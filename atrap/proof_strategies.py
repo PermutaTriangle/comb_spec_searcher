@@ -117,6 +117,13 @@ def cell_insertion(tiling, cell, input_set):
             yield left, ("U", Tiling(right))
 
 
+def all_cell_insertions(tiling, input_set):
+    for cell, block in tiling.items():
+        if block is not Tile.POINT:
+            for strategy in cell_insertion(tiling, cell, input_set):
+                yield strategy
+
+
 def verify_tiling(tiling, input_set):
     longest_basis_length = len(input_set.basis[-1])
     number_of_points = sum(1 for cell in tiling if tiling[cell] is Tile.P)
