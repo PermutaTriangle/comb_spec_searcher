@@ -1,7 +1,10 @@
 from grids import *
-from permuta import *
-from .recipes import tiling_inferral
+from .tools import tiling_inferral
 from copy import copy
+
+
+__all__ = ["all_row_and_column_insertions"]
+
 
 # this returns the tiling with row left empty, plus a list of all the coordinates of the cells in row.
 def row_insertion_helper(parent_tiling, row):
@@ -16,6 +19,7 @@ def row_insertion_helper(parent_tiling, row):
         else: # i > row
             empty_d[(i+1,j)] = perm_set
     return Tiling(empty_d), row_cells
+
 
 # This returns the strategies achieved by inserting into a row. It assumes this can be done.
 def row_insertion(parent_tiling, row, input_set):
@@ -132,6 +136,7 @@ def column_insertion(parent_tiling, column, input_set):
     yield "Inserting the left most point into column " + str(column), tuple( left_strategy )
     yield "Inserting the right most point into column " + str(column), tuple( right_strategy )
 
+
 def all_row_and_column_insertions(tiling, input_set):
     row_blocks = {}
     column_blocks = {}
@@ -154,11 +159,11 @@ def all_row_and_column_insertions(tiling, input_set):
     # if the count = 1 then exactly one in each row and column so equivalent to cell insertion so we ignore it.
     for i, value in row_blocks.items():
         if value is not None:
-            if value > 1:
+            if value > 0:
                 for strategy in row_insertion(tiling, i, input_set):
                     yield strategy
     for j, value in column_blocks.items():
         if value is not None:
-            if value > 1:
+            if value > 0:
                 for strategy in column_insertion(tiling, j, input_set):
                     yield strategy

@@ -1,6 +1,9 @@
 from grids import *
-from permuta import *
 from copy import copy
+from .tools import tiling_inferral
+
+
+__all__ = ["all_cell_insertions"]
 
 
 def cell_insertion_helper(parent_tiling, cell):
@@ -41,41 +44,6 @@ def cell_insertion_helper(parent_tiling, cell):
     left_tiling = copy(parent_tiling)
     left_tiling.pop(cell)
     return left_tiling, Tiling(d)
-
-
-def cell_inferral(tiling, the_cell, input_set):
-    point_cells = {}
-    for cell, block in tiling.items():
-        if block is Tile.P:
-            point_cells[cell] = block
-
-    max_length = len(input_set.basis[-1])
-
-    inferred_basis = list(input_set.basis)
-    for length in range(1, max_length):
-        perm_set = PermSet.avoiding(inferred_basis)
-        for patt in perm_set.of_length(length):
-            point_cells[the_cell] = PermSet([patt])
-            T = Tiling(point_cells)
-            TD = TilingPermSetDescriptor(T)
-            TPS = TilingPermSet(TD)
-            for perm in TPS.of_length(len(point_cells) - 1 + length):
-                if perm not in input_set:
-                    inferred_basis.append(patt)
-
-    return PermSet.avoiding(inferred_basis)
-
-
-def tiling_inferral(tiling, input_set):
-    inferred_tiling = copy(tiling)
-    for cell, block in tiling.items():
-        if block is None:
-            inferred_block = cell_inferral(tiling, cell, input_set)
-            if inferred_block == PermSet.avoiding(Perm((0,))):
-                inferred_tiling.pop(cell)
-            else:
-                inferred_tiling[cell] = inferred_block
-    return Tiling(inferred_tiling)
 
 
 def cell_insertion(tiling, cell, input_set):
@@ -121,17 +89,3 @@ def all_cell_insertions(tiling, input_set):
         if block is not Tile.POINT:
             for strategy in cell_insertion(tiling, cell, input_set):
                 yield strategy
-
-
-def verify_tiling(tiling, input_set):
-    longest_basis_length = len(input_set.basis[-1])
-    number_of_points = sum(1 for cell in tiling if tiling[cell] is Tile.P)
-    tiling_perm_set = TilingPermSet(TilingPermSetDescriptor(tiling))
-    for length in range(number_of_points, number_of_points + longest_basis_length + 1):
-        # print("TILING SET OF LENGTH", length)
-        # print(list(tiling_perm_set.of_length(length)))
-        # print("INPUT SET OF LENGTH", length)
-        # print(list(input_set.of_length(length)))
-        if not set(tiling_perm_set.of_length(length)).issubset(input_set.of_length(length)):
-            return False
-    return True

@@ -8,8 +8,8 @@ from grids import Tiling
 
 
 from .recipes import all_cell_insertions
-from .recipes import verify_tiling
-from .row_and_column_insertions import all_row_and_column_insertions
+from .recipes import all_row_and_column_insertions
+from .verification import verify_tiling
 
 
 RECIPES = [all_cell_insertions, all_row_and_column_insertions]
@@ -32,7 +32,7 @@ class Batch(object):
 
 
 class Bakery(object):
-    def __init__(self, input_set, recipes):
+    def __init__(self, input_set, recipes=RECIPES):
         # Store input set
         self.input_set = input_set
 
@@ -57,15 +57,18 @@ class Bakery(object):
         # Store first batch
         self.first_batch = batch
 
-    def bake(self, depth):
-        if depth > self.height:
-            self.reached_depth = 0
-            print("Starting baking!")
-            self.baking_helper(self.first_batch, 0, depth)
-            print("Baking ended!")
-            self.height = max(self.height, self.reached_depth)
+    def bake(self):
+        depth = self.height + 1
+        self.reached_depth = 0
+        print("Starting baking!")
+        self.baking_helper(self.first_batch, 0, depth)
+        print("Baking ended!")
+        self.height = max(self.height, self.reached_depth)
         if self.first_batch.verified:
             print("You can ask for a proof now!")
+            return True
+        else:
+            return False
 
     def baking_helper(self, batch, depth, max_depth):
 
@@ -75,7 +78,6 @@ class Bakery(object):
 
         if batch.verified:
             # No need to go further down
-            print("Reached max depth, stopping")
             return
 
         self.reached_depth = max(self.reached_depth, depth)
