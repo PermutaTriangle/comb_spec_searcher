@@ -64,8 +64,8 @@ def row_insertion(parent_tiling, row, input_set):
         top_strategy.append(inferred_top)
 
     # I got top and bottom mixed up, need to go through and change these around!
-    yield 'T', tuple( bottom_strategy )
-    yield 'B', tuple( top_strategy )
+    yield "Inserting the top most point into row " + str(row), tuple( bottom_strategy )
+    yield "Inserting the bottom most point into row " + str(row), tuple( top_strategy )
 
 # this returns the tiling with column left empty, plus a list of all the coordinates of the cells in column.
 def column_insertion_helper(parent_tiling, column):
@@ -129,8 +129,8 @@ def column_insertion(parent_tiling, column, input_set):
         left_strategy.append(inferred_left)
         right_strategy.append(inferred_right)
 
-    yield 'L', tuple( left_strategy )
-    yield 'R', tuple( right_strategy )
+    yield "Inserting the left most point into column " + str(column), tuple( left_strategy )
+    yield "Inserting the right most point into column " + str(column), tuple( right_strategy )
 
 def all_row_and_column_insertions(tiling, input_set):
     row_blocks = {}
@@ -155,10 +155,10 @@ def all_row_and_column_insertions(tiling, input_set):
     for i, value in row_blocks.items():
         if value is not None:
             if value > 1:
-                for strategy in row_insertions(tiling, i, input_set):
+                for strategy in row_insertion(tiling, i, input_set):
                     yield strategy
     for j, value in column_blocks.items():
         if value is not None:
             if value > 1:
-                for strategy in column_insertions(tiling, j, input_set):
+                for strategy in column_insertion(tiling, j, input_set):
                     yield strategy
