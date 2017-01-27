@@ -79,8 +79,7 @@ def tiling_inferral(tiling, input_set):
 
 
 def cell_insertion(tiling, cell, input_set):
-    temp_left, temp_right = cell_insertion_helper(tiling, cell)
-    left = ("E", temp_left)
+    left, temp_right = cell_insertion_helper(tiling, cell)
     right = dict(tiling_inferral(temp_right, input_set))
     NW_cell = cell
     NE_cell = cell[0], cell[1] + 2
@@ -90,31 +89,31 @@ def cell_insertion(tiling, cell, input_set):
         if NE_cell in right:
             NE_block = right.pop(NE_cell)
             NW_block = right.pop(NW_cell)
-            yield left, ("T", Tiling(right))
+            yield "Inserting the top most point in to the cell " + str(cell), (left, Tiling(right))
             right[NE_cell] = NE_block
             SW_block = right.pop(SW_cell)
-            yield left, ("L", Tiling(right))
+            yield "Inserting the left most point in to the cell " + str(cell), (left, Tiling(right))
             right[NW_cell] = NW_block
             SE_block = right.pop(SE_cell)
-            yield left, ("B", Tiling(right))
+            yield "Inserting the bottom most point in to the cell " + str(cell), (left, Tiling(right))
             right[SW_cell] = SW_block
             NE_block = right.pop(NE_cell)
-            yield left, ("R", Tiling(right))
+            yield "Inserting the right most point in to the cell " + str(cell),  (left, Tiling(right))
         else:
             NW_block = right.pop(NW_cell)
-            yield left, ("T", Tiling(right))
+            yield "Inserting the top most point in to the cell " + str(cell), (left, Tiling(right))
             right[NW_cell] = NW_block
             SE_block = right.pop(SE_cell)
-            yield left, ("B", Tiling(right))
+            yield "Inserting the bottom most point in to the cell " + str(cell), (left, Tiling(right))
     else:
         if NE_cell in right:
             NE_block = right.pop(NE_cell)
-            yield left, ("T", Tiling(right))
+            yield "Inserting the top most point in to the cell " + str(cell), (left, Tiling(right))
             right[NE_cell] = NE_block
             SW_block = right.pop(SW_cell)
-            yield left, ("B", Tiling(right))
+            yield "Inserting the top most point in to the cell " + str(cell), (left, Tiling(right))
         else:
-            yield left, ("U", Tiling(right))
+            yield "Inserting the unique point in to the cell " + str(cell), (left, Tiling(right))
 
 
 def all_cell_insertions(tiling, input_set):
@@ -129,10 +128,10 @@ def verify_tiling(tiling, input_set):
     number_of_points = sum(1 for cell in tiling if tiling[cell] is Tile.P)
     tiling_perm_set = TilingPermSet(TilingPermSetDescriptor(tiling))
     for length in range(number_of_points, number_of_points + longest_basis_length + 1):
-        #print("TILING SET OF LENGTH", length)
-        #print(list(tiling_perm_set.of_length(length)))
-        #print("INPUT SET OF LENGTH", length)
-        #print(list(input_set.of_length(length)))
+        # print("TILING SET OF LENGTH", length)
+        # print(list(tiling_perm_set.of_length(length)))
+        # print("INPUT SET OF LENGTH", length)
+        # print(list(input_set.of_length(length)))
         if not set(tiling_perm_set.of_length(length)).issubset(input_set.of_length(length)):
             return False
     return True
