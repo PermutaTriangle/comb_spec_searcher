@@ -42,8 +42,13 @@ def row_insertion(parent_tiling, row, input_set):
             if j < m:
                 bottom_d[(i,j)] = perm_set
                 top_d[(i,j)] = perm_set
-            else:
+            elif j > m:
                 bottom_d[(i,j+2)] = perm_set
+                top_d[(i,j+2)] = perm_set
+            else:
+                bottom_d[(i,j)] = perm_set
+                bottom_d[(i,j+2)] = perm_set
+                top_d[(i,j)] = perm_set
                 top_d[(i,j+2)] = perm_set
 
         for (i,j) in row_cells:
@@ -108,8 +113,13 @@ def column_insertion(parent_tiling, column, input_set):
             if i < n:
                 left_d[(i,j)] = perm_set
                 right_d[(i,j)] = perm_set
-            else:
+            elif i > n:
                 left_d[(i+2,j)] = perm_set
+                right_d[(i+2,j)] = perm_set
+            else:
+                left_d[(i,j)] = perm_set
+                left_d[(i+2,j)] = perm_set
+                right_d[(i,j)] = perm_set
                 right_d[(i+2,j)] = perm_set
 
         for (i,j) in column_cells:
