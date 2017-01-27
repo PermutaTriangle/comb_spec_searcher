@@ -150,6 +150,8 @@ def all_row_and_column_insertions(tiling, input_set):
                 column_blocks[j] = 1
             else:
                 column_blocks[j] += 1
+    # if value is None, then row or column contains a point, so we ignore it.
+    # if the count = 1 then exactly one in each row and column so equivalent to cell insertion so we ignore it.
     for i, value in row_blocks.items():
         if value is not None:
             if value > 1:
