@@ -1,2 +1,2 @@
-from .proof_strategies import *
-from .meta_tree_naive import *
+from .recipes import *
+from .bakery_naive import *
