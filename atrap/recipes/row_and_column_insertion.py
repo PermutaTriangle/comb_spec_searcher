@@ -1,4 +1,4 @@
-from grids import *
+from grids import Tiling, Block
 from .tools import tiling_inferral
 from copy import copy
 
@@ -31,13 +31,13 @@ def row_insertion(parent_tiling, row, input_set):
     for (n,m) in row_cells:
         # we will now insert min or max into cell (n,m)
         bottom_d = {}
-        bottom_d[(n,m+1)] = Tile.P
+        bottom_d[(n,m+1)] = Block.point
         top_d = {}
-        top_d[(n+1,m+1)] = Tile.P
+        top_d[(n+1,m+1)] = Block.point
 
         for (i,j), perm_set in empty_row.items():
             # we go through the remaining items. If not a point, we insert None, as it need to be inferred.
-            if perm_set is not Tile.P:
+            if perm_set is not Block.point:
                 perm_set = None
             if j < m:
                 bottom_d[(i,j)] = perm_set
@@ -102,13 +102,13 @@ def column_insertion(parent_tiling, column, input_set):
     for (n,m) in column_cells:
         # we will now insert leftmost or rightmost into cell (n,m)
         left_d = {}
-        left_d[(n+1,m)] = Tile.P
+        left_d[(n+1,m)] = Block.point
         right_d = {}
-        right_d[(n+1,m+1)] = Tile.P
+        right_d[(n+1,m+1)] = Block.point
 
         for (i,j), perm_set in empty_column.items():
             # we go through the remaining items, not in column. If not a point, we insert None, as it need to be inferred.
-            if perm_set is not Tile.P:
+            if perm_set is not Block.point:
                 perm_set = None
             if i < n:
                 left_d[(i,j)] = perm_set
@@ -151,7 +151,7 @@ def all_row_and_column_insertions(tiling, input_set):
     row_blocks = {}
     column_blocks = {}
     for (i,j), block in tiling.items():
-        if block is Tile.P:
+        if block is Block.point:
             # If row or column contains a point, we do not insert into this row or column.
             row_blocks[i] = None
             column_blocks[j] = None

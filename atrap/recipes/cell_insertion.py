@@ -1,4 +1,4 @@
-from grids import *
+from grids import Tiling, Block
 from copy import copy
 from .tools import tiling_inferral
 
@@ -10,7 +10,7 @@ def cell_insertion_helper(parent_tiling, cell):
     tiling = parent_tiling
     d = {}
     for (i, j), perm_set in tiling.items():
-        if perm_set is not Tile.P:
+        if perm_set is not Block.point:
             perm_set = None
         if i < cell[0]:
             if j < cell[1]:
@@ -29,7 +29,7 @@ def cell_insertion_helper(parent_tiling, cell):
                 d[(i + 2, j)] = perm_set
                 d[(i, j + 2)] = perm_set
                 d[(i + 2, j + 2)] = perm_set
-                d[(i + 1, j + 1)] = Tile.P
+                d[(i + 1, j + 1)] = Block.point
             else:
                 d[(i, j + 2)] = perm_set
                 d[(i + 2, j + 2)] = perm_set
@@ -86,6 +86,6 @@ def cell_insertion(tiling, cell, input_set):
 
 def all_cell_insertions(tiling, input_set):
     for cell, block in tiling.items():
-        if block is not Tile.POINT:
+        if block is not Block.point:
             for strategy in cell_insertion(tiling, cell, input_set):
                 yield strategy

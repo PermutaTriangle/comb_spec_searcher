@@ -1,4 +1,4 @@
-from grids import *
+from grids import Tiling, Block, PermSetTiled
 from permuta import *
 from copy import copy
 
@@ -9,7 +9,7 @@ __all__ = ["tiling_inferral"]
 def cell_inferral(tiling, the_cell, input_set):
     point_cells = {}
     for cell, block in tiling.items():
-        if block is Tile.P:
+        if block is Block.point:
             point_cells[cell] = block
 
     max_length = len(input_set.basis[-1])
@@ -20,8 +20,7 @@ def cell_inferral(tiling, the_cell, input_set):
         for patt in perm_set.of_length(length):
             point_cells[the_cell] = PermSet([patt])
             T = Tiling(point_cells)
-            TD = TilingPermSetDescriptor(T)
-            TPS = TilingPermSet(TD)
+            TPS = PermSetTiled(T)
             for perm in TPS.of_length(len(point_cells) - 1 + length):
                 if perm not in input_set:
                     inferred_basis.append(patt)

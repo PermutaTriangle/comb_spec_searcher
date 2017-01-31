@@ -36,6 +36,9 @@ class Bakery(object):
         # Store input set
         self.input_set = input_set
 
+        # Set tiling class to display input set in the way we want
+        Tiling.label(input_set, "X")
+
         # Store recipes
         self.recipes = tuple(recipes)
 
