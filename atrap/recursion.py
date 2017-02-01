@@ -1,7 +1,8 @@
 from grids import *
 from permuta import *
 from permuta.misc import UnionFind
-from itertools import combinations
+from itertools import combinations, chain
+from copy import copy
 
 def components(tiling, basis):
 
@@ -51,9 +52,8 @@ def is_reversibly_deletable(tiling, cell, basis):
     for perm, (occurences, where) in perms_to_consider.items():
         new_occurences = []
         for occurence in occurences:
-            if any( where[i] == cell for i in occurence ):
-                continue
-            new_occurences.append(occurence)
+            if not any( where[i] == cell for i in occurence ):
+                new_occurences.append(occurence)
         if len(new_occurences) > 0:
             continue
             # for continuing on in future tiling without the cell, we would go into new_perm, new_occurences and check.
@@ -61,3 +61,39 @@ def is_reversibly_deletable(tiling, cell, basis):
         else:
             return False
     return True
+
+def reversibly_deletably_path_finder(tiling, basis):
+
+    tilingpermset = PermSetTiled(tiling)
+
+    perms_to_consider = {}
+    for patt in basis:
+        max_length = tiling.total_points + len(patt)
+        for perm_length in range(max_length + 1):
+            # where tells you which cell a point belongs to.
+            for perm, where in tilingpermset.of_length_with_positions(perm_length):
+                occurences = [ [ perm[i] for i in occurence ] for occurence in perm.occurrences_of(patt) ]
+                if len(occurences) > 0:
+                    perms_to_consider[perm] = (occurences, where)
+
+    return list( chain( list( reversibly_deletably_path_finder_helper( cell, perms_to_consider, tiling ) ) for cell in tiling ) )
+
+def reversibly_deletably_path_finder_helper(cell, perms_to_consider, tiling):
+    new_perms_to_consider = {}
+    for perm, (occurences, where) in perms_to_consider.items():
+        new_occurences = []
+        for occurence in occurences:
+            if not any( where[i] == cell for i in occurence ):
+                new_occurences.append(occurence)
+        if len(new_occurences) > 0:
+            new_perms_to_consider[perm] = (new_occurences, where)
+        else:
+            return
+    new_tiling = copy(tiling)
+    new_tiling.pop(cell)
+    yield [cell]
+    for cell2 in new_tiling:
+        if not cell2 == cell:
+            for path in reversibly_deletably_path_finder_helper(cell2, new_perms_to_consider, new_tiling):
+                print( cell, cell2, path )
+                yield [cell] + path
