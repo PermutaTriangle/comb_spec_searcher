@@ -60,15 +60,18 @@ class Bakery(object):
         # Store first batch
         self.first_batch = batch
 
+        # Seen tilings
+        self.seen_tilings = {}
+
     def bake(self):
         depth = self.height + 1
         self.reached_depth = 0
-        print("Starting baking!")
+        #print("Starting baking!")
         self.baking_helper(self.first_batch, 0, depth)
-        print("Baking ended!")
+        #print("Baking ended!")
         self.height = max(self.height, self.reached_depth)
         if self.first_batch.verified:
-            print("You can ask for a proof now!")
+            #print("You can ask for a proof now!")
             return True
         else:
             return False
@@ -77,7 +80,7 @@ class Bakery(object):
 
         assert 0 <= depth <= max_depth
 
-        print("Am at depth", depth)
+        #print("Am at depth", depth)
 
         if batch.verified:
             # No need to go further down
@@ -89,7 +92,7 @@ class Bakery(object):
         # Just create all derived batches for ALL starters if not yet at max depth
         # IF a starter doesn't self verify
         if self.height <= depth < max_depth:
-            print("Creating batches at depth", depth)
+            #print("Creating batches at depth", depth)
             for starter in batch.starters:
                 if verify_tiling(starter.tiling, self.input_set) and depth != 0:
                     # And because it is self verified
@@ -101,7 +104,11 @@ class Bakery(object):
                     derived_batches = itertools.chain(*(recipe(starter.tiling, self.input_set)
                                                         for recipe in self.recipes))
                     for label, tilings in derived_batches:
-                        print("label:", label)
+                        #print("label:", label)
+                        for tiling in tilings:
+                            seen_times = self.seen_tilings.setdefault(tiling, 0)
+                            self.seen_tilings[tiling] = seen_times + 1
+                            print("Seen tiling", seen_times + 1, "times now")
                         derived_batch = Batch()
                         derived_batch.label = label
                         derived_batch.starters.extend(Starter(tiling) for tiling in tilings)
@@ -110,24 +117,24 @@ class Bakery(object):
         # Now come the depth cases
 
         if depth <= self.height:
-            print("Recursing on UNverified starters at depth", depth)
+            #print("Recursing on UNverified starters at depth", depth)
             # Recurse on unverified starters
-            print("Going through starters!")
+            #print("Going through starters!")
             for starter in batch.starters:
-                print()
-                print(starter, ":", sep="")
-                print()
-                print(starter.tiling)
-                print()
+                #print()
+                #print(starter, ":", sep="")
+                #print()
+                #print(starter.tiling)
+                #print()
                 # Go through the starters
                 if starter.verified:
-                    print("Starter is already verified")
-                    print()
+                    #print("Starter is already verified")
+                    #print()
                     pass  # starter is somehow verified, and we don't care anymore
                 else:  # starter is neither verified by own tiling, nor by a derivative batch
-                    print("Recursing on starters:")
-                    print(starter.batches)
-                    print()
+                    #print("Recursing on starters:")
+                    #print(starter.batches)
+                    #print()
                     for derived_batch in starter.batches:
                         self.baking_helper(derived_batch, depth + 1, max_depth)
                         if derived_batch.verified:
@@ -140,17 +147,17 @@ class Bakery(object):
                 batch.verified = True
 
         elif max_depth >= depth > self.height:
-            print("Attempting to verify starters at depth", depth)
+            #print("Attempting to verify starters at depth", depth)
             # Attempt to verify batch via starter self verification
             for starter in batch.starters:
                 starter.verified = starter.self_verified = verify_tiling(starter.tiling, self.input_set)
             if all(starter.self_verified for starter in batch.starters):
-                print("All starters verified at depth", depth)
+                #print("All starters verified at depth", depth)
                 # All starters of the batch verified, so batch is verified
                 batch.verified = True
                 # No need to recurse further
             elif depth != max_depth:
-                print("Recursing because unverified starters, currently at depth", depth)
+                #print("Recursing because unverified starters, currently at depth", depth)
                 # Recurse into derived batches
                 for starter in batch.starters:
                     if not starter.verified:
@@ -173,7 +180,7 @@ class Bakery(object):
 
     def give_me_proof(self):
         if self.first_batch.verified:
-            print("I will give you proof, look:")
+            #print("I will give you proof, look:")
             self._proof = []
             self._proof_helper(self.first_batch)
             for tiling in self._proof:
@@ -181,7 +188,7 @@ class Bakery(object):
                 print(tiling)
                 print()
         else:
-            print("I WON'T GIVE YOU PROOF!!!")
+            #print("I WON'T GIVE YOU PROOF!!!")
             return None
 
     def _proof_helper(self, batch):

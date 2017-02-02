@@ -37,9 +37,10 @@ bakery = atrap.bakery_naive.Bakery(input_set, recipes)
 print("Finding proof for:\n")
 print(input_set)
 print()
-print(bakery)
 
+depth = 0
 while True:
+    print("Baking depth", depth)
     good = bakery.bake()
     if good:
         bakery.give_me_proof()

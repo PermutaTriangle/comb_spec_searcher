@@ -41,8 +41,9 @@ def cell_insertion_helper(parent_tiling, cell):
                 d[(i + 2, j + 2)] = perm_set
             else:
                 d[(i + 2, j + 2)] = perm_set
-    left_tiling = copy(parent_tiling)
-    left_tiling.pop(cell)
+    left_tiling_dict = dict(tiling)
+    left_tiling_dict.pop(cell)
+    left_tiling = Tiling(left_tiling_dict)
     return left_tiling, Tiling(d)
 
 
