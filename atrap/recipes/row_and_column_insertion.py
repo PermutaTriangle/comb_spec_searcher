@@ -18,16 +18,16 @@ def row_insertion_helper(parent_tiling, row):
             empty_d[(i,j)] = perm_set
         else: # i > row
             empty_d[(i+1,j)] = perm_set
-    return Tiling(empty_d), row_cells
+    return empty_d, row_cells
 
 
 # This returns the strategies achieved by inserting into a row. It assumes this can be done.
 def row_insertion(parent_tiling, row, input_set):
     empty_row, row_cells = row_insertion_helper(parent_tiling, row)
     # bottom_strategy will insert points in to the bottom of the row, each cell at a time.
-    bottom_strategy = [empty_row]
+    bottom_strategy = [Tiling(empty_row)]
     # top_strategy will insert points in to the top of the row, each cell at a time.
-    top_strategy = [empty_row]
+    top_strategy = [Tiling(empty_row)]
     for (n,m) in row_cells:
         # we will now insert min or max into cell (n,m)
         bottom_d = {}
@@ -69,8 +69,8 @@ def row_insertion(parent_tiling, row, input_set):
         inferred_bottom = tiling_inferral(Tiling(bottom_d), input_set)
         inferred_top = tiling_inferral(Tiling(top_d), input_set)
 
-        bottom_strategy.append(inferred_bottom)
-        top_strategy.append(inferred_top)
+        bottom_strategy.append(Tiling(inferred_bottom))
+        top_strategy.append(Tiling(inferred_top))
 
     # I got top and bottom mixed up, need to go through and change these around!
     yield "Inserting the top most point into row " + str(row), tuple( bottom_strategy )
@@ -90,15 +90,15 @@ def column_insertion_helper(parent_tiling, column):
             empty_d[(i,j)] = perm_set
         else: # j > column
             empty_d[(i,j+1)] = perm_set
-    return Tiling(empty_d), column_cells
+    return empty_d, column_cells
 
 # This returns the strategies achieved by inserting into a column. It assumes this can be done.
 def column_insertion(parent_tiling, column, input_set):
     empty_column, column_cells = column_insertion_helper(parent_tiling, column)
     # left_strategy will insert points in to the leftmost of the column, each cell at a time.
-    left_strategy = [empty_column]
+    left_strategy = [Tiling(empty_column)]
     # right_strategy will insert points in to the rightmost of the column, each cell at a time.
-    right_strategy = [empty_column]
+    right_strategy = [Tiling(empty_column)]
     for (n,m) in column_cells:
         # we will now insert leftmost or rightmost into cell (n,m)
         left_d = {}
@@ -140,8 +140,8 @@ def column_insertion(parent_tiling, column, input_set):
         inferred_left = tiling_inferral(Tiling(left_d), input_set)
         inferred_right = tiling_inferral(Tiling(right_d), input_set)
 
-        left_strategy.append(inferred_left)
-        right_strategy.append(inferred_right)
+        left_strategy.append(Tiling(inferred_left))
+        right_strategy.append(Tiling(inferred_right))
 
     yield "Inserting the left most point into column " + str(column), tuple( left_strategy )
     yield "Inserting the right most point into column " + str(column), tuple( right_strategy )

@@ -48,8 +48,9 @@ def cell_insertion_helper(parent_tiling, cell):
 
 
 def cell_insertion(tiling, cell, input_set):
-    left, temp_right = cell_insertion_helper(tiling, cell)
-    right = dict(tiling_inferral(temp_right, input_set))
+    temp_left, temp_right = cell_insertion_helper(tiling, cell)
+    left = Tiling(temp_left)
+    right = tiling_inferral(temp_right, input_set)
     NW_cell = cell
     NE_cell = cell[0], cell[1] + 2
     SW_cell = cell[0] + 2, cell[1]

@@ -29,7 +29,7 @@ def cell_inferral(tiling, the_cell, input_set):
 
 
 def tiling_inferral(tiling, input_set):
-    inferred_tiling = copy(tiling)
+    inferred_tiling = dict(tiling)
     for cell, block in tiling.items():
         if block is None:
             inferred_block = cell_inferral(tiling, cell, input_set)
@@ -37,4 +37,4 @@ def tiling_inferral(tiling, input_set):
                 inferred_tiling.pop(cell)
             else:
                 inferred_tiling[cell] = inferred_block
-    return Tiling(inferred_tiling)
+    return inferred_tiling
