@@ -19,7 +19,9 @@ print(input_set)
 print()
 
 start_time = time.time()
-for number in range(5):
+number = 0
+while True:
+    number += 1
     print("Baking generation", number)
     good = bakery.bake()
     if good:
