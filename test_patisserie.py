@@ -28,5 +28,6 @@ for number in range(5):
         for tiling in proof:
             print(tiling)
         break
+
 print()
 print("I took", int(time.time() - start_time), "seconds")
