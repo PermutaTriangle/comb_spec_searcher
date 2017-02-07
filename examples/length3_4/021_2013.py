@@ -3,7 +3,7 @@ import atrap
 from permuta import *
 
 task = '021_2013'
-patts = [ Perm([ int(c)-1 for c in p ]) for p in task.split('_') ]
+patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 input_set = PermSet.avoiding(patts)
 
 #recipes = [atrap.recipes.all_row_and_column_insertions]

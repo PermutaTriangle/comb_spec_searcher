@@ -2,14 +2,18 @@ import time
 import atrap
 from permuta import *
 
-task = '021_1023'
-patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
+# ARC PERMUTATIONS
+# Cell insertion + recursion works in 125 seconds
+
+task = '1324_1342_2413_2431_3124_3142_4213_4231'
+patts = [ Perm([ int(c)-1 for c in p ]) for p in task.split('_') ]
 input_set = PermSet.avoiding(patts)
 
 #recipes = [atrap.recipes.all_row_and_column_insertions]
 recipes = [atrap.recipes.all_cell_insertions]
-# recipes = [atrap.recipes.all_cell_insertions, atrap.recipes.all_row_and_column_insertions]
+#recipes = [atrap.recipes.all_cell_insertions, atrap.recipes.all_row_and_column_insertions]
 bakery = atrap.patisserie.Bakery(input_set, recipes)
+
 
 print("Finding proof for:\n")
 print(input_set)

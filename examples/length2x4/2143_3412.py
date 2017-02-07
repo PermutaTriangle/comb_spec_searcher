@@ -2,14 +2,18 @@ import time
 import atrap
 from permuta import *
 
-task = '021_1023'
-patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
+# SKEW-MERGE PERMUTATIONS
+# 
+
+task = '2143_3412'
+patts = [ Perm([ int(c)-1 for c in p ]) for p in task.split('_') ]
 input_set = PermSet.avoiding(patts)
 
 #recipes = [atrap.recipes.all_row_and_column_insertions]
 recipes = [atrap.recipes.all_cell_insertions]
-# recipes = [atrap.recipes.all_cell_insertions, atrap.recipes.all_row_and_column_insertions]
+#recipes = [atrap.recipes.all_cell_insertions, atrap.recipes.all_row_and_column_insertions]
 bakery = atrap.patisserie.Bakery(input_set, recipes)
+
 
 print("Finding proof for:\n")
 print(input_set)

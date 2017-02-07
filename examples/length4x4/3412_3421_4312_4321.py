@@ -2,14 +2,18 @@ import time
 import atrap
 from permuta import *
 
-task = '021_1023'
-patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
+# THE DIAMOND-CLASS, I THINK
+# Found a proof in about 5 minutes
+
+task = '3412_3421_4312_4321'
+patts = [ Perm([ int(c)-1 for c in p ]) for p in task.split('_') ]
 input_set = PermSet.avoiding(patts)
 
 #recipes = [atrap.recipes.all_row_and_column_insertions]
 recipes = [atrap.recipes.all_cell_insertions]
-# recipes = [atrap.recipes.all_cell_insertions, atrap.recipes.all_row_and_column_insertions]
+#recipes = [atrap.recipes.all_cell_insertions, atrap.recipes.all_row_and_column_insertions]
 bakery = atrap.patisserie.Bakery(input_set, recipes)
+
 
 print("Finding proof for:\n")
 print(input_set)
