@@ -1,0 +1,15 @@
+The classes we want ATRAP to find a proof tree for
+
+* Every subset of S3 (just need 123)
+* Every Av(p,q) with p in S3, q in S4
+* More generally Av(P,Q) with P subset of S3, Q subset in S4
+* First basis (starting at the largest) that struct fails on; it has 11 length 4 patterns and we found a proof tree by hand
+* All the Kuszmaul examples; as Jay pointed out to me at Dartmouth most of them have a regular insertion encoding - Struct could do all of those ones, plus one more. There are still two undone
+* Every subset of S4 with four or more patterns
+* Almost all subsets of S4 with three patterns
+* The easy 2x4 classes, e.g., the ones with a rational generating function
+* The separable permutations
+* Av(3124,4312), enumerated in Jay's first paper
+* The three 2x4 classes Jay's C-machines paper with Michael, Cheyne, Nathaniel, and Vince
+* Some principle classes; Av(1234) would be nice, since it has D-finite generating function
+* Av(1324), at least some very tight bounds
