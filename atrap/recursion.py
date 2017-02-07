@@ -17,6 +17,7 @@ def components(tiling, basis):
 
     tilingpermset = PermSetTiled(tiling)
 
+    # TODO: work through permset first rather than regeneate for each pattern.
     for patt in basis:
         max_length = tiling.total_points + len(patt)
         for perm_length in range(max_length + 1):
@@ -33,6 +34,7 @@ def components(tiling, basis):
         else:
             all_components[i] = [cell]
     return list( all_components.values() )
+    # Consider unions of components.
 
 
 # We never use this function. Probably should just delete it.
@@ -107,3 +109,11 @@ def reversibly_deletably_path_finder_helper(cell, perms_to_consider, tiling):
         if cell2 > cell:
             for path in reversibly_deletably_path_finder_helper(cell2, new_perms_to_consider, tiling):
                 yield [cell] + path
+
+def reachable_tilings_by_reversibly_deleting(tiling, basis):
+
+    for path in reversibly_deletably_path_finder(tiling, basis):
+        new_tiling = dict(tiling)
+        for cell in path:
+            new_tiling.pop(cell)
+        yield Tiling(new_tiling)

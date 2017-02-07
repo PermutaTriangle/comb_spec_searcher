@@ -2,7 +2,9 @@ import time
 import atrap
 from permuta import *
 
-input_set = PermSet.avoiding([Perm((1,2,0)), Perm((2,0,1))])
+task = '021_2013'
+patts = [ Perm([ int(c)-1 for c in p ]) for p in task.split('_') ]
+input_set = PermSet.avoiding(patts)
 
 #recipes = [atrap.recipes.all_row_and_column_insertions]
 recipes = [atrap.recipes.all_cell_insertions]
