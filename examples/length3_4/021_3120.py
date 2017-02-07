@@ -2,7 +2,7 @@ import time
 import atrap
 from permuta import *
 
-task = '021_1023'
+task = '021_3120'
 patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 input_set = PermSet.avoiding(patts)
 
