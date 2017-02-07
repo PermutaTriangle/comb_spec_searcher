@@ -12,6 +12,7 @@ from grids import Tiling
 from .recipes import all_cell_insertions
 from .recipes import all_row_and_column_insertions
 from .verification import verify_tiling
+from .recursion import reachable_tilings_by_reversibly_deleting
 
 
 RECIPES = [all_cell_insertions, all_row_and_column_insertions]
@@ -23,6 +24,7 @@ class Starter(object):
 
         self.verified = False
         self.self_verified = False
+        self.recursively_verified = []
 
         self.child_batches = []
         self.parent_batches = []
@@ -141,12 +143,15 @@ class Bakery(object):
                                 new_frontier.append(derived_starter)
                                 # TODO
                                 derived_starter.parent_batches.append(derived_batch)
-                                print()
-                                print("Ancestors of unverified tiling:")
-                                print(derived_starter.tiling)
-                                for as_tiling in self.ancestral_starters(derived_starter):
-                                    print(as_tiling)
-                                print()
+                                ancestor_set = set(self.ancestral_starters(derived_starter))
+                                for reachable_tiling in reachable_tilings_by_reversibly_deleting(derived_starter.tiling, self.input_set.basis):
+                                    if reachable_tiling in ancestor_set:
+                                        print("Tiling RECURSIVELY verified!")
+                                        print(tiling)
+                                        print(reachable_tiling)
+                                        derived_starter.verified = True
+                                        derived_starter.recursively_verified = [reachable_tiling]
+                                        break
                                 derived_starter.parent_batches.pop()
 
                         else:
@@ -267,6 +272,8 @@ class Bakery(object):
                     assert child_starter.verified
                     if child_starter.self_verified:
                         proof.append(child_starter.tiling)
+                    elif child_starter.recursively_verified:
+                        proof.append(["recurse", child_starter.tiling, child_starter.recursively_verified[0]])
                     else:
                         frontier.append(child_starter)
             return proof
