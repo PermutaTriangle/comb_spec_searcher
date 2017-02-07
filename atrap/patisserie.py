@@ -139,9 +139,22 @@ class Bakery(object):
                                 #print("Frontier extended")
                                 # Add to new frontier
                                 new_frontier.append(derived_starter)
+                                # TODO
+                                derived_starter.parent_batches.append(derived_batch)
+                                print()
+                                print("Ancestors of unverified tiling:")
+                                print(derived_starter.tiling)
+                                for as_tiling in self.ancestral_starters(derived_starter):
+                                    print(as_tiling)
+                                print()
+                                derived_starter.parent_batches.pop()
+
                         else:
                             #print("Cache hit!")
                             # Unverified cached starter already existed
+                            # TODO: Perhaps new ancestors gained for some
+                            #       derived starters lower in the tree,
+                            #       need to check those for recursion
                             derived_starter = cached_starter
 
                         # Give derived starter its parent and vice-versa
@@ -215,6 +228,24 @@ class Bakery(object):
                             return True
             # First batch not verified
             return False
+
+    def ancestral_starters(self, starter):
+        ancestral_starters = {}
+        starter_frontier = [starter]
+        while starter_frontier:
+            ancestral_starter = starter_frontier.pop()
+            if ancestral_starter == self.first_batch.child_starters[0]:
+                continue
+            for parent_batch in ancestral_starter.parent_batches:
+                if parent_batch is self.first_batch:
+                    continue
+                else:
+                    starter_frontier.extend(parent_batch.parent_starters)
+            if ancestral_starter is starter:
+                continue
+            else:
+                ancestral_starters[ancestral_starter.tiling] = ancestral_starter
+        return ancestral_starters
 
     def give_me_proof(self):
         if self.first_batch.verified:
