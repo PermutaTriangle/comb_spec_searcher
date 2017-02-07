@@ -276,6 +276,18 @@ class Bakery(object):
                         proof.append(["recurse", child_starter.tiling, child_starter.recursively_verified[0]])
                     else:
                         frontier.append(child_starter)
-            return proof
+            tree = []
+            self._tree_helper(tree, self.first_batch.child_starters[0])
+            return proof, tree
         else:
             return None
+
+    def _tree_helper(self, tree, starter):
+        tree.append(starter.tiling)
+        for batch in starter.child_batches:
+            if batch.verified:
+                for child_starter in batch.child_starters:
+                    subtree = []
+                    self._tree_helper(subtree, child_starter)
+                    tree.append(subtree)
+                break
