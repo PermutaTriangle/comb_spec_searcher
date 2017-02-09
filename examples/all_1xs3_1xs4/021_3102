@@ -1,0 +1,96 @@
+Finding proof for:
+
+perm set of all perms avoiding Basis((Perm((0, 2, 1)), Perm((3, 1, 0, 2))))
+
+
+Baking generation 1
+Baking generation 2
+Found proof
+Here are the leaves
++-+
+| |
++-+
+
++-+-+
+| |o|
++-+-+
+|X| |
++-+-+
+
++-+-+-+-+
+|o| | | |
++-+-+-+-+
+| | |/| |
++-+-+-+-+
+| |o| | |
++-+-+-+-+
+| | | |1|
++-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 2, 1)), Perm((1, 0, 2))))
+
+
+
+Here is the tree
+
+
+root: 0
+      ├──── 1
+      └──── 2
+            ├──── 3
+            └──── 4
+
+
+0
++-+
+|X|
++-+
+
+
+
+1
++-+
+| |
++-+
+
+
+
+2
++-+-+-+
+| |o| |
++-+-+-+
+| | |1|
++-+-+-+
+|X| | |
++-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 2, 1)), Perm((1, 0, 2))))
+
+
+
+3
++-+-+
+| |o|
++-+-+
+|X| |
++-+-+
+
+
+
+4
++-+-+-+-+
+|o| | | |
++-+-+-+-+
+| | |/| |
++-+-+-+-+
+| |o| | |
++-+-+-+-+
+| | | |1|
++-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 2, 1)), Perm((1, 0, 2))))
+
+
+
+
+
+
+
+I took 0 seconds

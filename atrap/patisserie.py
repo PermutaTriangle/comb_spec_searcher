@@ -11,6 +11,7 @@ from grids import Tiling
 
 from .recipes import all_cell_insertions
 from .recipes import all_row_and_column_insertions
+from .recipes import row_column_separations
 from .verification import verify_tiling
 from .recursion import reachable_tilings_by_reversibly_deleting
 
@@ -124,6 +125,10 @@ class Bakery(object):
                     for tiling in tilings:
                         # Check if a derived starter for that tiling
                         # already exists
+
+                        # For using row column separation.
+                        tiling = row_column_separations(tiling, self.input_set)
+
                         cached_starter = self.seen_starters.get(tiling)
 
                         if cached_starter is None:
@@ -195,7 +200,7 @@ class Bakery(object):
 
         #print("Calling propagate with batch:")
         #print(batch)
-        
+
         # TODO: Do smarter with better data structure
         #       And probably different arguments
 

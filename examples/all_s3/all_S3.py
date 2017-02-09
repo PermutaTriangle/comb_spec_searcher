@@ -2,10 +2,10 @@ import time
 import atrap
 from permuta import *
 
-tasks = ['1234_1243_1324_1342_1423_1432_2134_2143_2314_2341_3214']
+tasks = ['012','120','012_021','012_120','012_210','021_201','120_201','012_021_102','012_021_120','012_021_201','012_120_201','021_102_120','120_021_201_102','120_210_021_201','201_210_021_102']
 
 for task in tasks:
-    patts = [ Perm([ int(c) - 1 for c in p ]) for p in task.split('_') ]
+    patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
     input_set = PermSet.avoiding(patts)
 
     #recipes = [atrap.recipes.all_row_and_column_insertions]

@@ -2,7 +2,7 @@ import time
 import atrap
 from permuta import *
 
-tasks = ['1234_1243_1324_1342_1423_1432_2134_2143_2314_2341_3214']
+tasks = ['2431_2143_3142_4132_1432_1342_1324_1423_1243']
 
 for task in tasks:
     patts = [ Perm([ int(c) - 1 for c in p ]) for p in task.split('_') ]

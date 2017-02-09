@@ -1,6 +1,7 @@
 from grids import Tiling, Block, PermSetTiled
 from permuta import *
 from copy import copy
+from .row_column_separation import row_column_separations
 
 
 __all__ = ["tiling_inferral"]
