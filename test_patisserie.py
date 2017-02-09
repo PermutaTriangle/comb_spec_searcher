@@ -8,10 +8,10 @@ from permuta import *
 #input_set = PermSet.avoiding([Perm((0, 2, 1)), Perm((2, 1, 0))])
 # input_set = PermSet.avoiding([Perm((2, 1, 0)), Perm((1, 0, 3, 2))])
 # input_set = PermSet.avoiding([Perm((0, 1, 2))])
-# input_set = PermSet.avoiding([Perm((0, 2, 1))])
+input_set = PermSet.avoiding([Perm((0, 2, 1))])
 #input_set = PermSet.avoiding([Perm((0, 1, 2)), Perm((0, 3, 2, 1))])
 #input_set = PermSet.avoiding([Perm((0, 1, 2)), Perm((1, 0, 3, 2))])
-input_set = PermSet.avoiding([Perm((0,2,1,3))])
+# input_set = PermSet.avoiding([Perm((0,2,1,3))])
 
 #recipes = [atrap.recipes.all_row_and_column_insertions]
 recipes = [atrap.recipes.all_cell_insertions]

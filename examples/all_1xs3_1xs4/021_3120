@@ -17,16 +17,19 @@ Here are the leaves
 |X| |
 +-+-+
 
-+-+-+-+-+
-|o| | | |
-+-+-+-+-+
-| | | |/|
-+-+-+-+-+
-| |o| | |
-+-+-+-+-+
-| | |1| |
-+-+-+-+-+
-1: perm set of all perms avoiding Basis((Perm((0, 2, 1)), Perm((1, 2, 0))))
++-+-+-+-+-+
+| |o| | | |
++-+-+-+-+-+
+|1| | | | |
++-+-+-+-+-+
+| | | | |/|
++-+-+-+-+-+
+| | |o| | |
++-+-+-+-+-+
+| | | |2| |
++-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 2, 1)), Perm((2, 0, 1))))
+2: perm set of all perms avoiding Basis((Perm((0, 2, 1)), Perm((1, 2, 0))))
 
 
 
@@ -58,9 +61,9 @@ root: 0
 +-+-+-+
 | |o| |
 +-+-+-+
-| | |1|
-+-+-+-+
 |X| | |
++-+-+-+
+| | |1|
 +-+-+-+
 1: perm set of all perms avoiding Basis((Perm((0, 2, 1)), Perm((1, 2, 0))))
 
@@ -76,16 +79,19 @@ root: 0
 
 
 4
-+-+-+-+-+
-|o| | | |
-+-+-+-+-+
-| | | |/|
-+-+-+-+-+
-| |o| | |
-+-+-+-+-+
-| | |1| |
-+-+-+-+-+
-1: perm set of all perms avoiding Basis((Perm((0, 2, 1)), Perm((1, 2, 0))))
++-+-+-+-+-+
+| |o| | | |
++-+-+-+-+-+
+|1| | | | |
++-+-+-+-+-+
+| | | | |/|
++-+-+-+-+-+
+| | |o| | |
++-+-+-+-+-+
+| | | |2| |
++-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 2, 1)), Perm((2, 0, 1))))
+2: perm set of all perms avoiding Basis((Perm((0, 2, 1)), Perm((1, 2, 0))))
 
 
 

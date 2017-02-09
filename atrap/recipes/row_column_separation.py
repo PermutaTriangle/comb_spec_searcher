@@ -82,7 +82,7 @@ def tile_splitter( tiling, row_splits, column_splits ):
             if i > row:
                 n += row_splits[row][0]
             elif i == row:
-                n += row_splits[row][1][(i,j)]
+                n += row_splits[row][0] - row_splits[row][1][(i,j)]
         for column in column_splits:
             if j > column:
                 m += column_splits[column][0]
