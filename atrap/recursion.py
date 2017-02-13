@@ -110,10 +110,60 @@ def reversibly_deletably_path_finder_helper(cell, perms_to_consider, tiling):
             for path in reversibly_deletably_path_finder_helper(cell2, new_perms_to_consider, tiling):
                 yield [cell] + path
 
-def reachable_tilings_by_reversibly_deleting(tiling, basis):
+# def unmixed_subtile(tiling, subtile): # TODO: This is pseudo-code
+#     # I think this is the fastest way to do this, because if we do it row by
+#     # row and then column by column, we need to call the get_row, get_column
+#     # functions, which currently go through all the cells to collect them into
+#     # rows and columns
+#     all_cells = list(tiling.cells())
+#     lac = len(all_cells)
+#     for c1 in range(lac):
+#         for c2 in range(c1+1,lac):
+#             cell1 = all_cells[c1]
+#             cell2 = all_cells[c2]
+#             if cell1[0] == cell2[0] or cell1[1] == cell2[1]: # If the cells share a row or column
+#                 if (cell1 in subtile) != (cell2 in subtile): # If the cells not both in the same place
+#                     return False
+#     return True
+
+
+
+def reachable_tilings_by_reversibly_deleting(tiling, basis, unmixed=True):
+
+    if unmixed:
+        popped_rows = {}
+        popped_columns = {}
 
     for path in reversibly_deletably_path_finder(tiling, basis):
+
         new_tiling = dict(tiling)
+
         for cell in path:
             new_tiling.pop(cell)
+
+            if unmixed:
+                if cell[0] in popped_rows:
+                    popped_rows[cell[0]].append( cell[1] )
+                else:
+                    popped_rows[cell[0]] = [ cell[1] ]
+                if cell[1] in popped_columns:
+                    popped_columns[cell[1]].append( [cell[0]] )
+                else:
+                    popped_columns[cell[1]] =  [ cell[0] ]
+
+        if unmixed:
+            mixing = False
+            for row in popped_rows:
+                if len(popped_rows[row]) != len(tiling.get_row(row)):
+                    mixing = True
+                    break
+            if mixing:
+                continue
+            for column in popped_columns:
+                if len(popped_columns[column]) != len(tiling.get_col(column)):
+                    mixing = True
+                    break
+            if mixing:
+                continue
+
         yield Tiling(new_tiling)
