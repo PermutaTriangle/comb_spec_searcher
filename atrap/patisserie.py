@@ -15,6 +15,7 @@ from .recipes import row_column_separations
 from .verification import verify_tiling
 from .recursion import reachable_tilings_by_reversibly_deleting
 
+import random
 
 RECIPES = [all_cell_insertions, all_row_and_column_insertions]
 
@@ -106,6 +107,11 @@ class Bakery(object):
                                                    self.input_set)
                                             for recipe in self.recipes))
 
+                # If you want a probabalistic version or pick a single strategy for dealing with finite classes
+                # if True: derived = random.sample(list(derived),2)
+                # if True: derived = [random.choice(list(derived))]
+                # if True: derived = [list(derived)[1]]
+                # if True: derived = list(derived)[0:2]
                 for label, tilings in derived:
                     # Construct each batch
                     derived_batch = Batch()
