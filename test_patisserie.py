@@ -17,7 +17,7 @@ input_set = PermSet.avoiding([Perm((0, 1, 2))])
 
 recipes = [atrap.recipes.all_row_and_column_insertions]
 # recipes = [atrap.recipes.all_cell_insertions]
-#recipes = [atrap.recipes.all_cell_insertions, atrap.recipes.all_row_and_column_insertions]
+# recipes = [atrap.recipes.all_cell_insertions, atrap.recipes.all_row_and_column_insertions]
 bakery = atrap.patisserie.Bakery(input_set, recipes)
 
 

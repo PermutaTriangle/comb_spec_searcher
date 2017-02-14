@@ -128,7 +128,7 @@ def reversibly_deletably_path_finder_helper(cell, perms_to_consider, tiling):
 
 
 
-def reachable_tilings_by_reversibly_deleting(tiling, basis, unmixed=True):
+def reachable_tilings_by_reversibly_deleting(tiling, basis, unmixed=False):
 
     if unmixed:
         popped_rows = {}
