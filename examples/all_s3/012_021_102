@@ -1,0 +1,62 @@
+Finding proof for:
+
+perm set of all perms avoiding Basis((Perm((0, 1, 2)), Perm((0, 2, 1)), Perm((1, 0, 2))))
+
+
+Baking generation 1
+Found proof
+Here are the leaves
++-+
+| |
++-+
+
++-+-+-+
+| |o| |
++-+-+-+
+|1| | |
++-+-+-+
+| | |X|
++-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+
+
+
+Here is the tree
+
+
+root: 0
+      ├──── 1
+      └──── 2
+
+
+0
++-+
+|X|
++-+
+
+
+
+1
++-+
+| |
++-+
+
+
+
+2
++-+-+-+
+| |o| |
++-+-+-+
+|1| | |
++-+-+-+
+| | |X|
++-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+
+
+
+
+
+
+
+I took 0 seconds

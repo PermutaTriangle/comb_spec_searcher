@@ -1,0 +1,222 @@
+Finding proof for:
+
+perm set of all perms avoiding Basis((Perm((0, 1, 2)), Perm((2, 1, 0))))
+
+
+Baking generation 1
+Baking generation 2
+Baking generation 3
+Baking generation 4
+Found proof
+Here are the leaves
++-+
+| |
++-+
+
++-+-+
+|o| |
++-+-+
+| |1|
++-+-+
+1: perm set of all perms avoiding Basis((Perm((1, 0)), Perm((0, 1, 2))))
+
++-+-+-+-+
+| | |o| |
++-+-+-+-+
+| | | |o|
++-+-+-+-+
+|o| | | |
++-+-+-+-+
+| |1| | |
++-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+
++-+-+-+-+
+| |o| | |
++-+-+-+-+
+| | | |o|
++-+-+-+-+
+|o| | | |
++-+-+-+-+
+| | |o| |
++-+-+-+-+
+
++-+-+-+
+| |o| |
++-+-+-+
+|o| | |
++-+-+-+
+| | |1|
++-+-+-+
+1: perm set of all perms avoiding Basis((Perm((1, 0)), Perm((0, 1, 2))))
+
++-+-+-+-+
+| | |o| |
++-+-+-+-+
+|o| | | |
++-+-+-+-+
+| | | |1|
++-+-+-+-+
+| |o| | |
++-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+
+
+
+Here is the tree
+
+
+root: 0
+      ├──── 1
+      └──── 2
+            ├──── 3
+            └──── 4
+                  ├──── 5
+                  │     ├──── 6
+                  │     └──── 7
+                  └──── 8
+                        ├──── 9
+                        └──── 10
+
+
+0
++-+
+|X|
++-+
+
+
+
+1
++-+
+| |
++-+
+
+
+
+2
++-+-+-+
+| |o| |
++-+-+-+
+|1| |2|
++-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((2, 1, 0))))
+2: perm set of all perms avoiding Basis((Perm((1, 0)), Perm((0, 1, 2))))
+
+
+
+3
++-+-+
+|o| |
++-+-+
+| |1|
++-+-+
+1: perm set of all perms avoiding Basis((Perm((1, 0)), Perm((0, 1, 2))))
+
+
+
+4
++-+-+-+-+-+
+| | |o| | |
++-+-+-+-+-+
+| | | | |1|
++-+-+-+-+-+
+|o| | | | |
++-+-+-+-+-+
+| | | |2| |
++-+-+-+-+-+
+| |1| | | |
++-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+2: perm set of all perms avoiding Basis((Perm((1, 0)), Perm((0, 1, 2))))
+
+
+
+5
++-+-+-+-+
+| | |o| |
++-+-+-+-+
+|o| | | |
++-+-+-+-+
+| | | |1|
++-+-+-+-+
+| |2| | |
++-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((1, 0)), Perm((0, 1, 2))))
+2: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+
+
+
+6
++-+-+-+
+| |o| |
++-+-+-+
+|o| | |
++-+-+-+
+| | |1|
++-+-+-+
+1: perm set of all perms avoiding Basis((Perm((1, 0)), Perm((0, 1, 2))))
+
+
+
+7
++-+-+-+-+
+| | |o| |
++-+-+-+-+
+|o| | | |
++-+-+-+-+
+| | | |1|
++-+-+-+-+
+| |o| | |
++-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+
+
+
+8
++-+-+-+-+-+
+| | |o| | |
++-+-+-+-+-+
+| | | | |o|
++-+-+-+-+-+
+|o| | | | |
++-+-+-+-+-+
+| | | |1| |
++-+-+-+-+-+
+| |1| | | |
++-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+
+
+
+9
++-+-+-+-+
+| | |o| |
++-+-+-+-+
+| | | |o|
++-+-+-+-+
+|o| | | |
++-+-+-+-+
+| |1| | |
++-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+
+
+
+10
++-+-+-+-+
+| |o| | |
++-+-+-+-+
+| | | |o|
++-+-+-+-+
+|o| | | |
++-+-+-+-+
+| | |o| |
++-+-+-+-+
+
+
+
+
+
+
+
+I took 2 seconds

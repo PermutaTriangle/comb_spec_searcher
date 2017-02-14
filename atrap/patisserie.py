@@ -11,8 +11,11 @@ from grids import Tiling
 
 from .recipes import all_cell_insertions
 from .recipes import all_row_and_column_insertions
+from .recipes import row_column_separations
 from .verification import verify_tiling
+from .recursion import reachable_tilings_by_reversibly_deleting
 
+import random
 
 RECIPES = [all_cell_insertions, all_row_and_column_insertions]
 
@@ -23,6 +26,7 @@ class Starter(object):
 
         self.verified = False
         self.self_verified = False
+        self.recursively_verified = []
 
         self.child_batches = []
         self.parent_batches = []
@@ -103,6 +107,11 @@ class Bakery(object):
                                                    self.input_set)
                                             for recipe in self.recipes))
 
+                # If you want a probabalistic version or pick a single strategy for dealing with finite classes
+                # if True: derived = random.sample(list(derived),2)
+                # if True: derived = [random.choice(list(derived))]
+                # if True: derived = [list(derived)[1]]
+                # if True: derived = list(derived)[0:2]
                 for label, tilings in derived:
                     # Construct each batch
                     derived_batch = Batch()
@@ -122,6 +131,10 @@ class Bakery(object):
                     for tiling in tilings:
                         # Check if a derived starter for that tiling
                         # already exists
+
+                        # For using row column separation.
+                        tiling = row_column_separations(tiling, self.input_set)
+
                         cached_starter = self.seen_starters.get(tiling)
 
                         if cached_starter is None:
@@ -139,9 +152,25 @@ class Bakery(object):
                                 #print("Frontier extended")
                                 # Add to new frontier
                                 new_frontier.append(derived_starter)
+                                # TODO
+                                derived_starter.parent_batches.append(derived_batch)
+                                ancestor_set = set(self.ancestral_starters(derived_starter))
+                                for reachable_tiling in reachable_tilings_by_reversibly_deleting(derived_starter.tiling, self.input_set.basis):
+                                    if reachable_tiling in ancestor_set:
+                                        print("Tiling RECURSIVELY verified!")
+                                        print(tiling)
+                                        print(reachable_tiling)
+                                        derived_starter.verified = True
+                                        derived_starter.recursively_verified = [reachable_tiling]
+                                        break
+                                derived_starter.parent_batches.pop()
+
                         else:
                             #print("Cache hit!")
                             # Unverified cached starter already existed
+                            # TODO: Perhaps new ancestors gained for some
+                            #       derived starters lower in the tree,
+                            #       need to check those for recursion
                             derived_starter = cached_starter
 
                         # Give derived starter its parent and vice-versa
@@ -177,7 +206,7 @@ class Bakery(object):
 
         #print("Calling propagate with batch:")
         #print(batch)
-        
+
         # TODO: Do smarter with better data structure
         #       And probably different arguments
 
@@ -216,6 +245,24 @@ class Bakery(object):
             # First batch not verified
             return False
 
+    def ancestral_starters(self, starter):
+        ancestral_starters = {}
+        starter_frontier = [starter]
+        while starter_frontier:
+            ancestral_starter = starter_frontier.pop()
+            if ancestral_starter == self.first_batch.child_starters[0]:
+                continue
+            for parent_batch in ancestral_starter.parent_batches:
+                if parent_batch is self.first_batch:
+                    continue
+                else:
+                    starter_frontier.extend(parent_batch.parent_starters)
+            if ancestral_starter is starter:
+                continue
+            else:
+                ancestral_starters[ancestral_starter.tiling] = ancestral_starter
+        return ancestral_starters
+
     def give_me_proof(self):
         if self.first_batch.verified:
             proof = []
@@ -236,8 +283,22 @@ class Bakery(object):
                     assert child_starter.verified
                     if child_starter.self_verified:
                         proof.append(child_starter.tiling)
+                    elif child_starter.recursively_verified:
+                        proof.append(["recurse", child_starter.tiling, child_starter.recursively_verified[0]])
                     else:
                         frontier.append(child_starter)
-            return proof
+            tree = []
+            self._tree_helper(tree, self.first_batch.child_starters[0])
+            return proof, tree
         else:
             return None
+
+    def _tree_helper(self, tree, starter):
+        tree.append(starter.tiling)
+        for batch in starter.child_batches:
+            if batch.verified:
+                for child_starter in batch.child_starters:
+                    subtree = []
+                    self._tree_helper(subtree, child_starter)
+                    tree.append(subtree)
+                break
