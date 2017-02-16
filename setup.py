@@ -11,6 +11,7 @@ setup(
     author = "Henning Ulfarsson",
     author_email = "henningu@ru.is",
     url = "https://github.com/PermutaTriangle/ATRAP",
-    packages=find_packages(),
-    long_description=read("README.md"),
+    install_requires = read("requirements.txt").splitlines(),
+    packages = find_packages(),
+    long_description = read("README.md"),
 )

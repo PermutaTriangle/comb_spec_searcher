@@ -6,19 +6,22 @@ from permuta import *
 #input_set = PermSet.avoiding([Perm((0, 1)), Perm((1, 0))])
 #input_set = PermSet.avoiding([Perm((0, 2, 1)), Perm((3, 2, 1, 0))])
 #input_set = PermSet.avoiding([Perm((0, 2, 1)), Perm((2, 1, 0))])
-# input_set = PermSet.avoiding([Perm((2, 1, 0)), Perm((1, 0, 3, 2))])
-input_set = PermSet.avoiding([Perm((0, 1, 2))])
-# input_set = PermSet.avoiding([Perm((0, 2, 1))])
-# input_set = PermSet.avoiding([Perm((0, 1, 2)), Perm((0, 3, 2, 1))])
-# input_set = PermSet.avoiding([Perm((0, 1, 2, 3)), Perm((3, 2, 1, 0))])
+input_set = PermSet.avoiding([Perm((2, 1, 0)), Perm((1, 0, 3, 2))])
+#input_set = PermSet.avoiding([Perm((0, 1, 2))])
+#input_set = PermSet.avoiding([Perm((0, 2, 1))])
+#input_set = PermSet.avoiding([Perm((0, 1, 2)), Perm((0, 3, 2, 1))])
+#input_set = PermSet.avoiding([Perm((0, 1, 2, 3)), Perm((3, 2, 1, 0))])
 #input_set = PermSet.avoiding([Perm((0, 1, 2)), Perm((1, 0, 3, 2))])
-# input_set = PermSet.avoiding([Perm((0, 1, 2, 3))])
-# input_set = PermSet.avoiding([Perm((0,2,1,3))])
+#input_set = PermSet.avoiding([Perm((0, 1, 2, 3))])
+#input_set = PermSet.avoiding([Perm((0,2,1,3))])
 
 recipes = [atrap.recipes.all_row_and_column_insertions]
 # recipes = [atrap.recipes.all_cell_insertions]
 # recipes = [atrap.recipes.all_cell_insertions, atrap.recipes.all_row_and_column_insertions]
 bakery = atrap.patisserie.Bakery(input_set, recipes)
+
+#def print(*args, **kwargs):
+#    pass
 
 
 print("Finding proof for:\n")
@@ -46,9 +49,10 @@ start_time = time.time()
 number = 0
 while True:
     number += 1
-    print("Baking generation", number)
-    good = bakery.bake()
+    #print("Size of frontier:", len(bakery.frontier))
+    good = bakery.bake(verbose=True)
     if good:
+        print()
         print("Found proof")
         print()
         print("Here are the leaves")

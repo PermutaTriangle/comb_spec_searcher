@@ -3,6 +3,8 @@
 
 import collections
 import itertools
+import tqdm
+import sys
 
 
 from builtins import dict
@@ -18,6 +20,10 @@ from .recursion import reachable_tilings_by_reversibly_deleting
 import random
 
 RECIPES = [all_cell_insertions, all_row_and_column_insertions]
+
+
+def print(*args, **kwargs):
+    pass
 
 
 class Starter(object):
@@ -98,10 +104,27 @@ class Bakery(object):
         # by means other than self-verification
         self.frontier = [starter]
 
-    def bake(self):
+        # The last generation of starters made
+        self.generation = 0
+
+    def bake(self, verbose=False, file=sys.stdout):
         if self.frontier:
+            self.generation += 1
             new_frontier = []
-            for frontier_starter in self.frontier:
+
+            l_bar = "{l_bar}"
+            bar = "{bar}"
+            r_bar = "|[{elapsed}<{remaining} @ {rate_fmt}]"
+            bar_format = l_bar + bar + r_bar
+            frontier_iterator = tqdm.tqdm(self.frontier,
+                                          disable=not verbose,
+                                          bar_format=bar_format,
+                                          unit="starter",
+                                          file=file,
+                                          ncols=80,
+                                          desc="Gen-"+str(self.generation))
+
+            for frontier_starter in frontier_iterator:
                 # Ready the "batch materials generator"
                 derived = itertools.chain(*(recipe(frontier_starter.tiling,
                                                    self.input_set)
@@ -186,6 +209,9 @@ class Bakery(object):
                         done = self._propagate_batch(derived_batch)
                         #print(done)
                         if done:
+                            if verbose:
+                                frontier_iterator.update()
+                                frontier_iterator.close()
                             return True
 
             # Replace old frontier with new one
