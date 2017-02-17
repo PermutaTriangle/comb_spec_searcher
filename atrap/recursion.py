@@ -166,4 +166,4 @@ def reachable_tilings_by_reversibly_deleting(tiling, basis, unmixed=False):
             if mixing:
                 continue
 
-        yield Tiling(new_tiling)
+        yield Tiling(new_tiling), list(new_tiling.keys())

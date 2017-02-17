@@ -16,6 +16,7 @@ from .recipes import all_row_and_column_insertions
 from .recipes import row_column_separations
 from .verification import verify_tiling
 from .recursion import reachable_tilings_by_reversibly_deleting
+from .ProofTree import ProofTree, ProofTreeNode
 
 import random
 
@@ -178,13 +179,13 @@ class Bakery(object):
                                 # TODO
                                 derived_starter.parent_batches.append(derived_batch)
                                 ancestor_set = set(self.ancestral_starters(derived_starter))
-                                for reachable_tiling in reachable_tilings_by_reversibly_deleting(derived_starter.tiling, self.input_set.basis):
+                                for reachable_tiling, cells in reachable_tilings_by_reversibly_deleting(derived_starter.tiling, self.input_set.basis):
                                     if reachable_tiling in ancestor_set:
                                         print("Tiling RECURSIVELY verified!")
                                         print(tiling)
                                         print(reachable_tiling)
                                         derived_starter.verified = True
-                                        derived_starter.recursively_verified = [reachable_tiling]
+                                        derived_starter.recursively_verified.append((reachable_tiling, cells))
                                         break
                                 derived_starter.parent_batches.pop()
 
@@ -289,42 +290,27 @@ class Bakery(object):
                 ancestral_starters[ancestral_starter.tiling] = ancestral_starter
         return ancestral_starters
 
-    def give_me_proof(self):
+    def get_proof_tree(self):
         if self.first_batch.verified:
-            proof = []
-            frontier = list(self.first_batch.child_starters)
-            while frontier:
-                starter = frontier.pop()
-
-                verified_batch = None
-                for child_batch in starter.child_batches:
-                    if child_batch.verified:
-                        verified_batch = child_batch
-                        break
-
-                if verified_batch is None:
-                    raise RuntimeError("No batch verifies a verified starter")
-
-                for child_starter in verified_batch.child_starters:
-                    assert child_starter.verified
-                    if child_starter.self_verified:
-                        proof.append(child_starter.tiling)
-                    elif child_starter.recursively_verified:
-                        proof.append(["recurse", child_starter.tiling, child_starter.recursively_verified[0]])
-                    else:
-                        frontier.append(child_starter)
-            tree = []
-            self._tree_helper(tree, self.first_batch.child_starters[0])
-            return proof, tree
+            root = self._tree_helper(self.first_batch.child_starters[0])
+            proof_tree = ProofTree(root)
+            return proof_tree
         else:
             return None
 
-    def _tree_helper(self, tree, starter):
-        tree.append(starter.tiling)
+    def _tree_helper(self, starter):
+        node = ProofTreeNode(starter.tiling)
+        if starter.verified:
+            if starter.self_verified:
+                #node.verified_by.append(starter.tiling)
+                node.formal_step += "Tiling now self verified"
+            for tiling, cells in starter.recursively_verified:
+                node.verified_by.append(tiling)
+                node.formal_step += "Tiling recursively verified with cells " + str(cells)
         for batch in starter.child_batches:
             if batch.verified:
-                for child_starter in batch.child_starters:
-                    subtree = []
-                    self._tree_helper(subtree, child_starter)
-                    tree.append(subtree)
+                node.formal_step += batch.label
+                node.children = [self._tree_helper(child_starter)
+                                 for child_starter in batch.child_starters]
                 break
+        return node
