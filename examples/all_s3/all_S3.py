@@ -1,72 +1,47 @@
 import time
 import atrap
 from permuta import *
+from permuta.misc.symmetry import *
+from itertools import combinations
 
-tasks = ['012','120','012_021','012_120','012_210','021_201','120_201','012_021_102','012_021_120','012_021_201','012_120_201','021_102_120','120_021_201_102','120_210_021_201','201_210_021_102']
+perms = tuple(PermSet(3))
+def perm_to_str(perm):
+    return "".join([str(i) for i in list(perm)])
 
-for task in tasks:
-    patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
-    input_set = PermSet.avoiding(patts)
+def perms_to_str(perms):
+    return "_".join(perm_to_str(perm) for perm in perms)
 
-    #recipes = [atrap.recipes.all_row_and_column_insertions]
-    recipes = [atrap.recipes.all_cell_insertions]
-    # recipes = [atrap.recipes.all_cell_insertions, atrap.recipes.all_row_and_column_insertions]
-    bakery = atrap.patisserie.Bakery(input_set, recipes)
-
-    with open(task, "w") as f:
-
-        print("Finding proof for:\n",file=f)
-        print(input_set,file=f)
-        print("\n",file=f)
-
-        tp_L = "└──── "
-        tp_pipe = "│     "
-        tp_tee = "├──── "
-        tp_empty = "      "
+for i in range(1, len(perms)):
+    for basis in combinations(perms,i):
+        if lex_min(basis) == basis:
+            input_set = PermSet.avoiding(basis)
+            if len(basis) != len(input_set.basis):
+                continue
+            recipes = [atrap.recipes.all_cell_insertions, atrap.recipes.all_row_and_column_insertions]
+            bakery = atrap.patisserie.Bakery(input_set, recipes)
+            task = perms_to_str(basis)
 
 
-        def print_tree(tree, depth, legend, prefix="root: ", tail=False):
-            label_counter = legend[0][1]
-            print(prefix, label_counter, sep="", file=f)
-            legend.append([label_counter, tree[0]])
-            legend[0][1] += 1
-            for subtree_number in range(1, len(tree)-1):
-                print_tree(tree[subtree_number], depth+1, legend, prefix[:-6] + (tp_pipe if tail else tp_empty) + tp_tee, True)
-            if len(tree) > 1:
-                print_tree(tree[-1], depth+1, legend, prefix[:-6] + (tp_pipe if tail else tp_empty) + tp_L, False)
+            start_time = time.time()
 
+            while True:
+                #print("Size of frontier:", len(bakery.frontier))
+                good = bakery.bake(verbose=True)
+                if good:
+                    break
 
-        start_time = time.time()
-        number = 0
-        while True:
-            number += 1
-            print("Baking generation", number,file=f)
-            good = bakery.bake()
-            if good:
-                print("Found proof",file=f)
-                print()
-                print("Here are the leaves",file=f)
-                proof, tree = bakery.give_me_proof()
-                for data in proof:
-                    if isinstance(data, list):
-                        for stuff in data:
-                            print(stuff,file=f)
-                    else:
-                        print(data,file=f)
-                print("\n",file=f)
-                print("Here is the tree",file=f)
-                print("\n",file=f)
-                legend = [["label counter:", 0]]
-                print_tree(tree, 0, legend)
-                print("\n",file=f)
-                for label, tiling in legend:
-                    if isinstance(tiling, int):
-                        continue
-                    print(label,file=f)
-                    print(tiling,file=f)
-                    print("\n",file=f)
-                print("\n",file=f)
-                break
+            with open(task, "w") as f:
+                tree = bakery.get_proof_tree()
 
-        print("\n",file=f)
-        print("I took", int(time.time() - start_time), "seconds",file=f)
+                print("",file=f)
+                print("Finding the proof tree for", input_set.__repr__() ,  "took", int(time.time() - start_time), "seconds",file=f)
+                print("",file=f)
+                print("Human readable:",file=f)
+                print("",file=f)
+
+                tree.pretty_print(file=f)
+
+                print("",file=f)
+                print("Computer readable (JSON):",file=f)
+                print("",file=f)
+                print(tree.to_json(indent="    ", sort_keys=True), file=f)
