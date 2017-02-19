@@ -13,9 +13,12 @@ def perms_to_str(perms):
 perms3 = PermSet(3)
 perms4 = PermSet(4)
 
-for i in range(1,len(perms3)):
-    for j in range(1, len(perms4)):
-        for basis3 in combinations(perms3,i):
+for i in range(1,len(perms3) + 1):
+    for basis3 in combinations(perms3,i):
+        perms4 = sorted(list( Av(basis3).of_length(4) ))
+        for j in range(1, len(perms4) + 1):
+            # if i == 1 and j < 8: #comment, made finding bases slightly smarter halfway through run.
+            #     continue
             for basis4 in combinations(perms4,j):
                 basis = basis3 + basis4
                 if lex_min(basis) == basis:
