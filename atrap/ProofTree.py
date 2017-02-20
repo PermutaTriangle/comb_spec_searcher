@@ -1,14 +1,13 @@
 import sys
 
-from grids import TilingTree, TilingTreeNode
+from grids import Tiling, TilingTree, TilingTreeNode
 
 
 class ProofTreeNode(TilingTreeNode):
-    def __init__(self, tiling, children=[]):
+    def __init__(self, tiling, children=[], verified_by=[], formal_step=""):
         super(ProofTreeNode, self).__init__(tiling, children)
-        self.verified_by = []
-        self.formal_step = ""
-        self.label = None
+        self.verified_by = verified_by
+        self.formal_step = formal_step
 
     def _to_json(self):
         attr_dict = super(ProofTreeNode, self)._to_json()
@@ -17,9 +16,22 @@ class ProofTreeNode(TilingTreeNode):
                                     in self.verified_by]
         return attr_dict
 
+    @classmethod
+    def _from_attr_dict(cls, attr_dict):
+        result = cls(**cls._prepare_attr_dict(attr_dict))
+        return result
+
+    @classmethod
+    def _prepare_attr_dict(cls, attr_dict):
+        attr_dict = super(ProofTreeNode, cls)._prepare_attr_dict(attr_dict)
+        attr_dict["verified_by"] = [Tiling._from_attr_dict(tiling_json)
+                                    for tiling_json
+                                    in attr_dict["verified_by"]]
+        return attr_dict
+
 
 class ProofTree(TilingTree):
-    __NODE_CLASS = ProofTreeNode
+    _NODE_CLASS = ProofTreeNode
 
     def pretty_print(self, file=sys.stdout):
         super(ProofTree, self).pretty_print(file=file)
@@ -29,7 +41,11 @@ class ProofTree(TilingTree):
 
     def print_recursions(self, file=sys.stdout):
         self._print_recursions(self.root, file)
-    
+
+    @classmethod
+    def _prepare_attr_dict(cls, attr_dict):
+        return super(ProofTree, cls)._prepare_attr_dict(attr_dict)
+
     def _print_recursions(self, root, file):
         if root.verified_by:
             print("-----------------\n\nTILING:", file=file)
