@@ -32,7 +32,7 @@ def row_column_separations( tiling, input_set ):
         if valid_splits:
             # print("max")
             max_split_size, max_split = max_splits(valid_splits)
-            if max_split_size > 1:
+            if max_split_size > 1 and len(max_split) == 1:
                 # TODO:  Taking the first, we should take lexicographically smallest splitting.
                 row_splits[row] = max_split_size, max_split[0]
                 # print(max_split)
@@ -52,7 +52,7 @@ def row_column_separations( tiling, input_set ):
         if valid_splits:
             # print("max")
             max_split_size, max_split = max_splits(valid_splits)
-            if max_split_size > 1:
+            if max_split_size > 1 and len(max_split) == 1:
                 column_splits[column] = max_split_size, max_split[0]
                 # print(max_split)
                 # print()
@@ -63,7 +63,6 @@ def row_column_separations( tiling, input_set ):
     # print(column_splits)
     # print("row_splits")
     # print(row_splits)
-
     return tile_splitter( tiling, row_splits, column_splits )
 
 
