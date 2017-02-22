@@ -6,7 +6,7 @@ from grids import Tiling, TilingTree, TilingTreeNode
 class ProofTreeNode(TilingTreeNode):
     def __init__(self, tiling, children=[], verified_by=[], formal_step=""):
         super(ProofTreeNode, self).__init__(tiling, children)
-        self.verified_by = verified_by
+        self.verified_by = list(verified_by)
         self.formal_step = formal_step
 
     def _to_json(self):
