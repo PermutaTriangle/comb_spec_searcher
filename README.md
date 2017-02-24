@@ -184,11 +184,8 @@ can be made unique some how (similar to a binary mesh pattern).
 ![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/321_1342.png "A crossing inversion placed around the maximum")
 
 ### Step 5: Wild ideas
-At this stage we will have a large collection of inputs (bases) and successful
-outputs (proof trees). Can we train an AI on this? Can we apply some big data
-or machine learning methods to this data set? There are some people at RU that
-know alot about this kind of stuff. We were also able to get people at ICERM
-(Brown University) excited about this, but are not ready with enough data.
+* At this stage we will have a large collection of inputs (bases) and successful outputs (proof trees). Can we train an AI on this? Can we apply some big data or machine learning methods to this data set? There are some people at RU that know alot about this kind of stuff. We were also able to get people at ICERM (Brown University) excited about this, but are not ready with enough data.
+* Can we define a space of proof strategies and search it for good ones?
 
 ## The papers
 
