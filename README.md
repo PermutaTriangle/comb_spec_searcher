@@ -27,7 +27,7 @@ length four patterns.
 ### Step 1: Mimic the regular insertion encoding
 Recall how regular cell insertion finds the structure of the class Av(123, 132):
 
-PICTURE1
+![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/rie_123_132.jpg "Regular insertion encoding of Av(123, 132)")
 
 The most basic implementation of ATRAP mimics the regular insertion encoding.
 Notation: X is a permutation class, e is the empty permutation, X-e is a class
@@ -37,7 +37,7 @@ root and use the following proof strategy to branch:
 Cell specialization (cs): Given a cell marked with an X, create a left child
 with X replaced by e, and a right child with X replaced by X-e.
 
-PICTURE2
+![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/basic_atrap_123_132.jpg "ATRAP mimicking regular insertion encoding")
 
 The left child is 'verified' meaning that it represents a subset of the class X.
 To progress from the right child we need a new proof strategy:
@@ -72,19 +72,19 @@ Instead of having to consider entire rows or columns when inserting new points
 we can take a cell marked with X-e and insert the top-most, bottom-most,
 left-most, or right-most point into it. This is point-placement (pp).
 
-PICTURE3
+![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/pp.jpg "I like to think of these as different viewpoints on the same subset")
 
 The proof strategy row-column separation (rcs) splits rows or columns depending
 on whether crossing 12's or 21's are allowed. Think of the structure of
 Av(231). Christian has generalized this to multiple cells in a row or a column.
 
-PICTURE4
+![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/rcs.jpg "If a crossing 21 is forbidden, split the row")
 
 Finally, whenever we apply a proof strategy that adds a point or an X-e we
 should infer what the rest of the cells need to avoid, instead of just marking
 them with an X.
 
-PICTURE5
+![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/inf.jpg "The right-most cell must be decreasing")
 
 With these proof strategies we should be able to find a proof tree for any
 Av(B) such that B contains at least one length 3 pattern and one length 4
@@ -99,15 +99,23 @@ the class is counted by the Catalan numbers, see Step 3.
 To be able to mimic Zeilberger's original enumeration schemes we need to have
 fission and fusions of rows and columns.
 
-PICTURE6
-![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/pic6.jpg "Logo Title Text 1")
+![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/ff.jpg "PSd = fission/fusion, PSe = row/column insertion")
+
+Here is the enumeration scheme given by Zeilberger (he wrote it out in plain
+English.)
+
+![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/es123.jpg "PSd = fission/fusion, PSe = row/column insertion")
 
 With these proof strategies we can find Zeilberger's original enumeration
 schemes. In particular we will be able to find very similar trees for Av(123)
-and Av(132). If we define isomorphisms of proof trees we can prove these are
-Wilf-equivalent. From Step 2 we will have established that Av(132) is enumerated
-by the Catalan numbers. This will finally give us a fully automatic
-Wilf-classification of all subsets of S3.
+and Av(132). The following tree is for Av(132)
+
+![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/es132.jpg "Sorry for the bad handwriting")
+
+If we define isomorphisms of proof trees we can prove these are Wilf-equivalent.
+From Step 2 we will have established that Av(132) is enumerated by the Catalan
+numbers. This will finally give us a fully automatic Wilf-classification of all
+subsets of S3.
 
 The strategy (cs) creates two branches depending on whether a cell avoids the
 pattern 1 (= is empty) or contains the pattern 1 (= is non-empty). This can be
@@ -133,3 +141,5 @@ There is a slight generalization of (rcs) which might be useful at some point:
 Branch into a left child where there is no crossing 12 between two cells, and
 a right child where there is a crossing 12. This only works if the crossing 12
 can be made unique some how (similar to a binary mesh pattern).
+
+![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/321_1342.jpg "A crossing inversion placed around the maximum")
