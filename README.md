@@ -26,12 +26,13 @@ length four patterns.
 ## Roadmap
 
 ### Step 1: Mimick the regular insertion encoding
-Recall how regular cell insertion finds the structure of the class Av(123, 132):
+Recall how the regular insertion encoding finds the structure of the class
+Av(123, 132):
 
 ![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/rie_123_132.jpg "Regular insertion encoding of Av(123, 132)")
 
 The most basic implementation of ATRAP mimicks the regular insertion encoding.
-Notation for the next figure: X is a permutation class, epsilong (e here) is the
+Notation for the next figure: X is a permutation class, epsilon (e here) is the
 empty permutation, X with a dot in the middle (X-e here) is a class with the
 empty permutation removed, and o is the point. We start with X at the root and
 use the following proof strategy to branch:
@@ -90,7 +91,7 @@ Av(231). Christian has generalized this to multiple cells in a row or a column.
 ![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/rcs.jpg "If a crossing 21 is forbidden, split the row")
 
 Finally, whenever we apply a proof strategy that adds a point or an X-e we
-should _infer_ what the rest of the cells need to avoid, instead of just marking
+should _infer (i)_ what the rest of the cells need to avoid, instead of just marking
 them with an X.
 
 ![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/inf.jpg "The right-most cell must be decreasing")
@@ -102,7 +103,8 @@ pattern.
 At this stage I think a paper with the above results is in order.
 
 Note that we can get a proof tree for Av(123) but it does not easily imply that
-the class is counted by the Catalan numbers, see Step 3.
+the class is counted by the Catalan numbers, see Step 3 below on isomorphic
+proof trees.
 
 ![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/current_atrap_123.png "Note that there is a decreasing cell that mixes into the recursed part")
 
@@ -118,23 +120,34 @@ English.)
 ![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/es123.jpg "PSd = fission/fusion, PSe = row/column insertion")
 
 With these proof strategies we can find Zeilberger's original enumeration
-schemes. In particular we will be able to find very similar trees for Av(123)
-and Av(132). The following tree is for Av(132)
+schemes. In particular we will be able to find a tree for Av(132)
+which is almost the same as the one for Av(123):
 
 ![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/es132.jpg "Sorry for the bad handwriting")
 
-If we define isomorphisms of proof trees we can prove these are Wilf-equivalent.
-From Step 2 we will have established that Av(132) is enumerated by the Catalan
-numbers. This will finally give us a fully automatic Wilf-classification of all
-subsets of S3.
+If we define isomorphisms of proof trees we can prove that Av(123) is
+Wilf-equivalent to Av(132). From Step 2 we will have established that Av(132) is
+enumerated by the Catalan numbers. This will finally give us a fully automatic
+Wilf-classification of all subsets of S3.
 
 The strategy (cs) creates two branches depending on whether a cell avoids the
 pattern 1 (= is empty) or contains the pattern 1 (= is non-empty). This can be
-generalized by replacing 1 with an arbitrary pattern p. Note that when we use
-(pp) on a cell which we know contains a pattern p we need to use a binary mesh
-pattern coincident with p. We call these strategies (csp) and (bmp). Note that
-(csp) would imply we can do any Av(132, p) where p is any pattern (see paper by
-Toufik and someone else).
+generalized by replacing 1 with an arbitrary pattern p. On the right branch
+where the pattern is contained (assuming this tiling is not verified) we can
+use a binary mesh pattern coincident with p (we say two patterns are coincident
+if Av(m) = Av(m'); a pattern is binary if it is contained in a permutation if
+and only if it is contained exactly once in the permutation) to place the points
+in the cell.
+
+![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/bmp.jpg "All the shadings are implied by the basis of X")
+
+The 'binaryness' of the mesh pattern allows the placement of the points to be
+unique, preserving enumeration. We call this generalization of (cs) _cell
+specialization with a pattern (csp)_. Inserting a binary mesh pattern into the
+cell we call _binary mesh pattern placement (bmpp)_. Having (csp) would imply we
+can do any Av(132, p) where p is any pattern (see paper by Toufik and someone
+else). We would want to prove a stronger result: that we can do any subclass of
+Av(132).
 
 At this stage we probably want to allow several recursions into the same tiling,
 as well as recursions outside of the actual proof tree.
@@ -143,7 +156,7 @@ A natural follow-up being able to automatically Wilf-classify S3 is to try to do
 as much as possible of S4. A nice goal would be at least all bases with four or
 more patterns.
 
-### Step 4, assuming there are still bases in S4 left: Gap matrices
+### Step 4, assuming there are still bases in S4 left :) : Gap matrices and more
 Vatter defined gap vectors for his enumeration schemes. In some sense they are
 tools for early termination of the nodes in the scheme. Our nodes are
 two-dimensional so we can define (completely analogously) gap matrices
