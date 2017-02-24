@@ -104,7 +104,7 @@ At this stage I think a paper with the above results is in order.
 Note that we can get a proof tree for Av(123) but it does not easily imply that
 the class is counted by the Catalan numbers, see Step 3.
 
-![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/current_atrap_123.jpg "Note that there is a decreasing cell that mixes into the recursed part")
+![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/current_atrap_123.png "Note that there is a decreasing cell that mixes into the recursed part")
 
 ### Step 3: Generalizing (cs) and (r), adding fission/fusion (ff)
 To be able to mimick Zeilberger's original enumeration schemes we need to have
@@ -153,4 +153,4 @@ Branch into a left child where there is no crossing 12 between two cells, and
 a right child where there is a crossing 12. This only works if the crossing 12
 can be made unique some how (similar to a binary mesh pattern).
 
-![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/321_1342.jpg "A crossing inversion placed around the maximum")
+![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/321_1342.png "A crossing inversion placed around the maximum")
