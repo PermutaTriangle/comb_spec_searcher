@@ -196,22 +196,22 @@ I put authors down according to what I guessed would make sense. Nothing is set
 in stone. I would love for everybody to be everywhere if they want.
 
 ### First paper on atrap (Ardal, Bean, Claesson, Pantone, Ulfarsson)
-[ ] Initial proof strategies: (cs), (nm), basic (r) => regular insertion encoding
-[ ] Generalized, or new proof strategies: (rci), slightly stronger (r), (pp), (rcs), (i)
-[ ] Say we can do all bases B with one S3 and one S4 pattern, point to PermPAL paper for enumerations
-[ ] A collection of nice S4 bases that we handle
+* Initial proof strategies: (cs), (nm), basic (r) => regular insertion encoding
+* Generalized, or new proof strategies: (rci), slightly stronger (r), (pp), (rcs), (i)
+* Say we can do all bases B with one S3 and one S4 pattern, point to PermPAL paper for enumerations
+* A collection of nice S4 bases that we handle
 
 ### PermPAL paper (Undergrads, Ardal, Claesson, Bean, Pantone, Ulfarsson)
-[ ] Turning struct covers into enumeration
-[ ] Turning atrap trees into enumeration
-[ ] Automatic Wilf-classification of bases B with one S3 and one S4 pattern
-[ ] [PermPAL](http://permpal.ru.is "Permutation Pattern Avoidance Library").
+* Turning struct covers into enumeration
+* Turning atrap trees into enumeration
+* Automatic Wilf-classification of bases B with one S3 and one S4 pattern
+* [PermPAL](http://permpal.ru.is "Permutation Pattern Avoidance Library").
 
 ### Second paper on atrap (Albert, Ardal, Magnusson, Pantone, Tannock, Ulfarsson)
-[ ] New proof strategies: (ff) => Zeilberger's original enumeration schemes
-[ ] Isomorphisms of proof trees: Fully automatic Wilf-classification of S3
-[ ] Even more proof strategies: (csp), (bmpp), very general (r)
-[ ] How much of S4 can we do?
+* New proof strategies: (ff) => Zeilberger's original enumeration schemes
+* Isomorphisms of proof trees: Fully automatic Wilf-classification of S3
+* Even more proof strategies: (csp), (bmpp), very general (r)
+* How much of S4 can we do?
 
 ## Thesis work of students
 
@@ -223,10 +223,10 @@ on both atrap papers. He also wants to implement a Monte-Carlo version of atrap.
 That might also become part of one of the atrap papers, or a separate paper.
 
 #### Papers from, or with a non-empty intersection with, thesis
-[ ] First atrap paper (see above)
-[ ] Second atrap paper (see above)
-[ ] Perhaps a Monte-Carlo paper, or that becomes part of one of the atrap papers
-[ ] The PermPAL paper (see above)
+* First atrap paper (see above)
+* Second atrap paper (see above)
+* Perhaps a Monte-Carlo paper, or that becomes part of one of the atrap papers
+* The PermPAL paper (see above)
 
 ### Christian Bean
 Christian is an author on the paper about struct. He will also be an author on
@@ -234,11 +234,11 @@ both atrap papers. His thesis can also include his work on vincular-covincular
 patterns and the independent subsets of graphs paper (both submitted)
 
 #### Papers from, or with a non-empty intersection with, thesis
-[ ] Struct paper (with Magnusson and Ulfarsson), proof-reading
-[ ] First atrap paper (see above)
-[ ] Second atrap paper (see above)
-[ ] Maybe: vincular-covincular (submitted)
-[ ] Maybe: independent sets in graphs (submitted)
+* Struct paper (with Magnusson and Ulfarsson), proof-reading
+* First atrap paper (see above)
+* Second atrap paper (see above)
+* Maybe: vincular-covincular (submitted)
+* Maybe: independent sets in graphs (submitted)
 
 ### Bjarki Gudmundsson
 Gudmundsson is also an author of the struct paper and implemented the algorithm.
@@ -247,9 +247,9 @@ the shading algorithm (the next student). He is currently working on something
 with Claesson.
 
 #### Papers from, or with a non-empty intersection with, thesis
-[ ] Shading algorithm (with Magnusson and Ulfarsson), mostly ready
-[ ] Struct paper (with Bean and Ulfarsson), proof-reading
-[ ] A paper with Claesson I think
+* Shading algorithm (with Magnusson and Ulfarsson), mostly ready
+* Struct paper (with Bean and Ulfarsson), proof-reading
+* A paper with Claesson I think
 
 ### Tomas Magnusson
 The work Magnusson did with Gudmundsson on the shading algorithm (sha) is
@@ -263,9 +263,9 @@ classification of mesh patterns of length 3. He will implement the binary mesh
 pattern placement of atrap and therefore be an author on the second atrap paper.
 
 #### Papers from, or with a non-empty intersection with, thesis
-[ ] Shading algorithm (with Gudmundsson and Ulfarsson), mostly ready
-[ ] Second atrap paper (see above)
-[ ] Inductive shading algorithm paper (with Tannock??? and Ulfarsson)
+* Shading algorithm (with Gudmundsson and Ulfarsson), mostly ready
+* Second atrap paper (see above)
+* Inductive shading algorithm paper (with Tannock??? and Ulfarsson)
 
 ### Undergrad group (4 students)
 These students have been parsing the logs from Struct (conjectured covers of
@@ -278,4 +278,4 @@ fixable) I think we should write a paper on the Wilf-classification of that set
 and about the [PermPAL](http://permpal.ru.is "Permutation Pattern Avoidance Library").
 
 #### Papers from, or with a non-empty intersection with, thesis
-[ ] The PermPAL paper (see above)
+* The PermPAL paper (see above)
