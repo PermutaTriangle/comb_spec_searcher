@@ -86,7 +86,15 @@ left-most, or right-most point into it. This is _point-placement (pp)_.
 
 The proof strategy _row-column separation (rcs)_ splits rows or columns depending
 on whether crossing 12's or 21's are allowed. Think of the structure of
-Av(231). Christian has generalized this to multiple cells in a row or a column.
+Av(231). This can be generalized to multiple cells in a row or column.
+
+For two cells ci and cj in the same row say ci < cj if i < j and placing a 21 is
+not allowed or i > j and placing 12 is not allowed. If a row's cells forms a
+partial order with this relation (it is possible for ci < cj and cj < ci) and
+this forms a ranked poset (a poset that has the property that for every element
+x, all maximal chains among those with x as greatest element have the same
+finite length - this ensure minimal elements have the same rank) then the row
+splits into multiple rows. The ith row has the cells of rank i.
 
 ![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/rcs.jpg "If a crossing 21 is forbidden, split the row")
 
@@ -150,7 +158,7 @@ result like the shading lemma og the shading algorithm to make the pattern
 binary.
 
 Having (csp) would imply we can do any Av(132, p) where p is any pattern (see
-paper by Toufik and someone else). We would want to prove a stronger result:
+paper by Mansour and Vainshtein). We would want to prove a stronger result:
 that we can do any subclass of Av(132).
 
 At this stage we probably want to allow several recursions into the same tiling,
