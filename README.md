@@ -153,9 +153,9 @@ The 'binaryness' of the mesh pattern allows the placement of the points to be
 unique, preserving enumeration. We call this generalization of (cs) _cell
 specialization with a pattern (csp)_. Inserting a binary mesh pattern into the
 cell we call _binary mesh pattern placement (bmpp)_. Having (csp) would imply we
-can do any Av(132, p) where p is any pattern (see paper by Toufik and someone
-else). We would want to prove a stronger result: that we can do any subclass of
-Av(132).
+can do any Av(132, p) where p is any pattern (see paper by Mansour and
+Vainshtein). We would want to prove a stronger result: that we can do any
+subclass of Av(132).
 
 At this stage we probably want to allow several recursions into the same tiling,
 as well as recursions outside of the actual proof tree.
