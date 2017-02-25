@@ -280,6 +280,11 @@ to find a proof tree for all bases B with at least one S3 patterna and at least
 on S4 pattern (almost possible now: 28 of them have external recursions -
 fixable) I think we should write a paper on the Wilf-classification of that set
 and about the [PermPAL](http://permpal.ru.is "Permutation Pattern Avoidance Library").
+[Here](http://permpal.ru.is/perms/av/132_1234_2314_2341_3214_3241_3412_3421_4231_4312/ "Av(132,1234,2314,2341,3214,3241,3412,3421,4231,4312)")
+is a completely trivial class that demonstrates what I really like about
+PermPAL (at least when it is fully populated): If you keep clicking the classes
+that your starting class refers to you eventually reach a trivial class like
+Av(12,21) (Schrödinger's point!).
 
 #### Papers from, or with a non-empty intersection with, thesis
 * The PermPAL paper (see above)
