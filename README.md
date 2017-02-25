@@ -25,7 +25,7 @@ length four patterns.
 
 ## Roadmap
 
-### Step 1: Mimick the regular insertion encoding
+### Step 0: Mimick the regular insertion encoding
 Recall how the regular insertion encoding finds the structure of the class
 Av(123, 132):
 
@@ -67,7 +67,7 @@ X-e's before we can apply (nm) this implies that the algorithm explores exactly
 one proof tree. This will change below when we have multiple choices for
 proceeding from a tiling.
 
-### Step 2: Generalizing (nm) and (r), adding (pp) and (rcs), and inferral of cells in a tiling
+### Step 1: Generalizing (nm) and (r), adding (pp) and (rcs), and inferral of cells in a tiling
 A natural generalization of (nm) is choosing a row or column and inserting a
 new bottom-most or top-most point in the row; or a left-most or right-most point
 in the column. We call this strategy row/column insertion (rci).
@@ -111,12 +111,12 @@ pattern.
 At this stage I think a paper with the above results is in order.
 
 Note that we can get a proof tree for Av(123) but it does not easily imply that
-the class is counted by the Catalan numbers, see Step 3 below on isomorphic
+the class is counted by the Catalan numbers, see Step 2 below on isomorphic
 proof trees.
 
 ![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/current_atrap_123.png "Note that there is a decreasing cell that mixes into the recursed part")
 
-### Step 3: Generalizing (cs) and (r), adding fission/fusion (ff)
+### Step 2: Generalizing (cs) and (r), adding fission/fusion (ff)
 To be able to mimick Zeilberger's original enumeration schemes we need to have
 _fission and fusions (ff)_ of rows and columns.
 
@@ -134,7 +134,7 @@ which is almost the same as the one for Av(123):
 ![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/es132.jpg "Sorry for the bad handwriting")
 
 If we define isomorphisms of proof trees we can prove that Av(123) is
-Wilf-equivalent to Av(132). From Step 2 we will have established that Av(132) is
+Wilf-equivalent to Av(132). From Step 1 we will have established that Av(132) is
 enumerated by the Catalan numbers. This will finally give us a fully automatic
 Wilf-classification of all subsets of S3.
 
@@ -164,17 +164,19 @@ that we can do any subclass of Av(132).
 At this stage we probably want to allow several recursions into the same tiling,
 as well as recursions outside of the actual proof tree.
 
-A natural follow-up being able to automatically Wilf-classify S3 is to try to do
-as much as possible of S4. A nice goal would be at least all bases with four or
-more patterns.
+A natural follow-up to automatically Wilf-classifying S3 is to try to do as much
+as possible of S4. A nice goal would be at least all bases with four or more
+patterns.
 
-### Step 4: Gap matrices and more
+This is probably enough for a second paper.
+
+### Step 3: Gap matrices and more
 Vatter defined gap vectors for his enumeration schemes. In some sense they are
 tools for early termination of the nodes in the scheme. Our nodes are
 two-dimensional so we can define (completely analogously) gap matrices.
 
-Christian thinks we might be able to mimick substition decomposition. I'll let
-him explain.
+Christian thinks we might be able to mimick substition decomposition. He'll put
+more on that later.
 
 There is a slight generalization of (rcs) which might be useful at some point:
 Branch into a left child where there is no crossing 12 between two cells, and
@@ -183,7 +185,9 @@ can be made unique some how (similar to a binary mesh pattern).
 
 ![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/321_1342.png "A crossing inversion placed around the maximum")
 
-### Step 5: Wild ideas
+This strategy is a part of the second item in step 4 below.
+
+### Step 4: Wild ideas
 * At this stage we will have a large collection of inputs (bases) and successful outputs (proof trees). Can we train an AI on this? Can we apply some big data or machine learning methods to this data set? There are some people at RU that know alot about this kind of stuff. We were also able to get people at ICERM (Brown University) excited about this, but are not ready with enough data.
 * Can we define a space of proof strategies and search it for good ones? E.g., one can generalize (cs) and (rci) to a common strategy which puts a pattern into a group of cells.
 
@@ -209,6 +213,9 @@ in stone. I would love for everybody to be everywhere if they want.
 * Isomorphisms of proof trees: Fully automatic Wilf-classification of S3
 * Even more proof strategies: (csp), (bmpp), very general (r)
 * How much of S4 can we do?
+
+### Third paper on atrap (?)
+* Who knows, maybe parts of step 3 and step 4.
 
 ## Thesis work of students
 
