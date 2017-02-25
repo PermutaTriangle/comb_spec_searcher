@@ -185,7 +185,7 @@ can be made unique some how (similar to a binary mesh pattern).
 
 ### Step 5: Wild ideas
 * At this stage we will have a large collection of inputs (bases) and successful outputs (proof trees). Can we train an AI on this? Can we apply some big data or machine learning methods to this data set? There are some people at RU that know alot about this kind of stuff. We were also able to get people at ICERM (Brown University) excited about this, but are not ready with enough data.
-* Can we define a space of proof strategies and search it for good ones?
+* Can we define a space of proof strategies and search it for good ones? E.g., one can generalize (cs) and (rci) to a common strategy which puts a pattern into a group of cells.
 
 ## The papers
 
@@ -204,7 +204,7 @@ in stone. I would love for everybody to be everywhere if they want.
 * Automatic Wilf-classification of bases B with one S3 and one S4 pattern
 * [PermPAL](http://permpal.ru.is "Permutation Pattern Avoidance Library").
 
-### Second paper on atrap (Albert, Ardal, Magnusson, Pantone, Tannock, Ulfarsson)
+### Second paper on atrap (Albert, Ardal, Bean, Magnusson, Pantone, Tannock, Ulfarsson)
 * New proof strategies: (ff) => Zeilberger's original enumeration schemes
 * Isomorphisms of proof trees: Fully automatic Wilf-classification of S3
 * Even more proof strategies: (csp), (bmpp), very general (r)
@@ -231,7 +231,7 @@ both atrap papers. His thesis can also include his work on vincular-covincular
 patterns and the independent subsets of graphs paper (both submitted)
 
 #### Papers from, or with a non-empty intersection with, thesis
-* Struct paper (with Magnusson and Ulfarsson), proof-reading
+* Struct paper (with Gudmundsson and Ulfarsson), proof-reading
 * First atrap paper (see above)
 * Second atrap paper (see above)
 * Maybe: vincular-covincular (submitted)
