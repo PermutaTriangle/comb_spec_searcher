@@ -16,8 +16,8 @@ def random_principal_class(request):
 
 
 @pytest.fixture(scope="module",
-        params=[{cell: random.choice([PermSet.avoiding(Perm.random(random.randint(0, 7))),  # A principal class of a random permutations
-                                      PositiveClass(PermSet.avoiding(Perm.random(random.randint(1, 7)))),  # ... or similarly a positive class
+        params=[{cell: random.choice([PermSet.avoiding(Perm.random(random.randint(2, 7))),  # A principal class of a random permutations
+                                      PositiveClass(PermSet.avoiding(Perm.random(random.randint(2, 7)))),  # ... or similarly a positive class
                                       Block.point,  # ... or a point
                                       Block.increasing,  # ... or a increasing permutation
                                       Block.decreasing])  # ... or a decreasing permutation
@@ -65,3 +65,42 @@ def test_is_verified(random_tiling_dict, random_basis):
             break
 
     assert atrap.tools.is_verified(tiling, basis) == expected_result
+
+
+def test_tiling_inferral(random_tiling_dict, random_basis):
+    tiling = Tiling(random_tiling_dict)
+    basis = random_basis
+
+    point_tiling_dict = {cell: Block.point for cell in tiling.point_cells}
+    new_tiling_dict = point_tiling_dict.copy()
+    point_tiling_dict.update({cell: Block.point
+                              for cell, block in tiling.non_points
+                              if isinstance(block, PositiveClass)})
+
+    for cell, block in tiling.non_points:
+        new_basis_elements = []
+        maximum_length = len(block.basis[-1])
+        for length in range(1, maximum_length + 1):
+            for perm in block.of_length(length):
+                new_block = PermSet([perm])
+                test_tiling_dict = point_tiling_dict.copy()
+                test_tiling_dict[cell] = new_block
+                test_tiling = Tiling(test_tiling_dict)
+                if any(perm.avoids(*basis) for perm
+                       in test_tiling.perms_of_length(length + test_tiling.total_points)):
+                    continue
+                else:
+                    new_basis_elements.append(perm)
+        new_basis_elements.extend(block.basis)
+        new_block = PermSet.avoiding(new_basis_elements)
+        if len(new_block.basis[0]) == 1:
+            continue
+        if isinstance(block, PositiveClass):
+            new_block = PositiveClass(new_block)
+        new_tiling_dict[cell] = new_block
+
+    print(basis)
+    print(tiling)
+    print(Tiling(new_tiling_dict))
+    print(atrap.tools.tiling_inferral(tiling, basis))
+    assert dict(Tiling(new_tiling_dict)) == dict(atrap.tools.tiling_inferral(tiling, basis))
