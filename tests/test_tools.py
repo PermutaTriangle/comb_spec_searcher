@@ -67,6 +67,11 @@ def test_is_verified(random_tiling_dict, random_basis):
     assert atrap.tools.is_verified(tiling, basis) == expected_result
 
 
+def test_is_verified_special_case_1():
+    tiling = Tiling({(0, 1): Block.increasing, (1, 0): Block.increasing})
+    assert atrap.tools.is_verified(tiling, Basis([Perm((3, 0, 2, 1))]))
+
+
 def test_tiling_inferral(random_tiling_dict, random_basis):
     tiling = Tiling(random_tiling_dict)
     basis = random_basis
