@@ -16,6 +16,8 @@ def basis_partitioning(tiling, length, basis):
         cache[length] = tiling.basis_partitioning(length, basis)
     return cache[length]
 
+def basis_partitioning(tiling, length, basis):
+    return tiling.basis_partitioning(length, basis)
 
 def is_verified(tiling, basis):
     """Check that a tiling is a subset of Av(basis)."""
@@ -28,6 +30,8 @@ def is_verified(tiling, basis):
     # We only need to check permutations up to this length because any longer
     # perm can be reduced to a perm of this length and still contain the patt
     # if it already did
+    # TODO: if tiling.total_points is greater than len(basis[-1]) and it only
+    #       contains points then this fails.
     verification_length = tiling.total_points + len(basis[-1])
 
     partitions = basis_partitioning(tiling, verification_length, basis)
@@ -49,7 +53,7 @@ def tiling_inferral(tiling, basis):
     verification_length = tiling.total_points + len(basis[-1])
     verification_length += sum(1 for _, block in tiling.non_points if isinstance(block, PositiveClass))
 
-    for length in range(verification_length):
+    for length in range(verification_length + 1):
         # Get the partitioning into containing/avoiding perms
         partitions = basis_partitioning(tiling, length, basis)
 
@@ -76,6 +80,7 @@ def tiling_inferral(tiling, basis):
     for cell, block in tiling.non_points:
         # If an element exclusively contributes to containing perms,
         # we add this element to the basis
+        print(cell, containing_perms_of_cells[cell], avoiding_perms_of_cells[cell])
         new_basis_elements = containing_perms_of_cells[cell] \
                            - avoiding_perms_of_cells[cell]
 
@@ -87,7 +92,6 @@ def tiling_inferral(tiling, basis):
         #print()
         #print(new_basis_elements)
         #print()
-
         # If basis contains the point, the block will consist
         # solely of the empty perm, so no need to add to the new tiling
         if Perm((0,)) in new_basis_elements:
@@ -106,7 +110,7 @@ def tiling_inferral(tiling, basis):
         if isinstance(block, PositiveClass):
             # Positive classes remain positive
             new_block = PositiveClass(new_block)
-        
+
         # Put the block into the cell of the new tiling
         tiling_dict[cell] = new_block
 

@@ -72,9 +72,25 @@ def test_is_verified_special_case_1():
     assert atrap.tools.is_verified(tiling, Basis([Perm((3, 0, 2, 1))]))
 
 
+#This failed once.
+def test_inferral_special_case_1():
+    tiling = Tiling({(0, 0): Block.point, (1, 1): PermSet( Basis( (Perm((0, 1)),) ) ) })
+    expected_tiling = Tiling({(0,0):Block.point})
+    assert atrap.tools.tiling_inferral(tiling, Basis((Perm((0, 1)),))) == expected_tiling
+
 def test_tiling_inferral(random_tiling_dict, random_basis):
-    tiling = Tiling(random_tiling_dict)
+
     basis = random_basis
+    basis_list = list(random_basis)
+    tiling_dict = {}
+    for cell, block in random_tiling_dict.items():
+        if block is not Block.point:
+            new_basis = basis_list + list(block.basis)
+            if new_basis:
+                block = PermSet.avoiding(new_basis)
+        tiling_dict[cell] = block
+
+    tiling = Tiling(tiling_dict)
 
     point_tiling_dict = {cell: Block.point for cell in tiling.point_cells}
     new_tiling_dict = point_tiling_dict.copy()
@@ -82,9 +98,9 @@ def test_tiling_inferral(random_tiling_dict, random_basis):
                               for cell, block in tiling.non_points
                               if isinstance(block, PositiveClass)})
 
+    maximum_length = len(basis[-1])
     for cell, block in tiling.non_points:
         new_basis_elements = []
-        maximum_length = len(block.basis[-1])
         for length in range(1, maximum_length + 1):
             for perm in block.of_length(length):
                 new_block = PermSet([perm])
@@ -351,109 +367,7 @@ def test_tiling_inferral_hardcoded_positive_class():
                     (1, 1): point,
                    }),
         ],
-        [
-            Tiling({(0, 0): input_set,
-                    (0, 1): input_set,
-                    (0, 2): input_set,
-                    (0, 3): input_set,
-                    (0, 4): input_set,
-                    (0, 5): input_set,
-                    (0, 6): input_set,
-                    (1, 0): input_set,
-                    (1, 1): input_set,
-                    (1, 2): input_set,
-                    (1, 3): input_set,
-                    (1, 4): input_set,
-                    (1, 5): input_set,
-                    (1, 6): input_set,
-                    (2, 0): input_set,
-                    (2, 1): input_set,
-                    (2, 2): input_set,
-                    (2, 3): input_set,
-                    (2, 4): input_set,
-                    (2, 5): input_set,
-                    (2, 6): input_set,
-                    (3, 0): input_set,
-                    (3, 1): input_set,
-                    (3, 2): input_set,
-                    (3, 3): input_set,
-                    (3, 4): input_set,
-                    (3, 5): input_set,
-                    (3, 6): input_set,
-                    (4, 0): input_set,
-                    (4, 1): input_set,
-                    (4, 2): input_set,
-                    (4, 3): input_set,
-                    (4, 4): input_set,
-                    (4, 5): input_set,
-                    (4, 6): input_set,
-                    (5, 0): input_set,
-                    (5, 1): input_set,
-                    (5, 2): input_set,
-                    (5, 3): input_set,
-                    (5, 4): input_set,
-                    (5, 5): input_set,
-                    (5, 6): input_set,
-                    (6, 0): input_set,
-                    (6, 1): input_set,
-                    (6, 2): input_set,
-                    (6, 3): input_set,
-                    (6, 4): input_set,
-                    (6, 5): input_set,
-                    (6, 6): input_set,
-                   }),
-            Tiling({(0, 0): input_set,
-                    (0, 1): input_set,
-                    (0, 2): input_set,
-                    (0, 3): input_set,
-                    (0, 4): input_set,
-                    (0, 5): input_set,
-                    (0, 6): input_set,
-                    (1, 0): input_set,
-                    (1, 1): input_set,
-                    (1, 2): input_set,
-                    (1, 3): input_set,
-                    (1, 4): input_set,
-                    (1, 5): input_set,
-                    (1, 6): input_set,
-                    (2, 0): input_set,
-                    (2, 1): input_set,
-                    (2, 2): input_set,
-                    (2, 3): input_set,
-                    (2, 4): input_set,
-                    (2, 5): input_set,
-                    (2, 6): input_set,
-                    (3, 0): input_set,
-                    (3, 1): input_set,
-                    (3, 2): input_set,
-                    (3, 3): input_set,
-                    (3, 4): input_set,
-                    (3, 5): input_set,
-                    (3, 6): input_set,
-                    (4, 0): input_set,
-                    (4, 1): input_set,
-                    (4, 2): input_set,
-                    (4, 3): input_set,
-                    (4, 4): input_set,
-                    (4, 5): input_set,
-                    (4, 6): input_set,
-                    (5, 0): input_set,
-                    (5, 1): input_set,
-                    (5, 2): input_set,
-                    (5, 3): input_set,
-                    (5, 4): input_set,
-                    (5, 5): input_set,
-                    (5, 6): input_set,
-                    (6, 0): input_set,
-                    (6, 1): input_set,
-                    (6, 2): input_set,
-                    (6, 3): input_set,
-                    (6, 4): input_set,
-                    (6, 5): input_set,
-                    (6, 6): input_set,
-                   })
-        ],
-    ]
+        ]
 
     # TODO: Parameterize or something
     for original, inferred in pairs:
