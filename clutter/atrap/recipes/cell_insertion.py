@@ -2,7 +2,6 @@ from grids import Tiling, Block
 from copy import copy
 from .tools import tiling_inferral
 
-
 __all__ = ["all_cell_insertions"]
 
 
@@ -86,8 +85,39 @@ def cell_insertion(tiling, cell, input_set):
             yield "Inserting the unique point in to the cell " + str(cell), (left, Tiling(right))
 
 
+def cell_insertion_topmost(tiling, cell, input_set):
+    temp_left, temp_right = cell_insertion_helper(tiling, cell)
+    left = Tiling(temp_left)
+    right = tiling_inferral(temp_right, input_set)
+    NW_cell = cell
+    NE_cell = cell[0], cell[1] + 2
+    SW_cell = cell[0] + 2, cell[1]
+    SE_cell = cell[0] + 2, cell[1] + 2
+    if NW_cell in right:
+        if NE_cell in right:
+            NE_block = right.pop(NE_cell)
+            NW_block = right.pop(NW_cell)
+            yield "Inserting the top most point in to the cell " + str(cell), (left, Tiling(right))
+        else:
+            NW_block = right.pop(NW_cell)
+            yield "Inserting the top most point in to the cell " + str(cell), (left, Tiling(right))
+    else:
+        if NE_cell in right:
+            NE_block = right.pop(NE_cell)
+            yield "Inserting the top most point in to the cell " + str(cell), (left, Tiling(right))
+        else:
+            yield "Inserting the unique point in to the cell " + str(cell), (left, Tiling(right))
+
+
 def all_cell_insertions(tiling, input_set):
     for cell, block in tiling.items():
         if block is not Block.point:
             for strategy in cell_insertion(tiling, cell, input_set):
+                yield strategy
+
+
+def all_cell_insertions_topmost(tiling, input_set):
+    for cell, block in tiling.items():
+        if block is not Block.point:
+            for strategy in cell_insertion_topmost(tiling, cell, input_set):
                 yield strategy
