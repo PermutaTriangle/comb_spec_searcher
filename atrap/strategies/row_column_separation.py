@@ -10,11 +10,11 @@ def row_and_column_inequalities_of_tiling(tiling, basis):
     smaller_than_dicts_by_row = (defaultdict(dict), defaultdict(dict))
     smaller_than_dicts_by_col = (defaultdict(dict), defaultdict(dict))
 
-    # We only need to check permutations up to this length because any longer
-    # perm can be reduced to a perm of this length and still contain the patt
-    # if it already did.
+    # We only need to check permutations up to this length because we are trying to show
+    # one cell is less than another, so only patterns using the two cells need be considered.
     verification_length = tiling.total_points + 2
     # Add to the length the number of positive classes.
+    # Of course positive classes contribute one extra in length since they can't be empty.
     verification_length += sum(1 for _, block in tiling.non_points if isinstance(block, PositiveClass))
 
     for length in range(verification_length + 1):
