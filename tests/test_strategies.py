@@ -7,7 +7,7 @@ from grids import Tiling, Cell, Block, PositiveClass
 from permuta import Perm, PermSet
 from permuta.descriptors import Basis
 from collections import defaultdict
-from itertools import combinations
+from itertools import permutations
 from copy import copy
 
 @pytest.fixture(scope="module",
@@ -58,7 +58,7 @@ def test_row_and_column_inequalities(random_tiling_dict, random_basis):
         if len(row_cells) > 1:
             # we create a dictionary that points a cell to what it is less than
             smaller_than_cells_of_row = {}
-            for pairi, pairj in combinations(row_cells, 2):
+            for pairi, pairj in permutations(row_cells, 2):
                 # the goal is to show that celli is less than cellj
                 celli, _ = pairi
                 cellj, _ = pairj
@@ -72,17 +72,17 @@ def test_row_and_column_inequalities(random_tiling_dict, random_basis):
                 less_than = True
                 for perm, cell_info in testing_point_tiling.perms_of_length_with_cell_info( testing_point_tiling.total_points ):
                     _, valuesi, _ = cell_info[celli] # TODO this needs to be the place celli mapped to after flattening of testing_point_tiling
-                    _, valuesj, _ = cell_info[cellj] # TODO this needs to be the place celli mapped to after flattening of testing_point_tiling
+                    _, valuesj, _ = cell_info[cellj] # TODO this needs to be the place cellj mapped to after flattening of testing_point_tiling
                     if valuesi[0] > valuesj[0]:
                         if perm.avoids(*basis):
                             less_than = False
                             break
+                if celli not in smaller_than_cells_of_row:
+                    smaller_than_cells_of_row[celli] = set()
                 # if less than implies that all perms with celli greater than cellj contain the basis, therefore celli < cellj
                 if less_than:
                     # and we add cellj to the set of what celli is less than
-                    if celli not in smaller_than_cells_of_row:
-                        smaller_than_cells_of_row[celli] = set()
-                    smaller_than_cells_of_row[celli].add[cellj]
+                    smaller_than_cells_of_row[celli].add(cellj)
             # we then append this set of inequalites to the dictionary, ready to be returned
             actual_smaller_than_row[row] = smaller_than_cells_of_row
 
@@ -92,7 +92,7 @@ def test_row_and_column_inequalities(random_tiling_dict, random_basis):
         col_cells = tiling.get_col(col)
         if len(col_cells) > 1:
             smaller_than_cells_of_col = {}
-            for pairi, pairj in combinations(col_cells, 2):
+            for pairi, pairj in permutations(col_cells, 2):
                 # the goal is to show that celli is less than cellj
                 celli, _ = pairi
                 cellj, _ = pairj
@@ -106,23 +106,27 @@ def test_row_and_column_inequalities(random_tiling_dict, random_basis):
                 less_than = True
                 for perm, cell_info in testing_point_tiling.perms_of_length_with_cell_info( testing_point_tiling.total_points ):
                     _, _, indicesi = cell_info[celli] # TODO this needs to be the place celli mapped to after flattening of testing_point_tiling
-                    _, _, indicesj = cell_info[cellj] # TODO this needs to be the place celli mapped to after flattening of testing_point_tiling
+                    _, _, indicesj = cell_info[cellj] # TODO this needs to be the place cellj mapped to after flattening of testing_point_tiling
                     if indicesi[0] > indicesj[0]:
                         if perm.avoids(*basis):
                             less_than = False
                             break
                 # if less than implies that all perms with celli to the right of cellj contain the basis, therefore celli < cellj
+                if celli not in smaller_than_cells_of_col:
+                    smaller_than_cells_of_col[celli] = set()
+                # if less than implies that all perms with celli to the right of cellj contain the basis, therefore celli < cellj
                 if less_than:
                     # and we add cellj to the set of what celli is less than
-                    if celli not in smaller_than_cells_of_col:
-                        smaller_than_cells_of_col[celli] = set()
-                    smaller_than_cells_of_col[celli].add[cellj]
+                    smaller_than_cells_of_col[celli].add(cellj)
             # we then append this set of inequalites to the dictionary, ready to be returned
-            actual_smaller_than_col[col] = smaller_than_cells_of_row
-            
+            actual_smaller_than_col[col] = smaller_than_cells_of_col
+
     print(tiling)
-    print(actual_smaller_than_row)
+
     smaller_than_row, smaller_than_col = row_and_column_inequalities_of_tiling(tiling, basis)
+    print(actual_smaller_than_row)
     print(smaller_than_row)
+    print(actual_smaller_than_col)
+    print(smaller_than_col)
     assert actual_smaller_than_row == smaller_than_row
     assert actual_smaller_than_col == smaller_than_col
