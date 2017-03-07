@@ -81,7 +81,7 @@ def tiling_inferral(tiling, basis):
     for cell, block in tiling.non_points:
         # If an element exclusively contributes to containing perms,
         # we add this element to the basis
-        print(cell, containing_perms_of_cells[cell], avoiding_perms_of_cells[cell])
+        # print(cell, containing_perms_of_cells[cell], avoiding_perms_of_cells[cell])
         new_basis_elements = containing_perms_of_cells[cell] \
                            - avoiding_perms_of_cells[cell]
 

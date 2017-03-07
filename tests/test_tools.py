@@ -120,10 +120,10 @@ def test_tiling_inferral(random_tiling_dict, random_basis):
             new_block = PositiveClass(new_block)
         new_tiling_dict[cell] = new_block
 
-    print(basis)
-    print(tiling)
-    print(Tiling(new_tiling_dict))
-    print(atrap.tools.tiling_inferral(tiling, basis))
+    # print(basis)
+    # print(tiling)
+    # print(Tiling(new_tiling_dict))
+    # print(atrap.tools.tiling_inferral(tiling, basis))
     assert dict(Tiling(new_tiling_dict)) == dict(atrap.tools.tiling_inferral(tiling, basis))
 
 
