@@ -11,7 +11,8 @@ _BASIS_PARTITIONING_CACHE = {}
 
 def basis_partitioning(tiling, length, basis):
     """A cached basis partitioning function."""
-    cache = _BASIS_PARTITIONING_CACHE.setdefault(tiling, {})
+    key = (tiling, basis)
+    cache = _BASIS_PARTITIONING_CACHE.setdefault(key, {})
     if length not in cache:
         cache[length] = tiling.basis_partitioning(length, basis)
     return cache[length]
