@@ -1,1 +1,1 @@
-from .row_column_separation import row_and_column_inequalities_of_tiling
+from .row_column_separation import row_and_column_inequalities_of_tiling, inequality_word, row_and_column_splits

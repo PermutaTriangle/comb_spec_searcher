@@ -2,6 +2,7 @@ from collections import defaultdict
 from grids import Tiling, Block, PositiveClass
 from atrap.tools import basis_partitioning
 from permuta import Perm, PermSet
+from copy import copy
 
 def row_and_column_inequalities_of_tiling(tiling, basis):
     # This will create the containing/avoiding less than cells of the permutation by row
@@ -115,3 +116,77 @@ def row_and_column_inequalities_of_tiling(tiling, basis):
 
     # we then return these inequalities ready for parsing so as to determine how we can split rows and columns.
     return smaller_than_row, smaller_than_col
+
+# returns the order that a cell must be plit into only if rows and columns have unique word
+def row_and_column_splits(tiling, basis):
+    # find the set of inequalities for the words
+    smaller_than_row, smaller_than_col = row_and_column_inequalities_of_tiling(tiling, basis)
+
+    # find the word for each row and column
+    row_splits = defaultdict(list)
+    col_splits = defaultdict(list)
+
+    for row in range(tiling.dimensions.j):
+        # pick out the rows inequalites
+        inequalities = smaller_than_row[row]
+        if len(inequalities) > 0:
+            splits = inequality_word(smaller_than_row[row])
+            row_splits[row] = splits
+
+    for col in range(tiling.dimensions.i):
+        # pick out the cols inequalites
+        inequalities = smaller_than_col[col]
+        if len(inequalities) > 0:
+            splits = inequality_word(smaller_than_col[col])
+            col_splits[col] = splits
+    return row_splits, col_splits
+
+def inequality_word( inequalities ):
+
+    keys = sorted( list(inequalities.keys()) )
+
+    words = inequality_word_helper( [], keys, inequalities, keys )
+    if len(words) > 1:
+        print("hmmmmm row column separation is still not producing a unique guy")
+    return words[0]
+
+def inequality_word_helper( word_so_far, keys, inequalities, original_keys ):
+    if keys:
+            new_keys = copy(keys)
+            next_key = new_keys.pop(0)
+            min_value = 0
+            max_value = len(inequalities)
+            for position in range(len(word_so_far)):
+                value_of_position = word_so_far[position]
+                key_of_position = original_keys[position]
+                if key_of_position in inequalities[next_key]:
+                    min_value = value_of_position
+                if next_key in inequalities[key_of_position]:
+                    max_value = value_of_position + 1
+                if min_value >= max_value:
+                    return []
+            if new_keys:
+                L = []
+                for letter in range(min_value, max_value):
+                    L = L + [ [letter] + word for word in inequality_word_helper( word_so_far + [letter], new_keys, inequalities, original_keys ) ]
+                return L
+            else:
+                letters_used = set(word_so_far)
+                unused_letters_needed = []
+                for i in range(len(letters_used)):
+                    if i not in word_so_far:
+                        if unused_letters_needed:
+                            return []
+                        unused_letters_needed.append(i)
+                if unused_letters_needed:
+                    unused_letter_needed = unused_letters_needed[0]
+                    if unused_letter_needed >= min_value and unused_letter_needed < max_value:
+                        return [ [unused_letter_needed] ]
+                else:
+                    new_max = len(word_so_far)
+                    if new_max >= min_value and new_max < max_value:
+                        return [ [new_max] ]
+                return []
+
+    else:
+        return [[]]
