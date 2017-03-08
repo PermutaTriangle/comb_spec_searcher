@@ -2,7 +2,8 @@ import atrap
 import pytest
 import random
 
-from atrap.strategies import row_and_column_inequalities_of_tiling
+from atrap.strategies.row_column_separation import row_and_column_inequalities_of_tiling
+from atrap.strategies import row_and_column_separations
 from grids import Tiling, Cell, Block, PositiveClass
 from permuta import Perm, PermSet
 from permuta.descriptors import Basis
@@ -145,10 +146,35 @@ def test_specific_row_and_col_inequalities():
     expected_row = {}
     expected_col = {0: {Cell(i=0, j=0): set(), Cell(i=0, j=1): {Cell(i=0, j=0)}, Cell(i=0, j=2): {Cell(i=0, j=1), Cell(i=0, j=0)}}}
     basis = Basis([Perm((0,1))])
-    answer_row, answer_col = atrap.strategies.row_and_column_inequalities_of_tiling(tiling, basis)
+    answer_row, answer_col = row_and_column_inequalities_of_tiling(tiling, basis)
     print(basis)
     print(tiling)
     print(expected_col)
     print(dict(answer_col))
     assert answer_row == expected_row
     assert answer_col == expected_col
+
+
+# TODO: This should be a test for all proof strategies. It is testing the
+# definition of a proof strategy.
+def test_row_and_column_separation(random_tiling_dict, random_basis):
+    '''Tests if row and column separation always creates the same subset as tiling'''
+    tiling = Tiling(random_tiling_dict)
+    basis = random_basis
+
+    separated_tiling = row_and_column_separations(tiling, basis)
+
+    verification_length = tiling.total_points + len(basis[-1])
+
+    for length in range(verification_length + 1):
+        actual_perms = set()
+        for perm in tiling.perms_of_length(length):
+            if perm.avoids(*basis):
+                actual_perms.add(perm)
+
+        separated_perms = set()
+        for perm in tiling.perms_of_length(length):
+            if perm.avoids(*basis):
+                separated_perms.add(perm)
+
+        assert actual_perms == separated_perms

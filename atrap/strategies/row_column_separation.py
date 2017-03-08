@@ -23,9 +23,7 @@ def row_and_column_inequalities_of_tiling(tiling, basis):
         # For containing and avoiding
         for partition, cells_smaller_than_by_row, cells_smaller_than_by_col in zip(partitions, smaller_than_dicts_by_row, smaller_than_dicts_by_col):
             # For each perm and its associated info
-            # for cell_infos in partition.values():
-            for perm, cell_infos in partition.items():
-                print(perm, cell_infos)
+            for cell_infos in partition.values():
                 # Store for each cell its contribution to the perm
                 for cell_info in cell_infos:
 
@@ -45,7 +43,6 @@ def row_and_column_inequalities_of_tiling(tiling, basis):
                         if len(all_single_cells_values) > 1:
                             # we sort by the values, thus the first element must be the smallest in value.
                             ordered_row = sorted(all_single_cells_values, key = lambda x: - x[1])
-                            print(ordered_row)
                             while len(ordered_row) > 1:
                                 smallest_cell = ordered_row.pop(0)[0]
                                 # then store that the smallest cell is smaller than the rest.
@@ -60,7 +57,6 @@ def row_and_column_inequalities_of_tiling(tiling, basis):
                         if len(all_single_cells_indices) > 1:
                             # we sort by the indices, thus the first element must be the leftmost/smallest in index.
                             ordered_col = sorted(all_single_cells_indices, key = lambda x: - x[1])
-                            print(ordered_col)
                             while len(ordered_col) > 1:
                                 smallest_cell = ordered_col.pop(0)[0]
                                 # then store that the smallest cell is smaller than the rest.
@@ -72,12 +68,12 @@ def row_and_column_inequalities_of_tiling(tiling, basis):
     # we now have all the inequalities given by the perms, split by containing and avoiding.
     containing_smaller_than_row, avoiding_smaller_than_row = smaller_than_dicts_by_row
     containing_smaller_than_col, avoiding_smaller_than_col = smaller_than_dicts_by_col
-    print("row")
-    print(containing_smaller_than_row)
-    print(avoiding_smaller_than_row)
-    print("col")
-    print(containing_smaller_than_col)
-    print(avoiding_smaller_than_col)
+    # print("row")
+    # print(containing_smaller_than_row)
+    # print(avoiding_smaller_than_row)
+    # print("col")
+    # print(containing_smaller_than_col)
+    # print(avoiding_smaller_than_col)
 
     # we will create the actual inequalities, considering whether the perm avoids or contains
     # this dictionary points to a row that points to the cells.
@@ -118,7 +114,7 @@ def row_and_column_inequalities_of_tiling(tiling, basis):
     return smaller_than_row, smaller_than_col
 
 # returns the order that a cell must be plit into only if rows and columns have unique word
-def row_and_column_splits(tiling, basis):
+def row_and_column_splits_of_tiling(tiling, basis):
     # find the set of inequalities for the words
     smaller_than_row, smaller_than_col = row_and_column_inequalities_of_tiling(tiling, basis)
 
@@ -139,6 +135,7 @@ def row_and_column_splits(tiling, basis):
         if len(inequalities) > 0:
             splits = inequality_word(smaller_than_col[col])
             col_splits[col] = splits
+
     return row_splits, col_splits
 
 def inequality_word( inequalities ):
@@ -146,47 +143,133 @@ def inequality_word( inequalities ):
     keys = sorted( list(inequalities.keys()) )
 
     words = inequality_word_helper( [], keys, inequalities, keys )
+
     if len(words) > 1:
-        print("hmmmmm row column separation is still not producing a unique guy")
-    return words[0]
+        # print("hmmmmm row column separation is still not producing a unique guy")
+        # print( words )
+        # print("lets makes sure all words are using as many letters as possible")
+        max_words = []
+        max_letter = 0
+        for word in words:
+            current_max_letter = max(word)
+            if current_max_letter == max_letter:
+                max_words.append(word)
+            elif current_max_letter > max_letter:
+                max_letter = current_max_letter
+                max_words = [word]
+        if len(max_words) > 1:
+            print("hmmmmm row column separation is still not producing a unique guy")
+            print("even more hmmmmm, also the word with most letters isn't unique")
+            print("I will choose the lexicographically smallest")
+            max_words.sort()
+            print(inequalities)
+            assert len(max_words) > 1
+
+        return max_words[0]
+
+    if words:
+        return words[0]
+    return []
 
 def inequality_word_helper( word_so_far, keys, inequalities, original_keys ):
     if keys:
-            new_keys = copy(keys)
-            next_key = new_keys.pop(0)
-            min_value = 0
-            max_value = len(inequalities)
-            for position in range(len(word_so_far)):
-                value_of_position = word_so_far[position]
-                key_of_position = original_keys[position]
-                if key_of_position in inequalities[next_key]:
+        new_keys = copy(keys)
+        next_key = new_keys.pop(0)
+        min_value = 0
+        max_value = len(inequalities)
+        for position in range(len(word_so_far)):
+            value_of_position = word_so_far[position]
+            key_of_position = original_keys[position]
+            if key_of_position in inequalities[next_key]:
+                if min_value < value_of_position:
                     min_value = value_of_position
                 if next_key in inequalities[key_of_position]:
+                    if max_value > value_of_position + 1:
+                        max_value = value_of_position + 1
+            elif next_key in inequalities[key_of_position]:
+                if max_value > value_of_position + 1:
                     max_value = value_of_position + 1
-                if min_value >= max_value:
-                    return []
-            if new_keys:
-                L = []
-                for letter in range(min_value, max_value):
-                    L = L + [ [letter] + word for word in inequality_word_helper( word_so_far + [letter], new_keys, inequalities, original_keys ) ]
-                return L
             else:
-                letters_used = set(word_so_far)
-                unused_letters_needed = []
-                for i in range(len(letters_used)):
-                    if i not in word_so_far:
-                        if unused_letters_needed:
-                            return []
-                        unused_letters_needed.append(i)
-                if unused_letters_needed:
-                    unused_letter_needed = unused_letters_needed[0]
-                    if unused_letter_needed >= min_value and unused_letter_needed < max_value:
-                        return [ [unused_letter_needed] ]
-                else:
-                    new_max = len(word_so_far)
-                    if new_max >= min_value and new_max < max_value:
-                        return [ [new_max] ]
+                if min_value < value_of_position:
+                    min_value = value_of_position
+                if max_value > value_of_position + 1:
+                    max_value = value_of_position + 1
+            if min_value >= max_value:
                 return []
-
+        if new_keys:
+            L = []
+            for letter in range(min_value, max_value):
+                L = L + [ [letter] + word for word in inequality_word_helper( word_so_far + [letter], new_keys, inequalities, original_keys ) ]
+            return L
+        else:
+            letters_used = set(word_so_far)
+            unused_letters_needed = []
+            for i in range(len(letters_used)):
+                if i not in word_so_far:
+                    if unused_letters_needed:
+                        return []
+                    unused_letters_needed.append(i)
+            if unused_letters_needed:
+                unused_letter_needed = unused_letters_needed[0]
+                if unused_letter_needed >= min_value and unused_letter_needed < max_value:
+                    return [ [unused_letter_needed] ]
+            else:
+                new_max = len(letters_used)
+                if new_max >= min_value and new_max < max_value:
+                    return [ [new_max] ]
+                else:
+                    if max_value == min_value + 1:
+                        return [ [min_value] ]
+            return []
     else:
         return [[]]
+
+
+def tile_splitter( tiling, row_and_column_splits ):
+    # print(tiling)
+    # print()
+    # print(row_and_column_splits)
+    row_splits, col_splits = row_and_column_splits
+
+    split_row_tiling_dict = {}
+
+    for row in range(tiling.dimensions.j):
+        if row_splits[row]:
+            current_row_splits = row_splits[row]
+            length_of_row = len(current_row_splits)
+
+            index_in_row = 0
+            # This is sorted
+            for (i,j), block in tiling.get_row(row):
+                split_row_tiling_dict[ i, j + current_row_splits[index_in_row]/length_of_row ] = block
+                index_in_row += 1
+        else:
+            for (i,j), block in tiling.get_row(row):
+                split_row_tiling_dict[i,j] = block
+
+    # TODO: I only make this tiling so I can use the get_col functionality.
+    # so perhaps we should store the cols as we go, rather than make the tiling.
+    split_row_tiling = Tiling(split_row_tiling_dict)
+
+    split_row_and_col_tiling_dict = {}
+
+    for col in range(split_row_tiling.dimensions.i):
+        if col_splits[col]:
+            current_col_splits = col_splits[col]
+            length_of_col = len(col_splits[col])
+            index_in_col = 0
+            # This is sorted
+            for (i,j), block in split_row_tiling.get_col(col):
+                split_row_and_col_tiling_dict[ i + current_col_splits[index_in_col]/length_of_col, j ] = block
+                index_in_col += 1
+        else:
+            for (i,j), block in split_row_tiling.get_col(col):
+                split_row_and_col_tiling_dict[i,j] = block
+
+    return Tiling(split_row_and_col_tiling_dict)
+
+def row_and_column_separations(tiling, basis):
+
+    row_and_column_splits = row_and_column_splits_of_tiling(tiling, basis)
+
+    return tile_splitter(tiling, row_and_column_splits)
