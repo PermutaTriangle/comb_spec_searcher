@@ -16,6 +16,13 @@ def test_internal_strategies(internal_strategy,
     tiling = Tiling(random_tiling_dict)
     basis = random_basis
 
+    print("Applying internal strategy to tiling:")
+    print()
+    print(tiling)
+    print()
+    print("While working in basis:")
+    print(basis)
+
     # Some arbitrary length to verify to
     verification_length = tiling.total_points + len(basis[-1]) + 2
 
@@ -28,13 +35,20 @@ def test_internal_strategies(internal_strategy,
                                    if perm.avoids(*basis))
 
     for _, strategy_tiling in internal_strategy(tiling, basis=basis):
+        print()
+        print("Looking at strategy tiling:")
+        print()
+        print(strategy_tiling)
+        print()
         for length in range(verification_length + 1):
             strategy_perms = set()
             for perm in strategy_tiling.perms_of_length(length):
                 if perm.avoids(*basis):
                     strategy_perms.add(perm)
-
             assert strategy_perms == actual_perms[length]
+            print("OK for length", length)
+        print()
+        print("Strategy tiling passed test")
 
 
 #    separated_tiling = row_and_column_separations(tiling, basis)
