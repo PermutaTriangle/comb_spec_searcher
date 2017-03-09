@@ -6,7 +6,7 @@ from grids import Tiling
 __all__ = ["cell_insertion", "all_cell_insertions"]
 
 
-def all_cell_insertions(tiling):
+def all_cell_insertions(tiling, **kwargs):
     """Yield all cell insertions of a tiling along with a formal step."""
     # We are concerned with all the classes of the tiling
     for cell, block in tiling.classes:
