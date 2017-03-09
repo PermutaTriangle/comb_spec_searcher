@@ -11,29 +11,8 @@ from collections import defaultdict
 from itertools import permutations
 from copy import copy
 
-@pytest.fixture(scope="module",
-        params=[{cell: random.choice([PermSet.avoiding(Perm.random(random.randint(2, 7))),  # A principal class of a random permutations
-                                      PositiveClass(PermSet.avoiding(Perm.random(random.randint(2, 7)))),  # ... or similarly a positive class
-                                      Block.point,  # ... or a point
-                                      Block.increasing,  # ... or a increasing permutation
-                                      Block.decreasing])  # ... or a decreasing permutation
-                 for cell in set((random.randint(0, 7),  # Random cell i value
-                                  random.randint(0, 7))  # Random cell j value
-                                  for _ in range(random.randint(0, 7)))}  # Amount of cells in dict
-                for _ in range(32)] + [{}])  # Add the empty dict always
-def random_tiling_dict(request):
-    """Random dictionaries for creating tilings."""
-    return request.param
+from fixtures import random_tiling_dict, random_basis
 
-@pytest.fixture
-def random_basis():
-    """A random basis whose elements range from length 2 to 4 inclusive."""
-    population = set()
-    for length in range(2, 5):
-        population.update(PermSet(length))
-    sample_size = random.randint(1, 7)
-    basis_elements = random.sample(population, sample_size)
-    return Basis(basis_elements)
 
 
 def test_row_and_column_inequalities(random_tiling_dict, random_basis):
@@ -153,28 +132,3 @@ def test_specific_row_and_col_inequalities():
     print(dict(answer_col))
     assert answer_row == expected_row
     assert answer_col == expected_col
-
-
-# TODO: This should be a test for all proof strategies. It is testing the
-# definition of a proof strategy.
-def test_row_and_column_separation(random_tiling_dict, random_basis):
-    '''Tests if row and column separation always creates the same subset as tiling'''
-    tiling = Tiling(random_tiling_dict)
-    basis = random_basis
-
-    separated_tiling = row_and_column_separations(tiling, basis)
-
-    verification_length = tiling.total_points + len(basis[-1])
-
-    for length in range(verification_length + 1):
-        actual_perms = set()
-        for perm in tiling.perms_of_length(length):
-            if perm.avoids(*basis):
-                actual_perms.add(perm)
-
-        separated_perms = set()
-        for perm in tiling.perms_of_length(length):
-            if perm.avoids(*basis):
-                separated_perms.add(perm)
-
-        assert actual_perms == separated_perms

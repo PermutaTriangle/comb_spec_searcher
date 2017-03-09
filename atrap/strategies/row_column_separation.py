@@ -272,4 +272,5 @@ def row_and_column_separations(tiling, basis):
 
     row_and_column_splits = row_and_column_splits_of_tiling(tiling, basis)
 
-    return tile_splitter(tiling, row_and_column_splits)
+    # TODO Do formal step string
+    yield "TODO: Row col sep formal step string", tile_splitter(tiling, row_and_column_splits)
