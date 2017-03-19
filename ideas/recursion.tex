@@ -1,0 +1,144 @@
+\documentclass{amsart}
+% For maths symbols, and theorem's etc
+\usepackage{amsmath, amsthm}
+
+\theoremstyle{definition}
+\newtheorem{class}{Class}
+
+\theoremstyle{remark}
+\newtheorem{rmk}{Remark}
+
+\newcommand{\mcC}{\mathcal{C}}
+
+\title{Recursive strategies}
+
+\begin{document}
+
+\maketitle
+
+Given a permutation class $\mcC$ a \emph{proof strategy} for a tiling $T$
+returns a disjoint set of tilings $T_1, T_2, \ldots, T_k$ such that the union of
+these individually intersected with $\mcC$ is the tiling $T$, i.e.
+\[
+  T \cap \mcC = ( T_1 \cap \mcC ) \sqcup ( T_2 \cap \mcC ) \sqcup \ldots \sqcup (T_k \cap \mcC).
+\]
+If the proof strategy returns a single tiling we call is an \emph{equivalence}
+proof strategy. If returns more than one we call it a \emph{batch} proof
+strategy.
+
+For a permutation class $\mcC$, consider the tree where the root node is the $1
+\times 1$ tiling with $\mcC$. The children of a node are the tilings obtained a
+proof strategy on it, thus form a disjoint union for the node while working
+inside $\mcC$. If all the leaves of the tree are subsets of $\mcC$ then they
+define a cover for $\mcC$, while the tree itself is a proof certificate of this
+cover. We call such trees \emph{proof trees}.
+
+Here is a rough outline of how we propose to search for proof trees.
+
+\begin{rmk}[Outline of basic proof tree search]
+  In order to find a cover for $\mcC$ we create an and-or tree. The root node is
+  the $1 \times 1$ tiling with $\mcC$ and originally set to \textsf{False}, as
+  we reject the trivial cover. For a node with tiling $T$, and for each proof
+  strategy we add to his children the tilings from the proof strategy and
+  conjoin the edges to these. When a tiling is a subset of $\mcC$, it is marked
+  as \textsf{True} and this information is propagated through the tree. When
+  edges are conjoined, this represents an ``and'', therefore in order for a node
+  to be \textsf{True} then a set of its children which are conjoined must all be
+  \textsf{True}. The ``or'' part of the tree is that we need only one set of
+  conjoined children to be \textsf{True}. When the root node becomes
+  \textsf{True} then we know that the search tree contains a proof tree for
+  $\mcC$.
+\end{rmk}
+
+We will do this in the following way, we will create OrNodes, which will consist
+of single tilings. From a tiling/OrNode, first we create the SiblingNode, which
+will consist of all tilings reachable by equivalent proof strategies, we call
+these \emph{sibling} tilings. In order for the SiblingNode to be verified we
+require that one of the sibling tilings to be verified.
+
+For each batch strategy we create an AndNode which will consist of the set of
+OrNodes with tilings corresponding to the strategy. In order for an AndNode to
+be verified, all of the OrNodes in its set must be verified.
+
+The remainder of this document will discuss recursive strategies, in an informal
+way. (For want of a better name) A \emph{recursive} strategy (these don't fit
+the definition of strategies given above) for a tiling, is a set of subtilings
+(currently disjoint), that if the enumeration/permutations are known for, then
+the enumeration/permutations are known for the tiling. There are three ways for
+a subtiling to be verified
+\begin{itemize}
+  \item it is verified as subset of $\mcC$,
+  \item it points to a verified node elsewhere in the tree,
+  \item or it points to an ancestor of the tiling.
+\end{itemize}
+
+Here is how we propose to find such proof trees relying on recursive strategies
+while maintaining the original proof trees definition. We will still use the
+OrNodes, AndNodes and SiblingNodes described above, but now keep track of
+more information.
+
+\begin{class}[OrNode]
+  \leavevmode
+  \begin{itemize}
+    \item a tiling $T$,
+    \item a SiblingNode - we will discuss this more when introducing
+    SiblingNodes, but essentially it stores reachable siblings of $T$,
+    \item the set of ancestral OrNodes,
+    \item parent AndNodes - (the strategies it belong too),
+    \item children AndNodes - (the batch strategies from an $T$).
+  \end{itemize}
+\end{class}
+
+We realized while trying to propagate ancestral verification the lack of
+knowledge of ancestors made things complicated. Therefore as you can see we have
+adopted the approach of storing ancestral OrNodes as we go.
+
+Note since we are storing the ancestral OrNodes, a tiling $T$ will belong to
+multiple OrNodes. However, the work done a tiling $T$ will only ever be done
+once and stored in the cache.
+
+\begin{class}[AndNode]
+\leavevmode
+\begin{itemize}
+  \item a parent OrNode with tiling $T$,
+  \item a set of OrNodes corresponding to a batch strategy on $T$,
+  \item formal step explaining the corresponding batch strategy
+  \item a set of ancestral OrNodes.
+\end{itemize}
+\end{class}
+
+\begin{class}[SiblingNode]
+  \leavevmode
+\begin{itemize}
+  \item a set of OrNodes with equivalent tilings,
+  \item a map explaining the equivalences,
+  \item a set of ancestral OrNodes.
+\end{itemize}
+\end{class}
+
+Let's discuss what we do when we expand the search tree. We first find an
+unverified OrNode $x$ with tiling $T$ to be expanded. For each batch strategy
+from the tiling $T$, we create an OrNode with each of the strategy's tilings and
+then an AndNode with them all.
+
+When we create the OrNode for a tiling $T$, we also create a SiblingNode with
+each of the equivalent proof strategies on the tiling $T$.
+
+Now, consider a recursive strategies $S$ for $T$ in OrNode $x$. For each $T'$ in
+$S$ if the tiling is not in the cache we create the OrNode but do not expand it
+until it is found naturally. If it is in the cache and one of its OrNodes is
+verified, it is verified. If it is verified by the verification check, it is
+verified. The final case is if it points somewhere unverified, say node $y$. We
+make a new OrNode with $T'$ if and only if $y$ is in the ancestral set of node
+$x$, and mark it verified. All of the tiling's OrNodes in $S$ are then connected
+together in an AndNode. We can propagate verified in the normal way.
+
+Note, we believe this removes the need for different types of verified. The
+challenge then comes from keeping track of ancestral nodes, and for combining
+siblings in SiblingNodes.
+
+
+
+
+
+\end{document}
