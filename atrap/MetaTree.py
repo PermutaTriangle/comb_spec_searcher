@@ -32,6 +32,9 @@ class StrategyCache(object):
                 except TypeError:
                     strategies = generator(tiling)
                 for strategy in strategies:
+                    # TODO: Need to fix it returning None.
+                    if not strategy:
+                        continue
                     if not isinstance(strategy[0], str):
                         strategy = ("formal step missing", strategy[0])
                     strats.append(strategy)
@@ -51,7 +54,7 @@ class StrategyCache(object):
 
 
 class SiblingNode(set):
-    def __init__(self, ancestor_set):
+    def __init__(self, ancestor_set=None):
         self.ancestor_set = ancestor_set
 
     def add(self, or_node):
@@ -95,7 +98,11 @@ class OrNode(object):
                self.sibling_node.ancestor_set == other.sibling_node.ancestor_set
 
     def __hash__(self):
-        return hash((self.tiling, self.sibling_node.ancestor_set))
+        # TODO: where are we making the node where sibling_node is None
+        if self.sibling_node:
+            return hash((self.tiling, self.sibling_node.ancestor_set))
+        else:
+            return hash((self.tiling))
 
 
 class AndNode(object):
@@ -126,21 +133,20 @@ class MetaTree(object):
         formal_step = "We start off with a 1x1 tiling where the single block is the input set."
         root_and_node.formal_step = formal_step
 
-        root_or_node = OrNode()
-        root_or_node.tiling = root_tiling
+        root_or_node = OrNode(root_tiling)
         root_or_node.parents.append(root_and_node)
         root_and_node.children.append(root_or_node)
 
         root_sibling_node = SiblingNode()
-        root_sibling_node.add(root_or_node)
         root_sibling_node.ancestor_set = frozenset()
+        root_sibling_node.add(root_or_node)
 
         self.root_and_node = root_and_node
         self.root_or_node = root_or_node
         self.root_sibling_node = root_sibling_node
 
         # Tiling to OR node set dictionary
-        self.tiling_cache = {root_tiling: {root_sibling_node.ancestor_set: root_or_node}}
+        self.tiling_cache = {root_tiling: {self.root_sibling_node.ancestor_set: root_or_node}}
 
         # How far the DFS or BFS have gone
         self.depth_searched = 0
@@ -235,11 +241,22 @@ class MetaTree(object):
 
             for strategy in self.strategy_cache.get_equivalence_strategies(tiling):
                 formal_step, eq_tiling = strategy
-                # TODO
-                sibling_or_node = self.tiling_cache.get(sibling_tiling)
+                # TODO: shouldn't return these in the first place
+                if eq_tiling == tiling:
+                    continue
+                # TODO: Christian stepped in, so can be done better probably.
+                sibling_or_nodes = self.tiling_cache.get(eq_tiling)
+
+                if sibling_or_nodes is None:
+                    sibling_or_node = None
+                else:
+                    sibling_or_node = sibling_or_nodes.get(ancestor_set)
+
                 if sibling_or_node is None:
-                    sibling_or_node = OrNode(sibling_tiling)
-                    self.tiling_cache[sibling_tiling] = sibling_or_node
+                    sibling_or_node = OrNode(eq_tiling)
+                    if sibling_or_nodes is None:
+                        self.tiling_cache[eq_tiling] = {}
+                    self.tiling_cache[eq_tiling][ancestor_set] = sibling_or_node
                     new_or_nodes.add(sibling_or_node)
                 else:
                     existing_sibling_nodes.add(sibling_or_node.sibling_node)
@@ -247,14 +264,13 @@ class MetaTree(object):
             sibling_node_iter = iter(existing_sibling_nodes)
             if len(existing_sibling_nodes) == 0:
                 # Create new sibling node
-                sibling_node = SiblingNode()
+                sibling_node = SiblingNode(ancestor_set)
             else:
                 sibling_node = next(sibling_node_iter)
 
             for existing_sibling_node in sibling_node_iter:
                 for sibling_or_node in existing_sibling_node:
                     sibling_node.add(sibling_or_node)
-
             for sibling_or_node in new_or_nodes:
                 sibling_node.add(sibling_or_node)
         else:

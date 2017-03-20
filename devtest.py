@@ -3,7 +3,7 @@ from permuta import *
 from grids import *
 
 
-#mtree = MetaTree(Block.decreasing.basis)
+mtree = MetaTree(Block.decreasing.basis)
 #mtree.do_level()
 
 scache = StrategyCache(Block.decreasing.basis)
