@@ -1,4 +1,3 @@
-from . import recipes
-from . import bakery_naive
-from . import patisserie
-from .ProofTree import ProofTree
+from . import strategies
+from . import tools
+from .MetaTree import MetaTree

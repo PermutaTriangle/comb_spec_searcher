@@ -16,12 +16,12 @@ Av(132, 312), as well as the reversals of these classes. As the goal is to
 consider all bases of length four patterns, this condition allows us discard a
 large number of bases and focus on more complicated ones.
 
-Quick note on the current versions: On the master branch we have a version
+Quick note on the current versions: On the branch called v2 we have a version
 implementing strategies that do *not* achieve mimicking regular insertion
-encoding. That version is hard to add to so we are starting from scratch. The
-current version is however quite powerful. Jay wrote another implementation of
-the meta-tree that uses components to handle recursions. This is on the
-pantone_tree branch.
+encoding. That version is hard to add to so we are starting from scratch, on the
+master branch. The current version is however quite powerful. Jay wrote another
+implementation of the meta-tree that uses components to handle recursions. This
+is on the pantone_tree branch.
 
 ## Roadmap
 
@@ -38,7 +38,7 @@ empty permutation removed, and o is the point. At this stage we are leaning
 towards calling classes of the form X-e _positive_ classes. We start with X at
 the root and use the following proof strategy to branch:
 
-_Cell specialization (cs)_: Given a cell marked with an X, create a left child
+_Cell insertion (ci)_: Given a cell marked with an X, create a left child
 with X replaced by e, and a right child with X replaced by X-e.
 
 ![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/basic_atrap_123_132.jpg "ATRAP mimicking regular insertion encoding")
@@ -46,7 +46,7 @@ with X replaced by e, and a right child with X replaced by X-e.
 The left child is 'verified' meaning that it represents a subset of the class X.
 To progress from the right child we need a new proof strategy:
 
-_Insert new maximum (nm)_: If there are no cells marked with 'X' in the top row of
+_Place new maximum (nm)_: If there are no cells marked with 'X' in the top row of
 the tiling then branch (into as many branches as there are X-e's) depending on
 where the new maximum is. Note that illegal placements of the new maximum are
 not drawn. (Also note that when this is applied with a single X-e then we don't
@@ -144,7 +144,7 @@ In Jay's implementation of the meta-tree Definition 4 is being used, and he
 looks for recursions to a tiling made up of any combination of components.
 
 I think eventually we will consider all of these together: E.g., compute the
-components (before of after inferral) and try deleting reversibly deletable
+components (before or after inferral) and try deleting reversibly deletable
 cells from these.
 
 END OF OLD DEFINITIONS OF RECURSION
@@ -165,7 +165,7 @@ proof trees.
 
 ![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/current_atrap_123.png "Note that there is a decreasing cell that mixes into the recursed part")
 
-### Step 3: Generalizing (cs), adding fission/fusion (ff)
+### Step 3: Generalizing (ci), adding fission/fusion (ff)
 To be able to mimick Zeilberger's original enumeration schemes we need to have
 _fission and fusions (ff)_ of rows and columns.
 
@@ -187,7 +187,7 @@ Wilf-equivalent to Av(132). From Step 1 we will have established that Av(132) is
 enumerated by the Catalan numbers. This will finally give us a fully automatic
 Wilf-classification of all subsets of S3.
 
-The strategy (cs) creates two branches depending on whether a cell avoids the
+The strategy (ci) creates two branches depending on whether a cell avoids the
 pattern 1 (= is empty) or contains the pattern 1 (= is non-empty). This can be
 generalized by replacing 1 with an arbitrary pattern p. On the right branch
 where the pattern is contained (assuming this tiling is not verified) we can
@@ -199,14 +199,14 @@ in the cell.
 ![alt text](https://github.com/PermutaTriangle/ATRAP/blob/master/figures_for_README/bmp.jpg "All the shadings are implied by the basis of X")
 
 The 'binaryness' of the mesh pattern allows the placement of the points to be
-unique, preserving enumeration. We call this generalization of (cs) _cell
-specialization with a pattern (csp)_. Inserting a binary mesh pattern into the
+unique, preserving enumeration. We call this generalization of (ci) _cell
+insertion with a pattern (cip)_. Inserting a binary mesh pattern into the
 cell we call _binary mesh pattern placement (bmpp)_. In the above figure the
 basis of X implied all the shadings. In general we sometimes need to use a
-result like the shading lemma og the shading algorithm to make the pattern
+result like the shading lemma and the shading algorithm to make the pattern
 binary.
 
-Having (csp) would imply we can do any Av(132, p) where p is any pattern (see
+Having (cip) would imply we can do any Av(132, p) where p is any pattern (see
 paper by Mansour and Vainshtein). We would want to prove a stronger result:
 that we can do any subclass of Av(132).
 
@@ -239,7 +239,7 @@ can be made unique some how (similar to a binary mesh pattern).
 This strategy can also be thought of as part of the following more general idea:
 
 Can we define a space of proof strategies and search it for good ones? E.g., one
-can generalize (cs) and (rci) to a common strategy which puts a pattern into a
+can generalize (ci) and (rci) to a common strategy which puts a pattern into a
 group of cells.
 
 At this stage we will have a large collection of inputs (bases) and successful
@@ -254,13 +254,13 @@ I put authors down according to what I guessed would make sense. Nothing is set
 in stone. I would love for everybody to be everywhere if they want.
 
 ### First paper on atrap (Albert, Ardal, Bean, Claesson, Magnusson, Pantone, Tannock, Ulfarsson)
-* Initial proof strategies: (cs), (nm), basic (r) => regular insertion encoding
+* Initial proof strategies: (ci), (nm), basic (r) => regular insertion encoding
 * Generalized, or new proof strategies: (rci), general (r), (pp), (rcs), (i)
 * Say we can do all bases B with one S3 and one S4 pattern, point to PermPAL paper for enumerations
 * Say we can do all bases B that struct succeeded, on point to PermPAL paper for enumerations
 * New proof strategies: (ff) => Zeilberger's original enumeration schemes
 * Isomorphisms of proof trees: Fully automatic Wilf-classification of S3
-* Even more proof strategies: (csp), (bmpp), very general (r)
+* Even more proof strategies: (cip), (bmpp), very general (r)
 * A collection of nice S4 bases that we handle
 
 ### PermPAL paper (Undergrads, Ardal, Claesson, Bean, Pantone, Ulfarsson)

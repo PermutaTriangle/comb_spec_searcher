@@ -8,9 +8,9 @@ for task in tasks:
     patts = [ Perm([ int(c) - 1 for c in p ]) for p in task.split('_') ]
     input_set = PermSet.avoiding(patts)
 
-    recipes = [atrap.recipes.all_row_and_column_insertions]
+    # recipes = [atrap.recipes.all_row_and_column_insertions]
     # recipes = [atrap.recipes.all_cell_insertions]
-    # recipes = [atrap.recipes.all_cell_insertions, atrap.recipes.all_row_and_column_insertions]
+    recipes = [atrap.recipes.all_cell_insertions, atrap.recipes.all_row_and_column_insertions]
     bakery = atrap.patisserie.Bakery(input_set, recipes)
 
     start_time = time.time()
@@ -20,7 +20,7 @@ for task in tasks:
         good = bakery.bake(verbose=True)
         if good:
             break
-    task = task + "row_column_insertions"
+    task = task + "row_column_insertions_and_cell_insertions_unmixed"
     with open(task, "w") as f:
         tree = bakery.get_proof_tree()
 

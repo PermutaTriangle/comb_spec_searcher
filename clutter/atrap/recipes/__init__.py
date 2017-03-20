@@ -1,4 +1,4 @@
-from .cell_insertion import all_cell_insertions
+from .cell_insertion import all_cell_insertions, all_cell_insertions_topmost
 from .row_and_column_insertion import all_row_and_column_insertions
 from .row_column_separation import row_column_separations
 

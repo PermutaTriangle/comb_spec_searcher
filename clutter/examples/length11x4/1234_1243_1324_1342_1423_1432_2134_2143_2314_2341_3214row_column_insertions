@@ -1,0 +1,732 @@
+
+Finding the proof tree for Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)), Perm((2, 1, 0, 3))) took 350 seconds
+
+Human readable:
+
+root: 0
+      ├─────1
+      └─────2
+            ├─────3
+            └─────4
+                  ├─────5
+                  ├─────6
+                  └─────7
+                        ├─────8
+                        ├─────9
+                        └─────10
+
+Label: 0
+
++-+
+|X|
++-+
+
+
+Label: 1
+
++-+
+| |
++-+
+
+
+Label: 2
+
++-+-+
+| |1|
++-+-+
+|o| |
++-+-+
+| |X|
++-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1, 2)), Perm((0, 2, 1)), Perm((1, 0, 2)), Perm((1, 2, 0)), Perm((2, 0, 1)), Perm((2, 1, 0))))
+
+
+Label: 3
+
++-+-+
+|o| |
++-+-+
+| |X|
++-+-+
+
+
+Label: 4
+
++-+-+-+-+-+
+| |1| | |1|
++-+-+-+-+-+
+| | | |o| |
++-+-+-+-+-+
+|o| | | | |
++-+-+-+-+-+
+| | |2| |X|
++-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+2: perm set of all perms avoiding Basis((Perm((1, 0)), Perm((0, 1, 2))))
+
+
+Label: 5
+
++-+-+-+-+
+| |1| | |
++-+-+-+-+
+| | | |o|
++-+-+-+-+
+|o| | | |
++-+-+-+-+
+| | |2| |
++-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+2: perm set of all perms avoiding Basis((Perm((1, 0)), Perm((0, 1, 2))))
+
+
+Label: 6
+
++-+-+-+
+| | |o|
++-+-+-+
+| |o| |
++-+-+-+
+|o| | |
++-+-+-+
+
+
+Label: 7
+
++-+-+-+-+-+-+
+| |1| | | | |
++-+-+-+-+-+-+
+| | | |o| | |
++-+-+-+-+-+-+
+|o| | | | | |
++-+-+-+-+-+-+
+| | |1| | |2|
++-+-+-+-+-+-+
+| | | | |o| |
++-+-+-+-+-+-+
+| | |1| | | |
++-+-+-+-+-+-+
+| | | | | |X|
++-+-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+2: perm set of all perms avoiding Basis((Perm((0, 1, 2)), Perm((0, 2, 1)), Perm((1, 0, 2)), Perm((1, 2, 0)), Perm((2, 0, 1)), Perm((2, 1, 0))))
+
+
+Label: 8
+
++-+-+-+-+-+-+
+| |1| | | | |
++-+-+-+-+-+-+
+| | | |o| | |
++-+-+-+-+-+-+
+|o| | | | | |
++-+-+-+-+-+-+
+| | | | |o| |
++-+-+-+-+-+-+
+| | |1| | | |
++-+-+-+-+-+-+
+| | | | | |X|
++-+-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+
+
+Label: 9
+
++-+-+-+-+-+-+-+
+| |1| | | | | |
++-+-+-+-+-+-+-+
+| | | |o| | | |
++-+-+-+-+-+-+-+
+|o| | | | | | |
++-+-+-+-+-+-+-+
+| | | | | |1| |
++-+-+-+-+-+-+-+
+| | |o| | | | |
++-+-+-+-+-+-+-+
+| | | | |o| | |
++-+-+-+-+-+-+-+
+| | | | | | |X|
++-+-+-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+
+
+Label: 10
+
++-+-+-+-+-+-+-+-+-+
+| |1| | | | | | | |
++-+-+-+-+-+-+-+-+-+
+| | | |o| | | | | |
++-+-+-+-+-+-+-+-+-+
+|o| | | | | | | | |
++-+-+-+-+-+-+-+-+-+
+| | |1| | |1| | |1|
++-+-+-+-+-+-+-+-+-+
+| | | | | | | |o| |
++-+-+-+-+-+-+-+-+-+
+| | | | |o| | | | |
++-+-+-+-+-+-+-+-+-+
+| | | | | | |2| |X|
++-+-+-+-+-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+2: perm set of all perms avoiding Basis((Perm((1, 0)), Perm((0, 1, 2))))
+
+
+Here are the recursions
+
+-----------------
+
+TILING:
++-+
+|X|
++-+
+
+Inserting the left most point into column 0
+
+Recursively verified by:
++-+-+-+-+-+
+| |1| | |1|
++-+-+-+-+-+
+| | | |o| |
++-+-+-+-+-+
+|o| | | | |
++-+-+-+-+-+
+| | |2| |X|
++-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+2: perm set of all perms avoiding Basis((Perm((1, 0)), Perm((0, 1, 2))))
+
+-----------------
+
+TILING:
++-+
+| |
++-+
+
+Tiling now self verified
+
+Recursively verified by:
++-+-+-+-+-+
+| |1| | |1|
++-+-+-+-+-+
+| | | |o| |
++-+-+-+-+-+
+|o| | | | |
++-+-+-+-+-+
+| | |2| |X|
++-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+2: perm set of all perms avoiding Basis((Perm((1, 0)), Perm((0, 1, 2))))
+
+-----------------
+
+TILING:
++-+-+
+| |1|
++-+-+
+|o| |
++-+-+
+| |X|
++-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1, 2)), Perm((0, 2, 1)), Perm((1, 0, 2)), Perm((1, 2, 0)), Perm((2, 0, 1)), Perm((2, 1, 0))))
+
+Inserting the bottom most point into row 0
+
+Recursively verified by:
++-+-+-+-+-+
+| |1| | |1|
++-+-+-+-+-+
+| | | |o| |
++-+-+-+-+-+
+|o| | | | |
++-+-+-+-+-+
+| | |2| |X|
++-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+2: perm set of all perms avoiding Basis((Perm((1, 0)), Perm((0, 1, 2))))
+
+-----------------
+
+TILING:
++-+-+
+|o| |
++-+-+
+| |X|
++-+-+
+
+Tiling now self verified
+
+Recursively verified by:
++-+-+-+-+-+
+| |1| | |1|
++-+-+-+-+-+
+| | | |o| |
++-+-+-+-+-+
+|o| | | | |
++-+-+-+-+-+
+| | |2| |X|
++-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+2: perm set of all perms avoiding Basis((Perm((1, 0)), Perm((0, 1, 2))))
+
+-----------------
+
+TILING:
++-+-+-+-+-+
+| |1| | |1|
++-+-+-+-+-+
+| | | |o| |
++-+-+-+-+-+
+|o| | | | |
++-+-+-+-+-+
+| | |2| |X|
++-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+2: perm set of all perms avoiding Basis((Perm((1, 0)), Perm((0, 1, 2))))
+
+Inserting the left most point into column 4
+
+Recursively verified by:
++-+-+-+-+-+
+| |1| | |1|
++-+-+-+-+-+
+| | | |o| |
++-+-+-+-+-+
+|o| | | | |
++-+-+-+-+-+
+| | |2| |X|
++-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+2: perm set of all perms avoiding Basis((Perm((1, 0)), Perm((0, 1, 2))))
+
+-----------------
+
+TILING:
++-+-+-+-+
+| |1| | |
++-+-+-+-+
+| | | |o|
++-+-+-+-+
+|o| | | |
++-+-+-+-+
+| | |2| |
++-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+2: perm set of all perms avoiding Basis((Perm((1, 0)), Perm((0, 1, 2))))
+
+Tiling now self verified
+
+Recursively verified by:
++-+-+-+-+-+
+| |1| | |1|
++-+-+-+-+-+
+| | | |o| |
++-+-+-+-+-+
+|o| | | | |
++-+-+-+-+-+
+| | |2| |X|
++-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+2: perm set of all perms avoiding Basis((Perm((1, 0)), Perm((0, 1, 2))))
+
+-----------------
+
+TILING:
++-+-+-+
+| | |o|
++-+-+-+
+| |o| |
++-+-+-+
+|o| | |
++-+-+-+
+
+Tiling now self verified
+
+Recursively verified by:
++-+-+-+-+-+
+| |1| | |1|
++-+-+-+-+-+
+| | | |o| |
++-+-+-+-+-+
+|o| | | | |
++-+-+-+-+-+
+| | |2| |X|
++-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+2: perm set of all perms avoiding Basis((Perm((1, 0)), Perm((0, 1, 2))))
+
+-----------------
+
+TILING:
++-+-+-+-+-+-+
+| |1| | | | |
++-+-+-+-+-+-+
+| | | |o| | |
++-+-+-+-+-+-+
+|o| | | | | |
++-+-+-+-+-+-+
+| | |1| | |2|
++-+-+-+-+-+-+
+| | | | |o| |
++-+-+-+-+-+-+
+| | |1| | | |
++-+-+-+-+-+-+
+| | | | | |X|
++-+-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+2: perm set of all perms avoiding Basis((Perm((0, 1, 2)), Perm((0, 2, 1)), Perm((1, 0, 2)), Perm((1, 2, 0)), Perm((2, 0, 1)), Perm((2, 1, 0))))
+
+Inserting the bottom most point into row 3
+
+Recursively verified by:
++-+-+-+-+-+
+| |1| | |1|
++-+-+-+-+-+
+| | | |o| |
++-+-+-+-+-+
+|o| | | | |
++-+-+-+-+-+
+| | |2| |X|
++-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+2: perm set of all perms avoiding Basis((Perm((1, 0)), Perm((0, 1, 2))))
+
+-----------------
+
+TILING:
++-+-+-+-+-+-+
+| |1| | | | |
++-+-+-+-+-+-+
+| | | |o| | |
++-+-+-+-+-+-+
+|o| | | | | |
++-+-+-+-+-+-+
+| | | | |o| |
++-+-+-+-+-+-+
+| | |1| | | |
++-+-+-+-+-+-+
+| | | | | |X|
++-+-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+
+Tiling now self verified
+
+Recursively verified by:
++-+-+-+-+-+
+| |1| | |1|
++-+-+-+-+-+
+| | | |o| |
++-+-+-+-+-+
+|o| | | | |
++-+-+-+-+-+
+| | |2| |X|
++-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+2: perm set of all perms avoiding Basis((Perm((1, 0)), Perm((0, 1, 2))))
+
+-----------------
+
+TILING:
++-+-+-+-+-+-+-+
+| |1| | | | | |
++-+-+-+-+-+-+-+
+| | | |o| | | |
++-+-+-+-+-+-+-+
+|o| | | | | | |
++-+-+-+-+-+-+-+
+| | | | | |1| |
++-+-+-+-+-+-+-+
+| | |o| | | | |
++-+-+-+-+-+-+-+
+| | | | |o| | |
++-+-+-+-+-+-+-+
+| | | | | | |X|
++-+-+-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+
+Tiling now self verified
+
+Recursively verified by:
++-+-+-+-+-+
+| |1| | |1|
++-+-+-+-+-+
+| | | |o| |
++-+-+-+-+-+
+|o| | | | |
++-+-+-+-+-+
+| | |2| |X|
++-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+2: perm set of all perms avoiding Basis((Perm((1, 0)), Perm((0, 1, 2))))
+
+-----------------
+
+TILING:
++-+-+-+-+-+-+-+-+-+
+| |1| | | | | | | |
++-+-+-+-+-+-+-+-+-+
+| | | |o| | | | | |
++-+-+-+-+-+-+-+-+-+
+|o| | | | | | | | |
++-+-+-+-+-+-+-+-+-+
+| | |1| | |1| | |1|
++-+-+-+-+-+-+-+-+-+
+| | | | | | | |o| |
++-+-+-+-+-+-+-+-+-+
+| | | | |o| | | | |
++-+-+-+-+-+-+-+-+-+
+| | | | | | |2| |X|
++-+-+-+-+-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+2: perm set of all perms avoiding Basis((Perm((1, 0)), Perm((0, 1, 2))))
+
+Tiling recursively verified with cells [(3, 5), (3, 8), (4, 7), (5, 4), (6, 6), (6, 8)]
+
+Recursively verified by:
++-+-+-+-+-+
+| |1| | |1|
++-+-+-+-+-+
+| | | |o| |
++-+-+-+-+-+
+|o| | | | |
++-+-+-+-+-+
+| | |2| |X|
++-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+2: perm set of all perms avoiding Basis((Perm((1, 0)), Perm((0, 1, 2))))
+
+
+--------------------- END RECURSIONS
+
+Computer readable (JSON):
+
+{
+    "root": {
+        "children": [
+            {
+                "children": [],
+                "formal_step": "Tiling now self verified",
+                "tiling": {},
+                "verified_by": [
+                    {
+                        "(0, 1)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                        "(0, 4)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                        "(1, 3)": "Block.point",
+                        "(2, 0)": "Block.point",
+                        "(3, 2)": "Av(Perm((1, 0)), Perm((0, 1, 2)))",
+                        "(3, 4)": "Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)), Perm((2, 1, 0, 3)))"
+                    }
+                ]
+            },
+            {
+                "children": [
+                    {
+                        "children": [],
+                        "formal_step": "Tiling now self verified",
+                        "tiling": {
+                            "(0, 0)": "Block.point",
+                            "(1, 1)": "Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)), Perm((2, 1, 0, 3)))"
+                        },
+                        "verified_by": [
+                            {
+                                "(0, 1)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                "(0, 4)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                "(1, 3)": "Block.point",
+                                "(2, 0)": "Block.point",
+                                "(3, 2)": "Av(Perm((1, 0)), Perm((0, 1, 2)))",
+                                "(3, 4)": "Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)), Perm((2, 1, 0, 3)))"
+                            }
+                        ]
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [],
+                                "formal_step": "Tiling now self verified",
+                                "tiling": {
+                                    "(0, 1)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                    "(1, 3)": "Block.point",
+                                    "(2, 0)": "Block.point",
+                                    "(3, 2)": "Av(Perm((1, 0)), Perm((0, 1, 2)))"
+                                },
+                                "verified_by": [
+                                    {
+                                        "(0, 1)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                        "(0, 4)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                        "(1, 3)": "Block.point",
+                                        "(2, 0)": "Block.point",
+                                        "(3, 2)": "Av(Perm((1, 0)), Perm((0, 1, 2)))",
+                                        "(3, 4)": "Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)), Perm((2, 1, 0, 3)))"
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [],
+                                "formal_step": "Tiling now self verified",
+                                "tiling": {
+                                    "(0, 2)": "Block.point",
+                                    "(1, 1)": "Block.point",
+                                    "(2, 0)": "Block.point"
+                                },
+                                "verified_by": [
+                                    {
+                                        "(0, 1)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                        "(0, 4)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                        "(1, 3)": "Block.point",
+                                        "(2, 0)": "Block.point",
+                                        "(3, 2)": "Av(Perm((1, 0)), Perm((0, 1, 2)))",
+                                        "(3, 4)": "Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)), Perm((2, 1, 0, 3)))"
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "children": [],
+                                        "formal_step": "Tiling now self verified",
+                                        "tiling": {
+                                            "(0, 1)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                            "(1, 3)": "Block.point",
+                                            "(2, 0)": "Block.point",
+                                            "(3, 4)": "Block.point",
+                                            "(4, 2)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                            "(5, 5)": "Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)), Perm((2, 1, 0, 3)))"
+                                        },
+                                        "verified_by": [
+                                            {
+                                                "(0, 1)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                                "(0, 4)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                                "(1, 3)": "Block.point",
+                                                "(2, 0)": "Block.point",
+                                                "(3, 2)": "Av(Perm((1, 0)), Perm((0, 1, 2)))",
+                                                "(3, 4)": "Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)), Perm((2, 1, 0, 3)))"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "children": [],
+                                        "formal_step": "Tiling now self verified",
+                                        "tiling": {
+                                            "(0, 1)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                            "(1, 3)": "Block.point",
+                                            "(2, 0)": "Block.point",
+                                            "(3, 5)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                            "(4, 2)": "Block.point",
+                                            "(5, 4)": "Block.point",
+                                            "(6, 6)": "Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)), Perm((2, 1, 0, 3)))"
+                                        },
+                                        "verified_by": [
+                                            {
+                                                "(0, 1)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                                "(0, 4)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                                "(1, 3)": "Block.point",
+                                                "(2, 0)": "Block.point",
+                                                "(3, 2)": "Av(Perm((1, 0)), Perm((0, 1, 2)))",
+                                                "(3, 4)": "Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)), Perm((2, 1, 0, 3)))"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "children": [],
+                                        "formal_step": "Tiling recursively verified with cells [(3, 5), (3, 8), (4, 7), (5, 4), (6, 6), (6, 8)]",
+                                        "tiling": {
+                                            "(0, 1)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                            "(1, 3)": "Block.point",
+                                            "(2, 0)": "Block.point",
+                                            "(3, 2)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                            "(3, 5)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                            "(3, 8)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                            "(4, 7)": "Block.point",
+                                            "(5, 4)": "Block.point",
+                                            "(6, 6)": "Av(Perm((1, 0)), Perm((0, 1, 2)))",
+                                            "(6, 8)": "Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)), Perm((2, 1, 0, 3)))"
+                                        },
+                                        "verified_by": [
+                                            {
+                                                "(0, 1)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                                "(0, 4)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                                "(1, 3)": "Block.point",
+                                                "(2, 0)": "Block.point",
+                                                "(3, 2)": "Av(Perm((1, 0)), Perm((0, 1, 2)))",
+                                                "(3, 4)": "Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)), Perm((2, 1, 0, 3)))"
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "formal_step": "Inserting the bottom most point into row 3",
+                                "tiling": {
+                                    "(0, 1)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                    "(1, 3)": "Block.point",
+                                    "(2, 0)": "Block.point",
+                                    "(3, 2)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                    "(3, 5)": "Av(Perm((0, 1, 2)), Perm((0, 2, 1)), Perm((1, 0, 2)), Perm((1, 2, 0)), Perm((2, 0, 1)), Perm((2, 1, 0)))",
+                                    "(4, 4)": "Block.point",
+                                    "(5, 2)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                    "(6, 5)": "Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)), Perm((2, 1, 0, 3)))"
+                                },
+                                "verified_by": [
+                                    {
+                                        "(0, 1)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                        "(0, 4)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                        "(1, 3)": "Block.point",
+                                        "(2, 0)": "Block.point",
+                                        "(3, 2)": "Av(Perm((1, 0)), Perm((0, 1, 2)))",
+                                        "(3, 4)": "Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)), Perm((2, 1, 0, 3)))"
+                                    }
+                                ]
+                            }
+                        ],
+                        "formal_step": "Inserting the left most point into column 4",
+                        "tiling": {
+                            "(0, 1)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                            "(0, 4)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                            "(1, 3)": "Block.point",
+                            "(2, 0)": "Block.point",
+                            "(3, 2)": "Av(Perm((1, 0)), Perm((0, 1, 2)))",
+                            "(3, 4)": "Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)), Perm((2, 1, 0, 3)))"
+                        },
+                        "verified_by": [
+                            {
+                                "(0, 1)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                "(0, 4)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                                "(1, 3)": "Block.point",
+                                "(2, 0)": "Block.point",
+                                "(3, 2)": "Av(Perm((1, 0)), Perm((0, 1, 2)))",
+                                "(3, 4)": "Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)), Perm((2, 1, 0, 3)))"
+                            }
+                        ]
+                    }
+                ],
+                "formal_step": "Inserting the bottom most point into row 0",
+                "tiling": {
+                    "(0, 1)": "Av(Perm((0, 1, 2)), Perm((0, 2, 1)), Perm((1, 0, 2)), Perm((1, 2, 0)), Perm((2, 0, 1)), Perm((2, 1, 0)))",
+                    "(1, 0)": "Block.point",
+                    "(2, 1)": "Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)), Perm((2, 1, 0, 3)))"
+                },
+                "verified_by": [
+                    {
+                        "(0, 1)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                        "(0, 4)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                        "(1, 3)": "Block.point",
+                        "(2, 0)": "Block.point",
+                        "(3, 2)": "Av(Perm((1, 0)), Perm((0, 1, 2)))",
+                        "(3, 4)": "Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)), Perm((2, 1, 0, 3)))"
+                    }
+                ]
+            }
+        ],
+        "formal_step": "Inserting the left most point into column 0",
+        "tiling": {
+            "(0, 0)": "Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)), Perm((2, 1, 0, 3)))"
+        },
+        "verified_by": [
+            {
+                "(0, 1)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                "(0, 4)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                "(1, 3)": "Block.point",
+                "(2, 0)": "Block.point",
+                "(3, 2)": "Av(Perm((1, 0)), Perm((0, 1, 2)))",
+                "(3, 4)": "Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)), Perm((2, 1, 0, 3)))"
+            }
+        ]
+    }
+}
