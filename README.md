@@ -111,6 +111,8 @@ First a preliminary definition: Let T be a tiling with a cell c, and let w be a
 permutation in the grid class of T. Then w-c is the permutation obtained by
 deleting the points in w that were contributed by c.
 
+START OF OLD DEFINITIONS OF RECURSION
+
 There are four definitions that impact how we think about recursions:
 
 *Definition 1* Let T be a tiling before inferral, meaning that all the blocks are of the type
@@ -144,6 +146,8 @@ looks for recursions to a tiling made up of any combination of components.
 I think eventually we will consider all of these together: E.g., compute the
 components (before of after inferral) and try deleting reversibly deletable
 cells from these.
+
+END OF OLD DEFINITIONS OF RECURSION
 
 Note also that recursion to an ancester is good, while recursion to a
 non-ancestor does not directly lead to verification.
