@@ -10,7 +10,50 @@ from permuta import PermSet
 from permuta.descriptors import Basis
 
 
+class StrategyCache(object):
+    # TODO: Do better
+    def __init__(self, basis):
+        self.basis = basis
+
+        self.equivalence_strategy_generators = [all_row_and_col_placements,
+                                                row_and_column_separations]
+        self.batch_strategy_generators = [all_cell_insertions]
+
+        self.eq_tilings = {}
+        self.batch_tilings = {}
+
+    def get_equivalence_strategies(self, tiling):
+        strats = self.eq_tilings.get(tiling)
+        if strats is None:
+            strats = []
+            for generator in self.equivalence_strategy_generators:
+                try:
+                    strategies = generator(tiling, self.basis)
+                except TypeError:
+                    strategies = generator(tiling)
+                for strategy in strategies:
+                    if not isinstance(strategy[0], str):
+                        strategy = ("formal step missing", strategy[0])
+                    strats.append(strategy)
+            self.eq_tilings[tiling] = strats
+        return strats
+
+    def get_batch_strategies(self, tiling):
+        strats = self.batch_tilings.get(tiling)
+        if strats is None:
+            strats = []
+            for generator in self.batch_strategy_generators:
+                strategies = generator(tiling)
+                for strategy in strategies:
+                    strats.append(strategy)
+            self.batch_tilings[tiling] = strats
+        return strats
+
+
 class SiblingNode(set):
+    def __init__(self, ancestor_set):
+        self.ancestor_set = ancestor_set
+
     def add(self, or_node):
         if or_node in self:
             raise RuntimeError("Attempting to add node already in sibling node")
@@ -18,10 +61,6 @@ class SiblingNode(set):
             raise TypeError("Non-OR node added to sibling node")
         super(SiblingNode, self).add(or_node)
         or_node.sibling_node = self
-
-    def get_frontier_radius(self):
-        # TODO: Do smarter
-        return min(sibling.frontier_radius for sibling in self)
 
     def get_children(self):
         # TODO: Do smarter
@@ -44,18 +83,19 @@ class OrNode(object):
         self.tiling = tiling
         self.sibling_node = None
 
-    def get_child_sibling_nodes(self):
-        return_set = set()
-        for child_and_node in self.children:
-            for child_or_node in child_and_node.children:
-                return_set.add(child_or_node.sibling_node)
-        return return_set
+#    def get_child_sibling_nodes(self):
+#        return_set = set()
+#        for child_and_node in self.children:
+#            for child_or_node in child_and_node.children:
+#                return_set.add(child_or_node.sibling_node)
+#        return return_set
 
     def __eq__(self, other):
-        return self.tiling == other.tiling
+        return self.tiling == other.tiling and \
+               self.sibling_node.ancestor_set == other.sibling_node.ancestor_set
 
     def __hash__(self):
-        return hash(self.tiling)
+        return hash((self.tiling, self.sibling_node.ancestor_set))
 
 
 class AndNode(object):
@@ -93,16 +133,20 @@ class MetaTree(object):
 
         root_sibling_node = SiblingNode()
         root_sibling_node.add(root_or_node)
+        root_sibling_node.ancestor_set = frozenset()
 
         self.root_and_node = root_and_node
         self.root_or_node = root_or_node
         self.root_sibling_node = root_sibling_node
 
-        # Tiling to OR node dictionary
-        self.tiling_cache = {root_tiling: root_or_node}
+        # Tiling to OR node set dictionary
+        self.tiling_cache = {root_tiling: {root_sibling_node.ancestor_set: root_or_node}}
 
         # How far the DFS or BFS have gone
         self.depth_searched = 0
+
+        # Strategy cache
+        self.strategy_cache = StrategyCache(basis)
 
     def do_level(self, requested_depth=None):
         if requested_depth is None:
@@ -119,12 +163,13 @@ class MetaTree(object):
         drill_set = set()  # Sibling nodes
         expand_set = set()  # OR nodes
 
+        if requested_depth == 0:
+            return
+        elif requested_depth < 0:
+            raise RuntimeError("Negative depth requested")
+
         for sibling_or_node in root_sibling_node:
-            if requested_depth == 0:
-                return
-            elif requested_depth < 0:
-                raise RuntimeError("Negative depth requested")
-            elif sibling_or_node.expanded:
+            if sibling_or_node.expanded:
                 # We need to move further down
                 print("Found that I need to move down on:")
                 print(sibling_or_node.tiling)
@@ -136,53 +181,61 @@ class MetaTree(object):
                 print(sibling_or_node.tiling)
                 expand_set.add(sibling_or_node)
 
+        # Expand the child nodes into sibling nodes and add to drill set
         for sibling_or_node in expand_set:
             print("Expanding:")
             print(sibling_or_node.tiling)
             child_sibling_nodes = self._expand_helper(sibling_or_node)
             drill_set.update(child_sibling_nodes)
 
+        # Move down entire drill set
         for child_sibling_node in drill_set:
             print("Moving down:")
             print(child_sibling_node)
             self._sibling_helper(child_sibling_node, requested_depth - 1)
 
     def _expand_helper(self, root_or_node):
+        # Expand OR node using batch strategies and return the sibling nodes
         child_sibling_nodes = set()
-        for cell_insertion in all_cell_insertions(root_or_node.tiling):
-            formal_step, strategy = cell_insertion
+        ancestor_set = root_or_node.sibling_node.ancestor_set.union(root_or_node.sibling_node)
+        for strategy in self.strategy_cache.get_batch_strategies(root_or_node.tiling):
+            formal_step, tilings = strategy
+            # Create the AND node and connect it to its parent OR node
             child_and_node = AndNode(formal_step)
-            for tiling in strategy:
-                sibling_node = self._get_sibling_node(tiling, child_and_node)
-                child_sibling_nodes.add(sibling_node)
             child_and_node.parents.append(root_or_node)
             root_or_node.children.append(child_and_node)
+            # Go through all the tilings created for the AND node
+            for tiling in tilings:
+                # Create/get a sibling node and connect it
+                sibling_node = self._get_sibling_node(tiling, child_and_node, ancestor_set)
+                # Add it to the return set
+                child_sibling_nodes.add(sibling_node)
         root_or_node.expanded = True
         return child_sibling_nodes
 
-    def _get_sibling_node(self, tiling, and_node):
-        or_node = self.tiling_cache.get(tiling)
+    def _get_sibling_node(self, tiling, and_node, ancestor_set):
+        ancestry_dict = self.tiling_cache.get(tiling)
+        if ancestry_dict is None:
+            or_node = None
+        else:
+            or_node = ancestry_dict.get(ancestor_set)
+
         if or_node is None:
             or_node = OrNode()
             or_node.tiling = tiling
-            self.tiling_cache[tiling] = or_node
+            if ancestry_dict is None:
+                self.tiling_cache[tiling] = {ancestor_set: or_node}
+            else:
+                self.tiling_cache[tiling][ancestor_set] = or_node
 
             # Our new OR node belongs to no sibling node yet
 
             new_or_nodes = set([or_node])
             existing_sibling_nodes = set()
 
-            print()
-            print("Doing row col placements of tiling:")
-            print(tiling)
-            print("We get:")
-            for sibling_tiling in all_row_and_col_placements(tiling):
-                # TODO: strategy is yielding funny at the moment
-                if sibling_tiling:
-                    sibling_tiling = sibling_tiling[0]
-                else:
-                    continue
-                print(sibling_tiling)
+            for strategy in self.strategy_cache.get_equivalence_strategies(tiling):
+                formal_step, eq_tiling = strategy
+                # TODO
                 sibling_or_node = self.tiling_cache.get(sibling_tiling)
                 if sibling_or_node is None:
                     sibling_or_node = OrNode(sibling_tiling)

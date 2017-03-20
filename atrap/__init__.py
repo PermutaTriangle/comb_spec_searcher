@@ -1,3 +1,3 @@
 from . import strategies
 from . import tools
-from .MetaTree import MetaTree
+from .MetaTree import MetaTree, StrategyCache
