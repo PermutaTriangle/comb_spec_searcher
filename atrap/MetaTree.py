@@ -54,7 +54,8 @@ class StrategyCache(object):
 
 
 class SiblingNode(set):
-    def __init__(self, ancestor_set=None):
+    def __init__(self, ancestor_set=frozenset()):
+        assert isinstance(ancestor_set, frozenset)
         self.ancestor_set = ancestor_set
 
     def add(self, or_node):
@@ -85,6 +86,8 @@ class OrNode(object):
         self.expanded = False
         self.tiling = tiling
         self.sibling_node = None
+        self.recursively_verifiable = [] #list of tilings
+        self.verified = False
 
 #    def get_child_sibling_nodes(self):
 #        return_set = set()
@@ -245,16 +248,17 @@ class MetaTree(object):
                 if eq_tiling == tiling:
                     continue
                 # TODO: Christian stepped in, so can be done better probably.
-                sibling_or_nodes = self.tiling_cache.get(eq_tiling)
+                # This is ancestry_dict
+                eq_tiling_ancestry_dict = self.tiling_cache.get(eq_tiling)
 
-                if sibling_or_nodes is None:
+                if eq_tiling_ancestry_dict is None:
                     sibling_or_node = None
                 else:
-                    sibling_or_node = sibling_or_nodes.get(ancestor_set)
+                    sibling_or_node = eq_tiling_ancestry_dict.get(ancestor_set)
 
                 if sibling_or_node is None:
                     sibling_or_node = OrNode(eq_tiling)
-                    if sibling_or_nodes is None:
+                    if eq_tiling_ancestry_dict is None:
                         self.tiling_cache[eq_tiling] = {}
                     self.tiling_cache[eq_tiling][ancestor_set] = sibling_or_node
                     new_or_nodes.add(sibling_or_node)
