@@ -1,8 +1,8 @@
-from grids import *
+from grids import Tiling
 from permuta import *
 from permuta.misc import UnionFind
 from itertools import combinations, chain
-from copy import copy
+from tools import basis_partitioning
 
 # Overly strict version, should we just remove it?
 def components(tiling, basis):
