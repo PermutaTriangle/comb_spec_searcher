@@ -3,60 +3,69 @@
 from atrap.strategies import all_cell_insertions
 from atrap.strategies import row_and_column_separations
 from atrap.strategies import all_row_and_col_placements
+from atrap.strategies import components
 
 from grids import Tiling
 
 from permuta import PermSet
 from permuta.descriptors import Basis
 
-
-class StrategyCache(object):
-    # TODO: Do better
-    def __init__(self, basis):
-        self.basis = basis
-
-        self.equivalence_strategy_generators = [all_row_and_col_placements,
-                                                row_and_column_separations]
-        self.batch_strategy_generators = [all_cell_insertions]
-
-        self.eq_tilings = {}
-        self.batch_tilings = {}
-
-    def get_equivalence_strategies(self, tiling):
-        strats = self.eq_tilings.get(tiling)
-        if strats is None:
-            strats = []
-            for generator in self.equivalence_strategy_generators:
-                try:
-                    strategies = generator(tiling, self.basis)
-                except TypeError:
-                    strategies = generator(tiling)
-                for strategy in strategies:
-                    # TODO: Need to fix it returning None.
-                    if not strategy:
-                        continue
-                    if not isinstance(strategy[0], str):
-                        strategy = ("formal step missing", strategy[0])
-                    strats.append(strategy)
-            self.eq_tilings[tiling] = strats
-        return strats
-
-    def get_batch_strategies(self, tiling):
-        strats = self.batch_tilings.get(tiling)
-        if strats is None:
-            strats = []
-            for generator in self.batch_strategy_generators:
-                strategies = generator(tiling)
-                for strategy in strategies:
-                    strats.append(strategy)
-            self.batch_tilings[tiling] = strats
-        return strats
-
+#
+# class StrategyCache(object):
+#     # TODO: Do better
+#     def __init__(self, basis):
+#         self.basis = basis
+#
+#         self.equivalence_strategy_generators = [all_row_and_col_placements,
+#                                                 row_and_column_separations]
+#         self.batch_strategy_generators = [all_cell_insertions]
+#         self.recursive_strategy_generators = [components]
+#
+#         self.eq_tilings = {}
+#         self.batch_tilings = {}
+#         self.recursive_tilings = {}
+#
+#     def get_equivalence_strategies(self, tiling):
+#         strats = self.eq_tilings.get(tiling)
+#         if strats is None:
+#             strats = []
+#             for generator in self.equivalence_strategy_generators:
+#                 try:
+#                     strategies = generator(tiling, self.basis)
+#                 except TypeError:
+#                     strategies = generator(tiling)
+#                 for strategy in strategies:
+#                     # TODO: Need to fix it returning None.
+#                     if not strategy:
+#                         continue
+#                     if not isinstance(strategy[0], str):
+#                         strategy = ("formal step missing", strategy[0])
+#                     strats.append(strategy)
+#             self.eq_tilings[tiling] = strats
+#         return strats
+#
+#     def get_batch_strategies(self, tiling):
+#         strats = self.batch_tilings.get(tiling)
+#         if strats is None:
+#             strats = []
+#             for generator in self.batch_strategy_generators:
+#                 strategies = generator(tiling)
+#                 for strategy in strategies:
+#                     strats.append(strategy)
+#             self.batch_tilings[tiling] = strats
+#         return strats
+#
+#     # TODO: If we go back to the ancestor approach.
+#     def get_recursive_strategies(self, tiling):
+#
 
 class SiblingNode(set):
-    def __init__(self, ancestor_set=frozenset()):
-        assert isinstance(ancestor_set, frozenset)
-        self.ancestor_set = ancestor_set
+
+    def __init__(self):
+        self.expandable = False
+
+    # Can we initialise this here rather than do it in the tree?
+    # def _init__(self, tiling, and_node, equivalence_strategy_generators):
 
     def add(self, or_node):
         if or_node in self:
@@ -97,15 +106,10 @@ class OrNode(object):
 #        return return_set
 
     def __eq__(self, other):
-        return self.tiling == other.tiling and \
-               self.sibling_node.ancestor_set == other.sibling_node.ancestor_set
+        return self.tiling == other.tiling
 
     def __hash__(self):
-        # TODO: where are we making the node where sibling_node is None
-        if self.sibling_node:
-            return hash((self.tiling, self.sibling_node.ancestor_set))
-        else:
-            return hash((self.tiling))
+        return hash(self.tiling)
 
 
 class AndNode(object):
@@ -113,6 +117,7 @@ class AndNode(object):
         self.formal_step = formal_step
         self.children = []
         self.parents = []
+        self.recursively_verifiable = []
 
     #@property
     #def or_children(self):
@@ -123,12 +128,18 @@ class AndNode(object):
 
 class MetaTree(object):
     def __init__(self, basis):
-        # Store basis and input set
+        # Store basis
         self.basis = Basis(basis)
-        self.input_set = PermSet.avoiding(basis)
+
+        # Generators for strategies
+        self.equivalence_strategy_generators = [all_row_and_col_placements,
+                                                row_and_column_separations]
+        self.batch_strategy_generators = [all_cell_insertions]
+        self.recursive_strategy_generators = [components]
+        self.counting_combining = 0
 
         # Create the first tiling
-        root_tiling = Tiling({(0, 0): self.input_set})
+        root_tiling = Tiling({(0, 0): PermSet.avoiding(basis)})
 
         # Create and store the root AND and OR node of the tree
         # Similarly create the sibling node
@@ -141,21 +152,18 @@ class MetaTree(object):
         root_and_node.children.append(root_or_node)
 
         root_sibling_node = SiblingNode()
-        root_sibling_node.ancestor_set = frozenset()
         root_sibling_node.add(root_or_node)
 
         self.root_and_node = root_and_node
         self.root_or_node = root_or_node
         self.root_sibling_node = root_sibling_node
 
-        # Tiling to OR node set dictionary
-        self.tiling_cache = {root_tiling: {self.root_sibling_node.ancestor_set: root_or_node}}
+        # Tiling to OR node dictionary
+        self.tiling_cache = {root_tiling: root_or_node}
 
         # How far the DFS or BFS have gone
         self.depth_searched = 0
 
-        # Strategy cache
-        self.strategy_cache = StrategyCache(basis)
 
     def do_level(self, requested_depth=None):
         if requested_depth is None:
@@ -206,70 +214,96 @@ class MetaTree(object):
     def _expand_helper(self, root_or_node):
         # Expand OR node using batch strategies and return the sibling nodes
         child_sibling_nodes = set()
-        ancestor_set = root_or_node.sibling_node.ancestor_set.union(root_or_node.sibling_node)
-        for strategy in self.strategy_cache.get_batch_strategies(root_or_node.tiling):
-            formal_step, tilings = strategy
-            # Create the AND node and connect it to its parent OR node
-            child_and_node = AndNode(formal_step)
-            child_and_node.parents.append(root_or_node)
-            root_or_node.children.append(child_and_node)
-            # Go through all the tilings created for the AND node
-            for tiling in tilings:
-                # Create/get a sibling node and connect it
-                sibling_node = self._get_sibling_node(tiling, child_and_node, ancestor_set)
-                # Add it to the return set
-                child_sibling_nodes.add(sibling_node)
+
+        # Find all the recursive strategies (including verification if switched on) and add 'em
+        for generator in self.recursive_strategy_generators:
+            for strategy in generator(tiling, self.basis):
+                formal_step, tilings = strategy
+                # Create the AND node and connect it to its parent OR node
+                child_and_node = AndNode(formal_step)
+                child_and_node.parents.append(root_or_node)
+                root_or_node.children.append(child_and_node)
+                # Go through all the tilings created for the AND node
+                for tiling in tilings:
+                    # Create/get a sibling node and connect it
+                    sibling_node = self._get_recursive_sibling_node(tiling, child_and_node)
+                    # Add it to the return set
+                    child_sibling_nodes.add(sibling_node)
+
+        # Find all the batch strategies, and add 'em.
+        for generator in self.batch_strategy_generators:
+            # TODO: Do we need to give it the basis for some strategies?
+            for strategy in generator(root_or_node.tiling, basis=self.basis):
+                if not strategy:
+                    continue
+                formal_step, tilings = strategy
+                # Create the AND node and connect it to its parent OR node
+                child_and_node = AndNode(formal_step)
+                child_and_node.parents.append(root_or_node)
+                root_or_node.children.append(child_and_node)
+                # Go through all the tilings created for the AND node
+                for tiling in tilings:
+                    # Create/get a sibling node and connect it
+                    sibling_node = self._get_sibling_node(tiling, child_and_node)
+                    # Add it to the return set
+                    child_sibling_nodes.add(sibling_node)
+                    sibling_node.expandable = True
         root_or_node.expanded = True
         return child_sibling_nodes
 
-    def _get_sibling_node(self, tiling, and_node, ancestor_set):
-        ancestry_dict = self.tiling_cache.get(tiling)
-        if ancestry_dict is None:
-            or_node = None
-        else:
-            or_node = ancestry_dict.get(ancestor_set)
+    def _get_recursive_sibling_node(self, tiling, and_node):
+        or_node = self.tiling_cache.get(tiling)
+        if or_node is None:
+            # Make sure we only expand non-recursive strategies
+            # therefore the sibling node created will have expandable = False
+            # unless found otherwise
+
+
+
+
+
+    def _get_sibling_node(self, tiling, and_node):
+        or_node = self.tiling_cache.get(tiling)
 
         if or_node is None:
             or_node = OrNode()
             or_node.tiling = tiling
-            if ancestry_dict is None:
-                self.tiling_cache[tiling] = {ancestor_set: or_node}
-            else:
-                self.tiling_cache[tiling][ancestor_set] = or_node
+            self.tiling_cache[tiling] = or_node
 
             # Our new OR node belongs to no sibling node yet
 
             new_or_nodes = set([or_node])
             existing_sibling_nodes = set()
 
-            for strategy in self.strategy_cache.get_equivalence_strategies(tiling):
-                formal_step, eq_tiling = strategy
-                # TODO: shouldn't return these in the first place
-                if eq_tiling == tiling:
-                    continue
-                # TODO: Christian stepped in, so can be done better probably.
-                # This is ancestry_dict
-                eq_tiling_ancestry_dict = self.tiling_cache.get(eq_tiling)
+            for generator in self.equivalence_strategy_generators:
+                for strategy in generator(tiling, basis=self.basis):
+                    if not strategy:
+                        continue
+                    if not isinstance(strategy[0], str):
+                        strategy = "", strategy[0]
+                    formal_step, eq_tiling = strategy
+                    # TODO: shouldn't return these in the first place
+                    if eq_tiling == tiling:
+                        continue
+                    # TODO: Christian stepped in, so can be done better probably.
+                    # This is ancestry_dict
+                    sibling_or_node = self.tiling_cache.get(eq_tiling)
 
-                if eq_tiling_ancestry_dict is None:
-                    sibling_or_node = None
-                else:
-                    sibling_or_node = eq_tiling_ancestry_dict.get(ancestor_set)
+                    if sibling_or_node is None:
+                        sibling_or_node = OrNode(eq_tiling)
 
-                if sibling_or_node is None:
-                    sibling_or_node = OrNode(eq_tiling)
-                    if eq_tiling_ancestry_dict is None:
-                        self.tiling_cache[eq_tiling] = {}
-                    self.tiling_cache[eq_tiling][ancestor_set] = sibling_or_node
-                    new_or_nodes.add(sibling_or_node)
-                else:
-                    existing_sibling_nodes.add(sibling_or_node.sibling_node)
+                        self.tiling_cache[eq_tiling] = sibling_or_node
+                        new_or_nodes.add(sibling_or_node)
+                    else:
+                        existing_sibling_nodes.add(sibling_or_node.sibling_node)
 
             sibling_node_iter = iter(existing_sibling_nodes)
             if len(existing_sibling_nodes) == 0:
                 # Create new sibling node
-                sibling_node = SiblingNode(ancestor_set)
+                sibling_node = SiblingNode()
             else:
+                print("yeah!! let's combine our forces for the greater good!")
+                self.counting_combining += 1
                 sibling_node = next(sibling_node_iter)
 
             for existing_sibling_node in sibling_node_iter:
@@ -279,6 +313,10 @@ class MetaTree(object):
                 sibling_node.add(sibling_or_node)
         else:
             sibling_node = or_node.sibling_node
+            # Make sure we only expand batch strategies found.
+            if sibling_node.expandable:
+
+
 
         # Hook up the OR node with its parent AND node and vice-versa
         or_node.parents.append(and_node)

@@ -12,7 +12,7 @@ def scale(cell, i_factor, i_add, j_factor, j_add):
     return Cell(i_factor*cell.i + i_add, j_factor*cell.j + j_add)
 
 
-def all_row_and_col_placements(tiling):
+def all_row_and_col_placements(tiling, **kwargs):
     for row_number in range(tiling.dimensions.j):
         for strategy in row_placement(tiling, row_number):
             yield strategy
@@ -64,7 +64,7 @@ def row_placement(tiling, row_number):
             new_tiling_dict[scale(col_cell, 3, 2, 3, 0)] = col_block
 
         # The cell we are placing into is treated differently
-        if isinstance(block, PositiveClass):        
+        if isinstance(block, PositiveClass):
             new_tiling_dict[scale(cell, 3, 0, 3, 0)] = block.perm_class
             new_tiling_dict[scale(cell, 3, 2, 3, 0)] = block.perm_class
         else:
@@ -119,7 +119,7 @@ def col_placement(tiling, col_number):
         for row_cell, row_block in tiling.get_row(cell.j):
             new_tiling_dict[scale(row_cell, 3, 0, 3, 2)] = row_block
 
-        if isinstance(block, PositiveClass):        
+        if isinstance(block, PositiveClass):
             new_tiling_dict[scale(cell, 3, 0, 3, 0)] = block.perm_class
             new_tiling_dict[scale(cell, 3, 0, 3, 2)] = block.perm_class
         else:
