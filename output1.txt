@@ -1,0 +1,248 @@
+doing level 1
+Doing depth 1
+on the tiling:
++-+
+|1|
++-+
+1: Av(Perm((1, 2, 0)))
+we get the following strategy
+We perform cell insertion into cell (0, 0); either it is empty or Av+(Perm((1, 2, 0))).
++-+
+| |
++-+
+
++-+
+|1|
++-+
+1: Av+(Perm((1, 2, 0)))
+----------------------
+I'm using one by one on the tiling:
++-+
+| |
++-+
+
+Doing depth 2
+on the tiling:
++-+-+
+|1| |
++-+-+
+| |2|
++-+-+
+|1| |
++-+-+
+1: Av(Perm((1, 2, 0)))
+2: point
+we get the following strategy
+We perform cell insertion into cell (0, 0); either it is empty or Av+(Perm((1, 2, 0))).
++-+-+
+|2| |
++-+-+
+| |1|
++-+-+
+1: point
+2: Av(Perm((1, 2, 0)))
++-+-+
+|3| |
++-+-+
+| |2|
++-+-+
+|1| |
++-+-+
+1: Av+(Perm((1, 2, 0)))
+2: point
+3: Av(Perm((1, 2, 0)))
+----------------------
+on the tiling:
++-+-+
+|1| |
++-+-+
+| |2|
++-+-+
+|1| |
++-+-+
+1: Av(Perm((1, 2, 0)))
+2: point
+we get the following strategy
+We perform cell insertion into cell (0, 2); either it is empty or Av+(Perm((1, 2, 0))).
++-+-+
+| |2|
++-+-+
+|1| |
++-+-+
+1: Av(Perm((1, 2, 0)))
+2: point
++-+-+
+|3| |
++-+-+
+| |2|
++-+-+
+|1| |
++-+-+
+1: Av(Perm((1, 2, 0)))
+2: point
+3: Av+(Perm((1, 2, 0)))
+----------------------
+on the tiling:
++-+-+
+| |1|
++-+-+
+|2| |
++-+-+
+| |1|
++-+-+
+1: Av(Perm((1, 2, 0)))
+2: point
+we get the following strategy
+We perform cell insertion into cell (1, 0); either it is empty or Av+(Perm((1, 2, 0))).
++-+-+
+| |2|
++-+-+
+|1| |
++-+-+
+1: point
+2: Av(Perm((1, 2, 0)))
++-+-+
+| |3|
++-+-+
+|2| |
++-+-+
+| |1|
++-+-+
+1: Av+(Perm((1, 2, 0)))
+2: point
+3: Av(Perm((1, 2, 0)))
+----------------------
+on the tiling:
++-+-+
+| |1|
++-+-+
+|2| |
++-+-+
+| |1|
++-+-+
+1: Av(Perm((1, 2, 0)))
+2: point
+we get the following strategy
+We perform cell insertion into cell (1, 2); either it is empty or Av+(Perm((1, 2, 0))).
++-+-+
+|2| |
++-+-+
+| |1|
++-+-+
+1: Av(Perm((1, 2, 0)))
+2: point
++-+-+
+| |3|
++-+-+
+|2| |
++-+-+
+| |1|
++-+-+
+1: Av(Perm((1, 2, 0)))
+2: point
+3: Av+(Perm((1, 2, 0)))
+----------------------
+on the tiling:
++-+-+-+
+|2| |2|
++-+-+-+
+| |1| |
++-+-+-+
+1: point
+2: Av(Perm((1, 2, 0)))
+we get the following strategy
+We perform cell insertion into cell (0, 1); either it is empty or Av+(Perm((1, 2, 0))).
++-+-+
+| |2|
++-+-+
+|1| |
++-+-+
+1: point
+2: Av(Perm((1, 2, 0)))
++-+-+-+
+|2| |3|
++-+-+-+
+| |1| |
++-+-+-+
+1: point
+2: Av+(Perm((1, 2, 0)))
+3: Av(Perm((1, 2, 0)))
+----------------------
+on the tiling:
++-+-+-+
+|2| |2|
++-+-+-+
+| |1| |
++-+-+-+
+1: point
+2: Av(Perm((1, 2, 0)))
+we get the following strategy
+We perform cell insertion into cell (2, 1); either it is empty or Av+(Perm((1, 2, 0))).
++-+-+
+|2| |
++-+-+
+| |1|
++-+-+
+1: point
+2: Av(Perm((1, 2, 0)))
++-+-+-+
+|2| |3|
++-+-+-+
+| |1| |
++-+-+-+
+1: point
+2: Av(Perm((1, 2, 0)))
+3: Av+(Perm((1, 2, 0)))
+----------------------
+on the tiling:
++-+-+-+
+| |2| |
++-+-+-+
+|1| |1|
++-+-+-+
+1: Av(Perm((1, 2, 0)))
+2: point
+we get the following strategy
+We perform cell insertion into cell (0, 0); either it is empty or Av+(Perm((1, 2, 0))).
++-+-+
+|2| |
++-+-+
+| |1|
++-+-+
+1: Av(Perm((1, 2, 0)))
+2: point
++-+-+-+
+| |3| |
++-+-+-+
+|1| |2|
++-+-+-+
+1: Av+(Perm((1, 2, 0)))
+2: Av(Perm((1, 2, 0)))
+3: point
+----------------------
+on the tiling:
++-+-+-+
+| |2| |
++-+-+-+
+|1| |1|
++-+-+-+
+1: Av(Perm((1, 2, 0)))
+2: point
+we get the following strategy
+We perform cell insertion into cell (2, 0); either it is empty or Av+(Perm((1, 2, 0))).
++-+-+
+| |2|
++-+-+
+|1| |
++-+-+
+1: Av(Perm((1, 2, 0)))
+2: point
++-+-+-+
+| |3| |
++-+-+-+
+|1| |2|
++-+-+-+
+1: Av(Perm((1, 2, 0)))
+2: Av+(Perm((1, 2, 0)))
+3: point
+----------------------

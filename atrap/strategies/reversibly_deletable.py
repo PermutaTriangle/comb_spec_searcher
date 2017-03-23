@@ -55,6 +55,8 @@ def components(tiling, basis):
         for cell in new_cells:
             new_tiling_dict[cell] = tiling[cell]
         strategy.append(Tiling(new_tiling_dict))
+    if len(strategy) <= 1:
+        return
 
     yield ( "the components of tiling", strategy  )
     # Consider unions of components.

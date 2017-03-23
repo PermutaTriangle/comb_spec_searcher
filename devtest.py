@@ -3,7 +3,16 @@ from permuta import *
 from grids import *
 
 
-mtree = MetaTree(Block.decreasing.basis)
+mtree = MetaTree(descriptors.Basis([Perm((0,1))]))
+
+
 #mtree.do_level()
 
-mtree.do_level(3)
+print("doing level 1")
+mtree.do_level()
+
+mtree.do_level()
+
+mtree.do_level()
+
+mtree.find_proof_tree()

@@ -1,14 +1,17 @@
-
-
 from atrap.strategies import all_cell_insertions
 from atrap.strategies import row_and_column_separations
 from atrap.strategies import all_row_and_col_placements
 from atrap.strategies import components
+from atrap.strategies import all_point_placements
+from atrap.strategies import one_by_one_verification, one_by_one_verified
+from atrap.tools import empty_cell_inferral
 
 from grids import Tiling
 
 from permuta import PermSet
 from permuta.descriptors import Basis
+
+from itertools import product, starmap
 
 #
 # class StrategyCache(object):
@@ -62,14 +65,17 @@ from permuta.descriptors import Basis
 class SiblingNode(set):
 
     def __init__(self):
-        self.expandable = False
+        self.natural = False
+        self.verification = set() # set of sets of tilings.
+                           # an empty set in the list implies verified without recursion
 
     # Can we initialise this here rather than do it in the tree?
     # def _init__(self, tiling, and_node, equivalence_strategy_generators):
 
     def add(self, or_node):
-        if or_node in self:
-            raise RuntimeError("Attempting to add node already in sibling node")
+        # if or_node in self:
+        #     print(or_node.tiling)
+        #     raise RuntimeError("Attempting to add node already in sibling node")
         if not isinstance(or_node, OrNode):
             raise TypeError("Non-OR node added to sibling node")
         super(SiblingNode, self).add(or_node)
@@ -84,6 +90,14 @@ class SiblingNode(set):
                     children.add(child_or_node.sibling_node)
         return children
 
+    def get_and_parents(self):
+        for sibling in self:
+            for parent_and_node in sibling.parents:
+                yield parent_and_node
+
+    def is_verified(self):
+        return any( not x for x in self.verified )
+
     def __hash__(self):
         return hash(id(self))#hash(sum(hash(sibling) in self))
 
@@ -95,8 +109,7 @@ class OrNode(object):
         self.expanded = False
         self.tiling = tiling
         self.sibling_node = None
-        self.recursively_verifiable = [] #list of tilings
-        self.verified = False
+        self.equivalent_expanded = False
 
 #    def get_child_sibling_nodes(self):
 #        return_set = set()
@@ -117,7 +130,14 @@ class AndNode(object):
         self.formal_step = formal_step
         self.children = []
         self.parents = []
-        self.recursively_verifiable = []
+        self.verification = set() #list of sets of tilings
+
+    def __eq__(self, other):
+        return self.parents == other.parents and self.formal_step == other.formal_step
+
+    def __hash__(self):
+        return hash(id(self))
+
 
     #@property
     #def or_children(self):
@@ -132,10 +152,9 @@ class MetaTree(object):
         self.basis = Basis(basis)
 
         # Generators for strategies
-        self.equivalence_strategy_generators = [all_row_and_col_placements,
-                                                row_and_column_separations]
+        self.equivalence_strategy_generators = [all_point_placements]
         self.batch_strategy_generators = [all_cell_insertions]
-        self.recursive_strategy_generators = [components]
+        self.recursive_strategy_generators = [components, one_by_one_verification]
         self.counting_combining = 0
 
         # Create the first tiling
@@ -153,6 +172,7 @@ class MetaTree(object):
 
         root_sibling_node = SiblingNode()
         root_sibling_node.add(root_or_node)
+        root_sibling_node.natural = True
 
         self.root_and_node = root_and_node
         self.root_or_node = root_or_node
@@ -188,37 +208,66 @@ class MetaTree(object):
         for sibling_or_node in root_sibling_node:
             if sibling_or_node.expanded:
                 # We need to move further down
-                print("Found that I need to move down on:")
-                print(sibling_or_node.tiling)
+                # print("Found that I need to move down on:")
+                # print(sibling_or_node.tiling)
                 for child_and_node in sibling_or_node.children:
                     for child_or_node in child_and_node.children:
                         drill_set.add(child_or_node.sibling_node)
             else:
-                print("Found that I need to expand down on:")
-                print(sibling_or_node.tiling)
+                # print("Found that I need to expand down on:")
+                # print(sibling_or_node.tiling)
                 expand_set.add(sibling_or_node)
 
         # Expand the child nodes into sibling nodes and add to drill set
         for sibling_or_node in expand_set:
-            print("Expanding:")
-            print(sibling_or_node.tiling)
-            child_sibling_nodes = self._expand_helper(sibling_or_node)
+            # print("Expanding:")
+            # print(sibling_or_node.tiling)
+            if frozenset() not in sibling_or_node.sibling_node.verification:
+                child_sibling_nodes = self._expand_helper(sibling_or_node)
+            else:
+                child_sibling_nodes = set()
             drill_set.update(child_sibling_nodes)
 
         # Move down entire drill set
         for child_sibling_node in drill_set:
-            print("Moving down:")
-            print(child_sibling_node)
+            # print("Moving down:")
+            # print(child_sibling_node)
             self._sibling_helper(child_sibling_node, requested_depth - 1)
 
     def _expand_helper(self, root_or_node):
         # Expand OR node using batch strategies and return the sibling nodes
         child_sibling_nodes = set()
+        and_nodes_to_be_propagataed = set()
 
         # Find all the recursive strategies (including verification if switched on) and add 'em
         for generator in self.recursive_strategy_generators:
-            for strategy in generator(tiling, self.basis):
+            for strategy in generator(root_or_node.tiling, basis=self.basis):
+                print("on the tiling:")
+                print(root_or_node.tiling)
+                print("whose parents' formal steps are:")
+                for parent in root_or_node.parents:
+                    print(parent.formal_step)
+                    print("using tiling")
+                    print(parent.parents[0].tiling)
+                print("with the following siblings:")
+                for sibling in root_or_node.sibling_node:
+                    print(sibling.tiling)
+                print("we get the following strategy")
                 formal_step, tilings = strategy
+                print(formal_step)
+                for tiling in tilings:
+                    print(tiling)
+                print("----------------------")
+                if len(tilings) == 0:
+                    child_and_node = AndNode(formal_step)
+                    child_and_node.parents.append(root_or_node)
+                    root_or_node.children.append(child_and_node)
+                    sibling_node = self._get_recursive_sibling_node(root_or_node.tiling, child_and_node)
+                    child_sibling_nodes.add(sibling_node)
+                    sibling_node.verification.add(frozenset())
+                    and_nodes_to_be_propagataed.add(child_and_node)
+                    continue
+
                 # Create the AND node and connect it to its parent OR node
                 child_and_node = AndNode(formal_step)
                 child_and_node.parents.append(root_or_node)
@@ -227,8 +276,21 @@ class MetaTree(object):
                 for tiling in tilings:
                     # Create/get a sibling node and connect it
                     sibling_node = self._get_recursive_sibling_node(tiling, child_and_node)
+                    if one_by_one_verified(tiling, self.basis):
+                        print("I'm using one by one on the tiling:")
+                        print(tiling)
+                        sibling_node.natural = True
+                        sibling_node.verification.add(frozenset())
+                    else:
+                        sibling_node.verification.add( frozenset([tiling]) )
                     # Add it to the return set
                     child_sibling_nodes.add(sibling_node)
+                self._propagate_and_node_verificataion(child_and_node, set())
+        #
+        # for and_node in and_nodes_to_be_propagataed:
+        #     self._propagate_and_node_verificataion(and_node, set())
+        #
+        # and_nodes_to_be_propagataed = set()
 
         # Find all the batch strategies, and add 'em.
         for generator in self.batch_strategy_generators:
@@ -236,18 +298,39 @@ class MetaTree(object):
             for strategy in generator(root_or_node.tiling, basis=self.basis):
                 if not strategy:
                     continue
+                print("on the tiling:")
+                print(root_or_node.tiling)
+                print("we get the following strategy")
                 formal_step, tilings = strategy
+                print(formal_step)
+                for tiling in tilings:
+                    print(tiling)
+                print("----------------------")
                 # Create the AND node and connect it to its parent OR node
                 child_and_node = AndNode(formal_step)
                 child_and_node.parents.append(root_or_node)
                 root_or_node.children.append(child_and_node)
                 # Go through all the tilings created for the AND node
                 for tiling in tilings:
+                    tiling = empty_cell_inferral(tiling, self.basis)
                     # Create/get a sibling node and connect it
                     sibling_node = self._get_sibling_node(tiling, child_and_node)
                     # Add it to the return set
-                    child_sibling_nodes.add(sibling_node)
-                    sibling_node.expandable = True
+                    if one_by_one_verified(tiling, self.basis):
+                        print("I'm using one by one on the tiling:")
+                        print(tiling)
+                        sibling_node.verification.add(frozenset())
+                    # child_sibling_nodes.add(sibling_node)
+                if any( not or_node.sibling_node.natural for or_node in child_and_node.children):
+                    for or_node in child_and_node.children:
+                        or_node.sibling_node.natural = True
+                    self._propagate_and_node_verificataion(child_and_node, set())
+
+
+        #
+        # for and_node in and_nodes_to_be_propagataed:
+        #     self._propagate_and_node_verificataion(and_node, set())
+
         root_or_node.expanded = True
         return child_sibling_nodes
 
@@ -255,11 +338,20 @@ class MetaTree(object):
         or_node = self.tiling_cache.get(tiling)
         if or_node is None:
             # Make sure we only expand non-recursive strategies
-            # therefore the sibling node created will have expandable = False
+            # therefore the sibling node created will have natural = False
             # unless found otherwise
+            or_node = OrNode()
+            or_node.tiling = tiling
+            self.tiling_cache[tiling] = or_node
+            sibling_node = SiblingNode()
+            sibling_node.add(or_node)
+        else:
+            sibling_node = or_node.sibling_node
 
+        or_node.parents.append(and_node)
+        and_node.children.append(or_node)
 
-
+        return sibling_node
 
 
     def _get_sibling_node(self, tiling, and_node):
@@ -271,55 +363,233 @@ class MetaTree(object):
             self.tiling_cache[tiling] = or_node
 
             # Our new OR node belongs to no sibling node yet
-
-            new_or_nodes = set([or_node])
-            existing_sibling_nodes = set()
-
-            for generator in self.equivalence_strategy_generators:
-                for strategy in generator(tiling, basis=self.basis):
-                    if not strategy:
-                        continue
-                    if not isinstance(strategy[0], str):
-                        strategy = "", strategy[0]
-                    formal_step, eq_tiling = strategy
-                    # TODO: shouldn't return these in the first place
-                    if eq_tiling == tiling:
-                        continue
-                    # TODO: Christian stepped in, so can be done better probably.
-                    # This is ancestry_dict
-                    sibling_or_node = self.tiling_cache.get(eq_tiling)
-
-                    if sibling_or_node is None:
-                        sibling_or_node = OrNode(eq_tiling)
-
-                        self.tiling_cache[eq_tiling] = sibling_or_node
-                        new_or_nodes.add(sibling_or_node)
-                    else:
-                        existing_sibling_nodes.add(sibling_or_node.sibling_node)
-
-            sibling_node_iter = iter(existing_sibling_nodes)
-            if len(existing_sibling_nodes) == 0:
-                # Create new sibling node
-                sibling_node = SiblingNode()
-            else:
-                print("yeah!! let's combine our forces for the greater good!")
-                self.counting_combining += 1
-                sibling_node = next(sibling_node_iter)
-
-            for existing_sibling_node in sibling_node_iter:
-                for sibling_or_node in existing_sibling_node:
-                    sibling_node.add(sibling_or_node)
-            for sibling_or_node in new_or_nodes:
-                sibling_node.add(sibling_or_node)
+            sibling_node = self._fully_equivalent_sibling_node(or_node)
         else:
             sibling_node = or_node.sibling_node
             # Make sure we only expand batch strategies found.
-            if sibling_node.expandable:
-
-
+            # Previously found by recursive strategy, but not batch
+            # Therefore we want to expand it.
+            if not sibling_node.natural:
+                sibling_node = self._fully_equivalent_sibling_node(or_node)
 
         # Hook up the OR node with its parent AND node and vice-versa
         or_node.parents.append(and_node)
         and_node.children.append(or_node)
 
         return sibling_node
+
+    def _fully_equivalent_sibling_node(self, or_node):
+        # Our new OR node belongs to no sibling node yet
+        new_or_nodes = set([or_node])
+        # new_sibling_nodes_to_be_added
+        existing_sibling_nodes = set()
+
+        while new_or_nodes:
+            new_or_node = new_or_nodes.pop()
+            if new_or_node.equivalent_expanded:
+                existing_sibling_nodes.add(new_or_node.sibling_node)
+                continue
+            new_sibling_node = SiblingNode()
+            new_sibling_node.add(new_or_node)
+            new_or_node.sibling_node = new_sibling_node
+            for generator in self.equivalence_strategy_generators:
+                for strategy in generator(new_or_node.tiling, basis=self.basis):
+                    if not isinstance(strategy[0], str):
+                        print("still the wrong format")
+                        strategy = "", strategy[0]
+                    formal_step, eq_tiling = strategy
+                    # TODO: shouldn't return these in the first place
+                    eq_tiling = empty_cell_inferral(eq_tiling, self.basis)
+                    if eq_tiling == or_node.tiling:
+                        continue
+
+                    # TODO: Christian stepped in, so can be done better probably.
+                    # This is ancestry_dict
+                    sibling_or_node = self.tiling_cache.get(eq_tiling)
+
+                    if sibling_or_node is None:
+                        sibling_or_node = OrNode(eq_tiling)
+                        self.tiling_cache[eq_tiling] = sibling_or_node
+                        new_or_nodes.add(sibling_or_node)
+                        # new_or_nodes_to_be_added.add(sibling_or_node)
+                        new_sibling_node.add(sibling_or_node)
+                        sibling_or_node.sibling_node = new_sibling_node
+                    else:
+                        # print(new_or_node.tiling)
+                        if new_or_node.sibling_node.natural:
+                            existing_sibling_nodes.add(sibling_or_node.sibling_node)
+                        else:
+                            new_or_node.sibling_node.natural = True
+                            new_or_nodes.add(new_or_node)
+                            existing_sibling_nodes.add(sibling_or_node.sibling_node)
+            existing_sibling_nodes.add(new_sibling_node)
+            new_or_node.equivalent_expanded = True
+
+        sibling_node_iter = iter(existing_sibling_nodes)
+        if len(existing_sibling_nodes) == 0:
+            # Create new sibling node
+            sibling_node = SiblingNode()
+        else:
+            sibling_node = next(sibling_node_iter)
+
+
+        for existing_sibling_node in sibling_node_iter:
+            # print("yeah!! let's combine our forces for the greater good!")
+            self.counting_combining += 1
+            for sibling_or_node in existing_sibling_node:
+                sibling_node.add(sibling_or_node)
+        # for sibling_or_node in new_or_nodes_to_be_added:
+        #     sibling_node.add(sibling_or_node)
+
+        return sibling_node
+
+    # I want to propagate verification to the parents of sibling_node
+    # TODO: consider updating, rather than recomputing verification
+    def _propagate_and_node_verificataion( self, and_node, seen_nodes=set() ):
+        if and_node in seen_nodes:
+            return
+        seen_nodes.add(and_node)
+        print("attempting AND node propagation")
+        if any( not child.sibling_node.verification for child in and_node.children):
+            print("there is an unverified child")
+            for child in and_node.children:
+                if not child.sibling_node.verification:
+                    print(child.tiling)
+            print("---")
+            return
+        if any( not child.sibling_node.natural for child in and_node.children):
+            print("there is an unnatural child DAMIAN!")
+            for child in and_node.children:
+                if not child.sibling_node.natural:
+                    print(child.tiling)
+            print("---")
+            return
+
+        child_verifications = set()
+        # input()
+        print(and_node.formal_step)
+
+        # unflattened_verifications = product( child.sibling_node.verification for child in and_node.children )
+        # new_verification = set()
+        # print(unflattened_verifications)
+        # for unflattened_verification in unflattened_verifications:
+        #     print(unflattened_verification)
+        #     new_verification.add( set().union( part for part in unflattened_verification) )
+
+        print("we're attempting to combine on an AND node")
+        child_verifications = []
+
+        for child in and_node.children:
+            child_verifications.append( child.sibling_node.verification )
+        print(child_verifications)
+        new_verification = set()
+        for verification_product in product(*child_verifications):
+            print( verification_product )
+            print("the tilings in this set are")
+            for fset in verification_product:
+                for tiling in fset:
+                    print(tiling)
+            new_verification.add(frozenset().union(*verification_product))
+        print("our guess is:")
+        print(new_verification)
+
+
+        # for child in and_node.children:
+        #     # find all the child verifications
+        #     print(child.tiling)
+        #     print(child.sibling_node.verification)
+        #     child_verifications.update(child.sibling_node.verification)
+        #     # we will have now seen all of tilings on the sibling node
+        #     seen_tilings.update( sibling.tiling for sibling in child.sibling_node )
+        # print("we've seen these tilings so far:")
+        # for tiling in seen_tilings:
+        #     print(tiling)
+        # # input()
+        #
+        # new_verification = set()
+        # new_verification.add(frozenset.union(*child_verifications))
+
+        and_node.verification = new_verification
+        print("the verification we give to the and_node is:")
+        print(new_verification)
+        # input()
+        if frozenset() in and_node.verification:
+            print("we've got a proof tree here!")
+            and_node.verification = set([frozenset()])
+            # input()
+        if and_node is self.root_and_node:
+            print("at root AND node")
+            # input()
+            if  frozenset() in and_node.verification:
+                print("we've got a proof tree here!")
+                self.find_proof_tree()
+                assert 2 == 3
+                # input()
+                # input()
+                # input()
+        # There is only one
+        for parent_node in and_node.parents:
+            self._propagate_sibling_node_verification( parent_node.sibling_node, seen_nodes )
+
+    def _propagate_sibling_node_verification( self, sibling_node, seen_nodes=set() ):
+        # if any( child.verification for child in sibling_node.children ):
+        #     return
+        # if any( child.sibling_node.natural for child in sibling_node.children ):
+        #     return
+        if sibling_node in seen_nodes:
+            return
+        seen_nodes.add(sibling_node)
+        # if any( sibling.tiling in seen_tilings and not sibling.tiling == self.root_or_node.tiling for sibling in sibling_node ):
+        #     return
+        print("sibling node propagation")
+        # input()
+        new_verification = set()
+        print("the child AND nodes have the following verifications:")
+        for sibling in sibling_node:
+            print(sibling.tiling)
+            for child_and_node in sibling.children:
+                print(child_and_node.verification)
+                new_verification.update(child_and_node.verification)
+        print("the new verification for the sibling node is:")
+        print(new_verification)
+
+        final_sibling_verification = set()
+        for verification in new_verification:
+            final_sibling_verification.add( frozenset( [tiling for tiling in verification if self.tiling_cache[tiling] not in sibling_node] ) )
+        sibling_node.verification = final_sibling_verification
+        if frozenset() in new_verification:
+            print("we have a proof tree here at the sibling node!!")
+
+        # input()
+        for parent_and_node in sibling_node.get_and_parents():
+            self._propagate_and_node_verificataion(parent_and_node, seen_nodes )
+
+    def find_proof_tree(self):
+        if not frozenset() in self.root_and_node.verification:
+            print("there isn't one, numb nuts")
+        print(self.root_and_node.formal_step)
+        print(self.root_or_node.tiling)
+        return self._find_proof_tree_helper(self.root_and_node)
+
+    def _find_proof_tree_helper(self, root_and_node):
+        print(root_and_node.formal_step)
+        print("Giving the tilings")
+        for child_or_node in root_and_node.children:
+            print(child_or_node.tiling)
+        for child_or_node in root_and_node.children:
+            k = False
+            for sibling in child_or_node.sibling_node:
+                if k:
+                    break
+                for child_and_node in sibling.children:
+                    if frozenset() in child_and_node.verification:
+                        if child_or_node.tiling != sibling.tiling:
+                            print("The following are siblings:")
+                            print(child_or_node.tiling)
+                            print(sibling_node.tiling)
+                        print("Using the following tiling:")
+                        print(sibling_node.tiling)
+                        self._find_proof_tree_helper(self.child_and_node)
+                        k = True
+                        break
+        print("something is fishy...")

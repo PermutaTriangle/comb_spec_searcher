@@ -41,6 +41,41 @@ def is_verified(tiling, basis):
     # Tiling is verified if all perms avoid; i.e., none contain
     return not containing_perms
 
+def empty_cell_inferral(tiling, basis):
+
+    new_tiling_dict = dict(tiling)
+
+    point_cells = {}
+    for cell, block in tiling:
+        if block is Block.point or isinstance(block, PositiveClass):
+            point_cells[cell] = Block.point
+
+    for cell, block in tiling.classes:
+        point_cells[cell] = Block.point
+        verification_length = len(point_cells)
+        point_cell_tiling = Tiling(point_cells)
+        point_cells.pop(cell)
+        if any( perm.avoids(*basis) for perm in point_cell_tiling.perms_of_length(verification_length) ):
+            continue
+        new_tiling_dict.pop(cell)
+
+    return Tiling(new_tiling_dict)
+
+def one_by_one_verified(tiling, basis):
+    if tiling.dimensions.i == 1 and tiling.dimensions.j == 1:
+        if len(tiling) > 0:
+            perm_class = tiling[(0,0)]
+            if isinstance(perm_class, PositiveClass):
+                perm_class = perm_class.perm_class
+            if perm_class == PermSet.avoiding(basis):
+                return False
+        return True
+    return False
+
+def one_by_one_verification(tiling, basis):
+    if one_by_one_verified(tiling, basis):
+        yield "one by one tiling, surely you can handle it", []
+
 
 def tiling_inferral(tiling, basis):
     """Return a new tiling where all non-points have been inferred."""
