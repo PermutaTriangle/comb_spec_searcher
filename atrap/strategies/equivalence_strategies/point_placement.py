@@ -3,6 +3,8 @@ from grids import Block
 from grids import PositiveClass
 from grids import Tiling
 
+from .equivalence_class import EquivalenceStrategy
+
 
 def all_point_placements(tiling, **kwargs):
     for cell, block in tiling.non_points:
@@ -90,7 +92,7 @@ def all_point_placements(tiling, **kwargs):
         leftmost_tiling = Tiling(leftmost_tiling_dict)
         rightmost_tiling = Tiling(rightmost_tiling_dict)
 
-        yield "Inserting the top most point in to the cell " + str(cell), topmost_tiling
-        yield "Inserting the left most point in to the cell " + str(cell), leftmost_tiling
-        yield "Inserting the bottom most point in to the cell " + str(cell), bottommost_tiling
-        yield "Inserting the right most point in to the cell " + str(cell),  rightmost_tiling
+        yield EquivalenceStrategy( "Inserting the top most point in to the cell " + str(cell), topmost_tiling )
+        yield EquivalenceStrategy( "Inserting the left most point in to the cell " + str(cell), leftmost_tiling )
+        yield EquivalenceStrategy( "Inserting the bottom most point in to the cell " + str(cell), bottommost_tiling )
+        yield EquivalenceStrategy( "Inserting the right most point in to the cell " + str(cell),  rightmost_tiling )

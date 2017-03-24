@@ -4,6 +4,10 @@ from atrap.tools import basis_partitioning
 from permuta import Perm, PermSet
 from copy import copy
 
+from .inferral_class import InferralStrategy
+
+# TODO: Its broken. Do topmost point insertion on 132 as first test case.
+
 def row_and_column_inequalities_of_tiling(tiling, basis):
     # This will create the containing/avoiding less than cells of the permutation by row
     smaller_than_dicts_by_row = (defaultdict(dict), defaultdict(dict))
@@ -158,11 +162,11 @@ def inequality_word( inequalities ):
                 max_letter = current_max_letter
                 max_words = [word]
         if len(max_words) > 1:
-            print("hmmmmm row column separation is still not producing a unique guy")
-            print("even more hmmmmm, also the word with most letters isn't unique")
-            print("I will choose the lexicographically smallest")
+            # print("hmmmmm row column separation is still not producing a unique guy")
+            # print("even more hmmmmm, also the word with most letters isn't unique")
+            # print("I will choose the lexicographically smallest")
             max_words.sort()
-            print(inequalities)
+            # print(inequalities)
             assert len(max_words) > 1
 
         return max_words[0]
@@ -273,4 +277,6 @@ def row_and_column_separations(tiling, basis):
     row_and_column_splits = row_and_column_splits_of_tiling(tiling, basis)
 
     # TODO Do formal step string
-    yield "TODO: Row col sep formal step string", tile_splitter(tiling, row_and_column_splits)
+    separated_tiling = tile_splitter(tiling, row_and_column_splits)
+    if not separated_tiling == tiling:
+        yield InferralStrategy( "Row column separations of the tiling", separated_tiling )

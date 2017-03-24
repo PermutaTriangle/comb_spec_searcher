@@ -2,8 +2,10 @@ from grids import Block
 from grids import PositiveClass
 from grids import Tiling
 
+from .batch_class import BatchStrategy
 
-__all__ = ["cell_insertion", "all_cell_insertions"]
+
+__all__ = ["all_cell_insertions"]
 
 
 def all_cell_insertions(tiling, **kwargs):
@@ -15,7 +17,8 @@ def all_cell_insertions(tiling, **kwargs):
         format_string = "We perform cell insertion into cell {}; either it is empty or {}."  # TODO: References
         formal_step = format_string.format(tuple(cell), positive_class)
         # Yield the formal step and the pair of tilings created
-        yield formal_step, cell_insertion(tiling, cell)
+
+        yield BatchStrategy( formal_step, cell_insertion(tiling, cell) )
 
 
 def cell_insertion(tiling, cell):

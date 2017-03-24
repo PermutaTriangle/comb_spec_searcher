@@ -10,13 +10,10 @@ mtree = MetaTree(descriptors.Basis([Perm((0,2,1))]))
 
 print("doing level 1")
 mtree.do_level()
-
 mtree.do_level()
-
 mtree.do_level()
-
 mtree.do_level()
-
 mtree.do_level()
+print("done")
 
 mtree.find_proof_tree()
