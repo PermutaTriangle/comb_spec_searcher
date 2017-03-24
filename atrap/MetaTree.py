@@ -280,7 +280,13 @@ class MetaTree(object):
                         print("I'm using one by one on the tiling:")
                         print(tiling)
                         sibling_node.natural = True
-                        sibling_node.verification.add(frozenset())
+                        # sibling_node.verification.add(frozenset())
+                        one_by_one_verified_and_node = AndNode("I am one-by-one verified")
+                        one_by_one_or_node = self.tiling_cache[tiling]
+                        one_by_one_or_node.children.append(one_by_one_verified_and_node)
+                        one_by_one_verified_and_node.parents.append(one_by_one_or_node)
+                        one_by_one_verified_and_node.verification.add(frozenset())
+                        self._propagate_and_node_verificataion(one_by_one_verified_and_node)
                     else:
                         sibling_node.verification.add( frozenset([tiling]) )
                     # Add it to the return set
@@ -319,7 +325,13 @@ class MetaTree(object):
                     if one_by_one_verified(tiling, self.basis):
                         print("I'm using one by one on the tiling:")
                         print(tiling)
-                        sibling_node.verification.add(frozenset())
+                        # sibling_node.verification.add(frozenset())
+                        one_by_one_verified_and_node = AndNode("I am one-by-one verified")
+                        one_by_one_or_node = self.tiling_cache[tiling]
+                        one_by_one_or_node.children.append(one_by_one_verified_and_node)
+                        one_by_one_verified_and_node.parents.append(one_by_one_or_node)
+                        one_by_one_verified_and_node.verification.add(frozenset())
+                        self._propagate_and_node_verificataion(one_by_one_verified_and_node)
                     # child_sibling_nodes.add(sibling_node)
                 if any( not or_node.sibling_node.natural for or_node in child_and_node.children):
                     for or_node in child_and_node.children:
@@ -520,7 +532,7 @@ class MetaTree(object):
         if and_node is self.root_and_node:
             print("at root AND node")
             # input()
-            if  frozenset() in and_node.verification:
+            if frozenset() in and_node.verification:
                 print("we've got a proof tree here!")
                 self.find_proof_tree()
                 assert 2 == 3
@@ -566,30 +578,44 @@ class MetaTree(object):
 
     def find_proof_tree(self):
         if not frozenset() in self.root_and_node.verification:
-            print("there isn't one, numb nuts")
+            print("there isn't one")
         print(self.root_and_node.formal_step)
         print(self.root_or_node.tiling)
-        return self._find_proof_tree_helper(self.root_and_node)
+        return self._find_proof_tree_helper(self.root_and_node, set())
 
-    def _find_proof_tree_helper(self, root_and_node):
+    def _find_proof_tree_helper(self, root_and_node, seen_tilings=set()):
         print(root_and_node.formal_step)
-        print("Giving the tilings")
+        if root_and_node.children:
+            print("Giving the tilings")
+        else:
+            return
         for child_or_node in root_and_node.children:
             print(child_or_node.tiling)
-        for child_or_node in root_and_node.children:
-            k = False
             for sibling in child_or_node.sibling_node:
+                if sibling.tiling in seen_tilings:
+                    return
+                seen_tilings.add(sibling.tiling)
+        for child_or_node in root_and_node.children:
+            # print(child_or_node.tiling)
+            k = False
+            # print(child_or_node.sibling_node.verification)
+            for sibling in child_or_node.sibling_node:
+                # print(sibling.tiling)
                 if k:
                     break
+                # print(sibling.children)
+
                 for child_and_node in sibling.children:
-                    if frozenset() in child_and_node.verification:
+                    # print(seen_tilings)
+                    # print(child_and_node.verification)
+                    if any(verification.issubset(seen_tilings) for verification in child_and_node.verification):
                         if child_or_node.tiling != sibling.tiling:
-                            print("The following are siblings:")
+                            print("The following two tilings are siblings:")
                             print(child_or_node.tiling)
-                            print(sibling_node.tiling)
+                            print(sibling.tiling)
                         print("Using the following tiling:")
-                        print(sibling_node.tiling)
-                        self._find_proof_tree_helper(self.child_and_node)
+                        print(sibling.tiling)
+                        self._find_proof_tree_helper(child_and_node, seen_tilings)
                         k = True
                         break
-        print("something is fishy...")
+        # print("something is fishy...")

@@ -56,12 +56,12 @@ def all_point_placements(tiling, **kwargs):
                     topmost_tiling_dict[(new_cell.i - 0.5, new_cell.j)] = new_block
 
                     bottommost_tiling_dict[(new_cell.i + 0.5, new_cell.j)] = new_block
-                    bottommost_tiling_dict[(cell.i - 0.5, new_cell.j)] = new_block
+                    bottommost_tiling_dict[(new_cell.i - 0.5, new_cell.j)] = new_block
 
                     leftmost_tiling_dict[(new_cell.i + 0.5, new_cell.j)] = new_block
                     leftmost_tiling_dict[(new_cell.i - 0.5, new_cell.j)] = new_block
 
-                    rightmost_tiling_dict[(new_cell.i - 0.5, new_cell.j)] = new_block
+                    rightmost_tiling_dict[(new_cell.i + 0.5, new_cell.j)] = new_block
                     rightmost_tiling_dict[(new_cell.i - 0.5, new_cell.j)] = new_block
 
             # same row, but different column
