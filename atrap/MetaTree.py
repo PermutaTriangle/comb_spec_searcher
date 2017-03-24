@@ -5,6 +5,7 @@ from atrap.strategies import all_point_placements
 from atrap.strategies import one_by_one_verification
 from atrap.strategies import empty_cell_inferral
 from atrap.strategies import subset_verified
+from atrap.ProofTree import ProofTree, ProofTreeNode
 
 from grids import Tiling
 
@@ -667,47 +668,43 @@ class MetaTree(object):
         if not frozenset() in self.root_and_node.verification:
             print("there isn't one")
             return
-        return self._find_proof_tree_helper(self.root_and_node, set())
+        proof_tree = ProofTree( self._find_proof_tree_helper(self.root_or_node.children[0], self.root_or_node.tiling, set([self.root_or_node.tiling])) )
+        proof_tree.pretty_print()
+        return proof_tree
 
-    def _find_proof_tree_helper(self, root_and_node, seen_tilings=set()):
-        print(root_and_node.formal_step)
-        if root_and_node.children:
-            print("Giving the tilings")
-        else:
-            return
+    def _find_proof_tree_helper(self, root_and_node, in_tiling, seen_tilings=set()):
 
-        end_of_the_line = False
+        # if not root_and_node.children:
+        #     return
+
+        formal_step = root_and_node.formal_step
+        out_tiling = root_and_node.parents[0].tiling
+        tilings = [ sibling.tiling for sibling in root_and_node.parents[0].sibling_node ]
+        seen_tilings.update(tilings)
+        print("----------")
+        print("seen_tilings")
+        for tiling in seen_tilings:
+            print(tiling)
+        print("----------")
+
+
+        children = []
         for child_or_node in root_and_node.children:
-            print(child_or_node.tiling)
-            for sibling in child_or_node.sibling_node:
-                if sibling.tiling in seen_tilings:
-                    end_of_the_line = True
-                seen_tilings.add(sibling.tiling)
-        if end_of_the_line:
-            return
-
-        for child_or_node in root_and_node.children:
-            # print(child_or_node.tiling)
             k = False
-            # print(child_or_node.sibling_node.verification)
+            if child_or_node.tiling in seen_tilings:
+                sibling_tilings = [ sibling.tiling for sibling in child_or_node.sibling_node ]
+                children.append(ProofTreeNode( "This is already in there", in_tiling, None, sibling_tilings, [] ))
+                k = True
+            if k:
+                break
             for sibling in child_or_node.sibling_node:
-                # print(sibling.tiling)
                 if k:
                     break
-                # print(sibling.children)
                 for child_and_node in sibling.children:
-                    # print(seen_tilings)
-                    # print(child_and_node.verification)
+                    print(sibling.tiling)
                     if any(verification.issubset(seen_tilings) for verification in child_and_node.verification):
-                        if child_or_node.tiling != sibling.tiling:
-                            print("--------------")
-                            print("The following two tilings are siblings:")
-                            print(child_or_node.tiling)
-                            print(sibling.tiling)
-                        print("--------------")
-                        print("Using the following tiling:")
-                        print(sibling.tiling)
-                        self._find_proof_tree_helper(child_and_node, seen_tilings)
+                        children.append( self._find_proof_tree_helper( child_and_node, child_or_node.tiling, seen_tilings ) )
                         k = True
                         break
-        # print("something is fishy...")
+
+        return ProofTreeNode(formal_step, in_tiling, out_tiling, tilings, children)
