@@ -3,7 +3,7 @@ from permuta import *
 from grids import *
 
 
-mtree = MetaTree(descriptors.Basis([Perm((0,2,1))]))
+mtree = MetaTree(descriptors.Basis([Perm((0,1,2)), Perm((1,0))]))
 
 
 #mtree.do_level()

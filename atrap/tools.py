@@ -17,8 +17,8 @@ def basis_partitioning(tiling, length, basis):
         cache[length] = tiling.basis_partitioning(length, basis)
     return cache[length]
 
-def basis_partitioning(tiling, length, basis):
-    return tiling.basis_partitioning(length, basis)
+# def basis_partitioning(tiling, length, basis):
+#     return tiling.basis_partitioning(length, basis)
 
 def is_verified(tiling, basis):
     """Check that a tiling is a subset of Av(basis)."""

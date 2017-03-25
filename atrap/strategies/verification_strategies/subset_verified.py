@@ -23,9 +23,16 @@ def subset_verified(tiling, basis):
         else:
             verification_length = tiling.total_points + len(basis[-1])
 
-        partitions = basis_partitioning(tiling, verification_length, basis)
-        containing_perms, _ = partitions
+        verified = True
+        for length in range(tiling.total_points, verification_length + 1):
+            partitions = basis_partitioning(tiling, length, basis)
+            containing_perms, _ = partitions
+            if containing_perms:
+                verified = False
+                break
+
+
 
         # Tiling is verified if all perms avoid; i.e., none contain
-        if not containing_perms:
+        if verified:
             yield VerificationStrategy( "The tiling is a subset of the subclass" )
