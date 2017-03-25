@@ -681,11 +681,6 @@ class MetaTree(object):
         out_tiling = root_and_node.parents[0].tiling
         tilings = [ sibling.tiling for sibling in root_and_node.parents[0].sibling_node ]
         seen_tilings.update(tilings)
-        print("----------")
-        print("seen_tilings")
-        for tiling in seen_tilings:
-            print(tiling)
-        print("----------")
 
 
         children = []
@@ -693,18 +688,25 @@ class MetaTree(object):
             k = False
             if child_or_node.tiling in seen_tilings:
                 sibling_tilings = [ sibling.tiling for sibling in child_or_node.sibling_node ]
-                children.append(ProofTreeNode( "This is already in there", in_tiling, None, sibling_tilings, [] ))
+                children.append(ProofTreeNode( "This is already in there", child_or_node.tiling, None, sibling_tilings, [] ))
                 k = True
-            if k:
-                break
             for sibling in child_or_node.sibling_node:
                 if k:
                     break
                 for child_and_node in sibling.children:
-                    print(sibling.tiling)
                     if any(verification.issubset(seen_tilings) for verification in child_and_node.verification):
                         children.append( self._find_proof_tree_helper( child_and_node, child_or_node.tiling, seen_tilings ) )
                         k = True
                         break
-
+        # print("+++++++++++++++++++++++")
+        # print("in_tiling")
+        # print(in_tiling)
+        # print("out_tiling")
+        # print(out_tiling)
+        # print("formal_step")
+        # print(root_and_node.formal_step)
+        # print("children's in_tilings")
+        # for child in children:
+        #     print( child.in_tiling )
+        # print("+++++++++++++++++++++++")
         return ProofTreeNode(formal_step, in_tiling, out_tiling, tilings, children)
