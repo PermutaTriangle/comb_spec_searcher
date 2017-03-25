@@ -62,13 +62,18 @@ class ProofTree(JsonAble):
     def pretty_print(self, file=sys.stdout):
         legend = [["label counter:", 0]]
         self._pretty_print(self.root, 0, legend, file=file)
-        for label, tiling in legend:
-            if isinstance(tiling, int):
+        for label, tilings in legend:
+            if isinstance(tilings, int):
                 continue
             print(file=file)
             print("Label:", label, file=file)
             print(file=file)
-            print(tiling, file=file)
+            in_tiling, out_tiling = tilings
+            print(in_tiling, file=file)
+            if out_tiling:
+                if out_tiling != in_tiling:
+                    print("We use his sibling for the next strategy", file=file)
+                    print(out_tiling, file=file)
 
     def _pretty_print(self, root, depth, legend, prefix="root: ", tail=False, file=sys.stdout):
         tp_L = ProofTree.__PRETTY_PRINT_DICT["L"]
@@ -77,7 +82,7 @@ class ProofTree(JsonAble):
         tp_empty = ProofTree.__PRETTY_PRINT_DICT["empty"]
         label_counter = legend[0][1]
         print(prefix, label_counter, sep="", file=file)
-        legend.append([label_counter, root.out_tiling])
+        legend.append([label_counter, (root.in_tiling, root.out_tiling)])
         legend[0][1] += 1
         for subtree_number in range(len(root.children)-1):
             self._pretty_print(root.children[subtree_number],
