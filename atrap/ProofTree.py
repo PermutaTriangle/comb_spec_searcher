@@ -77,7 +77,7 @@ class ProofTree(JsonAble):
         tp_empty = ProofTree.__PRETTY_PRINT_DICT["empty"]
         label_counter = legend[0][1]
         print(prefix, label_counter, sep="", file=file)
-        legend.append([label_counter, root.tilings[0]])
+        legend.append([label_counter, root.out_tiling])
         legend[0][1] += 1
         for subtree_number in range(len(root.children)-1):
             self._pretty_print(root.children[subtree_number],
