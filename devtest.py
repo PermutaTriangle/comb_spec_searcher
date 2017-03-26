@@ -3,7 +3,8 @@ from permuta import *
 from grids import *
 
 
-mtree = MetaTree(descriptors.Basis([Perm((0,1,2)), Perm((1,0))]))
+# mtree = MetaTree(descriptors.Basis([Perm((0,2,1)), Perm((0,1,2,3))]))
+mtree = MetaTree(descriptors.Basis([Perm((0,2,1))]))
 
 
 #mtree.do_level()
@@ -13,7 +14,3 @@ mtree.do_level()
 mtree.do_level()
 mtree.do_level()
 mtree.do_level()
-mtree.do_level()
-print("done")
-
-mtree.find_proof_tree()

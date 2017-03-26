@@ -158,7 +158,7 @@ class MetaTree(object):
         self.recursive_strategy_generators = [components]
         self.inferral_strategy_generators = [empty_cell_inferral]
         self.verification_strategy_generators = [one_by_one_verification, subset_verified]
-        self.counting_combining = 0
+        self.proof_tree_found = False
 
         # Create the first tiling
         root_tiling = Tiling({(0, 0): PermSet.avoiding(basis)})
@@ -196,11 +196,13 @@ class MetaTree(object):
                 print("Depth already searched")
                 return
             print("Doing depth", requested_depth)
-            self._sibling_helper(self.root_sibling_node, requested_depth)
+            if self._sibling_helper(self.root_sibling_node, requested_depth):
+                print("A proof tree has been found.")
+                self.find_proof_tree()
+                self.proof_tree_found = True
             self.depth_searched = requested_depth
 
     def _sibling_helper(self, root_sibling_node, requested_depth):
-        print(requested_depth)
         drill_set = set()  # Sibling nodes
         expand_set = set()  # OR nodes
 
@@ -228,6 +230,8 @@ class MetaTree(object):
             # print(sibling_or_node.tiling)
             if frozenset() not in sibling_or_node.sibling_node.verification:
                 child_sibling_nodes = self._expand_helper(sibling_or_node)
+                if frozenset() in self.root_and_node.verification:
+                    return True
             else:
                 child_sibling_nodes = set()
             drill_set.update(child_sibling_nodes)
@@ -237,8 +241,10 @@ class MetaTree(object):
         for child_sibling_node in drill_set:
             # print("Moving down:")
             # print(child_sibling_node)
-            self._sibling_helper(child_sibling_node, requested_depth - 1)
+            if self._sibling_helper(child_sibling_node, requested_depth - 1):
+                return True
 
+    # returns child sibling nodes of the expanded or node
     def _expand_helper(self, root_or_node):
         # Expand OR node using batch strategies and return the sibling nodes
         child_sibling_nodes = set()
@@ -530,9 +536,6 @@ class MetaTree(object):
 
         for existing_sibling_node in sibling_node_iter:
             # print("yeah!! let's combine our forces for the greater good!")
-            if not existing_sibling_node.issubset(sibling_node):
-                self.counting_combining += 1
-
             sibling_node.verification.update(existing_sibling_node.verification)
             for sibling_or_node in existing_sibling_node:
                 sibling_node.add(sibling_or_node)
@@ -617,13 +620,13 @@ class MetaTree(object):
             # print("we've got a proof tree here!")
             and_node.verification = set([frozenset()])
             # input()
-        if and_node is self.root_and_node:
-            # print("at root AND node")
-            # input()
-            if frozenset() in and_node.verification:
-                print("we've got a proof tree here!")
-                self.find_proof_tree()
-                assert 2 == 3
+        # if and_node is self.root_and_node:
+        #     # print("at root AND node")
+        #     # input()
+        #     if frozenset() in and_node.verification:
+        #         print("we've got a proof tree here!")
+        #         self.find_proof_tree()
+        #         assert 2 == 3
                 # input()
                 # input()
                 # input()
