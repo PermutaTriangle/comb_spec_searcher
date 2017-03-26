@@ -1,7 +1,9 @@
 
+from permuta import Perm, PermSet
 from grids import Tiling, Block, PositiveClass
 from atrap.tools import basis_partitioning
 from .inferral_class import InferralStrategy
+from collections import defaultdict
 
 def subclass_inferral(tiling, basis):
     """Return a new tiling where all non-points have been inferred."""

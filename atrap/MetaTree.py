@@ -4,6 +4,7 @@ from atrap.strategies import components
 from atrap.strategies import all_point_placements
 from atrap.strategies import one_by_one_verification
 from atrap.strategies import empty_cell_inferral
+from atrap.strategies import subclass_inferral
 from atrap.strategies import subset_verified
 from atrap.ProofTree import ProofTree, ProofTreeNode
 
@@ -156,7 +157,7 @@ class MetaTree(object):
         self.equivalence_strategy_generators = [all_point_placements]
         self.batch_strategy_generators = [all_cell_insertions]
         self.recursive_strategy_generators = [components]
-        self.inferral_strategy_generators = [empty_cell_inferral]
+        self.inferral_strategy_generators = [empty_cell_inferral, subclass_inferral]
         self.verification_strategy_generators = [one_by_one_verification, subset_verified]
         self.proof_tree_found = False
 
@@ -701,15 +702,15 @@ class MetaTree(object):
                         children.append( self._find_proof_tree_helper( child_and_node, child_or_node.tiling, seen_tilings ) )
                         k = True
                         break
-        # print("+++++++++++++++++++++++")
-        # print("in_tiling")
-        # print(in_tiling)
-        # print("out_tiling")
-        # print(out_tiling)
-        # print("formal_step")
-        # print(root_and_node.formal_step)
-        # print("children's in_tilings")
-        # for child in children:
-        #     print( child.in_tiling )
-        # print("+++++++++++++++++++++++")
+        print("+++++++++++++++++++++++")
+        print("in_tiling")
+        print(in_tiling)
+        print("out_tiling")
+        print(out_tiling)
+        print("formal_step")
+        print(root_and_node.formal_step)
+        print("children's in_tilings")
+        for child in children:
+            print( child.in_tiling )
+        print("+++++++++++++++++++++++")
         return ProofTreeNode(formal_step, in_tiling, out_tiling, tilings, children)
