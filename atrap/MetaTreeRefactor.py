@@ -527,11 +527,6 @@ class MetaTree(object):
             sibling_node.verification = final_verifications
 
             '''and propagate this information to parent AND nodes'''
-
-            if self.tiling_cache[Tiling({})] in sibling_node:
-                print(new_verifications)
-                print(final_verifications)
-
             for parent_and_node in sibling_node.get_parent_and_nodes():
                 self._propagate_and_node_verification(parent_and_node, seen_nodes)
 
