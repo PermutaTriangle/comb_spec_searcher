@@ -23,9 +23,10 @@ from itertools import product
 
 
 class SiblingNode(set):
-    '''An set of OR nodes with equivalent tilings.
-    It is considered natural if found by some batch strategy.
-    There exists a proof tree below if its verification contains the empty frozenset.'''
+    '''A set of OR nodes with equivalent tilings.
+    The node is considered natural if it contains a tiling found by a batch
+    strategy. There exists a proof tree below the node if its verification
+    contains the empty frozenset.'''
     def __init__(self):
         self.natural = False
         self.verification = set()
@@ -45,6 +46,8 @@ class SiblingNode(set):
                 yield parent_and_node
 
     def get_children_and_nodes(self):
+        '''An iterator of all AND nodes that are children of a tiling in
+        self.'''
         child_and_nodes = set()
         for sibling_or_node in self:
             child_and_nodes.update( sibling_or_node.children )
@@ -52,7 +55,8 @@ class SiblingNode(set):
             yield child_and_node
 
     def is_verified(self):
-        '''There exists a proof tree below if its verification contains the empty frozenset.'''
+        '''There exists a proof tree below if its verification contains the
+        empty frozenset.'''
         return frozenset() in self.verification
 
     def __eq__(self, other):
@@ -72,7 +76,7 @@ class OrNode(object):
     '''An OR node points to a tiling. There is one OR node for a tiling.
     The children are AND nodes given by the batch strategies from its tiling.
     The parents are AND nodes in which the tiling is part of the strategy.
-    It keeps track if it has been expanded by batch/equivalents strategies.
+    It keeps track if it has been expanded by batch/equivalence strategies.
     It also points to its SiblingNode.
     For it to be verified, one of its children must be verified.'''
     def __init__(self, tiling=None):
@@ -152,11 +156,11 @@ class MetaTree(object):
         else:
             self.verification_strategy_generators = [one_by_one_verification]
 
-        '''We then initialise the tree with the one by one tiling, with input set.'''
+        '''Initialise the tree with the one by one tiling, with Av(basis.'''
         root_tiling = Tiling({(0,0): PermSet.avoiding(self.basis)})
 
         '''Create and store the root AND and OR node of the tree.'''
-        root_and_node = AndNode("We start off with a 1x1 tiling where the single block is the input set.")
+        root_and_node = AndNode("We start off with a 1x1 tiling where the single block is Av({}).".format(self.basis))
         root_or_node = OrNode(root_tiling)
         root_or_node.parents.append(root_and_node)
         root_and_node.children.append(root_or_node)
@@ -166,7 +170,7 @@ class MetaTree(object):
         root_sibling_node.add(root_or_node)
         root_sibling_node.natural = True
 
-        # '''Store them for quick access'''
+        '''Store them for quick access'''
         self.root_and_node = root_and_node
         self.root_or_node = root_or_node
         self.root_sibling_node = root_sibling_node
@@ -183,7 +187,7 @@ class MetaTree(object):
 
     def do_level(self, requested_depth=None):
         '''This searches to depth first to the requested depth.
-        It stops when a proof tree is found returns it, if found.'''
+        It stops when a proof tree is found, and returns it, if found.'''
         if requested_depth is None:
             self.do_level(self.depth_searched + 1)
         else:
@@ -213,7 +217,7 @@ class MetaTree(object):
             raise RuntimeError("Negative depth requested")
         '''We only expand and search on natural tilings (those found by batch strategies)
         and those which do not already have a proof tree.'''
-        if not sibling_node.natural or sibling_node.is_verified():
+        if (not sibling_node.natural) or sibling_node.is_verified():
             return
 
         for sibling_or_node in sibling_node:
