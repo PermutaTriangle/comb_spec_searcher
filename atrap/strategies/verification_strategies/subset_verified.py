@@ -12,7 +12,8 @@ def subset_verified(tiling, basis):
         return True
 
     if len(tiling) <= 1:
-        one_by_one_verification(tiling, basis)
+        for verification_strategy in one_by_one_verification(tiling, basis):
+            yield verification_strategy
 
     else:
         # We only need to check permutations up to this length because any longer
