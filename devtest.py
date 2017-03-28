@@ -11,10 +11,17 @@ mtree = MetaTree(descriptors.Basis([Perm((0,2,1))]))
 
 # mtree = MetaTree(descriptors.Basis([Perm((0,1))]))
 
+# mtree = MetaTree(descriptors.Basis([Perm((0,1,2))]))
+
 
 
 #mtree.do_level()
+
 mtree.do_level()
+mtree.do_level()
+mtree.do_level()
+mtree.do_level()
+
 
 
 

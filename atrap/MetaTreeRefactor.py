@@ -202,7 +202,7 @@ class MetaTree(object):
                 print("A proof tree has been found.")
                 proof_tree = self.find_proof_tree()
                 proof_tree.pretty_print()
-                return self.find_proof_tree()
+                return proof_tree
             self.depth_searched = requested_depth
 
     def _sibling_helper(self, sibling_node, requested_depth):
@@ -565,6 +565,7 @@ class MetaTree(object):
     def find_proof_tree(self):
         if self.has_proof_tree():
             proof_tree = ProofTree( self._find_proof_tree_below_or_node(self.root_or_node) )
+            return proof_tree
         else:
             print("There is no proof tree yet. Use the do_level function to try and find one.")
 
@@ -572,26 +573,35 @@ class MetaTree(object):
         '''Return the ProofTreeNode that is verified below the OR node.'''
         if seen_tilings is None:
             seen_tilings = set()
+
         '''If the tiling has already been seen, we have a recursion.'''
         if or_node.tiling in seen_tilings:
             return ProofTreeNode("recurse", or_node.tiling, or_node.tiling, [sibling_or_node.tiling for sibling_or_node in or_node.sibling_node], [] )
+
         '''We add the tilings from the SiblingNode. These can now be used for recursions.'''
         sibling_tilings = [ sibling_or_node.tiling for sibling_or_node in or_node.sibling_node ]
         seen_tilings.update( sibling_tilings )
+
         '''The tiling we come in to the node by'''
         in_tiling = or_node.tiling
+
+        formal_step = None
 
         for child_and_node in or_node.sibling_node.get_children_and_nodes():
             '''If the child AND node is verified'''
             if any( verification.issubset(seen_tilings) for verification in child_and_node.verification ):
+                '''We use it for the next level'''
                 assert len(child_and_node.parents) == 1
                 '''Keep track of the strategy used by the verified AND node.'''
                 formal_step = child_and_node.formal_step
                 '''The tiling we left the ProofTreeNode by is the tiling on the parent of the AND node.'''
                 out_tiling = child_and_node.parents[0].tiling
                 '''The children are the ProofTreeNodes using the tilings of the strategy.'''
-                children = [ self._find_proof_tree_below_or_node(child_or_node, seen_tilings ) for child_or_node in child_and_node.children ]
+                children = [ self._find_proof_tree_below_or_node(child_or_node, seen_tilings.union(sibling_tilings) ) for child_or_node in child_and_node.children ]
                 '''We only want one tree'''
                 break
-
+        assert formal_step is not None
+        if formal_step is None:
+            print(or_node.tiling)
+            return ProofTreeNode("", or_node.tiling, or_node.tiling, sibling_tilings, [])
         return ProofTreeNode(formal_step, in_tiling, out_tiling, sibling_tilings, children)
