@@ -1,0 +1,91 @@
+
+Finding the proof tree for Av(Perm((0, 1)), Perm((2, 1, 0))) took 0 seconds
+
+Human readable:
+
+root: 0
+      ├─────1
+      └─────2
+
+Label: 0
+
++-+
+|1|
++-+
+1: Av(Perm((0, 1)), Perm((2, 1, 0)))
+
+Label: 1
+
++-+
+| |
++-+
+
+
+Label: 2
+
++-+
+|1|
++-+
+1: Av+(Perm((0, 1)), Perm((2, 1, 0)))
+We use his sibling for the next strategy
++-+-+
+|2| |
++-+-+
+| |1|
++-+-+
+1: point
+2: Av(Perm((0, 1)), Perm((1, 0)))
+
+Computer readable (JSON):
+
+{
+    "root": {
+        "children": [
+            {
+                "children": [],
+                "formal_step": "Verified because it is a one by one tiling with a subclass",
+                "in_tiling": {},
+                "out_tiling": {},
+                "tilings": [
+                    {}
+                ]
+            },
+            {
+                "children": [],
+                "formal_step": "The tiling is a subset of the subclass",
+                "in_tiling": {
+                    "[0, 0]": "Av+(Perm((0, 1)), Perm((2, 1, 0)))"
+                },
+                "out_tiling": {
+                    "[0, 1]": "Av(Perm((0, 1)), Perm((1, 0)))",
+                    "[1, 0]": "point"
+                },
+                "tilings": [
+                    {
+                        "[0, 1]": "Av(Perm((0, 1)), Perm((1, 0)))",
+                        "[1, 0]": "point"
+                    },
+                    {
+                        "[0, 1]": "point",
+                        "[1, 0]": "Av(Perm((0, 1)), Perm((1, 0)))"
+                    },
+                    {
+                        "[0, 0]": "Av+(Perm((0, 1)), Perm((2, 1, 0)))"
+                    }
+                ]
+            }
+        ],
+        "formal_step": "We perform cell insertion into cell (0, 0); either it is empty or Av+(Perm((0, 1)), Perm((2, 1, 0))).",
+        "in_tiling": {
+            "[0, 0]": "Av(Perm((0, 1)), Perm((2, 1, 0)))"
+        },
+        "out_tiling": {
+            "[0, 0]": "Av(Perm((0, 1)), Perm((2, 1, 0)))"
+        },
+        "tilings": [
+            {
+                "[0, 0]": "Av(Perm((0, 1)), Perm((2, 1, 0)))"
+            }
+        ]
+    }
+}
