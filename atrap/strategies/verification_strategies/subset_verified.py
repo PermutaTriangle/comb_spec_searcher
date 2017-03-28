@@ -1,4 +1,4 @@
-from grids import Tiling
+from grids import Tiling, PositiveClass
 from atrap.tools import basis_partitioning
 from .verification_class import VerificationStrategy
 from .one_by_one_verification import one_by_one_verification
@@ -23,6 +23,7 @@ def subset_verified(tiling, basis):
             verification_length = tiling.total_points
         else:
             verification_length = tiling.total_points + len(basis[-1])
+            verification_length += sum(1 for _, block in tiling.non_points if isinstance(block, PositiveClass))
 
         verified = True
         for length in range(tiling.total_points, verification_length + 1):

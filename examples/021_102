@@ -30,16 +30,14 @@ Label: 2
 +-+
 1: Av+(Perm((0, 2, 1)), Perm((1, 0, 2)))
 We use his sibling for the next strategy
-+-+-+
-|3| |
-+-+-+
-| |2|
-+-+-+
-|1| |
-+-+-+
-1: Av(Perm((1, 0)))
-2: point
-3: Av(Perm((0, 2, 1)), Perm((1, 0, 2)))
++-+-+-+
+|2| |3|
++-+-+-+
+| |1| |
++-+-+-+
+1: point
+2: Av(Perm((0, 2, 1)), Perm((1, 0, 2)))
+3: Av(Perm((1, 0)))
 
 Label: 3
 
@@ -53,16 +51,14 @@ Label: 3
 
 Label: 4
 
-+-+-+
-|3| |
-+-+-+
-| |2|
-+-+-+
-|1| |
-+-+-+
-1: Av+(Perm((1, 0)))
-2: point
-3: Av(Perm((0, 2, 1)), Perm((1, 0, 2)))
++-+-+-+
+|2| |3|
++-+-+-+
+| |1| |
++-+-+-+
+1: point
+2: Av(Perm((0, 2, 1)), Perm((1, 0, 2)))
+3: Av+(Perm((1, 0)))
 We use his sibling for the next strategy
 +-+-+-+-+
 |3| | | |
@@ -115,9 +111,9 @@ Computer readable (JSON):
                         "children": [],
                         "formal_step": "The tiling is a subset of the subclass",
                         "in_tiling": {
-                            "[0, 0]": "Av+(Perm((1, 0)))",
-                            "[0, 2]": "Av(Perm((0, 2, 1)), Perm((1, 0, 2)))",
-                            "[1, 1]": "point"
+                            "[0, 1]": "Av(Perm((0, 2, 1)), Perm((1, 0, 2)))",
+                            "[1, 0]": "point",
+                            "[2, 1]": "Av+(Perm((1, 0)))"
                         },
                         "out_tiling": {
                             "[0, 3]": "Av(Perm((0, 2, 1)), Perm((1, 0, 2)))",
@@ -133,38 +129,31 @@ Computer readable (JSON):
                                 "[3, 2]": "point"
                             },
                             {
-                                "[0, 0]": "Av(Perm((1, 0)))",
-                                "[0, 3]": "Av(Perm((0, 2, 1)), Perm((1, 0, 2)))",
-                                "[1, 1]": "point",
-                                "[2, 2]": "point"
+                                "[0, 1]": "Av(Perm((0, 2, 1)), Perm((1, 0, 2)))",
+                                "[1, 0]": "point",
+                                "[2, 1]": "Av+(Perm((1, 0)))"
                             },
                             {
-                                "[0, 0]": "Av+(Perm((1, 0)))",
                                 "[0, 2]": "Av(Perm((0, 2, 1)), Perm((1, 0, 2)))",
-                                "[1, 1]": "point"
+                                "[1, 0]": "point",
+                                "[2, 1]": "point",
+                                "[3, 2]": "Av(Perm((1, 0)))"
                             }
                         ]
                     }
                 ],
-                "formal_step": "We perform cell insertion into cell (0, 0); either it is empty or Av+(Perm((1, 0))).",
+                "formal_step": "We perform cell insertion into cell (2, 1); either it is empty or Av+(Perm((1, 0))).",
                 "in_tiling": {
                     "[0, 0]": "Av+(Perm((0, 2, 1)), Perm((1, 0, 2)))"
                 },
                 "out_tiling": {
-                    "[0, 0]": "Av(Perm((1, 0)))",
-                    "[0, 2]": "Av(Perm((0, 2, 1)), Perm((1, 0, 2)))",
-                    "[1, 1]": "point"
+                    "[0, 1]": "Av(Perm((0, 2, 1)), Perm((1, 0, 2)))",
+                    "[1, 0]": "point",
+                    "[2, 1]": "Av(Perm((1, 0)))"
                 },
                 "tilings": [
                     {
-                        "[0, 0]": "Av(Perm((1, 0)))",
-                        "[0, 2]": "Av(Perm((0, 2, 1)), Perm((1, 0, 2)))",
-                        "[1, 1]": "point"
-                    },
-                    {
-                        "[0, 1]": "point",
-                        "[1, 0]": "Av(Perm((0, 2, 1)), Perm((1, 0, 2)))",
-                        "[1, 2]": "Av(Perm((1, 0)))"
+                        "[0, 0]": "Av+(Perm((0, 2, 1)), Perm((1, 0, 2)))"
                     },
                     {
                         "[0, 1]": "Av(Perm((0, 2, 1)), Perm((1, 0, 2)))",
@@ -177,7 +166,14 @@ Computer readable (JSON):
                         "[2, 0]": "Av(Perm((0, 2, 1)), Perm((1, 0, 2)))"
                     },
                     {
-                        "[0, 0]": "Av+(Perm((0, 2, 1)), Perm((1, 0, 2)))"
+                        "[0, 0]": "Av(Perm((1, 0)))",
+                        "[0, 2]": "Av(Perm((0, 2, 1)), Perm((1, 0, 2)))",
+                        "[1, 1]": "point"
+                    },
+                    {
+                        "[0, 1]": "point",
+                        "[1, 0]": "Av(Perm((0, 2, 1)), Perm((1, 0, 2)))",
+                        "[1, 2]": "Av(Perm((1, 0)))"
                     }
                 ]
             }
