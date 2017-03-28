@@ -152,7 +152,7 @@ class MetaTree(object):
         else:
             self.recursive_strategy_generators = [components]
         if verification_strategies:
-            verification_strategy_generators = verification_strategies
+            self.verification_strategy_generators = verification_strategies
         else:
             self.verification_strategy_generators = [one_by_one_verification]
 
