@@ -273,12 +273,13 @@ class MetaTree(object):
                 recursive_and_node.parents.append(or_node)
                 or_node.children.append(recursive_and_node)
 
-                '''For each tiling in the strategy,'''
-                for index, tiling in enumerate(tilings):
-                    '''we use the inferral strategies.'''
-                    inferred_tiling = self._inferral(tiling)
-                    '''We replace the tiling in the strategy with the inferred tiling.'''
-                    tilings[index] = inferred_tiling
+                '''We should NOT be inferring on recursive stategies'''
+                # '''For each tiling in the strategy,'''
+                # for index, tiling in enumerate(tilings):
+                #     '''we use the inferral strategies.'''
+                #     inferred_tiling = self._inferral(tiling)
+                #     '''We replace the tiling in the strategy with the inferred tiling.'''
+                #     tilings[index] = inferred_tiling
 
                 '''Collect the verified AND nodes as they will need to propagate this information'''
                 verified_and_nodes = set()

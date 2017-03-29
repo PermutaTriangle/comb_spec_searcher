@@ -1,7 +1,7 @@
 from collections import defaultdict
 from grids import Tiling, Block, PositiveClass
 from permuta import Perm, PermSet
-
+from itertools import chain
 
 __all__ = ["basis_partitioning", "is_verified", "tiling_inferral"]
 
@@ -19,10 +19,13 @@ def basis_partitioning(tiling, length, basis):
         cache[length] = tiling.basis_partitioning(length, basis)
     return cache[length]
 
-
 def cells_of_occurrences(tiling, basis):
-    '''A cached occurrences of patts function for a tiling. An occurrence
-    is returned as a set of cells containing the patt. '''
+    return tuple( set( chain( *cells_of_occurrences_by_perms(tiling, basis) ) ) )
+
+def cells_of_occurrences_by_perms(tiling, basis):
+    '''A cached occurrences of patts function for a tiling. The occurrences are
+    stored as a set of occurrence by perm it is in. An occurrence is returned
+    as a set of cells containing the patt.  '''
     key = (tiling, basis)
     if key not in _OCCURRENCES_OF_CACHE:
         _OCCURRENCES_OF_CACHE[key] = set()
@@ -32,6 +35,7 @@ def cells_of_occurrences(tiling, basis):
             for perm_length in range(verification_length + 1):
                 containing_perms, _ = basis_partitioning(tiling, perm_length, basis)
                 for perm, cell_infos in containing_perms.items():
+                    perms_occurrences = set()
                     if len(cell_infos) != 1:
                         print(cell_infos)
                         print(tiling)
@@ -43,9 +47,12 @@ def cells_of_occurrences(tiling, basis):
                             for index in cell_indices:
                                 cell_perm[index] = cell
 
+
                     for occurrence in perm.occurrences_of(patt):
                         cells_of_occurrence = set( cell_perm[i] for i in occurrence )
-                        _OCCURRENCES_OF_CACHE[key].add(tuple(cells_of_occurrence))
+                        perms_occurrences.add(tuple(cells_of_occurrence))
+
+                    _OCCURRENCES_OF_CACHE[key].add(tuple(perms_occurrences))
 
     return _OCCURRENCES_OF_CACHE[key]
 

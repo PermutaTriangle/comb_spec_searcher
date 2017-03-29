@@ -16,14 +16,14 @@ def all_point_placements(tiling, **kwargs):
                or col_block is Block.point) != 1:
             # Cell ineligible because cell is not the sole non-class cell
             # in its respective col
-            return
+            continue
 
         if sum(1 for _, row_block in tiling.get_row(cell.j)
                if isinstance(row_block, PositiveClass)
                or row_block is Block.point) != 1:
              # Cell ineligible because cell is not the sole non-class cell
              # in its respective row
-            return
+            continue
 
         topmost_tiling_dict = {}
         bottommost_tiling_dict = {}
@@ -35,21 +35,21 @@ def all_point_placements(tiling, **kwargs):
                 # same cell
                 if new_cell.j == cell.j:
                     perm_class = new_block.perm_class
-                    topmost_tiling_dict[cell.i + 0.5, cell.j - 0.5] = perm_class
-                    topmost_tiling_dict[cell.i - 0.5, cell.j - 0.5] = perm_class
+                    topmost_tiling_dict[(cell.i + 0.5, cell.j - 0.5)] = perm_class
+                    topmost_tiling_dict[(cell.i - 0.5, cell.j - 0.5)] = perm_class
                     topmost_tiling_dict[cell] = Block.point
 
-                    bottommost_tiling_dict[cell.i + 0.5, cell.j + 0.5] = perm_class
-                    bottommost_tiling_dict[cell.i - 0.5, cell.j + 0.5] = perm_class
+                    bottommost_tiling_dict[(cell.i + 0.5, cell.j + 0.5)] = perm_class
+                    bottommost_tiling_dict[(cell.i - 0.5, cell.j + 0.5)] = perm_class
                     bottommost_tiling_dict[cell] = Block.point
 
 
-                    leftmost_tiling_dict[cell.i + 0.5, cell.j + 0.5] = perm_class
-                    leftmost_tiling_dict[cell.i + 0.5, cell.j - 0.5] = perm_class
+                    leftmost_tiling_dict[(cell.i + 0.5, cell.j + 0.5)] = perm_class
+                    leftmost_tiling_dict[(cell.i + 0.5, cell.j - 0.5)] = perm_class
                     leftmost_tiling_dict[new_cell] = Block.point
 
-                    rightmost_tiling_dict[cell.i - 0.5, cell.j + 0.5] = perm_class
-                    rightmost_tiling_dict[cell.i - 0.5, cell.j - 0.5] = perm_class
+                    rightmost_tiling_dict[(cell.i - 0.5, cell.j + 0.5)] = perm_class
+                    rightmost_tiling_dict[(cell.i - 0.5, cell.j - 0.5)] = perm_class
                     rightmost_tiling_dict[new_cell] = Block.point
 
                 # same column, but different row
