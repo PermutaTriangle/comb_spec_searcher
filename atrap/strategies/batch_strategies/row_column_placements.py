@@ -2,6 +2,7 @@ from grids import Tiling, Block, PositiveClass
 
 from .batch_class import BatchStrategy
 
+
 def all_row_placements(tiling, **kwargs):
     for row in range(tiling.dimensions.j):
         if len(tiling.get_row(row)) < 2:

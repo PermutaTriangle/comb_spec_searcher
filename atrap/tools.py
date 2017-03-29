@@ -13,7 +13,6 @@ _OCCURRENCES_OF_CACHE = {}
 
 def basis_partitioning(tiling, length, basis):
     """A cached basis partitioning function."""
-    _BASIS_PARTITIONING_CACHE = {}
     key = (tiling, basis)
     cache = _BASIS_PARTITIONING_CACHE.setdefault(key, {})
     if length not in cache:
@@ -24,7 +23,6 @@ def cells_of_occurrences(tiling, basis):
     return tuple( set( chain( *cells_of_occurrences_by_perms(tiling, basis) ) ) )
 
 def cells_of_occurrences_by_perms(tiling, basis):
-    _OCCURRENCES_OF_CACHE = {}
     '''A cached occurrences of patts function for a tiling. The occurrences are
     stored as a set of occurrence by perm it is in. An occurrence is returned
     as a set of cells containing the patt.  '''
