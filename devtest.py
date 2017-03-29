@@ -5,7 +5,7 @@ from permuta import Perm
 from time import time
 from atrap.strategies import subclass_inferral, subset_verified, reversibly_deletable_points, reversibly_deletable_cells, all_point_placements, all_row_placements, all_equivalent_row_placements, all_cell_insertions, empty_cell_inferral, one_by_one_verification, all_minimum_row_placements, all_equivalent_minimum_row_placements, is_empty
 
-mimic_regular_insertion_encoding = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, is_empty], [reversibly_deletable_points], [one_by_one_verification] ]
+mimic_regular_insertion_encoding = [ [all_cell_insertions, all_row_placements], [all_equivalent_row_placements], [empty_cell_inferral, subclass_inferral], [reversibly_deletable_points], [subset_verified, is_empty] ]
 
 # mtree = MetaTree(descriptors.Basis([Perm((0,2,1)), Perm((0,1,2,3)), Perm((3,2,0,1)), Perm((2,3,0,1))]))
 
@@ -21,6 +21,11 @@ mimic_regular_insertion_encoding = [ [all_cell_insertions, all_minimum_row_place
 
 mtree = MetaTree([Perm((0,2,1)), Perm((0,1,2,3)), Perm((3,2,0,1)), Perm((2,3,0,1))], *mimic_regular_insertion_encoding )
 
+# mtree = MetaTree([Perm((0,2,1)), Perm((1,2,0))], *mimic_regular_insertion_encoding )
+
+
+
+
 
 
 #mtree.do_level()
@@ -28,6 +33,7 @@ start = time()
 
 while not mtree.has_proof_tree():
     mtree.do_level()
+    print(len(mtree.tiling_cache))
 
 proof_tree = mtree.find_proof_tree()
 proof_tree.pretty_print()

@@ -1,6 +1,6 @@
 from atrap.tools import basis_partitioning
 from grids import PositiveClass, Tiling
-from .inferral_class import InferralStrategy
+from .verification_class import VerificationStrategy
 
 def is_empty(tiling, basis):
     verification_length = tiling.total_points + len(basis[-1])
@@ -12,4 +12,4 @@ def is_empty(tiling, basis):
             empty = False
             break
     if empty:
-        yield InferralStrategy("This tiling contains no avoiding perms", Tiling({}))
+        yield VerificationStrategy("This tiling contains no avoiding perms")
