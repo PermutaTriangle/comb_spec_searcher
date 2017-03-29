@@ -19,6 +19,8 @@ def reversibly_deletable_points(tiling, basis, current_cell=None, occurrences_by
         new_occurrences_by_perm = set()
         for perm_occurrences in occurrences_by_perm:
             new_perm_occurrences = []
+            if not reversibly_deletable:
+                break
             for occurrence in perm_occurrences:
                 if not any( cell_used == cell for cell_used in occurrence ):
                     new_perm_occurrences.append(occurrence)
