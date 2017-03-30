@@ -1,5 +1,4 @@
 from atrap.strategies import all_cell_insertions
-from atrap.strategies import row_and_column_separations
 from atrap.strategies import components
 from atrap.strategies import all_point_placements
 from atrap.strategies import one_by_one_verification

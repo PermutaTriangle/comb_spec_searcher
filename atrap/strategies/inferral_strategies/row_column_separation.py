@@ -1,12 +1,12 @@
 from collections import defaultdict
-from grids import Tiling, Block, PositiveClass
+from grids import Tiling, Block, PositiveClass, Cell
 from atrap.tools import basis_partitioning
-from permuta import Perm, PermSet
-from copy import copy
-
+from itertools import chain
+# from copy import copy
+#
 from .inferral_class import InferralStrategy
 
-# TODO: Its broken. Do topmost point insertion on 132 as first test case.
+# # TODO: Its broken. Do topmost point insertion on 132 as first test case.
 
 def row_and_column_inequalities_of_tiling(tiling, basis):
     # This will create the containing/avoiding less than cells of the permutation by row
@@ -117,166 +117,176 @@ def row_and_column_inequalities_of_tiling(tiling, basis):
     # we then return these inequalities ready for parsing so as to determine how we can split rows and columns.
     return smaller_than_row, smaller_than_col
 
-# returns the order that a cell must be plit into only if rows and columns have unique word
-def row_and_column_splits_of_tiling(tiling, basis):
-    # find the set of inequalities for the words
-    smaller_than_row, smaller_than_col = row_and_column_inequalities_of_tiling(tiling, basis)
+def separations( inequalities, unprocessed_cells=None, current_cell=None, current_state=None ):
+    if current_state is None:
+        current_state = []
+    if unprocessed_cells is None:
+        unprocessed_cells = list(inequalities.keys())
+    if current_cell is None:
+        current_cell = unprocessed_cells[0]
+        unprocessed_cells = unprocessed_cells[1:]
 
-    # find the word for each row and column
-    row_splits = defaultdict(list)
-    col_splits = defaultdict(list)
+    # print("current state")
+    # print(current_state)
+    # print(current_cell)
+    # print(unprocessed_cells)
 
-    for row in range(tiling.dimensions.j):
-        # pick out the rows inequalites
-        inequalities = smaller_than_row[row]
-        if len(inequalities) > 0:
-            splits = inequality_word(smaller_than_row[row])
-            row_splits[row] = splits
+    if current_state == []:
+        '''The next state must be the one with exactly one part'''
+        current_state.append( [current_cell] )
+        if unprocessed_cells:
+            next_cell = unprocessed_cells[0]
+            return [ separation for separation in separations( inequalities, unprocessed_cells[1:], next_cell, current_state )]
+        return [ current_state ]
 
-    for col in range(tiling.dimensions.i):
-        # pick out the cols inequalites
-        inequalities = smaller_than_col[col]
-        if len(inequalities) > 0:
-            splits = inequality_word(smaller_than_col[col])
-            col_splits[col] = splits
+    must_mix_with = [ cell for cell in inequalities.keys() if cell not in inequalities[current_cell] and current_cell not in inequalities[cell] and cell is not current_cell ]
 
-    return row_splits, col_splits
-
-def inequality_word( inequalities ):
-
-    keys = sorted( list(inequalities.keys()) )
-
-    words = inequality_word_helper( [], keys, inequalities, keys )
-
-    if len(words) > 1:
-        # print("hmmmmm row column separation is still not producing a unique guy")
-        # print( words )
-        # print("lets makes sure all words are using as many letters as possible")
-        max_words = []
-        max_letter = 0
-        for word in words:
-            current_max_letter = max(word)
-            if current_max_letter == max_letter:
-                max_words.append(word)
-            elif current_max_letter > max_letter:
-                max_letter = current_max_letter
-                max_words = [word]
-        if len(max_words) > 1:
-            # print("hmmmmm row column separation is still not producing a unique guy")
-            # print("even more hmmmmm, also the word with most letters isn't unique")
-            # print("I will choose the lexicographically smallest")
-            max_words.sort()
-            # print(inequalities)
-            assert len(max_words) > 1
-
-        return max_words[0]
-
-    if words:
-        return words[0]
-    return []
-
-def inequality_word_helper( word_so_far, keys, inequalities, original_keys ):
-    if keys:
-        new_keys = copy(keys)
-        next_key = new_keys.pop(0)
-        min_value = 0
-        max_value = len(inequalities)
-        for position in range(len(word_so_far)):
-            value_of_position = word_so_far[position]
-            key_of_position = original_keys[position]
-            if key_of_position in inequalities[next_key]:
-                if min_value < value_of_position:
-                    min_value = value_of_position
-                if next_key in inequalities[key_of_position]:
-                    if max_value > value_of_position + 1:
-                        max_value = value_of_position + 1
-            elif next_key in inequalities[key_of_position]:
-                if max_value > value_of_position + 1:
-                    max_value = value_of_position + 1
-            else:
-                if min_value < value_of_position:
-                    min_value = value_of_position
-                if max_value > value_of_position + 1:
-                    max_value = value_of_position + 1
-            if min_value >= max_value:
+    mixing_with_one = False
+    for index, part in enumerate(current_state):
+        if any( cell in part for cell in must_mix_with ):
+            if mixing_with_one:
+                '''The cell has to mix with two necessarily separate parts, hence no solution'''
                 return []
-        if new_keys:
-            L = []
-            for letter in range(min_value, max_value):
-                L = L + [ [letter] + word for word in inequality_word_helper( word_so_far + [letter], new_keys, inequalities, original_keys ) ]
-            return L
+            mixing_with_one = True
+            '''The cell must mix with this part'''
+            mixing_with_index = index
+
+    if mixing_with_one:
+        for index, part in enumerate(current_state):
+            if index < mixing_with_index:
+                if any( current_cell not in inequalities[cell] for cell in part ):
+                    '''There is some element in the part to the left which can't appear below the current cell'''
+                    return []
+            elif index > mixing_with_index:
+                if any( cell not in inequalities[current_cell] for cell in part ):
+                    '''There is some element in the part to the right which can't appear above the current cell'''
+                    return []
+        current_state[mixing_with_index].append(current_cell)
+        if unprocessed_cells:
+            next_cell = unprocessed_cells[0]
+            return [ separation for separation in separations( inequalities, unprocessed_cells[1:], next_cell, current_state )]
+
+        return [current_state]
+
+    '''The cell didn't mix with a part'''
+    furthest_left_index = 0
+    furthest_right_index = len(current_state)
+    for index, part in enumerate(current_state):
+        if any( cell not in inequalities[current_cell] for cell in part ):
+            '''The current cell may not appear to the left of this part'''
+            furthest_left_index = index + 1
+
+    for index, part in reversed( list(enumerate(current_state)) ):
+        if any( current_cell not in inequalities[cell] for cell in part):
+            '''The current cell may not appear to the right of this part'''
+            furthest_right_index = index
+
+    # print("current state")
+    # print(current_state)
+    # print(current_cell)
+    # print(unprocessed_cells)
+    # print("left index")
+    # print(furthest_left_index)
+    # print("right index")
+    # print(furthest_right_index)
+
+    if furthest_left_index > furthest_right_index:
+        return []
+
+    potential_states = []
+
+    if furthest_left_index > 0:
+        potential_state = current_state[:furthest_left_index-1] + [ current_state[furthest_left_index - 1] + [current_cell] ] + current_state[furthest_left_index+1:]
+        # print("furthest left")
+        # print(potential_state)
+        potential_states.append( potential_state )
+
+    for index in range(furthest_left_index, furthest_right_index + 1):
+        if index == len(current_state):
+            potential_state = current_state + [ [current_cell] ]
+            # print("furthest right")
+            # print(potential_state)
+            potential_states.append(potential_state)
+
         else:
-            letters_used = set(word_so_far)
-            unused_letters_needed = []
-            for i in range(len(letters_used)):
-                if i not in word_so_far:
-                    if unused_letters_needed:
-                        return []
-                    unused_letters_needed.append(i)
-            if unused_letters_needed:
-                unused_letter_needed = unused_letters_needed[0]
-                if unused_letter_needed >= min_value and unused_letter_needed < max_value:
-                    return [ [unused_letter_needed] ]
-            else:
-                new_max = len(letters_used)
-                if new_max >= min_value and new_max < max_value:
-                    return [ [new_max] ]
-                else:
-                    if max_value == min_value + 1:
-                        return [ [min_value] ]
-            return []
-    else:
-        return [[]]
+            potential_state = current_state[:index] + [ current_state[index] + [current_cell] ] + current_state[index+1:]
+            # print("middle")
+            # print(potential_state)
+            potential_states.append(potential_state)
 
+            potential_state = current_state[:index] + [ [current_cell] ] + current_state[index:]
+            # print(potential_state)
+            potential_states.append( potential_state )
 
-def tile_splitter( tiling, row_and_column_splits ):
+    # print("all")
+    # print(potential_states)
+
+    if unprocessed_cells:
+        next_cell = unprocessed_cells[0]
+        final_states = []
+        for potential_state in potential_states:
+            final_states.extend(  separation for separation in separations( inequalities, unprocessed_cells[1:], next_cell, potential_state ) )
+        return final_states
+
+    return potential_states
+
+def row_and_column_separation(tiling, basis):
     # print(tiling)
-    # print()
-    # print(row_and_column_splits)
-    row_splits, col_splits = row_and_column_splits
-
-    split_row_tiling_dict = {}
-
+    row_inequalities, column_inequalities = row_and_column_inequalities_of_tiling(tiling, basis)
+    new_tiling_dict = dict(tiling)
+    original_cell_to_shifted_cell_map = {}
     for row in range(tiling.dimensions.j):
-        if row_splits[row]:
-            current_row_splits = row_splits[row]
-            length_of_row = len(current_row_splits)
+        inequalities = row_inequalities[row]
+        if inequalities:
+            # print("------working on row {}------".format(row))
+            row_separations = separations(inequalities)
+            # print(row_separations)
+            if len(row_separations) == 1:
+                continue
+            row_separations.sort(key=len)
+            separation = row_separations[-1]
+            second_last = row_separations[-2]
+            if len(separation) == len(second_last):
+                continue
+            for cell, _ in tiling.get_row(row):
+                new_tiling_dict.pop(cell)
+            for index, part in enumerate(separation):
+                for cell in part:
+                    shifted_cell = Cell(cell.i, cell.j + index/len(separation))
+                    original_cell_to_shifted_cell_map[cell] = shifted_cell
+                    new_tiling_dict[shifted_cell] = tiling[cell]
+    #         print(Tiling(new_tiling_dict))
+    # print(original_cell_to_shifted_cell_map)
+    for col in range(tiling.dimensions.i):
+        inequalities = column_inequalities[col]
+        # print(inequalities)
+        if inequalities:
+            column_separations = separations(inequalities)
+            if len(column_separations) == 1:
+                continue
+            column_separations.sort(key=len)
+            separation = column_separations[-1]
+            second_last = column_separations[-2]
+            if len(separation) == len(second_last):
+                continue
+            for cell, _ in tiling.get_col(col):
+                shifted_cell = original_cell_to_shifted_cell_map.get(cell)
+                # print(cell)
+                # print(shifted_cell)
+                if shifted_cell is None:
+                    shifted_cell = cell
 
-            index_in_row = 0
-            # This is sorted
-            for (i,j), block in tiling.get_row(row):
-                split_row_tiling_dict[ i, j + current_row_splits[index_in_row]/length_of_row ] = block
-                index_in_row += 1
-        else:
-            for (i,j), block in tiling.get_row(row):
-                split_row_tiling_dict[i,j] = block
+                new_tiling_dict.pop(shifted_cell)
 
-    # TODO: I only make this tiling so I can use the get_col functionality.
-    # so perhaps we should store the cols as we go, rather than make the tiling.
-    split_row_tiling = Tiling(split_row_tiling_dict)
+            for index, part in enumerate(separation):
+                for cell in part:
+                    shifted_cell = original_cell_to_shifted_cell_map.get(cell)
+                    if shifted_cell is None:
+                        shifted_cell = cell
+                    new_tiling_dict[(shifted_cell.i + index/len(separation), shifted_cell.j)] = tiling[cell]
 
-    split_row_and_col_tiling_dict = {}
 
-    for col in range(split_row_tiling.dimensions.i):
-        if col_splits[col]:
-            current_col_splits = col_splits[col]
-            length_of_col = len(col_splits[col])
-            index_in_col = 0
-            # This is sorted
-            for (i,j), block in split_row_tiling.get_col(col):
-                split_row_and_col_tiling_dict[ i + current_col_splits[index_in_col]/length_of_col, j ] = block
-                index_in_col += 1
-        else:
-            for (i,j), block in split_row_tiling.get_col(col):
-                split_row_and_col_tiling_dict[i,j] = block
-
-    return Tiling(split_row_and_col_tiling_dict)
-
-def row_and_column_separations(tiling, basis):
-
-    row_and_column_splits = row_and_column_splits_of_tiling(tiling, basis)
-
-    # TODO Do formal step string
-    separated_tiling = tile_splitter(tiling, row_and_column_splits)
-    if not separated_tiling == tiling:
-        yield InferralStrategy( "Row column separations of the tiling", separated_tiling )
+    separated_tiling = Tiling(new_tiling_dict)
+    if tiling != separated_tiling:
+        formal_step = "Separated the rows and columns"
+        yield InferralStrategy( formal_step, separated_tiling)
