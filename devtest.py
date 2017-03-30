@@ -24,17 +24,17 @@ standard_strategies = [ [all_cell_insertions, all_row_placements], [all_point_pl
 
 # mtree = MetaTree([])
 
-# mtree = MetaTree([Perm((0,2,1)), Perm((0,1,2,3)), Perm((3,2,0,1)), Perm((2,3,0,1))], *mimic_regular_insertion_encoding )
+mtree = MetaTree([Perm((0,2,1)), Perm((0,1,2,3)), Perm((3,2,0,1)), Perm((2,3,0,1))], *standard_strategies )
 
 # mtree = MetaTree([Perm((0,2,1)), Perm((0,1,2))], *mimic_regular_insertion_encoding )
 
 # mtree = MetaTree([Perm((1,3,0,2)), Perm((2,0,3,1))], *all_strategies)
 
-task = '1234_1243_1324_1342_1423_1432_2134_2143_2314_2341_3214'
-
-patts = [ Perm([ int(c) - 1 for c in p ]) for p in task.split('_') ]
-
-mtree = MetaTree( patts, *all_strategies )
+# task = '1234_1243_1324_1342_1423_1432_2134_2143_2314_2341_3214'
+#
+# patts = [ Perm([ int(c) - 1 for c in p ]) for p in task.split('_') ]
+#
+# mtree = MetaTree( patts, *all_strategies )
 
 
 #mtree.do_level()

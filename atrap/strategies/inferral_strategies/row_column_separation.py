@@ -326,7 +326,7 @@ def row_and_column_separation(tiling, basis):
     '''We then take the tiling, which will of course flatten the tiling dictionary'''
     separated_tiling = Tiling(new_tiling_dict)
     if tiling != separated_tiling:
-        '''we only return it if it is different''''
+        '''we only return it if it is different'''
         # TODO: add the rows and columns separated to the formal_step
         formal_step = "Separated the rows and columns"
         yield InferralStrategy( formal_step, separated_tiling)
