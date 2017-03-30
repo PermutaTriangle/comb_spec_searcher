@@ -118,6 +118,12 @@ def row_and_column_inequalities_of_tiling(tiling, basis):
     return smaller_than_row, smaller_than_col
 
 def separations( inequalities, unprocessed_cells=None, current_cell=None, current_state=None ):
+    '''This is a recursive function for generating the splittings of a row/column from the given inequalities
+    It will split the cells from the row/column into parts. Any two cells in the same part must be on the the
+    same row/column as one another. A part to the left of another must be below/further to the left than the
+    other. For example in the tiling given by (0,0):Av(132), (1,1): Point, (2,0) Av(132) the separations of
+    the first row will look like [ [(2,0)] [(0,0)]] ] and [ [(0,0), (2,0)] ]. The second is the trivial
+    solution and is always returned.'''
     if current_state is None:
         current_state = []
     if unprocessed_cells is None:
@@ -135,6 +141,7 @@ def separations( inequalities, unprocessed_cells=None, current_cell=None, curren
         '''The next state must be the one with exactly one part'''
         current_state.append( [current_cell] )
         if unprocessed_cells:
+            '''we then take the next cell to pass to the recursive call'''
             next_cell = unprocessed_cells[0]
             return [ separation for separation in separations( inequalities, unprocessed_cells[1:], next_cell, current_state )]
         return [ current_state ]
@@ -171,6 +178,7 @@ def separations( inequalities, unprocessed_cells=None, current_cell=None, curren
     '''The cell didn't mix with a part'''
     furthest_left_index = 0
     furthest_right_index = len(current_state)
+    '''We search for the interval where the current cell can be placed'''
     for index, part in enumerate(current_state):
         if any( cell not in inequalities[current_cell] for cell in part ):
             '''The current cell may not appear to the left of this part'''
@@ -190,8 +198,14 @@ def separations( inequalities, unprocessed_cells=None, current_cell=None, curren
     # print("right index")
     # print(furthest_right_index)
 
+
     if furthest_left_index > furthest_right_index:
+        '''in which case the interval is empty'''
         return []
+
+    '''We now need to create the potential states, for example, consider the "fake"
+    current state [ [] [] [] [] [] [] [] ] then given the interval [1,3] then where
+    you see an "x" the current cell can be placed [ [x] x [x] x [x] x [x] [] [] [] ]'''
 
     potential_states = []
 
@@ -225,6 +239,7 @@ def separations( inequalities, unprocessed_cells=None, current_cell=None, curren
         next_cell = unprocessed_cells[0]
         final_states = []
         for potential_state in potential_states:
+            '''for each potential state, we call recursively'''
             final_states.extend(  separation for separation in separations( inequalities, unprocessed_cells[1:], next_cell, potential_state ) )
         return final_states
 
@@ -232,61 +247,86 @@ def separations( inequalities, unprocessed_cells=None, current_cell=None, curren
 
 def row_and_column_separation(tiling, basis):
     # print(tiling)
+    '''First we calculate the set of inequalities for all the rows and columns'''
     row_inequalities, column_inequalities = row_and_column_inequalities_of_tiling(tiling, basis)
     new_tiling_dict = dict(tiling)
+    '''When creating the new tiling, we need to keep track of the shifted cell we
+    add, in case a cell appears on a separated row and column'''
     original_cell_to_shifted_cell_map = {}
     for row in range(tiling.dimensions.j):
         inequalities = row_inequalities[row]
         if inequalities:
             # print("------working on row {}------".format(row))
+            '''Calculate the separation, described in the function'''
             row_separations = separations(inequalities)
             # print(row_separations)
             if len(row_separations) == 1:
+                '''This must be the trivial solution'''
                 continue
+            '''sort them by length, i.e. number of parts in the separation'''
             row_separations.sort(key=len)
+            '''pick the one with most'''
             separation = row_separations[-1]
             second_last = row_separations[-2]
             if len(separation) == len(second_last):
+                '''only use it if it is the unique longest'''
                 continue
             for cell, _ in tiling.get_row(row):
+                '''we remove the cells, as we intend to readd it separated'''
                 new_tiling_dict.pop(cell)
             for index, part in enumerate(separation):
                 for cell in part:
+                    '''the first part appears below the second, second below third etc,
+                    so we shift the y coordinate by the position of the part/len(separation)'''
                     shifted_cell = Cell(cell.i, cell.j + index/len(separation))
+                    '''we keep track of shifted cells for when we do the work for columns'''
                     original_cell_to_shifted_cell_map[cell] = shifted_cell
                     new_tiling_dict[shifted_cell] = tiling[cell]
     #         print(Tiling(new_tiling_dict))
     # print(original_cell_to_shifted_cell_map)
     for col in range(tiling.dimensions.i):
+        '''Calculate the separation, described in the function'''
         inequalities = column_inequalities[col]
         # print(inequalities)
         if inequalities:
             column_separations = separations(inequalities)
             if len(column_separations) == 1:
+                '''This must be the trivial solution'''
                 continue
+            '''sort them by length, i.e. number of parts in the separation'''
             column_separations.sort(key=len)
+            '''pick the one with most'''
             separation = column_separations[-1]
             second_last = column_separations[-2]
             if len(separation) == len(second_last):
+                '''only use it if it is the unique longest'''
                 continue
             for cell, _ in tiling.get_col(col):
+                '''If it was moved already it will apear in our map and we use its shift,
+                 else the cell will still be in the new tilings dictionary'''
                 shifted_cell = original_cell_to_shifted_cell_map.get(cell)
                 # print(cell)
                 # print(shifted_cell)
                 if shifted_cell is None:
                     shifted_cell = cell
-
+                '''we remove the cells, as we intend to readd it separated'''
                 new_tiling_dict.pop(shifted_cell)
 
             for index, part in enumerate(separation):
                 for cell in part:
+                    '''If it was moved already it will apear in our map and we use its shift,
+                     else the cell will still be in the new tilings dictionary'''
                     shifted_cell = original_cell_to_shifted_cell_map.get(cell)
                     if shifted_cell is None:
                         shifted_cell = cell
+                    '''the first part appears to the left of the second, second to the left of the third etc,
+                    so we shift the x coordinate by the position of the part/len(separation)'''
                     new_tiling_dict[(shifted_cell.i + index/len(separation), shifted_cell.j)] = tiling[cell]
 
-
+    '''We then take the tiling, which will of course flatten the tiling dictionary'''
     separated_tiling = Tiling(new_tiling_dict)
     if tiling != separated_tiling:
+        '''we only return it if it is different''''
+        # TODO: add the rows and columns separated to the formal_step
         formal_step = "Separated the rows and columns"
         yield InferralStrategy( formal_step, separated_tiling)
