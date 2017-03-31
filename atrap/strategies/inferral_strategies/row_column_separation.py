@@ -5,10 +5,15 @@ from itertools import chain
 # from copy import copy
 #
 from .inferral_class import InferralStrategy
+#
+# def row_and_column_inequalities_of_tiling(tiling, basis):
+#
+#
+#     total_points = tiling.total_points
+#     total_points += sum(1 for _, block in tiling.non_points if isinstance(block, PositiveClass))
 
-# # TODO: Its broken. Do topmost point insertion on 132 as first test case.
 
-def row_and_column_inequalities_of_tiling(tiling, basis):
+def row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=basis_partitioning):
     # This will create the containing/avoiding less than cells of the permutation by row
     smaller_than_dicts_by_row = (defaultdict(dict), defaultdict(dict))
     smaller_than_dicts_by_col = (defaultdict(dict), defaultdict(dict))
@@ -253,11 +258,11 @@ def separations( inequalities, unprocessed_cells=None, current_cell=None, curren
 
     return potential_states
 
-def row_and_column_separation(tiling, basis):
+def row_and_column_separation(tiling, basis, basis_partitioning=basis_partitioning):
     # print("----------------NOW CONSIDERING-------------")
     # print(tiling)
     '''First we calculate the set of inequalities for all the rows and columns'''
-    row_inequalities, column_inequalities = row_and_column_inequalities_of_tiling(tiling, basis)
+    row_inequalities, column_inequalities = row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=basis_partitioning)
     new_tiling_dict = dict(tiling)
     '''When creating the new tiling, we need to keep track of the shifted cell we
     add, in case a cell appears on a separated row and column'''

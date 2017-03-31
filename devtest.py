@@ -24,18 +24,18 @@ standard_strategies = [ [all_cell_insertions], [all_point_placements], [subclass
 
 # mtree = MetaTree([])
 
-# mtree = MetaTree([Perm((0,2,1)), Perm((0,1,2,3)), Perm((3,2,0,1)), Perm((2,3,0,1))], *standard_strategies )
+# mtree = MetaTree([Perm((0,2,1)), Perm((0,1,2,3)), Perm((3,2,0,1)), Perm((2,3,0,1))], *all_strategies )
 
-# mtree = MetaTree([Perm((0,2,1)), Perm((0,1,2))], *mimic_regular_insertion_encoding )
+mtree = MetaTree([Perm((0,2,1)), Perm((0,1,2))], *mimic_regular_insertion_encoding )
 
 # mtree = MetaTree([Perm((1,3,0,2)), Perm((2,0,3,1))], *all_strategies)
-
-# task = '021_0123_2103_2301'
-task = '012_2301'
 #
-patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
-
-mtree = MetaTree( patts, *standard_strategies )
+# task = '021_0123_2103_2301'
+# # task = '012_2301'
+# #
+# patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
+#
+# mtree = MetaTree( patts, *standard_strategies )
 
 
 #mtree.do_level()
@@ -43,6 +43,7 @@ start = time()
 
 while not mtree.has_proof_tree():
     mtree.do_level()
+    print("We had {} inferral cache hits and {} partitioning cache hits".format(mtree.inferral_cache_hits, mtree.partitioning_cache_hits))
     # print(len(mtree.tiling_cache))
     # for tiling, node in mtree.tiling_cache.items():
     #     print(tiling)

@@ -6,58 +6,56 @@ from itertools import chain
 __all__ = ["basis_partitioning", "is_verified", "tiling_inferral"]
 
 
-_BASIS_PARTITIONING_CACHE = {}
+# _BASIS_PARTITIONING_CACHE = {}
+#
+# _OCCURRENCES_OF_CACHE = {}
 
-_OCCURRENCES_OF_CACHE = {}
 
-
-def basis_partitioning(tiling, length, basis):
-    """A cached basis partitioning function."""
-    key = (tiling, basis)
-    cache = _BASIS_PARTITIONING_CACHE.setdefault(key, {})
-    if length not in cache:
-        cache[length] = tiling.basis_partitioning(length, basis)
-    return cache[length]
+# def basis_partitioning(tiling, length, basis):
+#     """A cached basis partitioning function."""
+#     key = (tiling, basis)
+#     cache = _BASIS_PARTITIONING_CACHE.setdefault(key, {})
+#     if length not in cache:
+#         cache[length] = tiling.basis_partitioning(length, basis)
+#     return cache[length]
 
 def basis_partitioning(tiling, length, basis):
     return tiling.basis_partitioning(length, basis)
 
-def cells_of_occurrences(tiling, basis):
-    return tuple( set( chain( *cells_of_occurrences_by_perms(tiling, basis) ) ) )
+def cells_of_occurrences(tiling, basis, basis_partitioning=basis_partitioning):
+    return tuple( set( chain( *cells_of_occurrences_by_perms(tiling, basis, basis_partitioning=basis_partitioning) ) ) )
 
-def cells_of_occurrences_by_perms(tiling, basis):
+def cells_of_occurrences_by_perms(tiling, basis, basis_partitioning=basis_partitioning):
     '''A cached occurrences of patts function for a tiling. The occurrences are
     stored as a set of occurrence by perm it is in. An occurrence is returned
     as a set of cells containing the patt.  '''
-    key = (tiling, basis)
-    if key not in _OCCURRENCES_OF_CACHE:
-        _OCCURRENCES_OF_CACHE[key] = set()
+    all_cells_of_occurrences_by_perms= set()
 
-        verification_length = tiling.total_points + len(basis[-1])
-        verification_length += sum(1 for _, block in tiling.non_points if isinstance(block, PositiveClass))
-        for perm_length in range(verification_length + 1):
-            containing_perms, _ = basis_partitioning(tiling, perm_length, basis)
-            for perm, cell_infos in containing_perms.items():
-                perms_occurrences = set()
-                if len(cell_infos) != 1:
-                    print(cell_infos)
-                    print(tiling)
-                assert len(cell_infos) == 1
-                for cell_info in cell_infos:
-                    cell_perm = [ 0 for i in range(len(perm))]
-                    for cell in cell_info.keys():
-                        _, _, cell_indices = cell_info[cell]
-                        for index in cell_indices:
-                            cell_perm[index] = cell
+    verification_length = tiling.total_points + len(basis[-1])
+    verification_length += sum(1 for _, block in tiling.non_points if isinstance(block, PositiveClass))
+    for perm_length in range(verification_length + 1):
+        containing_perms, _ = basis_partitioning(tiling, perm_length, basis)
+        for perm, cell_infos in containing_perms.items():
+            perms_occurrences = set()
+            if len(cell_infos) != 1:
+                print(cell_infos)
+                print(tiling)
+            assert len(cell_infos) == 1
+            for cell_info in cell_infos:
+                cell_perm = [ 0 for i in range(len(perm))]
+                for cell in cell_info.keys():
+                    _, _, cell_indices = cell_info[cell]
+                    for index in cell_indices:
+                        cell_perm[index] = cell
 
-                    for patt in basis:
-                        for occurrence in perm.occurrences_of(patt):
-                            cells_of_occurrence = set( cell_perm[i] for i in occurrence )
-                            perms_occurrences.add(tuple(cells_of_occurrence))
+                for patt in basis:
+                    for occurrence in perm.occurrences_of(patt):
+                        cells_of_occurrence = set( cell_perm[i] for i in occurrence )
+                        perms_occurrences.add(tuple(cells_of_occurrence))
 
-                    _OCCURRENCES_OF_CACHE[key].add(tuple(perms_occurrences))
+                all_cells_of_occurrences_by_perms.add(tuple(perms_occurrences))
 
-    return _OCCURRENCES_OF_CACHE[key]
+    return all_cells_of_occurrences_by_perms
 
 
 
