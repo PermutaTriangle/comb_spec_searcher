@@ -2,7 +2,7 @@
 from grids import Tiling, Block, PositiveClass
 from .inferral_class import InferralStrategy
 
-def empty_cell_inferral(tiling, basis):
+def empty_cell_inferral(tiling, basis, **kwargs):
 
     new_tiling_dict = dict(tiling)
 

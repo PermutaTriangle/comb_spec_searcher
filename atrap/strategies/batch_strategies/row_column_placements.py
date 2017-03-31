@@ -62,7 +62,7 @@ def all_row_placements(tiling, **kwargs):
         topmost_formal_step = "Placing the maximum point into row {}".format(row)
         yield BatchStrategy( topmost_formal_step, topmost_tilings )
 
-def all_minimum_row_placements(tiling, basis):
+def all_minimum_row_placements(tiling, basis, **kwargs):
         for row in range(tiling.dimensions.j):
             if len(tiling.get_row(row)) < 2:
                 continue

@@ -6,9 +6,14 @@ from itertools import chain
 __all__ = ["basis_partitioning", "is_verified", "tiling_inferral"]
 
 
-_BASIS_PARTITIONING_CACHE = {}
+# _BASIS_PARTITIONING_CACHE = {}
+#
+# _OCCURRENCES_OF_CACHE = {}
 
-_OCCURRENCES_OF_CACHE = {}
+
+_CLASS_CACHE = {}
+
+_PERMS_TO_CHECK = {}
 
 
 def basis_partitioning(tiling, length, basis):
@@ -17,47 +22,48 @@ def basis_partitioning(tiling, length, basis):
     cache = _BASIS_PARTITIONING_CACHE.setdefault(key, {})
     if length not in cache:
         cache[length] = tiling.basis_partitioning(length, basis)
+    else:
+        # print('**cache repeat!!**')
+        pass
     return cache[length]
 
 def basis_partitioning(tiling, length, basis):
     return tiling.basis_partitioning(length, basis)
 
-def cells_of_occurrences(tiling, basis):
-    return tuple( set( chain( *cells_of_occurrences_by_perms(tiling, basis) ) ) )
+def cells_of_occurrences(tiling, basis, basis_partitioning=basis_partitioning):
+    return tuple( set( chain( *cells_of_occurrences_by_perms(tiling, basis, basis_partitioning=basis_partitioning) ) ) )
 
-def cells_of_occurrences_by_perms(tiling, basis):
+def cells_of_occurrences_by_perms(tiling, basis, basis_partitioning=basis_partitioning):
     '''A cached occurrences of patts function for a tiling. The occurrences are
     stored as a set of occurrence by perm it is in. An occurrence is returned
     as a set of cells containing the patt.  '''
-    key = (tiling, basis)
-    if key not in _OCCURRENCES_OF_CACHE:
-        _OCCURRENCES_OF_CACHE[key] = set()
+    all_cells_of_occurrences_by_perms= set()
 
-        verification_length = tiling.total_points + len(basis[-1])
-        verification_length += sum(1 for _, block in tiling.non_points if isinstance(block, PositiveClass))
-        for perm_length in range(verification_length + 1):
-            containing_perms, _ = basis_partitioning(tiling, perm_length, basis)
-            for perm, cell_infos in containing_perms.items():
-                perms_occurrences = set()
-                if len(cell_infos) != 1:
-                    print(cell_infos)
-                    print(tiling)
-                assert len(cell_infos) == 1
-                for cell_info in cell_infos:
-                    cell_perm = [ 0 for i in range(len(perm))]
-                    for cell in cell_info.keys():
-                        _, _, cell_indices = cell_info[cell]
-                        for index in cell_indices:
-                            cell_perm[index] = cell
+    verification_length = tiling.total_points + len(basis[-1])
+    verification_length += sum(1 for _, block in tiling.non_points if isinstance(block, PositiveClass))
+    for perm_length in range(verification_length + 1):
+        containing_perms, _ = basis_partitioning(tiling, perm_length, basis)
+        for perm, cell_infos in containing_perms.items():
+            perms_occurrences = set()
+            if len(cell_infos) != 1:
+                print(cell_infos)
+                print(tiling)
+            assert len(cell_infos) == 1
+            for cell_info in cell_infos:
+                cell_perm = [ 0 for i in range(len(perm))]
+                for cell in cell_info.keys():
+                    _, _, cell_indices = cell_info[cell]
+                    for index in cell_indices:
+                        cell_perm[index] = cell
 
-                    for patt in basis:
-                        for occurrence in perm.occurrences_of(patt):
-                            cells_of_occurrence = set( cell_perm[i] for i in occurrence )
-                            perms_occurrences.add(tuple(cells_of_occurrence))
+                for patt in basis:
+                    for occurrence in perm.occurrences_of(patt):
+                        cells_of_occurrence = set( cell_perm[i] for i in occurrence )
+                        perms_occurrences.add(tuple(cells_of_occurrence))
 
-                    _OCCURRENCES_OF_CACHE[key].add(tuple(perms_occurrences))
+                all_cells_of_occurrences_by_perms.add(tuple(perms_occurrences))
 
-    return _OCCURRENCES_OF_CACHE[key]
+    return all_cells_of_occurrences_by_perms
 
 
 
@@ -196,3 +202,24 @@ def tiling_inferral(tiling, basis):
         tiling_dict[cell] = new_block
 
     return Tiling(tiling_dict)
+
+def get_class(basis):
+    # print(basis)
+    if basis not in _CLASS_CACHE:
+        _CLASS_CACHE[basis] = PermSet.avoiding(basis)
+    return _CLASS_CACHE[basis]
+
+def get_perms_to_check(basis):
+    if basis not in _PERMS_TO_CHECK:
+        to_check = list(basis)
+        perm_class = get_class(basis)
+        length_to_check = len(basis[-1])-1
+
+        for length in range(1, length_to_check+1):
+            for patt in perm_class.of_length(length):
+                if any(b.contains(patt) for b in basis):
+                    to_check.append(patt)
+
+        _PERMS_TO_CHECK[basis] = PermSet(to_check)
+
+    return _PERMS_TO_CHECK[basis]

@@ -7,7 +7,7 @@ from atrap.tools import cells_of_occurrences
 
 from .recursive_class import RecursiveStrategy
 
-def components(tiling, basis):
+def components(tiling, basis, basis_partitioning=basis_partitioning):
 
     cell_to_int = {}
 
@@ -17,7 +17,7 @@ def components(tiling, basis):
 
     components = UnionFind(len(cell_to_int))
 
-    occurrences_of_basis_elements = cells_of_occurrences(tiling, basis)
+    occurrences_of_basis_elements = cells_of_occurrences(tiling, basis, basis_partitioning=basis_partitioning)
     for cells_of_occurrence in cells_of_occurrences(tiling, basis):
         for cell1, cell2 in combinations(cells_of_occurrence, 2):
             components.unite(cell_to_int[cell1], cell_to_int[cell2])
