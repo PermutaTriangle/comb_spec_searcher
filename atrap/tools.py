@@ -223,9 +223,6 @@ def get_perms_to_check(basis):
 
         _PERMS_TO_CHECK[basis] = PermSet(to_check)
 
-        print("for ",basis,", checking: ",to_check)
-
-
     return _PERMS_TO_CHECK[basis]
 
 
