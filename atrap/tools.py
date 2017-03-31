@@ -19,6 +19,9 @@ def basis_partitioning(tiling, length, basis):
         cache[length] = tiling.basis_partitioning(length, basis)
     return cache[length]
 
+def basis_partitioning(tiling, length, basis):
+    return tiling.basis_partitioning(length, basis)
+
 def cells_of_occurrences(tiling, basis):
     return tuple( set( chain( *cells_of_occurrences_by_perms(tiling, basis) ) ) )
 

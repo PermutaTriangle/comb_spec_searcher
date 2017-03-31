@@ -201,6 +201,14 @@ def separations( inequalities, unprocessed_cells=None, current_cell=None, curren
 
     if furthest_left_index > furthest_right_index:
         '''in which case the interval is empty'''
+        if furthest_left_index == furthest_right_index + 1:
+            '''Must mix with part with furthest_right_index'''
+            current_state[furthest_right_index].append(current_cell)
+            # print(current_state)
+            if unprocessed_cells:
+                next_cell = unprocessed_cells[0]
+                return [ separation for separation in separations( inequalities, unprocessed_cells[1:], next_cell, current_state )]
+            return [current_state]
         return []
 
     '''We now need to create the potential states, for example, consider the "fake"
@@ -246,6 +254,7 @@ def separations( inequalities, unprocessed_cells=None, current_cell=None, curren
     return potential_states
 
 def row_and_column_separation(tiling, basis):
+    # print("----------------NOW CONSIDERING-------------")
     # print(tiling)
     '''First we calculate the set of inequalities for all the rows and columns'''
     row_inequalities, column_inequalities = row_and_column_inequalities_of_tiling(tiling, basis)
@@ -257,6 +266,7 @@ def row_and_column_separation(tiling, basis):
         inequalities = row_inequalities[row]
         if inequalities:
             # print("------working on row {}------".format(row))
+            # print(inequalities)
             '''Calculate the separation, described in the function'''
             row_separations = separations(inequalities)
             # print(row_separations)
@@ -282,13 +292,14 @@ def row_and_column_separation(tiling, basis):
                     '''we keep track of shifted cells for when we do the work for columns'''
                     original_cell_to_shifted_cell_map[cell] = shifted_cell
                     new_tiling_dict[shifted_cell] = tiling[cell]
-    #         print(Tiling(new_tiling_dict))
+            # print(Tiling(new_tiling_dict))
     # print(original_cell_to_shifted_cell_map)
     for col in range(tiling.dimensions.i):
         '''Calculate the separation, described in the function'''
         inequalities = column_inequalities[col]
-        # print(inequalities)
         if inequalities:
+            # print("------working on col {}------".format(col))
+            # print(inequalities)
             column_separations = separations(inequalities)
             if len(column_separations) == 1:
                 '''This must be the trivial solution'''
@@ -322,6 +333,7 @@ def row_and_column_separation(tiling, basis):
                     '''the first part appears to the left of the second, second to the left of the third etc,
                     so we shift the x coordinate by the position of the part/len(separation)'''
                     new_tiling_dict[(shifted_cell.i + index/len(separation), shifted_cell.j)] = tiling[cell]
+            # print(Tiling(new_tiling_dict))
 
     '''We then take the tiling, which will of course flatten the tiling dictionary'''
     separated_tiling = Tiling(new_tiling_dict)
