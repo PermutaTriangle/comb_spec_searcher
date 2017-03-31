@@ -3,6 +3,7 @@ from permuta import Perm, PermSet
 from grids import Tiling, Block, PositiveClass
 from .inferral_class import InferralStrategy
 from collections import defaultdict
+from .jays_subclass_inferral import jays_subclass_inferral
 
 def subclass_inferral(tiling, basis, **kwargs):
     '''Return a new tiling where all non-points have been inferred.
@@ -40,6 +41,7 @@ def subclass_inferral(tiling, basis, **kwargs):
 
     # assert inferred_tiling == old_subclass_inferral(tiling, basis)
     if not tiling == inferred_tiling:
+
         yield InferralStrategy("After tiling subset inferral", inferred_tiling)
 
 

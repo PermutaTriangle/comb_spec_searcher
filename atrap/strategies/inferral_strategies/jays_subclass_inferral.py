@@ -27,7 +27,7 @@ def cell_inferral(tiling, the_cell, input_set):
 
         # print("playing with:")
         # print(T)
-        
+
         if all(perm not in input_set for perm in T.perms_of_length(len(point_cells) - 1 + len(patt))):
             inferred_basis = Basis(inferred_basis+(patt,))
 
@@ -36,7 +36,7 @@ def cell_inferral(tiling, the_cell, input_set):
 
 
 
-def jays_subclass_inferral(tiling, basis):
+def jays_subclass_inferral(tiling, basis, **kwargs):
     """Return a new tiling where all non-points have been inferred."""
 
     # print("inferring...")
