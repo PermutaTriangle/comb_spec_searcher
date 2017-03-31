@@ -11,13 +11,21 @@ __all__ = ["basis_partitioning", "is_verified", "tiling_inferral"]
 # _OCCURRENCES_OF_CACHE = {}
 
 
-# def basis_partitioning(tiling, length, basis):
-#     """A cached basis partitioning function."""
-#     key = (tiling, basis)
-#     cache = _BASIS_PARTITIONING_CACHE.setdefault(key, {})
-#     if length not in cache:
-#         cache[length] = tiling.basis_partitioning(length, basis)
-#     return cache[length]
+_CLASS_CACHE = {}
+
+_PERMS_TO_CHECK = {}
+
+
+def basis_partitioning(tiling, length, basis):
+    """A cached basis partitioning function."""
+    key = (tiling, basis)
+    cache = _BASIS_PARTITIONING_CACHE.setdefault(key, {})
+    if length not in cache:
+        cache[length] = tiling.basis_partitioning(length, basis)
+    else:
+        # print('**cache repeat!!**')
+        pass
+    return cache[length]
 
 def basis_partitioning(tiling, length, basis):
     return tiling.basis_partitioning(length, basis)
@@ -194,3 +202,24 @@ def tiling_inferral(tiling, basis):
         tiling_dict[cell] = new_block
 
     return Tiling(tiling_dict)
+
+def get_class(basis):
+    # print(basis)
+    if basis not in _CLASS_CACHE:
+        _CLASS_CACHE[basis] = PermSet.avoiding(basis)
+    return _CLASS_CACHE[basis]
+
+def get_perms_to_check(basis):
+    if basis not in _PERMS_TO_CHECK:
+        to_check = list(basis)
+        perm_class = get_class(basis)
+        length_to_check = len(basis[-1])-1
+
+        for length in range(1, length_to_check+1):
+            for patt in perm_class.of_length(length):
+                if any(b.contains(patt) for b in basis):
+                    to_check.append(patt)
+
+        _PERMS_TO_CHECK[basis] = PermSet(to_check)
+
+    return _PERMS_TO_CHECK[basis]
