@@ -18,7 +18,7 @@ def cell_inferral(tiling, the_cell, input_set):
 
     max_length = max([0,len(input_set.basis[-1])-1])
 
-    inferred_basis = input_set.basis
+    inferred_basis = tiling[the_cell].basis
     # for length in range(1, max_length+1):
         # perm_set = get_class(inferred_basis)
     for patt in get_perms_to_check(inferred_basis):
