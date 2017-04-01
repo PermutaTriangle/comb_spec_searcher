@@ -10,13 +10,17 @@ def subclass_inferral(tiling, basis, **kwargs):
     '''Return a new tiling where all non-points have been inferred.
     This is a more primitive approach avoiding using the basis
     partitioning function'''
-    total_points = tiling.total_points
-    total_points += sum(1 for _, block in tiling.non_points if isinstance(block, PositiveClass))
+    total_points = tiling.total_points + tiling.total_other
 
     '''This will be the inferred tiling that is returned'''
-    inferred_tiling_dict = { cell: Block.point for cell in tiling.point_cells }
+    inferred_tiling_dict = { }
     '''We will add a perm to this tiling, to determine if it is forbidden in a cell'''
-    point_tiling_dict = { cell: block for cell, block in tiling if isinstance(block, PositiveClass) or block is Block.point }
+    point_tiling_dict = {}
+    for cell in tiling.point_cells:
+        inferred_tiling_dict[cell] = Block.point
+        point_tiling_dict[cell] = Block.point
+    for cell, positive_class in tiling.other:
+        point_tiling_dict[cell] = positive_class
 
     for cell, block in tiling.non_points:
         '''For all non point cells, we want to try and add to the original basis'''
@@ -30,7 +34,11 @@ def subclass_inferral(tiling, basis, **kwargs):
             inferral_length = temp_total_points + length
             for patt in PermSet.avoiding(original_basis).of_length(length):
                 '''For each potential pattern, to add it to the basis, we need that it
-                always creates a bad permutation with all the points'''
+                always creates a bad permutation with all the points
+                TODO Say that 01 and 012 are both avoiders of original_basis.
+                If we add 01 to the original basis, will 012 not be considered
+                because original_basis is updated and that changes what we are
+                looping over?'''
                 point_tiling_dict[cell] = PermSet([patt])
                 if any( perm.avoids(*basis) for perm in Tiling(point_tiling_dict).perms_of_length(inferral_length)):
                     point_tiling_dict.pop(cell)
