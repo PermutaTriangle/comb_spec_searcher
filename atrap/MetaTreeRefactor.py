@@ -308,8 +308,6 @@ class MetaTree(object):
                         verified_and_node = self._verify(child_or_node)
                         if verified_and_node:
                             verified_and_nodes.add(verified_and_node)
-                            new_verified_and_nodes = self._equivalent_expand(child_or_node)
-                            verified_and_nodes.update( new_verified_and_nodes )
                             child_sibling_node = child_or_node.sibling_node
                             child_sibling_node.natural = True
 
@@ -558,6 +556,12 @@ class MetaTree(object):
             return
         else:
             seen_nodes.add(and_node)
+        if and_node.is_verified():
+            # print("and_node is already verified")
+            '''we then propagate this information to its parent node'''
+            if and_node is not self.root_and_node:
+                self._propagate_sibling_node_verification(and_node.parent_sibling_node(), seen_nodes)
+            return
 
         '''In order to propagate we need that all our children are natural (else they have not occurred in the tree),
         and have some verification conditions.'''
@@ -579,6 +583,9 @@ class MetaTree(object):
             if frozenset() in new_verification:
                 and_node.verification = set([frozenset()])
             else:
+                # if and_node.verification == new_verification:
+                #     print("and_node verification didn't change")
+                #     return
                 and_node.verification = new_verification
 
 
@@ -593,6 +600,12 @@ class MetaTree(object):
             return
         else:
             seen_nodes.add(sibling_node)
+        if sibling_node.is_verified():
+            # print("sibling_node already verified")
+            '''and propagate this information to parent AND nodes'''
+            for parent_and_node in sibling_node.get_parent_and_nodes():
+                self._propagate_and_node_verification(parent_and_node, seen_nodes)
+            return
         '''In order to propagate we need that at least one AND node has a verified strategy'''
         if any( child_and_node.verification for child_and_node in sibling_node.get_children_and_nodes() ):
             new_verifications = set()
@@ -609,6 +622,9 @@ class MetaTree(object):
             if frozenset() in final_verifications:
                 sibling_node.verification = set([frozenset()])
             else:
+                # if sibling_node.verification == final_verifications:
+                #     print("sibling_node verification didn't change")
+                #     return
                 sibling_node.verification = final_verifications
 
             '''and propagate this information to parent AND nodes'''
