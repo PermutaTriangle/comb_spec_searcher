@@ -308,8 +308,6 @@ class MetaTree(object):
                         verified_and_node = self._verify(child_or_node)
                         if verified_and_node:
                             verified_and_nodes.add(verified_and_node)
-                            new_verified_and_nodes = self._equivalent_expand(child_or_node)
-                            verified_and_nodes.update( new_verified_and_nodes )
                             child_sibling_node = child_or_node.sibling_node
                             child_sibling_node.natural = True
 
