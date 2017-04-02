@@ -108,3 +108,109 @@ def all_minimum_row_placements(tiling, basis, **kwargs):
             bottommost_tilings = [ Tiling(tiling_dict) for tiling_dict in bottommost_tiling_dicts]
             bottommost_formal_step = "Placing the minimum point into row {}".format(row)
             yield BatchStrategy( bottommost_formal_step, bottommost_tilings )
+
+def all_column_placements(tiling, **kwargs):
+    for col in range(tiling.dimensions.i):
+        if len(tiling.get_col(col)) < 2:
+            continue
+
+        if any( not (block is Block.point or isinstance(block, PositiveClass)) for _, block in tiling.get_col(col) ):
+            # Col inelegible as some block is not a point.
+            continue
+
+        if any( sum(1 for _, row_block in tiling.get_row(cell.j)
+               if isinstance(row_block, PositiveClass)
+               or row_block is Block.point) != 1 for cell, _ in tiling.get_col(col) ):
+            # Col ineligible because there is a cell that is not
+            # the sole non-class cell in its respective row
+            continue
+
+        leftmost_tiling_dicts = [ {} for _ in tiling.get_col(col) ]
+        rightmost_tiling_dicts = [ {} for _ in tiling.get_col(col) ]
+        for cell, block in tiling:
+
+            for index, value in enumerate(tiling.get_col(col)):
+                cell_being_placed, _ = value
+
+                if cell.j == cell_being_placed.j:
+                    if cell.i == cell_being_placed.i:
+                        # same cell
+
+                        leftmost_tiling_dicts[index][cell] = Block.point
+                        rightmost_tiling_dicts[index][cell] = Block.point
+
+                        if isinstance(block, PositiveClass):
+                            perm_class = block.perm_class
+                            leftmost_tiling_dicts[index][(cell.i + 0.5, cell.j + 0.5)] = perm_class
+                            rightmost_tiling_dicts[index][(cell.i + 0.5, cell.j - 0.5)] = perm_class
+                            leftmost_tiling_dicts[index][(cell.i - 0.5, cell.j + 0.5)] = perm_class
+                            rightmost_tiling_dicts[index][(cell.i - 0.5, cell.j - 0.5)] = perm_class
+                    else:
+                        # same row, different col
+                        leftmost_tiling_dicts[index][(cell.i, cell.j + 0.5)] = block
+                        leftmost_tiling_dicts[index][(cell.i, cell.j - 0.5)] = block
+                        rightmost_tiling_dicts[index][(cell.i, cell.j + 0.5)] = block
+                        rightmost_tiling_dicts[index][(cell.i, cell.j - 0.5)] = block
+                elif cell.i == cell_being_placed.i:
+                    #same col, different row
+                    leftmost_tiling_dicts[index][(cell.i + 0.5, cell.j)] = block
+                    rightmost_tiling_dicts[index][(cell.i - 0.5, cell.j)] = block
+                else:
+                    # different row and different column
+                    leftmost_tiling_dicts[index][cell] = block
+                    rightmost_tiling_dicts[index][cell] = block
+
+        leftmost_tilings = [ Tiling(tiling_dict) for tiling_dict in leftmost_tiling_dicts]
+        leftmost_formal_step = "Placing the leftmost point into column {}".format(col)
+        yield BatchStrategy( leftmost_formal_step, leftmost_tilings )
+
+        rightmost_tilings = [ Tiling(tiling_dict) for tiling_dict in rightmost_tiling_dicts ]
+        rightmost_formal_step = "Placing the rightmost point into column {}".format(col)
+        yield BatchStrategy( rightmost_formal_step, rightmost_tilings )
+
+def all_leftmost_column_placements(tiling, **kwargs):
+    for col in range(tiling.dimensions.i):
+        if len(tiling.get_col(col)) < 2:
+            continue
+
+        if any( not (block is Block.point or isinstance(block, PositiveClass)) for _, block in tiling.get_col(col) ):
+            # Col inelegible as some block is not a point.
+            continue
+
+        if any( sum(1 for _, row_block in tiling.get_row(cell.j)
+               if isinstance(row_block, PositiveClass)
+               or row_block is Block.point) != 1 for cell, _ in tiling.get_col(col) ):
+            # Col ineligible because there is a cell that is not
+            # the sole non-class cell in its respective row
+            continue
+
+        leftmost_tiling_dicts = [ {} for _ in tiling.get_col(col) ]
+        for cell, block in tiling:
+
+            for index, value in enumerate(tiling.get_col(col)):
+                cell_being_placed, _ = value
+
+                if cell.j == cell_being_placed.j:
+                    if cell.i == cell_being_placed.i:
+                        # same cell
+
+                        leftmost_tiling_dicts[index][cell] = Block.point
+
+                        if isinstance(block, PositiveClass):
+                            perm_class = block.perm_class
+                            leftmost_tiling_dicts[index][(cell.i + 0.5, cell.j + 0.5)] = perm_class
+                            leftmost_tiling_dicts[index][(cell.i - 0.5, cell.j + 0.5)] = perm_class
+                    else:
+                        # same row, different col
+                        leftmost_tiling_dicts[index][(cell.i, cell.j + 0.5)] = block
+                        leftmost_tiling_dicts[index][(cell.i, cell.j - 0.5)] = block
+                elif cell.i == cell_being_placed.i:
+                    #same col, different row
+                    leftmost_tiling_dicts[index][(cell.i + 0.5, cell.j)] = block
+                else:
+                    # different row and different column
+                    leftmost_tiling_dicts[index][cell] = block
+
+        leftmost_tilings = [ Tiling(tiling_dict) for tiling_dict in leftmost_tiling_dicts]
+        leftmost_formal_step = "Placing the leftmost point into column {}".format(col)
+        yield BatchStrategy( leftmost_formal_step, leftmost_tilings )

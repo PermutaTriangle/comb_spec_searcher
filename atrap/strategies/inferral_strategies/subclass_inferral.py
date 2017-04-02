@@ -10,7 +10,7 @@ def subclass_inferral(tiling, basis, **kwargs):
     '''Return a new tiling where all non-points have been inferred.
     This is a more primitive approach avoiding using the basis
     partitioning function'''
-    total_points = tiling.total_points + tiling.total_other
+    total_points = tiling.total_points + len(tiling.other)
 
     '''This will be the inferred tiling that is returned'''
     inferred_tiling_dict = { }

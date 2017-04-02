@@ -16,6 +16,9 @@ mimic_regular_insertion_encoding = [ [all_cell_insertions, all_minimum_row_place
 
 standard_strategies = [ [all_cell_insertions], [all_point_placements], [jays_subclass_inferral, row_and_column_separation], [reversibly_deletable_cells], [subset_verified] ]
 
+finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, subclass_inferral], [], [subset_verified] ]
+
+
 # mtree = MetaTree([Perm((0,2,1)), Perm((3,2,1,0))], *standard_strategies)
 
 # mtree = MetaTree(descriptors.Basis([Perm((0,1,2,3))]))
@@ -38,11 +41,13 @@ standard_strategies = [ [all_cell_insertions], [all_point_placements], [jays_sub
 
 # task = '012_2301'
 
-task = '012_0321_2103'
+# task = '012_0321_2103'
+
+task = '012_3210'
 
 patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 #
-mtree = MetaTree( patts, *standard_strategies )
+mtree = MetaTree( patts, *finite_strategies )
 
 
 #mtree.do_level()
