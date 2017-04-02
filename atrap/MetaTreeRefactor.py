@@ -592,7 +592,7 @@ class MetaTree(object):
                 # if and_node.verification == new_verification:
                 #     print("and_node verification didn't change")
                 #     return
-                and_node.verification = new_verification
+                and_node.verification = self.verifications_cleanup( new_verification )
 
 
             '''we then propagate this information to its parent node'''
@@ -631,11 +631,20 @@ class MetaTree(object):
                 # if sibling_node.verification == final_verifications:
                 #     print("sibling_node verification didn't change")
                 #     return
-                sibling_node.verification = final_verifications
+                sibling_node.verification = self.verifications_cleanup( final_verifications )
 
             '''and propagate this information to parent AND nodes'''
             for parent_and_node in sibling_node.get_parent_and_nodes():
                 self._propagate_and_node_verification(parent_and_node, seen_nodes)
+
+    def verifications_cleanup(self, verifications):
+        cleanup_verifications = set()
+        for verification in verifications:
+            if any( x < verification for x in verifications ):
+                continue
+            cleanup_verifications.add(verification)
+        return cleanup_verifications
+
 
     def find_proof_tree(self):
         if self.has_proof_tree():
