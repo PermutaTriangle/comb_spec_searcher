@@ -26,13 +26,13 @@ for i in range(len(s2) + 1):
     for s2_subset in combinations(s2, i):
         if lex_min(s2_subset) != s2_subset:
             continue
-        s3_perms_available = PermSet.avoiding(s2_subset).of_length(3)
+        s3_perms_available = sorted(PermSet.avoiding(s2_subset).of_length(3))
         for j in range(len(s3_perms_available) + 1):
             for s3_subset in combinations(s3_perms_available, j):
                 if s2_subset or s3_subset:
-                    if lex_min(s2_subset+s3_subset) != s2_subset+s3_subset:
+                    if lex_min(s2_subset + s3_subset) != s2_subset + s3_subset:
                         continue
-                    s4_perms_available = PermSet.avoiding(s2_subset + s3_subset).of_length(4)
+                    s4_perms_available = sorted(PermSet.avoiding(s2_subset + s3_subset).of_length(4))
                     for k in range(len(s4_perms_available) + 1):
                         for s4_subset in combinations(s4_perms_available, k):
                             basis = s2_subset + s3_subset + s4_subset

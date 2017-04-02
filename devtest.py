@@ -14,7 +14,7 @@ all_strategies = [ [all_cell_insertions, all_row_placements], [all_equivalent_ro
 
 mimic_regular_insertion_encoding = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral], [reversibly_deletable_cells], [one_by_one_verification, is_empty]]
 
-standard_strategies = [ [all_cell_insertions], [all_point_placements], [jays_subclass_inferral, row_and_column_separation], [reversibly_deletable_cells], [subset_verified] ]
+standard_strategies = [ [all_active_cell_insertions], [all_point_placements], [jays_subclass_inferral, row_and_column_separation], [reversibly_deletable_cells], [subset_verified] ]
 
 finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, subclass_inferral], [], [subset_verified] ]
 
@@ -37,7 +37,7 @@ finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_eq
 
 # mtree = MetaTree([Perm((1,3,0,2)), Perm((2,0,3,1))], *all_strategies)
 #
-# task = '021_0123_2103_2301'
+# task = '012_2103_2301'
 
 # task = '012_2301'
 
@@ -59,16 +59,6 @@ while not mtree.has_proof_tree():
     print("The partitioning cache has {} tilings in it right now".format( len(mtree._basis_partitioning_cache) ) )
     print("The inferral cache has {} tilings in it right now".format( len(mtree._inferral_cache) ) )
     print("There are {} tilings in the search tree".format( len(mtree.tiling_cache)))
-    # print(len(mtree.tiling_cache))
-    # for tiling, node in mtree.tiling_cache.items():
-    #     print(tiling)
-    #     print(node.sibling_node.verification)
-    #     for verification in node.sibling_node.verification:
-    #         for t in verification:
-    #             print(t)
-    #     print("--------------")
-    # if mtree.depth_searched == 5:
-        # break
 
 proof_tree = mtree.find_proof_tree()
 proof_tree.pretty_print()
@@ -82,6 +72,6 @@ print("I took", end - start, "seconds")
 
 
 
-# proof_tree = mtree.find_proof_tree()
-#
-# print( proof_tree.to_json(indent="    ") )
+proof_tree = mtree.find_proof_tree()
+
+print( proof_tree.to_json(indent="    ") )

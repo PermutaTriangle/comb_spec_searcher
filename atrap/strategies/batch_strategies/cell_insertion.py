@@ -2,6 +2,9 @@ from grids import Block
 from grids import PositiveClass
 from grids import Tiling
 
+from atrap.tools import basis_partitioning, cells_of_occurrences
+from itertools import chain
+
 from .batch_class import BatchStrategy
 
 
@@ -36,3 +39,23 @@ def cell_insertion(tiling, cell):
     new_tiling_dict[cell] = positive_class
     positive_tiling = Tiling(new_tiling_dict)
     return empty_cell_tiling, positive_tiling
+
+
+def all_active_cell_insertions(tiling, basis, basis_partitioning=basis_partitioning, **kwargs):
+    """Yield all cell insertions where the cell was used for a some bad pattern of a tiling along with a formal step."""
+    # We are concerned with all the classes of the tiling
+    if len(tiling) <= 1:
+        for strategy in all_cell_insertions(tiling):
+            yield strategy
+        return
+
+    cells_to_insert = set( chain( *cells_of_occurrences(tiling, basis, basis_partitioning=basis_partitioning)) )
+    for cell in cells_to_insert:
+        block = tiling[cell]
+        if isinstance(block, PositiveClass) or block is Block.point:
+            continue
+        positive_class = PositiveClass(block)
+        format_string = "We perform cell insertion into cell {}; either it is empty or {}."  # TODO: References
+        formal_step = format_string.format(tuple(cell), positive_class)
+        # Yield the formal step and the pair of tilings created
+        yield BatchStrategy( formal_step, cell_insertion(tiling, cell) )
