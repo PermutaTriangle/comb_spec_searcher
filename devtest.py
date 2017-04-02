@@ -41,13 +41,13 @@ finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_eq
 
 # task = '012_2301'
 
-# task = '012_0321_2103'
+task = '012_0321_2103'
 
-task = '012_3210'
+# task = '012_3210'
 
 patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 #
-mtree = MetaTree( patts, *finite_strategies )
+mtree = MetaTree( patts, *standard_strategies )
 
 
 #mtree.do_level()
@@ -57,6 +57,7 @@ while not mtree.has_proof_tree():
     mtree.do_level()
     print("We had {} inferral cache hits and {} partitioning cache hits".format(mtree.inferral_cache_hits, mtree.partitioning_cache_hits))
     print("The partitioning cache has {} tilings in it right now".format( len(mtree._basis_partitioning_cache) ) )
+    print("The inferral cache has {} tilings in it right now".format( len(mtree._inferral_cache) ) )
     print("There are {} tilings in the search tree".format( len(mtree.tiling_cache)))
     # print(len(mtree.tiling_cache))
     # for tiling, node in mtree.tiling_cache.items():
