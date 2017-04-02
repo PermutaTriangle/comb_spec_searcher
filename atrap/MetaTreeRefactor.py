@@ -22,6 +22,10 @@ from permuta.descriptors import Basis
 from itertools import product
 
 
+from permuta import Perm
+from grids import Block
+
+
 class SiblingNode(set):
     '''A set of OR nodes with equivalent tilings.
     The node is considered natural if it contains a tiling found by a batch
@@ -246,6 +250,8 @@ class MetaTree(object):
             drill_set.update(child_sibling_nodes)
             if self.has_proof_tree():
                 return True
+
+        for sibling_or_node in expand_set:
             '''We then try all batch strategies and return the set of
             child SiblingNode created'''
             child_sibling_nodes = self._batch_expand(sibling_or_node)
@@ -420,7 +426,7 @@ class MetaTree(object):
                 '''For each inferral strategy,'''
                 if fully_inferred:
                     break
-                for inferral_strategy in inferral_strategy_generator(tiling, basis=self.basis, basis_partitioning=self._basis_partitioning):
+                for inferral_strategy in inferral_strategy_generator(inferred_tiling, basis=self.basis, basis_partitioning=self._basis_partitioning):
                     if not isinstance(inferral_strategy, InferralStrategy):
                         raise TypeError("Attempted to infer on a non InferralStrategy")
                     formal_step = inferral_strategy.formal_step
@@ -437,6 +443,7 @@ class MetaTree(object):
                 '''Clean up the cache'''
                 if semi_inferred_tiling in self._basis_partitioning_cache:
                     self._basis_partitioning_cache.pop(semi_inferred_tiling)
+            self._inferral_cache[inferred_tiling] = inferred_tiling
         else:
             self.inferral_cache_hits += 1
         return inferred_tiling
@@ -526,8 +533,6 @@ class MetaTree(object):
                         '''We try to verify the equivalent tiling'''
                         verified_and_node = self._verify(eq_or_node)
                         if verified_and_node:
-                            # verified_and_node.parents.append(eq_or_node)
-                            # eq_or_node.children.append(verified_and_node)
                             and_nodes_to_be_propagated.add(verified_and_node)
                     else:
                         eq_sibling_node = eq_or_node.sibling_node

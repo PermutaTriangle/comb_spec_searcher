@@ -36,7 +36,9 @@ standard_strategies = [ [all_cell_insertions], [all_point_placements], [jays_sub
 #
 # task = '021_0123_2103_2301'
 
-task = '012_2301'
+# task = '012_2301'
+
+task = '012_0321_2103'
 
 patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 #
