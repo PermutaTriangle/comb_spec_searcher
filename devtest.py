@@ -14,7 +14,7 @@ all_strategies = [ [all_cell_insertions, all_row_placements], [all_equivalent_ro
 
 mimic_regular_insertion_encoding = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral], [reversibly_deletable_cells], [one_by_one_verification, is_empty]]
 
-standard_strategies = [ [all_active_cell_insertions], [all_point_placements], [jays_subclass_inferral, row_and_column_separation], [reversibly_deletable_cells], [subset_verified] ]
+standard_strategies = [ [all_active_cell_insertions], [all_point_placements], [jays_subclass_inferral, row_and_column_separation], [components], [subset_verified] ]
 
 finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, subclass_inferral], [], [subset_verified] ]
 
@@ -27,7 +27,7 @@ finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_eq
 
 # mtree = MetaTree(descriptors.Basis([Perm((0,1))]))
 
-# mtree = MetaTree([Perm((0,1,2))], batch_strategies=[all_cell_insertions, all_row_placements], inferral_strategies=[subclass_inferral, row_and_column_separation], recursive_strategies=[reversibly_deletable_cells], verification_strategies=[subset_verified])
+# mtree = MetaTree([Perm((0,1,2))], *standard_strategies)
 
 # mtree = MetaTree([])
 
@@ -41,9 +41,15 @@ finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_eq
 
 # task = '012_2301'
 
-task = '012_0321_2103'
+# task = '012_0321_2103'
 
+# task = '012_1032_2301_2310'
+
+task = '1302_2031'
+#
 # task = '012_3210'
+#
+# task = '012'
 
 patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 #
@@ -59,9 +65,15 @@ while not mtree.has_proof_tree():
     print("The partitioning cache has {} tilings in it right now".format( len(mtree._basis_partitioning_cache) ) )
     print("The inferral cache has {} tilings in it right now".format( len(mtree._inferral_cache) ) )
     print("There are {} tilings in the search tree".format( len(mtree.tiling_cache)))
+    print("Time taken so far is {} seconds".format( time() - start ) )
+    # if mtree.depth_searched == 4:
+    #     break
 
-proof_tree = mtree.find_proof_tree()
-proof_tree.pretty_print()
+
+
+if mtree.has_proof_tree():
+    proof_tree = mtree.find_proof_tree()
+    proof_tree.pretty_print()
 
 end = time()
 
@@ -70,8 +82,8 @@ print("I took", end - start, "seconds")
 
 
 
-
-
-proof_tree = mtree.find_proof_tree()
-
-print( proof_tree.to_json(indent="    ") )
+#
+#
+# proof_tree = mtree.find_proof_tree()
+#
+# print( proof_tree.to_json(indent="    ") )
