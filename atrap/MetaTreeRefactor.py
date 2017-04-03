@@ -560,9 +560,11 @@ class MetaTree(object):
             return
         else:
             seen_nodes.add(and_node)
+
         if and_node.is_verified():
             print("and_node is already verified")
             return
+
         '''In order to propagate we need that all our children are natural (else they have not occurred in the tree),
         and have some verification conditions.'''
         if all( child_or_node.sibling_node.natural and child_or_node.sibling_node.verification for child_or_node in and_node.children ):
@@ -576,14 +578,15 @@ class MetaTree(object):
             for verification_product in product(*child_verifications):
                 new_verification.add(frozenset().union(*verification_product))
 
-            '''and overwrite the old verification'''
-            if frozenset() in new_verification:
-                and_node.verification = set([frozenset()])
-            else:
-                if and_node.verification == new_verification:
-                    print("and_node verification didn't change")
-                    return
-                and_node.verification = self.verifications_cleanup( new_verification )
+            '''clean the verifications'''
+            cleaned_verifications = self.verifications_cleanup(new_verification)
+
+
+            if and_node.verification == cleaned_verifications:
+                print("and_node verification didn't change")
+                return
+
+            and_node.verification = cleaned_verifications
 
 
             '''we then propagate this information to its parent node'''
@@ -597,13 +600,11 @@ class MetaTree(object):
             return
         else:
             seen_nodes.add(sibling_node)
+
         if sibling_node.is_verified():
             print("sibling_node already verified")
             return
-            # '''and propagate this information to parent AND nodes'''
-            # for parent_and_node in sibling_node.get_parent_and_nodes():
-            #     self._propagate_and_node_verification(parent_and_node, seen_nodes)
-            # return
+
         '''In order to propagate we need that at least one AND node has a verified strategy'''
         if any( child_and_node.verification for child_and_node in sibling_node.get_children_and_nodes() ):
             new_verifications = set()
@@ -616,20 +617,22 @@ class MetaTree(object):
             sibling_tilings = set( sibling_or_node.tiling for sibling_or_node in sibling_node )
             final_verifications = set([ verification - sibling_tilings for verification in new_verifications ])
 
-            '''we update the old verification'''
-            if frozenset() in final_verifications:
-                sibling_node.verification = set([frozenset()])
-            else:
-                if sibling_node.verification == final_verifications:
-                    print("sibling_node verification didn't change")
-                    return
-                sibling_node.verification = self.verifications_cleanup( final_verifications )
+            '''we clean the verification'''
+            cleaned_verifications = self.verifications_cleanup( final_verifications )
+
+            if cleaned_verifications == sibling_node.verification:
+                print("sibling node verification unchanged")
+                return
+            sibling_node.verification = cleaned_verifications
 
             '''and propagate this information to parent AND nodes'''
             for parent_and_node in sibling_node.get_parent_and_nodes():
                 self._propagate_and_node_verification(parent_and_node, seen_nodes)
 
+    # TODO: Perhaps we should clean as we go.
     def verifications_cleanup(self, verifications):
+        if frozenset() in verifications:
+            return set([frozenset()])
         cleanup_verifications = set()
         for verification in verifications:
             if any( x < verification for x in verifications ):
