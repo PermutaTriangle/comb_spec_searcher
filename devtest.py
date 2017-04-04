@@ -14,7 +14,7 @@ all_strategies = [ [all_cell_insertions, all_row_placements], [all_equivalent_ro
 
 mimic_regular_insertion_encoding = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral], [reversibly_deletable_cells], [one_by_one_verification, is_empty]]
 
-standard_strategies = [ [all_active_cell_insertions], [all_point_placements], [jays_subclass_inferral, row_and_column_separation], [components], [subset_verified] ]
+standard_strategies = [ [all_active_cell_insertions], [all_point_placements], [jays_subclass_inferral, row_and_column_separation], [components, reversibly_deletable_cells], [subset_verified] ]
 
 finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, subclass_inferral], [], [subset_verified] ]
 
@@ -49,7 +49,7 @@ task = '1302_2031'
 #
 # task = '012_3210'
 #
-# task = '012'
+# task = '021'
 
 patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 #
