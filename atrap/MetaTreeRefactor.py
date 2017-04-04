@@ -17,14 +17,11 @@ from .LRUCache import LRUCache
 
 from grids import Tiling
 
-from permuta import PermSet
 from permuta.descriptors import Basis
+from permuta import PermSet
 
 from itertools import product
 
-
-from time import time
-import sys
 
 class SiblingNode(set):
     '''A set of OR nodes with equivalent tilings.
@@ -373,13 +370,8 @@ class MetaTree(object):
                             self._basis_partitioning_cache.pop(tiling)
 
                 for sibling_node in sibling_nodes_to_be_propagated:
-                    start = time()
                     self._propagate_sibling_node_verification(sibling_node)
-                    # print("propagation took {} seconds".format(time() - start ))
-                start = time()
                 self._propagate_and_node_verification(recursive_and_node)
-                # print("propagation took {} seconds".format(time() - start ))
-                sys.stdout.flush()
         return child_sibling_nodes
 
     def _batch_expand(self, or_node):
@@ -447,13 +439,9 @@ class MetaTree(object):
 
                 '''Propagate the AND nodes' verifications that need to be propagated'''
                 for sibling_node in verified_sibling_nodes:
-                    start = time()
                     self._propagate_sibling_node_verification(sibling_node)
-                    # print( "propagation took {} seconds".format( time() - start ) )
-                start = time()
                 self._propagate_and_node_verification(batch_and_node)
-                # print("propagation took {} seconds".format(time() - start ) )
-                sys.stdout.flush()
+
         return child_sibling_nodes
 
     def _inferral(self, tiling):
@@ -593,7 +581,7 @@ class MetaTree(object):
                                 tilings_to_expand.add(eq_tiling)
         return verified
 
-    def _propagate_and_node_verification(self, and_node, seen_nodes=None, propagation_count = None):
+    def _propagate_and_node_verification(self, and_node, seen_nodes=None):
         if seen_nodes is None:
             seen_nodes = set()
         if and_node in seen_nodes:
@@ -601,13 +589,6 @@ class MetaTree(object):
             return
         else:
             seen_nodes.add(and_node)
-        if propagation_count is None:
-            # print("New propagation")
-            propagation_count = 0
-        else:
-            propagation_count += 1
-
-        # print(propagation_count)
 
         if and_node.is_verified():
             print("and_node is already verified")
@@ -615,52 +596,38 @@ class MetaTree(object):
 
         '''In order to propagate we need that all our children are natural (else they have not occurred in the tree),
         and have some verification conditions.'''
-        # print( all( child_or_node.sibling_node.natural and child_or_node.sibling_node.verification for child_or_node in and_node.children ) )
         if all( child_or_node.sibling_node.natural and child_or_node.sibling_node.verification for child_or_node in and_node.children ):
             child_verifications = []
             for child_or_node in and_node.children:
-                # print(child_or_node.tiling)
-                # print(child_or_node.sibling_node.verification)
                 child_verifications.append( child_or_node.sibling_node.verification )
-            # print("length of old is:")
-            print([len(x) for x in child_verifications])
             '''We need to take all possible ways of taking one verification possibility
             from each child. We then union the verifications.'''
-            new_verification = set()
-            for verification_product in product(*child_verifications):
-                new_verification.add(frozenset().union(*verification_product))
-            # print("length of new is:")
-            # print(len(new_verification))
+
+            new_verification = set( frozenset().union(*vp) for vp in product(*child_verifications) )
+
             '''clean the verifications'''
             more_new_verifications = set()
             for verification in new_verification:
                 more_new_verifications.add(frozenset([ tiling for tiling in verification if not self.tiling_cache.get(tiling).sibling_node.is_verified()]))
 
             cleaned_verifications = self.verifications_cleanup(more_new_verifications)
-            # print("after cleanup")
-            # print(len(cleaned_verifications))
 
             if and_node.verification == cleaned_verifications:
                 print("and_node verification didn't change")
                 return
 
             and_node.verification = cleaned_verifications
-            # print(and_node.verification)
-            # for x in and_node.verification:
-            #     for tiling in x:
-            #         print(tiling)
 
             if and_node.is_verified():
                 if and_node is not self.root_and_node:
-                    self._propagate_sibling_node_verification(and_node.parent_sibling_node(), set([and_node]), propagation_count)
+                    self._propagate_sibling_node_verification(and_node.parent_sibling_node(), set([and_node]))
                 return
 
             '''we then propagate this information to its parent node'''
             if and_node is not self.root_and_node:
-                self._propagate_sibling_node_verification(and_node.parent_sibling_node(), seen_nodes, propagation_count)
+                self._propagate_sibling_node_verification(and_node.parent_sibling_node(), seen_nodes)
 
-
-    def _propagate_sibling_node_verification(self, sibling_node, seen_nodes=None, propagation_count=None):
+    def _propagate_sibling_node_verification(self, sibling_node, seen_nodes=None):
         if seen_nodes is None:
             seen_nodes = set()
         if sibling_node in seen_nodes:
@@ -668,13 +635,6 @@ class MetaTree(object):
         else:
             seen_nodes.add(sibling_node)
 
-        if propagation_count is None:
-            # print("New propagation")
-            propagation_count = 0
-        else:
-            propagation_count += 1
-
-        # print(propagation_count)
 
         if sibling_node.is_verified():
             # print("sibling_node already verified")
@@ -694,44 +654,32 @@ class MetaTree(object):
             more_final_verifications = set()
 
             for verification in final_verifications:
-                more_final_verifications.add(frozenset([ tiling for tiling in verification if not self.tiling_cache.get(tiling).sibling_node.is_verified()]))
+                more_final_verifications.add(frozenset( tiling for tiling in verification if not self.tiling_cache.get(tiling).sibling_node.is_verified() ))
 
             '''we clean the verification'''
             cleaned_verifications = self.verifications_cleanup( more_final_verifications )
 
             if cleaned_verifications == sibling_node.verification:
-                print("sibling node verification unchanged")
+                # print("sibling node verification unchanged")
                 return
             sibling_node.verification = cleaned_verifications
 
             if sibling_node.is_verified():
-                # print("The sibling node with the following tiling was verified")
-                # for or_node in sibling_node:
-                #     print(or_node.tiling)
-                # print("propagating my newly found verification to the parent and nodes")
+
                 for parent_and_node in sibling_node.get_parent_and_nodes():
-                    # print( parent_and_node.formal_step)
-                    # for child in parent_and_node.children:
-                    #     print(child.tiling)
-                    # print()
-                    self._propagate_and_node_verification(parent_and_node, set([sibling_node]), propagation_count)
-                # print("finished propagating for the sibling node containing the tiling")
-                # for or_node in sibling_node:
-                #     print(or_node.tiling)
-                #     break
+                    self._propagate_and_node_verification(parent_and_node, set([sibling_node]))
                 return
 
             '''and propagate this information to parent AND nodes'''
             for parent_and_node in sibling_node.get_parent_and_nodes():
-                self._propagate_and_node_verification(parent_and_node, seen_nodes, propagation_count)
+                self._propagate_and_node_verification(parent_and_node, seen_nodes)
+
 
     # TODO: Perhaps we should clean as we go.
     def verifications_cleanup(self, verifications):
         if frozenset() in verifications:
             return set([frozenset()])
-        return verifications
         # TODO: Group by length
-        verifications = len(verifications)
         cleanup_verifications = set()
         for verification in verifications:
             if any( x < verification for x in verifications ):
