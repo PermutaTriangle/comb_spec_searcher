@@ -591,7 +591,7 @@ class MetaTree(object):
             seen_nodes.add(and_node)
 
         if and_node.is_verified():
-            print("and_node is already verified")
+            # print("and_node is already verified")
             return
 
         '''In order to propagate we need that all our children are natural (else they have not occurred in the tree),
@@ -603,20 +603,34 @@ class MetaTree(object):
             '''We need to take all possible ways of taking one verification possibility
             from each child. We then union the verifications.'''
 
-            new_verification = set( frozenset().union(*vp) for vp in product(*child_verifications) )
+            new_verifications = self._multiple_cleaner_products(child_verifications)
 
-            '''clean the verifications'''
-            more_new_verifications = set()
-            for verification in new_verification:
-                more_new_verifications.add(frozenset([ tiling for tiling in verification if not self.tiling_cache.get(tiling).sibling_node.is_verified()]))
+            ''' --- BEGIN OLD METHOD --- '''
+            # old_new_verification = set( frozenset().union(*vp) for vp in product(*child_verifications) )
+            #
+            # # '''clean the verifications'''
+            # # more_new_verifications = set()
+            # # for verification in new_verifications:
+            # #     more_new_verifications.add(frozenset([ tiling for tiling in verification if not self.tiling_cache.get(tiling).sibling_node.is_verified()]))
+            #
+            # old_more_new_verifications = set()
+            # for verification in old_new_verification:
+            #     old_more_new_verifications.add(frozenset([ tiling for tiling in verification if not self.tiling_cache.get(tiling).sibling_node.is_verified()]))
+            #
+            # old_cleaned_verifications = self._verifications_cleanup(old_more_new_verifications)
+            #
+            # cleaned_verifications = self._verifications_cleanup(new_verifications)
+            #
+            # assert old_cleaned_verifications == cleaned_verifications
+            # assert new_verifications == cleaned_verifications
+            ''' --- END OLD METHOD --- '''
 
-            cleaned_verifications = self.verifications_cleanup(more_new_verifications)
 
-            if and_node.verification == cleaned_verifications:
-                print("and_node verification didn't change")
+            if and_node.verification == new_verifications:
+                # print("and_node verification didn't change")
                 return
 
-            and_node.verification = cleaned_verifications
+            and_node.verification = new_verifications
 
             if and_node.is_verified():
                 if and_node is not self.root_and_node:
@@ -642,22 +656,37 @@ class MetaTree(object):
 
         '''In order to propagate we need that at least one AND node has a verified strategy'''
         if any( child_and_node.verification for child_and_node in sibling_node.get_children_and_nodes() ):
-            new_verifications = set()
-            '''To be verified we need only one of the children AND nodes to be verified.
-            We collect them all.'''
-            for child_and_node in sibling_node.get_children_and_nodes():
-                new_verifications.update(child_and_node.verification)
-            '''We now have access to the tilings in the current SiblingNode, so we can remove
-            these from our verifications'''
+
+            ''' --- BEGIN OLD METHOD ---'''
+
+            # new_verifications = set()
+            # '''To be verified we need only one of the children AND nodes to be verified.
+            # We collect them all.'''
+            # for child_and_node in sibling_node.get_children_and_nodes():
+            #     new_verifications.update(child_and_node.verification)
+            # '''We now have access to the tilings in the current SiblingNode, so we can remove
+            # these from our verifications'''
+            # sibling_tilings = set( sibling_or_node.tiling for sibling_or_node in sibling_node )
+            # final_verifications = set([ verification - sibling_tilings for verification in new_verifications ])
+            #
+            #
+            # more_final_verifications = set()
+            #
+            # for verification in final_verifications:
+            #     more_final_verifications.add(frozenset( tiling for tiling in verification if not self.tiling_cache.get(tiling).sibling_node.is_verified() ))
+            #
+            # '''we clean the verification'''
+            # old_cleaned_verifications = self._verifications_cleanup( more_final_verifications )
+
+            ''' --- END OLD METHOD --- '''
+
+            # print("---Now updating---")
+            cleaned_verifications = set()
             sibling_tilings = set( sibling_or_node.tiling for sibling_or_node in sibling_node )
-            final_verifications = set([ verification - sibling_tilings for verification in new_verifications ])
-            more_final_verifications = set()
+            for child_and_node in sibling_node.get_children_and_nodes():
+                self._cleaner_update( cleaned_verifications, child_and_node.verification, sibling_tilings )
 
-            for verification in final_verifications:
-                more_final_verifications.add(frozenset( tiling for tiling in verification if not self.tiling_cache.get(tiling).sibling_node.is_verified() ))
-
-            '''we clean the verification'''
-            cleaned_verifications = self.verifications_cleanup( more_final_verifications )
+            # assert cleaned_verifications == old_cleaned_verifications
 
             if cleaned_verifications == sibling_node.verification:
                 # print("sibling node verification unchanged")
@@ -675,17 +704,81 @@ class MetaTree(object):
                 self._propagate_and_node_verification(parent_and_node, seen_nodes)
 
 
-    # TODO: Perhaps we should clean as we go.
-    def verifications_cleanup(self, verifications):
-        if frozenset() in verifications:
-            return set([frozenset()])
-        # TODO: Group by length
-        cleanup_verifications = set()
-        for verification in verifications:
-            if any( x < verification for x in verifications ):
+    ''' --- BEGIN OLD METHOD --- '''
+    # # TODO: Perhaps we should clean as we go.
+    # def _verifications_cleanup(self, verifications):
+    #     if frozenset() in verifications:
+    #         return set([frozenset()])
+    #     # TODO: Group by length
+    #     cleanup_verifications = set()
+    #     for verification in verifications:
+    #         if any( x < verification for x in verifications ):
+    #             continue
+    #         cleanup_verifications.add(verification)
+    #     return cleanup_verifications
+    ''' --- END OLD METHOD --- '''
+
+    def _cleaner_update(self, A, B, sibling_tilings):
+        for x in B:
+            want_to_add = frozenset( tiling for tiling in x if not self.tiling_cache.get(tiling).sibling_node.is_verified() and tiling not in sibling_tilings )
+            supersets = set()
+            is_superset = False
+            for z in A:
+                if z <= want_to_add:
+                    is_superset = True
+                    break
+                elif z > want_to_add:
+                    supersets.add(z)
+            if is_superset:
                 continue
-            cleanup_verifications.add(verification)
-        return cleanup_verifications
+
+            A.add( want_to_add )
+            A.difference_update(supersets)
+
+
+    def _cleaner_cartesian_product( self, A, B ):
+        '''Two sets A and B, with sets of tilings (can be thought of as integers).
+        We want to take all (a,b) in A x B, and take the union a u b, and then
+        return all those that are not superset of another.'''
+        intermediate_answer = set()
+        for x in A:
+            temp_B = set( y - x for y in B )
+            for y in temp_B:
+                want_to_add = frozenset( tiling for tiling in x.union(y) if not self.tiling_cache.get(tiling).sibling_node.is_verified() )
+                supersets = set()
+
+                is_superset = False
+
+                for z in intermediate_answer:
+                    if z <= want_to_add:
+                        is_superset = True
+                        break
+                    elif z > want_to_add:
+                        supersets.add(z)
+                if is_superset:
+                    continue
+
+                intermediate_answer.add( want_to_add )
+                intermediate_answer = intermediate_answer - supersets
+
+        return intermediate_answer
+
+    def _multiple_cleaner_products(self, child_verifications):
+        if not child_verifications:
+            return set()
+
+        child_verifications.sort(key = len)
+
+        current_product = child_verifications[0]
+        child_verifications = child_verifications[1:]
+        while child_verifications:
+
+            current_child_verifications = child_verifications[0]
+            child_verifications = child_verifications[1:]
+
+            current_product = self._cleaner_cartesian_product(current_product, current_child_verifications)
+
+        return current_product
 
 
     def find_proof_tree(self):
@@ -694,6 +787,7 @@ class MetaTree(object):
             return proof_tree
         else:
             print("There is no proof tree yet. Use the do_level function to try and find one.")
+
 
     def _find_proof_tree_below_or_node(self, or_node, seen_tilings=None):
         '''Return the ProofTreeNode that is verified below the OR node.'''

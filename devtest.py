@@ -45,11 +45,11 @@ finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_eq
 
 # task = '012_1032_2301_2310'
 
-# task = '1302_2031'
+task = '1302_2031'
 #
 # task = '012_3210'
 #
-task = '012'
+# task = '012'
 
 patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 #
