@@ -39,7 +39,7 @@ finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_eq
 #
 # task = '012_2103_2301'
 
-task = '1234_1243_1324_1342_1423_1432_2134_2143_2314_2341_3214'
+# task = '1234_1243_1324_1342_1423_1432_2134_2143_2314_2341_3214'
 
 # task = '012_2301'
 
@@ -47,15 +47,15 @@ task = '1234_1243_1324_1342_1423_1432_2134_2143_2314_2341_3214'
 
 # task = '012_1032_2301_2310'
 
-# task = '1302_2031'
+task = '1302_2031'
 #
 # task = '012_3210'
 #
 # task = '012'
 
-# patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
+patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 
-patts = [ Perm([ int(c) - 1 for c in p ]) for p in task.split('_') ]
+# patts = [ Perm([ int(c) - 1 for c in p ]) for p in task.split('_') ]
 
 #
 mtree = MetaTree( patts, *standard_strategies )

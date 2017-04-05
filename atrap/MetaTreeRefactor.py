@@ -696,8 +696,11 @@ class MetaTree(object):
             # print("---Now updating---")
             cleaned_verifications = set()
             sibling_tilings = set( sibling_or_node.tiling for sibling_or_node in sibling_node )
-            for child_and_node in sibling_node.get_children_and_nodes():
-                self._cleaner_update( cleaned_verifications, child_and_node.verification, sibling_tilings )
+            child_and_node_verifications = sorted( [ child_and_node.verification for child_and_node in sibling_node.get_children_and_nodes()], key = len  )
+            for child_verification in child_and_node_verifications:
+                self._cleaner_update( cleaned_verifications, child_verification, sibling_tilings )
+            # # for child_and_node in sibling_node.get_children_and_nodes():
+            #     self._cleaner_update( cleaned_verifications, child_and_node.verification, sibling_tilings )
                 if frozenset() in cleaned_verifications:
                     '''Then the node is verified.'''
                     cleaned_verifications = set( [frozenset()] )
@@ -759,7 +762,7 @@ class MetaTree(object):
         return all those that are not superset of another.'''
         intermediate_answer = set()
         for x in A:
-            temp_B = set( y - x for y in B )
+            temp_B = sorted( set( y - x for y in B ), key = len )
             for y in temp_B:
                 want_to_add = x.union(y)
                 supersets = set()
