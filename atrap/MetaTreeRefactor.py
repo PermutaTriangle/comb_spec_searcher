@@ -698,6 +698,10 @@ class MetaTree(object):
             sibling_tilings = set( sibling_or_node.tiling for sibling_or_node in sibling_node )
             for child_and_node in sibling_node.get_children_and_nodes():
                 self._cleaner_update( cleaned_verifications, child_and_node.verification, sibling_tilings )
+                if frozenset() in cleaned_verifications:
+                    '''Then the node is verified.'''
+                    cleaned_verifications = set( [frozenset()] )
+                    break
 
             # assert cleaned_verifications == old_cleaned_verifications
 
@@ -770,7 +774,9 @@ class MetaTree(object):
                         supersets.add(z)
                 if is_superset:
                     continue
-
+                if want_to_add is frozenset():
+                    '''Everything else is a superset of this'''
+                    return set( [frozenset()] )
                 intermediate_answer.add( want_to_add )
                 intermediate_answer = intermediate_answer - supersets
 
