@@ -370,6 +370,10 @@ class MetaTree(object):
                             self._basis_partitioning_cache.pop(tiling)
 
                 for sibling_node in sibling_nodes_to_be_propagated:
+                    if sibling_node.is_verified():
+                        '''clean the cache'''
+                        self._sibling_node_cache_cleaner(sibling_node)
+                    '''propagate the information'''
                     self._propagate_sibling_node_verification(sibling_node)
                 self._propagate_and_node_verification(recursive_and_node)
         return child_sibling_nodes
@@ -439,6 +443,9 @@ class MetaTree(object):
 
                 '''Propagate the AND nodes' verifications that need to be propagated'''
                 for sibling_node in verified_sibling_nodes:
+                    '''clean the cache'''
+                    self._sibling_node_cache_cleaner(sibling_node)
+                    '''then propagate'''
                     self._propagate_sibling_node_verification(sibling_node)
                 self._propagate_and_node_verification(batch_and_node)
 
@@ -581,6 +588,12 @@ class MetaTree(object):
                                 tilings_to_expand.add(eq_tiling)
         return verified
 
+    def _sibling_node_cache_cleaner(self, sibling_node):
+        for or_node in sibling_node:
+            tiling = or_node.tiling
+            if tiling in self._basis_partitioning_cache:
+                self._basis_partitioning_cache.pop(tiling)
+
     def _propagate_and_node_verification(self, and_node, seen_nodes=None):
         if seen_nodes is None:
             seen_nodes = set()
@@ -694,7 +707,7 @@ class MetaTree(object):
             sibling_node.verification = cleaned_verifications
 
             if sibling_node.is_verified():
-
+                self._sibling_node_cache_cleaner(sibling_node)
                 for parent_and_node in sibling_node.get_parent_and_nodes():
                     self._propagate_and_node_verification(parent_and_node, set([sibling_node]))
                 return
@@ -744,7 +757,7 @@ class MetaTree(object):
         for x in A:
             temp_B = set( y - x for y in B )
             for y in temp_B:
-                want_to_add = frozenset( tiling for tiling in x.union(y) if not self.tiling_cache.get(tiling).sibling_node.is_verified() )
+                want_to_add = x.union(y)
                 supersets = set()
 
                 is_superset = False
@@ -769,13 +782,12 @@ class MetaTree(object):
 
         child_verifications.sort(key = len)
 
-        current_product = child_verifications[0]
+        current_product = set( frozenset( tiling for tiling in x if not self.tiling_cache.get(tiling).sibling_node.is_verified() ) for x in child_verifications[0] )
         child_verifications = child_verifications[1:]
+
         while child_verifications:
-
-            current_child_verifications = child_verifications[0]
+            current_child_verifications = set( frozenset( tiling for tiling in x if not self.tiling_cache.get(tiling).sibling_node.is_verified() ) for x in child_verifications[0] )
             child_verifications = child_verifications[1:]
-
             current_product = self._cleaner_cartesian_product(current_product, current_child_verifications)
 
         return current_product

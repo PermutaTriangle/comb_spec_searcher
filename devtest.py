@@ -14,7 +14,7 @@ all_strategies = [ [all_cell_insertions, all_row_placements], [all_equivalent_ro
 
 mimic_regular_insertion_encoding = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral], [reversibly_deletable_cells], [one_by_one_verification, is_empty]]
 
-standard_strategies = [ [all_active_cell_insertions], [all_point_placements], [jays_subclass_inferral, row_and_column_separation], [components, reversibly_deletable_cells], [subset_verified] ]
+standard_strategies = [ [all_active_cell_insertions], [all_point_placements], [jays_subclass_inferral, row_and_column_separation], [components], [subset_verified] ]
 
 finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, subclass_inferral], [], [subset_verified] ]
 
@@ -73,16 +73,8 @@ while not mtree.has_proof_tree():
 if mtree.has_proof_tree():
     proof_tree = mtree.find_proof_tree()
     proof_tree.pretty_print()
+    print( proof_tree.to_json(indent="    ") )
 
 end = time()
 
 print("I took", end - start, "seconds")
-
-
-
-
-#
-#
-# proof_tree = mtree.find_proof_tree()
-#
-# print( proof_tree.to_json(indent="    ") )
