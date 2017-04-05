@@ -610,13 +610,16 @@ class MetaTree(object):
         '''In order to propagate we need that all our children are natural (else they have not occurred in the tree),
         and have some verification conditions.'''
         if all( child_or_node.sibling_node.natural and child_or_node.sibling_node.verification for child_or_node in and_node.children ):
-            child_verifications = []
-            for child_or_node in and_node.children:
-                child_verifications.append( child_or_node.sibling_node.verification )
-            '''We need to take all possible ways of taking one verification possibility
-            from each child. We then union the verifications.'''
 
-            new_verifications = self._multiple_cleaner_products(child_verifications)
+            if all( child_or_node.sibling_node.is_verified() for child_or_node in and_node.children ):
+                new_verifications = set([frozenset()])
+            else:
+                child_verifications = []
+                for child_or_node in and_node.children:
+                    child_verifications.append( child_or_node.sibling_node.verification )
+                '''We need to take all possible ways of taking one verification possibility
+                from each child. We then union the verifications.'''
+                new_verifications = self._multiple_cleaner_products(child_verifications)
 
             ''' --- BEGIN OLD METHOD --- '''
             # old_new_verification = set( frozenset().union(*vp) for vp in product(*child_verifications) )
@@ -694,17 +697,21 @@ class MetaTree(object):
             ''' --- END OLD METHOD --- '''
 
             # print("---Now updating---")
-            cleaned_verifications = set()
-            sibling_tilings = set( sibling_or_node.tiling for sibling_or_node in sibling_node )
-            child_and_node_verifications = sorted( [ child_and_node.verification for child_and_node in sibling_node.get_children_and_nodes()], key = len  )
-            for child_verification in child_and_node_verifications:
-                self._cleaner_update( cleaned_verifications, child_verification, sibling_tilings )
-            # # for child_and_node in sibling_node.get_children_and_nodes():
-            #     self._cleaner_update( cleaned_verifications, child_and_node.verification, sibling_tilings )
-                if frozenset() in cleaned_verifications:
-                    '''Then the node is verified.'''
-                    cleaned_verifications = set( [frozenset()] )
-                    break
+
+            if any(child_and_node.is_verified() for child_and_node in sibling_node.get_children_and_nodes() ):
+                cleaned_verifications = set([frozenset()])
+            else:
+                cleaned_verifications = set()
+                sibling_tilings = set( sibling_or_node.tiling for sibling_or_node in sibling_node )
+                child_and_node_verifications = sorted( [ child_and_node.verification for child_and_node in sibling_node.get_children_and_nodes()], key = len  )
+                for child_verification in child_and_node_verifications:
+                    self._cleaner_update( cleaned_verifications, child_verification, sibling_tilings )
+                # # for child_and_node in sibling_node.get_children_and_nodes():
+                #     self._cleaner_update( cleaned_verifications, child_and_node.verification, sibling_tilings )
+                    if frozenset() in cleaned_verifications:
+                        '''Then the node is verified.'''
+                        cleaned_verifications = set( [frozenset()] )
+                        break
 
             # assert cleaned_verifications == old_cleaned_verifications
 
