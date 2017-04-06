@@ -16,16 +16,16 @@ _CLASS_CACHE = {}
 _PERMS_TO_CHECK = {}
 
 
-def basis_partitioning(tiling, length, basis):
-    """A cached basis partitioning function."""
-    key = (tiling, basis)
-    cache = _BASIS_PARTITIONING_CACHE.setdefault(key, {})
-    if length not in cache:
-        cache[length] = tiling.basis_partitioning(length, basis)
-    else:
-        # print('**cache repeat!!**')
-        pass
-    return cache[length]
+# def basis_partitioning(tiling, length, basis):
+#     """A cached basis partitioning function."""
+#     key = (tiling, basis)
+#     cache = _BASIS_PARTITIONING_CACHE.setdefault(key, {})
+#     if length not in cache:
+#         cache[length] = tiling.basis_partitioning(length, basis)
+#     else:
+#         # print('**cache repeat!!**')
+#         pass
+#     return cache[length]
 
 def basis_partitioning(tiling, length, basis):
     return tiling.basis_partitioning(length, basis)
