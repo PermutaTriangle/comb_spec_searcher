@@ -21,6 +21,7 @@ def subset_verified(tiling, basis, basis_partitioning=basis_partitioning):
         # if it already did
         if len(tiling) == tiling.total_points:
             verification_length = tiling.total_points
+            return tiling_generates_container(tiling, verification_length, basis)
         else:
             verification_length = tiling.total_points + len(basis[-1])
             verification_length += sum(1 for _, block in tiling.non_points if isinstance(block, PositiveClass))
@@ -30,7 +31,7 @@ def subset_verified(tiling, basis, basis_partitioning=basis_partitioning):
         We can start searching for bad permutations at length tiling.total_points+2
         since the tiling has already been inferred
         '''
-        for length in range(tiling.total_points+2, verification_length + 1):
+        for length in range(tiling.total_points+1, verification_length + 1):
             if tiling_generates_container(tiling, length, basis):
                 verified = False
                 break
