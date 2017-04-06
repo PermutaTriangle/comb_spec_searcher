@@ -1,4 +1,4 @@
-from atrap.tools import basis_partitioning
+from atrap.tools import basis_partitioning, tiling_generates_avoider
 from grids import PositiveClass, Tiling
 from .verification_class import VerificationStrategy
 

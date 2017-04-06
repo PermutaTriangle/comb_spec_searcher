@@ -31,10 +31,10 @@ def basis_partitioning(tiling, length, basis):
     return tiling.basis_partitioning(length, basis)
 
 def tiling_generates_container(tiling, length, basis):
-        return any(not perm.avoids(*basis) for perm in tiling.perms_of_length(length))
+    return any(not perm.avoids(*basis) for perm in tiling.perms_of_length(length))
 
 def tiling_generates_avoider(tiling, length, basis):
-        return any(perm.avoids(*basis) for perm in tiling.perms_of_length(length))
+    return any(perm.avoids(*basis) for perm in tiling.perms_of_length(length))
 
 def cells_of_occurrences(tiling, basis, basis_partitioning=basis_partitioning):
     return tuple( set( chain( *cells_of_occurrences_by_perms(tiling, basis, basis_partitioning=basis_partitioning) ) ) )

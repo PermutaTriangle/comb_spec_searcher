@@ -68,6 +68,9 @@ def all_equivalent_minimum_row_placements(tiling, **kwargs):
         if len(tiling.get_row(row)) != 1:
             continue
 
+        if all( block is Block.point for _, block in tiling.get_row(row) ):
+            continue
+
         if any( not (block is Block.point or isinstance(block, PositiveClass)) for _, block in tiling.get_row(row) ):
             # Row inelegible as some block is not a point.
             continue

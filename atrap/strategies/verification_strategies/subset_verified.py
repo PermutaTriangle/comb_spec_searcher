@@ -14,32 +14,34 @@ def subset_verified(tiling, basis, basis_partitioning=basis_partitioning):
     if len(tiling) <= 1:
         for verification_strategy in one_by_one_verification(tiling, basis):
             yield verification_strategy
+        return
 
     else:
         # We only need to check permutations up to this length because any longer
         # perm can be reduced to a perm of this length and still contain the patt
         # if it already did
+        verified = True
         if len(tiling) == tiling.total_points:
             verification_length = tiling.total_points
-            return tiling_generates_container(tiling, verification_length, basis)
+            if tiling_generates_container(tiling, verification_length, basis):
+                verified = False
         else:
             verification_length = tiling.total_points + len(basis[-1])
             verification_length += sum(1 for _, block in tiling.non_points if isinstance(block, PositiveClass))
 
-        verified = True
-        '''
-        We can start searching for bad permutations at length tiling.total_points+2
-        since the tiling has already been inferred
-        '''
-        for length in range(tiling.total_points+1, verification_length + 1):
-            if tiling_generates_container(tiling, length, basis):
-                verified = False
-                break
-            # partitions = basis_partitioning(tiling, length, basis)
-            # containing_perms, _ = partitions
-            # if containing_perms:
-            #     verified = False
-            #     break
+            '''
+            We can start searching for bad permutations at length tiling.total_points+2
+            since the tiling has already been inferred
+            '''
+            for length in range(tiling.total_points, verification_length + 1):
+                if tiling_generates_container(tiling, length, basis):
+                    verified = False
+                    break
+                # partitions = basis_partitioning(tiling, length, basis)
+                # containing_perms, _ = partitions
+                # if containing_perms:
+                #     verified = False
+                #     break
 
 
 
