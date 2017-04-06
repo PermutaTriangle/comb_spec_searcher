@@ -26,7 +26,11 @@ def subset_verified(tiling, basis, basis_partitioning=basis_partitioning):
             verification_length += sum(1 for _, block in tiling.non_points if isinstance(block, PositiveClass))
 
         verified = True
-        for length in range(tiling.total_points, verification_length + 1):
+        '''
+        We can start searching for bad permutations at length tiling.total_points+2
+        since the tiling has already been inferred
+        '''
+        for length in range(tiling.total_points+2, verification_length + 1):
             partitions = basis_partitioning(tiling, length, basis)
             containing_perms, _ = partitions
             if containing_perms:
