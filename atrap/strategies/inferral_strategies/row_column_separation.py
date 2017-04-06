@@ -261,6 +261,11 @@ def separations( inequalities, unprocessed_cells=None, current_cell=None, curren
 def row_and_column_separation(tiling, basis, basis_partitioning=basis_partitioning):
     # print("----------------NOW CONSIDERING-------------")
     # print(tiling)
+
+    if tiling.total_points + tiling.total_other + 2 < len(basis[0]):
+        return
+
+
     '''First we calculate the set of inequalities for all the rows and columns'''
     row_inequalities, column_inequalities = row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=basis_partitioning)
     new_tiling_dict = dict(tiling)
