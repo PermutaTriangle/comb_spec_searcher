@@ -3,18 +3,13 @@ from permuta import Perm
 
 
 from time import time
-# from atrap.strategies import subclass_inferral, subset_verified, reversibly_deletable_points, reversibly_deletable_cells, all_point_placements, all_row_placements, all_equivalent_row_placements, all_cell_insertions, empty_cell_inferral, one_by_one_verification, all_minimum_row_placements, all_equivalent_minimum_row_placements, is_empty, components
-# from atrap.strategies import row_and_column_separation
-# from atrap.strategies import jays_subclass_inferral
-# from atrap.strategies import old_subclass_inferral
 from atrap.strategies import *
-
 
 all_strategies = [ [all_cell_insertions, all_row_placements], [all_equivalent_row_placements, all_point_placements], [empty_cell_inferral, jays_subclass_inferral, row_and_column_separation], [reversibly_deletable_cells, components], [subset_verified, is_empty] ]
 
 mimic_regular_insertion_encoding = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral], [reversibly_deletable_cells], [one_by_one_verification, is_empty]]
 
-standard_strategies = [ [all_active_cell_insertions], [all_point_placements], [jays_subclass_inferral, row_and_column_separation], [components, reversibly_deletable_cells], [subset_verified] ]
+standard_strategies = [ [all_active_cell_insertions], [all_maximum_point_placements, all_symmetric_tilings], [jays_subclass_inferral, row_and_column_separation], [reversibly_deletable_cells], [subset_verified, is_empty] ]
 
 finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, subclass_inferral], [], [subset_verified] ]
 
@@ -45,6 +40,8 @@ finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_eq
 
 # task = '012_0321_2103'
 
+# task = '012_0321_1032_2103'
+#
 # task = '012_1032_2301_2310'
 
 task = '1302_2031'
@@ -70,7 +67,7 @@ while not mtree.has_proof_tree():
     print("The inferral cache has {} tilings in it right now".format( len(mtree._inferral_cache) ) )
     print("There are {} tilings in the search tree".format( len(mtree.tiling_cache)))
     print("Time taken so far is {} seconds".format( time() - start ) )
-    # if mtree.depth_searched == 4:
+    # if mtree.depth_searched == 3:
     #     break
 
 
