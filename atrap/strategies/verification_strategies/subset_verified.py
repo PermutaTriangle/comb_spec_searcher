@@ -1,5 +1,5 @@
 from grids import Tiling, PositiveClass
-from atrap.tools import basis_partitioning
+from atrap.tools import basis_partitioning, tiling_generates_container
 from .verification_class import VerificationStrategy
 from .one_by_one_verification import one_by_one_verification
 
@@ -31,11 +31,14 @@ def subset_verified(tiling, basis, basis_partitioning=basis_partitioning):
         since the tiling has already been inferred
         '''
         for length in range(tiling.total_points+2, verification_length + 1):
-            partitions = basis_partitioning(tiling, length, basis)
-            containing_perms, _ = partitions
-            if containing_perms:
+            if tiling_generates_container(tiling, length, basis):
                 verified = False
                 break
+            # partitions = basis_partitioning(tiling, length, basis)
+            # containing_perms, _ = partitions
+            # if containing_perms:
+            #     verified = False
+            #     break
 
 
 
