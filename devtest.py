@@ -14,7 +14,7 @@ all_strategies = [ [all_cell_insertions, all_row_placements], [all_equivalent_ro
 
 mimic_regular_insertion_encoding = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral], [reversibly_deletable_cells], [one_by_one_verification, is_empty]]
 
-standard_strategies = [ [all_active_cell_insertions], [all_point_placements], [jays_subclass_inferral, row_and_column_separation], [components], [subset_verified] ]
+standard_strategies = [ [all_active_cell_insertions], [all_point_placements], [jays_subclass_inferral, row_and_column_separation], [components, reversibly_deletable_cells], [subset_verified] ]
 
 finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, subclass_inferral], [], [subset_verified] ]
 
@@ -39,6 +39,8 @@ finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_eq
 #
 # task = '012_2103_2301'
 
+# task = '1234_1243_1324_1342_1423_1432_2134_2143_2314_2341_3214'
+
 # task = '012_2301'
 
 # task = '012_0321_2103'
@@ -52,9 +54,11 @@ task = '1302_2031'
 # task = '012'
 
 patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
+
+# patts = [ Perm([ int(c) - 1 for c in p ]) for p in task.split('_') ]
+
 #
 mtree = MetaTree( patts, *standard_strategies )
-
 
 #mtree.do_level()
 start = time()
@@ -74,16 +78,8 @@ while not mtree.has_proof_tree():
 if mtree.has_proof_tree():
     proof_tree = mtree.find_proof_tree()
     proof_tree.pretty_print()
+    print( proof_tree.to_json() )
 
 end = time()
 
 print("I took", end - start, "seconds")
-
-
-
-
-#
-#
-# proof_tree = mtree.find_proof_tree()
-#
-# print( proof_tree.to_json(indent="    ") )
