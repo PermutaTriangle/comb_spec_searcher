@@ -7,8 +7,7 @@ def is_empty(tiling, basis, basis_partitioning=basis_partitioning):
     verification_length += sum(1 for _, block in tiling.non_points if isinstance(block, PositiveClass))
     empty = True
     for length in range(verification_length + 1):
-        _, avoiding_perms = basis_partitioning(tiling, length, basis)
-        if avoiding_perms:
+        if tiling_generates_avoider(tiling, length, basis):
             empty = False
             break
     if empty:

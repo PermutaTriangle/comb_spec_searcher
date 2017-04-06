@@ -1,4 +1,5 @@
 import time
+from time import gmtime, strftime
 # import atrap
 # from permuta import *
 #   from permuta.misc.symmetry import *
@@ -16,9 +17,9 @@ all_strategies = [ [all_cell_insertions, all_row_placements], [all_equivalent_ro
 
 mimic_regular_insertion_encoding = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral], [reversibly_deletable_cells], [one_by_one_verification, is_empty]]
 
-standard_strategies_w_jay = [ [all_cell_insertions], [all_point_placements], [jays_subclass_inferral, row_and_column_separation], [reversibly_deletable_cells], [subset_verified] ]
+standard_strategies = [ [all_cell_insertions], [all_point_placements], [jays_subclass_inferral, row_and_column_separation], [reversibly_deletable_cells, components], [subset_verified] ]
 
-standard_strategies = [ [all_active_cell_insertions], [all_point_placements], [jays_subclass_inferral, row_and_column_separation], [components, reversibly_deletable_cells], [subset_verified] ]
+finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, subclass_inferral], [], [subset_verified] ]
 
 
 perms = tuple(PermSet(3))
@@ -64,6 +65,7 @@ for task in tasks:
     patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 
     mtree = MetaTree( patts, *standard_strategies )
+    # mtree = MetaTree( patts, *finite_strategies )
 
 
     #mtree.do_level()
@@ -93,6 +95,7 @@ for task in tasks:
         # tree = bakery.get_proof_tree()
 
         print("",file=f)
+        print("Log created ", strftime("%a, %d %b %Y %H:%M:%S", gmtime()),file=f)
         print("Finding the proof tree for", task ,  "took", int(end_time - start_time), "seconds",file=f)
         print("",file=f)
         print("Human readable:",file=f)
@@ -105,3 +108,4 @@ for task in tasks:
         print("Computer readable (JSON):",file=f)
         print("",file=f)
         print(proof_tree.to_json(sort_keys=True), file=f)
+        # print(proof_tree.to_json(indent="    ", sort_keys=True), file=f)
