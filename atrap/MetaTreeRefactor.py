@@ -390,6 +390,13 @@ class MetaTree(object):
                         child_sibling_node.natural = True
                     else:
                         child_sibling_node = child_or_node.sibling_node
+                        if not child_sibling_node.natural:
+                            verified = self._equivalent_expand(child_or_node)
+                            child_sibling_node = child_or_node.sibling_node
+                            if verified:
+                                verified_sibling_nodes.add( child_sibling_node )
+                            '''As it was found by a batch strategy it is natural'''
+                            child_sibling_node.natural = True
 
                     '''We connect it to the batch AND node it belongs too.'''
                     child_or_node.parents.append(batch_and_node)
