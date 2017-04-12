@@ -60,6 +60,9 @@ class SiblingNode(set):
         empty frozenset.'''
         return frozenset() in self.verification
 
+    def get_relation(self, tiling, out_tiling):
+        return "they are on the same SiblingNode"
+
     def __eq__(self, other):
         for x in self:
             if x not in other:
@@ -572,13 +575,15 @@ class MetaTree(object):
         self._labels_to_or_node[label] = or_node
         return label
 
-    def _get_sibling_labels(self, sibling_node):
+    def _get_sibling_labels(self, sibling_node, force=False):
         '''Return all the labels of the tilings in the sibling node'''
         labels = set()
         for or_node in sibling_node:
             label = self._tiling_to_label.get(or_node.tiling)
             if label is not None:
                 labels.add(label)
+        if not labels and force:
+            labels.add( self._tiling_labeler( or_node.tiling ) )
         return labels
 
 
@@ -747,7 +752,11 @@ class MetaTree(object):
 
         '''If the tiling has already been seen, we have a recursion.'''
         if or_node.tiling in seen_tilings:
-            return ProofTreeNode("recurse", or_node.tiling, or_node.tiling, [sibling_or_node.tiling for sibling_or_node in or_node.sibling_node], [] )
+            label = min( self._get_sibling_labels(or_node.sibling_node, force=True) )
+            in_tiling = or_node.tiling
+            out_tiling = or_node.tiling
+            # TODO: Make out tiling be the in tiling of the node above it.
+            return ProofTreeNode("recurse", in_tiling, out_tiling, or_node.sibling_node.get_relation(in_tiling, out_tiling), label, recurse=True )
 
         '''We add the tilings from the SiblingNode. These can now be used for recursions.'''
         sibling_tilings = [ sibling_or_node.tiling for sibling_or_node in or_node.sibling_node ]
@@ -774,5 +783,8 @@ class MetaTree(object):
 
         '''We should only get here after finding a strategy for the ProofTreeNode'''
         assert formal_step is not None
+        label = min( self._get_sibling_labels(or_node.sibling_node, force=True) )
+        if children:
+            return ProofTreeNode(formal_step, in_tiling, out_tiling, or_node.sibling_node.get_relation(in_tiling, out_tiling), label, children=children)
 
-        return ProofTreeNode(formal_step, in_tiling, out_tiling, sibling_tilings, children)
+        return ProofTreeNode(formal_step, in_tiling, out_tiling, or_node.sibling_node.get_relation(in_tiling, out_tiling), label)

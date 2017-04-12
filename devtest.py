@@ -4,12 +4,13 @@ from permuta import Perm
 
 from time import time
 from atrap.strategies import *
+from atrap.ProofTree import ProofTree
 
 all_strategies = [ [all_cell_insertions, all_row_placements], [all_equivalent_row_placements, all_point_placements], [empty_cell_inferral, jays_subclass_inferral, row_and_column_separation], [reversibly_deletable_cells, components], [subset_verified, is_empty] ]
 
 mimic_regular_insertion_encoding = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral], [reversibly_deletable_cells], [one_by_one_verification, is_empty]]
 
-standard_strategies = [ [all_active_cell_insertions], [all_maximum_point_placements, all_symmetric_tilings], [jays_subclass_inferral, row_and_column_separation], [reversibly_deletable_cells], [subset_verified, is_empty] ]
+standard_strategies = [ [all_cell_insertions], [all_point_placements], [subclass_inferral, row_and_column_separation], [reversibly_deletable_cells], [subset_verified, is_empty] ]
 
 finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, subclass_inferral], [], [subset_verified] ]
 
@@ -44,11 +45,11 @@ finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_eq
 #
 # task = '012_1032_2301_2310'
 
-task = '1302_2031'
+# task = '1302_2031'
 #
 # task = '012_3210'
 #
-# task = '012'
+task = '012'
 
 patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 
@@ -75,7 +76,10 @@ while not mtree.has_proof_tree():
 if mtree.has_proof_tree():
     proof_tree = mtree.find_proof_tree()
     proof_tree.pretty_print()
-    print( proof_tree.to_json() )
+    json = proof_tree.to_json(indent="  ")
+    print(json)
+    assert ProofTree.from_json(json).to_json(indent="  ") == json
+
 
 end = time()
 
