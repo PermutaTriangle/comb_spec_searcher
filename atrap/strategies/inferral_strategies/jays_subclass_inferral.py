@@ -21,7 +21,7 @@ def cell_inferral(tiling, the_cell, input_set):
     inferred_basis = tiling[the_cell].basis
     # for length in range(1, max_length+1):
         # perm_set = get_class(inferred_basis)
-    for patt in get_perms_to_check(inferred_basis):
+    for patt in get_perms_to_check(input_set.basis):
         point_cells[the_cell] = PermSet([patt])
         T = Tiling(point_cells)
 
