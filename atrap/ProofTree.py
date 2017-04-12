@@ -9,36 +9,48 @@ __all__ = ["ProofTree", "ProofTreeNode"]
 
 
 class ProofTreeNode(JsonAble):
-    def __init__(self, formal_step, in_tiling, out_tiling, tilings=[], children=[]):
+    def __init__(self,
+                 formal_step,
+                 in_tiling,
+                 out_tiling,
+                 relation,
+                 identifier,
+                 children=None,
+                 recurse=False):
         self.formal_step = formal_step
         self.in_tiling = in_tiling
         self.out_tiling = out_tiling
-        self.tilings = list(tilings)
-        self.children = list(children)
+        self.relation = relation
+        self.identifier = identifier
+        self.children = [] if children is None else list(children)
+        self.recurse = recurse
 
     @classmethod
     def _from_attr_dict(cls, attr_dict):
         formal_step = attr_dict["formal_step"]
         in_tiling = Tiling._from_attr_dict(attr_dict["in_tiling"])
-        if attr_dict["out_tiling"] == "None":
-            out_tiling = None
-        else:
-            out_tiling = Tiling._from_attr_dict(attr_dict["out_tiling"])
-        tilings = map(Tiling._from_attr_dict, attr_dict["tilings"])
-        children = map(cls._from_attr_dict,
-                       attr_dict["children"])
-        return cls(formal_step, in_tiling, out_tiling, tilings, children)
+        out_tiling = Tiling._from_attr_dict(attr_dict["out_tiling"])
+        relation = attr_dict["relation"]
+        identifier = attr_dict["identifier"]
+        children = map(cls._from_attr_dict, attr_dict["children"])
+        recurse = attr_dict["recurse"]
+        return cls(formal_step,
+                   in_tiling,
+                   out_tiling,
+                   relation,
+                   identifier,
+                   children,
+                   recurse)
 
     def _get_attr_dict(self):
         attr_dict = {}
         attr_dict["formal_step"] = self.formal_step
         attr_dict["in_tiling"] = self.in_tiling._get_attr_dict()
-        if self.out_tiling is None:
-            attr_dict["out_tiling"] = "None"
-        else:
-            attr_dict["out_tiling"] = self.out_tiling._get_attr_dict()
-        attr_dict["tilings"] = list(tiling._get_attr_dict() for tiling in self.tilings)
+        attr_dict["out_tiling"] = self.out_tiling._get_attr_dict()
+        attr_dict["relation"] = self.relation
+        attr_dict["identifier"] = self.identifier
         attr_dict["children"] = [child._get_attr_dict() for child in self.children]
+        attr_dict["recurse"] = self.recurse
         return attr_dict
 
 
