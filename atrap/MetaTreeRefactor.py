@@ -745,25 +745,31 @@ class MetaTree(object):
             print("There is no proof tree yet. Use the do_level function to try and find one.")
 
 
-    def _find_proof_tree_below_or_node(self, or_node, seen_tilings=None):
+    def _find_proof_tree_below_or_node(self, or_node, seen_tilings=None, in_tiling_or_nodes=None):
         '''Return the ProofTreeNode that is verified below the OR node.'''
         if seen_tilings is None:
             seen_tilings = set()
+        if in_tiling_or_nodes is None:
+            in_tiling_or_nodes = set()
 
         '''If the tiling has already been seen, we have a recursion.'''
         if or_node.tiling in seen_tilings:
             label = min( self._get_sibling_labels(or_node.sibling_node, force=True) )
             in_tiling = or_node.tiling
-            out_tiling = or_node.tiling
-            # TODO: Make out tiling be the in tiling of the node above it.
+            for other_or_node in in_tiling_or_nodes:
+                if other_or_node.sibling_node == or_node.sibling_node:
+                    out_tiling = other_or_node.tiling
             return ProofTreeNode("recurse", in_tiling, out_tiling, or_node.sibling_node.get_relation(in_tiling, out_tiling), label, recurse=True )
 
         '''We add the tilings from the SiblingNode. These can now be used for recursions.'''
         sibling_tilings = [ sibling_or_node.tiling for sibling_or_node in or_node.sibling_node ]
         seen_tilings.update( sibling_tilings )
 
-        '''The tiling we come in to the node by'''
+        '''The tiling we come in to the node by.'''
         in_tiling = or_node.tiling
+
+        '''We add it to the in tiling or nodes, these are used for finding out tiling when recursing.'''
+        in_tiling_or_nodes.add(or_node)
 
         formal_step = None
 
@@ -777,7 +783,7 @@ class MetaTree(object):
                 '''The tiling we left the ProofTreeNode by is the tiling on the parent of the AND node.'''
                 out_tiling = child_and_node.parents[0].tiling
                 '''The children are the ProofTreeNodes using the tilings of the strategy.'''
-                children = [ self._find_proof_tree_below_or_node(child_or_node, seen_tilings.union(sibling_tilings) ) for child_or_node in child_and_node.children ]
+                children = [ self._find_proof_tree_below_or_node(child_or_node, seen_tilings, in_tiling_or_nodes ) for child_or_node in child_and_node.children ]
                 '''We only want one tree'''
                 break
 
