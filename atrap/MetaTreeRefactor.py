@@ -31,6 +31,7 @@ class SiblingNode(set):
     def __init__(self):
         self.natural = False
         self.verification = set()
+        self.explanations = {}
 
     def add(self, or_node):
         '''An OR node has only one sibling node.
@@ -39,6 +40,11 @@ class SiblingNode(set):
             raise TypeError("Non-OR node added to sibling node")
         super(SiblingNode, self).add(or_node)
         or_node.sibling_node = self
+
+    def join(self, tiling, other_tiling, explanation):
+        key = (tiling, other_tiling)
+        if key not in self.explanations:
+            self.explanations[key] = explanation
 
     def get_parent_and_nodes(self):
         '''An iterator of all AND node parents of the SiblingNode's OR nodes.'''
@@ -60,8 +66,62 @@ class SiblingNode(set):
         empty frozenset.'''
         return frozenset() in self.verification
 
-    def get_relation(self, tiling, out_tiling):
+    def get_relation(self, tiling, other_tiling):
+        if tiling == other_tiling:
+            return ""
+
+        path = self.find_path(tiling, other_tiling)
+        if path:
+            explanation = "| "
+            for i in range(len(path) - 1):
+                for j in range(i+1, len(path)):
+                    t1 = path[i]
+                    t2 = path[j]
+                    key = (t1, t2)
+                    if key in self.explanations:
+                        explanation = explanation + self.explanations[key] + ". | "
+                    key = (t2, t1)
+                    if key in self.explanations:
+                        explanation = explanation + "The reverse of: " + self.explanations[key] + ". | "
+            return explanation
+        '''We hopefully never get here'''
         return "they are on the same SiblingNode"
+
+    def find_path(self, tiling, other_tiling):
+        '''Floyd-Warshall algorithm for shortest path'''
+        sibling_tilings = {}
+        reverse_map = {}
+        for or_node in self:
+            n = len(sibling_tilings)
+            sibling_tilings[or_node.tiling] = n
+            reverse_map[n] = or_node.tiling
+
+        dist = [ [99999999 for i in range(len(sibling_tilings))] for j in range(len(sibling_tilings))]
+        nxt = [ [None for i in range(len(sibling_tilings))] for j in range(len(sibling_tilings))]
+        for key in self.explanations.keys():
+            u = sibling_tilings[key[0]]
+            v = sibling_tilings[key[1]]
+            dist[u][v] = 1
+            nxt[u][v] = v
+            dist[v][u] = 1
+            nxt[v][u] = u
+
+        for k in range(len(sibling_tilings)):
+            for i in range(len(sibling_tilings)):
+                for j in range(len(sibling_tilings)):
+                    if dist[i][j] > dist[i][k] + dist[k][j]:
+                        dist[i][j] = dist[i][k] + dist[k][j]
+                        nxt[i][j] = nxt[i][k]
+
+        u = sibling_tilings[tiling]
+        v = sibling_tilings[other_tiling]
+        if nxt[u][v] is None:
+            return []
+        path = [u]
+        while u != v:
+            u = nxt[u][v]
+            path.append(u)
+        return [reverse_map[x] for x in path]
 
     def __eq__(self, other):
         for x in self:
@@ -528,6 +588,7 @@ class MetaTree(object):
                         '''Remember to update the cache'''
                         self.tiling_cache[eq_tiling] = eq_or_node
                         sibling_node.add(eq_or_node)
+                        sibling_node.join(tiling, eq_tiling, formal_step)
                         '''Add it to the equivalent tilings found'''
                         equivalent_tilings.add(eq_tiling)
                         '''And the tilings to be checked for equivalences'''
@@ -539,17 +600,20 @@ class MetaTree(object):
                         eq_sibling_node = eq_or_node.sibling_node
                         '''The SiblingNode can be verified in anyway that the equivalent SiblingNode can be'''
                         sibling_node.verification.update(eq_sibling_node.verification)
+                        sibling_node.explanations.update(eq_sibling_node.explanations)
 
                         if eq_sibling_node.natural:
                             '''If it is natural, we add the OR nodes to the sibling node
                             noting that we have already attempted to expand these'''
                             for eq_or_node in eq_sibling_node:
                                 sibling_node.add(eq_or_node)
+                                sibling_node.join(tiling, eq_tiling, formal_step)
                                 equivalent_tilings.add(eq_or_node.tiling)
                         else:
                             '''Otherwise we need to try equivalence strategies on them/it.'''
                             for eq_or_node in eq_sibling_node:
                                 sibling_node.add(eq_or_node)
+                                sibling_node.join(tiling, eq_tiling, formal_step)
                                 equivalent_tilings.add(eq_or_node.tiling)
                                 tilings_to_expand.add(eq_tiling)
         return verified
