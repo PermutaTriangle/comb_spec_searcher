@@ -223,7 +223,7 @@ def separations( inequalities, unprocessed_cells=None, current_cell=None, curren
     potential_states = []
 
     if furthest_left_index > 0:
-        potential_state = current_state[:furthest_left_index-1] + [ current_state[furthest_left_index - 1] + [current_cell] ] + current_state[furthest_left_index+1:]
+        potential_state = current_state[:furthest_left_index-1] + [ current_state[furthest_left_index - 1] + [current_cell] ] + current_state[furthest_left_index:]
         # print("furthest left")
         # print(potential_state)
         potential_states.append( potential_state )
@@ -261,6 +261,8 @@ def separations( inequalities, unprocessed_cells=None, current_cell=None, curren
 def row_and_column_separation(tiling, basis, basis_partitioning=basis_partitioning):
     # print("----------------NOW CONSIDERING-------------")
     # print(tiling)
+    # print(dict(tiling))
+    # print(basis)
 
     if tiling.total_points + tiling.total_other + 2 < len(basis[0]):
         return
@@ -302,7 +304,7 @@ def row_and_column_separation(tiling, basis, basis_partitioning=basis_partitioni
                     '''we keep track of shifted cells for when we do the work for columns'''
                     original_cell_to_shifted_cell_map[cell] = shifted_cell
                     new_tiling_dict[shifted_cell] = tiling[cell]
-            # print(Tiling(new_tiling_dict))
+    #         print(Tiling(new_tiling_dict))
     # print(original_cell_to_shifted_cell_map)
     for col in range(tiling.dimensions.i):
         '''Calculate the separation, described in the function'''
@@ -311,6 +313,7 @@ def row_and_column_separation(tiling, basis, basis_partitioning=basis_partitioni
             # print("------working on col {}------".format(col))
             # print(inequalities)
             column_separations = separations(inequalities)
+            # print(column_separations)
             if len(column_separations) == 1:
                 '''This must be the trivial solution'''
                 continue
@@ -330,7 +333,7 @@ def row_and_column_separation(tiling, basis, basis_partitioning=basis_partitioni
                 # print(shifted_cell)
                 if shifted_cell is None:
                     shifted_cell = cell
-                '''we remove the cells, as we intend to readd it separated'''
+                '''we remove the cells, as we intend to read it separated'''
                 new_tiling_dict.pop(shifted_cell)
 
             for index, part in enumerate(separation):
