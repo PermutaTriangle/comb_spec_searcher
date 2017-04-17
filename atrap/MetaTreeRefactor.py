@@ -662,6 +662,7 @@ class MetaTree(object):
             '''The AND node is already verified, so propagated this information already'''
             return
 
+
         '''In order to propagate we need that all our children are natural (else they have not occurred in the tree),
         and have some verification conditions.'''
         if all( child_or_node.sibling_node.natural and child_or_node.sibling_node.verification for child_or_node in and_node.children ):
@@ -672,6 +673,7 @@ class MetaTree(object):
                 child_verifications = []
                 for child_or_node in and_node.children:
                     child_verifications.append( child_or_node.sibling_node.verification )
+
                 '''We need to take all possible ways of taking one verification possibility
                 from each child. We then union the verifications.'''
                 new_verifications = self._multiple_cleaner_products(child_verifications)
@@ -716,6 +718,7 @@ class MetaTree(object):
                 cleaned_verifications = set()
                 sibling_node_labels = self._get_sibling_labels(sibling_node)
                 child_and_node_verifications = sorted( [ child_and_node.verification for child_and_node in sibling_node.get_children_and_nodes()], key = len  )
+
                 for child_verification in child_and_node_verifications:
                     self._cleaner_update( cleaned_verifications, child_verification, sibling_node_labels )
                     if frozenset() in cleaned_verifications:

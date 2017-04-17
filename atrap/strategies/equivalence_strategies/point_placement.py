@@ -26,17 +26,17 @@ def all_point_placements(tiling, **kwargs):
              # in its respective row
             continue
 
-        if block is Block.decreasing:
+        if block is PositiveClass( Block.decreasing ):
             for strategy in all_minimum_and_maximum_decreasing( tiling, cell ):
                 yield strategy
             continue
 
-        if block is Block.increasing:
+        if block is PositiveClass( Block.increasing ):
             for strategy in all_minimum_and_maximum_increasing( tiling, cell ):
                 yield strategy
             continue
 
-        if block is Block.point_or_empty:
+        if block is PositiveClass( Block.point_or_empty ):
             for strategy in all_unique_point_or_empty( tiling, cell ):
                 yield strategy
             continue
@@ -158,7 +158,7 @@ def all_minimum_and_maximum_decreasing( tiling, cell ):
     yield EquivalenceStrategy( "Inserting the bottom most point in to the cell " + str(cell), bottommost_tiling )
 
 
-def all_minimum_and_maximum_decreasing( tiling, cell ):
+def all_minimum_and_maximum_increasing( tiling, cell ):
     '''Assumes that the block in the cell is increasing '''
     topmost_tiling_dict = {}
     bottommost_tiling_dict = {}
