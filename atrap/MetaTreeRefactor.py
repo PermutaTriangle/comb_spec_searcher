@@ -398,7 +398,7 @@ class MetaTree(object):
                         self._sibling_node_cache_cleaner(sibling_node)
                     '''propagate the information'''
                     self._propagate_sibling_node_verification(sibling_node)
-
+                self._propagate_and_node_verification(recursive_and_node)
         return child_sibling_nodes
 
     def _batch_expand(self, or_node):
@@ -445,9 +445,9 @@ class MetaTree(object):
                         child_sibling_node = child_or_node.sibling_node
                         if verified:
                             verified_sibling_nodes.add( child_sibling_node )
-                        '''We attempt to verify the tiling using verification strategies.
-                        If it verifies, we need to propagate the information to the sibling node.'''
                         elif self._verify(child_or_node):
+                            '''We attempt to verify the tiling using verification strategies.
+                            If it verifies, we need to propagate the information to the sibling node.'''
                             verified_sibling_nodes.add( child_sibling_node )
                         '''As it was found by a batch strategy it is natural'''
                         child_sibling_node.natural = True
@@ -469,14 +469,13 @@ class MetaTree(object):
                     if child_sibling_node.is_verified() and child_sibling_node.natural:
                         child_sibling_nodes.add(child_sibling_node)
 
-                '''Propagate the AND nodes' verifications that need to be propagated'''
+                '''Propagate the verifications that need to be propagated'''
                 for sibling_node in verified_sibling_nodes:
                     '''clean the cache'''
                     self._sibling_node_cache_cleaner(sibling_node)
                     '''then propagate'''
                     self._propagate_sibling_node_verification(sibling_node)
                 self._propagate_and_node_verification( batch_and_node )
-
         return child_sibling_nodes
 
     def _inferral(self, tiling):
@@ -601,21 +600,20 @@ class MetaTree(object):
                         '''The SiblingNode can be verified in anyway that the equivalent SiblingNode can be'''
                         sibling_node.verification.update(eq_sibling_node.verification)
                         sibling_node.explanations.update(eq_sibling_node.explanations)
+                        sibling_node.join(tiling, eq_tiling, formal_step)
 
                         if eq_sibling_node.natural:
                             '''If it is natural, we add the OR nodes to the sibling node
                             noting that we have already attempted to expand these'''
-                            for eq_or_node in eq_sibling_node:
-                                sibling_node.add(eq_or_node)
-                                sibling_node.join(tiling, eq_tiling, formal_step)
-                                equivalent_tilings.add(eq_or_node.tiling)
+                            for sibling_or_node in eq_sibling_node:
+                                sibling_node.add(sibling_or_node)
+                                equivalent_tilings.add(sibling_or_node.tiling)
                         else:
                             '''Otherwise we need to try equivalence strategies on them/it.'''
-                            for eq_or_node in eq_sibling_node:
-                                sibling_node.add(eq_or_node)
-                                sibling_node.join(tiling, eq_tiling, formal_step)
-                                equivalent_tilings.add(eq_or_node.tiling)
-                                tilings_to_expand.add(eq_tiling)
+                            for sibling_or_node in eq_sibling_node:
+                                sibling_node.add(sibling_or_node)
+                                equivalent_tilings.add(sibling_or_node.tiling)
+                                tilings_to_expand.add(sibling_or_node.tiling)
         return verified
 
     def _sibling_node_cache_cleaner(self, sibling_node):
@@ -651,7 +649,14 @@ class MetaTree(object):
         return labels
 
 
-    def _propagate_and_node_verification(self, and_node):
+    def _propagate_and_node_verification(self, and_node):#, seen_nodes=None):
+
+        # if seen_nodes is None:
+        #     seen_nodes = set()
+        # if and_node in seen_nodes:
+        #     return
+        # else:
+        #     seen_nodes.add(and_node)
 
         if and_node.is_verified():
             '''The AND node is already verified, so propagated this information already'''
@@ -680,14 +685,23 @@ class MetaTree(object):
 
             if and_node.is_verified():
                 if and_node is not self.root_and_node:
+                    # self._propagate_sibling_node_verification(and_node.parent_sibling_node(), set([and_node]))
                     self._propagate_sibling_node_verification(and_node.parent_sibling_node())
                 return
 
             '''we then propagate this information to its parent node'''
             if and_node is not self.root_and_node:
+                # self._propagate_sibling_node_verification(and_node.parent_sibling_node(), seen_nodes)
                 self._propagate_sibling_node_verification(and_node.parent_sibling_node())
 
-    def _propagate_sibling_node_verification(self, sibling_node):
+    def _propagate_sibling_node_verification(self, sibling_node):#, seen_nodes=None):
+
+        # if seen_nodes is None:
+        #     seen_nodes = set()
+        # if sibling_node in seen_nodes:
+        #     return
+        # else:
+        #     seen_nodes.add(sibling_node)
 
         if sibling_node.is_verified():
             '''The node is already verified, we've already pushed this information around'''
@@ -717,13 +731,14 @@ class MetaTree(object):
             if sibling_node.is_verified():
                 self._sibling_node_cache_cleaner(sibling_node)
                 for parent_and_node in sibling_node.get_parent_and_nodes():
-                    self._propagate_and_node_verification(parent_and_node)
+                    # self._propagate_and_node_verification(parent_and_node, set([sibling_node]))
+                    self._propagate_and_node_verification( parent_and_node )
                 return
 
             '''and propagate this information to parent AND nodes'''
             for parent_and_node in sibling_node.get_parent_and_nodes():
+                # self._propagate_and_node_verification(parent_and_node, seen_nodes)
                 self._propagate_and_node_verification(parent_and_node)
-
     def _cleaner_update(self, A, B, sibling_labels):
         for x in B:
             want_to_add = frozenset( label for label in x if not self._labels_to_or_node.get(label).sibling_node.is_verified() and label not in sibling_labels )
