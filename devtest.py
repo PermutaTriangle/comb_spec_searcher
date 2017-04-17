@@ -10,7 +10,7 @@ all_strategies = [ [all_cell_insertions, all_row_placements], [all_equivalent_ro
 
 mimic_regular_insertion_encoding = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral], [reversibly_deletable_cells], [one_by_one_verification, is_empty]]
 
-standard_strategies = [ [all_cell_insertions], [all_maximum_point_placements, all_symmetric_tilings], [subclass_inferral, row_and_column_separation], [components], [subset_verified, is_empty] ]
+standard_strategies = [ [all_cell_insertions], [all_point_placements, all_symmetric_tilings], [subclass_inferral, row_and_column_separation], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
 
 finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, subclass_inferral], [], [subset_verified] ]
 
@@ -33,7 +33,7 @@ finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_eq
 
 # mtree = MetaTree([Perm((1,3,0,2)), Perm((2,0,3,1))], *all_strategies)
 #
-# task = '012_2103_2301'
+task = '012_2103_2301'
 
 # task = '1234_1243_1324_1342_1423_1432_2134_2143_2314_2341_3214'
 
@@ -45,11 +45,15 @@ finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_eq
 #
 # task = '012_1032_2301_2310'
 
-task = '1302_2031'
+# task = '1302_2031'
 #
 # task = '012_3210'
 #
 # task = '012'
+
+# task = '0'
+
+# task = '0132_0213_0231_3120'
 
 patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 
@@ -57,6 +61,8 @@ patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 
 #
 mtree = MetaTree( patts, *standard_strategies )
+
+print(mtree.basis)
 
 #mtree.do_level()
 start = time()
