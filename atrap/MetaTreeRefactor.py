@@ -398,7 +398,7 @@ class MetaTree(object):
                         self._sibling_node_cache_cleaner(sibling_node)
                     '''propagate the information'''
                     self._propagate_sibling_node_verification(sibling_node)
-                self._propagate_and_node_verification(recursive_and_node)
+
         return child_sibling_nodes
 
     def _batch_expand(self, or_node):
@@ -475,7 +475,6 @@ class MetaTree(object):
                     self._sibling_node_cache_cleaner(sibling_node)
                     '''then propagate'''
                     self._propagate_sibling_node_verification(sibling_node)
-                self._propagate_and_node_verification(batch_and_node)
 
         return child_sibling_nodes
 
