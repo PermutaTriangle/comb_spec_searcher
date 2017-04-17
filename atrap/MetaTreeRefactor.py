@@ -650,14 +650,7 @@ class MetaTree(object):
         return labels
 
 
-    def _propagate_and_node_verification(self, and_node, seen_nodes=None):
-        if seen_nodes is None:
-            seen_nodes = set()
-        if and_node in seen_nodes:
-            '''Already attempted the propagation of this AND node'''
-            return
-        else:
-            seen_nodes.add(and_node)
+    def _propagate_and_node_verification(self, and_node):
 
         if and_node.is_verified():
             '''The AND node is already verified, so propagated this information already'''
@@ -693,13 +686,7 @@ class MetaTree(object):
             if and_node is not self.root_and_node:
                 self._propagate_sibling_node_verification(and_node.parent_sibling_node(), seen_nodes)
 
-    def _propagate_sibling_node_verification(self, sibling_node, seen_nodes=None):
-        if seen_nodes is None:
-            seen_nodes = set()
-        if sibling_node in seen_nodes:
-            return
-        else:
-            seen_nodes.add(sibling_node)
+    def _propagate_sibling_node_verification(self, sibling_node):
 
         if sibling_node.is_verified():
             '''The node is already verified, we've already pushed this information around'''
