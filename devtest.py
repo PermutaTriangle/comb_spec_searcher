@@ -8,9 +8,9 @@ from atrap.ProofTree import ProofTree
 
 all_strategies = [ [all_cell_insertions, all_row_placements], [all_equivalent_row_placements, all_point_placements], [empty_cell_inferral, jays_subclass_inferral, row_and_column_separation], [reversibly_deletable_cells, components], [subset_verified, is_empty] ]
 
-mimic_regular_insertion_encoding = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral], [reversibly_deletable_cells], [one_by_one_verification, is_empty]]
+mimic_regular_insertion_encoding = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral], [reversibly_deletable_points], [one_by_one_verification, is_empty]]
 
-standard_strategies = [ [all_cell_insertions], [all_maximum_point_placements, all_symmetric_tilings], [subclass_inferral, row_and_column_separation], [components], [subset_verified, is_empty] ]
+standard_strategies = [ [all_cell_insertions], [all_point_placements, all_symmetric_tilings], [subclass_inferral, row_and_column_separation], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
 
 finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, subclass_inferral], [], [subset_verified] ]
 
@@ -46,9 +46,17 @@ finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_eq
 # task = '012_1032_2301_2310'
 
 task = '1302_2031'
+
+#ins-enc
+# task = '3210_2031'
+# task = '012_021'
+
+# task = '0123_0132_0213_0231_0312_1023_1203_2013'
+
 #
 # task = '012_3210'
 #
+# task = '0123'
 # task = '012'
 
 patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
