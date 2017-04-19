@@ -1,7 +1,7 @@
 from grids import Tiling, Block, PositiveClass
 
 from .equivalence_class import EquivalenceStrategy
-from .point_placement import all_unique_point_or_empty, all_minimum_and_maximum_decreasing, all_minimum_and_maximum_increasing, all_maximum_decreasing, all_minimum_increasing, all_maximum_increasing
+from .point_placement import all_unique_point_or_empty, all_minimum_and_maximum_decreasing, all_minimum_and_maximum_increasing, all_minimum_decreasing, all_maximum_decreasing, all_minimum_increasing, all_maximum_increasing
 
 def all_equivalent_row_placements(tiling, **kwargs):
     for row in range(tiling.dimensions.j):
