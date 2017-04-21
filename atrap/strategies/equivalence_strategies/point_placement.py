@@ -419,7 +419,7 @@ def all_maximum_point_placements(tiling, **kwargs):
 
         topmost_tiling = Tiling(topmost_tiling_dict)
 
-        yield EquivalenceStrategy( "Inserting the right most point in to the cell " + str(cell),  rightmost_tiling )
+        yield EquivalenceStrategy( "Inserting the maximum point in to the cell " + str(cell),  topmost_tiling )
 
 
 def all_leftmost_point_placements(tiling, **kwargs):
