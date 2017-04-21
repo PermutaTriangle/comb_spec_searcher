@@ -10,7 +10,15 @@ all_strategies = [ [all_cell_insertions, all_row_placements], [all_equivalent_ro
 
 mimic_regular_insertion_encoding = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral], [reversibly_deletable_cells], [one_by_one_verification, is_empty]]
 
-standard_strategies = [ [all_cell_insertions], [all_point_placements], [subclass_inferral, row_and_column_separation], [reversibly_deletable_cells], [subset_verified, is_empty] ]
+# Run 1
+standard_strategies = [ [all_active_cell_insertions], [all_point_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
+# standard_strategies = [ [all_cell_insertions], [all_point_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
+standard_strategies = [ [all_cell_insertions, all_row_placements, all_column_placements], [all_equivalent_row_placements, all_equivalent_column_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
+
+# Run 2
+# standard_strategies = [ [all_cell_insertions], [all_point_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
+
+# Next runs: Add symmetries, splittings, fission/fusion
 
 finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, subclass_inferral], [], [subset_verified] ]
 
@@ -23,9 +31,10 @@ def perm_to_str(perm):
 def perms_to_str(perms):
     return "_".join(perm_to_str(perm) for perm in perms)
 
-length_to_process = '6'
+length_to_process = '11'
 
 with open('length'+length_to_process) as f:
+# with open('length'+length_to_process+'_depth_geq4') as f:
     content = f.readlines()
     content = [x.strip() for x in content]
     for task in content:
@@ -51,7 +60,7 @@ with open('length'+length_to_process) as f:
                 print("There are {} tilings in the search tree".format( len(mtree.tiling_cache)))
                 print("Time taken so far is {} seconds".format( time() - start_time ) )
                 print('')
-                if mtree.depth_searched == 4:
+                if mtree.depth_searched == 6:
                     break
 
             end_time = time()
@@ -72,3 +81,4 @@ with open('length'+length_to_process) as f:
                 print(proof_tree.to_json(sort_keys=True), file=f)
             else:
                 print('No proof tree found', file=f)
+                print("Took", int(end_time - start_time), "seconds", file=f)

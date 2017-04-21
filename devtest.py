@@ -10,10 +10,12 @@ all_strategies = [ [all_cell_insertions, all_row_placements, all_column_placemen
 
 mimic_regular_insertion_encoding = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral], [reversibly_deletable_points], [one_by_one_verification, is_empty]]
 
-standard_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
-# standard_strategies = [ [all_cell_insertions], [all_point_placements], [subclass_inferral, row_and_column_separation], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
+# standard_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
+standard_strategies = [ [all_cell_insertions], [all_point_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral,], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
 
-finite_strategies = [ [all_cell_insertions, all_row_placements], [all_equivalent_row_placements], [empty_cell_inferral, subclass_inferral], [], [subset_verified, is_empty] ]
+# finite_strategies = [ [all_cell_insertions, all_row_placements], [all_equivalent_row_placements], [empty_cell_inferral, subclass_inferral], [], [subset_verified, is_empty] ]
+finite_strategies_w_min_row = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [], [subset_verified, is_empty] ]
+finite_strategies_w_point_pl = [ [all_cell_insertions], [all_point_placement], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [], [subset_verified, is_empty] ]
 
 
 # mtree = MetaTree([Perm((0,2,1)), Perm((3,2,1,0))], *standard_strategies)
@@ -55,6 +57,8 @@ task = '012_0321_1032_2103'
 # task = '0'
 
 # task = '0132_0213_0231_3120'
+
+task = '01_10'
 
 patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 
