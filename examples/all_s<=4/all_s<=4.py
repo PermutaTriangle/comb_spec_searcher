@@ -5,9 +5,16 @@ from permuta import PermSet
 from itertools import combinations
 from permuta.permutils import is_finite, lex_min
 
-standard_strategies = [ [all_cell_insertions], [all_point_placements], [subclass_inferral, row_and_column_separation], [reversibly_deletable_cells], [subset_verified, is_empty] ]
+standard_strategies_w_min_row = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
+standard_strategies_w_left_col = [ [all_cell_insertions, all_leftmost_column_placements], [all_equivalent_leftmost_column_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
+standard_strategies_w_all_rows = [ [all_cell_insertions, all_row_placements], [all_equivalent_row_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
+standard_strategies_w_all_cols = [ [all_cell_insertions, all_column_placements], [all_equivalent_column_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
+standard_strategies_w_all_row_cols = [ [all_cell_insertions, all_row_placements, all_column_placements], [all_equivalent_row_placements, all_equivalent_column_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
+standard_strategies_point_pl = [ [all_cell_insertions], [all_point_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral,], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
 
-finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, subclass_inferral], [], [subset_verified] ]
+# First one is best
+finite_strategies_w_min_row = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [], [subset_verified, is_empty] ]
+finite_strategies_w_max_point_pl = [ [all_cell_insertions], [all_maximum_point_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [], [subset_verified, is_empty] ]
 
 def perm_to_str(perm):
     return "".join([str(i) for i in list(perm)])
@@ -34,6 +41,8 @@ for i in range(len(s2) + 1):
                         continue
                     s4_perms_available = sorted(PermSet.avoiding(s2_subset + s3_subset).of_length(4))
                     for k in range(len(s4_perms_available) + 1):
+                        if k >=4:
+                            continue
                         for s4_subset in combinations(s4_perms_available, k):
                             basis = s2_subset + s3_subset + s4_subset
                             if lex_min(basis) == basis:
@@ -49,8 +58,10 @@ for i in range(len(s2) + 1):
                                 print(task)
 
                                 if is_finite(basis):
-                                    strategies = finite_strategies
+                                    # strategies = finite_strategies_w_point_pl
+                                    strategies = finite_strategies_w_min_row
                                 else:
+                                    continue
                                     strategies = standard_strategies
 
                                 meta_tree = MetaTree(input_set.basis, *strategies)
@@ -58,7 +69,6 @@ for i in range(len(s2) + 1):
 
                                 while not meta_tree.has_proof_tree():
                                     meta_tree.do_level()
-
 
                                 with open(task, "w") as f:
                                     proof_tree = meta_tree.find_proof_tree()

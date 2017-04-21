@@ -1,0 +1,40 @@
+
+Finding the proof tree for Av(Perm((0, 2, 1)), Perm((1, 0, 2))) took 0 seconds
+
+Human readable:
+
+root: 0
+      ├─────1
+      └─────2
+
+Label: 0
+
++-+
+|1|
++-+
+1: Av(Perm((0, 2, 1)), Perm((1, 0, 2)))
+
+Label: 1
+
++-+
+| |
++-+
+
+
+Label: 2
+
++-+
+|1|
++-+
+1: Av+(Perm((0, 2, 1)), Perm((1, 0, 2)))
+We use his sibling for the next strategy
++-+-+-+
+| |3| |
++-+-+-+
+|2| | |
++-+-+-+
+| | |1|
++-+-+-+
+1: Av(Perm((0, 2, 1)), Perm((1, 0, 2)))
+2: Av(Perm((1, 0)))
+3: point
