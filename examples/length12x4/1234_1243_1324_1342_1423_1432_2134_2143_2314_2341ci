@@ -1,0 +1,237 @@
+
+Finding the proof tree for Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0))) took 4 seconds
+
+Human readable:
+
+root: 0
+      ├─────1
+      └─────2
+            ├─────3
+            └─────4
+                  ├─────5
+                  └─────6
+
+Label: 0
+
++-+
+|X|
++-+
+
+
+Label: 1
+
++-+
+| |
++-+
+
+
+Label: 2
+
++-+-+-+
+| |o| |
++-+-+-+
+|1| |X|
++-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1, 2)), Perm((0, 2, 1)), Perm((1, 0, 2)), Perm((1, 2, 0))))
+
+
+Label: 3
+
++-+-+
+| |o|
++-+-+
+|1| |
++-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1, 2)), Perm((0, 2, 1)), Perm((1, 0, 2)), Perm((1, 2, 0))))
+
+
+Label: 4
+
++-+-+-+-+-+-+
+| | |o| | | |
++-+-+-+-+-+-+
+|\| | | | | |
++-+-+-+-+-+-+
+| | | | |o| |
++-+-+-+-+-+-+
+| |1| |2| |X|
++-+-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1)), Perm((1, 0))))
+2: perm set of all perms avoiding Basis((Perm((0, 1, 2)), Perm((0, 2, 1)), Perm((1, 0, 2)), Perm((1, 2, 0))))
+
+
+Label: 5
+
++-+-+-+-+-+
+| |o| | | |
++-+-+-+-+-+
+|\| | | | |
++-+-+-+-+-+
+| | | |o| |
++-+-+-+-+-+
+| | |1| |X|
++-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1, 2)), Perm((0, 2, 1)), Perm((1, 0, 2)), Perm((1, 2, 0))))
+
+
+Label: 6
+
++-+-+-+-+-+-+
+| | |o| | | |
++-+-+-+-+-+-+
+|\| | | | | |
++-+-+-+-+-+-+
+| | | | |o| |
++-+-+-+-+-+-+
+| |o| | | | |
++-+-+-+-+-+-+
+| | | |1| |X|
++-+-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1, 2)), Perm((0, 2, 1)), Perm((1, 0, 2)), Perm((1, 2, 0))))
+
+
+Here are the recursions
+
+-----------------
+
+TILING:
++-+-+-+-+-+
+| |o| | | |
++-+-+-+-+-+
+|\| | | | |
++-+-+-+-+-+
+| | | |o| |
++-+-+-+-+-+
+| | |1| |X|
++-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1, 2)), Perm((0, 2, 1)), Perm((1, 0, 2)), Perm((1, 2, 0))))
+
+Tiling recursively verified with cells [(2, 3), (3, 2), (3, 4)]
+
+Recursively verified by:
++-+-+-+
+| |o| |
++-+-+-+
+|1| |X|
++-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1, 2)), Perm((0, 2, 1)), Perm((1, 0, 2)), Perm((1, 2, 0))))
+
+-----------------
+
+TILING:
++-+-+-+-+-+-+
+| | |o| | | |
++-+-+-+-+-+-+
+|\| | | | | |
++-+-+-+-+-+-+
+| | | | |o| |
++-+-+-+-+-+-+
+| |o| | | | |
++-+-+-+-+-+-+
+| | | |1| |X|
++-+-+-+-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1, 2)), Perm((0, 2, 1)), Perm((1, 0, 2)), Perm((1, 2, 0))))
+
+Tiling recursively verified with cells [(2, 4), (4, 3), (4, 5)]
+
+Recursively verified by:
++-+-+-+
+| |o| |
++-+-+-+
+|1| |X|
++-+-+-+
+1: perm set of all perms avoiding Basis((Perm((0, 1, 2)), Perm((0, 2, 1)), Perm((1, 0, 2)), Perm((1, 2, 0))))
+
+
+--------------------- END RECURSIONS
+
+Computer readable (JSON):
+
+{
+    "root": {
+        "children": [
+            {
+                "children": [],
+                "formal_step": "Tiling now self verified",
+                "tiling": {},
+                "verified_by": []
+            },
+            {
+                "children": [
+                    {
+                        "children": [],
+                        "formal_step": "Tiling now self verified",
+                        "tiling": {
+                            "(0, 1)": "Block.point",
+                            "(1, 0)": "Av(Perm((0, 1, 2)), Perm((0, 2, 1)), Perm((1, 0, 2)), Perm((1, 2, 0)))"
+                        },
+                        "verified_by": []
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [],
+                                "formal_step": "Tiling recursively verified with cells [(2, 3), (3, 2), (3, 4)]",
+                                "tiling": {
+                                    "(0, 1)": "Block.point",
+                                    "(1, 0)": "Av(Perm((0, 1)))",
+                                    "(2, 3)": "Block.point",
+                                    "(3, 2)": "Av(Perm((0, 1, 2)), Perm((0, 2, 1)), Perm((1, 0, 2)), Perm((1, 2, 0)))",
+                                    "(3, 4)": "Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)))"
+                                },
+                                "verified_by": [
+                                    {
+                                        "(0, 1)": "Block.point",
+                                        "(1, 0)": "Av(Perm((0, 1, 2)), Perm((0, 2, 1)), Perm((1, 0, 2)), Perm((1, 2, 0)))",
+                                        "(1, 2)": "Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)))"
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [],
+                                "formal_step": "Tiling recursively verified with cells [(2, 4), (4, 3), (4, 5)]",
+                                "tiling": {
+                                    "(0, 2)": "Block.point",
+                                    "(1, 0)": "Av(Perm((0, 1)))",
+                                    "(2, 4)": "Block.point",
+                                    "(3, 1)": "Block.point",
+                                    "(4, 3)": "Av(Perm((0, 1, 2)), Perm((0, 2, 1)), Perm((1, 0, 2)), Perm((1, 2, 0)))",
+                                    "(4, 5)": "Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)))"
+                                },
+                                "verified_by": [
+                                    {
+                                        "(0, 1)": "Block.point",
+                                        "(1, 0)": "Av(Perm((0, 1, 2)), Perm((0, 2, 1)), Perm((1, 0, 2)), Perm((1, 2, 0)))",
+                                        "(1, 2)": "Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)))"
+                                    }
+                                ]
+                            }
+                        ],
+                        "formal_step": "Inserting the unique point in to the cell (3, 1)",
+                        "tiling": {
+                            "(0, 2)": "Block.point",
+                            "(1, 0)": "Av(Perm((0, 1)))",
+                            "(2, 4)": "Block.point",
+                            "(3, 1)": "Av(Perm((0, 1)), Perm((1, 0)))",
+                            "(3, 3)": "Av(Perm((0, 1, 2)), Perm((0, 2, 1)), Perm((1, 0, 2)), Perm((1, 2, 0)))",
+                            "(3, 5)": "Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)))"
+                        },
+                        "verified_by": []
+                    }
+                ],
+                "formal_step": "Inserting the top most point in to the cell (1, 2)",
+                "tiling": {
+                    "(0, 1)": "Block.point",
+                    "(1, 0)": "Av(Perm((0, 1, 2)), Perm((0, 2, 1)), Perm((1, 0, 2)), Perm((1, 2, 0)))",
+                    "(1, 2)": "Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)))"
+                },
+                "verified_by": []
+            }
+        ],
+        "formal_step": "Inserting the top most point in to the cell (0, 0)",
+        "tiling": {
+            "(0, 0)": "Av(Perm((0, 1, 2, 3)), Perm((0, 1, 3, 2)), Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)), Perm((1, 0, 2, 3)), Perm((1, 0, 3, 2)), Perm((1, 2, 0, 3)), Perm((1, 2, 3, 0)))"
+        },
+        "verified_by": []
+    }
+}

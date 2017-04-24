@@ -1,39 +1,40 @@
+Christians-MacBook-Pro:ATRAP christianbean$ PYTHONHASHSEED=0 python3 devtest.py
 Doing depth 1
-We had 0 inferral cache hits and 4 partitioning cache hits
+We had 0 inferral cache hits and 9 partitioning cache hits
 The partitioning cache has 0 tilings in it right now
 The inferral cache has 3 tilings in it right now
 There are 7 tilings in the search tree
-Time taken so far is 0.016138076782226562 seconds
+Time taken so far is 0.024641990661621094 seconds
 Doing depth 2
-We had 4 inferral cache hits and 93 partitioning cache hits
+We had 4 inferral cache hits and 128 partitioning cache hits
 The partitioning cache has 0 tilings in it right now
 The inferral cache has 31 tilings in it right now
 There are 47 tilings in the search tree
-Time taken so far is 0.3664357662200928 seconds
+Time taken so far is 0.737786054611206 seconds
 Doing depth 3
-We had 39 inferral cache hits and 1821 partitioning cache hits
+We had 42 inferral cache hits and 2096 partitioning cache hits
 The partitioning cache has 0 tilings in it right now
 The inferral cache has 473 tilings in it right now
 There are 643 tilings in the search tree
-Time taken so far is 14.81521487236023 seconds
+Time taken so far is 18.280244827270508 seconds
 Doing depth 4
 A proof tree has been found.
-We had 449 inferral cache hits and 19967 partitioning cache hits
+We had 54 inferral cache hits and 3178 partitioning cache hits
 The partitioning cache has 0 tilings in it right now
-The inferral cache has 4647 tilings in it right now
-There are 5988 tilings in the search tree
-Time taken so far is 325.03920006752014 seconds
+The inferral cache has 693 tilings in it right now
+There are 964 tilings in the search tree
+Time taken so far is 24.722999095916748 seconds
 root: 0
       ├─────1
       └─────2
             ├─────3
             └─────4
                   ├─────5
-                  │     ├─────6
-                  │     └─────7
-                  │           ├─────8
-                  │           └─────9
-                  └─────10
+                  └─────6
+                        ├─────7
+                        └─────8
+                              ├─────9
+                              └─────10
 
 Label: 0
 
@@ -57,11 +58,11 @@ Label: 2
 1: Av+(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))
 We use his sibling for the next strategy
 +-+-+
-| |1|
+|1| |
 +-+-+
-|2| |
+| |2|
 +-+-+
-| |1|
+|1| |
 +-+-+
 1: Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))
 2: point
@@ -73,29 +74,21 @@ Label: 3
 +-+-+
 | |1|
 +-+-+
-1: Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))
-2: point
-We use his sibling for the next strategy
-+-+-+
-| |2|
-+-+-+
-|1| |
-+-+-+
 1: point
 2: Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))
 
 Label: 4
 
 +-+-+
-| |3|
+|3| |
 +-+-+
-|2| |
+| |2|
 +-+-+
-| |1|
+|1| |
 +-+-+
-1: Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))
+1: Av+(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))
 2: point
-3: Av+(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))
+3: Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))
 We use his sibling for the next strategy
 +-+-+-+-+-+
 | | |2| | |
@@ -113,6 +106,13 @@ We use his sibling for the next strategy
 
 Label: 5
 
++-+
+|1|
++-+
+1: Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))
+
+Label: 6
+
 +-+-+-+-+
 | | |2| |
 +-+-+-+-+
@@ -137,15 +137,17 @@ We use his sibling for the next strategy
 1: point
 2: Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))
 
-Label: 6
+Label: 7
 
-+-+-+-+-+
-|1| | | |
-+-+-+-+-+
-| |2| |2|
-+-+-+-+-+
-| | |1| |
-+-+-+-+-+
++-+-+-+
+| |2| |
++-+-+-+
+|1| | |
++-+-+-+
+| |2| |
++-+-+-+
+| | |1|
++-+-+-+
 1: point
 2: Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))
 We use his sibling for the next strategy
@@ -157,14 +159,14 @@ We use his sibling for the next strategy
 1: Av+(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))
 2: point
 
-Label: 7
+Label: 8
 
 +-+-+-+-+
-| |3| | |
+| |2| | |
 +-+-+-+-+
 |1| | | |
 +-+-+-+-+
-| |2| |2|
+| |2| |3|
 +-+-+-+-+
 | | |1| |
 +-+-+-+-+
@@ -173,31 +175,31 @@ Label: 7
 3: Av+(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))
 We use his sibling for the next strategy
 +-+-+-+-+-+-+-+
-| | | | |2| |2|
+|2| |2| | | | |
 +-+-+-+-+-+-+-+
-| | | | | |1| |
+| |1| | | | | |
 +-+-+-+-+-+-+-+
-| |2| | | | | |
+| | | | | |2| |
 +-+-+-+-+-+-+-+
-|1| | | | | | |
+| | | | | | |1|
 +-+-+-+-+-+-+-+
-| |2| |2| | | |
+| | | |2| |2| |
 +-+-+-+-+-+-+-+
-| | |1| | | | |
+| | | | |1| | |
 +-+-+-+-+-+-+-+
 1: point
 2: Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))
 
-Label: 8
+Label: 9
 
 +-+-+-+-+
-| |2| | |
+| | |2| |
 +-+-+-+-+
-|1| | | |
+| | | |1|
 +-+-+-+-+
-| |2| |2|
+|2| |2| |
 +-+-+-+-+
-| | |1| |
+| |1| | |
 +-+-+-+-+
 1: point
 2: Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))
@@ -214,7 +216,7 @@ We use his sibling for the next strategy
 1: Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))
 2: point
 
-Label: 9
+Label: 10
 
 +-+-+-+
 |2| |2|
@@ -228,36 +230,6 @@ We use his sibling for the next strategy
 |1|
 +-+
 1: Av+(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))
-
-Label: 10
-
-+-+-+-+-+-+
-| | |3| | |
-+-+-+-+-+-+
-| |2| |2| |
-+-+-+-+-+-+
-|3| | | | |
-+-+-+-+-+-+
-| |2| | | |
-+-+-+-+-+-+
-| | | | |1|
-+-+-+-+-+-+
-1: Av+(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))
-2: Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))
-3: point
-We use his sibling for the next strategy
-+-+-+-+-+
-| |3| | |
-+-+-+-+-+
-|1| | | |
-+-+-+-+-+
-| |2| |2|
-+-+-+-+-+
-| | |1| |
-+-+-+-+-+
-1: point
-2: Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))
-3: Av+(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))
 {
   "root": {
     "formal_step": "We perform cell insertion into cell (0, 0); either it is empty or Av+(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1))).",
@@ -268,51 +240,51 @@ We use his sibling for the next strategy
       "[0, 0]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))"
     },
     "relation": "",
-    "identifier": 0,
+    "identifier": 1,
     "children": [
       {
         "formal_step": "Verified because it is a one by one tiling with a subclass",
         "in_tiling": {},
         "out_tiling": {},
         "relation": "",
-        "identifier": 48,
+        "identifier": 44,
         "children": [],
         "recurse": false
       },
       {
-        "formal_step": "We perform cell insertion into cell (1, 2); either it is empty or Av+(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1))).",
+        "formal_step": "We perform cell insertion into cell (0, 0); either it is empty or Av+(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1))).",
         "in_tiling": {
           "[0, 0]": "Av+(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))"
         },
         "out_tiling": {
-          "[1, 0]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
-          "[0, 1]": "point",
-          "[1, 2]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))"
+          "[0, 0]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
+          "[1, 1]": "point",
+          "[0, 2]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))"
         },
-        "relation": "| Inserting the top most point in to the cell Cell(i=0, j=0). | The inverse of the tiling. | Tiling was rotated 90 degrees. | The inverse of the tiling. | ",
-        "identifier": 10,
+        "relation": "| Inserting the top most point in to the cell Cell(i=0, j=0). | The inverse of the tiling. | ",
+        "identifier": 27,
         "children": [
           {
             "formal_step": "The tiling is a subset of the subclass",
             "in_tiling": {
-              "[1, 0]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
-              "[0, 1]": "point"
+              "[1, 0]": "point",
+              "[0, 1]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))"
             },
             "out_tiling": {
-              "[0, 0]": "point",
-              "[1, 1]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))"
+              "[1, 0]": "point",
+              "[0, 1]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))"
             },
-            "relation": "| The reverse of: The inverse of the tiling. | Tiling was rotated 90 degrees. | ",
-            "identifier": 49,
+            "relation": "",
+            "identifier": 45,
             "children": [],
             "recurse": false
           },
           {
-            "formal_step": "We perform cell insertion into cell (4, 0); either it is empty or Av+(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1))).",
+            "formal_step": "The components of the tiling",
             "in_tiling": {
-              "[1, 0]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
-              "[0, 1]": "point",
-              "[1, 2]": "Av+(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))"
+              "[0, 0]": "Av+(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
+              "[1, 1]": "point",
+              "[0, 2]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))"
             },
             "out_tiling": {
               "[4, 0]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
@@ -322,11 +294,24 @@ We use his sibling for the next strategy
               "[3, 3]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
               "[2, 4]": "point"
             },
-            "relation": "| Inserting the top most point in to the cell Cell(i=1, j=2). | ",
-            "identifier": 52,
+            "relation": "| The reverse of: The inverse of the tiling. | The reverse of: Tiling was rotated 90 degrees. | The reverse of: The inverse of the tiling. | Tiling was rotated 90 degrees. | Inserting the top most point in to the cell Cell(i=1, j=2). | ",
+            "identifier": 48,
             "children": [
               {
-                "formal_step": "We perform cell insertion into cell (1, 3); either it is empty or Av+(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1))).",
+                "formal_step": "recurse",
+                "in_tiling": {
+                  "[0, 0]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))"
+                },
+                "out_tiling": {
+                  "[0, 0]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))"
+                },
+                "relation": "",
+                "identifier": 1,
+                "children": [],
+                "recurse": true
+              },
+              {
+                "formal_step": "We perform cell insertion into cell (3, 1); either it is empty or Av+(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1))).",
                 "in_tiling": {
                   "[1, 0]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
                   "[0, 1]": "point",
@@ -342,22 +327,22 @@ We use his sibling for the next strategy
                   "[1, 3]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))"
                 },
                 "relation": "| The reverse of: The inverse of the tiling. | Tiling was rotated 90 degrees. | ",
-                "identifier": 2,
+                "identifier": 5,
                 "children": [
                   {
                     "formal_step": "The tiling is a subset of the subclass",
                     "in_tiling": {
                       "[2, 0]": "point",
                       "[1, 1]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
-                      "[3, 1]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
-                      "[0, 2]": "point"
+                      "[0, 2]": "point",
+                      "[1, 3]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))"
                     },
                     "out_tiling": {
                       "[1, 0]": "Av+(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
                       "[0, 1]": "point"
                     },
-                    "relation": "| The reverse of: Tiling was rotated 90 degrees. | The reverse of: Tiling was rotated 90 degrees. | The reverse of: Inserting the top most point in to the cell Cell(i=0, j=1). | The reverse of: The inverse of the tiling. | ",
-                    "identifier": 50,
+                    "relation": "| The reverse of: Tiling was rotated 90 degrees. | The reverse of: Tiling was rotated 90 degrees. | The reverse of: The inverse of the tiling. | The reverse of: Inserting the top most point in to the cell Cell(i=0, j=1). | The inverse of the tiling. | ",
+                    "identifier": 46,
                     "children": [],
                     "recurse": false
                   },
@@ -366,31 +351,31 @@ We use his sibling for the next strategy
                     "in_tiling": {
                       "[2, 0]": "point",
                       "[1, 1]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
-                      "[3, 1]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
+                      "[3, 1]": "Av+(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
                       "[0, 2]": "point",
-                      "[1, 3]": "Av+(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))"
+                      "[1, 3]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))"
                     },
                     "out_tiling": {
-                      "[2, 0]": "point",
-                      "[1, 1]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
+                      "[4, 0]": "point",
                       "[3, 1]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
-                      "[0, 2]": "point",
-                      "[1, 3]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
-                      "[5, 4]": "point",
-                      "[4, 5]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
-                      "[6, 5]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))"
+                      "[5, 1]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
+                      "[6, 2]": "point",
+                      "[5, 3]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
+                      "[1, 4]": "point",
+                      "[0, 5]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
+                      "[2, 5]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))"
                     },
-                    "relation": "| Inserting the top most point in to the cell Cell(i=1, j=3). | The reverse of: Tiling was rotated 90 degrees. | The reverse of: Tiling was rotated 90 degrees. | The reverse of: Inserting the top most point in to the cell Cell(i=0, j=4). | The reverse of: Tiling was rotated 90 degrees. | Inserting the top most point in to the cell Cell(i=0, j=0). | Tiling was rotated 90 degrees. | Tiling was rotated 90 degrees. | ",
-                    "identifier": 51,
+                    "relation": "| The reverse of: The inverse of the tiling. | Inserting the top most point in to the cell Cell(i=1, j=3). | The reverse of: Tiling was rotated 90 degrees. | The reverse of: The inverse of the tiling. | The reverse of: Inserting the top most point in to the cell Cell(i=4, j=4). | The reverse of: Tiling was rotated 90 degrees. | The reverse of: Tiling was rotated 90 degrees. | Inserting the top most point in to the cell Cell(i=0, j=0). | The inverse of the tiling. | Tiling was rotated 90 degrees. | ",
+                    "identifier": 47,
                     "children": [
                       {
                         "formal_step": "recurse",
                         "in_tiling": {
-                          "[2, 0]": "point",
-                          "[1, 1]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
-                          "[3, 1]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
-                          "[0, 2]": "point",
-                          "[1, 3]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))"
+                          "[1, 0]": "point",
+                          "[0, 1]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
+                          "[2, 1]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
+                          "[3, 2]": "point",
+                          "[2, 3]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))"
                         },
                         "out_tiling": {
                           "[1, 0]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
@@ -399,8 +384,8 @@ We use his sibling for the next strategy
                           "[3, 2]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
                           "[2, 3]": "point"
                         },
-                        "relation": "| The reverse of: Tiling was rotated 90 degrees. | The inverse of the tiling. | ",
-                        "identifier": 2,
+                        "relation": "| The inverse of the tiling. | ",
+                        "identifier": 5,
                         "children": [],
                         "recurse": true
                       },
@@ -415,7 +400,7 @@ We use his sibling for the next strategy
                           "[0, 0]": "Av+(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))"
                         },
                         "relation": "| The reverse of: Tiling was rotated 90 degrees. | The reverse of: The inverse of the tiling. | The reverse of: Inserting the top most point in to the cell Cell(i=0, j=0). | ",
-                        "identifier": 10,
+                        "identifier": 27,
                         "children": [],
                         "recurse": true
                       }
@@ -424,28 +409,6 @@ We use his sibling for the next strategy
                   }
                 ],
                 "recurse": false
-              },
-              {
-                "formal_step": "recurse",
-                "in_tiling": {
-                  "[4, 0]": "Av+(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
-                  "[1, 1]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
-                  "[0, 2]": "point",
-                  "[1, 3]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
-                  "[3, 3]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
-                  "[2, 4]": "point"
-                },
-                "out_tiling": {
-                  "[2, 0]": "point",
-                  "[1, 1]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
-                  "[3, 1]": "Av(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))",
-                  "[0, 2]": "point",
-                  "[1, 3]": "Av+(Perm((1, 3, 0, 2)), Perm((2, 0, 3, 1)))"
-                },
-                "relation": "| The reverse of: The inverse of the tiling. | Inserting the top most point in to the cell Cell(i=0, j=4). | Tiling was rotated 90 degrees. | Tiling was rotated 90 degrees. | The reverse of: Inserting the top most point in to the cell Cell(i=1, j=3). | ",
-                "identifier": 51,
-                "children": [],
-                "recurse": true
               }
             ],
             "recurse": false
@@ -457,4 +420,4 @@ We use his sibling for the next strategy
     "recurse": false
   }
 }
-I took 325.56062173843384 seconds
+I took 24.869999170303345 seconds
