@@ -143,7 +143,7 @@ def all_column_placements(tiling, **kwargs):
                             perm_class = block.perm_class
                             leftmost_tiling_dicts[index][(cell.i + 0.5, cell.j + 0.5)] = perm_class
                             rightmost_tiling_dicts[index][(cell.i + 0.5, cell.j - 0.5)] = perm_class
-                            leftmost_tiling_dicts[index][(cell.i - 0.5, cell.j + 0.5)] = perm_class
+                            leftmost_tiling_dicts[index][(cell.i + 0.5, cell.j - 0.5)] = perm_class
                             rightmost_tiling_dicts[index][(cell.i - 0.5, cell.j - 0.5)] = perm_class
                     else:
                         # same row, different col
@@ -199,7 +199,7 @@ def all_leftmost_column_placements(tiling, **kwargs):
                         if isinstance(block, PositiveClass):
                             perm_class = block.perm_class
                             leftmost_tiling_dicts[index][(cell.i + 0.5, cell.j + 0.5)] = perm_class
-                            leftmost_tiling_dicts[index][(cell.i - 0.5, cell.j + 0.5)] = perm_class
+                            leftmost_tiling_dicts[index][(cell.i + 0.5, cell.j - 0.5)] = perm_class
                     else:
                         # same row, different col
                         leftmost_tiling_dicts[index][(cell.i, cell.j + 0.5)] = block
