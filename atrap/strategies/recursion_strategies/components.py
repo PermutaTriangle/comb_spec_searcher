@@ -44,5 +44,5 @@ def components(tiling, basis, basis_partitioning=basis_partitioning):
     if len(strategy) <= 1:
         return
 
-    yield RecursiveStrategy( "The components of the tiling", strategy  )
+    yield RecursiveStrategy( "The components of the tiling", strategy, [tiling._back_map for tiling in strategy]  )
 # Consider the union of components?
