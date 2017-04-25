@@ -53,16 +53,6 @@ basic = [ [all_cell_insertions], [all_maximum_point_placements], [row_and_column
 # task = '012_1032_2301_2310'
 
 task = '1302_2031'
-<<<<<<< HEAD
-
-#ins-enc
-# task = '3210_2031'
-# task = '012_021'
-
-# task = '0123_0132_0213_0231_0312_1023_1203_2013'
-=======
-#
->>>>>>> origin/master
 # task = '012_3210'
 # task = '0'
 #
@@ -77,10 +67,6 @@ task = '1302_2031'
 
 # task = '0132_0213_0231_3120'
 
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/master
 patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 
 # patts = [ Perm([ int(c) - 1 for c in p ]) for p in task.split('_') ]
