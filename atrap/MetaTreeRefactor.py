@@ -209,6 +209,8 @@ class MetaTree(object):
         self._tiling_to_label = {}
         self._labels_to_or_node = {}
         self._partitioning_calls = {}
+        self._cached_tilings = set()
+        self._cache_misses = 0
 
         '''Initialise the proof strategies to be used.'''
         if batch_strategies is not None:
@@ -488,7 +490,6 @@ class MetaTree(object):
         semi_inferred_tilings = []
         if inferred_tiling is None:
             inferred_tiling = tiling
-            semi_inferred_tilings.append(inferred_tiling)
             fully_inferred = False
             for inferral_strategy_generator in self.inferral_strategy_generators:
                 '''For each inferral strategy,'''
@@ -499,13 +500,20 @@ class MetaTree(object):
                         raise TypeError("Attempted to infer on a non InferralStrategy")
                     formal_step = inferral_strategy.formal_step
                     '''we infer as much as possible about the tiling and replace it.'''
-                    inferred_tiling = inferral_strategy.tiling
-                    if inferred_tiling in self._inferral_cache:
-                        inferred_tiling = self._inferral_cache.get(inferred_tiling)
+                    soon_to_be_tiling = inferral_strategy.tiling
+
+                    if soon_to_be_tiling is inferred_tiling:
+                        continue
+
+                    if soon_to_be_tiling in self._inferral_cache:
+                        soon_to_be_tiling = self._inferral_cache.get(soon_to_be_tiling)
+                        semi_inferred_tilings.append(inferred_tiling)
+                        inferred_tiling = soon_to_be_tiling
                         fully_inferred = True
                         break
                     else:
                         semi_inferred_tilings.append(inferred_tiling)
+                        inferred_tiling = soon_to_be_tiling
             for semi_inferred_tiling in semi_inferred_tilings:
                 self._inferral_cache.set(semi_inferred_tiling, inferred_tiling)
                 '''Clean up the cache'''
@@ -528,6 +536,10 @@ class MetaTree(object):
 
         cache = self._basis_partitioning_cache.get(tiling)
         if cache is None:
+            if tiling in self._cached_tilings:
+                self._cache_misses += 1
+            else:
+                self._cached_tilings.add(tiling)
             self._basis_partitioning_cache.set(tiling, {})
             cache = self._basis_partitioning_cache.get(tiling)
         else:

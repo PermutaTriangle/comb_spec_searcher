@@ -107,6 +107,7 @@ while not mtree.has_proof_tree():
     print("Time taken so far is {} seconds.".format( time() - start ) )
     for function_name, calls in mtree._partitioning_calls.items():
         print("The function {} called the partitioning cache {} many times".format(function_name, calls))
+    print("There were {} cache misses".format(mtree._cache_misses))
     # if mtree.depth_searched == 10:
     #     break
 
