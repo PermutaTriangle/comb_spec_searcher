@@ -346,6 +346,13 @@ class MetaTree(object):
                 formal_step = recursive_strategy.formal_step
                 tilings = recursive_strategy.tilings
 
+                print("============")
+                print(or_node.tiling)
+                print("----->")
+                for t in tilings:
+                    print(t)
+                print("============")
+
                 '''We create the AND node for the strategy and connect it its parent.'''
                 recursive_and_node = AndNode(formal_step)
                 recursive_and_node.parents.append(or_node)

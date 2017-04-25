@@ -10,7 +10,9 @@ all_strategies = [ [all_cell_insertions, all_row_placements, all_column_placemen
 
 mimic_regular_insertion_encoding = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral], [reversibly_deletable_points], [one_by_one_verification, is_empty]]
 
-standard_strategies = [ [all_cell_insertions], [all_point_placements, all_symmetric_tilings], [subclass_inferral, row_and_column_separation], [splittings], [subset_verified, is_empty] ]
+standard_strategies = [ [all_cell_insertions], [all_point_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
+# standard_strategies = [ [all_cell_insertions], [all_point_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
+standard_strategies_w_all_row_cols = [ [all_cell_insertions, all_row_placements, all_column_placements], [all_equivalent_row_placements, all_equivalent_column_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
 
 # finite_strategies = [ [all_cell_insertions, all_row_placements], [all_equivalent_row_placements], [empty_cell_inferral, subclass_inferral], [], [subset_verified, is_empty] ]
 finite_strategies_w_min_row = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [], [subset_verified, is_empty] ]
@@ -43,11 +45,11 @@ finite_strategies_w_point_pl = [ [all_cell_insertions], [all_point_placements], 
 
 # task = '012_0321_2103'
 
-task = '012_0321_1032_2103'
+# task = '012_0321_1032_2103'
 #
 # task = '012_1032_2301_2310'
 
-# task = '1302_2031'
+task = '1302_2031'
 
 #ins-enc
 # task = '3210_2031'
@@ -70,7 +72,7 @@ patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 
 #
 # mtree = MetaTree( patts, *mimic_regular_insertion_encoding )
-mtree = MetaTree( patts, *standard_strategies )
+mtree = MetaTree( patts, *standard_strategies_w_all_row_cols )
 
 print(mtree.basis)
 
