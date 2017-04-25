@@ -2,12 +2,11 @@ from grids import *
 from permuta import *
 from permuta.misc import UnionFind
 from itertools import combinations
-from atrap.tools import basis_partitioning
 from atrap.tools import cells_of_occurrences
 
 from .recursive_class import RecursiveStrategy
 
-def components(tiling, basis, basis_partitioning=basis_partitioning):
+def components(tiling, basis, basis_partitioning=None):
 
     cell_to_int = {}
 
@@ -18,7 +17,7 @@ def components(tiling, basis, basis_partitioning=basis_partitioning):
     components = UnionFind(len(cell_to_int))
 
     occurrences_of_basis_elements = cells_of_occurrences(tiling, basis, basis_partitioning=basis_partitioning)
-    for cells_of_occurrence in cells_of_occurrences(tiling, basis):
+    for cells_of_occurrence in cells_of_occurrences(tiling, basis, basis_partitioning=basis_partitioning):
         for cell1, cell2 in combinations(cells_of_occurrence, 2):
             components.unite(cell_to_int[cell1], cell_to_int[cell2])
 
@@ -44,5 +43,5 @@ def components(tiling, basis, basis_partitioning=basis_partitioning):
     if len(strategy) <= 1:
         return
 
-    yield RecursiveStrategy( "The components of the tiling", strategy  )
+    yield RecursiveStrategy( "The components of the tiling", strategy, [tiling._back_map for tiling in strategy]  )
 # Consider the union of components?

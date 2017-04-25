@@ -2,7 +2,7 @@ from grids import Block
 from grids import PositiveClass
 from grids import Tiling
 
-from atrap.tools import basis_partitioning, cells_of_occurrences
+from atrap.tools import cells_of_occurrences
 from itertools import chain
 
 from .batch_class import BatchStrategy
@@ -41,7 +41,7 @@ def cell_insertion(tiling, cell):
     return empty_cell_tiling, positive_tiling
 
 
-def all_active_cell_insertions(tiling, basis, basis_partitioning=basis_partitioning, **kwargs):
+def all_active_cell_insertions(tiling, basis, basis_partitioning=None, **kwargs):
     """Yield all cell insertions where the cell was used for a some bad pattern of a tiling along with a formal step."""
     # We are concerned with all the classes of the tiling
     if len(tiling) <= 1:

@@ -2,6 +2,7 @@ from collections import defaultdict
 from grids import Tiling, Block, PositiveClass
 from permuta import Perm, PermSet
 from itertools import chain
+import inspect
 
 __all__ = ["basis_partitioning", "is_verified", "tiling_inferral"]
 
@@ -26,9 +27,9 @@ _PERMS_TO_CHECK = {}
 #         # print('**cache repeat!!**')
 #         pass
 #     return cache[length]
-
-def basis_partitioning(tiling, length, basis):
-    return tiling.basis_partitioning(length, basis)
+#
+# def basis_partitioning(tiling, length, basis):
+#     return tiling.basis_partitioning(length, basis)
 
 def tiling_generates_container(tiling, length, basis):
     return any(not perm.avoids(*basis) for perm in tiling.perms_of_length(length))
@@ -36,10 +37,10 @@ def tiling_generates_container(tiling, length, basis):
 def tiling_generates_avoider(tiling, length, basis):
     return any(perm.avoids(*basis) for perm in tiling.perms_of_length(length))
 
-def cells_of_occurrences(tiling, basis, basis_partitioning=basis_partitioning):
+def cells_of_occurrences(tiling, basis, basis_partitioning=None):
     return tuple( set( chain( *cells_of_occurrences_by_perms(tiling, basis, basis_partitioning=basis_partitioning) ) ) )
 
-def cells_of_occurrences_by_perms(tiling, basis, basis_partitioning=basis_partitioning):
+def cells_of_occurrences_by_perms(tiling, basis, basis_partitioning=None):
     '''A cached occurrences of patts function for a tiling. The occurrences are
     stored as a set of occurrence by perm it is in. An occurrence is returned
     as a set of cells containing the patt.  '''
@@ -48,7 +49,7 @@ def cells_of_occurrences_by_perms(tiling, basis, basis_partitioning=basis_partit
     verification_length = tiling.total_points + len(basis[-1])
     verification_length += sum(1 for _, block in tiling.non_points if isinstance(block, PositiveClass))
     for perm_length in range(verification_length + 1):
-        containing_perms, _ = basis_partitioning(tiling, perm_length, basis)
+        containing_perms, _ = basis_partitioning(tiling, perm_length, basis, inspect.stack()[0][3])
         for perm, cell_infos in containing_perms.items():
             perms_occurrences = set()
             if len(cell_infos) != 1:
@@ -97,7 +98,7 @@ def is_verified(tiling, basis):
     #       contains points then this fails.
     verification_length = tiling.total_points + len(basis[-1])
 
-    partitions = basis_partitioning(tiling, verification_length, basis)
+    partitions = basis_partitioning(tiling, verification_length, basis, inspect.stack()[0][3])
     containing_perms, _ = partitions
 
     # Tiling is verified if all perms avoid; i.e., none contain
@@ -153,7 +154,7 @@ def tiling_inferral(tiling, basis):
 
     for length in range(verification_length + 1):
         # Get the partitioning into containing/avoiding perms
-        partitions = basis_partitioning(tiling, length, basis)
+        partitions = basis_partitioning(tiling, length, basis, inspect.stack()[0][3])
 
         # For containing and avoiding
         for partition, perms_of_cells in zip(partitions, perms_of_cells_dicts):

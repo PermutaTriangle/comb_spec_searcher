@@ -1,9 +1,9 @@
 from grids import Tiling, PositiveClass
-from atrap.tools import basis_partitioning, tiling_generates_container
+from atrap.tools import tiling_generates_container
 from .verification_class import VerificationStrategy
 from .one_by_one_verification import one_by_one_verification
 
-def subset_verified(tiling, basis, basis_partitioning=basis_partitioning):
+def subset_verified(tiling, basis, basis_partitioning=None):
     """Check that a tiling is a subset of Av(basis)."""
     if not isinstance(tiling, Tiling):
         raise TypeError

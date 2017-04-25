@@ -18,6 +18,9 @@ standard_strategies_w_all_row_cols = [ [all_cell_insertions, all_row_placements,
 finite_strategies_w_min_row = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [], [subset_verified, is_empty] ]
 finite_strategies_w_point_pl = [ [all_cell_insertions], [all_point_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [], [subset_verified, is_empty] ]
 
+finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, subclass_inferral], [], [subset_verified, is_empty] ]
+
+basic = [ [all_cell_insertions], [all_maximum_point_placements], [row_and_column_separation], [reversibly_deletable_cells], [one_by_one_verification] ]
 
 # mtree = MetaTree([Perm((0,2,1)), Perm((3,2,1,0))], *standard_strategies)
 
@@ -50,22 +53,34 @@ finite_strategies_w_point_pl = [ [all_cell_insertions], [all_point_placements], 
 # task = '012_1032_2301_2310'
 
 task = '1302_2031'
+<<<<<<< HEAD
 
 #ins-enc
 # task = '3210_2031'
 # task = '012_021'
 
 # task = '0123_0132_0213_0231_0312_1023_1203_2013'
+=======
+#
+>>>>>>> origin/master
 # task = '012_3210'
+# task = '0'
 #
 # task = '0123'
 # task = '012'
+
+# task = '021'
+
+# task = '4213_3142'
 
 # task = '0'
 
 # task = '0132_0213_0231_3120'
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/master
 patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 
 # patts = [ Perm([ int(c) - 1 for c in p ]) for p in task.split('_') ]
@@ -75,6 +90,7 @@ patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 mtree = MetaTree( patts, *standard_strategies_w_all_row_cols )
 
 print(mtree.basis)
+
 
 def count_verified_tilings(mt):
     count = 0
@@ -106,6 +122,9 @@ while not mtree.has_proof_tree():
     print("There are {} verified tilings.".format(count_verified_tilings(mtree)))
     print("There are {} SiblingNodes of which {} are verified.".format(*count_sibling_nodes(mtree)))
     print("Time taken so far is {} seconds.".format( time() - start ) )
+    for function_name, calls in mtree._partitioning_calls.items():
+        print("The function {} called the partitioning cache {} many times".format(function_name, calls))
+    print("There were {} cache misses".format(mtree._cache_misses))
     # if mtree.depth_searched == 10:
     #     break
 

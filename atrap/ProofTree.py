@@ -2,7 +2,7 @@ import sys
 
 #from permuta import Perm, PermSet
 
-from grids import JsonAble, Tiling
+from grids import JsonAble, Tiling, Cell
 
 
 __all__ = ["ProofTree", "ProofTreeNode"]
@@ -16,14 +16,14 @@ class ProofTreeNode(JsonAble):
                  relation,
                  identifier,
                  children=None,
-                 recurse=False):
+                 recurse=None):
         self.formal_step = formal_step
         self.in_tiling = in_tiling
         self.out_tiling = out_tiling
         self.relation = relation
         self.identifier = identifier
         self.children = [] if children is None else list(children)
-        self.recurse = recurse
+        self.recurse = [] if children is None else list(recurse)
 
     @classmethod
     def _from_attr_dict(cls, attr_dict):
@@ -33,7 +33,7 @@ class ProofTreeNode(JsonAble):
         relation = attr_dict["relation"]
         identifier = attr_dict["identifier"]
         children = map(cls._from_attr_dict, attr_dict["children"])
-        recurse = attr_dict["recurse"]
+        recurse = eval(attr_dict["recurse"])
         return cls(formal_step,
                    in_tiling,
                    out_tiling,
@@ -50,7 +50,7 @@ class ProofTreeNode(JsonAble):
         attr_dict["relation"] = self.relation
         attr_dict["identifier"] = self.identifier
         attr_dict["children"] = [child._get_attr_dict() for child in self.children]
-        attr_dict["recurse"] = self.recurse
+        attr_dict["recurse"] = repr(self.recurse)
         return attr_dict
 
 

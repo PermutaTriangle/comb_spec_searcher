@@ -171,6 +171,8 @@ class AndNode(object):
         self.children = []
         self.parents = []
         self.verification = set()
+        self.recursion = False
+        self.back_maps = []
 
     def is_verified(self):
         return frozenset() in self.verification
@@ -206,6 +208,9 @@ class MetaTree(object):
         '''A cache for labels'''
         self._tiling_to_label = {}
         self._labels_to_or_node = {}
+        self._partitioning_calls = {}
+        self._cached_tilings = set()
+        self._cache_misses = 0
 
         '''Initialise the proof strategies to be used.'''
         if batch_strategies is not None:
@@ -356,6 +361,8 @@ class MetaTree(object):
                 '''We create the AND node for the strategy and connect it its parent.'''
                 recursive_and_node = AndNode(formal_step)
                 recursive_and_node.parents.append(or_node)
+                recursive_and_node.recursion = True
+                recursive_and_node.back_maps = recursive_strategy.back_maps
                 or_node.children.append(recursive_and_node)
 
                 '''Collect the verified AND nodes as they will need to propagate this information'''
@@ -490,7 +497,6 @@ class MetaTree(object):
         semi_inferred_tilings = []
         if inferred_tiling is None:
             inferred_tiling = tiling
-            semi_inferred_tilings.append(inferred_tiling)
             fully_inferred = False
             for inferral_strategy_generator in self.inferral_strategy_generators:
                 '''For each inferral strategy,'''
@@ -501,13 +507,20 @@ class MetaTree(object):
                         raise TypeError("Attempted to infer on a non InferralStrategy")
                     formal_step = inferral_strategy.formal_step
                     '''we infer as much as possible about the tiling and replace it.'''
-                    inferred_tiling = inferral_strategy.tiling
-                    if inferred_tiling in self._inferral_cache:
-                        inferred_tiling = self._inferral_cache.get(inferred_tiling)
+                    soon_to_be_tiling = inferral_strategy.tiling
+
+                    if soon_to_be_tiling is inferred_tiling:
+                        continue
+
+                    if soon_to_be_tiling in self._inferral_cache:
+                        soon_to_be_tiling = self._inferral_cache.get(soon_to_be_tiling)
+                        semi_inferred_tilings.append(inferred_tiling)
+                        inferred_tiling = soon_to_be_tiling
                         fully_inferred = True
                         break
                     else:
                         semi_inferred_tilings.append(inferred_tiling)
+                        inferred_tiling = soon_to_be_tiling
             for semi_inferred_tiling in semi_inferred_tilings:
                 self._inferral_cache.set(semi_inferred_tiling, inferred_tiling)
                 '''Clean up the cache'''
@@ -518,10 +531,22 @@ class MetaTree(object):
             self.inferral_cache_hits += 1
         return inferred_tiling
 
-    def _basis_partitioning(self, tiling, length, basis):
+    def _basis_partitioning(self, tiling, length, basis, function_name=None):
         """A cached basis partitioning function."""
+
+        if function_name is not None:
+            if function_name in self._partitioning_calls:
+                self._partitioning_calls[function_name] += 1
+            else:
+                self._partitioning_calls[function_name] = 0
+
+
         cache = self._basis_partitioning_cache.get(tiling)
         if cache is None:
+            if tiling in self._cached_tilings:
+                self._cache_misses += 1
+            else:
+                self._cached_tilings.add(tiling)
             self._basis_partitioning_cache.set(tiling, {})
             cache = self._basis_partitioning_cache.get(tiling)
         else:
@@ -835,7 +860,7 @@ class MetaTree(object):
             for other_or_node in in_tiling_or_nodes:
                 if other_or_node.sibling_node == or_node.sibling_node:
                     out_tiling = other_or_node.tiling
-            return ProofTreeNode("recurse", in_tiling, out_tiling, or_node.sibling_node.get_relation(in_tiling, out_tiling), label, recurse=True )
+            return ProofTreeNode("recurse", in_tiling, out_tiling, or_node.sibling_node.get_relation(in_tiling, out_tiling), label, recurse=[] )
 
         '''We add the tilings from the SiblingNode. These can now be used for recursions.'''
         sibling_tilings = [ sibling_or_node.tiling for sibling_or_node in or_node.sibling_node ]
@@ -848,6 +873,7 @@ class MetaTree(object):
         in_tiling_or_nodes.add(or_node)
 
         formal_step = None
+        recurse = []
 
         for child_and_node in or_node.sibling_node.get_children_and_nodes():
             '''If the child AND node is verified'''
@@ -859,6 +885,8 @@ class MetaTree(object):
                 '''The tiling we left the ProofTreeNode by is the tiling on the parent of the AND node.'''
                 out_tiling = child_and_node.parents[0].tiling
                 '''The children are the ProofTreeNodes using the tilings of the strategy.'''
+                if child_and_node.recursion:
+                    recurse = child_and_node.back_maps
                 children = [ self._find_proof_tree_below_or_node(child_or_node, seen_tilings, in_tiling_or_nodes ) for child_or_node in child_and_node.children ]
                 '''We only want one tree'''
                 break
@@ -867,6 +895,6 @@ class MetaTree(object):
         assert formal_step is not None
         label = min( self._get_sibling_labels(or_node.sibling_node, force=True) )
         if children:
-            return ProofTreeNode(formal_step, in_tiling, out_tiling, or_node.sibling_node.get_relation(in_tiling, out_tiling), label, children=children)
+            return ProofTreeNode(formal_step, in_tiling, out_tiling, or_node.sibling_node.get_relation(in_tiling, out_tiling), label, children=children, recurse=recurse)
 
-        return ProofTreeNode(formal_step, in_tiling, out_tiling, or_node.sibling_node.get_relation(in_tiling, out_tiling), label)
+        return ProofTreeNode(formal_step, in_tiling, out_tiling, or_node.sibling_node.get_relation(in_tiling, out_tiling), label, recurse=recurse)
