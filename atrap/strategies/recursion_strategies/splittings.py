@@ -55,7 +55,7 @@ def splittings(tiling, basis, basis_partitioning=basis_partitioning):
 
     # turn the list of lists of lists into a list of lists of Tilings
     for good_split in all_valid_splittings:
-        print('good split:',good_split)
+        # print('good split:',good_split)
         strategy = [Tiling({x:tiling[x] for x in part}) for part in good_split]
         yield RecursiveStrategy( "A splitting of the tiling", strategy )
 
@@ -77,8 +77,8 @@ def find_good_splittings(tiling, basis, basis_partitioning=basis_partitioning, b
 
     claimed = (set() if len(built) == 0 else set.union(*built))
     if len(claimed) == len(occupied_cells):
-        print('\nlen(claimed) = len(occupied_cells):')
-        print(claimed, occupied_cells)
+        # print('\nlen(claimed) = len(occupied_cells):')
+        # print(claimed, occupied_cells)
         return [built]
 
     cells_to_check = occupied_cells_set.difference(claimed)

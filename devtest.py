@@ -14,7 +14,7 @@ standard_strategies = [ [all_cell_insertions], [all_point_placements, all_symmet
 
 # finite_strategies = [ [all_cell_insertions, all_row_placements], [all_equivalent_row_placements], [empty_cell_inferral, subclass_inferral], [], [subset_verified, is_empty] ]
 finite_strategies_w_min_row = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [], [subset_verified, is_empty] ]
-finite_strategies_w_point_pl = [ [all_cell_insertions], [all_point_placement], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [], [subset_verified, is_empty] ]
+finite_strategies_w_point_pl = [ [all_cell_insertions], [all_point_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [], [subset_verified, is_empty] ]
 
 
 # mtree = MetaTree([Perm((0,2,1)), Perm((3,2,1,0))], *standard_strategies)
@@ -47,7 +47,7 @@ task = '012_0321_1032_2103'
 #
 # task = '012_1032_2301_2310'
 
-task = '1302_2031'
+# task = '1302_2031'
 
 #ins-enc
 # task = '3210_2031'
