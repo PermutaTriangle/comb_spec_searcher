@@ -88,9 +88,9 @@ def find_good_splittings(tiling, basis, basis_partitioning=basis_partitioning, b
 
 
     good_splittings = []
+    min_length = min([len(P) for P in basis])
     verification_length = max([len(P) for P in basis]) + tiling.total_points + sum(1 for _, block in tiling.non_points if isinstance(block, PositiveClass))
-    containing_perms, _ = basis_partitioning(tiling, verification_length, basis)
-
+    
     for subset in subsets_to_check:
 
         new_part = set(subset)
@@ -112,30 +112,37 @@ def find_good_splittings(tiling, basis, basis_partitioning=basis_partitioning, b
 
         good_partition = True
 
-        for basis_element in containing_perms.keys():
-            
+        for length_to_check in range(min_length, verification_length+1):
+
+            containing_perms, _ = basis_partitioning(tiling, length_to_check, basis)
+
             if not good_partition:
                 break
 
-            for position_set in containing_perms[basis_element]:
-
-                partition_split = [[-1 for i in range(verification_length)] for p in partition_to_check]
-
-                for cell in position_set.keys():
-                    cell_perm, cell_values, cell_indices = position_set[cell]
-
-                    for index in range(len(cell_perm)):
-                        partition_split[cell_to_part_dict[cell]][cell_indices[index]] = cell_values[index]
-
-                permize = ( Perm( standardize ([entry for entry in part_perm if entry != -1]) ) for part_perm in partition_split )
-
-                if not any( any ( perm.contains(basis_element) for basis_element in basis ) for perm in permize ):
-                    # print('\tthis partition is bad')
-                    # print('\t',partition_to_check)
-                    # print('\t',position_set)
-                    # print('\t', partition_split)
-                    good_partition = False
+            for basis_element in containing_perms.keys():
+                
+                if not good_partition:
                     break
+
+                for position_set in containing_perms[basis_element]:
+
+                    partition_split = [[-1 for i in range(verification_length)] for p in partition_to_check]
+
+                    for cell in position_set.keys():
+                        cell_perm, cell_values, cell_indices = position_set[cell]
+
+                        for index in range(len(cell_perm)):
+                            partition_split[cell_to_part_dict[cell]][cell_indices[index]] = cell_values[index]
+
+                    permize = ( Perm( standardize ([entry for entry in part_perm if entry != -1]) ) for part_perm in partition_split )
+
+                    if not any( any ( perm.contains(basis_element) for basis_element in basis ) for perm in permize ):
+                        # print('\tthis partition is bad')
+                        # print('\t',partition_to_check)
+                        # print('\t',position_set)
+                        # print('\t', partition_split)
+                        good_partition = False
+                        break
 
         if good_partition:
             good_splittings.extend(find_good_splittings(tiling, basis, basis_partitioning=basis_partitioning, built=built+[new_part]))
