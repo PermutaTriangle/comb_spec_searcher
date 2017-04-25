@@ -206,6 +206,7 @@ class MetaTree(object):
         '''A cache for labels'''
         self._tiling_to_label = {}
         self._labels_to_or_node = {}
+        self._partitioning_calls = {}
 
         '''Initialise the proof strategies to be used.'''
         if batch_strategies is not None:
@@ -511,8 +512,16 @@ class MetaTree(object):
             self.inferral_cache_hits += 1
         return inferred_tiling
 
-    def _basis_partitioning(self, tiling, length, basis):
+    def _basis_partitioning(self, tiling, length, basis, function_name=None):
         """A cached basis partitioning function."""
+
+        if function_name is not None:
+            if function_name in self._partitioning_calls:
+                self._partitioning_calls[function_name] += 1
+            else:
+                self._partitioning_calls[function_name] = 0
+
+
         cache = self._basis_partitioning_cache.get(tiling)
         if cache is None:
             self._basis_partitioning_cache.set(tiling, {})

@@ -1,19 +1,13 @@
 from collections import defaultdict
 from grids import Tiling, Block, PositiveClass, Cell
-from atrap.tools import basis_partitioning
 from itertools import chain
-# from copy import copy
+import inspect
 #
 from .inferral_class import InferralStrategy
-#
-# def row_and_column_inequalities_of_tiling(tiling, basis):
-#
-#
-#     total_points = tiling.total_points
-#     total_points += sum(1 for _, block in tiling.non_points if isinstance(block, PositiveClass))
 
 
-def row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=basis_partitioning):
+
+def row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=None):
     # This will create the containing/avoiding less than cells of the permutation by row
     smaller_than_dicts_by_row = (defaultdict(dict), defaultdict(dict))
     smaller_than_dicts_by_col = (defaultdict(dict), defaultdict(dict))
@@ -27,7 +21,7 @@ def row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=basi
 
     for length in range(verification_length + 1):
         # Get the partitioning into containing/avoiding perms
-        partitions = basis_partitioning(tiling, length, basis)
+        partitions = basis_partitioning(tiling, length, basis, inspect.stack()[0][3])
 
         # For containing and avoiding
         for partition, cells_smaller_than_by_row, cells_smaller_than_by_col in zip(partitions, smaller_than_dicts_by_row, smaller_than_dicts_by_col):
@@ -258,7 +252,7 @@ def separations( inequalities, unprocessed_cells=None, current_cell=None, curren
 
     return potential_states
 
-def row_and_column_separation(tiling, basis, basis_partitioning=basis_partitioning):
+def row_and_column_separation(tiling, basis, basis_partitioning=None):
     # print("----------------NOW CONSIDERING-------------")
     # print(tiling)
     # print(dict(tiling))

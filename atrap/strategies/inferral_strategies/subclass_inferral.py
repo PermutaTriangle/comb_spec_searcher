@@ -3,7 +3,6 @@ from permuta import Perm, PermSet
 from grids import Tiling, Block, PositiveClass
 from .inferral_class import InferralStrategy
 from collections import defaultdict
-from atrap.tools import basis_partitioning
 from .jays_subclass_inferral import jays_subclass_inferral
 
 def subclass_inferral(tiling, basis, **kwargs):
@@ -80,7 +79,7 @@ def subclass_inferral(tiling, basis, **kwargs):
 
 
 
-def old_subclass_inferral(tiling, basis, basis_partitioning=basis_partitioning):
+def old_subclass_inferral(tiling, basis, basis_partitioning=None):
     """Return a new tiling where all non-points have been inferred."""
 
     # The containing/avoiding perms_of_cells dictionary

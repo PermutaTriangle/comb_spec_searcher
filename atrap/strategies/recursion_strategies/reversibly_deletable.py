@@ -1,9 +1,9 @@
 from grids import Tiling, Block
-from atrap.tools import basis_partitioning, cells_of_occurrences_by_perms
+from atrap.tools import cells_of_occurrences_by_perms
 
 from .recursive_class import RecursiveStrategy
 
-def reversibly_deletable_points(tiling, basis, current_cell=None, occurrences_by_perm=None, path=None, basis_partitioning=basis_partitioning, **kwargs):
+def reversibly_deletable_points(tiling, basis, current_cell=None, occurrences_by_perm=None, path=None, basis_partitioning=None, **kwargs):
     if current_cell is None:
         '''Take the smallest cell in the tiling'''
         current_cell = (-1,-1)
@@ -41,7 +41,7 @@ def reversibly_deletable_points(tiling, basis, current_cell=None, occurrences_by
                 yield recursive_strategy
             path.pop()
 
-def reversibly_deletable_cells(tiling, basis, current_cell=None, occurrences_by_perm=None, path=None, basis_partitioning=basis_partitioning, **kwargs):
+def reversibly_deletable_cells(tiling, basis, current_cell=None, occurrences_by_perm=None, path=None, basis_partitioning=None, **kwargs):
 
     if current_cell is None:
         '''Take the smallest cell in the tiling'''
