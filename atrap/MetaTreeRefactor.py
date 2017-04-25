@@ -171,6 +171,8 @@ class AndNode(object):
         self.children = []
         self.parents = []
         self.verification = set()
+        self.recursion = False
+        self.back_maps = []
 
     def is_verified(self):
         return frozenset() in self.verification
@@ -350,6 +352,8 @@ class MetaTree(object):
                 '''We create the AND node for the strategy and connect it its parent.'''
                 recursive_and_node = AndNode(formal_step)
                 recursive_and_node.parents.append(or_node)
+                recursive_and_node.recursion = True
+                recursive_and_node.back_maps = recursive_strategy.back_maps
                 or_node.children.append(recursive_and_node)
 
                 '''Collect the verified AND nodes as they will need to propagate this information'''
@@ -837,7 +841,7 @@ class MetaTree(object):
             for other_or_node in in_tiling_or_nodes:
                 if other_or_node.sibling_node == or_node.sibling_node:
                     out_tiling = other_or_node.tiling
-            return ProofTreeNode("recurse", in_tiling, out_tiling, or_node.sibling_node.get_relation(in_tiling, out_tiling), label, recurse=True )
+            return ProofTreeNode("recurse", in_tiling, out_tiling, or_node.sibling_node.get_relation(in_tiling, out_tiling), label, recurse=[] )
 
         '''We add the tilings from the SiblingNode. These can now be used for recursions.'''
         sibling_tilings = [ sibling_or_node.tiling for sibling_or_node in or_node.sibling_node ]
@@ -850,6 +854,7 @@ class MetaTree(object):
         in_tiling_or_nodes.add(or_node)
 
         formal_step = None
+        recurse = []
 
         for child_and_node in or_node.sibling_node.get_children_and_nodes():
             '''If the child AND node is verified'''
@@ -861,6 +866,8 @@ class MetaTree(object):
                 '''The tiling we left the ProofTreeNode by is the tiling on the parent of the AND node.'''
                 out_tiling = child_and_node.parents[0].tiling
                 '''The children are the ProofTreeNodes using the tilings of the strategy.'''
+                if child_and_node.recursion:
+                    recurse = child_and_node.back_maps
                 children = [ self._find_proof_tree_below_or_node(child_or_node, seen_tilings, in_tiling_or_nodes ) for child_or_node in child_and_node.children ]
                 '''We only want one tree'''
                 break
@@ -869,6 +876,6 @@ class MetaTree(object):
         assert formal_step is not None
         label = min( self._get_sibling_labels(or_node.sibling_node, force=True) )
         if children:
-            return ProofTreeNode(formal_step, in_tiling, out_tiling, or_node.sibling_node.get_relation(in_tiling, out_tiling), label, children=children)
+            return ProofTreeNode(formal_step, in_tiling, out_tiling, or_node.sibling_node.get_relation(in_tiling, out_tiling), label, children=children, recurse=recurse)
 
-        return ProofTreeNode(formal_step, in_tiling, out_tiling, or_node.sibling_node.get_relation(in_tiling, out_tiling), label)
+        return ProofTreeNode(formal_step, in_tiling, out_tiling, or_node.sibling_node.get_relation(in_tiling, out_tiling), label, recurse=recurse)
