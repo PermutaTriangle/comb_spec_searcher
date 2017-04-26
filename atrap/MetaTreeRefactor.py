@@ -22,6 +22,8 @@ from permuta import PermSet
 
 from itertools import product
 
+import sys
+
 
 class SiblingNode(set):
     '''A set of OR nodes with equivalent tilings.
@@ -264,20 +266,20 @@ class MetaTree(object):
     def has_proof_tree(self):
         return frozenset() in self.root_and_node.verification
 
-    def do_level(self, requested_depth=None):
+    def do_level(self, requested_depth=None, file=sys.stdout):
         '''This searches to depth first to the requested depth.
         It stops when a proof tree is found, and returns it, if found.'''
         if requested_depth is None:
-            self.do_level(self.depth_searched + 1)
+            self.do_level(self.depth_searched + 1, file=file)
         else:
             if requested_depth <= self.depth_searched:
-                print("Depth already searched")
+                print("Depth already searched", file=file)
                 return
-            print("Doing depth", requested_depth)
+            print("Doing depth", requested_depth, file=file)
             '''The work to go deeper is hidden in the helper function.
             This returns True when a proof tree is found.'''
             if self._sibling_helper(self.root_sibling_node, requested_depth):
-                print("A proof tree has been found.")
+                print("A proof tree has been found.", file=file)
                 proof_tree = self.find_proof_tree()
                 # proof_tree.pretty_print()
                 return proof_tree
@@ -351,12 +353,12 @@ class MetaTree(object):
                 formal_step = recursive_strategy.formal_step
                 tilings = recursive_strategy.tilings
 
-                print("============")
-                print(or_node.tiling)
-                print("----->")
-                for t in tilings:
-                    print(t)
-                print("============")
+                # print("============")
+                # print(or_node.tiling)
+                # print("----->")
+                # for t in tilings:
+                #     print(t)
+                # print("============")
 
                 '''We create the AND node for the strategy and connect it its parent.'''
                 recursive_and_node = AndNode(formal_step)
@@ -536,9 +538,9 @@ class MetaTree(object):
 
         if function_name is not None:
             if function_name in self._partitioning_calls:
-                self._partitioning_calls[function_name] += 1
+                self._partitioning_calls[function_name][0] += 1
             else:
-                self._partitioning_calls[function_name] = 0
+                self._partitioning_calls[function_name] = [1,0]
 
 
         cache = self._basis_partitioning_cache.get(tiling)
@@ -552,6 +554,8 @@ class MetaTree(object):
         else:
             self.partitioning_cache_hits += 1
         if length not in cache:
+            if function_name is not None:
+                self._partitioning_calls[function_name][1] += 1
             cache[length] = tiling.basis_partitioning(length, basis)
         return cache[length]
 
