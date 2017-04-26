@@ -45,11 +45,10 @@ def standardize(p_list):
 import itertools
 from grids import *
 from permuta import *
-from atrap.tools import basis_partitioning
 from atrap.tools import cells_of_occurrences
 from .recursive_class import RecursiveStrategy
 
-def splittings(tiling, basis, basis_partitioning=basis_partitioning):
+def splittings(tiling, basis, basis_partitioning=None):
 
     all_valid_splittings = find_good_splittings(tiling, basis, basis_partitioning=basis_partitioning)
 
@@ -57,12 +56,12 @@ def splittings(tiling, basis, basis_partitioning=basis_partitioning):
     for good_split in all_valid_splittings:
         # print('good split:',good_split)
         strategy = [Tiling({x:tiling[x] for x in part}) for part in good_split]
-        yield RecursiveStrategy( "A splitting of the tiling", strategy )
+        yield RecursiveStrategy( "A splitting of the tiling", strategy , [tiling._back_map for tiling in strategy])
 
 
     # TODO: maybe here I need to filter out maximal things????
 
-def find_good_splittings(tiling, basis, basis_partitioning=basis_partitioning, built=[]):
+def find_good_splittings(tiling, basis, basis_partitioning=None, built=[]):
 
     tiling_keys = dict(tiling).keys()
     occupied_cells = tuple(tiling_keys)
@@ -114,7 +113,7 @@ def find_good_splittings(tiling, basis, basis_partitioning=basis_partitioning, b
 
         for length_to_check in range(min_length, verification_length+1):
 
-            containing_perms, _ = basis_partitioning(tiling, length_to_check, basis)
+            containing_perms, _ = basis_partitioning(tiling, length_to_check, basis, "splittings")
 
             if not good_partition:
                 break

@@ -6,6 +6,9 @@ from grids import Tiling
 from .equivalence_class import EquivalenceStrategy
 
 
+"""
+    Turns C+ into [point | C], etc
+"""
 def point_separation(tiling, **kwargs):
 
     for cell, block in tiling.non_points:
