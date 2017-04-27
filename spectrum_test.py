@@ -71,7 +71,7 @@ while tasks_left > 0:
     time.sleep(tick_wait)
     ticks += 1
 
-    if ticks % (status_print_frequency_in_seconds*10) == 0:
+    if ticks % (status_print_frequency_in_seconds * int(1/tick_wait)) == 0:
         print("")
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         print("==============")
