@@ -109,7 +109,8 @@ if mtree.has_proof_tree():
     proof_tree.pretty_print(file=f)
     json = proof_tree.to_json(indent="  ")
     print(json,file=f)
-    assert ProofTree.from_json(json).to_json(indent="  ") == json
+    if not ProofTree.from_json(json).to_json(indent="  ") == json:
+        print '**ASSERT FAILURE** assert ProofTree.from_json(json).to_json(indent="  ") == json'
 
 
 end = time()
