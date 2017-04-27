@@ -84,7 +84,7 @@ while tasks_left > 0:
         to_start = tasks[0]
         tasks = tasks[1:]
 
-        active_processes.append(subprocess.Popen(["python3", hunt_file_location]+to_start.split("_"), preexec_fn=lambda : os.nice(20)))
+        active_processes.append(subprocess.Popen(["python3", hunt_file_location, "batch"]+to_start.split("_"), preexec_fn=lambda : os.nice(20)))
         tasks_running.append([to_start,time.time()])
         print("Starting:",to_start)
 

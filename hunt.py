@@ -1,4 +1,5 @@
 import sys
+import os
 
 from atrap import MetaTree
 from permuta import Perm,Av
@@ -7,20 +8,16 @@ from time import time
 from atrap.strategies import *
 from atrap.ProofTree import ProofTree
 
-## SET THIS TO TRUE TO OUTPUT TO A FILE
-OUTPUT_TO_FILE = False
-
-
-
-
-
 standard_strategies = [ [all_cell_insertions], [all_point_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
 standard_strategies_w_all_row_cols = [ [all_cell_insertions, all_row_placements, all_column_placements], [all_equivalent_row_placements, all_equivalent_column_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
 COMP_REC_standard_strategies_w_all_row_cols = [ [all_cell_insertions, all_row_placements, all_column_placements], [all_equivalent_row_placements, all_equivalent_column_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
 
 
+## SET THIS TO TRUE TO OUTPUT TO A FILE
+OUTPUT_TO_FILE = True # automatically set to True if called from spectrum_test or run_batch
 STRATS_TO_USE = standard_strategies_w_all_row_cols
 
+spectrum_mode = False
 
 
 
@@ -34,12 +31,26 @@ def perms_to_str(perms):
 if len(sys.argv) == 1:
     print("form: hunt.py p1 p2 p3 ... -> Av(p1, p2, p3, ...)")
 
-perms = sys.argv[1:]
+if sys.argv[1] == 'spectrum':
+    OUTPUT_TO_FILE = True
+    spectrum_mode = True
+    perms = sys.argv[3:]
+elif sys.argv[1] == 'batch':
+    OUTPUT_TO_FILE = True
+    batch_mode = True
+    perms = sys.argv[2:]
+else:
+    perms = sys.argv[1:]
+
 task = "_".join(perm for perm in perms)
 patts = [ Perm([ int(c)-1 for c in p ]) for p in task.split('_') ]
 
 # print(sys.argv)
-f = (open('results/hunt_'+task+'_results.txt', 'w') if OUTPUT_TO_FILE else sys.stdout)
+if spectrum_mode:
+    spectrum_results = open('spectrum_results/spectrum_'+task+'_'+sys.argv[2]+'_results.txt', 'w')
+    f = open(os.devnull, 'w')
+else:
+    f = (open('results/hunt_'+task+'_results.txt', 'w') if OUTPUT_TO_FILE else sys.stdout)
 
 mtree = MetaTree( patts, *STRATS_TO_USE )
 
@@ -64,6 +75,7 @@ def count_sibling_nodes(mt):
 #mtree.do_level()
 start = time()
 
+
 print("Hunting for proof tree for the class: "+str(Av(patts)), file=f)
 
 f.flush()
@@ -82,10 +94,8 @@ while not mtree.has_proof_tree():
     for function_name, calls in mtree._partitioning_calls.items():
         print("The function {} called the partitioning cache *{}* times, ({} originating)".format(function_name, calls[0], calls[1]),file=f)
     print("There were {} cache misses".format(mtree._cache_misses),file=f)
-    # if mtree.depth_searched == 10:
-    #     break
-
-
+    f.flush()
+    
 
 if mtree.has_proof_tree():
     proof_tree = mtree.find_proof_tree()
@@ -98,6 +108,11 @@ if mtree.has_proof_tree():
 end = time()
 
 print("I took", end - start, "seconds",file=f)
+
+if spectrum_mode:
+    print(end-start,file=spectrum_results)
+    print(json, file=spectrum_results)
+    spectrum_results.close()
 
 if f != sys.stdout:
     f.close()
