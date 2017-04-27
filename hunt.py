@@ -49,6 +49,14 @@ patts = [ Perm([ int(c)-1 for c in p ]) for p in task.split('_') ]
 if spectrum_mode:
     spectrum_results = open('spectrum_results/spectrum_'+task+'_'+sys.argv[2]+'_results.txt', 'w')
     f = open(os.devnull, 'w')
+
+    strats_file = open('spectrum_results/stratsused.txt', 'w')
+    for strat_type in STRATS_TO_USE:
+        print(locals().iteritems)
+
+        strats_file.write(", ".join([fff.__name__ for fff in strat_type]))
+        strats_file.write("\n")
+    strats_file.close()
 else:
     f = (open('results/hunt_'+task+'_results.txt', 'w') if OUTPUT_TO_FILE else sys.stdout)
 

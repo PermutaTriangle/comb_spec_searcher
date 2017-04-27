@@ -118,10 +118,22 @@ for result in results:
         proof_tree_partition.append([])
     proof_tree_partition[tiling_set_lookup[tiling_set]].append(result[0])
 
+strats_file = open('spectrum_results/stratsused.txt', 'r')
+strats_used = strats_file.readlines()
+strats_file.close()
+
 # Now collect results and print to file
 summary_file = open(summary_output_file, "w")
 summary_file.write("Task: "+testing_task+"\n")
 summary_file.write("Repetitions: "+str(num_repetions)+"\n\n")
+summary_file.write("Strategies Used:\n")
+summary_file.write("\tBatch stragies: "+strats_used[0])
+summary_file.write("\tEquivalence stragies: "+strats_used[1])
+summary_file.write("\tInferral stragies: "+strats_used[2])
+summary_file.write("\tRecursive stragies: "+strats_used[3])
+summary_file.write("\tVerification stragies: "+strats_used[4])
+summary_file.write("\n")
+
 summary_file.write("Number of distinct proof trees: "+str(len(proof_tree_partition))+"\n\n")
 summary_file.write("Fastest Proof Tree: \t"+nice_time_format(min([result[0] for result in results]))+"\n")
 summary_file.write("Slowest Proof Tree: \t"+nice_time_format(max([result[0] for result in results]))+"\n")
@@ -131,6 +143,7 @@ summary_file.write("\n\n")
 summary_file.write("=========================="+"\n")
 summary_file.write("=== PROOF TREE SUMMARY ==="+"\n")
 summary_file.write("==========================\n"+"\n")
+summary_file.flush()
 
 for (index, tree_part) in enumerate(sorted(proof_tree_partition,key=len, reverse=True)):
     summary_file.write("Tree #"+str(index+1)+":"+"\n")
@@ -140,6 +153,7 @@ for (index, tree_part) in enumerate(sorted(proof_tree_partition,key=len, reverse
     summary_file.write("\t\tmean occurrence: \t\t"+nice_time_format(sum(tree_part)/len(tree_part))+"\n")
     summary_file.write("\t\tmedian occurrence: \t\t"+nice_time_format( list_median(tree_part) )+"\n")
     summary_file.write("\t\ttree written to: \t\t"+'spectrum_results/spectrum_'+testing_task+'_results_tree_number_'+str(index+1)+'.txt'+"\n\n")
+    summary_file.flush()
 
     tree_output_file = open('spectrum_results/spectrum_'+testing_task+'_results_tree_number_'+str(index+1)+'.txt', "w")
     tree_output_file.write(tiling_set_json_lookup[([k for k in tiling_set_lookup.keys() if tiling_set_lookup[k]==proof_tree_partition.index(tree_part)])[0]])
