@@ -25,6 +25,7 @@ def list_median(L):
 testing_task = '123'
 num_repetions = 10
 tick_wait = 0.01
+remove_temp_files = True
 
 hunt_file_location = "./hunt.py"
 status_print_frequency_in_seconds = 30
@@ -145,4 +146,8 @@ for (index, tree_part) in enumerate(sorted(proof_tree_partition,key=len, reverse
     tree_output_file.close()
 
 summary_file.close()
+
+if remove_temp_files:
+    for temp_file in file_names:
+        os.remove(temp_file)
 
