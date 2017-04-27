@@ -110,3 +110,14 @@ class ProofTree(JsonAble):
                                prefix[:-6] + (tp_pipe if tail else tp_empty) + tp_L,
                                False,
                                file)
+
+    def set_of_tilings(self, root=None, to_return=set()):
+        if root is None:
+            root = self.root
+        next_return = set(to_return)
+        next_return.add(root.in_tiling)
+        next_return.add(root.out_tiling)
+        for subtree_number in range(len(root.children)):
+            next_return = next_return.union(self.set_of_tilings(root.children[subtree_number],
+                               next_return))
+        return next_return
