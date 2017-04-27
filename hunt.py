@@ -18,6 +18,7 @@ OUTPUT_TO_FILE = True # automatically set to True if called from spectrum_test o
 STRATS_TO_USE = standard_strategies_w_all_row_cols
 
 spectrum_mode = False
+batch_mode = False
 
 
 
@@ -52,8 +53,6 @@ if spectrum_mode:
 
     strats_file = open('spectrum_results/stratsused.txt', 'w')
     for strat_type in STRATS_TO_USE:
-        print(locals().iteritems)
-
         strats_file.write(", ".join([fff.__name__ for fff in strat_type]))
         strats_file.write("\n")
     strats_file.close()
