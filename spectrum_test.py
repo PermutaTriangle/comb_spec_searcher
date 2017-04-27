@@ -121,6 +121,7 @@ for result in results:
 strats_file = open('spectrum_results/stratsused.txt', 'r')
 strats_used = strats_file.readlines()
 strats_file.close()
+os.remove('spectrum_results/stratsused.txt')
 
 # Now collect results and print to file
 summary_file = open(summary_output_file, "w")
