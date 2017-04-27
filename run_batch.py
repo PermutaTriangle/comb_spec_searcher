@@ -63,6 +63,7 @@ tasks = ['123', '132', '123_2413', '132_1234', '2341_4312',
 
 hunt_file_location = "./hunt.py"
 status_print_frequency_in_seconds = 30
+tick_wait = 0.01
 
 num_parallel = 2
 show_completed = True
@@ -101,7 +102,7 @@ while tasks_left > 0:
         else:
             i += 1
 
-    time.sleep(0.1)
+    time.sleep(tick_wait)
     ticks += 1
 
     if ticks % status_print_frequency_in_seconds*10 == 0:
