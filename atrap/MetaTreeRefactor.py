@@ -23,7 +23,10 @@ from permuta import PermSet
 from itertools import product
 
 import sys
+import traceback
 
+
+SPLITTINGS_HACK = False
 
 class SiblingNode(set):
     '''A set of OR nodes with equivalent tilings.
@@ -353,12 +356,36 @@ class MetaTree(object):
                 formal_step = recursive_strategy.formal_step
                 tilings = recursive_strategy.tilings
 
-                # print("============")
-                # print(or_node.tiling)
-                # print("----->")
-                # for t in tilings:
-                #     print(t)
-                # print("============")
+
+                # Here we should check that there is at most one verified tiling among the group!
+                # How do I do that??
+
+                if SPLITTINGS_HACK:
+                    # This is redoing a lot of verification work that should be cached
+                    # And this should only happen when the strategy is "splittings"
+                    number_of_verified_results = 0
+
+                    for tiling in tilings:
+                        child_or_node = self.tiling_cache.get(tiling)
+                        if child_or_node is None:
+                            child_or_node = OrNode(tiling)
+                        if self._verify(child_or_node):
+                            number_of_verified_results += 1
+                        if number_of_verified_results > 1:
+                            break
+
+                    if number_of_verified_results > 1:
+                        # print("============")
+                        # print(or_node.tiling)
+                        # print("----->")
+                        # for t in tilings:
+                        #     print(t)
+                        # print("============")
+                        # print("\tNV:",number_of_verified_results)
+                        pass
+
+                    if number_of_verified_results > 1:
+                        continue
 
                 '''We create the AND node for the strategy and connect it its parent.'''
                 recursive_and_node = AndNode(formal_step)
@@ -407,6 +434,9 @@ class MetaTree(object):
                     if not child_or_node.sibling_node.natural:
                         if tiling in self._basis_partitioning_cache:
                             self._basis_partitioning_cache.pop(tiling)
+
+
+                
 
                 for sibling_node in sibling_nodes_to_be_propagated:
                     if sibling_node.is_verified():
@@ -556,6 +586,10 @@ class MetaTree(object):
         if length not in cache:
             if function_name is not None:
                 self._partitioning_calls[function_name][1] += 1
+            else:
+                print("SOMEONE IS CALLING NONE!")
+                for line in traceback.format_stack():
+                    print(line.strip())
             cache[length] = tiling.basis_partitioning(length, basis)
         return cache[length]
 
