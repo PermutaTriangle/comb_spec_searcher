@@ -2,7 +2,7 @@ import os
 import subprocess
 import time
 
-tasks = ['123', '132', '123_2413', '132_1234', '2341_4312',
+tasks = ['2341_4312',
     '2341_2413',
     '2314_2341',
     '2341_3421',
@@ -62,7 +62,7 @@ tasks = ['123', '132', '123_2413', '132_1234', '2341_4312',
 # tasks = ['1342', '2413', '1234', '1243', '1432', '2143', '1324']
 
 hunt_file_location = "./hunt.py"
-status_print_frequency_in_seconds = 30
+status_print_frequency_in_seconds = 3600
 tick_wait = 0.01
 
 num_parallel = 2

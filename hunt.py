@@ -11,7 +11,7 @@ from atrap.ProofTree import ProofTree
 standard_strategies = [ [all_cell_insertions], [all_point_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
 standard_strategies_w_all_row_cols = [ [all_cell_insertions, all_row_placements, all_column_placements], [all_equivalent_row_placements, all_equivalent_column_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
 COMP_REC_standard_strategies_w_all_row_cols = [ [all_cell_insertions, all_row_placements, all_column_placements], [all_equivalent_row_placements, all_equivalent_column_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
-
+standard_strategies_w_min_row_left_col_splittings = [ [all_cell_insertions, all_minimum_row_placements, all_leftmost_column_placements], [all_equivalent_leftmost_column_placements, all_equivalent_minimum_row_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
 
 ## SET THIS TO TRUE TO OUTPUT TO A FILE
 OUTPUT_TO_FILE = True # automatically set to True if called from spectrum_test or run_batch
@@ -110,7 +110,7 @@ if mtree.has_proof_tree():
     json = proof_tree.to_json(indent="  ")
     print(json,file=f)
     if not ProofTree.from_json(json).to_json(indent="  ") == json:
-        print '**ASSERT FAILURE** assert ProofTree.from_json(json).to_json(indent="  ") == json'
+        print('**ASSERT FAILURE** assert ProofTree.from_json(json).to_json(indent="  ") == json')
 
 
 end = time()
