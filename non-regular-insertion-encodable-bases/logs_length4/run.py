@@ -31,21 +31,11 @@ def perm_to_str(perm):
 def perms_to_str(perms):
     return "_".join(perm_to_str(perm) for perm in perms)
 
-length_to_process = '11'
+length_to_process = '4'
 
-# # 1
-# strat_pack = standard_strategies_w_left_col
-# strat_pack_desc = 'standard_strategies_w_left_col'
-# max_depth = 8
-
-# # 2
-# strat_pack = standard_strategies_w_min_row
-# strat_pack_desc = 'standard_strategies_w_min_row'
-# max_depth = 8
-
-# 3
-strat_pack = standard_strategies_w_all_cols
-strat_pack_desc = 'standard_strategies_w_all_cols'
+# 1
+strat_pack = standard_strategies_w_left_col
+strat_pack_desc = 'standard_strategies_w_left_col'
 max_depth = 8
 
 first_failure = False
