@@ -10,7 +10,7 @@ all_strategies = [ [all_cell_insertions, all_row_placements, all_column_placemen
 
 mimic_regular_insertion_encoding = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral], [reversibly_deletable_points], [one_by_one_verification, is_empty]]
 
-standard_strategies = [ [all_cell_insertions], [all_point_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
+standard_strategies = [ [all_cell_insertions], [point_separation, all_point_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
 # standard_strategies = [ [all_cell_insertions], [all_point_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
 standard_strategies_w_all_row_cols = [ [all_cell_insertions, all_row_placements, all_column_placements], [all_equivalent_row_placements, all_equivalent_column_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
 
@@ -60,11 +60,11 @@ basic = [ [all_cell_insertions], [all_maximum_point_placements], [row_and_column
 
 # task = '021'
 
-# task = '4213_3142'
+# task = '123'
 
 # task = '0'
 
-# task = '0132_0213_0231_3120'
+task = '0132_0213_0231_3120'
 
 patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 

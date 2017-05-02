@@ -1,35 +1,4 @@
 """
-    
-    ==================
-
-    We need a "recursive cleaner". A recursive strategy may return a boatload of redudant splittings.
-    For example, suppose the tiling T splits into five parts A / B / C / D / E, where B / C / D / E are
-    all subset verified. Clearly we don't want to consider the many different options formed by combining 
-    B / C / D / E in various ways, such as:
-      A / B / C / D / E
-      A / BC / DE
-      A / BCD / E
-      A / BCDE
-      etc
-
-    But, we also don't necessarily want to just combine them all together! For example, suppose T splits
-    into three parts A / B / C, where B and C are subset verified. It's possible that A is not an ancestor
-    but A+B together will be. In which case, the splitting A / B / C does us no good, but AB / C does!
-
-    I think the right place for this analysis is not within the Rescursive Strategy, but back in the Metatree.
-    So, this will return the "maximally split" splittings, and leave it to the metatree to decide what to
-    do with them.
-
-    ==================
-
-    Currently, points are NOT shared between components of a splitting
-
-    ==================
-
-    TOTHINK: Do we need to check every length UP TO the verification length or can we just check the
-       verification length itself? If we don't NEED TO, then is it maybe advantageous anyway because
-       we can exit early?
-
     ==================       
 
     TODO: Need to speedtest my standardize against the permuta version

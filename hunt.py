@@ -1,5 +1,6 @@
 import sys
 import os
+import random
 
 from atrap import MetaTree
 from permuta import Perm,Av
@@ -13,9 +14,11 @@ standard_strategies_w_all_row_cols = [ [all_cell_insertions, all_row_placements,
 COMP_REC_standard_strategies_w_all_row_cols = [ [all_cell_insertions, all_row_placements, all_column_placements], [all_equivalent_row_placements, all_equivalent_column_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
 standard_strategies_w_min_row_left_col_splittings = [ [all_cell_insertions, all_minimum_row_placements, all_leftmost_column_placements], [all_equivalent_leftmost_column_placements, all_equivalent_minimum_row_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
 
-## SET THIS TO TRUE TO OUTPUT TO A FILE
-OUTPUT_TO_FILE = True # automatically set to True if called from spectrum_test or run_batch
+### SET THESE VARIABLES ###
+OUTPUT_TO_FILE = False # automatically set to True if called from spectrum_test or run_batch
 STRATS_TO_USE = standard_strategies_w_all_row_cols
+###########################
+
 
 spectrum_mode = False
 batch_mode = False
@@ -57,6 +60,7 @@ if spectrum_mode:
         strats_file.write("\n")
     strats_file.close()
 else:
+    # f = (open('results/hunt_'+task+'_'+str(random.randint(0,10**4))+'_results.txt', 'w') if OUTPUT_TO_FILE else sys.stdout)
     f = (open('results/hunt_'+task+'_results.txt', 'w') if OUTPUT_TO_FILE else sys.stdout)
 
 mtree = MetaTree( patts, *STRATS_TO_USE )
