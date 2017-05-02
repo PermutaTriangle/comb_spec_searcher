@@ -32,6 +32,18 @@ def perms_to_str(perms):
     return "_".join(perm_to_str(perm) for perm in perms)
 
 length_to_process = '11'
+
+# # 1
+# strat_pack = standard_strategies_w_left_col
+# strat_pack_desc = 'standard_strategies_w_left_col'
+# max_depth = 8
+
+# # 2
+# strat_pack = standard_strategies_w_min_row
+# strat_pack_desc = 'standard_strategies_w_min_row'
+# max_depth = 8
+
+# 3
 strat_pack = standard_strategies_w_all_cols
 strat_pack_desc = 'standard_strategies_w_all_cols'
 max_depth = 8
@@ -46,20 +58,11 @@ with open('length'+length_to_process+'_failed') as g:
     content = [x.strip() for x in content]
 
     for i in range(len(content)):
-        print(i)
-        print(content[len(content)-1-i])
-        print(content[len(content)-1-i].split())
         if content[len(content)-1-i].split() and content[len(content)-1-i].split()[0] == 'Maximum':
-            print('Breaking')
-            print(i)
             i = i-2
-            print(content[len(content)-1-i])
-
             break
 
-    print(len(content))
     content = content[len(content)-1-i::]
-    print(content)
 
     for task in content:
 
