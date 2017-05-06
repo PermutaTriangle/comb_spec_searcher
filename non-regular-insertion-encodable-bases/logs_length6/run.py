@@ -48,9 +48,14 @@ length_to_process = '6'
 # strat_pack_desc = 'standard_strategies_w_all_cols'
 # max_depth = 8
 
-# 4
-strat_pack = standard_strategies_w_all_rows
-strat_pack_desc = 'standard_strategies_w_all_rows'
+# # 4
+# strat_pack = standard_strategies_w_all_rows
+# strat_pack_desc = 'standard_strategies_w_all_rows'
+# max_depth = 8
+
+# 5
+strat_pack = standard_strategies_w_all_rows_cols
+strat_pack_desc = 'standard_strategies_w_all_rows_cols'
 max_depth = 8
 
 first_failure = False
