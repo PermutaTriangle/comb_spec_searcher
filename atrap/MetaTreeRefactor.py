@@ -14,6 +14,7 @@ from atrap.strategies import RecursiveStrategy
 from atrap.strategies import VerificationStrategy
 from .LRUCache import LRUCache
 
+import time
 
 from grids import Tiling
 
@@ -266,11 +267,11 @@ class MetaTree(object):
     def has_proof_tree(self):
         return frozenset() in self.root_and_node.verification
 
-    def do_level(self, requested_depth=None, file=sys.stdout):
+    def do_level(self, requested_depth=None, file=sys.stdout, max_time=None):
         '''This searches to depth first to the requested depth.
         It stops when a proof tree is found, and returns it, if found.'''
         if requested_depth is None:
-            self.do_level(self.depth_searched + 1, file=file)
+            self.do_level(self.depth_searched + 1, file=file, max_time=max_time)
         else:
             if requested_depth <= self.depth_searched:
                 print("Depth already searched", file=file)
@@ -278,19 +279,23 @@ class MetaTree(object):
             print("Doing depth", requested_depth, file=file)
             '''The work to go deeper is hidden in the helper function.
             This returns True when a proof tree is found.'''
-            if self._sibling_helper(self.root_sibling_node, requested_depth):
+            if self._sibling_helper(self.root_sibling_node, requested_depth, max_time=max_time):
                 print("A proof tree has been found.", file=file)
                 proof_tree = self.find_proof_tree()
                 # proof_tree.pretty_print()
                 return proof_tree
             self.depth_searched = requested_depth
 
-    def _sibling_helper(self, sibling_node, requested_depth):
+    def _sibling_helper(self, sibling_node, requested_depth, max_time=None, start_time=None):
         '''This expands from the given SiblingNode to the requested depth.
         SiblingNodes to search on are added to the drill set.
         The OR nodes found that need expanding are added to the expand set.'''
         drill_set = set()
         expand_set = set()
+
+        if max_time is not None:
+            if start_time is None:
+                start_time = time.time()
 
         if requested_depth == 0:
             return
@@ -321,6 +326,12 @@ class MetaTree(object):
             if self.has_proof_tree():
                 return True
 
+            if max_time is not None:
+                if time.time() - start_time > max_time:
+                    print("rec_died")
+                    print(time.time() - start_time)
+                    return False
+
         for sibling_or_node in expand_set:
             '''We then try all batch strategies and return the set of
             child SiblingNode created'''
@@ -333,10 +344,21 @@ class MetaTree(object):
             if self.has_proof_tree():
                 return True
 
+            if max_time is not None:
+                if time.time() - start_time > max_time:
+                    print("batch_died")
+                    print(time.time() - start_time)
+                    return False
+
         for child_sibling_node in drill_set:
             '''We then continue to search down the tree, lowering the requested depth.'''
-            if self._sibling_helper(child_sibling_node, requested_depth - 1):
-                return True
+            if max_time is not None:
+                if self._sibling_helper(child_sibling_node, requested_depth - 1, max_time=max_time, start_time=start_time):
+                    return True
+                if time.time() - start_time > max_time:
+                    return False
+            else:
+                self._sibling_helper(child_sibling_node, requested_depth - 1)
 
     def _recursively_expand(self, or_node):
         '''This function will expand a given OR node, and return the

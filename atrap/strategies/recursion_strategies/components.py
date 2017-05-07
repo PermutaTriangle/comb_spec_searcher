@@ -6,7 +6,7 @@ from atrap.tools import cells_of_occurrences
 
 from .recursive_class import RecursiveStrategy
 
-def components(tiling, basis, basis_partitioning=None):
+def components(tiling, basis, basis_partitioning=None, **kwargs):
 
     cell_to_int = {}
 

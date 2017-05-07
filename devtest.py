@@ -100,7 +100,7 @@ start = time()
 
 while not mtree.has_proof_tree():
     print("===============================")
-    mtree.do_level()
+    mtree.do_level(max_time=10)
     print("We had {} inferral cache hits and {} partitioning cache hits.".format(mtree.inferral_cache_hits, mtree.partitioning_cache_hits))
     print("The partitioning cache has {} tilings in it right now.".format( len(mtree._basis_partitioning_cache) ) )
     print("The inferral cache has {} tilings in it right now.".format( len(mtree._inferral_cache) ) )
@@ -112,8 +112,8 @@ while not mtree.has_proof_tree():
     for function_name, calls in mtree._partitioning_calls.items():
         print("The function {} called the partitioning cache *{}* times, ({} originating)".format(function_name, calls[0], calls[1]))
     print("There were {} cache misses".format(mtree._cache_misses))
-    # if mtree.depth_searched == 10:
-    #     break
+    if mtree.depth_searched == 10:
+        break
 
 
 
