@@ -214,6 +214,7 @@ class MetaTree(object):
         self._partitioning_calls = {}
         self._cached_tilings = set()
         self._cache_misses = 0
+        self.timed_out = False
 
         '''Initialise the proof strategies to be used.'''
         if batch_strategies is not None:
@@ -270,6 +271,7 @@ class MetaTree(object):
     def do_level(self, requested_depth=None, file=sys.stdout, max_time=None):
         '''This searches to depth first to the requested depth.
         It stops when a proof tree is found, and returns it, if found.'''
+        start_time = time.time()
         if requested_depth is None:
             self.do_level(self.depth_searched + 1, file=file, max_time=max_time)
         else:
@@ -284,6 +286,9 @@ class MetaTree(object):
                 proof_tree = self.find_proof_tree()
                 # proof_tree.pretty_print()
                 return proof_tree
+            if max_time is not None:
+                if time.time() - start_time > max_time:
+                    self.timed_out = True
             self.depth_searched = requested_depth
 
     def _sibling_helper(self, sibling_node, requested_depth, max_time=None, start_time=None):
@@ -328,8 +333,6 @@ class MetaTree(object):
 
             if max_time is not None:
                 if time.time() - start_time > max_time:
-                    print("rec_died")
-                    print(time.time() - start_time)
                     return False
 
         for sibling_or_node in expand_set:
@@ -346,8 +349,6 @@ class MetaTree(object):
 
             if max_time is not None:
                 if time.time() - start_time > max_time:
-                    print("batch_died")
-                    print(time.time() - start_time)
                     return False
 
         for child_sibling_node in drill_set:
