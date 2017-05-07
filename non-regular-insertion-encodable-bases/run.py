@@ -6,6 +6,9 @@ from atrap.ProofTree import ProofTree
 from time import time
 from time import gmtime, strftime
 
+import time
+import timeout_decorator
+
 all_strategies = [ [all_cell_insertions, all_row_placements], [all_equivalent_row_placements, all_point_placements], [empty_cell_inferral, jays_subclass_inferral, row_and_column_separation], [reversibly_deletable_cells, components], [subset_verified, is_empty] ]
 
 mimic_regular_insertion_encoding = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral], [reversibly_deletable_cells], [one_by_one_verification, is_empty]]
@@ -31,7 +34,7 @@ def perm_to_str(perm):
 def perms_to_str(perms):
     return "_".join(perm_to_str(perm) for perm in perms)
 
-length_to_process = '11'
+length_to_process = '6'
 
 # # 1
 # strat_pack = standard_strategies_w_left_col
@@ -43,10 +46,25 @@ length_to_process = '11'
 # strat_pack_desc = 'standard_strategies_w_min_row'
 # max_depth = 8
 
-# 3
-strat_pack = standard_strategies_w_all_cols
-strat_pack_desc = 'standard_strategies_w_all_cols'
-max_depth = 8
+# # 3
+# strat_pack = standard_strategies_w_all_cols
+# strat_pack_desc = 'standard_strategies_w_all_cols'
+# max_depth = 8
+
+# # 4
+# strat_pack = standard_strategies_w_all_rows
+# strat_pack_desc = 'standard_strategies_w_all_rows'
+# max_depth = 8
+
+# 5
+strat_pack = standard_strategies_w_all_rows_cols
+strat_pack_desc = 'standard_strategies_w_all_rows_cols'
+max_depth = 1000
+max_time = 20
+
+@timeout_decorator.timeout(max_time)
+def call_it():
+    mtree.do_level()
 
 first_failure = False
 first_success = False
@@ -70,6 +88,7 @@ with open('length'+length_to_process+'_failed') as g:
             continue
 
         print('Now processing {}'.format(task))
+        ran_out_of_time = False
 
         patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
         mtree = MetaTree(patts, *strat_pack)
@@ -79,7 +98,7 @@ with open('length'+length_to_process+'_failed') as g:
             print(task, file=f)
             print("Log created ", strftime("%a, %d %b %Y %H:%M:%S", gmtime()),file=f)
 
-            start_time = time()
+            start_time = time.time()
             depth_tried = 0
 
             while not mtree.has_proof_tree():
@@ -87,17 +106,25 @@ with open('length'+length_to_process+'_failed') as g:
                 if mtree.depth_searched == max_depth:
                     break
 
-                mtree.do_level()
-                depth_tried += 1
+                # mtree.do_level()
+
+                try:
+                    call_it()
+                    depth_tried += 1
+                    print('Finished level {} without running out of time'.format(str(depth_tried)))
+                except:
+                    print('Ran out of time on level {}'.format(str(depth_tried+1)))
+                    ran_out_of_time = True
+                    break
 
                 print("We had {} inferral cache hits and {} partitioning cache hits".format(mtree.inferral_cache_hits, mtree.partitioning_cache_hits))
                 print("The partitioning cache has {} tilings in it right now".format( len(mtree._basis_partitioning_cache) ) )
                 print("The inferral cache has {} tilings in it right now".format( len(mtree._inferral_cache) ) )
                 print("There are {} tilings in the search tree".format( len(mtree.tiling_cache)))
-                print("Time taken so far is {} seconds".format( time() - start_time ) )
+                print("Time taken so far is {} seconds".format( time.time() - start_time ) )
                 print('')
 
-            end_time = time()
+            end_time = time.time()
 
             if mtree.has_proof_tree():
                 proof_tree = mtree.find_proof_tree()
@@ -107,6 +134,7 @@ with open('length'+length_to_process+'_failed') as g:
                 print("",file=f)
                 print('Strategies applied: {}'.format(strat_pack_desc), file=f)
                 print('Maximum depth set at {}'.format(str(max_depth)), file=f)
+                print('Maximum time per level set at {} seconds'.format(str(max_time)), file=f)
                 print("",file=f)
                 print("Human readable:", file=f)
                 print("",file=f)
@@ -124,6 +152,7 @@ with open('length'+length_to_process+'_failed') as g:
                         print('', file=f)
                         print('Strategies applied: {}'.format(strat_pack_desc), file=f)
                         print('Maximum depth set at {}'.format(str(max_depth)), file=f)
+                        print('Maximum time per level set at {} seconds'.format(str(max_time)), file=f)
                         print('', file=f)
 
                 with open('length{}_succeeded'.format(length_to_process), 'a+') as e:
@@ -131,10 +160,11 @@ with open('length'+length_to_process+'_failed') as g:
 
             else:
                 print('No proof tree found. Tried for {} seconds'.format(int(end_time - start_time)), file=f)
-                print("",file=f)
+                print('Ran out of time on level {}'.format(depth_tried+1), file=f)
                 print("",file=f)
                 print('Strategies applied: {}'.format(strat_pack_desc), file=f)
                 print('Maximum depth set at {}'.format(str(max_depth)), file=f)
+                print('Maximum time per level set at {} seconds'.format(str(max_time)), file=f)
                 print("",file=f)
 
                 if not first_failure:
@@ -143,6 +173,7 @@ with open('length'+length_to_process+'_failed') as g:
                         print('', file=f)
                         print('Strategies applied: {}'.format(strat_pack_desc), file=f)
                         print('Maximum depth set at {}'.format(str(max_depth)), file=f)
+                        print('Maximum time per level set at {} seconds'.format(str(max_time)), file=f)
                         print('', file=f)
 
                 with open('length{}_failed'.format(length_to_process), 'a+') as e:
@@ -153,6 +184,7 @@ if not first_failure:
         print('', file=f)
         print('Strategies applied: {}'.format(strat_pack_desc), file=f)
         print('Maximum depth set at {}'.format(str(max_depth)), file=f)
+        print('Maximum time per level set at {} seconds'.format(str(max_time)), file=f)
         print('', file=f)
 
 else:
@@ -164,6 +196,7 @@ if not first_success:
         print('', file=f)
         print('Strategies applied: {}'.format(strat_pack_desc), file=f)
         print('Maximum depth set at {}'.format(str(max_depth)), file=f)
+        print('Maximum time per level set at {} seconds'.format(str(max_time)), file=f)
         print('', file=f)
 
 else:
