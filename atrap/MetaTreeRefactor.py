@@ -22,6 +22,8 @@ from permuta import PermSet
 
 from itertools import product
 
+import sys
+import traceback
 
 class SiblingNode(set):
     '''A set of OR nodes with equivalent tilings.
@@ -264,20 +266,20 @@ class MetaTree(object):
     def has_proof_tree(self):
         return frozenset() in self.root_and_node.verification
 
-    def do_level(self, requested_depth=None):
+    def do_level(self, requested_depth=None, file=sys.stdout):
         '''This searches to depth first to the requested depth.
         It stops when a proof tree is found, and returns it, if found.'''
         if requested_depth is None:
-            self.do_level(self.depth_searched + 1)
+            self.do_level(self.depth_searched + 1, file=file)
         else:
             if requested_depth <= self.depth_searched:
-                print("Depth already searched")
+                print("Depth already searched", file=file)
                 return
-            print("Doing depth", requested_depth)
+            print("Doing depth", requested_depth, file=file)
             '''The work to go deeper is hidden in the helper function.
             This returns True when a proof tree is found.'''
             if self._sibling_helper(self.root_sibling_node, requested_depth):
-                print("A proof tree has been found.")
+                print("A proof tree has been found.", file=file)
                 proof_tree = self.find_proof_tree()
                 # proof_tree.pretty_print()
                 return proof_tree
@@ -343,7 +345,7 @@ class MetaTree(object):
 
         for recursive_generator in self.recursive_strategy_generators:
             '''For each recursive strategy.'''
-            for recursive_strategy in recursive_generator(or_node.tiling, basis=self.basis, basis_partitioning=self._basis_partitioning):
+            for recursive_strategy in recursive_generator(or_node.tiling, basis=self.basis, basis_partitioning=self._basis_partitioning, verification_strategies=self.verification_strategy_generators, tiling_cache=self.tiling_cache):
 
                 if not isinstance(recursive_strategy, RecursiveStrategy):
                     raise TypeError("Attempted to recurse on a non RecursiveStrategy.")
@@ -398,6 +400,9 @@ class MetaTree(object):
                     if not child_or_node.sibling_node.natural:
                         if tiling in self._basis_partitioning_cache:
                             self._basis_partitioning_cache.pop(tiling)
+
+
+
 
                 for sibling_node in sibling_nodes_to_be_propagated:
                     if sibling_node.is_verified():
@@ -529,9 +534,9 @@ class MetaTree(object):
 
         if function_name is not None:
             if function_name in self._partitioning_calls:
-                self._partitioning_calls[function_name] += 1
+                self._partitioning_calls[function_name][0] += 1
             else:
-                self._partitioning_calls[function_name] = 0
+                self._partitioning_calls[function_name] = [1,0]
 
 
         cache = self._basis_partitioning_cache.get(tiling)
@@ -545,6 +550,12 @@ class MetaTree(object):
         else:
             self.partitioning_cache_hits += 1
         if length not in cache:
+            if function_name is not None:
+                self._partitioning_calls[function_name][1] += 1
+            else:
+                print("SOMEONE IS CALLING NONE!")
+                for line in traceback.format_stack():
+                    print(line.strip())
             cache[length] = tiling.basis_partitioning(length, basis)
         return cache[length]
 

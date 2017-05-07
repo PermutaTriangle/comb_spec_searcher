@@ -6,14 +6,17 @@ from time import time
 from atrap.strategies import *
 from atrap.ProofTree import ProofTree
 
-all_strategies = [ [all_cell_insertions, all_row_placements, all_column_placements], [all_point_placements, all_equivalent_row_placements, all_equivalent_column_placements, all_symmetric_tilings], [empty_cell_inferral, subclass_inferral, row_and_column_separation], [reversibly_deletable_cells, components], [subset_verified, is_empty] ]
+all_strategies = [ [all_cell_insertions, all_row_placements, all_column_placements], [all_point_placements, all_equivalent_row_placements, all_equivalent_column_placements, all_symmetric_tilings], [empty_cell_inferral, subclass_inferral, row_and_column_separation], [splittings, reversibly_deletable_cells, components], [subset_verified, is_empty] ]
 
 mimic_regular_insertion_encoding = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral], [reversibly_deletable_points], [one_by_one_verification, is_empty]]
 
-# standard_strategies = [ [all_cell_insertions], [all_point_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
-standard_strategies = [ [all_cell_insertions, all_row_placements, all_column_placements], [all_equivalent_row_placements, all_equivalent_column_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
+standard_strategies = [ [all_cell_insertions], [point_separation, all_point_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
+# standard_strategies = [ [all_cell_insertions], [all_point_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
+standard_strategies_w_all_row_cols = [ [all_cell_insertions, all_row_placements, all_column_placements], [all_equivalent_row_placements, all_equivalent_column_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
 
-# standard_strategies = [ [all_cell_insertions], [all_point_placements], [subclass_inferral, row_and_column_separation], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
+# finite_strategies = [ [all_cell_insertions, all_row_placements], [all_equivalent_row_placements], [empty_cell_inferral, subclass_inferral], [], [subset_verified, is_empty] ]
+finite_strategies_w_min_row = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [], [subset_verified, is_empty] ]
+finite_strategies_w_point_pl = [ [all_cell_insertions], [all_point_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [], [subset_verified, is_empty] ]
 
 finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, subclass_inferral], [], [subset_verified, is_empty] ]
 
@@ -49,20 +52,19 @@ basic = [ [all_cell_insertions], [all_maximum_point_placements], [row_and_column
 #
 # task = '012_1032_2301_2310'
 
-task = '1302_2031'
-#
 # task = '012_3210'
 # task = '0'
 #
+# task = '0123'
 # task = '012'
 
 # task = '021'
 
-# task = '4213_3142'
+# task = '123'
 
 # task = '0'
 
-# task = '0132_0213_0231_3120'
+task = '0132_0213_0231_3120'
 
 patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 
@@ -70,7 +72,7 @@ patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 
 #
 # mtree = MetaTree( patts, *mimic_regular_insertion_encoding )
-mtree = MetaTree( patts, *standard_strategies )
+mtree = MetaTree( patts, *standard_strategies_w_all_row_cols )
 
 print(mtree.basis)
 
@@ -97,6 +99,7 @@ def count_sibling_nodes(mt):
 start = time()
 
 while not mtree.has_proof_tree():
+    print("===============================")
     mtree.do_level()
     print("We had {} inferral cache hits and {} partitioning cache hits.".format(mtree.inferral_cache_hits, mtree.partitioning_cache_hits))
     print("The partitioning cache has {} tilings in it right now.".format( len(mtree._basis_partitioning_cache) ) )
@@ -105,8 +108,9 @@ while not mtree.has_proof_tree():
     print("There are {} verified tilings.".format(count_verified_tilings(mtree)))
     print("There are {} SiblingNodes of which {} are verified.".format(*count_sibling_nodes(mtree)))
     print("Time taken so far is {} seconds.".format( time() - start ) )
+    print("")
     for function_name, calls in mtree._partitioning_calls.items():
-        print("The function {} called the partitioning cache {} many times".format(function_name, calls))
+        print("The function {} called the partitioning cache *{}* times, ({} originating)".format(function_name, calls[0], calls[1]))
     print("There were {} cache misses".format(mtree._cache_misses))
     # if mtree.depth_searched == 10:
     #     break

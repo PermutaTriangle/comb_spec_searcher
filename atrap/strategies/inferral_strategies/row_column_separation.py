@@ -1,7 +1,6 @@
 from collections import defaultdict
 from grids import Tiling, Block, PositiveClass, Cell
 from itertools import chain
-import inspect
 #
 from .inferral_class import InferralStrategy
 
@@ -21,7 +20,7 @@ def row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=None
 
     for length in range(verification_length + 1):
         # Get the partitioning into containing/avoiding perms
-        partitions = basis_partitioning(tiling, length, basis, inspect.stack()[0][3])
+        partitions = basis_partitioning(tiling, length, basis, "row_col_inequalities")
 
         # For containing and avoiding
         for partition, cells_smaller_than_by_row, cells_smaller_than_by_col in zip(partitions, smaller_than_dicts_by_row, smaller_than_dicts_by_col):

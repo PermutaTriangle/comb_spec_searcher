@@ -6,6 +6,68 @@ from grids import Tiling
 from .equivalence_class import EquivalenceStrategy
 
 
+"""
+    Turns C+ into [point | C], etc
+"""
+def point_separation(tiling, **kwargs):
+
+    for cell, block in tiling.non_points:
+        if not isinstance(block, PositiveClass):
+            continue
+
+        hor_split = True
+        vert_split = True
+
+        if sum(1 for _, col_block in tiling.get_col(cell.i)) != 1:
+            # Cell ineligible because cell is not the sole non-class cell
+            # in its respective col
+            hor_split = False
+
+        if sum(1 for _, row_block in tiling.get_row(cell.j)) != 1:
+             # Cell ineligible because cell is not the sole non-class cell
+             # in its respective row
+            vert_split = False
+
+        # print("tiling is:")
+        # print(tiling)
+        # print("H:",hor_split,"\tV:",vert_split)
+
+        topmost_tiling_dict = dict(tiling)
+        bottommost_tiling_dict = dict(tiling)
+        leftmost_tiling_dict = dict(tiling)
+        rightmost_tiling_dict = dict(tiling)
+
+        if vert_split:
+            topmost_tiling_dict[cell] = block.perm_class
+            topmost_tiling_dict[(cell.i, cell.j + 0.5)] = Block.point
+            bottommost_tiling_dict[cell] = block.perm_class
+            bottommost_tiling_dict[(cell.i, cell.j - 0.5)] = Block.point
+
+            # print("T:")
+            # print(Tiling( topmost_tiling_dict ))
+
+            # print("B:")
+            # print(Tiling( bottommost_tiling_dict ))
+
+            yield EquivalenceStrategy( "Separting the topmost point from cell " + str(cell), Tiling( topmost_tiling_dict ))
+            yield EquivalenceStrategy( "Separting the bottommost point from cell " + str(cell), Tiling( bottommost_tiling_dict ))
+
+        if hor_split:
+            leftmost_tiling_dict[cell] = block.perm_class
+            leftmost_tiling_dict[(cell.i - 0.5, cell.j)] = Block.point
+            rightmost_tiling_dict[cell] = block.perm_class
+            rightmost_tiling_dict[(cell.i + 0.5, cell.j)] = Block.point
+
+            # print("L:")
+            # print(Tiling( leftmost_tiling_dict ))
+
+            # print("R:")
+            # print(Tiling( rightmost_tiling_dict ))
+
+            yield EquivalenceStrategy( "Separting the leftmost point from cell " + str(cell), Tiling( leftmost_tiling_dict ))
+            yield EquivalenceStrategy( "Separting the rightmost point from cell " + str(cell), Tiling( rightmost_tiling_dict ))
+
+
 def all_point_placements(tiling, **kwargs):
 
     for cell, block in tiling.non_points:
