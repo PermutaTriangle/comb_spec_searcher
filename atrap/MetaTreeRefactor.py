@@ -25,9 +25,6 @@ from itertools import product
 import sys
 import traceback
 
-
-SPLITTINGS_HACK = False
-
 class SiblingNode(set):
     '''A set of OR nodes with equivalent tilings.
     The node is considered natural if it contains a tiling found by a batch
@@ -348,44 +345,13 @@ class MetaTree(object):
 
         for recursive_generator in self.recursive_strategy_generators:
             '''For each recursive strategy.'''
-            for recursive_strategy in recursive_generator(or_node.tiling, basis=self.basis, basis_partitioning=self._basis_partitioning):
+            for recursive_strategy in recursive_generator(or_node.tiling, basis=self.basis, basis_partitioning=self._basis_partitioning, verification_strategies=self.verification_strategy_generators, tiling_cache=self.tiling_cache):
 
                 if not isinstance(recursive_strategy, RecursiveStrategy):
                     raise TypeError("Attempted to recurse on a non RecursiveStrategy.")
 
                 formal_step = recursive_strategy.formal_step
                 tilings = recursive_strategy.tilings
-
-
-                # Here we should check that there is at most one verified tiling among the group!
-                # How do I do that??
-
-                if SPLITTINGS_HACK:
-                    # This is redoing a lot of verification work that should be cached
-                    # And this should only happen when the strategy is "splittings"
-                    number_of_verified_results = 0
-
-                    for tiling in tilings:
-                        child_or_node = self.tiling_cache.get(tiling)
-                        if child_or_node is None:
-                            child_or_node = OrNode(tiling)
-                        if self._verify(child_or_node):
-                            number_of_verified_results += 1
-                        if number_of_verified_results > 1:
-                            break
-
-                    if number_of_verified_results > 1:
-                        # print("============")
-                        # print(or_node.tiling)
-                        # print("----->")
-                        # for t in tilings:
-                        #     print(t)
-                        # print("============")
-                        # print("\tNV:",number_of_verified_results)
-                        pass
-
-                    if number_of_verified_results > 1:
-                        continue
 
                 '''We create the AND node for the strategy and connect it its parent.'''
                 recursive_and_node = AndNode(formal_step)
@@ -436,7 +402,7 @@ class MetaTree(object):
                             self._basis_partitioning_cache.pop(tiling)
 
 
-                
+
 
                 for sibling_node in sibling_nodes_to_be_propagated:
                     if sibling_node.is_verified():

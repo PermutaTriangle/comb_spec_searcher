@@ -1,9 +1,9 @@
 """
-    ==================       
+    ==================
 
     TODO: Need to speedtest my standardize against the permuta version
 
-    ==================       
+    ==================
 
 """
 
@@ -17,7 +17,9 @@ from permuta import *
 from atrap.tools import cells_of_occurrences
 from .recursive_class import RecursiveStrategy
 
-def splittings(tiling, basis, basis_partitioning=None):
+SPLITTINGS_HACK = True
+
+def splittings(tiling, basis, basis_partitioning=None, verification_strategies=None, tiling_cache=None):
 
     all_valid_splittings = find_good_splittings(tiling, basis, basis_partitioning=basis_partitioning)
 
@@ -25,6 +27,32 @@ def splittings(tiling, basis, basis_partitioning=None):
     for good_split in all_valid_splittings:
         # print('good split:',good_split)
         strategy = [Tiling({x:tiling[x] for x in part}) for part in good_split]
+        if SPLITTINGS_HACK:
+            # This is redoing a lot of verification work that should be cached
+            # And this should only happen when the strategy is "splittings"
+            number_of_verified_results = 0
+
+            for sub_tiling in strategy:
+                child_or_node = tiling_cache.get(sub_tiling)
+                if child_or_node is None:
+                    verified = False
+                    for verification_strategy_generator in verification_strategies:
+                        for verification_strategy in verification_strategy_generator(tiling, basis=basis, basis_partitioning=basis_partitioning):
+                            verified = True
+                            number_of_verified_results += 1
+                            break
+                        if verified:
+                            break
+                else:
+                    if child_or_node.is_verified():
+                        number_of_verified_results += 1
+
+                if number_of_verified_results > 1:
+                    break
+
+            if number_of_verified_results > 1:
+                continue
+
         yield RecursiveStrategy( "A splitting of the tiling", strategy , [tiling._back_map for tiling in strategy])
 
 
@@ -58,7 +86,7 @@ def find_good_splittings(tiling, basis, basis_partitioning=None, built=[]):
     good_splittings = []
     min_length = min([len(P) for P in basis])
     verification_length = max([len(P) for P in basis]) + tiling.total_points + sum(1 for _, block in tiling.non_points if isinstance(block, PositiveClass))
-    
+
     for subset in subsets_to_check:
 
         new_part = set(subset)
@@ -88,7 +116,7 @@ def find_good_splittings(tiling, basis, basis_partitioning=None, built=[]):
                 break
 
             for basis_element in containing_perms.keys():
-                
+
                 if not good_partition:
                     break
 
