@@ -409,7 +409,6 @@ class MetaTree(object):
                     child_or_node.parents.append(recursive_and_node)
                     recursive_and_node.children.append(child_or_node)
 
-
                     '''If the SiblingNode is not verified we append the tiling
                     to the verification possibilities of the SiblingNode.'''
                     if not child_sibling_node.is_verified():
@@ -500,9 +499,8 @@ class MetaTree(object):
                     child_or_node.parents.append(batch_and_node)
                     batch_and_node.children.append(child_or_node)
 
-                    '''We return natural unverified SiblingNodes.'''
-                    if child_sibling_node.is_verified() and child_sibling_node.natural:
-                        child_sibling_nodes.add(child_sibling_node)
+                    '''We try expanding further'''
+                    child_sibling_nodes.add(child_sibling_node)
 
                 '''Propagate the verifications that need to be propagated'''
                 for sibling_node in verified_sibling_nodes:
