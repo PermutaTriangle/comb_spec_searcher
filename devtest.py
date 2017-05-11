@@ -12,7 +12,7 @@ mimic_regular_insertion_encoding = [ [all_cell_insertions, all_minimum_row_place
 
 standard_strategies = [ [all_cell_insertions], [point_separation, all_point_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
 # standard_strategies = [ [all_cell_insertions], [all_point_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
-standard_strategies_w_all_row_cols = [ [all_cell_insertions, all_row_placements, all_column_placements], [all_equivalent_row_placements, all_equivalent_column_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
+standard_strategies_w_all_row_cols = [ [all_cell_insertions, all_row_placements, all_column_placements], [all_equivalent_row_placements, all_equivalent_column_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
 
 # finite_strategies = [ [all_cell_insertions, all_row_placements], [all_equivalent_row_placements], [empty_cell_inferral, subclass_inferral], [], [subset_verified, is_empty] ]
 finite_strategies_w_min_row = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [], [subset_verified, is_empty] ]
@@ -64,7 +64,9 @@ basic = [ [all_cell_insertions], [all_maximum_point_placements], [row_and_column
 
 # task = '0'
 
-task = '0132_0213_0231_3120'
+# task = '0132_0213_0231_3120'
+
+task = '0213_0231'
 
 patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 
@@ -97,7 +99,7 @@ def count_sibling_nodes(mt):
 
 #mtree.do_level()
 start = time()
-max_time = 10
+max_time = 100
 while not mtree.has_proof_tree():
     print("===============================")
     mtree.do_level(max_time=max_time)
@@ -112,10 +114,8 @@ while not mtree.has_proof_tree():
     for function_name, calls in mtree._partitioning_calls.items():
         print("The function {} called the partitioning cache *{}* times, ({} originating)".format(function_name, calls[0], calls[1]))
     print("There were {} cache misses".format(mtree._cache_misses))
-    if mtree.depth_searched == 10 or mtree.timed_out or time() - start > max_time:
+    if mtree.depth_searched == 4 or mtree.timed_out:# or time() - start > max_time:
         break
-
-
 
 if mtree.has_proof_tree():
     proof_tree = mtree.find_proof_tree()
@@ -123,7 +123,6 @@ if mtree.has_proof_tree():
     json = proof_tree.to_json(indent="  ")
     print(json)
     assert ProofTree.from_json(json).to_json(indent="  ") == json
-
 
 end = time()
 
