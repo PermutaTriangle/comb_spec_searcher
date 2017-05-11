@@ -38,10 +38,50 @@ length_to_process = '3'
 # strat_pack_desc = 'standard_strategies_w_left_col'
 # max_depth = 8
 
-# 2
-strat_pack = standard_strategies_w_min_row
-strat_pack_desc = 'standard_strategies_w_min_row'
-max_depth = 8
+# # 2
+# strat_pack = standard_strategies_w_min_row
+# strat_pack_desc = 'standard_strategies_w_min_row'
+# max_depth = 8
+
+# # 3,5
+# strat_pack = standard_strategies_w_all_cols
+# strat_pack_desc = 'standard_strategies_w_all_cols'
+# max_depth = 5
+
+# # 3,6
+# strat_pack = standard_strategies_w_all_cols
+# strat_pack_desc = 'standard_strategies_w_all_cols'
+# max_depth = 6
+
+# # 3,7
+# strat_pack = standard_strategies_w_all_cols
+# strat_pack_desc = 'standard_strategies_w_all_cols'
+# max_depth = 7
+
+# # 4,5
+# strat_pack = standard_strategies_w_all_rows
+# strat_pack_desc = 'standard_strategies_w_all_rows'
+# max_depth = 5
+
+# # 4,6
+# strat_pack = standard_strategies_w_all_rows
+# strat_pack_desc = 'standard_strategies_w_all_rows'
+# max_depth = 6
+
+# # 4,7
+# strat_pack = standard_strategies_w_all_rows
+# strat_pack_desc = 'standard_strategies_w_all_rows'
+# max_depth = 7
+
+# # 5,4
+# strat_pack = standard_strategies_w_all_rows_cols
+# strat_pack_desc = 'standard_strategies_w_all_rows_cols'
+# max_depth = 4
+
+# 5,5
+strat_pack = standard_strategies_w_all_rows_cols
+strat_pack_desc = 'standard_strategies_w_all_rows_cols'
+max_depth = 5
 
 first_failure = False
 first_success = False
