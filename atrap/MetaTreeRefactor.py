@@ -26,6 +26,7 @@ from itertools import product
 import sys
 import traceback
 
+
 class SiblingNode(set):
     '''A set of OR nodes with equivalent tilings.
     The node is considered natural if it contains a tiling found by a batch
@@ -389,6 +390,7 @@ class MetaTree(object):
                 for tiling in tilings:
                     '''We attempt to find the OR node of the tiling in the cache.'''
                     child_or_node = self.tiling_cache.get(tiling)
+
                     if child_or_node is None:
                         '''If it is not there we create it.'''
                         child_or_node = OrNode(tiling)
@@ -416,8 +418,10 @@ class MetaTree(object):
                         child_sibling_node.verification.add( frozenset([ self._tiling_labeler(tiling) ]) )
 
                     '''We return natural unverified SiblingNodes.'''
-                    if child_sibling_node.natural and not child_sibling_node.is_verified():
-                        child_sibling_nodes.add(child_sibling_node)
+                    child_sibling_nodes.add(child_sibling_node)
+
+                    temp_or_node = self.tiling_cache.get(tiling)
+                    temp_sibling_node = temp_or_node.sibling_node
 
                     '''We only want to cache natural things'''
                     if not child_or_node.sibling_node.natural:
@@ -434,6 +438,7 @@ class MetaTree(object):
                     '''propagate the information'''
                     self._propagate_sibling_node_verification(sibling_node)
                 self._propagate_and_node_verification(recursive_and_node)
+
         return child_sibling_nodes
 
     def _batch_expand(self, or_node):
@@ -496,13 +501,17 @@ class MetaTree(object):
                             '''As it was found by a batch strategy it is natural'''
                             child_sibling_node.natural = True
 
+                            '''Should we be propagating tilings which become natural?'''
+                            verified_sibling_nodes.add(child_sibling_node)
+                            # print("propagating tiling which became natural")
+                            # print(tiling)
+
                     '''We connect it to the batch AND node it belongs too.'''
                     child_or_node.parents.append(batch_and_node)
                     batch_and_node.children.append(child_or_node)
 
-                    '''We return natural unverified SiblingNodes.'''
-                    if child_sibling_node.is_verified() and child_sibling_node.natural:
-                        child_sibling_nodes.add(child_sibling_node)
+                    '''try to expand further'''
+                    child_sibling_nodes.add(child_sibling_node)
 
                 '''Propagate the verifications that need to be propagated'''
                 for sibling_node in verified_sibling_nodes:
@@ -584,7 +593,7 @@ class MetaTree(object):
 
     def _verify(self, or_node):
         '''Attempt to verify an OR node using verification strategies.
-        It will connect and AND node carrying the formal step.'''
+        It will connect an AND node carrying the formal step.'''
         tiling = or_node.tiling
         verified = False
         for verification_generator in self.verification_strategy_generators:
@@ -683,7 +692,7 @@ class MetaTree(object):
 
 
     def _tiling_labeler( self, tiling ):
-        '''Labels a tiling, and labels it. It tries to label tilings in the same sibling node.'''
+        '''Labels a tiling. It tries to label tilings in the same sibling node.'''
         or_node = self.tiling_cache.get(tiling)
         assert or_node is not None
         sibling_node = or_node.sibling_node
@@ -708,19 +717,11 @@ class MetaTree(object):
         return labels
 
 
-    def _propagate_and_node_verification(self, and_node):#, seen_nodes=None):
-
-        # if seen_nodes is None:
-        #     seen_nodes = set()
-        # if and_node in seen_nodes:
-        #     return
-        # else:
-        #     seen_nodes.add(and_node)
+    def _propagate_and_node_verification(self, and_node):
 
         if and_node.is_verified():
             '''The AND node is already verified, so propagated this information already'''
             return
-
 
         '''In order to propagate we need that all our children are natural (else they have not occurred in the tree),
         and have some verification conditions.'''
@@ -784,6 +785,11 @@ class MetaTree(object):
                         '''Then the node is verified.'''
                         cleaned_verifications = set( [frozenset()] )
                         break
+                    else:
+                        # assert ( frozenset(sibling_node_labels) not in cleaned_verifications and frozenset(sibling_node_labels) in sibling_node.verification) == ( not any( verification.issubset(sibling_node_labels) for verification in cleaned_verifications ) and any( verification.issubset(sibling_node_labels) for verification in sibling_node.verification ) )
+                        if not any( verification.issubset(sibling_node_labels) for verification in cleaned_verifications ) and any( verification.issubset(sibling_node_labels) for verification in sibling_node.verification ):
+                            cleaned_verifications.add( frozenset( sibling_node_labels ) )
+
 
             if cleaned_verifications == sibling_node.verification:
                 '''sibling node status unchanged, no need to propagate further'''
@@ -801,6 +807,7 @@ class MetaTree(object):
             for parent_and_node in sibling_node.get_parent_and_nodes():
                 # self._propagate_and_node_verification(parent_and_node, seen_nodes)
                 self._propagate_and_node_verification(parent_and_node)
+
     def _cleaner_update(self, A, B, sibling_labels):
         for x in B:
             want_to_add = frozenset( label for label in x if not self._labels_to_or_node.get(label).sibling_node.is_verified() and label not in sibling_labels )
