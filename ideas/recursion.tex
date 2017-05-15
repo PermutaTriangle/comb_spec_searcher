@@ -20,18 +20,18 @@ Given a permutation class $\mcC$ a \emph{proof strategy} for a tiling $T$
 returns a disjoint set of tilings $T_1, T_2, \ldots, T_k$ such that the union of
 these individually intersected with $\mcC$ is the tiling $T$, i.e.
 \[
-  T \cap \mcC = ( T_1 \cap \mcC ) \sqcup ( T_2 \cap \mcC ) \sqcup \ldots \sqcup (T_k \cap \mcC).
+  T \cap \mcC = ( T_1 \cap \mcC ) \sqcup ( T_2 \cap \mcC ) \sqcup \cdots \sqcup (T_k \cap \mcC).
 \]
-If the proof strategy returns a single tiling we call is an \emph{equivalence}
+If the proof strategy returns a single tiling we call it an \emph{equivalence}
 proof strategy. If returns more than one we call it a \emph{batch} proof
 strategy.
 
 For a permutation class $\mcC$, consider the tree where the root node is the $1
-\times 1$ tiling with $\mcC$. The children of a node are the tilings obtained a
-proof strategy on it, thus form a disjoint union for the node while working
-inside $\mcC$. If all the leaves of the tree are subsets of $\mcC$ then they
-define a cover for $\mcC$, while the tree itself is a proof certificate of this
-cover. We call such trees \emph{proof trees}.
+\times 1$ tiling with $\mcC$. The \emph{children} of a node are the tilings
+obtained by a proof strategy on it, thus form a disjoint union for the node
+while working inside $\mcC$. If all the leaves of the tree are subsets of $\mcC$
+then they define a cover for $\mcC$, while the tree itself is a proof
+certificate of this cover. We call such trees \emph{proof trees}.
 
 Here is a rough outline of how we propose to search for proof trees.
 
