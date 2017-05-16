@@ -11,12 +11,18 @@ all_strategies = [ [all_cell_insertions, all_row_placements], [all_equivalent_ro
 mimic_regular_insertion_encoding = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral], [reversibly_deletable_cells], [one_by_one_verification, is_empty]]
 
 standard_strategies_w_left_col = [ [all_cell_insertions, all_leftmost_column_placements], [all_equivalent_leftmost_column_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
+standard_strategies_w_left_col_splittings = [ [all_cell_insertions, all_leftmost_column_placements], [all_equivalent_leftmost_column_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
 standard_strategies_w_min_row = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
+standard_strategies_w_min_row_splittings = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
 standard_strategies_w_left_col_min_row = [ [all_cell_insertions, all_leftmost_column_placements, all_minimum_row_placements], [all_equivalent_leftmost_column_placements, all_equivalent_minimum_row_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
 standard_strategies_w_all_cols = [ [all_cell_insertions, all_column_placements], [all_equivalent_column_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
+standard_strategies_w_all_cols_splittings = [ [all_cell_insertions, all_column_placements], [all_equivalent_column_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
 standard_strategies_w_all_rows = [ [all_cell_insertions, all_row_placements], [all_equivalent_row_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
+standard_strategies_w_all_rows_splittings = [ [all_cell_insertions, all_row_placements], [all_equivalent_row_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
 standard_strategies_w_all_rows_cols = [ [all_cell_insertions, all_row_placements, all_column_placements], [all_equivalent_row_placements, all_equivalent_column_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
+standard_strategies_w_all_rows_cols_splittings = [ [all_cell_insertions, all_row_placements, all_column_placements], [all_equivalent_row_placements, all_equivalent_column_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
 standard_strategies_point_pl = [ [all_cell_insertions], [all_point_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral,], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
+standard_strategies_point_pl_splittings = [ [all_cell_insertions], [all_point_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral,], [splittings], [subset_verified, is_empty] ]
 
 # First one is best
 finite_strategies_w_min_row = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [], [subset_verified, is_empty] ]
@@ -58,10 +64,115 @@ length_to_process = '2'
 # strat_pack_desc = 'standard_strategies_w_all_rows_cols'
 # max_depth = 4
 
-# 5,5
-strat_pack = standard_strategies_w_all_rows_cols
-strat_pack_desc = 'standard_strategies_w_all_rows_cols'
-max_depth = 5
+# # 5,5
+# strat_pack = standard_strategies_w_all_rows_cols
+# strat_pack_desc = 'standard_strategies_w_all_rows_cols'
+# max_depth = 5
+
+# # 1'
+# strat_pack = standard_strategies_w_left_col
+# strat_pack_desc = 'standard_strategies_w_left_col-prop_fixed'
+# max_depth = 8
+
+# # 2'
+# strat_pack = standard_strategies_w_min_row
+# strat_pack_desc = 'standard_strategies_w_min_row-prop_fixed'
+# max_depth = 8
+
+# # 3'
+# strat_pack = standard_strategies_w_all_cols
+# strat_pack_desc = 'standard_strategies_w_all_cols-prop_fixed'
+# max_depth = 8
+
+# # 4'
+# strat_pack = standard_strategies_w_all_rows
+# strat_pack_desc = 'standard_strategies_w_all_rows-prop_fixed'
+# max_depth = 8
+
+# # 5,4'
+# strat_pack = standard_strategies_w_all_rows_cols
+# strat_pack_desc = 'standard_strategies_w_all_rows_cols-prop_fixed'
+# max_depth = 4
+
+# # 5,5'
+# strat_pack = standard_strategies_w_all_rows_cols
+# strat_pack_desc = 'standard_strategies_w_all_rows_cols-prop_fixed'
+# max_depth = 5
+
+# # 6,3'
+# strat_pack = standard_strategies_point_pl
+# strat_pack_desc = 'standard_strategies_point_pl-prop_fixed'
+# max_depth = 3
+
+# # 6,4'
+# strat_pack = standard_strategies_point_pl
+# strat_pack_desc = 'standard_strategies_point_pl-prop_fixed'
+# max_depth = 4
+
+# # 7'
+# strat_pack = standard_strategies_w_left_col_splittings
+# strat_pack_desc = 'standard_strategies_w_left_col_splittings-prop_fixed'
+# max_depth = 8
+
+# # 8'
+# strat_pack = standard_strategies_w_min_row_splittings
+# strat_pack_desc = 'standard_strategies_w_min_row_splittings-prop_fixed'
+# max_depth = 8
+
+# # 12,3'
+# strat_pack = standard_strategies_point_pl_splittings
+# strat_pack_desc = 'standard_strategies_point_pl_splittings-prop_fixed'
+# max_depth = 3
+
+# # 9,5'
+# strat_pack = standard_strategies_w_all_cols_splittings
+# strat_pack_desc = 'standard_strategies_w_all_cols_splittings-prop_fixed'
+# max_depth = 5
+
+# # 9,6'
+# strat_pack = standard_strategies_w_all_cols_splittings
+# strat_pack_desc = 'standard_strategies_w_all_cols_splittings-prop_fixed'
+# max_depth = 6
+
+# # 9,7'
+# strat_pack = standard_strategies_w_all_cols_splittings
+# strat_pack_desc = 'standard_strategies_w_all_cols_splittings-prop_fixed'
+# max_depth = 7
+
+# # 10,5'
+# strat_pack = standard_strategies_w_all_rows_splittings
+# strat_pack_desc = 'standard_strategies_w_all_rows_splittings-prop_fixed'
+# max_depth = 5
+
+# # 10,6'
+# strat_pack = standard_strategies_w_all_rows_splittings
+# strat_pack_desc = 'standard_strategies_w_all_rows_splittings-prop_fixed'
+# max_depth = 6
+
+# # 10,7'
+# strat_pack = standard_strategies_w_all_rows_splittings
+# strat_pack_desc = 'standard_strategies_w_all_rows_splittings-prop_fixed'
+# max_depth = 7
+
+# # 11,4'
+# strat_pack = standard_strategies_w_all_rows_cols_splittings
+# strat_pack_desc = 'standard_strategies_w_all_rows_cols_splittings-prop_fixed'
+# max_depth = 4
+
+# # 12,4'
+# strat_pack = standard_strategies_point_pl_splittings
+# strat_pack_desc = 'standard_strategies_point_pl_splittings-prop_fixed'
+# max_depth = 4
+
+# # 11,5'
+# strat_pack = standard_strategies_w_all_rows_cols_splittings
+# strat_pack_desc = 'standard_strategies_w_all_rows_cols_splittings-prop_fixed'
+# max_depth = 5
+
+# 1,9'
+strat_pack = standard_strategies_w_left_col
+strat_pack_desc = 'standard_strategies_w_left_col-prop_fixed'
+max_depth = 9
 
 first_failure = False
 first_success = False

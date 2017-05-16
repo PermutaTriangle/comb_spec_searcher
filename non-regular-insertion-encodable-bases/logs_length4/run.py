@@ -58,9 +58,39 @@ length_to_process = '4'
 # strat_pack_desc = 'standard_strategies_w_all_rows_cols'
 # max_depth = 4
 
-# 5,5
+# # 5,5
+# strat_pack = standard_strategies_w_all_rows_cols
+# strat_pack_desc = 'standard_strategies_w_all_rows_cols'
+# max_depth = 5
+
+# # 1'
+# strat_pack = standard_strategies_w_left_col
+# strat_pack_desc = 'standard_strategies_w_left_col-prop_fixed'
+# max_depth = 8
+
+# # 2'
+# strat_pack = standard_strategies_w_min_row
+# strat_pack_desc = 'standard_strategies_w_min_row-prop_fixed'
+# max_depth = 8
+
+# # 3'
+# strat_pack = standard_strategies_w_all_cols
+# strat_pack_desc = 'standard_strategies_w_all_cols-prop_fixed'
+# max_depth = 8
+
+# # 4'
+# strat_pack = standard_strategies_w_all_rows
+# strat_pack_desc = 'standard_strategies_w_all_rows-prop_fixed'
+# max_depth = 8
+
+# # 5,4'
+# strat_pack = standard_strategies_w_all_rows_cols
+# strat_pack_desc = 'standard_strategies_w_all_rows_cols-prop_fixed'
+# max_depth = 4
+
+# 5,5'
 strat_pack = standard_strategies_w_all_rows_cols
-strat_pack_desc = 'standard_strategies_w_all_rows_cols'
+strat_pack_desc = 'standard_strategies_w_all_rows_cols-prop_fixed'
 max_depth = 5
 
 first_failure = False
