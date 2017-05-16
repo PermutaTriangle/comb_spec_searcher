@@ -158,7 +158,6 @@ class OrNode(object):
         self.expanded = False
         self.tiling = tiling
         self.sibling_node = None
-        self.equivalent_expanded = False
 
     def is_verified(self):
         return self.sibling_node.is_verified()
@@ -664,8 +663,9 @@ class MetaTree(object):
                         '''And the tilings to be checked for equivalences'''
                         tilings_to_expand.add(eq_tiling)
                         '''We try to verify the equivalent tiling'''
-                        if self._verify(eq_or_node):
-                            verified = True
+                        if not verified:
+                            if self._verify(eq_or_node):
+                                verified = True
                     else:
                         eq_sibling_node = eq_or_node.sibling_node
                         '''The SiblingNode can be verified in anyway that the equivalent SiblingNode can be'''
