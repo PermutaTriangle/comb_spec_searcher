@@ -58,7 +58,6 @@ for i in range(len(s2) + 1):
                                 print(task)
 
                                 if is_finite(basis):
-                                    # strategies = finite_strategies_w_point_pl
                                     strategies = finite_strategies_w_min_row
                                 else:
                                     continue
