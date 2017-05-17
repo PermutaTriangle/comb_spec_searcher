@@ -16,6 +16,7 @@ def components(tiling, basis, basis_partitioning=None,  **kwargs):
 
     components = UnionFind(len(cell_to_int))
 
+    occurrences_of_basis_elements = cells_of_occurrences(tiling, basis, basis_partitioning=basis_partitioning)
     for cells_of_occurrence in occurrences_of_basis_elements:
         for cell1, cell2 in combinations(cells_of_occurrence, 2):
             components.unite(cell_to_int[cell1], cell_to_int[cell2])
