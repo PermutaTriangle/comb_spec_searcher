@@ -6,3 +6,4 @@ from .row_column_placements import all_row_placements
 from .row_column_placements import all_minimum_row_placements
 from .row_column_placements import all_column_placements
 from .row_column_placements import all_leftmost_column_placements
+from .isolate_points import all_point_isolations

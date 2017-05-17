@@ -18,7 +18,6 @@ def all_equivalent_point_isolations(tiling, **kwargs):
 
 def isolate_cell_in_column(tiling, cell_to_be_isolated):
     new_tiling_dict = {}
-    column = cell_to_be_isolated.j
 
     for cell, block in tiling:
 
@@ -31,12 +30,11 @@ def isolate_cell_in_column(tiling, cell_to_be_isolated):
         else:
             new_tiling_dict[cell] = block
 
-    return EquivalenceStrategy( "Isolating the point at {} in its row".format(cell), Tiling(new_tiling_dict))
+    return EquivalenceStrategy( "Isolating the point at {} in its column".format(cell), Tiling(new_tiling_dict))
 
 
 def isolate_cell_in_row(tiling, cell_to_be_isolated):
     new_tiling_dict = {}
-    column = cell_to_be_isolated.j
 
     for cell, block in tiling:
 
@@ -49,4 +47,4 @@ def isolate_cell_in_row(tiling, cell_to_be_isolated):
         else:
             new_tiling_dict[cell] = block
 
-    return EquivalenceStrategy( "Isolating the point at {} in its column".format(cell), Tiling(new_tiling_dict))
+    return EquivalenceStrategy( "Isolating the point at {} in its row".format(cell), Tiling(new_tiling_dict))
