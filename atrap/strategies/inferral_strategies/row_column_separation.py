@@ -1,12 +1,13 @@
 from collections import defaultdict
 from grids import Tiling, Block, PositiveClass, Cell
-from itertools import chain
+from itertools import chain, combinations
 #
 from .inferral_class import InferralStrategy
 
 
 
-def row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=None):
+
+def old_row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=None):
     # This will create the containing/avoiding less than cells of the permutation by row
     smaller_than_dicts_by_row = (defaultdict(dict), defaultdict(dict))
     smaller_than_dicts_by_col = (defaultdict(dict), defaultdict(dict))
@@ -114,6 +115,101 @@ def row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=None
 
     # we then return these inequalities ready for parsing so as to determine how we can split rows and columns.
     return smaller_than_row, smaller_than_col
+
+
+def row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=None):
+
+    point_cells = [cell for cell, block in tiling if isinstance(block, PositiveClass)]
+    smaller_than_row = defaultdict(dict)
+    smaller_than_col = defaultdict(dict)
+    for row in range(tiling.dimensions.j):
+        row_cells = [ cell for cell, _ in tiling.get_row(row) ]
+        if len(row_cells) < 2:
+            continue
+
+        inequalities = {}
+
+        for cell1, cell2 in combinations(row_cells, 2):
+            if cell1 not in inequalities:
+                inequalities[cell1] = set()
+            if cell2 not in inequalities:
+                inequalities[cell2] = set()
+
+
+
+            point_tiling = { cell: Block.point for cell in point_cells }
+            point_tiling[cell1] = Block.point
+            point_tiling[cell2] = Block.point
+            point_tiling = Tiling(point_tiling)
+
+            new_cell1 = point_tiling.cell_map(cell1)
+            new_cell2 = point_tiling.cell_map(cell2)
+
+            containing_perms, avoiding_perms = point_tiling.basis_partitioning(point_tiling.total_points, basis)
+
+
+            # print(point_tiling)
+            # print(containing_perms, avoiding_perms)
+            # print(new_cell1)
+            # print(new_cell2)
+
+            if all( all( cell_info[new_cell1][1] < cell_info[new_cell2][1] for cell_info in cell_infos ) for cell_infos in avoiding_perms.values() ):
+                if not all( all( cell_info[new_cell1][1] < cell_info[new_cell2][1] for cell_info in cell_infos ) for cell_infos in containing_perms.values() ):
+                    inequalities[cell1].add(cell2)
+            if all( all( cell_info[new_cell1][1] > cell_info[new_cell2][1] for cell_info in cell_infos ) for cell_infos in avoiding_perms.values() ):
+                if not all( all( cell_info[new_cell1][1] > cell_info[new_cell2][1] for cell_info in cell_infos ) for cell_infos in containing_perms.values() ):
+                    inequalities[cell2].add(cell1)
+
+        smaller_than_row[row] = inequalities
+
+    for col in range(tiling.dimensions.i):
+        col_cells = [ cell for cell,_ in tiling.get_col(col) ]
+        if len(col_cells) < 2:
+            continue
+
+        inequalities = {}
+
+        for cell1, cell2 in combinations(col_cells, 2):
+            if cell1 not in inequalities:
+                inequalities[cell1] = set()
+            if cell2 not in inequalities:
+                inequalities[cell2] = set()
+
+            point_tiling = { cell: Block.point for cell in point_cells }
+            point_tiling[cell1] = Block.point
+            point_tiling[cell2] = Block.point
+
+            point_tiling = Tiling(point_tiling)
+
+            new_cell1 = point_tiling.cell_map(cell1)
+            new_cell2 = point_tiling.cell_map(cell2)
+
+            containing_perms, avoiding_perms = point_tiling.basis_partitioning(point_tiling.total_points, basis)
+
+            if all( all( cell_info[new_cell1][2] < cell_info[new_cell2][2] for cell_info in cell_infos ) for cell_infos in avoiding_perms.values() ):
+                if not all( all( cell_info[new_cell1][2] < cell_info[new_cell2][2] for cell_info in cell_infos ) for cell_infos in containing_perms.values() ):
+                    inequalities[cell1].add(cell2)
+            if all( all( cell_info[new_cell1][2] > cell_info[new_cell2][2] for cell_info in cell_infos ) for cell_infos in avoiding_perms.values() ):
+                if not all( all( cell_info[new_cell1][2] > cell_info[new_cell2][2] for cell_info in cell_infos ) for cell_infos in containing_perms.values() ):
+                    inequalities[cell2].add(cell1)
+
+        smaller_than_col[col] = inequalities
+
+
+    # if not (smaller_than_row, smaller_than_col) == old_row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=basis_partitioning):
+    #     print("For the tiling")
+    #     print(tiling)
+    #     print("the old results were")
+    #     print( old_row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=basis_partitioning) )
+    #     print("and the new were")
+    #     print(smaller_than_row)
+    #     print(smaller_than_col)
+    #     print()
+    #     print("--------------------------")
+    #     print()
+    # assert( (smaller_than_row, smaller_than_col) == old_row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=basis_partitioning) )
+    return smaller_than_row, smaller_than_col
+
 
 def separations( inequalities, unprocessed_cells=None, current_cell=None, current_state=None ):
     '''This is a recursive function for generating the splittings of a row/column from the given inequalities
