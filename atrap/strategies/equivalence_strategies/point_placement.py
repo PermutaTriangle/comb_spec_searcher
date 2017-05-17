@@ -396,7 +396,6 @@ def all_unique_point_or_empty( tiling, cell ):
         if new_cell.i == cell.i:
             # same cell
             if new_cell.j == cell.j:
-                perm_class = new_block.perm_class
                 topmost_tiling_dict[cell] = Block.point
 
             # same column, but different row
