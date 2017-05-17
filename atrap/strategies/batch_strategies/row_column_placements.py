@@ -33,7 +33,7 @@ def all_row_placements(tiling, **kwargs):
                         bottommost_tiling_dicts[index][cell] = Block.point
                         topmost_tiling_dicts[index][cell] = Block.point
 
-                        if isinstance(block, PositiveClass):
+                        if isinstance(block, PositiveClass) and not block is Block.point:
                             perm_class = block.perm_class
                             bottommost_tiling_dicts[index][(cell.i - 0.5, cell.j + 0.5)] = perm_class
                             bottommost_tiling_dicts[index][(cell.i + 0.5, cell.j + 0.5)] = perm_class
@@ -90,7 +90,7 @@ def all_minimum_row_placements(tiling, basis, **kwargs):
 
                             bottommost_tiling_dicts[index][cell] = Block.point
 
-                            if isinstance(block, PositiveClass):
+                            if isinstance(block, PositiveClass) and not block is Block.point:
                                 perm_class = block.perm_class
                                 bottommost_tiling_dicts[index][(cell.i - 0.5, cell.j + 0.5)] = perm_class
                                 bottommost_tiling_dicts[index][(cell.i + 0.5, cell.j + 0.5)] = perm_class
@@ -139,7 +139,7 @@ def all_column_placements(tiling, **kwargs):
                         leftmost_tiling_dicts[index][cell] = Block.point
                         rightmost_tiling_dicts[index][cell] = Block.point
 
-                        if isinstance(block, PositiveClass):
+                        if isinstance(block, PositiveClass) and not block is Block.point:
                             perm_class = block.perm_class
                             leftmost_tiling_dicts[index][(cell.i + 0.5, cell.j + 0.5)] = perm_class
                             leftmost_tiling_dicts[index][(cell.i + 0.5, cell.j - 0.5)] = perm_class
@@ -196,7 +196,7 @@ def all_leftmost_column_placements(tiling, **kwargs):
 
                         leftmost_tiling_dicts[index][cell] = Block.point
 
-                        if isinstance(block, PositiveClass):
+                        if isinstance(block, PositiveClass) and block is Block.point:
                             perm_class = block.perm_class
                             leftmost_tiling_dicts[index][(cell.i + 0.5, cell.j + 0.5)] = perm_class
                             leftmost_tiling_dicts[index][(cell.i + 0.5, cell.j - 0.5)] = perm_class
