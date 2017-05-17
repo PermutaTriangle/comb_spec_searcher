@@ -55,14 +55,14 @@ def isolate_point_in_row(tiling, cell_to_be_isolated):
                 isolated_tiling_dict[ (cell.i, cell.j+0.5) ] = block
         isolated_tilings.append( Tiling(isolated_tiling_dict) )
 
-    print("Isolated the point at {} in its row on the tiling".format(cell_to_be_isolated))
-    print(tiling)
-    print("it gave")
-    for tiling in isolated_tilings:
-        print(tiling)
-        print()
-    print()
-    print("---------")
+    # print("Isolated the point at {} in its row on the tiling".format(cell_to_be_isolated))
+    # print(tiling)
+    # print("it gave")
+    # for tiling in isolated_tilings:
+    #     print(tiling)
+    #     print()
+    # print()
+    # print("---------")
     return BatchStrategy("Isolated the point at {} in its row".format(cell_to_be_isolated), isolated_tilings)
 
 
@@ -106,14 +106,14 @@ def isolate_point_in_column(tiling, cell_to_be_isolated):
                 isolated_tiling_dict[ (cell.i+0.5, cell.j) ] = block
         isolated_tilings.append( Tiling(isolated_tiling_dict) )
 
-    print("Isolated the point at {} in its column on the tiling".format(cell_to_be_isolated))
-    print(tiling)
-    print("it gave")
-    for tiling in isolated_tilings:
-        print(tiling)
-        print()
-    print()
-    print("---------")
+    # print("Isolated the point at {} in its column on the tiling".format(cell_to_be_isolated))
+    # print(tiling)
+    # print("it gave")
+    # for tiling in isolated_tilings:
+    #     print(tiling)
+    #     print()
+    # print()
+    # print("---------")
     return BatchStrategy("Isolated the point at {} in its column".format(cell_to_be_isolated), isolated_tilings)
 
 
