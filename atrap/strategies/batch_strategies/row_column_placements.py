@@ -196,7 +196,7 @@ def all_leftmost_column_placements(tiling, **kwargs):
 
                         leftmost_tiling_dicts[index][cell] = Block.point
 
-                        if isinstance(block, PositiveClass) and block is Block.point:
+                        if isinstance(block, PositiveClass) and not block is Block.point:
                             perm_class = block.perm_class
                             leftmost_tiling_dicts[index][(cell.i + 0.5, cell.j + 0.5)] = perm_class
                             leftmost_tiling_dicts[index][(cell.i + 0.5, cell.j - 0.5)] = perm_class
