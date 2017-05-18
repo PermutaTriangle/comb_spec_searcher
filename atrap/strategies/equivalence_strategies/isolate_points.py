@@ -8,15 +8,15 @@ def all_equivalent_point_isolations(tiling, **kwargs):
         if sum(1 for _, col_block in tiling.get_col(cell.i) if isinstance(col_block, PositiveClass)) == 1:
             # Cell ineligible because cell is not the sole non-class cell
             # in its respective col
-            yield isolate_cell_in_column(tiling, cell)
+            yield isolate_point_in_column(tiling, cell)
 
 
         if sum(1 for _, row_block in tiling.get_row(cell.j) if isinstance(row_block, PositiveClass)) == 1:
              # Cell ineligible because cell is not the sole non-class cell
              # in its respective row
-            yield isolate_cell_in_row(tiling, cell)
+            yield isolate_point_in_row(tiling, cell)
 
-def isolate_cell_in_column(tiling, cell_to_be_isolated):
+def isolate_point_in_column(tiling, cell_to_be_isolated):
     new_tiling_dict = {}
 
     for cell, block in tiling:
@@ -33,7 +33,7 @@ def isolate_cell_in_column(tiling, cell_to_be_isolated):
     return EquivalenceStrategy( "Isolating the point at {} in its column".format(cell), Tiling(new_tiling_dict))
 
 
-def isolate_cell_in_row(tiling, cell_to_be_isolated):
+def isolate_point_in_row(tiling, cell_to_be_isolated):
     new_tiling_dict = {}
 
     for cell, block in tiling:

@@ -49,8 +49,8 @@ def point_separation(tiling, **kwargs):
             # print("B:")
             # print(Tiling( bottommost_tiling_dict ))
 
-            yield EquivalenceStrategy( "Separting the topmost point from cell " + str(cell), Tiling( topmost_tiling_dict ))
-            yield EquivalenceStrategy( "Separting the bottommost point from cell " + str(cell), Tiling( bottommost_tiling_dict ))
+            yield EquivalenceStrategy( "Separating the topmost point from cell " + str(cell), Tiling( topmost_tiling_dict ))
+            yield EquivalenceStrategy( "Separating the bottommost point from cell " + str(cell), Tiling( bottommost_tiling_dict ))
 
         if hor_split:
             leftmost_tiling_dict[cell] = block.perm_class
