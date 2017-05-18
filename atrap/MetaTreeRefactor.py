@@ -22,6 +22,7 @@ from permuta.descriptors import Basis
 from permuta import PermSet
 
 from itertools import product
+from collections import deque
 
 import sys
 import traceback
@@ -96,41 +97,53 @@ class SiblingNode(set):
         '''We hopefully never get here'''
         return "they are on the same SiblingNode"
 
+
     def find_path(self, tiling, other_tiling):
-        '''Floyd-Warshall algorithm for shortest path'''
+        '''BFS for shortest path'''
         sibling_tilings = {}
         reverse_map = {}
+
         for or_node in self:
             n = len(sibling_tilings)
             sibling_tilings[or_node.tiling] = n
             reverse_map[n] = or_node.tiling
 
-        dist = [ [99999999 for i in range(len(sibling_tilings))] for j in range(len(sibling_tilings))]
-        nxt = [ [None for i in range(len(sibling_tilings))] for j in range(len(sibling_tilings))]
-        for key in self.explanations.keys():
-            u = sibling_tilings[key[0]]
-            v = sibling_tilings[key[1]]
-            dist[u][v] = 1
-            nxt[u][v] = v
-            dist[v][u] = 1
-            nxt[v][u] = u
+        adjacency_list = [ [] for i in range(len(self)) ]
+        for (t1,t2) in self.explanations:
+            u = sibling_tilings[t1]
+            v = sibling_tilings[t2]
+            adjacency_list[u].append(v)
+            adjacency_list[v].append(u)
 
-        for k in range(len(sibling_tilings)):
-            for i in range(len(sibling_tilings)):
-                for j in range(len(sibling_tilings)):
-                    if dist[i][j] > dist[i][k] + dist[k][j]:
-                        dist[i][j] = dist[i][k] + dist[k][j]
-                        nxt[i][j] = nxt[i][k]
+        dequeue = deque()
 
-        u = sibling_tilings[tiling]
-        v = sibling_tilings[other_tiling]
-        if nxt[u][v] is None:
-            return []
-        path = [u]
-        while u != v:
-            u = nxt[u][v]
-            path.append(u)
-        return [reverse_map[x] for x in path]
+        start = sibling_tilings[tiling]
+        end = sibling_tilings[other_tiling]
+
+        dequeue.append(start)
+        visited = [ False for i in range(len(self)) ]
+        neighbour = [ None for i in range(len(self)) ]
+        while len(dequeue) > 0:
+            u = dequeue.popleft()
+            if u == end:
+                break
+            if visited[u]:
+                continue
+            visited[u] = True
+
+            for v in adjacency_list[u]:
+                if not visited[v]:
+                    dequeue.append(v)
+                    neighbour[v] = u
+
+        path = [reverse_map[end]]
+        while neighbour[end] is not None:
+            t = reverse_map[neighbour[end]]
+            path.append(t)
+            end = neighbour[end]
+
+        return path[::-1]
+
 
     def __eq__(self, other):
         for x in self:
