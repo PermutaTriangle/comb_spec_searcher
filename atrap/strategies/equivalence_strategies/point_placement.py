@@ -49,8 +49,8 @@ def point_separation(tiling, **kwargs):
             # print("B:")
             # print(Tiling( bottommost_tiling_dict ))
 
-            yield EquivalenceStrategy( "Separting the topmost point from cell " + str(cell), Tiling( topmost_tiling_dict ))
-            yield EquivalenceStrategy( "Separting the bottommost point from cell " + str(cell), Tiling( bottommost_tiling_dict ))
+            yield EquivalenceStrategy( "Separating the topmost point from cell " + str(cell), Tiling( topmost_tiling_dict ))
+            yield EquivalenceStrategy( "Separating the bottommost point from cell " + str(cell), Tiling( bottommost_tiling_dict ))
 
         if hor_split:
             leftmost_tiling_dict[cell] = block.perm_class
@@ -396,7 +396,6 @@ def all_unique_point_or_empty( tiling, cell ):
         if new_cell.i == cell.i:
             # same cell
             if new_cell.j == cell.j:
-                perm_class = new_block.perm_class
                 topmost_tiling_dict[cell] = Block.point
 
             # same column, but different row

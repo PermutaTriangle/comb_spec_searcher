@@ -55,7 +55,7 @@ def cells_of_occurrences_by_perms(tiling, basis, basis_partitioning=None):
                 print(cell_infos)
                 print(tiling)
                 print("OH NO! You tried a recursive strategy on a tiling that creates duplicates :(")
-            assert len(cell_infos) == 1
+                assert len(cell_infos) == 1
             for cell_info in cell_infos:
                 cell_perm = [ 0 for i in range(len(perm))]
                 for cell in cell_info.keys():
