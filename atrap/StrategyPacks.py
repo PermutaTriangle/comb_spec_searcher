@@ -10,11 +10,88 @@ class StrategyPacks(object):
         [splittings],
         [subset_verified, is_empty]]
 
+    minimum_row_placements = [
+        [all_cell_insertions, all_minimum_row_placements],
+        [all_equivalent_minimum_row_placements],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [components, reversibly_deletable_cells],
+        [subset_verified, is_empty]]
+
+    minimum_row_placements_and_splittings = [
+        [all_cell_insertions, all_minimum_row_placements],
+        [all_equivalent_minimum_row_placements],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [splittings],
+        [subset_verified, is_empty]]
+
+    minimum_row_placements_and_point_separation = [
+        [all_cell_insertions, all_minimum_row_placements],
+        [all_equivalent_minimum_row_placements, point_separation],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [components, reversibly_deletable_cells],
+        [subset_verified, is_empty]]
+
+    minimum_row_placements_and_splittings_and_point_separation = [
+        [all_cell_insertions, all_minimum_row_placements],
+        [all_equivalent_minimum_row_placements, point_separation],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [splittings],
+        [subset_verified, is_empty]]
+
     row_placements = [
         [all_cell_insertions, all_row_placements],
         [all_equivalent_row_placements],
         [empty_cell_inferral, row_and_column_separation, subclass_inferral],
         [components, reversibly_deletable_cells],
+        [subset_verified, is_empty]]
+
+    row_placements_and_splittings = [
+        [all_cell_insertions, all_row_placements],
+        [all_equivalent_row_placements],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [splittings],
+        [subset_verified, is_empty]]
+
+    row_placements_and_point_separation = [
+        [all_cell_insertions, all_row_placements],
+        [all_equivalent_row_placements, point_separation],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [components, reversibly_deletable_cells],
+        [subset_verified, is_empty]]
+
+    row_placements_and_splittings_and_point_separation = [
+        [all_cell_insertions, all_row_placements],
+        [all_equivalent_row_placements, point_separation],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [splittings],
+        [subset_verified, is_empty]]
+
+    left_column_placements = [
+        [all_cell_insertions, all_leftmost_column_placements],
+        [all_equivalent_leftmost_column_placements],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [components, reversibly_deletable_cells],
+        [subset_verified, is_empty]]
+
+    left_column_placements_and_splittings = [
+        [all_cell_insertions, all_leftmost_column_placements],
+        [all_equivalent_leftmost_column_placements],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [splittings],
+        [subset_verified, is_empty]]
+
+    left_column_placements_and_point_separation = [
+        [all_cell_insertions, all_leftmost_column_placements],
+        [all_equivalent_leftmost_column_placements, point_separation],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [components, reversibly_deletable_cells],
+        [subset_verified, is_empty]]
+
+    left_column_placements_and_splittings_and_point_separation = [
+        [all_cell_insertions, all_leftmost_column_placements],
+        [all_equivalent_leftmost_column_placements, point_separation],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [splittings],
         [subset_verified, is_empty]]
 
     column_placements = [
@@ -24,6 +101,27 @@ class StrategyPacks(object):
         [components, reversibly_deletable_cells],
         [subset_verified, is_empty]]
 
+    column_placements_and_splittings = [
+        [all_cell_insertions, all_column_placements],
+        [all_equivalent_column_placements],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [splittings],
+        [subset_verified, is_empty]]
+
+    column_placements_and_point_separation = [
+        [all_cell_insertions, all_column_placements],
+        [all_equivalent_column_placements, point_separation],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [components, reversibly_deletable_cells],
+        [subset_verified, is_empty]]
+
+    column_placements_and_splittings_and_point_separation = [
+        [all_cell_insertions, all_column_placements],
+        [all_equivalent_column_placements, point_separation],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [splittings],
+        [subset_verified, is_empty]]
+
     row_and_column_placements = [
         [all_cell_insertions, all_row_placements, all_column_placements],
         [all_equivalent_row_placements, all_equivalent_column_placements],
@@ -31,11 +129,39 @@ class StrategyPacks(object):
         [components, reversibly_deletable_cells],
         [subset_verified, is_empty]]
 
+    row_and_column_placements_and_splittings = [
+        [all_cell_insertions, all_row_placements, all_column_placements],
+        [all_equivalent_row_placements, all_equivalent_column_placements],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [splittings],
+        [subset_verified, is_empty]]
+
+    row_and_column_placements_and_point_separation = [
+        [all_cell_insertions, all_row_placements, all_column_placements],
+        [all_equivalent_row_placements, all_equivalent_column_placements, point_separation],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [components, reversibly_deletable_cells],
+        [subset_verified, is_empty]]
+
+    row_and_column_placements_and_splittings_and_point_separation = [
+        [all_cell_insertions, all_row_placements, all_column_placements],
+        [all_equivalent_row_placements, all_equivalent_column_placements, point_separation],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [splittings],
+        [subset_verified, is_empty]]
+
     point_separation_and_isolation = [
         [all_cell_insertions, all_point_isolations],
         [point_separation, all_equivalent_point_isolations],
         [empty_cell_inferral, row_and_column_separation, subclass_inferral],
         [components, reversibly_deletable_cells],
+        [subset_verified, is_empty]]
+
+    point_separation_and_isolation_and_splittings = [
+        [all_cell_insertions, all_point_isolations],
+        [point_separation, all_equivalent_point_isolations],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [splittings],
         [subset_verified, is_empty]]
 
     finite = [
