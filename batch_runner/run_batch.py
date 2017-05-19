@@ -90,7 +90,7 @@ for basis in bases:
         while True:
             time_remaining = end_time - time.time()
             mtree.do_level(max_time = time_remaining)
-            if time.time() > end_time:
+            if time.time() > end_time or mtree.has_proof_tree():
                 break
 
         with open( task, "a" ) as f:
@@ -124,6 +124,7 @@ for basis in bases:
             print("",file=f)
 
             if mtree.has_proof_tree():
+                proof_tree = mtree.find_proof_tree()
                 print("A proof tree was found in {} seconds".format(total_time), file=f)
                 print("",file=f)
                 print("Human readable:", file=f)
