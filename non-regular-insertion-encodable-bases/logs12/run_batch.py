@@ -5,34 +5,36 @@ from atrap.ProofTree import ProofTree
 import time
 
 filename = 'length12' # the file with bases to be processed
+# filename = 'length12afterround1'
 
 # Will try each strategy pack in order.
-strategy_packs = [ StrategyPacks.minimum_row_placements,
-                   StrategyPacks.minimum_row_placements_and_splittings,
-                   StrategyPacks.minimum_row_placements_and_point_separation,
-                   StrategyPacks.minimum_row_placements_and_splittings_and_point_separation,
-                   StrategyPacks.row_placements,
-                   StrategyPacks.row_placements_and_splittings,
-                   StrategyPacks.row_placements_and_point_separation,
-                   StrategyPacks.row_placements_and_splittings_and_point_separation,
-                   StrategyPacks.left_column_placements,
-                   StrategyPacks.left_column_placements_and_splittings,
-                   StrategyPacks.left_column_placements_and_point_separation,
-                   StrategyPacks.left_column_placements_and_splittings_and_point_separation,
-                   StrategyPacks.column_placements,
-                   StrategyPacks.column_placements_and_splittings,
-                   StrategyPacks.column_placements_and_point_separation,
-                   StrategyPacks.column_placements_and_splittings_and_point_separation,
-                   StrategyPacks.row_and_column_placements,
-                   StrategyPacks.row_and_column_placements_and_splittings,
-                   StrategyPacks.row_and_column_placements_and_point_separation,
-                   StrategyPacks.row_and_column_placements_and_splittings_and_point_separation,
-                   StrategyPacks.point_separation_and_isolation,
-                   StrategyPacks.point_separation_and_isolation_and_splittings,
+strategy_packs = [  StrategyPacks.row_and_column_placements,
+                    StrategyPacks.row_and_column_placements_and_splittings,
+                    StrategyPacks.row_and_column_placements_and_point_separation,
+                    StrategyPacks.row_and_column_placements_and_splittings_and_point_separation,
+                    StrategyPacks.point_separation_and_isolation,
+                    StrategyPacks.point_separation_and_isolation_and_splittings,
+                    StrategyPacks.row_placements,
+                    StrategyPacks.row_placements_and_splittings,
+                    StrategyPacks.row_placements_and_point_separation,
+                    StrategyPacks.row_placements_and_splittings_and_point_separation,
+                    StrategyPacks.minimum_row_placements,
+                    StrategyPacks.minimum_row_placements_and_splittings,
+                    StrategyPacks.minimum_row_placements_and_point_separation,
+                    StrategyPacks.minimum_row_placements_and_splittings_and_point_separation,
+                    StrategyPacks.column_placements,
+                    StrategyPacks.column_placements_and_splittings,
+                    StrategyPacks.column_placements_and_point_separation,
+                    StrategyPacks.column_placements_and_splittings_and_point_separation,
+                    StrategyPacks.left_column_placements,
+                    StrategyPacks.left_column_placements_and_splittings,
+                    StrategyPacks.left_column_placements_and_point_separation,
+                    StrategyPacks.left_column_placements_and_splittings_and_point_separation,
                  ]
 
 
-max_times = 5 # seconds for each strategy pack (must be integer)
+max_times = 30 # seconds for each strategy pack (must be integer)
+# max_times = 60
 # max_times = [ 5, 6, 7, 8, 9, 10] # seconds for corresponding strategy pack
 
 def perm_to_str(perm):
@@ -87,6 +89,7 @@ with open(filename) as f:
 
 for basis in bases:
     task = basis_to_str(basis)
+    no_proof_tree_found = True
 
     with open(task, "w") as f:
         print(task, file=f)
@@ -116,12 +119,12 @@ for basis in bases:
                 print('Ran out of time, without finding a proof tree')
                 break
 
-        with open( task, "a" ) as f:
+        with open(task, "a" ) as f:
             print( "===========================================", file=f)
             total_time = int( time.time() - start_time )
             print("Log created", time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()),file=f)
             print("",file=f)
-            print("Maximum depth searched was {}".format(mtree.depth_searched), file=f)
+            print("Maximum depth fully searched was {}".format(mtree.depth_searched), file=f)
             print("",file=f)
             print('Maximum time set at {} seconds'.format(str(max_time)), file=f)
             print("",file=f)
@@ -137,8 +140,7 @@ for basis in bases:
             print("There were {} inferral cache hits and {} partitioning cache hits.".format(mtree.inferral_cache_hits, mtree.partitioning_cache_hits),file=f)
             print("The partitioning cache had {} tilings in it right now.".format( len(mtree._basis_partitioning_cache) ) ,file=f)
             print("The inferral cache has {} tilings in it right now.".format( len(mtree._inferral_cache) ) ,file=f)
-            print("There were {} tilings in the search tree.".format( len(mtree.tiling_cache)),file=f)
-            print("There were {} verified tilings.".format(count_verified_tilings(mtree)), file=f)
+            print("There were {} tilings of which {} are verified.".format( len(mtree.tiling_cache), count_verified_tilings(mtree)),file=f)
             print("There were {} SiblingNodes of which {} are verified.".format(*count_sibling_nodes(mtree)),file=f)
             print("",file=f)
             for function_name, calls in mtree._partitioning_calls.items():
@@ -160,7 +162,12 @@ for basis in bases:
                 print("", file=f)
                 print(proof_tree.to_json(sort_keys=True), file=f)
 
+                no_proof_tree_found = False
                 break
             else:
                 print("No proof tree was found after {} seconds".format(total_time),file=f)
                 print("",file=f)
+
+    if no_proof_tree_found:
+        with open(task, "a" ) as f:
+            print('Unable to find a proof tree within the time limits', file=f)

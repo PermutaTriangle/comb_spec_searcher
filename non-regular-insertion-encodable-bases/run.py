@@ -33,7 +33,7 @@ def perm_to_str(perm):
 def perms_to_str(perms):
     return "_".join(perm_to_str(perm) for perm in perms)
 
-length_to_process = '6'
+length_to_process = '3'
 
 # # 1
 # strat_pack = standard_strategies_w_left_col
