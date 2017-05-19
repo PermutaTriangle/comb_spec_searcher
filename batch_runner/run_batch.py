@@ -17,9 +17,6 @@ strategy_packs = [ StrategyPacks.row_placements,
 max_times = 100 # seconds for each strategy pack (must be integer)
 # max_times = [ 5, 6, 7, 8, 9, 10] # seconds for corresponding strategy pack
 
-filename = 'length6'
-
-
 def perm_to_str(perm):
     return "".join([str(i) for i in list(perm)])
 
@@ -70,13 +67,12 @@ with open(filename) as f:
     content = f.readlines()
     bases = [ str_to_basis( x.strip() ) for x in content]
 
-
 for basis in bases:
     task = basis_to_str(basis)
 
     with open(task, "w") as f:
         print(task, file=f)
-        print("",file=f)
+        print("", file=f)
 
     print('Now processing {}'.format(task))
     for strategy_pack, max_time, attempt in zip(strategy_packs, max_times, range(len(strategy_packs))):
