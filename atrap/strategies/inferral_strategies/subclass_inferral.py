@@ -49,11 +49,14 @@ def subclass_inferral(tiling, basis, **kwargs):
                 if isinstance(block, PositiveClass):
                     point_tiling_dict[cell] = Block.point
         '''We updated the inferred_tiling'''
-        if Perm( (0,) ) in original_basis:
-            continue
         if isinstance(block, PositiveClass):
-            new_block = PositiveClass(PermSet.avoiding(original_basis))
+            if Perm( (0,) ) in original_basis:
+                new_block = Block.point
+            else:
+                new_block = PositiveClass(PermSet.avoiding(original_basis))
         else:
+            if Perm( (0,) ) in original_basis:
+                continue
             new_block = PermSet.avoiding(original_basis)
 
         inferred_tiling_dict[cell] = new_block
