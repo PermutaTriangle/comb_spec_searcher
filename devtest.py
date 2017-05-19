@@ -17,7 +17,7 @@ standard_strategies_w_all_row_cols = [ [all_cell_insertions, all_row_placements,
 standard_strategies_w_all_row_cols_and_point_separation = [ [all_cell_insertions, all_row_placements, all_column_placements, all_point_isolations], [point_separation, all_equivalent_point_isolations, all_equivalent_row_placements, all_equivalent_column_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
 
 standard_strategies_w_point_separation_and_isolation = [ [all_cell_insertions, all_point_isolations], [point_separation, all_equivalent_point_isolations], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
-
+enum_sch = [ [all_cell_insertions, all_point_isolations], [point_separation, all_equivalent_point_isolations], [empty_cell_inferral], [reversibly_deletable_cells], [subset_verified, is_empty] ]
 
 # finite_strategies = [ [all_cell_insertions, all_row_placements], [all_equivalent_row_placements], [empty_cell_inferral, subclass_inferral], [], [subset_verified, is_empty] ]
 finite_strategies_w_min_row = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [], [subset_verified, is_empty] ]
@@ -60,7 +60,8 @@ basic = [ [all_cell_insertions], [all_maximum_point_placements], [row_and_column
 # task = '012_3210'
 # task = '0'
 #
-task = '0123'
+# task = '0123'
+# task = '0213'
 # task = '012'
 
 # task = '021'
@@ -75,14 +76,20 @@ task = '0123'
 
 # task = "1302_2031"
 
-patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
+# task = '0231_1230_3012'
+
+# task = '0231_0321'
 
 # patts = [ Perm([ int(c) - 1 for c in p ]) for p in task.split('_') ]
 
 #
 # mtree = MetaTree( patts, *mimic_regular_insertion_encoding )
+standard_strategies_w_left_col = [ [all_cell_insertions, all_leftmost_column_placements], [all_equivalent_leftmost_column_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
+task = '0123_0132_0213_0231_0312_1023_1203_1230_2013_2301_3012'
+patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 
-strategies = standard_strategies_w_point_separation_and_isolation
+strategies = standard_strategies_w_left_col
+# strategies = enum_sch
 
 mtree = MetaTree( patts, *strategies )
 
@@ -112,7 +119,7 @@ def count_sibling_nodes(mt):
 
 #mtree.do_level()
 start = time()
-max_time = 100
+max_time = 500
 while not mtree.has_proof_tree():
     print("===============================")
     mtree.do_level(max_time=max_time)
@@ -127,7 +134,7 @@ while not mtree.has_proof_tree():
     for function_name, calls in mtree._partitioning_calls.items():
         print("The function {} called the partitioning cache *{}* times, ({} originating)".format(function_name, calls[0], calls[1]))
     print("There were {} cache misses".format(mtree._cache_misses))
-    if mtree.depth_searched == 6 or mtree.timed_out:# or time() - start > max_time:
+    if mtree.depth_searched == 8 or mtree.timed_out:# or time() - start > max_time:
         break
 
 if mtree.has_proof_tree():
