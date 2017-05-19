@@ -69,6 +69,7 @@ with open(filename) as f:
 
 for basis in bases:
     task = basis_to_str(basis)
+    no_proof_tree_found = True
 
     with open(task, "w") as f:
         print(task, file=f)
@@ -98,12 +99,12 @@ for basis in bases:
                 print('Ran out of time, without finding a proof tree')
                 break
 
-        with open( task, "a" ) as f:
+        with open(task, "a" ) as f:
             print( "===========================================", file=f)
             total_time = int( time.time() - start_time )
             print("Log created", time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()),file=f)
             print("",file=f)
-            print("Maximum depth searched was {}".format(mtree.depth_searched), file=f)
+            print("Maximum depth fully searched was {}".format(mtree.depth_searched), file=f)
             print("",file=f)
             print('Maximum time set at {} seconds'.format(str(max_time)), file=f)
             print("",file=f)
@@ -119,8 +120,7 @@ for basis in bases:
             print("There were {} inferral cache hits and {} partitioning cache hits.".format(mtree.inferral_cache_hits, mtree.partitioning_cache_hits),file=f)
             print("The partitioning cache had {} tilings in it right now.".format( len(mtree._basis_partitioning_cache) ) ,file=f)
             print("The inferral cache has {} tilings in it right now.".format( len(mtree._inferral_cache) ) ,file=f)
-            print("There were {} tilings in the search tree.".format( len(mtree.tiling_cache)),file=f)
-            print("There were {} verified tilings.".format(count_verified_tilings(mtree)), file=f)
+            print("There were {} tilings of which {} are verified.".format( len(mtree.tiling_cache), count_verified_tilings(mtree)),file=f)
             print("There were {} SiblingNodes of which {} are verified.".format(*count_sibling_nodes(mtree)),file=f)
             print("",file=f)
             for function_name, calls in mtree._partitioning_calls.items():
@@ -142,7 +142,12 @@ for basis in bases:
                 print("", file=f)
                 print(proof_tree.to_json(sort_keys=True), file=f)
 
+                no_proof_tree_found = False
                 break
             else:
                 print("No proof tree was found after {} seconds".format(total_time),file=f)
                 print("",file=f)
+
+    if no_proof_tree_found:
+        with open(task, "a" ) as f:
+            print('Unable to find a proof tree within the time limits', file=f)
