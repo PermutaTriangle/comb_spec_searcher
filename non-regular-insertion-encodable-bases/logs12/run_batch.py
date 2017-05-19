@@ -4,17 +4,35 @@ from atrap.ProofTree import ProofTree
 
 import time
 
-filename = 'length11' # the file with bases to be processed
+filename = 'length12' # the file with bases to be processed
 
-strategy_packs = [ StrategyPacks.row_placements,
+# Will try each strategy pack in order.
+strategy_packs = [ StrategyPacks.minimum_row_placements,
+                   StrategyPacks.minimum_row_placements_and_splittings,
+                   StrategyPacks.minimum_row_placements_and_point_separation,
+                   StrategyPacks.minimum_row_placements_and_splittings_and_point_separation,
+                   StrategyPacks.row_placements,
+                   StrategyPacks.row_placements_and_splittings,
+                   StrategyPacks.row_placements_and_point_separation,
+                   StrategyPacks.row_placements_and_splittings_and_point_separation,
+                   StrategyPacks.left_column_placements,
+                   StrategyPacks.left_column_placements_and_splittings,
+                   StrategyPacks.left_column_placements_and_point_separation,
+                   StrategyPacks.left_column_placements_and_splittings_and_point_separation,
                    StrategyPacks.column_placements,
+                   StrategyPacks.column_placements_and_splittings,
+                   StrategyPacks.column_placements_and_point_separation,
+                   StrategyPacks.column_placements_and_splittings_and_point_separation,
                    StrategyPacks.row_and_column_placements,
+                   StrategyPacks.row_and_column_placements_and_splittings,
+                   StrategyPacks.row_and_column_placements_and_point_separation,
+                   StrategyPacks.row_and_column_placements_and_splittings_and_point_separation,
                    StrategyPacks.point_separation_and_isolation,
-                   StrategyPacks.row_and_column_placements_point_separation,
-                   StrategyPacks.all_strategies ] # Will try each strategy pack in order.
+                   StrategyPacks.point_separation_and_isolation_and_splittings,
+                 ]
 
 
-max_times = 100 # seconds for each strategy pack (must be integer)
+max_times = 5 # seconds for each strategy pack (must be integer)
 # max_times = [ 5, 6, 7, 8, 9, 10] # seconds for corresponding strategy pack
 
 def perm_to_str(perm):
