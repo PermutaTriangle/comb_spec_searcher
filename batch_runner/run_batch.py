@@ -4,7 +4,7 @@ from atrap.ProofTree import ProofTree
 
 import time
 
-filename = 'length6' # the file with bases to be processed
+filename = 'length11' # the file with bases to be processed
 
 strategy_packs = [ StrategyPacks.row_placements,
                    StrategyPacks.column_placements,
@@ -74,10 +74,16 @@ for basis in bases:
         print(task, file=f)
         print("", file=f)
 
+    print('-----------------------------------------------------------------')
     print('Now processing {}'.format(task))
     for strategy_pack, max_time, attempt in zip(strategy_packs, max_times, range(len(strategy_packs))):
-        print("Attempt {}".format(attempt))
-
+        print()
+        print("Attempt {} with the following strategies:".format(attempt))
+        print("Batch: {}".format( strategies_to_str(strategy_pack[0])))
+        print("Equivalent: {}".format( strategies_to_str(strategy_pack[1])))
+        print("Inferral: {}".format( strategies_to_str(strategy_pack[2])))
+        print("Recursive: {}".format( strategies_to_str(strategy_pack[3])))
+        print("Verification: {}".format( strategies_to_str(strategy_pack[4])) )
         mtree = MetaTree( basis, *strategy_pack )
 
         start_time = time.time()
@@ -86,7 +92,11 @@ for basis in bases:
         while True:
             time_remaining = end_time - time.time()
             mtree.do_level(max_time = time_remaining)
-            if time.time() > end_time or mtree.has_proof_tree():
+            if time.time() > end_time:
+                print('Ran out of time, without finding a proof tree')
+                break
+            if mtree.has_proof_tree():
+                print('Found a proof tree!')
                 break
 
         with open( task, "a" ) as f:
@@ -100,7 +110,7 @@ for basis in bases:
             print("",file=f)
             print("Total time taken was {} seconds".format( total_time ),file=f)
             print("",file=f)
-            print("The strategies aplied were:",file=f)
+            print("The strategies applied were:",file=f)
             print("Batch: {}".format( strategies_to_str(strategy_pack[0])), file=f )
             print("Equivalent: {}".format( strategies_to_str(strategy_pack[1])), file=f )
             print("Inferral: {}".format( strategies_to_str(strategy_pack[2])), file=f )
