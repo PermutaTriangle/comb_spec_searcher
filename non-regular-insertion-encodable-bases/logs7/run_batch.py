@@ -4,8 +4,10 @@ from atrap.ProofTree import ProofTree
 
 import time
 
-filename = 'length7' # the file with bases to be processed
+# filename = 'length7' # the file with bases to be processed
 # filename = 'length7afterround1'
+# filename = 'length7afterround2'
+filename = 'length7afterround3'
 
 # Will try each strategy pack in order.
 strategy_packs = [  StrategyPacks.row_and_column_placements,
@@ -33,8 +35,10 @@ strategy_packs = [  StrategyPacks.row_and_column_placements,
                  ]
 
 
-max_times = 30 # seconds for each strategy pack (must be integer)
+# max_times = 30 # seconds for each strategy pack (must be integer)
 # max_times = 60
+# max_times = 120
+max_times = 600
 # max_times = [ 5, 6, 7, 8, 9, 10] # seconds for corresponding strategy pack
 
 def perm_to_str(perm):
