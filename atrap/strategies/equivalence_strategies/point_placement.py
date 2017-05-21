@@ -291,7 +291,7 @@ def all_minimum_increasing( tiling, cell ):
             if new_cell.j == cell.j:
                 perm_class = new_block.perm_class
 
-                bottommost_tiling_dict[(cell.i + 0.5, cell.j + 0.5)] = Block.decreasing
+                bottommost_tiling_dict[(cell.i + 0.5, cell.j + 0.5)] = Block.increasing
                 bottommost_tiling_dict[cell] = Block.point
 
             # same column, but different row
