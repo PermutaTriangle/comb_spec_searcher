@@ -3,7 +3,12 @@ import sys
 #from permuta import Perm, PermSet
 
 from grids import JsonAble, Tiling, Cell
-
+from collections import Counter
+from functools import reduce
+from operator import add, mul
+from .Helpers import get_tiling_genf, taylor_expand
+from sympy import Function, Eq, solve
+from sympy.abc import x
 
 __all__ = ["ProofTree", "ProofTreeNode"]
 
@@ -70,6 +75,105 @@ class ProofTree(JsonAble):
         attr_dict = {}
         attr_dict["root"] = self.root._get_attr_dict()
         return attr_dict
+   
+    def get_funcs(self):
+        """Creates a dictionary mapping from identifiers to function names"""
+        funcs = {}
+        self._get_funcs(self.root, funcs)
+        return funcs
+
+    def _get_funcs(self, root, funcs):
+        if root.identifier not in funcs:
+            funcs[root.identifier] = Function("F_"+str(root.identifier))
+        for child in root.children:
+            self._get_funcs(child, funcs)
+
+    def get_equations(self, funcs):
+        return self._get_equations(self.root, funcs)
+
+    def _get_equations(self, root, funcs):
+        lhs = funcs[root.identifier](x)
+        rhs = 0
+        if root.formal_step == "recurse":
+            return []
+        if root.recurse:
+            rhs = reduce(mul, [funcs[child.identifier](x) for child in root.children], 1)
+        elif root.children:
+            rhs = reduce(add, [funcs[child.identifier](x) for child in root.children], 0)
+        elif "contains no" in root.formal_step:
+            rhs = 0
+        else:
+            rhs = get_tiling_genf(root.out_tiling)
+        return reduce(add, [self._get_equations(child, funcs) for child in root.children], [Eq(lhs, rhs)])
+
+    def get_genf(self):
+        funcs = self.get_funcs()
+        f = funcs[self.root.identifier]
+        eqs = self.get_equations(funcs)
+        solutions = solve(eqs, tuple([eq.lhs for eq in eqs]), dict=True)
+        if solutions:
+            avoid = self.root.in_tiling[Cell(i=0,j=0)]
+            coeffs = [len(avoid.of_length(i)) for i in range(11)]
+            for solution in solutions:
+                expansion = taylor_expand(solution[f(x)])
+                if coeffs == expansion:
+                    return solution[f(x)]
+            raise RuntimeError("Incorrect generating function")
+        raise RuntimeError("No solution was found for this tree")
+
+    def get_recursion_type(self):
+        return self._get_recursion_type(self.root)
+
+    def _get_recursion_type(self, root):
+        res = 0
+        if root.recurse:
+            mixing = False
+            x = [{c.i for c in dic.values()} for dic in root.recurse]
+            y = [{c.j for c in dic.values()} for dic in root.recurse]
+            simple = False
+            for i in range(len(root.recurse)):
+                if root.children[i].formal_step == "recurse":
+                    simple = True
+                    for j in range(len(root.recurse)):
+                        if i != j:
+                            if len(x[i] & x[j]) > 0 or len(y[i] & y[j]) > 0:
+                                mixing = True
+            if mixing:
+                return 3
+            if simple:
+                res = 2
+            else:
+                res = 1
+        if root.children:
+            res = max(res, max(self._get_recursion_type(child) for child in root.children))
+        return res
+
+    def get_recursion_count(self):
+        return self._get_recursion_count(self.root)
+
+    def _get_recursion_count(self, root):
+        cnt = Counter()
+        if root.recurse:
+            found = False
+            x = [{c.i for c in dic.values()} for dic in root.recurse]
+            y = [{c.j for c in dic.values()} for dic in root.recurse]
+            simple = False
+            for i in range(len(root.recurse)):
+                if root.children[i].formal_step == "recurse":
+                    simple = True
+                    for j in range(len(root.recurse)):
+                        if i != j:
+                            if len(x[i] & x[j]) > 0 or len(y[i] & y[j]) > 0:
+                                found = True
+            if found:
+                cnt[3] += 1
+            elif simple:
+                cnt[2] += 1
+            else:
+                cnt[1] += 1
+        if obj["children"]:
+            cnt = reduce(add, (self._get_recursion_count(child) for child in root.children), cnt)
+        return cnt 
 
     def pretty_print(self, file=sys.stdout):
         legend = [["label counter:", 0]]
