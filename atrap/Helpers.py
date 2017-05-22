@@ -4,13 +4,14 @@ from grids import Tiling, Factor, Block, PositiveClass, lex_min
 from permuta import Av
 from functools import reduce
 from operator import add, mul
+from math import factorial
 
 from pymongo import MongoClient
 mongo = MongoClient('mongodb://webapp:c73f12a3@tagl.is:27017/permsdb')
 
 __all__ = ["get_tiling_genf", "genf_from_db", "factor_from_db", "permeval", "taylor_expand"]
 
-def get_tiling_genf(tiling, identifier):
+def get_tiling_genf(tiling, identifier, inp_set, root_func):
     factorEqs = []
     for factor in tiling.find_factors():
         eq = factor_from_db(factor)
@@ -23,6 +24,9 @@ def get_tiling_genf(tiling, identifier):
         for k, v in factor.factor.items():
             w = v if v == Block.point else (Av(v.basis) if isinstance(v, PositiveClass) else v)
             if len(factor) == 1:
+                if w == inp_set:
+                    factorEqs.append(root_func - (1 if isinstance(v, PositiveClass) else 0))
+                    break
                 ext_genf = genf_from_db(v)
                 if ext_genf == None:
                     raise RuntimeError("Cannot find generating function for " + str(identifier) + " because generating function for " + repr(v) + " is unknown")

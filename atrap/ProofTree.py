@@ -88,10 +88,10 @@ class ProofTree(JsonAble):
         for child in root.children:
             self._get_funcs(child, funcs)
 
-    def get_equations(self, funcs):
-        return self._get_equations(self.root, funcs)
+    def get_equations(self, funcs, avoid):
+        return self._get_equations(self.root, funcs, avoid)
 
-    def _get_equations(self, root, funcs):
+    def _get_equations(self, root, funcs, avoid):
         lhs = funcs[root.identifier](x)
         rhs = 0
         if root.formal_step == "recurse":
@@ -103,18 +103,18 @@ class ProofTree(JsonAble):
         elif "contains no" in root.formal_step:
             rhs = 0
         else:
-            rhs = get_tiling_genf(root.out_tiling, root.identifier)
-        return reduce(add, [self._get_equations(child, funcs) for child in root.children], [Eq(lhs, rhs)])
+            rhs = get_tiling_genf(root.out_tiling, root.identifier, avoid, funcs[self.root.identifier](x))
+        return reduce(add, [self._get_equations(child, funcs, avoid) for child in root.children], [Eq(lhs, rhs)])
 
     def get_genf(self):
         if self.get_recursion_type() > 2:
             raise RuntimeError("Can not find generating function, due to interleaving decomposition. ")
         funcs = self.get_funcs()
         f = funcs[self.root.identifier]
-        eqs = self.get_equations(funcs)
+        avoid = self.root.in_tiling[Cell(i=0,j=0)]
+        eqs = self.get_equations(funcs, avoid)
         solutions = solve(eqs, tuple([eq.lhs for eq in eqs]), dict=True)
         if solutions:
-            avoid = self.root.in_tiling[Cell(i=0,j=0)]
             coeffs = [len(avoid.of_length(i)) for i in range(11)]
             for solution in solutions:
                 expansion = taylor_expand(solution[f(x)])
