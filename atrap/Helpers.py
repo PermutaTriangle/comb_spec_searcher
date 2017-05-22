@@ -7,7 +7,7 @@ from operator import add, mul
 from math import factorial
 
 from pymongo import MongoClient
-mongo = MongoClient('mongodb://webapp:c73f12a3@tagl.is:27017/permsdb')
+mongo = MongoClient('mongodb://webapp:c73f12a3@permpal.ru.is:27017/permsdb')
 
 __all__ = ["get_tiling_genf", "genf_from_db", "factor_from_db", "permeval", "taylor_expand"]
 
