@@ -1,6 +1,7 @@
 import sys
 
-#from permuta import Perm, PermSet
+from permuta import Av
+from permuta.permutils import lex_min
 
 from grids import JsonAble, Tiling, Cell
 from collections import Counter
@@ -112,6 +113,7 @@ class ProofTree(JsonAble):
         funcs = self.get_funcs()
         f = funcs[self.root.identifier]
         avoid = self.root.in_tiling[Cell(i=0,j=0)]
+        avoid = Av(lex_min(list(avoid.basis)))
         eqs = self.get_equations(funcs, avoid)
         solutions = solve(eqs, tuple([eq.lhs for eq in eqs]), dict=True)
         if solutions:

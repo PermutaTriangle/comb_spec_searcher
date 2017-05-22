@@ -24,7 +24,7 @@ def get_tiling_genf(tiling, identifier, inp_set, root_func):
                 eq = get_tiling_genf(with_point, identifier, inp_set, root_func) + get_tiling_genf(empty, identifier, inp_set, root_func)
                 factorEqs.append(eq)
                 break
-            if v != Block.point and isinstance(v, PositiveClass):
+            if v is not Block.point and isinstance(v, PositiveClass):
                 non_positive = {kk:vv for kk,vv in factor.factor.items()}
                 non_positive[k] = v.perm_class
                 non_positive = Tiling(non_positive)
@@ -44,6 +44,8 @@ def get_tiling_genf(tiling, identifier, inp_set, root_func):
                     if v == inp_set:
                         factorEqs.append(root_func)
                         break
+                    if v is Block.point:
+                        continue
                     ext_genf = genf_from_db(v)
                     if ext_genf == None:
                         raise RuntimeError("Cannot find generating function for " + str(identifier) + " because generating function for " + repr(v) + " is unknown")
@@ -57,7 +59,7 @@ def get_tiling_genf(tiling, identifier, inp_set, root_func):
                     sets += 1
             else:
                 if sets > 1:
-                    raise RuntimeError("Unknown factor found \n" + str(factor))
+                    raise RuntimeError("Unknown factor found \n" + str(factor) + "\nThe minimum of the factor is \n" + str(factor.minimum()))
                 if func:
                     points = len(factor.factor)-1
                     eq = x*diff(x*(func),x)
@@ -107,10 +109,3 @@ def permeval(text):
         return eval("Av([" + text[3:-1]+"])")
     else:
         return Block.point
-
-if __name__ == "__main__":
-    t = Tiling({Cell(i=0,j=0):Block.point_or_empty,Cell(i=0,j=1):Block.decreasing})
-    print(get_tiling_genf(t,0,None,Function('F')).expand().simplify())
-    t2 = Tiling({Cell(i=0,j=0):PositiveClass(Block.decreasing),Cell(i=0,j=1):PositiveClass(Block.increasing)})
-    print(get_tiling_genf(t2,0,None,Function('F')).expand().simplify())
-
