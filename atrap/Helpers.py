@@ -1,4 +1,4 @@
-from sympy import diff, sympify, symbols 
+from sympy import diff, sympify, symbols
 from sympy.abc import x
 from grids import Tiling, Factor, Block, PositiveClass, lex_min
 from permuta import Av
@@ -6,7 +6,7 @@ from functools import reduce
 from operator import add, mul
 
 from pymongo import MongoClient
-mongo = MongoClient('mongodb://webapp:c73f12a3@localhost:27017/permsdb')
+mongo = MongoClient('mongodb://webapp:c73f12a3@tagl.is:27017/permsdb')
 
 __all__ = ["get_tiling_genf", "genf_from_db", "factor_from_db", "permeval", "taylor_expand"]
 
