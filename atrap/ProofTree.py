@@ -103,7 +103,7 @@ class ProofTree(JsonAble):
         elif "contains no" in root.formal_step:
             rhs = 0
         else:
-            rhs = get_tiling_genf(root.out_tiling)
+            rhs = get_tiling_genf(root.out_tiling, root.identifier)
         return reduce(add, [self._get_equations(child, funcs) for child in root.children], [Eq(lhs, rhs)])
 
     def get_genf(self):

@@ -10,7 +10,7 @@ mongo = MongoClient('mongodb://webapp:c73f12a3@tagl.is:27017/permsdb')
 
 __all__ = ["get_tiling_genf", "genf_from_db", "factor_from_db", "permeval", "taylor_expand"]
 
-def get_tiling_genf(tiling):
+def get_tiling_genf(tiling, identifier):
     factorEqs = []
     for factor in tiling.find_factors():
         eq = factor_from_db(factor)
@@ -25,14 +25,14 @@ def get_tiling_genf(tiling):
             if len(factor) == 1:
                 ext_genf = genf_from_db(v)
                 if ext_genf == None:
-                    raise RuntimeError("Cannot find generating function for " + str(obj["identifier"]) + " because generating function for " + repr(v) + " is unknown")
+                    raise RuntimeError("Cannot find generating function for " + str(identifier) + " because generating function for " + repr(v) + " is unknown")
                 factorEqs.append(ext_genf - (1 if isinstance(v, PositiveClass) else 0))
                 break
             if v is not Block.point:
                 pos = isinstance(v,PositiveClass)
                 ext_genf = genf_from_db(v)
                 if ext_genf == None:
-                    raise RuntimeError("Cannot find generating function for " + str(obj["identifier"]) + " because generating function for " + repr(v) + " is unknown")
+                    raise RuntimeError("Cannot find generating function for " + str(identifier) + " because generating function for " + repr(v) + " is unknown")
                 func = ext_genf
                 sets += 1
         else:
