@@ -75,7 +75,7 @@ class ProofTree(JsonAble):
         attr_dict = {}
         attr_dict["root"] = self.root._get_attr_dict()
         return attr_dict
-   
+
     def get_funcs(self):
         """Creates a dictionary mapping from identifiers to function names"""
         funcs = {}
@@ -107,6 +107,8 @@ class ProofTree(JsonAble):
         return reduce(add, [self._get_equations(child, funcs) for child in root.children], [Eq(lhs, rhs)])
 
     def get_genf(self):
+        if self.get_recursion_type() > 2:
+            raise RuntimeError("Can not find generating function, due to interleaving decomposition. ")
         funcs = self.get_funcs()
         f = funcs[self.root.identifier]
         eqs = self.get_equations(funcs)
@@ -173,7 +175,7 @@ class ProofTree(JsonAble):
                 cnt[1] += 1
         if obj["children"]:
             cnt = reduce(add, (self._get_recursion_count(child) for child in root.children), cnt)
-        return cnt 
+        return cnt
 
     def pretty_print(self, file=sys.stdout):
         legend = [["label counter:", 0]]
