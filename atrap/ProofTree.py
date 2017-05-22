@@ -173,7 +173,7 @@ class ProofTree(JsonAble):
                 cnt[2] += 1
             else:
                 cnt[1] += 1
-        if obj["children"]:
+        if root.children:
             cnt = reduce(add, (self._get_recursion_count(child) for child in root.children), cnt)
         return cnt
 
