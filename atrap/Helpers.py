@@ -39,7 +39,10 @@ def get_tiling_genf(tiling, identifier, inp_set, root_func):
                 continue
             func = 0
             sets = 0
+            xs,ys = set(),set()
             for k, v in factor.factor.items():
+                xs.add(k[0])
+                ys.add(k[1])
                 if len(factor) == 1:
                     if v == inp_set:
                         factorEqs.append(root_func)
@@ -58,7 +61,7 @@ def get_tiling_genf(tiling, identifier, inp_set, root_func):
                     func = ext_genf
                     sets += 1
             else:
-                if sets > 1:
+                if sets > 1 or (len(xs) > 1 and len(ys) > 1):
                     raise RuntimeError("Unknown factor found \n" + str(factor) + "\nThe minimum of the factor is \n" + str(factor.minimum()))
                 if func:
                     points = len(factor.factor)-1

@@ -122,7 +122,7 @@ class ProofTree(JsonAble):
                 expansion = taylor_expand(solution[f(x)])
                 if coeffs == expansion:
                     return solution[f(x)]
-            raise RuntimeError("Incorrect generating function")
+            raise RuntimeError("Incorrect generating function\n" + str(solutions))
         raise RuntimeError("No solution was found for this tree")
 
     def get_recursion_type(self):
