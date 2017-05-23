@@ -122,7 +122,7 @@ class ProofTree(JsonAble):
                 expansion = taylor_expand(solution[f(x)])
                 if coeffs == expansion:
                     return solution[f(x)]
-            raise RuntimeError("Incorrect generating function")
+            raise RuntimeError("Incorrect generating function\n" + str(solutions))
         raise RuntimeError("No solution was found for this tree")
 
     def get_recursion_type(self):
@@ -138,10 +138,10 @@ class ProofTree(JsonAble):
             for i in range(len(root.recurse)):
                 if root.children[i].formal_step == "recurse":
                     simple = True
-                    for j in range(len(root.recurse)):
-                        if i != j:
-                            if len(x[i] & x[j]) > 0 or len(y[i] & y[j]) > 0:
-                                mixing = True
+                for j in range(len(root.recurse)):
+                    if i != j:
+                        if len(x[i] & x[j]) > 0 or len(y[i] & y[j]) > 0:
+                            mixing = True
             if mixing:
                 return 3
             if simple:
@@ -165,10 +165,10 @@ class ProofTree(JsonAble):
             for i in range(len(root.recurse)):
                 if root.children[i].formal_step == "recurse":
                     simple = True
-                    for j in range(len(root.recurse)):
-                        if i != j:
-                            if len(x[i] & x[j]) > 0 or len(y[i] & y[j]) > 0:
-                                found = True
+                for j in range(len(root.recurse)):
+                    if i != j:
+                        if len(x[i] & x[j]) > 0 or len(y[i] & y[j]) > 0:
+                            found = True
             if found:
                 cnt[3] += 1
             elif simple:

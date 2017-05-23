@@ -1,31 +1,13 @@
 from atrap import MetaTree
-from permuta import Perm
+from permuta import Perm, Av
 
 
 from time import time
 from atrap.strategies import *
 from atrap.ProofTree import ProofTree
+from atrap import StrategyPacks
 
-all_strategies = [ [all_cell_insertions, all_row_placements, all_column_placements], [all_point_placements, all_equivalent_row_placements, all_equivalent_column_placements, all_symmetric_tilings], [empty_cell_inferral, subclass_inferral, row_and_column_separation], [splittings, reversibly_deletable_cells, components], [subset_verified, is_empty] ]
-
-mimic_regular_insertion_encoding = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral], [reversibly_deletable_points], [one_by_one_verification, is_empty]]
-
-standard_strategies = [ [all_cell_insertions], [point_separation, all_point_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
-# standard_strategies = [ [all_cell_insertions], [all_point_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
-standard_strategies_w_all_row_cols = [ [all_cell_insertions, all_row_placements, all_column_placements], [all_equivalent_row_placements, all_equivalent_column_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
-
-standard_strategies_w_all_row_cols_and_point_separation = [ [all_cell_insertions, all_row_placements, all_column_placements, all_point_isolations], [point_separation, all_equivalent_point_isolations, all_equivalent_row_placements, all_equivalent_column_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
-
-standard_strategies_w_point_separation_and_isolation = [ [all_cell_insertions, all_point_isolations], [point_separation, all_equivalent_point_isolations], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
-enum_sch = [ [all_cell_insertions, all_point_isolations], [point_separation, all_equivalent_point_isolations], [empty_cell_inferral], [reversibly_deletable_cells], [subset_verified, is_empty] ]
-
-# finite_strategies = [ [all_cell_insertions, all_row_placements], [all_equivalent_row_placements], [empty_cell_inferral, subclass_inferral], [], [subset_verified, is_empty] ]
-finite_strategies_w_min_row = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [], [subset_verified, is_empty] ]
-finite_strategies_w_point_pl = [ [all_cell_insertions], [all_point_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [], [subset_verified, is_empty] ]
-
-finite_strategies = [ [all_cell_insertions, all_minimum_row_placements], [all_equivalent_minimum_row_placements], [empty_cell_inferral, subclass_inferral], [], [subset_verified, is_empty] ]
-
-basic = [ [all_cell_insertions], [all_maximum_point_placements], [row_and_column_separation], [reversibly_deletable_cells], [one_by_one_verification] ]
+from atrap.Helpers import taylor_expand
 
 # mtree = MetaTree([Perm((0,2,1)), Perm((3,2,1,0))], *standard_strategies)
 
@@ -62,7 +44,7 @@ basic = [ [all_cell_insertions], [all_maximum_point_placements], [row_and_column
 #
 # task = '0123'
 # task = '0213'
-# task = '012'
+# task = '012_3210'
 
 # task = '021'
 
@@ -72,7 +54,7 @@ basic = [ [all_cell_insertions], [all_maximum_point_placements], [row_and_column
 
 # task = '0132_0213_0231_3120'
 
-# task = '0213_0231'
+task = '0213_0231'
 
 # task = "1302_2031"
 
@@ -80,15 +62,17 @@ basic = [ [all_cell_insertions], [all_maximum_point_placements], [row_and_column
 
 # task = '0231_0321'
 
+# task = '0132_0213_0231_0312_0321_1032_1302_1320_2031_3021_3120'
+
 # patts = [ Perm([ int(c) - 1 for c in p ]) for p in task.split('_') ]
 
 #
 # mtree = MetaTree( patts, *mimic_regular_insertion_encoding )
-standard_strategies_w_left_col = [ [all_cell_insertions, all_leftmost_column_placements], [all_equivalent_leftmost_column_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
-task = '0123_0132_0213_0231_0312_1023_1203_1230_2013_2301_3012'
+# standard_strategies_w_left_col = [ [all_cell_insertions, all_leftmost_column_placements], [all_equivalent_leftmost_column_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
+# task = '0123_0132_0213_0231_0312_1023_1203_1230_2013_2301_3012'
 patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 
-strategies = standard_strategies_w_left_col
+strategies = StrategyPacks.point_separation_and_isolation
 # strategies = enum_sch
 
 mtree = MetaTree( patts, *strategies )
@@ -134,7 +118,7 @@ while not mtree.has_proof_tree():
     for function_name, calls in mtree._partitioning_calls.items():
         print("The function {} called the partitioning cache *{}* times, ({} originating)".format(function_name, calls[0], calls[1]))
     print("There were {} cache misses".format(mtree._cache_misses))
-    if mtree.depth_searched == 8 or mtree.timed_out:# or time() - start > max_time:
+    if mtree.depth_searched == 15 or mtree.timed_out:# or time() - start > max_time:
         break
 
 if mtree.has_proof_tree():
@@ -143,6 +127,15 @@ if mtree.has_proof_tree():
     json = proof_tree.to_json(indent="  ")
     print(json)
     assert ProofTree.from_json(json).to_json(indent="  ") == json
+    try:
+        f = proof_tree.get_genf()
+        print( f )
+        print("The coefficients from the generating function are")
+        print( taylor_expand(f, terms=11) )
+        print("The actual coefficients are")
+        print( [ len( Av(mtree.basis).of_length(i) ) for i in range(12)])
+    except RuntimeError as e:
+        print(str(e))
 
 end = time()
 
