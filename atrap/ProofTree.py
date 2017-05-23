@@ -7,9 +7,6 @@ from grids import JsonAble, Tiling, Cell
 from collections import Counter
 from functools import reduce
 from operator import add, mul
-from .Helpers import get_tiling_genf, taylor_expand
-from sympy import Function, Eq, solve
-from sympy.abc import x
 
 __all__ = ["ProofTree", "ProofTreeNode"]
 
@@ -84,6 +81,7 @@ class ProofTree(JsonAble):
         return funcs
 
     def _get_funcs(self, root, funcs):
+        from sympy import Function
         if root.identifier not in funcs:
             funcs[root.identifier] = Function("F_"+str(root.identifier))
         for child in root.children:
@@ -93,6 +91,9 @@ class ProofTree(JsonAble):
         return self._get_equations(self.root, funcs, avoid)
 
     def _get_equations(self, root, funcs, avoid):
+        from .Helpers import get_tiling_genf
+        from sympy import Eq
+        from sympy.abc import x
         lhs = funcs[root.identifier](x)
         rhs = 0
         if root.formal_step == "recurse":
@@ -108,6 +109,9 @@ class ProofTree(JsonAble):
         return reduce(add, [self._get_equations(child, funcs, avoid) for child in root.children], [Eq(lhs, rhs)])
 
     def get_genf(self):
+        from .Helpers import taylor_expand
+        from sympy import solve
+        from sympy.abc import x
         if self.get_recursion_type() > 2:
             raise RuntimeError("Can not find generating function, due to interleaving decomposition. ")
         funcs = self.get_funcs()
