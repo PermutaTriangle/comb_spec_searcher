@@ -313,7 +313,8 @@ class MetaTree(object):
             if max_time is not None:
                 if time.time() - start_time > max_time:
                     self.timed_out = True
-            self.depth_searched = requested_depth
+            if not self.timed_out:
+                self.depth_searched = requested_depth
 
     def _sibling_helper(self, sibling_node, requested_depth, max_time=None, start_time=None):
         '''This expands from the given SiblingNode to the requested depth.
