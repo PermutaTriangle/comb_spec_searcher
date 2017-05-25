@@ -77,15 +77,15 @@ def get_tiling_genf(tiling, identifier, inp_set, root_func):
 
 def genf_from_db(inputset):
     permset = Av(lex_min(list(inputset.basis)))
-    avoid = '_'.join([''.join([str(i+1) for i in perm]) for perm in permset.basis])
-    result = mongo.permsdb.perm.find_one({'avoid':avoid})
-    if not result or 'sympy_genf' not in result:
+    basis = '_'.join([''.join([str(i+1) for i in perm]) for perm in permset.basis])
+    result = mongo.permsdb.av.find_one({'basis':basis})
+    if not result or 'atrap_data' not in result or 'sympy_genf' not in result['atrap_data']:
         return None
-    res = result['sympy_genf']
-    for c in "BCDEFGH":
-        if c in res:
-            return None
-    return sympify(result['sympy_genf'])
+    res = result['atrap_data']['sympy_genf']
+    #for c in "BCDEFGH":
+    #    if c in res:
+    #        return None
+    return sympify(res)
 
 def factor_from_db(factor):
     key = factor.minimum()
