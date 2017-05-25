@@ -53,6 +53,8 @@ def isolate_point_in_row(tiling, cell_to_be_isolated):
                 isolated_tiling_dict[ (cell.i, cell.j-0.5) ] = block
             else:
                 isolated_tiling_dict[ (cell.i, cell.j+0.5) ] = block
+                if block is not Block.point:
+                    isolated_tiling_dict.pop( (cell.i, cell.j-0.5) )
         isolated_tilings.append( Tiling(isolated_tiling_dict) )
 
     # print("Isolated the point at {} in its row on the tiling".format(cell_to_be_isolated))
@@ -104,6 +106,8 @@ def isolate_point_in_column(tiling, cell_to_be_isolated):
                 isolated_tiling_dict[ (cell.i-0.5, cell.j) ] = block
             else:
                 isolated_tiling_dict[ (cell.i+0.5, cell.j) ] = block
+                if block is not Block.point:
+                    isolated_tiling_dict.pop( (cell.i-0.5, cell.j) )
         isolated_tilings.append( Tiling(isolated_tiling_dict) )
 
     # print("Isolated the point at {} in its column on the tiling".format(cell_to_be_isolated))
