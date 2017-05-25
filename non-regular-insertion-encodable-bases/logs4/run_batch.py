@@ -4,7 +4,7 @@ from atrap.ProofTree import ProofTree
 
 import time
 
-#filename = 'length4' # the file with bases to be processed
+# filename = 'length4' # the file with bases to be processed
 filename = 'length4afterround1'
 
 # Will try each strategy pack in order.
