@@ -97,10 +97,14 @@ def factor_from_db(factor):
 def taylor_expand(gen_func, terms=10):
     coeffs = []
     fac = 1
+    #print(gen_func)
     gen_func = gen_func.series(n=terms+1)
+    #print("After series:")
+    #print(gen_func)
     for i in range(terms+1):
         coeffs.append(gen_func.subs(x, 0)//fac)
         gen_func = diff(gen_func)
+        #print(gen_func)
         fac *= (i+1)
 
     return coeffs

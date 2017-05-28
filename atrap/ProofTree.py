@@ -119,11 +119,18 @@ class ProofTree(JsonAble):
         avoid = self.root.in_tiling[Cell(i=0,j=0)]
         avoid = Av(lex_min(list(avoid.basis)))
         eqs = self.get_equations(funcs, avoid)
+        #for eq in eqs:
+        #    print(eq)
         solutions = solve(eqs, tuple([eq.lhs for eq in eqs]), dict=True)
+        any_valid = False
         if solutions:
             coeffs = [len(avoid.of_length(i)) for i in range(verify+1)]
             for solution in solutions:
-                expansion = taylor_expand(solution[f(x)], verify)
+                try:
+                    expansion = taylor_expand(solution[f(x)], verify)
+                except TypeError:
+                    continue
+                any_valid = True
                 if coeffs == expansion:
                     sol = solution[f(x)].expand().simplify()
                     if expansion:
@@ -133,7 +140,8 @@ class ProofTree(JsonAble):
                     if equations:
                         return sol,eqs
                     return sol
-            raise RuntimeError("Incorrect generating function\n" + str(solutions))
+            if any_valid:
+                raise RuntimeError("Incorrect generating function\n" + str(solutions))
         raise RuntimeError("No solution was found for this tree")
 
     def get_recursion_type(self):
