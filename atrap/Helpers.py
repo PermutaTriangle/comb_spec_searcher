@@ -15,20 +15,20 @@ def get_tiling_genf(tiling, identifier, inp_set, root_func):
     factorEqs = []
     for factor in tiling.find_factors():
         eq = None
-        for k,v in factor.factor.items():
+        for k, v in factor.factor.items():
             if v == Block.point_or_empty:
-                with_point = {kk:vv for kk,vv in factor.factor.items()}
+                with_point = {kk:vv for kk, vv in factor.factor.items()}
                 with_point[k] = Block.point
                 with_point = Tiling(with_point)
-                empty = Tiling({kk:vv for kk,vv in factor.factor.items() if kk != k})
+                empty = Tiling({kk:vv for kk, vv in factor.factor.items() if kk != k})
                 eq = get_tiling_genf(with_point, identifier, inp_set, root_func) + get_tiling_genf(empty, identifier, inp_set, root_func)
                 factorEqs.append(eq)
                 break
             if v is not Block.point and isinstance(v, PositiveClass):
-                non_positive = {kk:vv for kk,vv in factor.factor.items()}
+                non_positive = {kk:vv for kk, vv in factor.factor.items()}
                 non_positive[k] = v.perm_class
                 non_positive = Tiling(non_positive)
-                empty = Tiling({kk:vv for kk,vv in factor.factor.items() if kk != k})
+                empty = Tiling({kk:vv for kk, vv in factor.factor.items() if kk != k})
                 eq = get_tiling_genf(non_positive, identifier, inp_set, root_func) - get_tiling_genf(empty, identifier, inp_set, root_func)
                 factorEqs.append(eq)
                 break
@@ -39,7 +39,7 @@ def get_tiling_genf(tiling, identifier, inp_set, root_func):
                 continue
             func = 0
             sets = 0
-            xs,ys = set(),set()
+            xs, ys = set(),set()
             for k, v in factor.factor.items():
                 xs.add(k[0])
                 ys.add(k[1])
@@ -65,9 +65,9 @@ def get_tiling_genf(tiling, identifier, inp_set, root_func):
                     raise RuntimeError("Unknown factor found \n" + str(factor) + "\nThe minimum of the factor is \n" + str(factor.minimum()))
                 if func:
                     points = len(factor.factor)-1
-                    eq = x*diff(x*(func),x)
+                    eq = x*diff(x*(func), x)
                     for _ in range(points-1):
-                        eq = x*diff(x*eq,x)
+                        eq = x*diff(x*eq, x)
                     factorEqs.append(eq.doit())
                 else:
                     points = len(factor.factor)
