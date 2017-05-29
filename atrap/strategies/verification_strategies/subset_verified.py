@@ -38,11 +38,7 @@ def subset_verified(tiling, basis, basis_partitioning=None):
                 if tiling_generates_container(tiling, length, basis):
                     verified = False
                     break
-                # partitions = basis_partitioning(tiling, length, basis)
-                # containing_perms, _ = partitions
-                # if containing_perms:
-                #     verified = False
-                #     break
+
         # Tiling is verified if all perms avoid; i.e., none contain
         if verified:
             yield VerificationStrategy("The tiling is a subset of the subclass")
