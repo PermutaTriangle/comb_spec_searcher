@@ -1,3 +1,4 @@
+"""It's a tree dammit."""
 from atrap.strategies import all_cell_insertions
 from atrap.strategies import components
 from atrap.strategies import all_point_placements
@@ -29,18 +30,26 @@ import traceback
 
 
 class SiblingNode(set):
-    '''A set of OR nodes with equivalent tilings.
+    """
+    A set of OR nodes with equivalent tilings.
+
     The node is considered workable if it contains a tiling found by a batch
     strategy. There exists a proof tree below the node if its verification
-    contains the empty frozenset.'''
+    contains the empty frozenset.
+    """
+
     def __init__(self):
+        """The constructor for SiblingNode."""
         self.workable = False
         self.verification = set()
         self.explanations = {}
 
     def add(self, or_node):
-        '''An OR node has only one sibling node.
-        Therefore, when adding an OR node it points to that SiblingNode.'''
+        """
+        An OR node has only one sibling node.
+
+        Therefore, when adding an OR node it points to that SiblingNode.
+        """
         if not isinstance(or_node, OrNode):
             raise TypeError("Non-OR node added to sibling node")
         super(SiblingNode, self).add(or_node)
@@ -62,7 +71,7 @@ class SiblingNode(set):
         self.'''
         child_and_nodes = set()
         for sibling_or_node in self:
-            child_and_nodes.update( sibling_or_node.children )
+            child_and_nodes.update(sibling_or_node.children)
         for child_and_node in child_and_nodes:
             yield child_and_node
 
@@ -74,7 +83,7 @@ class SiblingNode(set):
     def can_be_propagated(self):
         '''We can propagate if any of the Siblngs
         have a verified OrNode.'''
-        return any( child_and_node.verification for child_and_node in self.get_children_and_nodes() )
+        return any(child_and_node.verification for child_and_node in self.get_children_and_nodes())
 
     def get_relation(self, tiling, other_tiling):
         if tiling == other_tiling:
@@ -97,9 +106,8 @@ class SiblingNode(set):
         '''We hopefully never get here'''
         return "they are on the same SiblingNode"
 
-
     def find_path(self, tiling, other_tiling):
-        '''BFS for shortest path'''
+        """BFS for shortest path."""
         sibling_tilings = {}
         reverse_map = {}
 
@@ -108,8 +116,8 @@ class SiblingNode(set):
             sibling_tilings[or_node.tiling] = n
             reverse_map[n] = or_node.tiling
 
-        adjacency_list = [ [] for i in range(len(self)) ]
-        for (t1,t2) in self.explanations:
+        adjacency_list = [[] for i in range(len(self))]
+        for (t1, t2) in self.explanations:
             u = sibling_tilings[t1]
             v = sibling_tilings[t2]
             adjacency_list[u].append(v)
@@ -121,8 +129,8 @@ class SiblingNode(set):
         end = sibling_tilings[other_tiling]
 
         dequeue.append(start)
-        visited = [ False for i in range(len(self)) ]
-        neighbour = [ None for i in range(len(self)) ]
+        visited = [False for i in range(len(self))]
+        neighbour = [None for i in range(len(self))]
         while len(dequeue) > 0:
             u = dequeue.popleft()
             if u == end:
@@ -144,7 +152,6 @@ class SiblingNode(set):
 
         return path[::-1]
 
-
     def __eq__(self, other):
         for x in self:
             if x not in other:
@@ -159,12 +166,16 @@ class SiblingNode(set):
 
 
 class OrNode(object):
-    '''An OR node points to a tiling. There is one OR node for a tiling.
-    The children are AND nodes given by the batch strategies from its tiling.
-    The parents are AND nodes in which the tiling is part of the strategy.
-    It keeps track if it has been expanded by batch/equivalence strategies.
-    It also points to its SiblingNode.
-    For it to be verified, one of its children must be verified.'''
+    """
+    An OR node points to a tiling.
+
+    There is one OR node for a tiling. The children are AND nodes given by the
+    batch strategies from its tiling. The parents are AND nodes in which the
+    tiling is part of the strategy. It keeps track if it has been expanded by
+    batch/equivalence strategies. It also points to its SiblingNode. For it to
+    be verified, one of its children must be verified.
+    """
+
     def __init__(self, tiling=None):
         self.children = []
         self.parents = []
@@ -202,7 +213,8 @@ class AndNode(object):
         '''In order to propagate we need that all the AndNode's
         children are workable (else they have not occurred in
         the tree) with interesting information or verified'''
-        return all( ( child_or_node.sibling_node.workable and child_or_node.sibling_node.verification ) or child_or_node.is_verified() for child_or_node in self.children )
+        return all((child_or_node.sibling_node.workable and child_or_node.sibling_node.verification)
+                   or child_or_node.is_verified() for child_or_node in self.children)
 
     def parent_sibling_node(self):
         if len(self.parents) != 1:
@@ -216,15 +228,25 @@ class AndNode(object):
         return self.parents[0].sibling_node
 
     def __eq__(self, other):
-        return set(self.parents) == set(other.parents) and self.formal_step == other.formal_step and set(self.children) == set(other.children)
+        return (set(self.parents) == set(other.parents)
+                and self.formal_step == other.formal_step
+                and set(self.children) == set(other.children))
 
     def __hash__(self):
         return hash(id(self))
 
 
 class MetaTree(object):
-    '''This searches for a proof tree for a given basis'''
-    def __init__(self, basis, batch_strategies=None, equivalence_strategies=None, inferral_strategies=None, recursive_strategies=None, verification_strategies=None, non_interleaving_recursion=False):
+    """This searches for a proof tree for a given basis."""
+
+    def __init__(self,
+                 basis,
+                 batch_strategies=None,
+                 equivalence_strategies=None,
+                 inferral_strategies=None,
+                 recursive_strategies=None,
+                 verification_strategies=None,
+                 non_interleaving_recursion=False):
         self.basis = Basis(basis)
         self.non_interleaving_recursion = non_interleaving_recursion
         '''A cache for the tilings generated by inferral functions'''
@@ -264,7 +286,7 @@ class MetaTree(object):
             self.verification_strategy_generators = [one_by_one_verification]
 
         '''Initialise the tree with the one by one tiling, with Av(basis.'''
-        root_tiling = Tiling({(0,0): PermSet.avoiding(self.basis)})
+        root_tiling = Tiling({(0, 0): PermSet.avoiding(self.basis)})
 
         '''Create and store the root AND and OR node of the tree.'''
         root_and_node = AndNode("We start off with a 1x1 tiling where the single block is Av({}).".format(self.basis))
@@ -293,21 +315,21 @@ class MetaTree(object):
     def has_proof_tree(self):
         return frozenset() in self.root_and_node.verification
 
-    def do_level(self, requested_depth=None, file=sys.stdout, max_time=None):
+    def do_level(self, requested_depth=None, f=sys.stdout, max_time=None):
         '''This searches to depth first to the requested depth.
         It stops when a proof tree is found, and returns it, if found.'''
         start_time = time.time()
         if requested_depth is None:
-            self.do_level(self.depth_searched + 1, file=file, max_time=max_time)
+            self.do_level(self.depth_searched + 1, f=f, max_time=max_time)
         else:
             if requested_depth <= self.depth_searched:
-                print("Depth already searched", file=file)
+                print("Depth already searched", file=f)
                 return
-            print("Doing depth", requested_depth, file=file)
+            print("Doing depth", requested_depth, file=f)
             '''The work to go deeper is hidden in the helper function.
             This returns True when a proof tree is found.'''
             if self._sibling_helper(self.root_sibling_node, requested_depth, max_time=max_time):
-                print("A proof tree has been found.", file=file)
+                print("A proof tree has been found.", file=f)
                 proof_tree = self.find_proof_tree()
                 # proof_tree.pretty_print()
                 return proof_tree
@@ -334,7 +356,7 @@ class MetaTree(object):
             raise RuntimeError("Negative depth requested")
         '''We only expand and search on workable tilings (those found by batch strategies)
         and those which do not already have a proof tree.'''
-        if sibling_node.is_verified() or (not sibling_node.workable) :
+        if sibling_node.is_verified() or (not sibling_node.workable):
             return
 
         for sibling_or_node in sibling_node:
@@ -380,7 +402,10 @@ class MetaTree(object):
         for child_sibling_node in drill_set:
             '''We then continue to search down the tree, lowering the requested depth.'''
             if max_time is not None:
-                if self._sibling_helper(child_sibling_node, requested_depth - 1, max_time=max_time, start_time=start_time):
+                if self._sibling_helper(child_sibling_node,
+                                        requested_depth - 1,
+                                        max_time=max_time,
+                                        start_time=start_time):
                     return True
                 if time.time() - start_time > max_time:
                     return False
@@ -394,11 +419,14 @@ class MetaTree(object):
 
         for recursive_generator in self.recursive_strategy_generators:
             '''For each recursive strategy.'''
-            for recursive_strategy in recursive_generator(or_node.tiling, basis=self.basis, basis_partitioning=self._basis_partitioning, verification_strategies=self.verification_strategy_generators, tiling_cache=self.tiling_cache):
+            for recursive_strategy in recursive_generator(or_node.tiling,
+                                                          basis=self.basis,
+                                                          basis_partitioning=self._basis_partitioning,
+                                                          verification_strategies=self.verification_strategy_generators,
+                                                          tiling_cache=self.tiling_cache):
 
                 if not isinstance(recursive_strategy, RecursiveStrategy):
                     raise TypeError("Attempted to recurse on a non RecursiveStrategy.")
-
 
                 if self.non_interleaving_recursion:
                     '''Only keep the strtegies with non-interleaving recursion'''
@@ -423,8 +451,6 @@ class MetaTree(object):
                 recursive_and_node.back_maps = recursive_strategy.back_maps
                 or_node.children.append(recursive_and_node)
 
-
-
                 '''Collect the verified AND nodes as they will need to propagate this information'''
                 sibling_nodes_to_be_propagated = set()
 
@@ -438,7 +464,7 @@ class MetaTree(object):
                         '''Remember to update the cache'''
                         self.tiling_cache[tiling] = child_or_node
                         child_sibling_node = SiblingNode()
-                        child_sibling_node.add(child_or_node) # unworkable SiblingNode created.
+                        child_sibling_node.add(child_or_node)  # unworkable SiblingNode created.
 
                         '''We attempt to verify the tiling using verification strategies.'''
                         if self._verify(child_or_node):
@@ -454,7 +480,7 @@ class MetaTree(object):
                     '''If the SiblingNode is not verified we append the tiling
                     to the verification possibilities of the SiblingNode.'''
                     if not child_sibling_node.is_verified():
-                        child_sibling_node.verification.add( frozenset([ self._tiling_labeler(tiling) ]) )
+                        child_sibling_node.verification.add(frozenset([self._tiling_labeler(tiling)]))
 
                     '''We return all SiblingNodes created.'''
                     child_sibling_nodes.add(child_sibling_node)
@@ -463,7 +489,6 @@ class MetaTree(object):
                     if not child_or_node.sibling_node.workable:
                         if tiling in self._basis_partitioning_cache:
                             self._basis_partitioning_cache.pop(tiling)
-
 
                 for sibling_node in sibling_nodes_to_be_propagated:
                     if sibling_node.is_verified():
@@ -482,7 +507,9 @@ class MetaTree(object):
 
         for batch_strategy_generator in self.batch_strategy_generators:
             '''For each batch strategy.'''
-            for batch_strategy in batch_strategy_generator(or_node.tiling, basis=self.basis, basis_partitioning=self._basis_partitioning):
+            for batch_strategy in batch_strategy_generator(or_node.tiling,
+                                                           basis=self.basis,
+                                                           basis_partitioning=self._basis_partitioning):
 
                 if not isinstance(batch_strategy, BatchStrategy):
                     raise TypeError("Attempted to expand with non BatchStrategy.")
@@ -518,11 +545,11 @@ class MetaTree(object):
                         verified = self._equivalent_expand(child_or_node)
                         child_sibling_node = child_or_node.sibling_node
                         if verified:
-                            verified_sibling_nodes.add( child_sibling_node )
+                            verified_sibling_nodes.add(child_sibling_node)
                         elif self._verify(child_or_node):
                             '''We attempt to verify the tiling using verification strategies.
                             If it verifies, we need to propagate the information to the sibling node.'''
-                            verified_sibling_nodes.add( child_sibling_node )
+                            verified_sibling_nodes.add(child_sibling_node)
                         '''As it was found by a batch strategy it is workable'''
                         child_sibling_node.workable = True
                     else:
@@ -533,7 +560,7 @@ class MetaTree(object):
                             verified = self._equivalent_expand(child_or_node)
                             child_sibling_node = child_or_node.sibling_node
                             if verified:
-                                verified_sibling_nodes.add( child_sibling_node )
+                                verified_sibling_nodes.add(child_sibling_node)
                             '''As it was found by a batch strategy it is now workable'''
                             child_sibling_node.workable = True
 
@@ -555,7 +582,7 @@ class MetaTree(object):
                     self._sibling_node_cache_cleaner(sibling_node)
                     '''then propagate'''
                     self._propagate_sibling_node_verification(sibling_node)
-                self._propagate_and_node_verification( batch_and_node )
+                self._propagate_and_node_verification(batch_and_node)
         return child_sibling_nodes
 
     def _inferral(self, tiling):
@@ -568,7 +595,9 @@ class MetaTree(object):
                 '''For each inferral strategy,'''
                 if fully_inferred:
                     break
-                for inferral_strategy in inferral_strategy_generator(inferred_tiling, basis=self.basis, basis_partitioning=self._basis_partitioning):
+                for inferral_strategy in inferral_strategy_generator(inferred_tiling,
+                                                                     basis=self.basis,
+                                                                     basis_partitioning=self._basis_partitioning):
                     if not isinstance(inferral_strategy, InferralStrategy):
                         raise TypeError("Attempted to infer on a non InferralStrategy")
                     formal_step = inferral_strategy.formal_step
@@ -604,8 +633,7 @@ class MetaTree(object):
             if function_name in self._partitioning_calls:
                 self._partitioning_calls[function_name][0] += 1
             else:
-                self._partitioning_calls[function_name] = [1,0]
-
+                self._partitioning_calls[function_name] = [1, 0]
 
         cache = self._basis_partitioning_cache.get(tiling)
         if cache is None:
@@ -633,7 +661,9 @@ class MetaTree(object):
         tiling = or_node.tiling
         verified = False
         for verification_generator in self.verification_strategy_generators:
-            for verification_strategy in verification_generator(tiling, basis=self.basis, basis_partitioning=self._basis_partitioning):
+            for verification_strategy in verification_generator(tiling,
+                                                                basis=self.basis,
+                                                                basis_partitioning=self._basis_partitioning):
                 if not isinstance(verification_strategy, VerificationStrategy):
                     raise TypeError("Attempting to verify with non VerificationStrategy.")
                 formal_step = verification_strategy.formal_step
@@ -663,7 +693,9 @@ class MetaTree(object):
             tiling = tilings_to_expand.pop()
             for equivalence_generator in self.equivalence_strategy_generators:
                 '''for all equivalent strategies'''
-                for equivalence_strategy in equivalence_generator(tiling, basis=self.basis, basis_partitioning=self._basis_partitioning):
+                for equivalence_strategy in equivalence_generator(tiling,
+                                                                  basis=self.basis,
+                                                                  basis_partitioning=self._basis_partitioning):
 
                     if not isinstance(equivalence_strategy, EquivalenceStrategy):
                         raise TypeError("Attempting to combine non EquivalenceStrategy.")
@@ -724,8 +756,7 @@ class MetaTree(object):
             if tiling in self._basis_partitioning_cache:
                 self._basis_partitioning_cache.pop(tiling)
 
-
-    def _tiling_labeler( self, tiling ):
+    def _tiling_labeler(self, tiling):
         '''Labels a tiling. It tries to label tilings in the same sibling node.'''
         or_node = self.tiling_cache.get(tiling)
         assert or_node is not None
@@ -747,9 +778,8 @@ class MetaTree(object):
             if label is not None:
                 labels.add(label)
         if not labels and force:
-            labels.add( self._tiling_labeler( or_node.tiling ) )
+            labels.add(self._tiling_labeler(or_node.tiling))
         return labels
-
 
     def _propagate_and_node_verification(self, and_node):
 
@@ -759,12 +789,12 @@ class MetaTree(object):
 
         if and_node.can_be_propagated():
 
-            if all( child_or_node.is_verified() for child_or_node in and_node.children ):
+            if all(child_or_node.is_verified() for child_or_node in and_node.children):
                 new_verifications = set([frozenset()])
             else:
                 child_verifications = []
                 for child_or_node in and_node.children:
-                    child_verifications.append( child_or_node.sibling_node.verification )
+                    child_verifications.append(child_or_node.sibling_node.verification)
 
                 '''We need to take all possible ways of taking one verification possibility
                 from each child. We then union the verifications.'''
@@ -794,24 +824,27 @@ class MetaTree(object):
 
         if sibling_node.can_be_propagated():
 
-            if any(child_and_node.is_verified() for child_and_node in sibling_node.get_children_and_nodes() ):
+            if any(child_and_node.is_verified() for child_and_node in sibling_node.get_children_and_nodes()):
                 cleaned_verifications = set([frozenset()])
             else:
                 cleaned_verifications = set()
                 sibling_node_labels = self._get_sibling_labels(sibling_node)
-                child_and_node_verifications = sorted( [ child_and_node.verification for child_and_node in sibling_node.get_children_and_nodes()], key = len  )
+                child_and_node_verifications = sorted([child_and_node.verification
+                                                       for child_and_node in sibling_node.get_children_and_nodes()],
+                                                      key=len)
 
                 for child_verification in child_and_node_verifications:
-                    self._cleaner_update( cleaned_verifications, child_verification, sibling_node_labels )
+                    self._cleaner_update(cleaned_verifications, child_verification, sibling_node_labels)
                     if frozenset() in cleaned_verifications:
                         '''Then the node is verified.'''
-                        cleaned_verifications = set( [frozenset()] )
+                        cleaned_verifications = set([frozenset()])
                         break
                     else:
-                        # assert ( frozenset(sibling_node_labels) not in cleaned_verifications and frozenset(sibling_node_labels) in sibling_node.verification) == ( not any( verification.issubset(sibling_node_labels) for verification in cleaned_verifications ) and any( verification.issubset(sibling_node_labels) for verification in sibling_node.verification ) )
-                        if not any( verification.issubset(sibling_node_labels) for verification in cleaned_verifications ) and any( verification.issubset(sibling_node_labels) for verification in sibling_node.verification ):
-                            cleaned_verifications.add( frozenset( sibling_node_labels ) )
-
+                        if (not any(verification.issubset(sibling_node_labels)
+                                    for verification in cleaned_verifications)
+                            and any(verification.issubset(sibling_node_labels)
+                                    for verification in sibling_node.verification)):
+                            cleaned_verifications.add(frozenset(sibling_node_labels))
 
             if cleaned_verifications == sibling_node.verification:
                 '''sibling node status unchanged, no need to propagate further'''
@@ -821,7 +854,7 @@ class MetaTree(object):
             if sibling_node.is_verified():
                 self._sibling_node_cache_cleaner(sibling_node)
                 for parent_and_node in sibling_node.get_parent_and_nodes():
-                    self._propagate_and_node_verification( parent_and_node )
+                    self._propagate_and_node_verification(parent_and_node)
                 return
 
             '''and propagate this information to parent AND nodes'''
@@ -830,7 +863,9 @@ class MetaTree(object):
 
     def _cleaner_update(self, A, B, sibling_labels):
         for x in B:
-            want_to_add = frozenset( label for label in x if not self._labels_to_or_node.get(label).sibling_node.is_verified() and label not in sibling_labels )
+            want_to_add = frozenset(label for label in x
+                                    if not self._labels_to_or_node.get(label).sibling_node.is_verified()
+                                    and label not in sibling_labels)
             supersets = set()
             is_superset = False
             for z in A:
@@ -842,17 +877,16 @@ class MetaTree(object):
             if is_superset:
                 continue
 
-            A.add( want_to_add )
+            A.add(want_to_add)
             A.difference_update(supersets)
 
-
-    def _cleaner_cartesian_product( self, A, B ):
+    def _cleaner_cartesian_product(self, A, B):
         '''Two sets A and B, with sets of tilings (can be thought of as integers).
         We want to take all (a,b) in A x B, and take the union a u b, and then
         return all those that are not superset of another.'''
         intermediate_answer = set()
         for x in A:
-            temp_B = sorted( set( y - x for y in B ), key = len )
+            temp_B = sorted(set(y - x for y in B), key=len)
             for y in temp_B:
                 want_to_add = x.union(y)
                 supersets = set()
@@ -869,8 +903,8 @@ class MetaTree(object):
                     continue
                 if want_to_add is frozenset():
                     '''Everything else is a superset of this'''
-                    return set( [frozenset()] )
-                intermediate_answer.add( want_to_add )
+                    return set([frozenset()])
+                intermediate_answer.add(want_to_add)
                 intermediate_answer = intermediate_answer - supersets
 
         return intermediate_answer
@@ -879,26 +913,29 @@ class MetaTree(object):
         if not child_verifications:
             return set()
 
-        child_verifications.sort(key = len)
+        child_verifications.sort(key=len)
 
-        current_product = set( frozenset( label for label in x if not self._labels_to_or_node.get(label).sibling_node.is_verified() ) for x in child_verifications[0] )
+        curr_product = set(frozenset(label for label in x
+                                     if not self._labels_to_or_node.get(label).sibling_node.is_verified())
+                           for x in child_verifications[0])
         child_verifications = child_verifications[1:]
 
         while child_verifications:
-            current_child_verifications = set( frozenset( label for label in x if not self._labels_to_or_node.get(label).sibling_node.is_verified() ) for x in child_verifications[0] )
+            curr_child_verifications = set(
+                                       frozenset(label for label in x
+                                                 if not self._labels_to_or_node.get(label).sibling_node.is_verified())
+                                       for x in child_verifications[0])
             child_verifications = child_verifications[1:]
-            current_product = self._cleaner_cartesian_product(current_product, current_child_verifications)
+            curr_product = self._cleaner_cartesian_product(curr_product, curr_child_verifications)
 
-        return current_product
-
+        return curr_product
 
     def find_proof_tree(self):
         if self.has_proof_tree():
-            proof_tree = ProofTree( self._find_proof_tree_below_or_node(self.root_or_node) )
+            proof_tree = ProofTree(self._find_proof_tree_below_or_node(self.root_or_node))
             return proof_tree
         else:
             print("There is no proof tree yet. Use the do_level function to try and find one.")
-
 
     def _find_proof_tree_below_or_node(self, or_node, seen_tilings=None, in_tiling_or_nodes=None):
         '''Return the ProofTreeNode that is verified below the OR node.'''
@@ -909,16 +946,21 @@ class MetaTree(object):
 
         '''If the tiling has already been seen, we have a recursion.'''
         if or_node.tiling in seen_tilings:
-            label = min( self._get_sibling_labels(or_node.sibling_node, force=True) )
+            label = min(self._get_sibling_labels(or_node.sibling_node, force=True))
             in_tiling = or_node.tiling
             for other_or_node in in_tiling_or_nodes:
                 if other_or_node.sibling_node == or_node.sibling_node:
                     out_tiling = other_or_node.tiling
-            return ProofTreeNode("recurse", in_tiling, out_tiling, or_node.sibling_node.get_relation(in_tiling, out_tiling), label, recurse=[] )
+            return ProofTreeNode("recurse",
+                                 in_tiling,
+                                 out_tiling,
+                                 or_node.sibling_node.get_relation(in_tiling, out_tiling),
+                                 label,
+                                 recurse=[])
 
         '''We add the tilings from the SiblingNode. These can now be used for recursions.'''
-        sibling_tilings = [ sibling_or_node.tiling for sibling_or_node in or_node.sibling_node ]
-        seen_tilings.update( sibling_tilings )
+        sibling_tilings = [sibling_or_node.tiling for sibling_or_node in or_node.sibling_node]
+        seen_tilings.update(sibling_tilings)
 
         '''The tiling we come in to the node by.'''
         in_tiling = or_node.tiling
@@ -931,7 +973,7 @@ class MetaTree(object):
 
         for child_and_node in or_node.sibling_node.get_children_and_nodes():
             '''If the child AND node is verified'''
-            if any( verification.issubset(seen_tilings) for verification in child_and_node.verification ):
+            if any(verification.issubset(seen_tilings) for verification in child_and_node.verification):
                 '''We use it for the next level'''
                 assert len(child_and_node.parents) == 1
                 '''Keep track of the strategy used by the verified AND node.'''
@@ -941,14 +983,26 @@ class MetaTree(object):
                 '''The children are the ProofTreeNodes using the tilings of the strategy.'''
                 if child_and_node.recursion:
                     recurse = child_and_node.back_maps
-                children = [ self._find_proof_tree_below_or_node(child_or_node, seen_tilings, in_tiling_or_nodes ) for child_or_node in child_and_node.children ]
+                children = [self._find_proof_tree_below_or_node(child_or_node, seen_tilings, in_tiling_or_nodes)
+                            for child_or_node in child_and_node.children]
                 '''We only want one tree'''
                 break
 
         '''We should only get here after finding a strategy for the ProofTreeNode'''
         assert formal_step is not None
-        label = min( self._get_sibling_labels(or_node.sibling_node, force=True) )
+        label = min(self._get_sibling_labels(or_node.sibling_node, force=True))
         if children:
-            return ProofTreeNode(formal_step, in_tiling, out_tiling, or_node.sibling_node.get_relation(in_tiling, out_tiling), label, children=children, recurse=recurse)
+            return ProofTreeNode(formal_step,
+                                 in_tiling,
+                                 out_tiling,
+                                 or_node.sibling_node.get_relation(in_tiling, out_tiling),
+                                 label,
+                                 children=children,
+                                 recurse=recurse)
 
-        return ProofTreeNode(formal_step, in_tiling, out_tiling, or_node.sibling_node.get_relation(in_tiling, out_tiling), label, recurse=recurse)
+        return ProofTreeNode(formal_step,
+                             in_tiling,
+                             out_tiling,
+                             or_node.sibling_node.get_relation(in_tiling, out_tiling),
+                             label,
+                             recurse=recurse)
