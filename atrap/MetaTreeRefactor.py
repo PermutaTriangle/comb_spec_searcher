@@ -893,6 +893,10 @@ class MetaTree(object):
 
                 is_superset = False
 
+                if want_to_add is frozenset():
+                    '''Everything else is a superset of this'''
+                    return set([frozenset()])
+
                 for z in intermediate_answer:
                     if z <= want_to_add:
                         is_superset = True
@@ -901,9 +905,7 @@ class MetaTree(object):
                         supersets.add(z)
                 if is_superset:
                     continue
-                if want_to_add is frozenset():
-                    '''Everything else is a superset of this'''
-                    return set([frozenset()])
+
                 intermediate_answer.add(want_to_add)
                 intermediate_answer = intermediate_answer - supersets
 
@@ -913,19 +915,17 @@ class MetaTree(object):
         if not child_verifications:
             return set()
 
-        child_verifications.sort(key=len)
+        child_verifications.sort(key=len, reverse=True)
 
         curr_product = set(frozenset(label for label in x
                                      if not self._labels_to_or_node.get(label).sibling_node.is_verified())
-                           for x in child_verifications[0])
-        child_verifications = child_verifications[1:]
+                           for x in child_verifications.pop())
 
         while child_verifications:
             curr_child_verifications = set(
                                        frozenset(label for label in x
                                                  if not self._labels_to_or_node.get(label).sibling_node.is_verified())
-                                       for x in child_verifications[0])
-            child_verifications = child_verifications[1:]
+                                       for x in child_verifications.pop())
             curr_product = self._cleaner_cartesian_product(curr_product, curr_child_verifications)
 
         return curr_product
