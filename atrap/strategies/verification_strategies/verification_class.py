@@ -1,6 +1,3 @@
-
-
-
 class VerificationStrategy(object):
 
     def __init__(self, formal_step):

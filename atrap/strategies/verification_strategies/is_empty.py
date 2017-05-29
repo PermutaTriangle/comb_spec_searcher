@@ -1,6 +1,7 @@
 from atrap.tools import tiling_generates_avoider
-from grids import PositiveClass, Tiling
+from grids import PositiveClass
 from .verification_class import VerificationStrategy
+
 
 def is_empty(tiling, basis, basis_partitioning=None):
     '''This checks if for a tiling T, Av(B) intersected with T is the emptyset'''
