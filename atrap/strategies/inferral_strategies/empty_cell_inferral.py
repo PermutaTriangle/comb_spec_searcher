@@ -1,6 +1,6 @@
-
 from grids import Tiling, Block, PositiveClass
 from .inferral_class import InferralStrategy
+
 
 def empty_cell_inferral(tiling, basis, **kwargs):
 
@@ -17,14 +17,13 @@ def empty_cell_inferral(tiling, basis, **kwargs):
         verification_length = len(point_cells)
         point_cell_tiling = Tiling(point_cells)
         point_cells.pop(cell)
-        if any( perm.avoids(*basis) for perm in point_cell_tiling.perms_of_length(verification_length) ):
+        if any(perm.avoids(*basis) for perm in point_cell_tiling.perms_of_length(verification_length)):
             continue
         cells_removed.append(cell)
         new_tiling_dict.pop(cell)
-
 
     if cells_removed:
         new_tiling = Tiling(new_tiling_dict)
         formal_step = "The cells {} are empty."
         formal_step = formal_step.format(tuple(cells_removed))
-        yield InferralStrategy( formal_step, new_tiling )
+        yield InferralStrategy(formal_step, new_tiling)

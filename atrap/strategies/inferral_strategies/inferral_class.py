@@ -1,6 +1,5 @@
-
-
 from grids import Tiling
+
 
 class InferralStrategy(object):
 
