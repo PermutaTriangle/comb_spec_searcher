@@ -22,8 +22,8 @@ def get_tiling_genf(tiling, identifier, inp_set, root_func):
                 with_point[k] = Block.point
                 with_point = Tiling(with_point)
                 empty = Tiling({kk: vv for kk, vv in factor.factor.items() if kk != k})
-                eq = get_tiling_genf(with_point, identifier, inp_set, root_func) 
-                    + get_tiling_genf(empty, identifier, inp_set, root_func)
+                eq = (get_tiling_genf(with_point, identifier, inp_set, root_func) 
+                      + get_tiling_genf(empty, identifier, inp_set, root_func))
                 factorEqs.append(eq)
                 break
             if v is not Block.point and isinstance(v, PositiveClass):
@@ -31,8 +31,8 @@ def get_tiling_genf(tiling, identifier, inp_set, root_func):
                 non_positive[k] = v.perm_class
                 non_positive = Tiling(non_positive)
                 empty = Tiling({kk: vv for kk, vv in factor.factor.items() if kk != k})
-                eq = get_tiling_genf(non_positive, identifier, inp_set, root_func)
-                    - get_tiling_genf(empty, identifier, inp_set, root_func)
+                eq = (get_tiling_genf(non_positive, identifier, inp_set, root_func)
+                      - get_tiling_genf(empty, identifier, inp_set, root_func))
                 factorEqs.append(eq)
                 break
         else:
