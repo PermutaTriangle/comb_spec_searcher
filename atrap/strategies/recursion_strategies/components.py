@@ -1,5 +1,4 @@
-from grids import *
-from permuta import *
+from grids import Tiling
 from permuta.misc import UnionFind
 from itertools import combinations
 from atrap.tools import cells_of_occurrences
@@ -20,7 +19,6 @@ def components(tiling, basis, basis_partitioning=None, **kwargs):
     for cells_of_occurrence in occurrences_of_basis_elements:
         for cell1, cell2 in combinations(cells_of_occurrence, 2):
             components_set.unite(cell_to_int[cell1], cell_to_int[cell2])
-
 
     all_components = {}
     for cell, _ in tiling:
