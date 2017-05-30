@@ -1,16 +1,15 @@
+"""A strategy that tests if a tiling is a subset of the class."""
+
 from grids import Tiling, PositiveClass
 from atrap.tools import tiling_generates_container
 from .verification_class import VerificationStrategy
 from .one_by_one_verification import one_by_one_verification
 
 
-def subset_verified(tiling, basis, basis_partitioning=None):
+def subset_verified(tiling, basis):
     """Check that a tiling is a subset of Av(basis)."""
     if not isinstance(tiling, Tiling):
         raise TypeError
-
-    if len(basis) < 1:
-        return True
 
     if len(tiling) <= 1:
         for verification_strategy in one_by_one_verification(tiling, basis):
