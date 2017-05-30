@@ -1,9 +1,12 @@
+"""A basic inferral strategy that determines if cells are empty based on points placed."""
+
+
 from grids import Tiling, Block, PositiveClass
 from .inferral_class import InferralStrategy
 
 
 def empty_cell_inferral(tiling, basis, **kwargs):
-
+    """Yield InferralStrategy by removing all empty cells."""
     new_tiling_dict = dict(tiling)
 
     point_cells = {}

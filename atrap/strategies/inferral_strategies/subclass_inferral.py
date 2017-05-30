@@ -1,3 +1,4 @@
+"""Determine what class in cells based on points already placed."""
 
 from permuta import Perm, PermSet
 from grids import Tiling, Block, PositiveClass
@@ -5,9 +6,12 @@ from .inferral_class import InferralStrategy
 
 
 def subclass_inferral(tiling, basis, **kwargs):
-    '''Return a new tiling where all non-points have been inferred.
+    """
+    Return a new tiling where all non-points have been inferred.
+
     This is a more primitive approach avoiding using the basis
-    partitioning function'''
+    partitioning function.
+    """
     total_points = tiling.total_points + tiling.total_other
 
     '''This will be the inferred tiling that is returned'''

@@ -1,3 +1,6 @@
+"""TODO: DocString."""
+
+
 import itertools
 from grids import Tiling, PositiveClass
 from permuta import Perm

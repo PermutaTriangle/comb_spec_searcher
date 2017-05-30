@@ -1,10 +1,21 @@
+"""A wrapper for recursive strategies."""
+
+
 from collections import Iterable
 from grids import Tiling
 
 
 class RecursiveStrategy(object):
+    """A wrapper for recursive strategies."""
 
     def __init__(self, formal_step, tilings, back_maps):
+        """
+        Constructor for RecursiveStrategy.
+
+        Formal step is a string describing strategy used. Tilings are the set of
+        tilings given by the strategy. The back maps explain how to glue the
+        tilings back together.
+        """
         if not isinstance(formal_step, str):
             raise TypeError("Formal step not a string")
         if not isinstance(tilings, Iterable):

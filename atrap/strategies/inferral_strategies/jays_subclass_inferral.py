@@ -1,3 +1,4 @@
+"""TODO: DocString."""
 
 from permuta import Perm, PermSet
 from permuta.descriptors import Basis

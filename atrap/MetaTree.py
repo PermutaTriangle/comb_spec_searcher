@@ -375,7 +375,7 @@ class MetaTree(object):
     ''' There exists a proof tree if the frozenset() is contained in the root AND node.'''
     def has_proof_tree(self):
         """Return True if there exists a proof tree."""
-        return self.root_and_node.has_proof_tree()
+        return self.root_and_node.is_verified()
 
     def do_level(self, requested_depth=None, f=sys.stdout, max_time=None):
         """

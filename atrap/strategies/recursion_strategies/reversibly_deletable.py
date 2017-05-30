@@ -1,3 +1,10 @@
+"""
+RecursiveStrategies by using the definition of reversibly deletable.
+
+This definition is essentially equivalent to the one given in enumeration schemes paper.
+"""
+
+
 from grids import Tiling, Block
 from atrap.tools import cells_of_occurrences_by_perms
 
@@ -11,6 +18,7 @@ def reversibly_deletable_points(tiling,
                                 path=None,
                                 basis_partitioning=None,
                                 **kwargs):
+    """Yield all possibly RecursiveStrategy removing reversibly deletable points."""
     if current_cell is None:
         '''Take the smallest cell in the tiling'''
         current_cell = (-1, -1)
@@ -44,7 +52,7 @@ def reversibly_deletable_points(tiling,
             formal_step = "Reversibly delete the points at cells {}".format(path)
             points = [Tiling({cell: Block.point}) for cell in path]
             strategy = [Tiling(new_tiling_dict)] + points
-            yield RecursiveStrategy(formal_step, strategy, [tiling._back_map for tiling in strategy])
+            yield RecursiveStrategy(formal_step, strategy, [t._back_map for t in strategy])
             for recursive_strategy in reversibly_deletable_points(tiling, basis, cell, new_occurrences_by_perm, path):
                 yield recursive_strategy
             path.pop()
@@ -57,7 +65,7 @@ def reversibly_deletable_cells(tiling,
                                path=None,
                                basis_partitioning=None,
                                **kwargs):
-
+    """Yield all possile RecursiveStrategy from removing reversibly deletable cells."""
     if current_cell is None:
         '''Take the smallest cell in the tiling'''
         current_cell = (-1, -1)
@@ -95,7 +103,7 @@ def reversibly_deletable_cells(tiling,
             formal_step = "Reversibly delete the points at cells {}".format(path)
             blocks = [Tiling({cell: block}) for cell, block in blocks]
             tilings = [Tiling(new_tiling_dict)] + blocks
-            yield RecursiveStrategy(formal_step, tilings, [tiling._back_map for tiling in tilings])
+            yield RecursiveStrategy(formal_step, tilings, [t._back_map for t in tilings])
             for recursive_strategy in reversibly_deletable_cells(tiling, basis, cell, new_occurrences_by_perm, path):
                 yield recursive_strategy
             path.pop()

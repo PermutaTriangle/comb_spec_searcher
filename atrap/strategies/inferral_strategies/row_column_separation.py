@@ -1,3 +1,6 @@
+"""An inferral function that tries to separate cells in rows and columns."""
+
+
 from collections import defaultdict
 from grids import Tiling, Block, PositiveClass, Cell
 from itertools import combinations
@@ -5,7 +8,7 @@ from .inferral_class import InferralStrategy
 
 
 def row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=None):
-
+    """Return dictionaries with all inequalities of rows and columns."""
     point_cells = [cell for cell, block in tiling if isinstance(block, PositiveClass)]
     smaller_than_row = defaultdict(dict)
     smaller_than_col = defaultdict(dict)
@@ -93,12 +96,15 @@ def row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=None
 
 
 def separations(inequalities, unprocessed_cells=None, current_cell=None, current_state=None):
-    '''This is a recursive function for generating the splittings of a row/column from the given inequalities
+    """
+    A  recursive function for generating the splittings of a row/column from the given inequalities.
+
     It will split the cells from the row/column into parts. Any two cells in the same part must be on the the
     same row/column as one another. A part to the left of another must be below/further to the left than the
     other. For example in the tiling given by (0,0):Av(132), (1,1): Point, (2,0) Av(132) the separations of
     the first row will look like [ [(2,0)] [(0,0)]] ] and [ [(0,0), (2,0)] ]. The second is the trivial
-    solution and is always returned.'''
+    solution and is always returned.
+    """
     if current_state is None:
         current_state = []
     if unprocessed_cells is None:
@@ -245,11 +251,7 @@ def separations(inequalities, unprocessed_cells=None, current_cell=None, current
 
 
 def row_and_column_separation(tiling, basis, basis_partitioning=None):
-    # print("----------------NOW CONSIDERING-------------")
-    # print(tiling)
-    # print(dict(tiling))
-    # print(basis)
-
+    """Try separating all rows and columns."""
     if tiling.total_points + tiling.total_other + 2 < len(basis[0]):
         return
 

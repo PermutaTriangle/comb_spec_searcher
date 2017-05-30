@@ -6,7 +6,7 @@ from .verification_class import VerificationStrategy
 from .one_by_one_verification import one_by_one_verification
 
 
-def subset_verified(tiling, basis):
+def subset_verified(tiling, basis, **kwargs):
     """Check that a tiling is a subset of Av(basis)."""
     if not isinstance(tiling, Tiling):
         raise TypeError

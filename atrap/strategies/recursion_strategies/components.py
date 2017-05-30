@@ -1,3 +1,6 @@
+"""A recursive strategy using the definition of components."""
+
+
 from grids import Tiling
 from permuta.misc import UnionFind
 from itertools import combinations
@@ -5,8 +8,13 @@ from atrap.tools import cells_of_occurrences
 
 from .recursive_class import RecursiveStrategy
 
-def components(tiling, basis, basis_partitioning=None, **kwargs):
 
+def components(tiling, basis, basis_partitioning=None, **kwargs):
+    """
+    Yield strategy found by taking components of a tiling.
+
+    Two cells are in the same component if there exists an occurrence using both cells.
+    """
     cell_to_int = {}
 
     for cell, _ in tiling:
@@ -41,5 +49,5 @@ def components(tiling, basis, basis_partitioning=None, **kwargs):
     if len(strategy) <= 1:
         return
 
-    yield RecursiveStrategy("The components of the tiling", strategy, [tiling._back_map for tiling in strategy])
+    yield RecursiveStrategy("The components of the tiling", strategy, [t._back_map for t in strategy])
 # Consider the union of components?
