@@ -1,129 +1,19 @@
+"""An inferral function that tries to separate cells in rows and columns."""
+
+
 from collections import defaultdict
 from grids import Tiling, Block, PositiveClass, Cell
-from itertools import chain, combinations
-#
+from itertools import combinations
 from .inferral_class import InferralStrategy
 
 
-
-
-def old_row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=None):
-    # This will create the containing/avoiding less than cells of the permutation by row
-    smaller_than_dicts_by_row = (defaultdict(dict), defaultdict(dict))
-    smaller_than_dicts_by_col = (defaultdict(dict), defaultdict(dict))
-
-    # We only need to check permutations up to this length because we are trying to show
-    # one cell is less than another, so only patterns using the two cells need be considered.
-    verification_length = tiling.total_points + 2
-    # Add to the length the number of positive classes.
-    # Of course positive classes contribute one extra in length since they can't be empty.
-    verification_length += sum(1 for _, block in tiling.non_points if isinstance(block, PositiveClass))
-
-    for length in range(verification_length + 1):
-        # Get the partitioning into containing/avoiding perms
-        partitions = basis_partitioning(tiling, length, basis, "row_col_inequalities")
-
-        # For containing and avoiding
-        for partition, cells_smaller_than_by_row, cells_smaller_than_by_col in zip(partitions, smaller_than_dicts_by_row, smaller_than_dicts_by_col):
-            # For each perm and its associated info
-            for cell_infos in partition.values():
-                # Store for each cell its contribution to the perm
-                for cell_info in cell_infos:
-
-                    # we collect the cells and cell values, cell indices by row, column respectively
-                    all_single_cells_indices_cols = defaultdict(list)
-                    all_single_cells_values_rows = defaultdict(list)
-                    for cell, info in cell_info.items():
-                        _, cell_values, cell_indices = info
-                        # we only consider the occurrences where there has been one point placed in the cells
-                        if len(cell_values) == 1:
-                            all_single_cells_indices_cols[cell.i].append( (cell, cell_indices[0]) )
-                            all_single_cells_values_rows[cell.j].append( (cell, cell_values[0]) )
-
-                    # for each row we now create the set of inequalities.
-                    for row, all_single_cells_values in all_single_cells_values_rows.items():
-                        # if there is only one cell in the row, there is no need, as we can't reorder the cells.
-                        if len(all_single_cells_values) > 1:
-                            # we sort by the values, thus the first element must be the smallest in value.
-                            ordered_row = sorted(all_single_cells_values, key = lambda x: - x[1])
-                            while len(ordered_row) > 1:
-                                smallest_cell = ordered_row.pop(0)[0]
-                                # then store that the smallest cell is smaller than the rest.
-                                if smallest_cell in cells_smaller_than_by_row[row]:
-                                    cells_smaller_than_by_row[row][smallest_cell].update( x[0] for x in ordered_row )
-                                else:
-                                    cells_smaller_than_by_row[row][smallest_cell] = set( [x[0] for x in ordered_row] )
-
-                    # for each column we now create the set of inequalities
-                    for col, all_single_cells_indices in all_single_cells_indices_cols.items():
-                        # if there is only one cell in the column, there is no need, as we can't reorder the cells.
-                        if len(all_single_cells_indices) > 1:
-                            # we sort by the indices, thus the first element must be the leftmost/smallest in index.
-                            ordered_col = sorted(all_single_cells_indices, key = lambda x: - x[1])
-                            while len(ordered_col) > 1:
-                                smallest_cell = ordered_col.pop(0)[0]
-                                # then store that the smallest cell is smaller than the rest.
-                                if smallest_cell in cells_smaller_than_by_col[col]:
-                                    cells_smaller_than_by_col[col][smallest_cell].update( x[0] for x in ordered_col )
-                                else:
-                                    cells_smaller_than_by_col[col][smallest_cell] = set( [x[0] for x in ordered_col] )
-
-    # we now have all the inequalities given by the perms, split by containing and avoiding.
-    containing_smaller_than_row, avoiding_smaller_than_row = smaller_than_dicts_by_row
-    containing_smaller_than_col, avoiding_smaller_than_col = smaller_than_dicts_by_col
-    # print("row")
-    # print(containing_smaller_than_row)
-    # print(avoiding_smaller_than_row)
-    # print("col")
-    # print(containing_smaller_than_col)
-    # print(avoiding_smaller_than_col)
-
-    # we will create the actual inequalities, considering whether the perm avoids or contains
-    # this dictionary points to a row that points to the cells.
-    smaller_than_row = defaultdict(dict)
-    smaller_than_col = defaultdict(dict)
-
-    # for each row
-    # TODO: this should be for all rows with two elements or more
-    for row in range(tiling.dimensions.j):
-        row_cells = tiling.get_row(row)
-        if len(row_cells) > 1:
-            # for each cell
-            for cell, _ in row_cells:
-                # pick out the inequalities for containing
-                containing_cells_smaller_than = containing_smaller_than_row[row][cell] if cell in containing_smaller_than_row[row] else set()
-                # pick out the inequalities for avoiding
-                avoiding_cells_smaller_than = avoiding_smaller_than_row[row][cell] if cell in avoiding_smaller_than_row[row] else set()
-                # then a cell is actually less than if and only if it is less than for only containing perms
-                # hence we take the set minus.
-                smaller_than_row[row][cell] = containing_cells_smaller_than - avoiding_cells_smaller_than
-
-    # essentially repeat above for columns. for each column
-    # TODO: this should be for all cols with two elements or more
-    for col in range(tiling.dimensions.i):
-        col_cells = tiling.get_col(col)
-        if len(col_cells) > 1:
-        # for each cell
-            for cell, _ in col_cells:
-                # pick out the inequalities for containing
-                containing_cells_smaller_than = containing_smaller_than_col[col][cell] if cell in containing_smaller_than_col[col] else set()
-                # pick out the inequalities for avoiding
-                avoiding_cells_smaller_than = avoiding_smaller_than_col[col][cell] if cell in avoiding_smaller_than_col[col] else set()
-                # then a cell is actually less than if and only if it is less than for only containing perms
-                # hence we take the set minus.
-                smaller_than_col[col][cell] = containing_cells_smaller_than - avoiding_cells_smaller_than
-
-    # we then return these inequalities ready for parsing so as to determine how we can split rows and columns.
-    return smaller_than_row, smaller_than_col
-
-
 def row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=None):
-
+    """Return dictionaries with all inequalities of rows and columns."""
     point_cells = [cell for cell, block in tiling if isinstance(block, PositiveClass)]
     smaller_than_row = defaultdict(dict)
     smaller_than_col = defaultdict(dict)
     for row in range(tiling.dimensions.j):
-        row_cells = [ cell for cell, _ in tiling.get_row(row) ]
+        row_cells = [cell for cell, _ in tiling.get_row(row)]
         if len(row_cells) < 2:
             continue
 
@@ -135,9 +25,7 @@ def row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=None
             if cell2 not in inequalities:
                 inequalities[cell2] = set()
 
-
-
-            point_tiling = { cell: Block.point for cell in point_cells }
+            point_tiling = {cell: Block.point for cell in point_cells}
             point_tiling[cell1] = Block.point
             point_tiling[cell2] = Block.point
             point_tiling = Tiling(point_tiling)
@@ -147,23 +35,25 @@ def row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=None
 
             containing_perms, avoiding_perms = point_tiling.basis_partitioning(point_tiling.total_points, basis)
 
-
-            # print(point_tiling)
-            # print(containing_perms, avoiding_perms)
-            # print(new_cell1)
-            # print(new_cell2)
-
-            if all( all( cell_info[new_cell1][1] < cell_info[new_cell2][1] for cell_info in cell_infos ) for cell_infos in avoiding_perms.values() ):
-                if not all( all( cell_info[new_cell1][1] < cell_info[new_cell2][1] for cell_info in cell_infos ) for cell_infos in containing_perms.values() ):
+            if all(all(cell_info[new_cell1][1] < cell_info[new_cell2][1]
+                       for cell_info in cell_infos)
+                   for cell_infos in avoiding_perms.values()):
+                if not all(all(cell_info[new_cell1][1] < cell_info[new_cell2][1]
+                               for cell_info in cell_infos)
+                           for cell_infos in containing_perms.values()):
                     inequalities[cell1].add(cell2)
-            if all( all( cell_info[new_cell1][1] > cell_info[new_cell2][1] for cell_info in cell_infos ) for cell_infos in avoiding_perms.values() ):
-                if not all( all( cell_info[new_cell1][1] > cell_info[new_cell2][1] for cell_info in cell_infos ) for cell_infos in containing_perms.values() ):
+            if all(all(cell_info[new_cell1][1] > cell_info[new_cell2][1]
+                       for cell_info in cell_infos)
+                   for cell_infos in avoiding_perms.values()):
+                if not all(all(cell_info[new_cell1][1] > cell_info[new_cell2][1]
+                               for cell_info in cell_infos)
+                           for cell_infos in containing_perms.values()):
                     inequalities[cell2].add(cell1)
 
         smaller_than_row[row] = inequalities
 
     for col in range(tiling.dimensions.i):
-        col_cells = [ cell for cell,_ in tiling.get_col(col) ]
+        col_cells = [cell for cell, _ in tiling.get_col(col)]
         if len(col_cells) < 2:
             continue
 
@@ -175,7 +65,7 @@ def row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=None
             if cell2 not in inequalities:
                 inequalities[cell2] = set()
 
-            point_tiling = { cell: Block.point for cell in point_cells }
+            point_tiling = {cell: Block.point for cell in point_cells}
             point_tiling[cell1] = Block.point
             point_tiling[cell2] = Block.point
 
@@ -186,38 +76,35 @@ def row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=None
 
             containing_perms, avoiding_perms = point_tiling.basis_partitioning(point_tiling.total_points, basis)
 
-            if all( all( cell_info[new_cell1][2] < cell_info[new_cell2][2] for cell_info in cell_infos ) for cell_infos in avoiding_perms.values() ):
-                if not all( all( cell_info[new_cell1][2] < cell_info[new_cell2][2] for cell_info in cell_infos ) for cell_infos in containing_perms.values() ):
+            if all(all(cell_info[new_cell1][2] < cell_info[new_cell2][2]
+                       for cell_info in cell_infos)
+                   for cell_infos in avoiding_perms.values()):
+                if not all(all(cell_info[new_cell1][2] < cell_info[new_cell2][2]
+                               for cell_info in cell_infos)
+                           for cell_infos in containing_perms.values()):
                     inequalities[cell1].add(cell2)
-            if all( all( cell_info[new_cell1][2] > cell_info[new_cell2][2] for cell_info in cell_infos ) for cell_infos in avoiding_perms.values() ):
-                if not all( all( cell_info[new_cell1][2] > cell_info[new_cell2][2] for cell_info in cell_infos ) for cell_infos in containing_perms.values() ):
+            if all(all(cell_info[new_cell1][2] > cell_info[new_cell2][2]
+                       for cell_info in cell_infos)
+                   for cell_infos in avoiding_perms.values()):
+                if not all(all(cell_info[new_cell1][2] > cell_info[new_cell2][2]
+                               for cell_info in cell_infos)
+                           for cell_infos in containing_perms.values()):
                     inequalities[cell2].add(cell1)
 
         smaller_than_col[col] = inequalities
-
-
-    # if not (smaller_than_row, smaller_than_col) == old_row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=basis_partitioning):
-    #     print("For the tiling")
-    #     print(tiling)
-    #     print("the old results were")
-    #     print( old_row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=basis_partitioning) )
-    #     print("and the new were")
-    #     print(smaller_than_row)
-    #     print(smaller_than_col)
-    #     print()
-    #     print("--------------------------")
-    #     print()
-    # assert( (smaller_than_row, smaller_than_col) == old_row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=basis_partitioning) )
     return smaller_than_row, smaller_than_col
 
 
-def separations( inequalities, unprocessed_cells=None, current_cell=None, current_state=None ):
-    '''This is a recursive function for generating the splittings of a row/column from the given inequalities
+def separations(inequalities, unprocessed_cells=None, current_cell=None, current_state=None):
+    """
+    A  recursive function for generating the splittings of a row/column from the given inequalities.
+
     It will split the cells from the row/column into parts. Any two cells in the same part must be on the the
     same row/column as one another. A part to the left of another must be below/further to the left than the
     other. For example in the tiling given by (0,0):Av(132), (1,1): Point, (2,0) Av(132) the separations of
     the first row will look like [ [(2,0)] [(0,0)]] ] and [ [(0,0), (2,0)] ]. The second is the trivial
-    solution and is always returned.'''
+    solution and is always returned.
+    """
     if current_state is None:
         current_state = []
     if unprocessed_cells is None:
@@ -233,18 +120,23 @@ def separations( inequalities, unprocessed_cells=None, current_cell=None, curren
 
     if current_state == []:
         '''The next state must be the one with exactly one part'''
-        current_state.append( [current_cell] )
+        current_state.append([current_cell])
         if unprocessed_cells:
             '''we then take the next cell to pass to the recursive call'''
             next_cell = unprocessed_cells[0]
-            return [ separation for separation in separations( inequalities, unprocessed_cells[1:], next_cell, current_state )]
-        return [ current_state ]
+            return [separation for separation in separations(inequalities,
+                                                             unprocessed_cells[1:],
+                                                             next_cell,
+                                                             current_state)]
+        return [current_state]
 
-    must_mix_with = [ cell for cell in inequalities.keys() if cell not in inequalities[current_cell] and current_cell not in inequalities[cell] and cell is not current_cell ]
+    must_mix_with = [cell for cell in inequalities.keys() if (cell not in inequalities[current_cell]
+                                                              and current_cell not in inequalities[cell]
+                                                              and cell is not current_cell)]
 
     mixing_with_one = False
     for index, part in enumerate(current_state):
-        if any( cell in part for cell in must_mix_with ):
+        if any(cell in part for cell in must_mix_with):
             if mixing_with_one:
                 '''The cell has to mix with two necessarily separate parts, hence no solution'''
                 return []
@@ -255,17 +147,20 @@ def separations( inequalities, unprocessed_cells=None, current_cell=None, curren
     if mixing_with_one:
         for index, part in enumerate(current_state):
             if index < mixing_with_index:
-                if any( current_cell not in inequalities[cell] for cell in part ):
+                if any(current_cell not in inequalities[cell] for cell in part):
                     '''There is some element in the part to the left which can't appear below the current cell'''
                     return []
             elif index > mixing_with_index:
-                if any( cell not in inequalities[current_cell] for cell in part ):
+                if any(cell not in inequalities[current_cell] for cell in part):
                     '''There is some element in the part to the right which can't appear above the current cell'''
                     return []
         current_state[mixing_with_index].append(current_cell)
         if unprocessed_cells:
             next_cell = unprocessed_cells[0]
-            return [ separation for separation in separations( inequalities, unprocessed_cells[1:], next_cell, current_state )]
+            return [separation for separation in separations(inequalities,
+                                                             unprocessed_cells[1:],
+                                                             next_cell,
+                                                             current_state)]
 
         return [current_state]
 
@@ -274,12 +169,12 @@ def separations( inequalities, unprocessed_cells=None, current_cell=None, curren
     furthest_right_index = len(current_state)
     '''We search for the interval where the current cell can be placed'''
     for index, part in enumerate(current_state):
-        if any( cell not in inequalities[current_cell] for cell in part ):
+        if any(cell not in inequalities[current_cell] for cell in part):
             '''The current cell may not appear to the left of this part'''
             furthest_left_index = index + 1
 
-    for index, part in reversed( list(enumerate(current_state)) ):
-        if any( current_cell not in inequalities[cell] for cell in part):
+    for index, part in reversed(list(enumerate(current_state))):
+        if any(current_cell not in inequalities[cell] for cell in part):
             '''The current cell may not appear to the right of this part'''
             furthest_right_index = index
 
@@ -292,7 +187,6 @@ def separations( inequalities, unprocessed_cells=None, current_cell=None, curren
     # print("right index")
     # print(furthest_right_index)
 
-
     if furthest_left_index > furthest_right_index:
         '''in which case the interval is empty'''
         if furthest_left_index == furthest_right_index + 1:
@@ -301,7 +195,9 @@ def separations( inequalities, unprocessed_cells=None, current_cell=None, curren
             # print(current_state)
             if unprocessed_cells:
                 next_cell = unprocessed_cells[0]
-                return [ separation for separation in separations( inequalities, unprocessed_cells[1:], next_cell, current_state )]
+                return [separation for separation in separations(inequalities,
+                                                                 unprocessed_cells[1:],
+                                                                 next_cell, current_state)]
             return [current_state]
         return []
 
@@ -312,27 +208,30 @@ def separations( inequalities, unprocessed_cells=None, current_cell=None, curren
     potential_states = []
 
     if furthest_left_index > 0:
-        potential_state = current_state[:furthest_left_index-1] + [ current_state[furthest_left_index - 1] + [current_cell] ] + current_state[furthest_left_index:]
+        potential_state = (current_state[:furthest_left_index-1]
+                           + [current_state[furthest_left_index - 1]
+                           + [current_cell]]
+                           + current_state[furthest_left_index:])
         # print("furthest left")
         # print(potential_state)
-        potential_states.append( potential_state )
+        potential_states.append(potential_state)
 
     for index in range(furthest_left_index, furthest_right_index + 1):
         if index == len(current_state):
-            potential_state = current_state + [ [current_cell] ]
+            potential_state = current_state + [[current_cell]]
             # print("furthest right")
             # print(potential_state)
             potential_states.append(potential_state)
 
         else:
-            potential_state = current_state[:index] + [ current_state[index] + [current_cell] ] + current_state[index+1:]
+            potential_state = current_state[:index] + [current_state[index] + [current_cell]] + current_state[index+1:]
             # print("middle")
             # print(potential_state)
             potential_states.append(potential_state)
 
-            potential_state = current_state[:index] + [ [current_cell] ] + current_state[index:]
+            potential_state = current_state[:index] + [[current_cell]] + current_state[index:]
             # print(potential_state)
-            potential_states.append( potential_state )
+            potential_states.append(potential_state)
 
     # print("all")
     # print(potential_states)
@@ -342,29 +241,30 @@ def separations( inequalities, unprocessed_cells=None, current_cell=None, curren
         final_states = []
         for potential_state in potential_states:
             '''for each potential state, we call recursively'''
-            final_states.extend(  separation for separation in separations( inequalities, unprocessed_cells[1:], next_cell, potential_state ) )
+            final_states.extend(separation for separation in separations(inequalities,
+                                                                         unprocessed_cells[1:],
+                                                                         next_cell,
+                                                                         potential_state))
         return final_states
 
     return potential_states
 
-def row_and_column_separation(tiling, basis, basis_partitioning=None):
-    # print("----------------NOW CONSIDERING-------------")
-    # print(tiling)
-    # print(dict(tiling))
-    # print(basis)
 
+def row_and_column_separation(tiling, basis, basis_partitioning=None):
+    """Try separating all rows and columns."""
     if tiling.total_points + tiling.total_other + 2 < len(basis[0]):
         return
 
-
     '''First we calculate the set of inequalities for all the rows and columns'''
-    row_inequalities, column_inequalities = row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=basis_partitioning)
+    row_ineqs, col_inequalities = row_and_column_inequalities_of_tiling(tiling,
+                                                                        basis,
+                                                                        basis_partitioning=basis_partitioning)
     new_tiling_dict = dict(tiling)
     '''When creating the new tiling, we need to keep track of the shifted cell we
     add, in case a cell appears on a separated row and column'''
     original_cell_to_shifted_cell_map = {}
     for row in range(tiling.dimensions.j):
-        inequalities = row_inequalities[row]
+        inequalities = row_ineqs[row]
         if inequalities:
             # print("------working on row {}------".format(row))
             # print(inequalities)
@@ -397,7 +297,7 @@ def row_and_column_separation(tiling, basis, basis_partitioning=None):
     # print(original_cell_to_shifted_cell_map)
     for col in range(tiling.dimensions.i):
         '''Calculate the separation, described in the function'''
-        inequalities = column_inequalities[col]
+        inequalities = col_inequalities[col]
         if inequalities:
             # print("------working on col {}------".format(col))
             # print(inequalities)
@@ -443,4 +343,4 @@ def row_and_column_separation(tiling, basis, basis_partitioning=None):
         '''we only return it if it is different'''
         # TODO: add the rows and columns separated to the formal_step
         formal_step = "Separated the rows and columns"
-        yield InferralStrategy( formal_step, separated_tiling)
+        yield InferralStrategy(formal_step, separated_tiling)

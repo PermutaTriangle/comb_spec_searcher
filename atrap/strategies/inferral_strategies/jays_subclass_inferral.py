@@ -1,3 +1,4 @@
+"""TODO: DocString."""
 
 from permuta import Perm, PermSet
 from permuta.descriptors import Basis
@@ -5,7 +6,6 @@ from grids import Tiling, Block, PositiveClass
 from atrap.tools import get_class, get_perms_to_check
 from .inferral_class import InferralStrategy
 
-import time
 
 def cell_inferral(tiling, the_cell, input_set):
     point_cells = {}
@@ -16,11 +16,9 @@ def cell_inferral(tiling, the_cell, input_set):
         elif cell != the_cell and isinstance(block, PositiveClass):
             point_cells[cell] = Block.point
 
-    max_length = max([0,len(input_set.basis[-1])-1])
-
     inferred_basis = tiling[the_cell].basis
     # for length in range(1, max_length+1):
-        # perm_set = get_class(inferred_basis)
+    #     perm_set = get_class(inferred_basis)
     for patt in get_perms_to_check(input_set.basis):
         point_cells[the_cell] = PermSet([patt])
         T = Tiling(point_cells)
@@ -31,9 +29,7 @@ def cell_inferral(tiling, the_cell, input_set):
         if all(perm not in input_set for perm in T.perms_of_length(len(point_cells) - 1 + len(patt))):
             inferred_basis = Basis(inferred_basis+(patt,))
 
-
     return inferred_basis
-
 
 
 def jays_subclass_inferral(tiling, basis, **kwargs):
@@ -70,4 +66,4 @@ def jays_subclass_inferral(tiling, basis, **kwargs):
     # print(new_tiling)
 
     if not tiling == new_tiling:
-        yield  InferralStrategy("After tiling subset inferral", new_tiling)
+        yield InferralStrategy("After tiling subset inferral", new_tiling)

@@ -1,7 +1,9 @@
 from atrap.strategies import *
 
+
 class StrategyPacks(object):
     """Different strategy packs for convenience."""
+
     # Avoiding all_symmetric_tilings on purpose.
     all_strategies = [
         [all_cell_insertions, all_point_isolations],
