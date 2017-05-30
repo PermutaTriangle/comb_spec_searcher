@@ -1,9 +1,23 @@
+"""
+The row and column placement equivalent strategy.
+
+This only places in a row/column if it is the only
+positive class in its respective row/column.
+"""
+
 from grids import Tiling, Block, PositiveClass
 
 from .equivalence_class import EquivalenceStrategy
-from .point_placement import all_unique_point_or_empty, all_minimum_and_maximum_decreasing, all_minimum_and_maximum_increasing, all_minimum_decreasing, all_maximum_decreasing, all_minimum_increasing, all_maximum_increasing
+from .point_placement import all_unique_point_or_empty
+from .point_placement import all_minimum_and_maximum_decreasing
+from .point_placement import all_minimum_and_maximum_increasing
+from .point_placement import all_minimum_decreasing
+from .point_placement import all_maximum_decreasing
+from .point_placement import all_minimum_increasing
+
 
 def all_equivalent_row_placements(tiling, **kwargs):
+    """Yield Equivalent strategy from placing in a row with one positive class."""
     for row in range(tiling.dimensions.j):
         if len(tiling.get_row(row)) != 1:
             continue
@@ -14,25 +28,25 @@ def all_equivalent_row_placements(tiling, **kwargs):
             # Row inelegible as it is not a PositiveClass
             continue
 
-        if any( sum(1 for _, col_block in tiling.get_col(cell.i)
+        if any(sum(1 for _, col_block in tiling.get_col(cell.i)
                if isinstance(col_block, PositiveClass)
-               or col_block is Block.point) != 1 for cell, _ in tiling.get_row(row) ):
+               or col_block is Block.point) != 1 for cell, _ in tiling.get_row(row)):
             # Row ineligible because there is a cell that is not
             # the sole non-class cell in its respective col
             continue
 
         if block is PositiveClass(Block.decreasing):
-            for strategy in all_minimum_and_maximum_decreasing( tiling, cell ):
+            for strategy in all_minimum_and_maximum_decreasing(tiling, cell):
                 yield strategy
             continue
 
         if block is PositiveClass(Block.increasing):
-            for strategy in all_minimum_and_maximum_increasing( tiling, cell ):
+            for strategy in all_minimum_and_maximum_increasing(tiling, cell):
                 yield strategy
             continue
 
         if block is PositiveClass(Block.point_or_empty):
-            for strategy in all_unique_point_or_empty( tiling, cell ):
+            for strategy in all_unique_point_or_empty(tiling, cell):
                 yield strategy
             continue
 
@@ -76,11 +90,12 @@ def all_equivalent_row_placements(tiling, **kwargs):
         topmost_tiling = Tiling(topmost_tiling_dict)
         bottommost_tiling = Tiling(bottommost_tiling_dict)
 
-        yield EquivalenceStrategy( "Inserting the top most point in to the cell " + str(cell), topmost_tiling )
-        yield EquivalenceStrategy( "Inserting the bottom most point in to the cell " + str(cell), bottommost_tiling )
+        yield EquivalenceStrategy("Inserting the top most point in to the cell " + str(cell), topmost_tiling)
+        yield EquivalenceStrategy("Inserting the bottom most point in to the cell " + str(cell), bottommost_tiling)
 
 
 def all_equivalent_column_placements(tiling, **kwargs):
+    """Yield Equivalent strategy from placing in a column with one positive class."""
     for col in range(tiling.dimensions.i):
         if len(tiling.get_col(col)) != 1:
             continue
@@ -91,25 +106,25 @@ def all_equivalent_column_placements(tiling, **kwargs):
             # Row inelegible as it is not a PositiveClass
             continue
 
-        if any( sum(1 for _, row_block in tiling.get_row(cell.j)
+        if any(sum(1 for _, row_block in tiling.get_row(cell.j)
                if isinstance(row_block, PositiveClass)
-               or row_block is Block.point) != 1 for cell, _ in tiling.get_col(col) ):
+               or row_block is Block.point) != 1 for cell, _ in tiling.get_col(col)):
             # Col ineligible because there is a cell that is not
             # the sole non-class cell in its respective row
             continue
 
         if block is PositiveClass(Block.decreasing):
-            for strategy in all_minimum_and_maximum_decreasing( tiling, cell ):
+            for strategy in all_minimum_and_maximum_decreasing(tiling, cell):
                 yield strategy
             continue
 
         if block is PositiveClass(Block.increasing):
-            for strategy in all_minimum_and_maximum_increasing( tiling, cell ):
+            for strategy in all_minimum_and_maximum_increasing(tiling, cell):
                 yield strategy
             continue
 
         if block is PositiveClass(Block.point_or_empty):
-            for strategy in all_unique_point_or_empty( tiling, cell ):
+            for strategy in all_unique_point_or_empty(tiling, cell):
                 yield strategy
             continue
 
@@ -153,11 +168,12 @@ def all_equivalent_column_placements(tiling, **kwargs):
         leftmost_tiling = Tiling(leftmost_tiling_dict)
         rightmost_tiling = Tiling(rightmost_tiling_dict)
 
-        yield EquivalenceStrategy( "Inserting the left most point in to the cell " + str(cell), leftmost_tiling )
-        yield EquivalenceStrategy( "Inserting the right most point in to the cell " + str(cell),  rightmost_tiling )
+        yield EquivalenceStrategy("Inserting the left most point in to the cell " + str(cell), leftmost_tiling)
+        yield EquivalenceStrategy("Inserting the right most point in to the cell " + str(cell),  rightmost_tiling)
 
 
 def all_equivalent_minimum_row_placements(tiling, **kwargs):
+    """Return Equivalent strategy from placing minimum in a row with one positive class."""
     for row in range(tiling.dimensions.j):
         if len(tiling.get_row(row)) != 1:
             continue
@@ -168,25 +184,25 @@ def all_equivalent_minimum_row_placements(tiling, **kwargs):
             # Row inelegible as it is not a PositiveClass
             continue
 
-        if any( sum(1 for _, col_block in tiling.get_col(cell.i)
+        if any(sum(1 for _, col_block in tiling.get_col(cell.i)
                if isinstance(col_block, PositiveClass)
-               or col_block is Block.point) != 1 for cell, _ in tiling.get_row(row) ):
+               or col_block is Block.point) != 1 for cell, _ in tiling.get_row(row)):
             # Row ineligible because there is a cell that is not
             # the sole non-class cell in its respective col
             continue
 
         if block is PositiveClass(Block.decreasing):
-            for strategy in all_minimum_decreasing( tiling, cell ):
+            for strategy in all_minimum_decreasing(tiling, cell):
                 yield strategy
             continue
 
         if block is PositiveClass(Block.increasing):
-            for strategy in all_minimum_increasing( tiling, cell ):
+            for strategy in all_minimum_increasing(tiling, cell):
                 yield strategy
             continue
 
         if block is PositiveClass(Block.point_or_empty):
-            for strategy in all_unique_point_or_empty( tiling, cell ):
+            for strategy in all_unique_point_or_empty(tiling, cell):
                 yield strategy
             continue
         bottommost_tiling_dict = {}
@@ -217,10 +233,11 @@ def all_equivalent_minimum_row_placements(tiling, **kwargs):
 
         bottommost_tiling = Tiling(bottommost_tiling_dict)
 
-        yield EquivalenceStrategy( "Inserting the bottom most point in to the cell " + str(cell), bottommost_tiling )
+        yield EquivalenceStrategy("Inserting the bottom most point in to the cell " + str(cell), bottommost_tiling)
 
 
 def all_equivalent_leftmost_column_placements(tiling, **kwargs):
+    """Return Equivalent strategy from placing leftmost in a column with one positive class."""
     for col in range(tiling.dimensions.i):
         if len(tiling.get_col(col)) != 1:
             continue
@@ -231,25 +248,25 @@ def all_equivalent_leftmost_column_placements(tiling, **kwargs):
             # Row inelegible as it is not a PositiveClass
             continue
 
-        if any( sum(1 for _, row_block in tiling.get_row(cell.j)
+        if any(sum(1 for _, row_block in tiling.get_row(cell.j)
                if isinstance(row_block, PositiveClass)
-               or row_block is Block.point) != 1 for cell, _ in tiling.get_col(col) ):
+               or row_block is Block.point) != 1 for cell, _ in tiling.get_col(col)):
             # Col ineligible because there is a cell that is not
             # the sole non-class cell in its respective row
             continue
 
         if block is PositiveClass(Block.decreasing):
-            for strategy in all_maximum_decreasing( tiling, cell ):
+            for strategy in all_maximum_decreasing(tiling, cell):
                 yield strategy
             continue
 
         if block is PositiveClass(Block.increasing):
-            for strategy in all_minimum_increasing( tiling, cell ):
+            for strategy in all_minimum_increasing(tiling, cell):
                 yield strategy
             continue
 
         if block is PositiveClass(Block.point_or_empty):
-            for strategy in all_unique_point_or_empty( tiling, cell ):
+            for strategy in all_unique_point_or_empty(tiling, cell):
                 yield strategy
             continue
 
@@ -280,4 +297,4 @@ def all_equivalent_leftmost_column_placements(tiling, **kwargs):
 
         leftmost_tiling = Tiling(leftmost_tiling_dict)
 
-        yield EquivalenceStrategy( "Inserting the left most point in to the cell " + str(cell), leftmost_tiling )
+        yield EquivalenceStrategy("Inserting the left most point in to the cell " + str(cell), leftmost_tiling)
