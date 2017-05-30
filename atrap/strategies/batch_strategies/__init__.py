@@ -7,3 +7,5 @@ from .row_column_placements import all_minimum_row_placements
 from .row_column_placements import all_column_placements
 from .row_column_placements import all_leftmost_column_placements
 from .isolate_points import all_point_isolations
+from .left_to_right_maxima import left_to_right_maxima123
+from .left_to_right_maxima import left_to_right_maxima1234
