@@ -194,6 +194,62 @@ class StrategyPacks(object):
         [splittings],
         [subset_verified, is_empty]]
 
+    point_placement_and_all_lrm_and_rlm_placements = [
+        [all_cell_insertions, all_lrm_and_rlm_placements],
+        [all_point_placements],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [components, reversibly_deletable_cells],
+        [subset_verified, is_empty]]
+
+    point_placement_and_all_lrm_and_rlm_placements_and_splittings = [
+        [all_cell_insertions, all_lrm_and_rlm_placements],
+        [all_point_placements],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [splittings],
+        [subset_verified, is_empty]]
+
+    row_and_column_placements_and_all_lrm_and_rlm_placements = [
+        [all_cell_insertions, all_row_placements, all_column_placements, all_lrm_and_rlm_placements],
+        [all_equivalent_row_placements, all_equivalent_column_placements],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [components, reversibly_deletable_cells],
+        [subset_verified, is_empty]]
+
+    row_and_column_placements_and_all_lrm_and_rlm_placements_and_splittings = [
+        [all_cell_insertions, all_row_placements, all_column_placements, all_lrm_and_rlm_placements],
+        [all_equivalent_row_placements, all_equivalent_column_placements],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [splittings],
+        [subset_verified, is_empty]]
+
+    point_placement_and_all_321_boundaries = [
+        [all_cell_insertions, all_321_boundaries],
+        [all_point_placements],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [components, reversibly_deletable_cells],
+        [subset_verified, is_empty]]
+
+    point_placement_and_all_321_boundaries_and_splittings = [
+        [all_cell_insertions, all_321_boundaries],
+        [all_point_placements],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [splittings],
+        [subset_verified, is_empty]]
+
+    row_and_column_placements_and_all_321_boundaries = [
+        [all_cell_insertions, all_row_placements, all_column_placements, all_321_boundaries],
+        [all_equivalent_row_placements, all_equivalent_column_placements],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [components, reversibly_deletable_cells],
+        [subset_verified, is_empty]]
+
+    row_and_column_placements_and_all_321_boundaries_and_splittings = [
+        [all_cell_insertions, all_row_placements, all_column_placements, all_321_boundaries],
+        [all_equivalent_row_placements, all_equivalent_column_placements],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [splittings],
+        [subset_verified, is_empty]]
+
     finite = [
         [all_cell_insertions, all_minimum_row_placements],
         [all_equivalent_minimum_row_placements],
