@@ -58,6 +58,7 @@ def left_to_right_maxima1234(tiling, basis, **kwargs):
         tilings = [one_left_to_right_maxima, two_left_to_right_maxima, three_left_to_right_maxima]
         yield BatchStrategy("Placing the left-to-right maxima", tilings)
 
+
 def right_to_left_minima123(tiling, basis, **kwargs):
     """DocString."""
     if tiling.dimensions.i != 1 or tiling.dimensions.j != 1:
@@ -76,7 +77,7 @@ def right_to_left_minima123(tiling, basis, **kwargs):
                                            (0, 3): block.perm_class,
                                            (2, 3): block.perm_class})
 
-        tilings = [one_right_to_left_minima, to_right_two_left_minima]
+        tilings = [one_right_to_left_minima, two_right_to_left_minima]
         yield BatchStrategy("Placing the right-to-left minima", tilings)
 
 
@@ -218,7 +219,7 @@ def right_to_left_maxima4321(tiling, basis, **kwargs):
 
 
 def all_lrm_and_rlm_placements(tiling, basis, **kwargs):
-    """Yield all BatchStrategies from placing lrm and rlm boundaries"""
+    """Yield all BatchStrategies from placing lrm and rlm boundaries."""
     if tiling.dimensions.i != 1 or tiling.dimensions.j != 1:
         return
 
@@ -227,31 +228,23 @@ def all_lrm_and_rlm_placements(tiling, basis, **kwargs):
         if Perm((0, 1, 2)) in basis:
             for strategy in left_to_right_maxima123(tiling, basis):
                 yield strategy
-
-        if Perm((0, 1, 2, 3)) in basis:
-            for strategy in left_to_right_maxima1234(tiling, basis):
-                yield strategy
-
-        if Perm((0, 1, 2)) in basis:
             for strategy in right_to_left_minima123(tiling, basis):
                 yield strategy
 
         if Perm((0, 1, 2, 3)) in basis:
+            for strategy in left_to_right_maxima1234(tiling, basis):
+                yield strategy
             for strategy in right_to_left_minima1234(tiling, basis):
                 yield strategy
 
         if Perm((2, 1, 0)) in basis:
             for strategy in right_to_left_maxima321(tiling, basis):
                 yield strategy
-
-        if Perm((3, 2, 1, 0)) in basis:
-            for strategy in right_to_left_maxima4321(tiling, basis):
-                yield strategy
-
-        if Perm((2, 1, 0)) in basis:
             for strategy in left_to_right_minima321(tiling, basis):
                 yield strategy
 
         if Perm((3, 2, 1, 0)) in basis:
             for strategy in left_to_right_minima4321(tiling, basis):
+                yield strategy
+            for strategy in right_to_left_maxima4321(tiling, basis):
                 yield strategy
