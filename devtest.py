@@ -42,7 +42,7 @@ from atrap.Helpers import taylor_expand
 # task = '012_3210'
 # task = '0'
 #
-# task = '0123'
+task = '0123'
 # task = '0213'
 # task = '012_3210'
 
@@ -52,9 +52,11 @@ from atrap.Helpers import taylor_expand
 
 # task = '0'
 
+# task = '012'
+
 # task = '0132_0213_0231_3120'
 
-task = '0213_0231'
+# task = '0213_0231'
 
 # task = "1302_2031"
 
@@ -72,7 +74,7 @@ task = '0213_0231'
 # task = '0123_0132_0213_0231_0312_1023_1203_1230_2013_2301_3012'
 patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 
-strategies = StrategyPacks.point_separation_and_isolation
+strategies = StrategyPacks.left_to_right_maxima_1234_and_row_column_placements
 # strategies = enum_sch
 
 mtree = MetaTree( patts, *strategies )
