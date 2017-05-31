@@ -22,7 +22,7 @@ def get_tiling_genf(tiling, identifier, inp_set, root_func):
                 with_point[k] = Block.point
                 with_point = Tiling(with_point)
                 empty = Tiling({kk: vv for kk, vv in factor.factor.items() if kk != k})
-                eq = (get_tiling_genf(with_point, identifier, inp_set, root_func) 
+                eq = (get_tiling_genf(with_point, identifier, inp_set, root_func)
                       + get_tiling_genf(empty, identifier, inp_set, root_func))
                 factorEqs.append(eq)
                 break
@@ -54,7 +54,7 @@ def get_tiling_genf(tiling, identifier, inp_set, root_func):
                         continue
                     ext_genf = genf_from_db(v)
                     if ext_genf is None:
-                        raise RuntimeError("Cannot find generating function for " + str(identifier) 
+                        raise RuntimeError("Cannot find generating function for " + str(identifier)
                                            + " because generating function for " + repr(v) + " is unknown")
                     factorEqs.append(ext_genf)
                     break
@@ -67,7 +67,7 @@ def get_tiling_genf(tiling, identifier, inp_set, root_func):
                     sets += 1
             else:
                 if sets > 1 or (len(xs) > 1 and len(ys) > 1):
-                    raise RuntimeError("Unknown factor found \n" + str(factor) 
+                    raise RuntimeError("Unknown factor found \n" + str(factor)
                                        + "\nThe minimum of the factor is \n" + str(factor.minimum()))
                 if func:
                     points = len(factor.factor)-1
@@ -105,7 +105,6 @@ def factor_from_db(factor):
 def taylor_expand(gen_func, terms=10):
     coeffs = []
     fac = 1
-    #print(gen_func)
     gen_func = gen_func.series(n=terms+1)
     #print("After series:")
     #print(gen_func)

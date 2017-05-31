@@ -108,7 +108,7 @@ class ProofTree(JsonAble):
             rhs = get_tiling_genf(root.out_tiling, root.identifier, avoid, funcs[self.root.identifier](x))
         return reduce(add, [self._get_equations(child, funcs, avoid) for child in root.children], [Eq(lhs, rhs)])
 
-    def get_genf(self, verify=10, equations=False, expansion=False):
+    def get_genf(self, verify=10, equations=False, expand=False):
         from .Helpers import taylor_expand
         from sympy import solve
         from sympy.abc import x
@@ -133,7 +133,7 @@ class ProofTree(JsonAble):
                 any_valid = True
                 if coeffs == expansion:
                     sol = solution[f(x)].expand().simplify()
-                    if expansion:
+                    if expand:
                         if equations:
                             return sol,eqs,expansion
                         return sol,expansion

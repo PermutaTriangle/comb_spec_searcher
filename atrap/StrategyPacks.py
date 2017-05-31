@@ -215,6 +215,40 @@ class StrategyPacks(object):
         [reversibly_deletable_cells],
         [subset_verified, is_empty]]
 
+    left_to_right_maxima_123_and_point_placements = [
+        [all_cell_insertions, left_to_right_maxima123],
+        [all_point_placements],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [components, reversibly_deletable_cells],
+        [subset_verified, is_empty]]
+
+    left_to_right_maxima_1234_and_point_placements = [
+        [all_cell_insertions, left_to_right_maxima1234],
+        [all_point_placements],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [components, reversibly_deletable_cells],
+        [subset_verified, is_empty]]
+
+    left_to_right_maxima_123_and_row_column_placements = [
+        [all_cell_insertions, left_to_right_maxima123, all_row_placements],
+        [all_equivalent_row_placements],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [components, reversibly_deletable_cells],
+        [subset_verified, is_empty]]
+
+    left_to_right_maxima_1234_and_row_column_placements = [
+        [all_cell_insertions, left_to_right_maxima1234, all_row_placements, all_column_placements],
+        [all_equivalent_row_placements, all_equivalent_column_placements],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [components, reversibly_deletable_cells],
+        [subset_verified, is_empty]]
+
+    point_separation_and_isolation_with_left_to_right_maxima1234 = [
+        [all_cell_insertions, left_to_right_maxima1234, all_point_isolations],
+        [point_separation, all_equivalent_point_isolations],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [components, reversibly_deletable_cells],
+        [subset_verified, is_empty]]
 
 
     def __new__(_cls):
