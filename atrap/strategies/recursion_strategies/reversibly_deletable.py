@@ -50,8 +50,8 @@ def reversibly_deletable_points(tiling,
             for deleted_cell in path:
                 new_tiling_dict.pop(deleted_cell)
             formal_step = "Reversibly delete the points at cells {}".format(path)
-            points = [Tiling({cell: Block.point}) for cell in path]
-            strategy = [Tiling(new_tiling_dict)] + points
+            points = Tiling({cell: Block.point for cell in path})
+            strategy = [Tiling(new_tiling_dict), points]
             yield RecursiveStrategy(formal_step, strategy, [t._back_map for t in strategy])
             for recursive_strategy in reversibly_deletable_points(tiling, basis, cell, new_occurrences_by_perm, path):
                 yield recursive_strategy
@@ -62,8 +62,7 @@ def reversibly_deletable_cells(tiling,
                                basis,
                                current_cell=None,
                                occurrences_by_perm=None,
-                               path=None,
-                               basis_partitioning=None,
+                               path=None, basis_partitioning=None,
                                **kwargs):
     """Yield all possile RecursiveStrategy from removing reversibly deletable cells."""
     if current_cell is None:
@@ -100,9 +99,9 @@ def reversibly_deletable_cells(tiling,
             blocks = []
             for deleted_cell in path:
                 blocks.append((deleted_cell, new_tiling_dict.pop(deleted_cell)))
-            formal_step = "Reversibly delete the points at cells {}".format(path)
-            blocks = [Tiling({cell: block}) for cell, block in blocks]
-            tilings = [Tiling(new_tiling_dict)] + blocks
+            formal_step = "Reversibly delete the blocks at cells {}".format(path)
+            blocks = Tiling({cell: block for cell, block in blocks})
+            tilings = [Tiling(new_tiling_dict), blocks]
             yield RecursiveStrategy(formal_step, tilings, [t._back_map for t in tilings])
             for recursive_strategy in reversibly_deletable_cells(tiling, basis, cell, new_occurrences_by_perm, path):
                 yield recursive_strategy
