@@ -1,4 +1,3 @@
-
 from .batch_class import BatchStrategy
 from .cell_insertion import all_cell_insertions
 from .cell_insertion import all_active_cell_insertions
@@ -9,3 +8,4 @@ from .row_column_placements import all_leftmost_column_placements
 from .isolate_points import all_point_isolations
 from .left_to_right_maxima import left_to_right_maxima123
 from .left_to_right_maxima import left_to_right_maxima1234
+from .lrm_rlm_boundaries import all_321_boundaries
