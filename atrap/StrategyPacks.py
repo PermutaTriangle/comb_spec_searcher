@@ -152,6 +152,34 @@ class StrategyPacks(object):
         [splittings],
         [subset_verified, is_empty]]
 
+    point_placement = [
+        [all_cell_insertions],
+        [all_point_placements],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [components, reversibly_deletable_cells],
+        [subset_verified, is_empty]]
+
+    point_placement_and_splittings = [
+        [all_cell_insertions],
+        [all_point_placements],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [splittings],
+        [subset_verified, is_empty]]
+
+    point_placement_and_point_separation = [
+        [all_cell_insertions],
+        [all_point_placements, point_separation],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [components, reversibly_deletable_cells],
+        [subset_verified, is_empty]]
+
+    point_placement_and_splittings_and_point_separation = [
+        [all_cell_insertions],
+        [all_point_placements],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [splittings],
+        [subset_verified, is_empty]]
+
     point_separation_and_isolation = [
         [all_cell_insertions, all_point_isolations],
         [point_separation, all_equivalent_point_isolations],
@@ -180,11 +208,11 @@ class StrategyPacks(object):
         [reversibly_deletable_points],
         [one_by_one_verification, is_empty]]
 
-    row_and_column_placements_point_separation = [
-        [all_cell_insertions, all_row_placements, all_column_placements],
-        [all_equivalent_row_placements, all_equivalent_column_placements, point_separation],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
+    mimic_Zeilberger_enumeration_schemes = [
+        [all_cell_insertions, all_point_isolations],
+        [point_separation, all_equivalent_point_isolations],
+        [empty_cell_inferral],
+        [reversibly_deletable_cells],
         [subset_verified, is_empty]]
 
 
