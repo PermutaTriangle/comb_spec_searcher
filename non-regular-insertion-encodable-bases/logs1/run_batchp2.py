@@ -10,7 +10,20 @@ import time
 filename = 'length1afterround1p2'
 
 # Will try each strategy pack in order.
-strategy_packs = [  StrategyPacks.row_and_column_placements,
+strategy_packs = [
+                    StrategyPacks.row_and_column_placements_and_all_321_boundaries,
+                    StrategyPacks.row_and_column_placements_and_all_321_boundaries_and_splittings,
+                    StrategyPacks.point_placement_and_all_321_boundaries,
+                    StrategyPacks.point_placement_and_all_321_boundaries_and_splittings,
+                    StrategyPacks.point_placement_and_all_lrm_and_rlm_placements,
+                    StrategyPacks.point_placement_and_all_lrm_and_rlm_placements_and_splittings,
+                    StrategyPacks.row_and_column_placements_and_all_lrm_and_rlm_placements,
+                    StrategyPacks.row_and_column_placements_and_all_lrm_and_rlm_placements_and_splittings,
+                    StrategyPacks.point_placement,
+                    StrategyPacks.point_placement_and_splittings,
+                    StrategyPacks.point_placement_and_point_separation,
+                    StrategyPacks.point_placement_and_splittings_and_point_separation,
+                    StrategyPacks.row_and_column_placements,
                     StrategyPacks.row_and_column_placements_and_splittings,
                     StrategyPacks.row_and_column_placements_and_point_separation,
                     StrategyPacks.row_and_column_placements_and_splittings_and_point_separation,
