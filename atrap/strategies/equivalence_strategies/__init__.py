@@ -6,5 +6,4 @@ from .row_column_placement import all_equivalent_row_placements
 from .row_column_placement import all_equivalent_column_placements
 from .row_column_placement import all_equivalent_minimum_row_placements
 from .row_column_placement import all_equivalent_leftmost_column_placements
-from .symmetric_tilings import all_symmetric_tilings
 from .isolate_points import all_equivalent_point_isolations

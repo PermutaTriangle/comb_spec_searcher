@@ -9,7 +9,7 @@ from atrap.strategies import subset_verified
 from atrap.ProofTree import ProofTree, ProofTreeNode
 
 from atrap.strategies import BatchStrategy
-from atrap.strategies import EquivalenceStrategy, all_symmetric_tilings
+from atrap.strategies import EquivalenceStrategy
 from atrap.strategies import InferralStrategy
 from atrap.strategies import RecursiveStrategy
 from atrap.strategies import VerificationStrategy
@@ -293,7 +293,8 @@ class MetaTree(object):
                  inferral_strategies=None,
                  recursive_strategies=None,
                  verification_strategies=None,
-                 non_interleaving_recursion=False):
+                 non_interleaving_recursion=False,
+                 symmetry=False):
         """
         A contructor for the MetaTree.
 
@@ -323,6 +324,11 @@ class MetaTree(object):
         self._cached_tilings = set()
         self._cache_misses = 0
         self.timed_out = False
+        if symmetry:
+            '''A list of symmetry functions of tilings.'''
+            self.symmetry = self._find_symmetries(self.basis)
+        else:
+            self.symmetry = []
 
         '''Initialise the proof strategies to be used.'''
         if batch_strategies is not None:
@@ -783,10 +789,6 @@ class MetaTree(object):
 
                     formal_step = equivalence_strategy.formal_step
                     eq_tiling = equivalence_strategy.tiling
-
-                    '''We infer on the equivalent tiling'''
-                    if equivalence_generator != all_symmetric_tilings:
-                        eq_tiling = self._inferral(eq_tiling)
 
                     '''If we have already seen this tiling while building, we skip it'''
                     if eq_tiling in equivalent_tilings:
