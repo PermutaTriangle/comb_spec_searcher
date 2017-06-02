@@ -9,10 +9,24 @@ import time
 # filename = 'length4fixiso'
 # filename = 'length4afterround2p2'
 # filename = 'length4afterround3p2'
-filename = 'length4afterround4p2'
+# filename = 'length4afterround4p2'
+filename = 'length4afterround5p2'
 
 # Will try each strategy pack in order.
-strategy_packs = [  StrategyPacks.row_and_column_placements,
+strategy_packs = [
+                    StrategyPacks.row_and_column_placements_and_all_321_boundaries,
+                    StrategyPacks.row_and_column_placements_and_all_321_boundaries_and_splittings,
+                    StrategyPacks.point_placement_and_all_321_boundaries,
+                    StrategyPacks.point_placement_and_all_321_boundaries_and_splittings,
+                    StrategyPacks.point_placement_and_all_lrm_and_rlm_placements,
+                    StrategyPacks.point_placement_and_all_lrm_and_rlm_placements_and_splittings,
+                    StrategyPacks.row_and_column_placements_and_all_lrm_and_rlm_placements,
+                    StrategyPacks.row_and_column_placements_and_all_lrm_and_rlm_placements_and_splittings,
+                    StrategyPacks.point_placement,
+                    StrategyPacks.point_placement_and_splittings,
+                    StrategyPacks.point_placement_and_point_separation,
+                    StrategyPacks.point_placement_and_splittings_and_point_separation,
+                    StrategyPacks.row_and_column_placements,
                     StrategyPacks.row_and_column_placements_and_splittings,
                     StrategyPacks.row_and_column_placements_and_point_separation,
                     StrategyPacks.row_and_column_placements_and_splittings_and_point_separation,
@@ -40,8 +54,8 @@ strategy_packs = [  StrategyPacks.row_and_column_placements,
 # max_times = 30 # seconds for each strategy pack (must be integer)
 # max_times = 60
 # max_times = 120
-# max_times = 600
-max_times = 1800
+max_times = 600
+# max_times = 1800
 # max_times = [ 5, 6, 7, 8, 9, 10] # seconds for corresponding strategy pack
 
 def perm_to_str(perm):
