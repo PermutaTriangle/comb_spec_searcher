@@ -1,13 +1,13 @@
 0213_0231_0312_0321
 
 ===========================================
-Log created Mon, 22 May 2017 21:12:20
+Log created Fri, 26 May 2017 00:44:02
 
 Maximum depth fully searched was 4
 
-Maximum time set at 30 seconds
+Maximum time set at 120 seconds
 
-Total time taken was 30 seconds
+Total time taken was 120 seconds
 
 The strategies applied were:
 Batch: all_cell_insertions, all_row_placements, all_column_placements
@@ -16,151 +16,124 @@ Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
 Recursive: components, reversibly_deletable_cells
 Verification: subset_verified, is_empty
 
-There were 286 inferral cache hits and 1681 partitioning cache hits.
-The partitioning cache had 2 tilings in it right now.
-The inferral cache has 1696 tilings in it right now.
-There were 1052 tilings of which 108 are verified.
-There were 556 SiblingNodes of which 52 are verified.
-
-The function cells_of_occurrences_by_perms called the partitioning cache *1802* times, (901 originating)
-There were 0 cache misses
-
-No proof tree was found after 30 seconds
-
-===========================================
-Log created Mon, 22 May 2017 21:12:50
-
-Maximum depth fully searched was 4
-
-Maximum time set at 30 seconds
-
-Total time taken was 30 seconds
-
-The strategies applied were:
-Batch: all_cell_insertions, all_row_placements, all_column_placements
-Equivalent: all_equivalent_row_placements, all_equivalent_column_placements
-Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
-Recursive: splittings
-Verification: subset_verified, is_empty
-
-There were 232 inferral cache hits and 26181 partitioning cache hits.
+There were 745 inferral cache hits and 3826 partitioning cache hits.
 The partitioning cache had 1 tilings in it right now.
-The inferral cache has 1733 tilings in it right now.
-There were 1077 tilings of which 158 are verified.
-There were 560 SiblingNodes of which 66 are verified.
+The inferral cache has 4888 tilings in it right now.
+There were 2850 tilings of which 434 are verified.
+There were 1435 SiblingNodes of which 102 are verified.
 
-The function splittings called the partitioning cache *26285* times, (352 originating)
+The function cells_of_occurrences_by_perms called the partitioning cache *4084* times, (2042 originating)
 There were 0 cache misses
 
-No proof tree was found after 30 seconds
+No proof tree was found after 120 seconds
 
 ===========================================
-Log created Mon, 22 May 2017 21:13:20
+Log created Fri, 26 May 2017 00:46:03
 
 Maximum depth fully searched was 4
 
-Maximum time set at 30 seconds
+Maximum time set at 120 seconds
 
-Total time taken was 30 seconds
-
-The strategies applied were:
-Batch: all_cell_insertions, all_row_placements, all_column_placements
-Equivalent: all_equivalent_row_placements, all_equivalent_column_placements, point_separation
-Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
-Recursive: components, reversibly_deletable_cells
-Verification: subset_verified, is_empty
-
-There were 326 inferral cache hits and 1496 partitioning cache hits.
-The partitioning cache had 3 tilings in it right now.
-The inferral cache has 1414 tilings in it right now.
-There were 1021 tilings of which 126 are verified.
-There were 323 SiblingNodes of which 40 are verified.
-
-The function cells_of_occurrences_by_perms called the partitioning cache *1606* times, (803 originating)
-There were 0 cache misses
-
-No proof tree was found after 30 seconds
-
-===========================================
-Log created Mon, 22 May 2017 21:13:51
-
-Maximum depth fully searched was 4
-
-Maximum time set at 30 seconds
-
-Total time taken was 30 seconds
+Total time taken was 120 seconds
 
 The strategies applied were:
 Batch: all_cell_insertions, all_row_placements, all_column_placements
-Equivalent: all_equivalent_row_placements, all_equivalent_column_placements, point_separation
+Equivalent: all_equivalent_row_placements, all_equivalent_column_placements
 Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
 Recursive: splittings
 Verification: subset_verified, is_empty
 
-There were 399 inferral cache hits and 16316 partitioning cache hits.
+There were 432 inferral cache hits and 213066 partitioning cache hits.
 The partitioning cache had 3 tilings in it right now.
-The inferral cache has 1564 tilings in it right now.
-There were 1150 tilings of which 139 are verified.
-There were 376 SiblingNodes of which 53 are verified.
+The inferral cache has 3825 tilings in it right now.
+There were 2282 tilings of which 398 are verified.
+There were 1147 SiblingNodes of which 126 are verified.
 
-The function splittings called the partitioning cache *16443* times, (370 originating)
+The function splittings called the partitioning cache *213250* times, (673 originating)
 There were 0 cache misses
 
-No proof tree was found after 30 seconds
+No proof tree was found after 120 seconds
 
 ===========================================
-Log created Mon, 22 May 2017 21:14:21
-
-Maximum depth fully searched was 4
-
-Maximum time set at 30 seconds
-
-Total time taken was 30 seconds
-
-The strategies applied were:
-Batch: all_cell_insertions, all_point_isolations
-Equivalent: point_separation, all_equivalent_point_isolations
-Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
-Recursive: components, reversibly_deletable_cells
-Verification: subset_verified, is_empty
-
-There were 3749 inferral cache hits and 1492 partitioning cache hits.
-The partitioning cache had 2 tilings in it right now.
-The inferral cache has 1366 tilings in it right now.
-There were 860 tilings of which 96 are verified.
-There were 306 SiblingNodes of which 32 are verified.
-
-The function cells_of_occurrences_by_perms called the partitioning cache *1602* times, (801 originating)
-There were 0 cache misses
-
-No proof tree was found after 30 seconds
-
-===========================================
-Log created Mon, 22 May 2017 21:14:32
+Log created Fri, 26 May 2017 00:48:04
 
 Maximum depth fully searched was 3
 
-Maximum time set at 30 seconds
+Maximum time set at 120 seconds
 
-Total time taken was 11 seconds
+Total time taken was 121 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_row_placements, all_column_placements
+Equivalent: all_equivalent_row_placements, all_equivalent_column_placements, point_separation
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: components, reversibly_deletable_cells
+Verification: subset_verified, is_empty
+
+There were 1146 inferral cache hits and 3869 partitioning cache hits.
+The partitioning cache had 3 tilings in it right now.
+The inferral cache has 4588 tilings in it right now.
+There were 3041 tilings of which 753 are verified.
+There were 800 SiblingNodes of which 77 are verified.
+
+The function cells_of_occurrences_by_perms called the partitioning cache *4140* times, (2070 originating)
+There were 0 cache misses
+
+No proof tree was found after 121 seconds
+
+===========================================
+Log created Fri, 26 May 2017 00:50:05
+
+Maximum depth fully searched was 4
+
+Maximum time set at 120 seconds
+
+Total time taken was 120 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_row_placements, all_column_placements
+Equivalent: all_equivalent_row_placements, all_equivalent_column_placements, point_separation
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: splittings
+Verification: subset_verified, is_empty
+
+There were 1609 inferral cache hits and 60076 partitioning cache hits.
+The partitioning cache had 13 tilings in it right now.
+The inferral cache has 6490 tilings in it right now.
+There were 4282 tilings of which 1230 are verified.
+There were 1170 SiblingNodes of which 146 are verified.
+
+The function splittings called the partitioning cache *60470* times, (1273 originating)
+There were 0 cache misses
+
+No proof tree was found after 120 seconds
+
+===========================================
+Log created Fri, 26 May 2017 00:50:14
+
+Maximum depth fully searched was 3
+
+Maximum time set at 120 seconds
+
+Total time taken was 9 seconds
 
 The strategies applied were:
 Batch: all_cell_insertions, all_point_isolations
 Equivalent: point_separation, all_equivalent_point_isolations
 Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
-Recursive: splittings
+Recursive: components, reversibly_deletable_cells
 Verification: subset_verified, is_empty
 
-There were 3073 inferral cache hits and 1892 partitioning cache hits.
-The partitioning cache had 0 tilings in it right now.
-The inferral cache has 1221 tilings in it right now.
-There were 726 tilings of which 118 are verified.
-There were 251 SiblingNodes of which 42 are verified.
+There were 2011 inferral cache hits and 770 partitioning cache hits.
+The partitioning cache had 1 tilings in it right now.
+The inferral cache has 735 tilings in it right now.
+There were 499 tilings of which 109 are verified.
+There were 174 SiblingNodes of which 33 are verified.
 
-The function splittings called the partitioning cache *1966* times, (182 originating)
-There were 0 cache misses
+The function cells_of_occurrences_by_perms called the partitioning cache *832* times, (423 originating)
+There were 1 cache misses
 
-A proof tree was found in 11 seconds
+A proof tree was found in 9 seconds
 
 Human readable:
 
@@ -171,10 +144,11 @@ root: 0
             └─────4
                   ├─────5
                   │     ├─────6
-                  │     └─────7
-                  └─────8
-                        ├─────9
-                        └─────10
+                  │     ├─────7
+                  │     └─────8
+                  └─────9
+                        ├─────10
+                        └─────11
 
 Label: 0
 
@@ -197,11 +171,13 @@ Label: 2
 +-+
 1: Av+(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))
 We use his sibling for the next strategy
-+-+-+
-|1|2|
-+-+-+
-1: Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))
-2: point
++-+
+|2|
++-+
+|1|
++-+
+1: point
+2: Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))
 
 Label: 3
 
@@ -212,58 +188,48 @@ Label: 3
 
 Label: 4
 
-+-+-+
-|1|2|
-+-+-+
-1: Av+(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))
-2: point
++-+
+|2|
++-+
+|1|
++-+
+1: point
+2: Av+(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))
 We use his sibling for the next strategy
-+-+-+-+
-|1|2|2|
-+-+-+-+
++-+
+|2|
++-+
+|2|
++-+
+|1|
++-+
 1: Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))
 2: point
 
 Label: 5
 
-+-+-+-+-+
-|3| | |2|
-+-+-+-+-+
-| | |2| |
-+-+-+-+-+
-| |1| | |
-+-+-+-+-+
-1: Av(Perm((0, 2, 1)))
-2: point
-3: Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))
-We use his sibling for the next strategy
-+-+-+-+-+
-|3| | | |
-+-+-+-+-+
-| | | |2|
-+-+-+-+-+
-|1| | | |
-+-+-+-+-+
-| | |2| |
-+-+-+-+-+
-| |1| | |
-+-+-+-+-+
-1: Av(Perm((0, 2, 1)))
-2: point
-3: Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))
++-+-+-+
+| | |3|
++-+-+-+
+| |3| |
++-+-+-+
+|2| | |
++-+-+-+
+| | |1|
++-+-+-+
+1: Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))
+2: Av(Perm((0, 2, 1)))
+3: point
 
 Label: 6
 
-+-+-+
-|3| |
-+-+-+
-| |2|
-+-+-+
-|1| |
-+-+-+
-1: Av(Perm((0, 2, 1)))
++-+
+|2|
++-+
+|1|
++-+
+1: Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))
 2: point
-3: Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))
 We use his sibling for the next strategy
 +-+
 |1|
@@ -272,61 +238,72 @@ We use his sibling for the next strategy
 
 Label: 7
 
-+-+-+
-| |2|
-+-+-+
-|1| |
-+-+-+
++-+
+|1|
++-+
 1: Av(Perm((0, 2, 1)))
-2: point
 
 Label: 8
+
++-+
+|1|
++-+
+1: point
+
+Label: 9
 
 +-+-+-+
 |3| | |
 +-+-+-+
-| |2| |
+| |3| |
 +-+-+-+
 |1| |2|
 +-+-+-+
 1: Av(Perm((0, 2, 1)))
-2: point
-3: Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))
+2: Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))
+3: point
 We use his sibling for the next strategy
-+-+-+-+-+
-|3| |2| |
-+-+-+-+-+
-| | | |2|
-+-+-+-+-+
-| |1| | |
-+-+-+-+-+
++-+-+-+-+-+
+| |3| | | |
++-+-+-+-+-+
+| | | |3| |
++-+-+-+-+-+
+|1| | | | |
++-+-+-+-+-+
+| | |1| |2|
++-+-+-+-+-+
 1: Av(Perm((0, 2, 1)))
-2: point
-3: Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))
-
-Label: 9
-
-+-+-+
-|1|2|
-+-+-+
-1: Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))
-2: point
-We use his sibling for the next strategy
-+-+
-|1|
-+-+
-1: Av+(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))
+2: Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))
+3: point
 
 Label: 10
 
-+-+-+
-| |2|
-+-+-+
-|1| |
-+-+-+
++-+-+-+-+
+|3| | | |
++-+-+-+-+
+| | |3| |
++-+-+-+-+
+| |1| |2|
++-+-+-+-+
 1: Av(Perm((0, 2, 1)))
+2: Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))
+3: point
+We use his sibling for the next strategy
++-+-+
+|2| |
++-+-+
+| |1|
++-+-+
+1: Av+(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))
 2: point
+
+Label: 11
+
++-+
+|1|
++-+
+1: Av(Perm((0, 2, 1)))
 
 Computer readable (JSON):
 
-{"root": {"children": [{"children": [], "formal_step": "Verified because it is a one by one tiling with a subclass", "identifier": 26, "in_tiling": {}, "out_tiling": {}, "recurse": "[]", "relation": ""}, {"children": [{"children": [], "formal_step": "Verified because it is a one by one tiling with a subclass", "identifier": 1, "in_tiling": {"[0, 0]": "point"}, "out_tiling": {"[0, 0]": "point"}, "recurse": "[]", "relation": ""}, {"children": [{"children": [{"children": [], "formal_step": "recurse", "identifier": 20, "in_tiling": {"[0, 0]": "Av(Perm((0, 2, 1)))", "[0, 2]": "Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))", "[1, 1]": "point"}, "out_tiling": {"[0, 0]": "Av+(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))"}, "recurse": "[]", "relation": "| The reverse of: Isolating the point at Cell(i=1, j=0) in its row. | The reverse of: Separting the rightmost point from cell Cell(i=0, j=0). | "}, {"children": [], "formal_step": "The tiling is a subset of the subclass", "identifier": 27, "in_tiling": {"[0, 0]": "Av(Perm((0, 2, 1)))", "[1, 1]": "point"}, "out_tiling": {"[0, 0]": "Av(Perm((0, 2, 1)))", "[1, 1]": "point"}, "recurse": "[]", "relation": ""}], "formal_step": "A splitting of the tiling", "identifier": 28, "in_tiling": {"[0, 2]": "Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))", "[1, 0]": "Av(Perm((0, 2, 1)))", "[2, 1]": "point", "[3, 2]": "point"}, "out_tiling": {"[0, 2]": "Av(Perm((0, 2, 1)))", "[0, 4]": "Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))", "[1, 0]": "Av(Perm((0, 2, 1)))", "[2, 1]": "point", "[3, 3]": "point"}, "recurse": "[{Cell(i=0, j=0): Cell(i=0, j=2), Cell(i=0, j=2): Cell(i=0, j=4), Cell(i=1, j=1): Cell(i=3, j=3)}, {Cell(i=0, j=0): Cell(i=1, j=0), Cell(i=1, j=1): Cell(i=2, j=1)}]", "relation": "| Isolating the point at Cell(i=3, j=2) in its row. | "}, {"children": [{"children": [], "formal_step": "recurse", "identifier": 20, "in_tiling": {"[0, 0]": "Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))", "[1, 0]": "point"}, "out_tiling": {"[0, 0]": "Av+(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))"}, "recurse": "[]", "relation": "| The reverse of: Separting the rightmost point from cell Cell(i=0, j=0). | "}, {"children": [], "formal_step": "recurse", "identifier": 27, "in_tiling": {"[0, 0]": "Av(Perm((0, 2, 1)))", "[1, 1]": "point"}, "out_tiling": {"[0, 0]": "Av(Perm((0, 2, 1)))", "[1, 1]": "point"}, "recurse": "[]", "relation": ""}], "formal_step": "A splitting of the tiling", "identifier": 29, "in_tiling": {"[0, 0]": "Av(Perm((0, 2, 1)))", "[0, 2]": "Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))", "[1, 1]": "point", "[2, 0]": "point"}, "out_tiling": {"[0, 2]": "Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))", "[1, 0]": "Av(Perm((0, 2, 1)))", "[2, 2]": "point", "[3, 1]": "point"}, "recurse": "[{Cell(i=0, j=0): Cell(i=0, j=2), Cell(i=1, j=0): Cell(i=2, j=2)}, {Cell(i=0, j=0): Cell(i=1, j=0), Cell(i=1, j=1): Cell(i=3, j=1)}]", "relation": "| Isolating the point at Cell(i=0, j=2) in its row. | The reverse of: Isolating the point at Cell(i=2, j=2) in its row. | "}], "formal_step": "Isolated the point at Cell(i=1, j=0) in its row", "identifier": 30, "in_tiling": {"[0, 0]": "Av+(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))", "[1, 0]": "point"}, "out_tiling": {"[0, 0]": "Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))", "[1, 0]": "point", "[2, 0]": "point"}, "recurse": "[]", "relation": "| Separting the rightmost point from cell Cell(i=0, j=0). | "}], "formal_step": "We perform cell insertion into cell (0, 0); either it is empty or Av+(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1))).", "identifier": 20, "in_tiling": {"[0, 0]": "Av+(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))"}, "out_tiling": {"[0, 0]": "Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))", "[1, 0]": "point"}, "recurse": "[]", "relation": "| Separting the rightmost point from cell Cell(i=0, j=0). | "}], "formal_step": "We perform cell insertion into cell (0, 0); either it is empty or Av+(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1))).", "identifier": 31, "in_tiling": {"[0, 0]": "Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))"}, "out_tiling": {"[0, 0]": "Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))"}, "recurse": "[]", "relation": ""}}
+{"root": {"children": [{"children": [], "formal_step": "Verified because it is a one by one tiling with a subclass", "identifier": 24, "in_tiling": {}, "out_tiling": {}, "recurse": "[]", "relation": ""}, {"children": [{"children": [], "formal_step": "Verified because it is a one by one tiling with a subclass", "identifier": 0, "in_tiling": {"[0, 0]": "point"}, "out_tiling": {"[0, 0]": "point"}, "recurse": "[]", "relation": ""}, {"children": [{"children": [{"children": [], "formal_step": "recurse", "identifier": 20, "in_tiling": {"[0, 0]": "Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))", "[0, 1]": "point"}, "out_tiling": {"[0, 0]": "Av+(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))"}, "recurse": "[]", "relation": "| The reverse of: Separating the topmost point from cell Cell(i=0, j=0). | "}, {"children": [], "formal_step": "Verified because it is a one by one tiling with a subclass", "identifier": 4, "in_tiling": {"[0, 0]": "Av(Perm((0, 2, 1)))"}, "out_tiling": {"[0, 0]": "Av(Perm((0, 2, 1)))"}, "recurse": "[]", "relation": ""}, {"children": [], "formal_step": "recurse", "identifier": 0, "in_tiling": {"[0, 0]": "point"}, "out_tiling": {"[0, 0]": "point"}, "recurse": "[]", "relation": ""}], "formal_step": "The components of the tiling", "identifier": 25, "in_tiling": {"[0, 1]": "Av(Perm((0, 2, 1)))", "[1, 2]": "point", "[2, 0]": "Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))", "[2, 3]": "point"}, "out_tiling": {"[0, 1]": "Av(Perm((0, 2, 1)))", "[1, 2]": "point", "[2, 0]": "Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))", "[2, 3]": "point"}, "recurse": "[{Cell(i=0, j=0): Cell(i=2, j=0), Cell(i=0, j=1): Cell(i=2, j=3)}, {Cell(i=0, j=0): Cell(i=0, j=1)}, {Cell(i=0, j=0): Cell(i=1, j=2)}]", "relation": ""}, {"children": [{"children": [], "formal_step": "The tiling is a subset of the subclass", "identifier": 26, "in_tiling": {"[0, 2]": "point", "[1, 0]": "Av(Perm((0, 2, 1)))", "[2, 1]": "point", "[3, 0]": "Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))"}, "out_tiling": {"[0, 1]": "point", "[1, 0]": "Av+(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))"}, "recurse": "[]", "relation": "| The reverse of: Isolating the point at Cell(i=0, j=2) in its column. | The reverse of: Separating the topmost point from cell Cell(i=1, j=0). | "}, {"children": [], "formal_step": "recurse", "identifier": 4, "in_tiling": {"[0, 0]": "Av(Perm((0, 2, 1)))"}, "out_tiling": {"[0, 0]": "Av(Perm((0, 2, 1)))"}, "recurse": "[]", "relation": ""}], "formal_step": "Reversibly delete the points at cells [Cell(i=0, j=1)]", "identifier": 27, "in_tiling": {"[0, 0]": "Av(Perm((0, 2, 1)))", "[0, 2]": "point", "[1, 1]": "point", "[2, 0]": "Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))"}, "out_tiling": {"[0, 1]": "Av(Perm((0, 2, 1)))", "[1, 3]": "point", "[2, 0]": "Av(Perm((0, 2, 1)))", "[3, 2]": "point", "[4, 0]": "Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))"}, "recurse": "[{Cell(i=0, j=2): Cell(i=1, j=3), Cell(i=1, j=0): Cell(i=2, j=0), Cell(i=2, j=1): Cell(i=3, j=2), Cell(i=3, j=0): Cell(i=4, j=0)}, {Cell(i=0, j=0): Cell(i=0, j=1)}]", "relation": "| Isolating the point at Cell(i=0, j=2) in its column. | "}], "formal_step": "Isolated the point at Cell(i=0, j=1) in its column", "identifier": 28, "in_tiling": {"[0, 0]": "point", "[0, 1]": "Av+(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))"}, "out_tiling": {"[0, 0]": "Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))", "[0, 1]": "point", "[0, 2]": "point"}, "recurse": "[]", "relation": "| Separating the topmost point from cell Cell(i=0, j=1). | The reverse of: Separating the bottommost point from cell Cell(i=0, j=0). | Separating the topmost point from cell Cell(i=0, j=0). | "}], "formal_step": "We perform cell insertion into cell (0, 1); either it is empty or Av+(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1))).", "identifier": 20, "in_tiling": {"[0, 0]": "Av+(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))"}, "out_tiling": {"[0, 0]": "point", "[0, 1]": "Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))"}, "recurse": "[]", "relation": "| Separating the bottommost point from cell Cell(i=0, j=0). | "}], "formal_step": "We perform cell insertion into cell (0, 0); either it is empty or Av+(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1))).", "identifier": 29, "in_tiling": {"[0, 0]": "Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))"}, "out_tiling": {"[0, 0]": "Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((0, 3, 2, 1)))"}, "recurse": "[]", "relation": ""}}
