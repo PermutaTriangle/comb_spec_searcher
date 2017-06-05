@@ -247,6 +247,7 @@ def find_symmetries(basis):
     use will be closed  return corresponding symmetry of tiling.
     """
     valid_symmetries = []
+    basis = set(basis)
     if rotate_90_clockwise_set(basis) == basis:
         valid_symmetries.append(rotate_90_clockwise)
     if rotate_90_clockwise_set(basis) == basis:

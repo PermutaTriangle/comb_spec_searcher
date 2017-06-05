@@ -42,7 +42,7 @@ from atrap.Helpers import taylor_expand
 # task = '012_3210'
 # task = '0'
 #
-task = '0123'
+# task = '0123'
 # task = '0213'
 # task = '012_3210'
 
@@ -58,7 +58,7 @@ task = '0123'
 
 # task = '0213_0231'
 
-# task = "1302_2031"
+task = "1302_2031"
 
 # task = '0231_1230_3012'
 
@@ -74,10 +74,10 @@ task = '0123'
 # task = '0123_0132_0213_0231_0312_1023_1203_1230_2013_2301_3012'
 patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 
-strategies = StrategyPacks.left_to_right_maxima_1234_and_row_column_placements
+strategies = StrategyPacks.row_and_column_placements
 # strategies = enum_sch
 
-mtree = MetaTree( patts, *strategies )
+mtree = MetaTree( patts, *strategies, symmetry=False )
 
 print("Using the strategies:")
 print(strategies)
@@ -133,9 +133,9 @@ if mtree.has_proof_tree():
         f = proof_tree.get_genf()
         print( f )
         print("The coefficients from the generating function are")
-        print( taylor_expand(f, terms=11) )
+        print( taylor_expand(f, terms=10) )
         print("The actual coefficients are")
-        print( [ len( Av(mtree.basis).of_length(i) ) for i in range(12)])
+        print( [ len( Av(mtree.basis).of_length(i) ) for i in range(11)])
     except RuntimeError as e:
         print(str(e))
 
