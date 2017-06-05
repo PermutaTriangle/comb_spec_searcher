@@ -546,6 +546,7 @@ class MetaTree(object):
                         child_sibling_node.add(child_or_node)  # unworkable SiblingNode created.
                         if self.symmetry:
                             for sym_tiling in self._symmetric_tilings(tiling):
+                                assert not sym_tiling in self.tiling_cache
                                 sym_or_node = OrNode(sym_tiling)
                                 self.tiling_cache[sym_tiling] = sym_or_node
                                 child_sibling_node.add(sym_or_node)
@@ -812,6 +813,7 @@ class MetaTree(object):
             tilings_to_expand = set([or_node.tiling])
             if self.symmetry:
                 for sym_tiling in self._symmetric_tilings(or_node.tiling):
+                    assert not sym_tiling in self.tiling_cache
                     sym_or_node = OrNode(sym_tiling)
                     self.tiling_cache[sym_tiling] = sym_or_node
                     sym_or_node.expanded = True
@@ -840,7 +842,7 @@ class MetaTree(object):
                         raise TypeError("Attempting to combine non EquivalenceStrategy.")
 
                     formal_step = equivalence_strategy.formal_step
-                    eq_tiling = equivalence_strategy.tiling
+                    eq_tiling = self._inferral(equivalence_strategy.tiling)
 
                     '''If we have already seen this tiling while building, we skip it'''
                     if eq_tiling in equivalent_tilings:
@@ -863,6 +865,7 @@ class MetaTree(object):
 
                         if self.symmetry:
                             for sym_tiling in self._symmetric_tilings(eq_tiling):
+                                assert not sym_tiling in self.tiling_cache
                                 sym_or_node = OrNode(sym_tiling)
                                 sym_or_node.expanded = True
                                 self.tiling_cache[sym_tiling] = sym_or_node

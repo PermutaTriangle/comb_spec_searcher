@@ -250,7 +250,7 @@ def find_symmetries(basis):
     basis = set(basis)
     if rotate_90_clockwise_set(basis) == basis:
         valid_symmetries.append(rotate_90_clockwise)
-    if rotate_90_clockwise_set(basis) == basis:
+    if rotate_180_clockwise_set(basis) == basis:
         valid_symmetries.append(rotate_180_clockwise)
     if rotate_270_clockwise_set(basis) == basis:
         valid_symmetries.append(rotate_270_clockwise)
