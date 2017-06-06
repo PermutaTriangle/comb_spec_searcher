@@ -87,7 +87,7 @@ task = '1302_2031' # row_and_column_placements - seven symmetries.
 
 #
 # mtree = MetaTree( patts, *mimic_regular_insertion_encoding )
-# strategies = [ [all_cell_insertions], [all_point_placements], [empty_cell_inferral], [components], [subset_verified, is_empty] ]
+strategies = [ [all_cell_insertions], [all_point_placements], [empty_cell_inferral], [components], [subset_verified, is_empty] ]
 # task = '0123_0132_0213_0231_0312_1023_1203_1230_2013_2301_3012'
 patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 
