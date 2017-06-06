@@ -6,16 +6,15 @@ from atrap.strategies import one_by_one_verification
 from atrap.strategies import empty_cell_inferral
 from atrap.strategies import subclass_inferral
 from atrap.strategies import subset_verified
+from atrap.tools import find_symmetries
 from atrap.ProofTree import ProofTree, ProofTreeNode
 
 from atrap.strategies import BatchStrategy
-from atrap.strategies import EquivalenceStrategy, all_symmetric_tilings
+from atrap.strategies import EquivalenceStrategy
 from atrap.strategies import InferralStrategy
 from atrap.strategies import RecursiveStrategy
 from atrap.strategies import VerificationStrategy
 from .LRUCache import LRUCache
-
-from atrap.strategies import reversibly_deletable_cells, reversibly_deletable_points
 
 import time
 
@@ -296,6 +295,7 @@ class MetaTree(object):
                  recursive_strategies=None,
                  verification_strategies=None,
                  non_interleaving_recursion=False,
+                 symmetry=False,
                  early_splitting_only=False):
         """
         A contructor for the MetaTree.
@@ -327,6 +327,11 @@ class MetaTree(object):
         self._cached_tilings = set()
         self._cache_misses = 0
         self.timed_out = False
+        if symmetry:
+            '''A list of symmetry functions of tilings.'''
+            self.symmetry = find_symmetries(self.basis)
+        else:
+            self.symmetry = []
 
 
         '''Initialise the proof strategies to be used.'''
@@ -542,7 +547,14 @@ class MetaTree(object):
                         self.tiling_cache[tiling] = child_or_node
                         child_sibling_node = SiblingNode()
                         child_sibling_node.add(child_or_node)  # unworkable SiblingNode created.
-
+                        if self.symmetry:
+                            for sym_tiling in self._symmetric_tilings(tiling):
+                                assert not sym_tiling in self.tiling_cache
+                                sym_or_node = OrNode(sym_tiling)
+                                self.tiling_cache[sym_tiling] = sym_or_node
+                                child_sibling_node.add(sym_or_node)
+                                child_sibling_node.join(tiling, sym_tiling, "a symmetry")
+                                sym_or_node.expanded = True
                         '''We attempt to verify the tiling using verification strategies.'''
                         if self._verify(child_or_node):
                             '''If it is verified we need to propagate the information to the sibling node'''
@@ -627,7 +639,8 @@ class MetaTree(object):
                         child_or_node = OrNode(tiling)
                         '''Remember to update the cache'''
                         self.tiling_cache[tiling] = child_or_node
-                        '''Attempt to expand the new OR node into a maximal SiblingNode.'''
+                        '''Attempt to expand the new OR node into a maximal SiblingNode.
+                        Symmetries handled in equivalent expand function.'''
                         verified = self._equivalent_expand(child_or_node)
                         child_sibling_node = child_or_node.sibling_node
                         if verified:
@@ -671,6 +684,26 @@ class MetaTree(object):
                 self._propagate_and_node_verification(batch_and_node)
         return child_sibling_nodes
 
+    def _symmetric_tilings(self, tiling, ordered=False):
+        """Return all symmetries of tiling.
+
+        This function only works if symmetry is set to true.
+        It returns precisely those symmetries which are different from original tiling.
+        Sometimes, the order symmetries are appied are important. Therefore, if order=True,
+        this will return a list with each symmetry applied. This functionality is
+        needed for inferral.
+        """
+        if ordered:
+            return [sym(tiling) for sym in self.symmetry]
+        else:
+            symmetric_tilings = set()
+            for sym in self.symmetry:
+                symmetric_tiling = sym(tiling)
+                if symmetric_tiling != tiling:
+                    symmetric_tilings.add(symmetric_tiling)
+
+        return symmetric_tilings
+
     def _inferral(self, tiling):
         """Return fully inferred tiling using InferralStrategies."""
         inferred_tiling = self._inferral_cache.get(tiling)
@@ -705,6 +738,12 @@ class MetaTree(object):
                         inferred_tiling = soon_to_be_tiling
             for semi_inferred_tiling in semi_inferred_tilings:
                 self._inferral_cache.set(semi_inferred_tiling, inferred_tiling)
+                if self.symmetry:
+                    for sym_semi_inferred_tiling, sym_inferred_tiling in zip(self._symmetric_tilings(semi_inferred_tiling, ordered=True),
+                                                                             self._symmetric_tilings(inferred_tiling, ordered=True)):
+                        self._inferral_cache.set(sym_semi_inferred_tiling, sym_inferred_tiling)
+                    if sym_semi_inferred_tiling in self._basis_partitioning_cache:
+                        self._basis_partitioning_cache.pop(sym_semi_inferred_tiling)
                 '''Clean up the cache'''
                 if semi_inferred_tiling in self._basis_partitioning_cache:
                     self._basis_partitioning_cache.pop(semi_inferred_tiling)
@@ -776,11 +815,29 @@ class MetaTree(object):
         make the biggest SiblingNode possible. It will return true if
         any equivalent tiling is verified, false otherwise.
         """
-        sibling_node = SiblingNode()
-        sibling_node.add(or_node)
-        equivalent_tilings = set([or_node.tiling])
-        tilings_to_expand = set([or_node.tiling])
-        verified = False
+        if or_node.sibling_node is None:
+            sibling_node = SiblingNode()
+            sibling_node.add(or_node)
+            equivalent_tilings = set([or_node.tiling])
+            tilings_to_expand = set([or_node.tiling])
+            if self.symmetry:
+                for sym_tiling in self._symmetric_tilings(or_node.tiling):
+                    assert not sym_tiling in self.tiling_cache
+                    sym_or_node = OrNode(sym_tiling)
+                    self.tiling_cache[sym_tiling] = sym_or_node
+                    sym_or_node.expanded = True
+                    sibling_node.add(sym_or_node)
+                    sibling_node.join(or_node.tiling, sym_tiling, "a symmetry")
+                    equivalent_tilings.add(sym_tiling)
+            verified = False
+        else:
+            sibling_node = or_node.sibling_node
+            equivalent_tilings = set([or_node.tiling])
+            tilings_to_expand = set([or_node.tiling])
+            if self.symmetry:
+                for sym_or_node in sibling_node:
+                    equivalent_tilings.add(sym_or_node.tiling)
+            verified = sibling_node.is_verified()
         while tilings_to_expand:
             '''For each tiling to be expanded and'''
             tiling = tilings_to_expand.pop()
@@ -794,11 +851,7 @@ class MetaTree(object):
                         raise TypeError("Attempting to combine non EquivalenceStrategy.")
 
                     formal_step = equivalence_strategy.formal_step
-                    eq_tiling = equivalence_strategy.tiling
-
-                    '''We infer on the equivalent tiling'''
-                    if equivalence_generator != all_symmetric_tilings:
-                        eq_tiling = self._inferral(eq_tiling)
+                    eq_tiling = self._inferral(equivalence_strategy.tiling)
 
                     '''If we have already seen this tiling while building, we skip it'''
                     if eq_tiling in equivalent_tilings:
@@ -818,6 +871,17 @@ class MetaTree(object):
                         equivalent_tilings.add(eq_tiling)
                         '''And the tilings to be checked for equivalences'''
                         tilings_to_expand.add(eq_tiling)
+
+                        if self.symmetry:
+                            for sym_tiling in self._symmetric_tilings(eq_tiling):
+                                assert not sym_tiling in self.tiling_cache
+                                sym_or_node = OrNode(sym_tiling)
+                                sym_or_node.expanded = True
+                                self.tiling_cache[sym_tiling] = sym_or_node
+                                sibling_node.add(sym_or_node)
+                                sibling_node.join(eq_tiling, sym_tiling, "a symmetry")
+                                equivalent_tilings.add(sym_tiling)
+
                         '''We try to verify the equivalent tiling'''
                         if not verified:
                             if self._verify(eq_or_node):
