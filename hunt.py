@@ -6,17 +6,19 @@ from atrap import MetaTree
 from permuta import Perm,Av
 
 from time import time
-from atrap.strategies import *
 from atrap.ProofTree import ProofTree
 
-standard_strategies = [ [all_cell_insertions], [all_point_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
-standard_strategies_w_all_row_cols = [ [all_cell_insertions, all_row_placements, all_column_placements], [all_equivalent_row_placements, all_equivalent_column_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
-COMP_REC_standard_strategies_w_all_row_cols = [ [all_cell_insertions, all_row_placements, all_column_placements], [all_equivalent_row_placements, all_equivalent_column_placements, all_symmetric_tilings], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
-standard_strategies_w_min_row_left_col_splittings = [ [all_cell_insertions, all_minimum_row_placements, all_leftmost_column_placements], [all_equivalent_leftmost_column_placements, all_equivalent_minimum_row_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [splittings], [subset_verified, is_empty] ]
+from atrap import StrategyPacks
+
+
+
+
+
+
 
 ### SET THESE VARIABLES ###
 OUTPUT_TO_FILE = False # automatically set to True if called from spectrum_test or run_batch
-STRATS_TO_USE = standard_strategies_w_all_row_cols
+STRATS_TO_USE = StrategyPacks.row_insertion_testing
 ###########################
 
 
@@ -63,7 +65,8 @@ else:
     # f = (open('results/hunt_'+task+'_'+str(random.randint(0,10**4))+'_results.txt', 'w') if OUTPUT_TO_FILE else sys.stdout)
     f = (open('results/hunt_'+task+'_results.txt', 'w') if OUTPUT_TO_FILE else sys.stdout)
 
-mtree = MetaTree( patts, *STRATS_TO_USE )
+
+mtree = MetaTree( patts, *STRATS_TO_USE ,early_splitting_only=True)
 
 def count_verified_tilings(mt):
     count = 0
@@ -93,7 +96,7 @@ f.flush()
 
 while not mtree.has_proof_tree():
     print("===============================",file=f)
-    mtree.do_level(file=f)
+    mtree.do_level(f=f)
     print("We had {} inferral cache hits and {} partitioning cache hits.".format(mtree.inferral_cache_hits, mtree.partitioning_cache_hits),file=f)
     print("The partitioning cache has {} tilings in it right now.".format( len(mtree._basis_partitioning_cache) ) ,file=f)
     print("The inferral cache has {} tilings in it right now.".format( len(mtree._inferral_cache) ) ,file=f)

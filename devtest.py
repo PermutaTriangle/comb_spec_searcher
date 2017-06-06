@@ -42,11 +42,11 @@ from atrap.Helpers import taylor_expand
 # task = '012_3210'
 # task = '0'
 #
-task = '0123'
+# task = '0123'
 # task = '0213'
 # task = '012_3210'
 
-# task = '021'
+task = '021'
 
 # task = '123'
 
@@ -66,21 +66,39 @@ task = '0123'
 
 # task = '0132_0213_0231_0312_0321_1032_1302_1320_2031_3021_3120'
 
+# task = '0132_1302' # row_and_column_placements - no symmetry.
+# task = '0213_0231' # row_and_column_placements - no symmetry.
+# task = '0213_1302' # row_and_column_placements - one symmetry.
+# task = '0231_1032' # row_and_column_placements - no symmetry.
+# task = '0231_1320' # row_and_column_placements - one symmetry.
+# task = '0321_1302' # column_placements - no symmetry.
+# task = '0321_2301' # row_and_column_placements - one symmetry.
+# task = '0132_1023' # point placements - three symmetry.
+# task = '0231_0321' # point placements - no symmetry.
+# task = '0231_1302' # row_and_column_placements - no symmetry.
+# task = '0123_0132' # separation and isolation and splitting - one symmetry.
+# task = '0132_0231' # point placements - no symmetry.
+# task = '0213_1032' # point placements - three symmetries.
+# task = '0231_1230' # separation and isolation - no symmetry.
+# task = '0231_2031' # separation and isolation - no symmetry.
+task = '1302_2031' # row_and_column_placements - seven symmetries.
+
 # patts = [ Perm([ int(c) - 1 for c in p ]) for p in task.split('_') ]
 
 #
 # mtree = MetaTree( patts, *mimic_regular_insertion_encoding )
-# standard_strategies_w_left_col = [ [all_cell_insertions, all_leftmost_column_placements], [all_equivalent_leftmost_column_placements], [empty_cell_inferral, row_and_column_separation, subclass_inferral], [components, reversibly_deletable_cells], [subset_verified, is_empty] ]
+strategies = [ [all_cell_insertions], [all_point_placements], [empty_cell_inferral], [components], [subset_verified, is_empty] ]
 # task = '0123_0132_0213_0231_0312_1023_1203_1230_2013_2301_3012'
 patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 
-strategies = StrategyPacks.left_to_right_maxima_1234_and_row_column_placements
+strategies = StrategyPacks.point_placement
 # strategies = enum_sch
 
-mtree = MetaTree( patts, *strategies )
+mtree = MetaTree( patts, *strategies, symmetry=True, non_interleaving_recursion=False )
 
 print("Using the strategies:")
 print(strategies)
+print(mtree.symmetry)
 
 print(mtree.basis)
 
@@ -129,15 +147,15 @@ if mtree.has_proof_tree():
     json = proof_tree.to_json(indent="  ")
     print(json)
     assert ProofTree.from_json(json).to_json(indent="  ") == json
-    try:
-        f = proof_tree.get_genf()
-        print( f )
-        print("The coefficients from the generating function are")
-        print( taylor_expand(f, terms=11) )
-        print("The actual coefficients are")
-        print( [ len( Av(mtree.basis).of_length(i) ) for i in range(12)])
-    except RuntimeError as e:
-        print(str(e))
+    # try:
+    #     f = proof_tree.get_genf()
+    #     print( f )
+    #     print("The coefficients from the generating function are")
+    #     print( taylor_expand(f, terms=10) )
+    #     print("The actual coefficients are")
+    #     print( [ len( Av(mtree.basis).of_length(i) ) for i in range(11)])
+    # except RuntimeError as e:
+    #     print(str(e))
 
 end = time()
 

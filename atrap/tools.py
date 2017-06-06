@@ -2,8 +2,10 @@ from collections import defaultdict
 from grids import Tiling, Block, PositiveClass
 from permuta import Perm, PermSet
 from itertools import chain
+from permuta.permutils import rotate_90_clockwise_set, rotate_180_clockwise_set, rotate_270_clockwise_set
+from permuta.permutils import inverse_set, complement_set, reverse_set, antidiagonal_set
 
-__all__ = ["basis_partitioning", "is_verified", "tiling_inferral"]
+__all__ = ("basis_partitioning", "is_verified", "tiling_inferral")
 
 
 # _BASIS_PARTITIONING_CACHE = {}
@@ -235,3 +237,143 @@ def get_perms_to_check(basis):
         _PERMS_TO_CHECK[basis] = PermSet(to_check)
 
     return _PERMS_TO_CHECK[basis]
+
+
+def find_symmetries(basis):
+    """
+    Return a list of symmetry functions, where the basis is closed with respect to the symmetries.
+
+    The functions returned return a symmetry of the input tiling. The symmetry
+    use will be closed  return corresponding symmetry of tiling.
+    """
+    valid_symmetries = []
+    basis = set(basis)
+    if rotate_90_clockwise_set(basis) == basis:
+        valid_symmetries.append(rotate_90_clockwise)
+    if rotate_180_clockwise_set(basis) == basis:
+        valid_symmetries.append(rotate_180_clockwise)
+    if rotate_270_clockwise_set(basis) == basis:
+        valid_symmetries.append(rotate_270_clockwise)
+    if inverse_set(basis) == basis:
+        valid_symmetries.append(inverse)
+    if antidiagonal_set(basis) == basis:
+        valid_symmetries.append(antidiagonal)
+    if reverse_set(basis) == basis:
+        valid_symmetries.append(reverse)
+    if complement_set(basis) == basis:
+        valid_symmetries.append(complement)
+
+    return valid_symmetries
+
+
+def rotate_90_clockwise(tiling):
+    """Return tiling rotated 90 degrees clockwise."""
+    new_tiling_dict = {}
+    height = tiling.dimensions.j
+    for cell, block in tiling:
+        if block is Block.point:
+            new_block = Block.point
+        else:
+            new_basis = [perm._rotate_right() for perm in block.basis]
+            new_block = PermSet.avoiding(new_basis)
+            if isinstance(block, PositiveClass):
+                new_block = PositiveClass(new_block)
+        new_tiling_dict[(cell.j, height - cell.i)] = new_block
+    return Tiling(new_tiling_dict)
+
+
+def rotate_180_clockwise(tiling):
+    """Return tiling rotated 180 degrees clockwise."""
+    new_tiling_dict = {}
+    height = tiling.dimensions.j
+    width = tiling.dimensions.i
+    for cell, block in tiling:
+        if block is Block.point:
+            new_block = Block.point
+        else:
+            new_basis = [perm._rotate_180() for perm in block.basis]
+            new_block = PermSet.avoiding(new_basis)
+            if isinstance(block, PositiveClass):
+                new_block = PositiveClass(new_block)
+        new_tiling_dict[(height - cell.i, width - cell.j)] = new_block
+    return Tiling(new_tiling_dict)
+
+
+def rotate_270_clockwise(tiling):
+    """Return tiling rotated 270 degrees clockwise."""
+    new_tiling_dict = {}
+    width = tiling.dimensions.i
+    for cell, block in tiling:
+        if block is Block.point:
+            new_block = Block.point
+        else:
+            new_basis = [perm._rotate_left() for perm in block.basis]
+            new_block = PermSet.avoiding(new_basis)
+            if isinstance(block, PositiveClass):
+                new_block = PositiveClass(new_block)
+        new_tiling_dict[(width-cell.j, cell.i)] = new_block
+    return Tiling(new_tiling_dict)
+
+
+def inverse(tiling):
+    """Return inverse of tiling."""
+    new_tiling_dict = {}
+    for cell, block in tiling:
+        if block is Block.point:
+            new_block = Block.point
+        else:
+            new_basis = [perm.inverse() for perm in block.basis]
+            new_block = PermSet.avoiding(new_basis)
+            if isinstance(block, PositiveClass):
+                new_block = PositiveClass(new_block)
+        new_tiling_dict[(cell.j, cell.i)] = new_block
+    return Tiling(new_tiling_dict)
+
+
+def reverse(tiling):
+    """Return reverse of tiling."""
+    new_tiling_dict = {}
+    width = tiling.dimensions.i
+    for cell, block in tiling:
+        if block is Block.point:
+            new_block = Block.point
+        else:
+            new_basis = [perm.reverse() for perm in block.basis]
+            new_block = PermSet.avoiding(new_basis)
+            if isinstance(block, PositiveClass):
+                new_block = PositiveClass(new_block)
+        new_tiling_dict[(width-cell.i, cell.j)] = new_block
+    return Tiling(new_tiling_dict)
+
+
+def antidiagonal(tiling):
+    """Return antidiagonal of tiling."""
+    new_tiling_dict = {}
+    height = tiling.dimensions.j
+    width = tiling.dimensions.i
+    for cell, block in tiling:
+        if block is Block.point:
+            new_block = Block.point
+        else:
+            new_basis = [perm.flip_antidiagonal() for perm in block.basis]
+            new_block = PermSet.avoiding(new_basis)
+            if isinstance(block, PositiveClass):
+                new_block = PositiveClass(new_block)
+        new_tiling_dict[(width-cell.j, height-cell.i)] = new_block
+    return Tiling(new_tiling_dict)
+
+
+def complement(tiling):
+    """Return complement of tiling."""
+    new_tiling_dict = {}
+    height = tiling.dimensions.j
+    for cell, block in tiling:
+        if block is Block.point:
+            new_block = Block.point
+        else:
+            new_basis = [perm.complement() for perm in block.basis]
+            new_block = PermSet.avoiding(new_basis)
+            if isinstance(block, PositiveClass):
+                new_block = PositiveClass(new_block)
+        new_tiling_dict[(cell.i, height-cell.j)] = new_block
+    return Tiling(new_tiling_dict)

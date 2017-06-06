@@ -306,6 +306,47 @@ class StrategyPacks(object):
         [components, reversibly_deletable_cells],
         [subset_verified, is_empty]]
 
+    row_and_column_insertion = [
+        [all_row_and_column_insertions, all_point_isolations],
+        [all_equivalent_point_isolations],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [components, reversibly_deletable_cells],
+        [subset_verified, is_empty]]
+
+    row_and_column_insertion_and_cell_insertion = [
+        [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
+        [all_equivalent_point_isolations],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [components, reversibly_deletable_cells],
+        [subset_verified, is_empty]]
+
+    row_and_column_insertion_and_cell_insertion_and_point_separation = [
+        [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
+        [all_equivalent_point_isolations, point_separation],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [components, reversibly_deletable_cells],
+        [subset_verified, is_empty]]
+
+    row_and_column_insertion_and_splittings = [
+        [all_row_and_column_insertions, all_point_isolations],
+        [all_equivalent_point_isolations],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [splittings],
+        [subset_verified, is_empty]]
+
+    row_and_column_insertion_and_cell_insertion_and_splittings = [
+        [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
+        [all_equivalent_point_isolations],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [splittings],
+        [subset_verified, is_empty]]
+
+    row_and_column_insertion_and_cell_insertion_and_point_separation_and_splittings = [
+        [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
+        [all_equivalent_point_isolations, point_separation],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [splittings],
+        [subset_verified, is_empty]]
 
     def __new__(_cls):
         raise RuntimeError("Block class should not be instantiated")
