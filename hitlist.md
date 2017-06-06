@@ -40,6 +40,7 @@ The classes we want ATRAP to find a proof tree for
 - [ ] Some horizontal juxtapositions like the > class juxtaposed with the < class. (Sam Miner and I tried to enumerate this once to prove that the horizontal juxtaposition of two rational classes can be non-rational.) [Note that the basis of a juxtaposition can be computed from the bases of the two sides.]
 
 - [ ] The Shubert variety classes (one of Albert and Brignall, a more complicated one of Masaki Ikeda (alex woo's student))
+    - [ ] LCI Schubert varieties 53241_52341_52431_35142_42513_426153
 
 - [ ] The substitution closure of Av(321), which equals Av(25314, 35142, 41352, 42513, 362514, 531642) (see a paper of Atkinson, Ruskuc, and Smith)
 
