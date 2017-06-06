@@ -5,11 +5,15 @@ Y = Atrap success
 X = No Atrap successes so far
 ? = A possible Atrap success, but perhaps before we fixed a bug
 
-12 bases found in the latest run (marked as YY below, Y means found before bug fixed)
+16 bases found in the latest run (marked as YY below)
 0123_0132:A proof tree was found in 388 seconds
+0132_0231:A proof tree was found in 239 seconds
+0132_1023:A proof tree was found in 1652 seconds
 0132_1302:A proof tree was found in 12 seconds
 0213_0231:A proof tree was found in 21 seconds
+0213_1032:A proof tree was found in 305 seconds
 0213_1302:A proof tree was found in 11 seconds
+0231_0321:A proof tree was found in 970 seconds
 0231_1032:A proof tree was found in 24 seconds
 0231_1230:A proof tree was found in 127 seconds
 0231_1302:A proof tree was found in 386 seconds
@@ -62,7 +66,7 @@ X 4231, 3214	1, 2, 6, 22, 87, 352, 1428, 5768, ...	A165532	algebraic (nonrationa
 
 X 4213, 1432	1, 2, 6, 22, 87, 352, 1434, 5861, ...	A165533	algebraic (nonrational) g.f.	Miner & preprint (0231_3012)
 
-X 4312, 3421    1, 2, 6, 22, 87, 354, 1459, 6056, ...	A164651	algebraic (nonrational) g.f.	Le (2005) established the Wilf-equivalence; Callan & preprint1 determined the enumeration. (0132_1023)
+YY 4312, 3421    1, 2, 6, 22, 87, 354, 1459, 6056, ...	A164651	algebraic (nonrational) g.f.	Le (2005) established the Wilf-equivalence; Callan & preprint1 determined the enumeration. (0132_1023)
 ? 4213, 2431 (0231_2013) -- May have been found by Pantone - see email from 21/3/2017 (1423, 2314)
 
 X 4312, 3124	1, 2, 6, 22, 88, 363, 1507, 6241, ...	A165534	algebraic (nonrational) g.f.	Pantone & preprint (0132_1320)
@@ -71,7 +75,7 @@ X 4312, 3124	1, 2, 6, 22, 88, 363, 1507, 6241, ...	A165534	algebraic (nonrationa
 
 X 4312, 3214	1, 2, 6, 22, 88, 365, 1540, 6568, ...	A165536	algebraic (nonrational) g.f.	Miner & preprint (0132_1230)
 
-Y 4231, 3412    1, 2, 6, 22, 88, 366, 1552, 6652, ...	A032351	algebraic (nonrational) g.f.	Bóna (1998) (0213_1032)
+YY 4231, 3412    1, 2, 6, 22, 88, 366, 1552, 6652, ...	A032351	algebraic (nonrational) g.f.	Bóna (1998) (0213_1032)
 YY 4231, 3142 (0213_1302)
 X 4213, 3241 (0231_1203)
 YY 4213, 3124 (0231_1320)
@@ -100,11 +104,11 @@ X 4312, 4123	1, 2, 6, 22, 89, 382, 1711, 7922, ...	A165545	conjectured to not sa
 
 YY 4321, 4312    1, 2, 6, 22, 90, 394, 1806, 8558, ...	A006318	Schröder numbers algebraic (nonrational) g.f.	Kremer (2000), Kremer (2003) (0123_0132) ESd2
 X 4312, 4231 (0132_0213) ESd4
-Y 4312, 4213 (0132_0231) ESd4
+YY 4312, 4213 (0132_0231) ESd4
 X 4312, 3412 (0132_1032) ESd3
 YY 4231, 4213 (0213_0231) ESd2
 X 4213, 4132 (0231_0312)
-X 4213, 4123 (0231_0321) ESd2
+YY 4213, 4123 (0231_0321) ESd2
 YY 4213, 2413 (0231_2031)
 YY 4213, 3214 (0231_1230) ESd3
 YY 3142, 2413 (1302_2031)
