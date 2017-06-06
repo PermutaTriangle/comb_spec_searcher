@@ -12,7 +12,8 @@ import time
 # filename = 'length5afterround4p2'
 # filename = 'length5afterround5p2'
 # filename = 'length5afterround6p2'
-filename = 'length5afterround7p2'
+# filename = 'length5afterround7p2'
+filename = 'length5afterround8p2'
 
 # Will try each strategy pack in order.
 strategy_packs = [
@@ -56,9 +57,9 @@ strategy_packs = [
 # max_times = 30 # seconds for each strategy pack (must be integer)
 # max_times = 60
 # max_times = 120
-max_times = 600
+# max_times = 600
 # max_times = 1800
-# max_times = 3600
+max_times = 3600
 # max_times = [ 5, 6, 7, 8, 9, 10] # seconds for corresponding strategy pack
 
 def perm_to_str(perm):
