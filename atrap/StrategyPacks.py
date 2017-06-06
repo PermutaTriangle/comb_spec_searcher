@@ -187,6 +187,13 @@ class StrategyPacks(object):
         [components, reversibly_deletable_cells],
         [subset_verified, is_empty]]
 
+    row_insertion_testing = [
+        [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
+        [point_separation, all_equivalent_point_isolations, all_equivalent_row_and_column_insertions],
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        [splittings],
+        [subset_verified, one_by_one_verification, is_empty]]
+
 
 
     def __new__(_cls):
