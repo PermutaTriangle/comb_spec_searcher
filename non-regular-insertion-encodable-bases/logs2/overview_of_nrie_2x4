@@ -6,10 +6,11 @@ Z = Atrap success on the Dartmouth cluster
 X = No Atrap successes so far
 ? = A possible Atrap success, but perhaps before we fixed a bug
 
-16 bases found in the latest run on Garpur (marked as Y below)
+17 bases found in the latest run on Garpur (marked as Y below)
 0123_0132:A proof tree was found in 388 seconds
 0132_0231:A proof tree was found in 239 seconds
 0132_1023:A proof tree was found in 1652 seconds
+0132_1032:A proof tree was found in 646 seconds
 0132_1302:A proof tree was found in 12 seconds
 0213_0231:A proof tree was found in 21 seconds
 0213_1032:A proof tree was found in 305 seconds
@@ -106,7 +107,7 @@ X 4312, 4123	1, 2, 6, 22, 89, 382, 1711, 7922, ...	A165545	conjectured to not sa
 Y 4321, 4312    1, 2, 6, 22, 90, 394, 1806, 8558, ...	A006318	Schröder numbers algebraic (nonrational) g.f.	Kremer (2000), Kremer (2003) (0123_0132) ESd2
 Z 4312, 4231 (0132_0213) ESd4
 Y 4312, 4213 (0132_0231) ESd4
-Z 4312, 3412 (0132_1032) ESd3
+Z 4312, 3412 (0132_1032) ESd3 (then Y)
 Y 4231, 4213 (0213_0231) ESd2
 Z 4213, 4132 (0231_0312)
 Y 4213, 4123 (0231_0321) ESd2
