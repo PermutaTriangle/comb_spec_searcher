@@ -582,6 +582,7 @@ class MetaTree(object):
                             self._basis_partitioning_cache.pop(tiling)
 
                     if all_verified_or_exist and self.early_splitting_only:
+
                         #print("Here")
                         or_node.expanded = True
 

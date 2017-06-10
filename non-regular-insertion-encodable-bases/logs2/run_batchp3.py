@@ -10,10 +10,17 @@ import time
 # filename = 'length2afterround3p3'
 # filename = 'length2afterround4p3'
 # filename = 'length2afterround5p3'
-filename = 'length2afterround6p3'
+# filename = 'length2afterround6p3'
+filename = 'length2afterround7p3'
 
 # Will try each strategy pack in order.
 strategy_packs = [
+                    StrategyPacks.row_and_column_insertion,
+                    StrategyPacks.row_and_column_insertion_and_cell_insertion,
+                    StrategyPacks.row_and_column_insertion_and_cell_insertion_and_point_separation,
+                    StrategyPacks.row_and_column_insertion_and_splittings,
+                    StrategyPacks.row_and_column_insertion_and_cell_insertion_and_splittings,
+                    StrategyPacks.row_and_column_insertion_and_cell_insertion_and_point_separation_and_splittings,
                     StrategyPacks.row_and_column_placements_and_all_321_boundaries,
                     StrategyPacks.row_and_column_placements_and_all_321_boundaries_and_splittings,
                     StrategyPacks.point_placement_and_all_321_boundaries,
