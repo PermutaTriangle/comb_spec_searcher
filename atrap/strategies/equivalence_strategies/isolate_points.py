@@ -30,7 +30,7 @@ def isolate_point_in_column(tiling, cell_to_be_isolated):
         else:
             new_tiling_dict[cell] = block
 
-    return EquivalenceStrategy( "Isolating the point at {} in its column".format(cell), Tiling(new_tiling_dict))
+    return EquivalenceStrategy( "Isolating the point at {} in its column".format(cell_to_be_isolated), Tiling(new_tiling_dict))
 
 
 def isolate_point_in_row(tiling, cell_to_be_isolated):
@@ -47,4 +47,4 @@ def isolate_point_in_row(tiling, cell_to_be_isolated):
         else:
             new_tiling_dict[cell] = block
 
-    return EquivalenceStrategy( "Isolating the point at {} in its row".format(cell), Tiling(new_tiling_dict))
+    return EquivalenceStrategy( "Isolating the point at {} in its row".format(cell_to_be_isolated), Tiling(new_tiling_dict))
