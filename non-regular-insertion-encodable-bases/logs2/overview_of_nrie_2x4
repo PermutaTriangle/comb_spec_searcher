@@ -6,23 +6,29 @@ Z = Atrap success on the Dartmouth cluster
 X = No Atrap successes so far
 ? = A possible Atrap success, but perhaps before we fixed a bug
 
-17 bases found in the latest run on Garpur (marked as Y below)
+19 bases found in the latest run on Garpur (marked as Y below)
 0123_0132:A proof tree was found in 388 seconds
+0132_0213:A proof tree was found on the Dartmouth cluster
 0132_0231:A proof tree was found in 239 seconds
 0132_1023:A proof tree was found in 1652 seconds
 0132_1032:A proof tree was found in 646 seconds
+0132_1230:A proof tree was found in 2409 seconds
 0132_1302:A proof tree was found in 12 seconds
 0213_0231:A proof tree was found in 21 seconds
 0213_1032:A proof tree was found in 305 seconds
 0213_1302:A proof tree was found in 11 seconds
+0213_1320:A proof tree was found on the Dartmouth cluster
+0231_0312:A proof tree was found in 681 seconds
 0231_0321:A proof tree was found in 970 seconds
 0231_1032:A proof tree was found in 24 seconds
 0231_1230:A proof tree was found in 127 seconds
 0231_1302:A proof tree was found in 386 seconds
 0231_1320:A proof tree was found in 20 seconds
 0231_2031:A proof tree was found in 238 seconds
+0231_2301:A proof tree was found on the Dartmouth cluster
 0321_1302:A proof tree was found in 17 seconds
 0321_2301:A proof tree was found in 24 seconds
+1032_2301:A proof tree was found on the Dartmouth cluster
 1302_2031:A proof tree was found in 104 seconds
 
 F 4321, 1234	1, 2, 6, 22, 86, 306, 882, 1764, ...	A206736	finite	Erdős–Szekeres theorem
@@ -73,9 +79,9 @@ Y 4312, 3421    1, 2, 6, 22, 87, 354, 1459, 6056, ...	A164651	algebraic (nonrati
 
 X 4312, 3124	1, 2, 6, 22, 88, 363, 1507, 6241, ...	A165534	algebraic (nonrational) g.f.	Pantone & preprint (0132_1320)
 
-? 4231, 3124	1, 2, 6, 22, 88, 363, 1508, 6255, ...	A165535	algebraic (nonrational) g.f.	Albert, Atkinson & Vatter (2014) (0213_1320) -- May have been found by Pantone - see email from 21/3/2017 (2314, 3241)
+Z 4231, 3124	1, 2, 6, 22, 88, 363, 1508, 6255, ...	A165535	algebraic (nonrational) g.f.	Albert, Atkinson & Vatter (2014) (0213_1320)
 
-X 4312, 3214	1, 2, 6, 22, 88, 365, 1540, 6568, ...	A165536	algebraic (nonrational) g.f.	Miner & preprint (0132_1230)
+Y 4312, 3214	1, 2, 6, 22, 88, 365, 1540, 6568, ...	A165536	algebraic (nonrational) g.f.	Miner & preprint (0132_1230)
 
 Y 4231, 3412    1, 2, 6, 22, 88, 366, 1552, 6652, ...	A032351	algebraic (nonrational) g.f.	Bóna (1998) (0213_1032)
 Y 4231, 3142 (0213_1302)
@@ -109,7 +115,7 @@ Z 4312, 4231 (0132_0213) ESd4
 Y 4312, 4213 (0132_0231) ESd4
 Z 4312, 3412 (0132_1032) ESd3 (then Y)
 Y 4231, 4213 (0213_0231) ESd2
-Z 4213, 4132 (0231_0312)
+Z 4213, 4132 (0231_0312) (then Y)
 Y 4213, 4123 (0231_0321) ESd2
 Y 4213, 2413 (0231_2031)
 Y 4213, 3214 (0231_1230) ESd3
