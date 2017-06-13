@@ -239,6 +239,7 @@ class AndNode(object):
         self.parents = []
         self.verification = set()
         self.recursion = False
+        self.strategy_verified = False
         self.back_maps = []
 
     def is_verified(self):
@@ -582,6 +583,8 @@ class MetaTree(object):
                             self._basis_partitioning_cache.pop(tiling)
 
                     if all_verified_or_exist and self.early_splitting_only:
+
+                        #print("Here")
                         or_node.expanded = True
 
                 for sibling_node in sibling_nodes_to_be_propagated:
@@ -797,6 +800,7 @@ class MetaTree(object):
                 '''We create the AND node, containing the verifiction step.'''
                 verified_and_node = AndNode(formal_step)
                 verified_and_node.parents.append(or_node)
+                verified_and_node.strategy_verified = True
                 or_node.children.append(verified_and_node)
                 '''We add the empty frozenset which implies that a node is verified.'''
                 verified_and_node.verification.add(frozenset())
@@ -1142,22 +1146,36 @@ class MetaTree(object):
         formal_step = None
         recurse = []
 
-        for child_and_node in or_node.sibling_node.get_children_and_nodes():
-            '''If the child AND node is verified'''
-            if any(verification.issubset(seen_tilings) for verification in child_and_node.verification):
-                '''We use it for the next level'''
-                assert len(child_and_node.parents) == 1
-                '''Keep track of the strategy used by the verified AND node.'''
-                formal_step = child_and_node.formal_step
-                '''The tiling we left the ProofTreeNode by is the tiling on the parent of the AND node.'''
-                out_tiling = child_and_node.parents[0].tiling
-                '''The children are the ProofTreeNodes using the tilings of the strategy.'''
-                if child_and_node.recursion:
-                    recurse = child_and_node.back_maps
-                children = [self._find_proof_tree_below_or_node(child_or_node, seen_tilings, in_tiling_or_nodes)
-                            for child_or_node in child_and_node.children]
-                '''We only want one tree'''
-                break
+        if any( child_and_node.strategy_verified for child_and_node in or_node.sibling_node.get_children_and_nodes() ):
+            for child_and_node in or_node.sibling_node.get_children_and_nodes():
+                if child_and_node.strategy_verified:
+                    '''If verified by a verification strategy it has no children'''
+                    formal_step = child_and_node.formal_step
+                    out_tiling = child_and_node.parents[0].tiling
+                    label = min(self._get_sibling_labels(or_node.sibling_node, force=True))
+                    return ProofTreeNode(formal_step,
+                                         in_tiling,
+                                         out_tiling,
+                                         or_node.sibling_node.get_relation(in_tiling, out_tiling),
+                                         label,
+                                         strategy_verified=True)
+        else:
+            for child_and_node in or_node.sibling_node.get_children_and_nodes():
+                '''If the child AND node is verified'''
+                if any(verification.issubset(seen_tilings) for verification in child_and_node.verification):
+                    '''We use it for the next level'''
+                    assert len(child_and_node.parents) == 1
+                    '''Keep track of the strategy used by the verified AND node.'''
+                    formal_step = child_and_node.formal_step
+                    '''The tiling we left the ProofTreeNode by is the tiling on the parent of the AND node.'''
+                    out_tiling = child_and_node.parents[0].tiling
+                    '''The children are the ProofTreeNodes using the tilings of the strategy.'''
+                    if child_and_node.recursion:
+                        recurse = child_and_node.back_maps
+                    children = [self._find_proof_tree_below_or_node(child_or_node, seen_tilings, in_tiling_or_nodes)
+                                for child_or_node in child_and_node.children]
+                    '''We only want one tree'''
+                    break
 
         '''We should only get here after finding a strategy for the ProofTreeNode'''
         assert formal_step is not None

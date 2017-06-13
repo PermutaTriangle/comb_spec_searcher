@@ -66,7 +66,7 @@ else:
     f = (open('results/hunt_'+task+'_results.txt', 'w') if OUTPUT_TO_FILE else sys.stdout)
 
 
-mtree = MetaTree( patts, *STRATS_TO_USE ,early_splitting_only=True)
+mtree = MetaTree( patts, *STRATS_TO_USE ,early_splitting_only=True, symmetry=True)
 
 def count_verified_tilings(mt):
     count = 0
