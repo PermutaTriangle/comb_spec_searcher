@@ -17,6 +17,6 @@ def extreme_point_boundaries(tiling, basis, **kwargs):
     boundary_basis = list(basis) + [Perm((2, 1, 0)), Perm((0, 1, 2))]
 
     boundary_list = [get_boundary_tiling(perm, Av(basis)) for perm in Av(boundary_basis)]
-    for t in boundary_list:
-        print(t)
+    # for t in boundary_list:
+    #     print(t)
     yield BatchStrategy("All boundaries", boundary_list)
