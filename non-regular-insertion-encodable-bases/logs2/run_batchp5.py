@@ -5,7 +5,8 @@ from atrap.ProofTree import ProofTree
 import time
 
 # filename = 'length2afterround6p5'
-filename = 'length2afterround7p5'
+# filename = 'length2afterround7p5'
+filename = 'length2afterround8p5'
 
 # Will try each strategy pack in order.
 strategy_packs = [
@@ -56,7 +57,8 @@ strategy_packs = [
 # max_times = 60
 # max_times = 120
 # max_times = 600
-max_times = 1800
+# max_times = 1800
+max_times = 3600
 # max_times = [ 5, 6, 7, 8, 9, 10] # seconds for corresponding strategy pack
 
 def perm_to_str(perm):
