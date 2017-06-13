@@ -17,5 +17,6 @@ from .lrm_rlm import left_to_right_minima4321
 from .lrm_rlm import right_to_left_maxima321
 from .lrm_rlm import right_to_left_maxima4321
 from .lrm_rlm import all_lrm_and_rlm_placements
+from .extreme_point_boundary import extreme_point_boundaries
 
 from .row_column_insertion import all_row_and_column_insertions
