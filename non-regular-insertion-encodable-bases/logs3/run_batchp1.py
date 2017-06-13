@@ -10,10 +10,19 @@ import time
 # filename = 'length3afterround3p1'
 # filename = 'length3afterround4p1'
 # filename = 'length3afterround5p1'
-filename = 'length3afterround6p1'
+# filename = 'length3afterround6p1'
+filename = 'length3afterround7p1'
 
 # Will try each strategy pack in order.
 strategy_packs = [
+                    StrategyPacks.jays_special,
+                    StrategyPacks.extreme_points,
+                    StrategyPacks.minimum_row_no_rec,
+                    StrategyPacks.row_placements_no_rec,
+                    StrategyPacks.left_column_placements_no_rec,
+                    StrategyPacks.column_placements_no_rec,
+                    StrategyPacks.row_and_column_placements_no_rec,
+                    StrategyPacks.jays_special_no_rec,
                     StrategyPacks.row_and_column_insertion,
                     StrategyPacks.row_and_column_insertion_and_cell_insertion,
                     StrategyPacks.row_and_column_insertion_and_cell_insertion_and_point_separation,
@@ -61,7 +70,8 @@ strategy_packs = [
 # max_times = 60
 # max_times = 120
 # max_times = 600
-max_times = 1800
+# max_times = 1800
+max_times = 3600
 # max_times = [ 5, 6, 7, 8, 9, 10] # seconds for corresponding strategy pack
 
 def perm_to_str(perm):
