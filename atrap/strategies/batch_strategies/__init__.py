@@ -20,3 +20,10 @@ from .lrm_rlm import all_lrm_and_rlm_placements
 from .extreme_point_boundary import extreme_point_boundaries
 
 from .row_column_insertion import all_row_and_column_insertions
+
+from .insertion_encoding import insertion_encoding_row_placements
+from .insertion_encoding import insertion_encoding_column_placements
+from .insertion_encoding import rightmost_insertion_encoding_column_placements
+from .insertion_encoding import leftmost_insertion_encoding_column_placements
+from .insertion_encoding import minimum_insertion_encoding_row_placements
+from .insertion_encoding import maximum_insertion_encoding_row_placements

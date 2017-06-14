@@ -293,11 +293,39 @@ class StrategyPacks(object):
         [subset_verified, is_empty]]
 
     mimic_regular_insertion_encoding = [
-        [all_cell_insertions, all_minimum_row_placements],
-        [all_equivalent_minimum_row_placements],
-        [empty_cell_inferral],
+        [all_cell_insertions, minimum_insertion_encoding_row_placements],
+        [],
+        [],
         [reversibly_deletable_points],
-        [one_by_one_verification, is_empty]]
+        [subset_verified, is_empty]]
+
+    mimic_regular_insertion_encoding_flip = [
+        [all_cell_insertions, leftmost_insertion_encoding_column_placements],
+        [],
+        [],
+        [reversibly_deletable_points],
+        [subset_verified, is_empty]]
+
+    mimic_regular_insertion_encoding_but_better = [
+        [all_cell_insertions, minimum_insertion_encoding_row_placements]
+        []
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral]
+        [components, reversibly_deletable_cells]
+        [subset_verified, is_empty]]
+
+    mimic_regular_insertion_encoding_flip_but_better = [
+        [all_cell_insertions, leftmost_insertion_encoding_column_placements]
+        []
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral]
+        [components, reversibly_deletable_cells]
+        [subset_verified, is_empty]]
+
+    mimic_regular_insertion_encoding_but_better_from_all_angles = [
+        [all_cell_insertions, insertion_encoding_row_placements, insertion_encoding_column_placements]
+        []
+        [empty_cell_inferral, row_and_column_separation, subclass_inferral]
+        [components, reversibly_deletable_cells]
+        [subset_verified, is_empty]]
 
     mimic_Zeilberger_enumeration_schemes = [
         [all_cell_insertions, all_point_isolations],
