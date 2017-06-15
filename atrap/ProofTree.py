@@ -39,7 +39,7 @@ class ProofTreeNode(JsonAble):
         identifier = attr_dict["identifier"]
         children = map(cls._from_attr_dict, attr_dict["children"])
         recurse = eval(attr_dict["recurse"])
-        strategy_verified = attr_dict["strategy_verified"]
+        strategy_verified = attr_dict["strategy_verified"] if "strategy_verified" in attr_dict else False
         return cls(formal_step,
                    in_tiling,
                    out_tiling,
