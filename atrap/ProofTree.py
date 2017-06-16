@@ -70,12 +70,12 @@ class ProofTree(JsonAble):
         self.root = root
     
     def size(self, root=None):
-        if root = None:
+        if root == None:
             root = self.root
-        return sum(self.size(child) for child in root.children) if root.children else 1
+        return 1 + sum(self.size(child) for child in root.children) if root.children else 1
 
     def depth(self, root=None):
-        if root = None:
+        if root == None:
             root = self.root
         return 1 + max(self.depth(child) for child in root.children) if root.children else 1
 
