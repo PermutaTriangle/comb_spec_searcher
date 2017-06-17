@@ -5,432 +5,676 @@ class StrategyPacks(object):
     """Different strategy packs for convenience."""
 
     # Avoiding all_symmetric_tilings on purpose.
-    all_strategies = [
-        [all_cell_insertions, all_point_isolations],
-        [all_point_placements, point_separation, all_equivalent_point_isolations],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [splittings],
-        [subset_verified, is_empty]]
+    all_strategies = {
+        "batch_strategies": [all_cell_insertions, all_point_isolations],
+        "equivalence_strategies": [all_point_placements, point_separation, all_equivalent_point_isolations],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [splittings],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    minimum_row_placements = [
-        [all_cell_insertions, all_minimum_row_placements],
-        [all_equivalent_minimum_row_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    minimum_row_placements = {
+        "batch_strategies": [all_cell_insertions, all_minimum_row_placements],
+        "equivalence_strategies": [all_equivalent_minimum_row_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    minimum_row_placements_and_splittings = [
-        [all_cell_insertions, all_minimum_row_placements],
-        [all_equivalent_minimum_row_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [splittings],
-        [subset_verified, is_empty]]
+    minimum_row_placements_and_splittings = {
+        "batch_strategies": [all_cell_insertions, all_minimum_row_placements],
+        "equivalence_strategies": [all_equivalent_minimum_row_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [splittings],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    minimum_row_no_rec = [
-        [all_cell_insertions, all_minimum_row_placements],
-        [all_equivalent_minimum_row_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [],
-        [subset_verified, is_empty]]
+    minimum_row_no_rec = {
+        "batch_strategies": [all_cell_insertions, all_minimum_row_placements],
+        "equivalence_strategies": [all_equivalent_minimum_row_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    minimum_row_placements_and_point_separation = [
-        [all_cell_insertions, all_minimum_row_placements],
-        [all_equivalent_minimum_row_placements, point_separation],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    minimum_row_placements_and_point_separation = {
+        "batch_strategies": [all_cell_insertions, all_minimum_row_placements],
+        "equivalence_strategies": [all_equivalent_minimum_row_placements, point_separation],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    minimum_row_placements_and_splittings_and_point_separation = [
-        [all_cell_insertions, all_minimum_row_placements],
-        [all_equivalent_minimum_row_placements, point_separation],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [splittings],
-        [subset_verified, is_empty]]
+    minimum_row_placements_and_splittings_and_point_separation = {
+        "batch_strategies": [all_cell_insertions, all_minimum_row_placements],
+        "equivalence_strategies": [all_equivalent_minimum_row_placements, point_separation],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [splittings],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    row_placements = [
-        [all_cell_insertions, all_row_placements],
-        [all_equivalent_row_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    row_placements = {
+        "batch_strategies": [all_cell_insertions, all_row_placements],
+        "equivalence_strategies": [all_equivalent_row_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    row_placements_and_splittings = [
-        [all_cell_insertions, all_row_placements],
-        [all_equivalent_row_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [splittings],
-        [subset_verified, is_empty]]
+    row_placements_and_splittings = {
+        "batch_strategies": [all_cell_insertions, all_row_placements],
+        "equivalence_strategies": [all_equivalent_row_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [splittings],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    row_placements_no_rec = [
-        [all_cell_insertions, all_row_placements],
-        [all_equivalent_row_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [],
-        [subset_verified, is_empty]]
+    row_placements_no_rec = {
+        "batch_strategies": [all_cell_insertions, all_row_placements],
+        "equivalence_strategies": [all_equivalent_row_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    row_placements_and_point_separation = [
-        [all_cell_insertions, all_row_placements],
-        [all_equivalent_row_placements, point_separation],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    row_placements_and_point_separation = {
+        "batch_strategies": [all_cell_insertions, all_row_placements],
+        "equivalence_strategies": [all_equivalent_row_placements, point_separation],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    row_placements_and_splittings_and_point_separation = [
-        [all_cell_insertions, all_row_placements],
-        [all_equivalent_row_placements, point_separation],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [splittings],
-        [subset_verified, is_empty]]
+    row_placements_and_splittings_and_point_separation = {
+        "batch_strategies": [all_cell_insertions, all_row_placements],
+        "equivalence_strategies": [all_equivalent_row_placements, point_separation],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [splittings],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    left_column_placements = [
-        [all_cell_insertions, all_leftmost_column_placements],
-        [all_equivalent_leftmost_column_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    left_column_placements = {
+        "batch_strategies": [all_cell_insertions, all_leftmost_column_placements],
+        "equivalence_strategies": [all_equivalent_leftmost_column_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    left_column_placements_and_splittings = [
-        [all_cell_insertions, all_leftmost_column_placements],
-        [all_equivalent_leftmost_column_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [splittings],
-        [subset_verified, is_empty]]
+    left_column_placements_and_splittings = {
+        "batch_strategies": [all_cell_insertions, all_leftmost_column_placements],
+        "equivalence_strategies": [all_equivalent_leftmost_column_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [splittings],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    left_column_placements_no_rec = [
-        [all_cell_insertions, all_leftmost_column_placements],
-        [all_equivalent_leftmost_column_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [],
-        [subset_verified, is_empty]]
+    left_column_placements_no_rec = {
+        "batch_strategies": [all_cell_insertions, all_leftmost_column_placements],
+        "equivalence_strategies": [all_equivalent_leftmost_column_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    left_column_placements_and_point_separation = [
-        [all_cell_insertions, all_leftmost_column_placements],
-        [all_equivalent_leftmost_column_placements, point_separation],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    left_column_placements_and_point_separation = {
+        "batch_strategies": [all_cell_insertions, all_leftmost_column_placements],
+        "equivalence_strategies": [all_equivalent_leftmost_column_placements, point_separation],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    left_column_placements_and_splittings_and_point_separation = [
-        [all_cell_insertions, all_leftmost_column_placements],
-        [all_equivalent_leftmost_column_placements, point_separation],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [splittings],
-        [subset_verified, is_empty]]
+    left_column_placements_and_splittings_and_point_separation = {
+        "batch_strategies": [all_cell_insertions, all_leftmost_column_placements],
+        "equivalence_strategies": [all_equivalent_leftmost_column_placements, point_separation],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [splittings],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    column_placements = [
-        [all_cell_insertions, all_column_placements],
-        [all_equivalent_column_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    column_placements = {
+        "batch_strategies": [all_cell_insertions, all_column_placements],
+        "equivalence_strategies": [all_equivalent_column_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    column_placements_and_splittings = [
-        [all_cell_insertions, all_column_placements],
-        [all_equivalent_column_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [splittings],
-        [subset_verified, is_empty]]
+    column_placements_and_splittings = {
+        "batch_strategies": [all_cell_insertions, all_column_placements],
+        "equivalence_strategies": [all_equivalent_column_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [splittings],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    column_placements_no_rec = [
-        [all_cell_insertions, all_column_placements],
-        [all_equivalent_column_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [],
-        [subset_verified, is_empty]]
+    column_placements_no_rec = {
+        "batch_strategies": [all_cell_insertions, all_column_placements],
+        "equivalence_strategies": [all_equivalent_column_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    column_placements_and_point_separation = [
-        [all_cell_insertions, all_column_placements],
-        [all_equivalent_column_placements, point_separation],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    column_placements_and_point_separation = {
+        "batch_strategies": [all_cell_insertions, all_column_placements],
+        "equivalence_strategies": [all_equivalent_column_placements, point_separation],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    column_placements_and_splittings_and_point_separation = [
-        [all_cell_insertions, all_column_placements],
-        [all_equivalent_column_placements, point_separation],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [splittings],
-        [subset_verified, is_empty]]
+    column_placements_and_splittings_and_point_separation = {
+        "batch_strategies": [all_cell_insertions, all_column_placements],
+        "equivalence_strategies": [all_equivalent_column_placements, point_separation],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [splittings],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    row_and_column_placements = [
-        [all_cell_insertions, all_row_placements, all_column_placements],
-        [all_equivalent_row_placements, all_equivalent_column_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    row_and_column_placements = {
+        "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements],
+        "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    row_and_column_placements_and_splittings = [
-        [all_cell_insertions, all_row_placements, all_column_placements],
-        [all_equivalent_row_placements, all_equivalent_column_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [splittings],
-        [subset_verified, is_empty]]
+    row_and_column_placements_and_splittings = {
+        "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements],
+        "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [splittings],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    row_and_column_placements_no_rec = [
-        [all_cell_insertions, all_row_placements, all_column_placements],
-        [all_equivalent_row_placements, all_equivalent_column_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    row_and_column_placements_no_rec = {
+        "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements],
+        "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    row_and_column_placements_and_point_separation = [
-        [all_cell_insertions, all_row_placements, all_column_placements],
-        [all_equivalent_row_placements, all_equivalent_column_placements, point_separation],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    row_and_column_placements_and_point_separation = {
+        "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements],
+        "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements, point_separation],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    row_and_column_placements_and_splittings_and_point_separation = [
-        [all_cell_insertions, all_row_placements, all_column_placements],
-        [all_equivalent_row_placements, all_equivalent_column_placements, point_separation],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [splittings],
-        [subset_verified, is_empty]]
+    row_and_column_placements_and_splittings_and_point_separation = {
+        "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements],
+        "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements, point_separation],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [splittings],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    point_placement = [
-        [all_cell_insertions],
-        [all_point_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    point_placement = {
+        "batch_strategies": [all_cell_insertions],
+        "equivalence_strategies": [all_point_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    point_placement_and_splittings = [
-        [all_cell_insertions],
-        [all_point_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [splittings],
-        [subset_verified, is_empty]]
+    point_placement_and_splittings = {
+        "batch_strategies": [all_cell_insertions],
+        "equivalence_strategies": [all_point_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [splittings],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    point_placement_and_point_separation = [
-        [all_cell_insertions],
-        [all_point_placements, point_separation],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    point_placement_and_point_separation = {
+        "batch_strategies": [all_cell_insertions],
+        "equivalence_strategies": [all_point_placements, point_separation],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    point_placement_and_splittings_and_point_separation = [
-        [all_cell_insertions],
-        [all_point_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [splittings],
-        [subset_verified, is_empty]]
+    point_placement_and_splittings_and_point_separation = {
+        "batch_strategies": [all_cell_insertions],
+        "equivalence_strategies": [all_point_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [splittings],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    point_separation_and_isolation = [
-        [all_cell_insertions, all_point_isolations],
-        [point_separation, all_equivalent_point_isolations],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    point_separation_and_isolation = {
+        "batch_strategies": [all_cell_insertions, all_point_isolations],
+        "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    point_separation_and_isolation_and_splittings = [
-        [all_cell_insertions, all_point_isolations],
-        [point_separation, all_equivalent_point_isolations],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [splittings],
-        [subset_verified, is_empty]]
+    point_separation_and_isolation_and_splittings = {
+        "batch_strategies": [all_cell_insertions, all_point_isolations],
+        "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [splittings],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    point_placement_and_all_lrm_and_rlm_placements = [
-        [all_cell_insertions, all_lrm_and_rlm_placements],
-        [all_point_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    point_placement_and_all_lrm_and_rlm_placements = {
+        "batch_strategies": [all_cell_insertions, all_lrm_and_rlm_placements],
+        "equivalence_strategies": [all_point_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    point_placement_and_all_lrm_and_rlm_placements_and_splittings = [
-        [all_cell_insertions, all_lrm_and_rlm_placements],
-        [all_point_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [splittings],
-        [subset_verified, is_empty]]
+    point_placement_and_all_lrm_and_rlm_placements_and_splittings = {
+        "batch_strategies": [all_cell_insertions, all_lrm_and_rlm_placements],
+        "equivalence_strategies": [all_point_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [splittings],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    row_and_column_placements_and_all_lrm_and_rlm_placements = [
-        [all_cell_insertions, all_row_placements, all_column_placements, all_lrm_and_rlm_placements],
-        [all_equivalent_row_placements, all_equivalent_column_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    row_and_column_placements_and_all_lrm_and_rlm_placements = {
+        "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements, all_lrm_and_rlm_placements],
+        "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    row_and_column_placements_and_all_lrm_and_rlm_placements_and_splittings = [
-        [all_cell_insertions, all_row_placements, all_column_placements, all_lrm_and_rlm_placements],
-        [all_equivalent_row_placements, all_equivalent_column_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [splittings],
-        [subset_verified, is_empty]]
+    row_and_column_placements_and_all_lrm_and_rlm_placements_and_splittings = {
+        "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements, all_lrm_and_rlm_placements],
+        "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [splittings],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    point_placement_and_all_321_boundaries = [
-        [all_cell_insertions, all_321_boundaries],
-        [all_point_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    point_placement_and_all_321_boundaries = {
+        "batch_strategies": [all_cell_insertions, all_321_boundaries],
+        "equivalence_strategies": [all_point_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    point_placement_and_all_321_boundaries_and_splittings = [
-        [all_cell_insertions, all_321_boundaries],
-        [all_point_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [splittings],
-        [subset_verified, is_empty]]
+    point_placement_and_all_321_boundaries_and_splittings = {
+        "batch_strategies": [all_cell_insertions, all_321_boundaries],
+        "equivalence_strategies": [all_point_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [splittings],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    row_and_column_placements_and_all_321_boundaries = [
-        [all_cell_insertions, all_row_placements, all_column_placements, all_321_boundaries],
-        [all_equivalent_row_placements, all_equivalent_column_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    row_and_column_placements_and_all_321_boundaries = {
+        "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements, all_321_boundaries],
+        "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    row_and_column_placements_and_all_321_boundaries_and_splittings = [
-        [all_cell_insertions, all_row_placements, all_column_placements, all_321_boundaries],
-        [all_equivalent_row_placements, all_equivalent_column_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [splittings],
-        [subset_verified, is_empty]]
+    row_and_column_placements_and_all_321_boundaries_and_splittings = {
+        "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements, all_321_boundaries],
+        "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [splittings],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    finite = [
-        [all_cell_insertions, all_minimum_row_placements],
-        [all_equivalent_minimum_row_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [],
-        [subset_verified, is_empty]]
+    finite = {
+        "batch_strategies": [all_cell_insertions, all_minimum_row_placements],
+        "equivalence_strategies": [all_equivalent_minimum_row_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    mimic_regular_insertion_encoding = [
-        [all_cell_insertions, minimum_insertion_encoding_row_placements],
-        [],
-        [],
-        [reversibly_deletable_points],
-        [subset_verified, is_empty]]
+    mimic_regular_insertion_encoding = {
+        "batch_strategies": [all_cell_insertions, minimum_insertion_encoding_row_placements],
+        "equivalence_strategies": [],
+        "inferral_strategies": [],
+        "recursive_strategies": [reversibly_deletable_points],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    mimic_regular_insertion_encoding_flip = [
-        [all_cell_insertions, leftmost_insertion_encoding_column_placements],
-        [],
-        [],
-        [reversibly_deletable_points],
-        [subset_verified, is_empty]]
+    mimic_regular_insertion_encoding_flip = {
+        "batch_strategies": [all_cell_insertions, leftmost_insertion_encoding_column_placements],
+        "equivalence_strategies": [],
+        "inferral_strategies": [],
+        "recursive_strategies": [reversibly_deletable_points],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    mimic_regular_insertion_encoding_but_better = [
-        [all_cell_insertions, minimum_insertion_encoding_row_placements],
-        [],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    mimic_regular_insertion_encoding_but_better = {
+        "batch_strategies": [all_cell_insertions, minimum_insertion_encoding_row_placements],
+        "equivalence_strategies": [],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    mimic_regular_insertion_encoding_flip_but_better = [
-        [all_cell_insertions, leftmost_insertion_encoding_column_placements],
-        [],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    mimic_regular_insertion_encoding_flip_but_better = {
+        "batch_strategies": [all_cell_insertions, leftmost_insertion_encoding_column_placements],
+        "equivalence_strategies": [],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    mimic_regular_insertion_encoding_but_better_from_all_angles = [
-        [all_cell_insertions, insertion_encoding_row_placements, insertion_encoding_column_placements],
-        [],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    mimic_regular_insertion_encoding_but_better_from_all_angles = {
+        "batch_strategies": [all_cell_insertions, insertion_encoding_row_placements, insertion_encoding_column_placements],
+        "equivalence_strategies": [],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    mimic_Zeilberger_enumeration_schemes = [
-        [all_cell_insertions, all_point_isolations],
-        [point_separation, all_equivalent_point_isolations],
-        [empty_cell_inferral],
-        [reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    mimic_Zeilberger_enumeration_schemes = {
+        "batch_strategies": [all_cell_insertions, all_point_isolations],
+        "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
+        "inferral_strategies": [empty_cell_inferral],
+        "recursive_strategies": [reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    left_to_right_maxima_123_and_point_placements = [
-        [all_cell_insertions, left_to_right_maxima123],
-        [all_point_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    left_to_right_maxima_123_and_point_placements = {
+        "batch_strategies": [all_cell_insertions, left_to_right_maxima123],
+        "equivalence_strategies": [all_point_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    left_to_right_maxima_1234_and_point_placements = [
-        [all_cell_insertions, left_to_right_maxima1234],
-        [all_point_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    left_to_right_maxima_1234_and_point_placements = {
+        "batch_strategies": [all_cell_insertions, left_to_right_maxima1234],
+        "equivalence_strategies": [all_point_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    left_to_right_maxima_123_and_row_column_placements = [
-        [all_cell_insertions, left_to_right_maxima123, all_row_placements],
-        [all_equivalent_row_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    left_to_right_maxima_123_and_row_column_placements = {
+        "batch_strategies": [all_cell_insertions, left_to_right_maxima123, all_row_placements],
+        "equivalence_strategies": [all_equivalent_row_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    left_to_right_maxima_1234_and_row_column_placements = [
-        [all_cell_insertions, left_to_right_maxima1234, all_row_placements, all_column_placements],
-        [all_equivalent_row_placements, all_equivalent_column_placements],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    left_to_right_maxima_1234_and_row_column_placements = {
+        "batch_strategies": [all_cell_insertions, left_to_right_maxima1234, all_row_placements, all_column_placements],
+        "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    point_separation_and_isolation_with_left_to_right_maxima1234 = [
-        [all_cell_insertions, left_to_right_maxima1234, all_point_isolations],
-        [point_separation, all_equivalent_point_isolations],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    point_separation_and_isolation_with_left_to_right_maxima1234 = {
+        "batch_strategies": [all_cell_insertions, left_to_right_maxima1234, all_point_isolations],
+        "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    row_and_column_insertion = [
-        [all_row_and_column_insertions, all_point_isolations],
-        [all_equivalent_point_isolations],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    row_and_column_insertion = {
+        "batch_strategies": [all_row_and_column_insertions, all_point_isolations],
+        "equivalence_strategies": [all_equivalent_point_isolations],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    row_and_column_insertion_and_cell_insertion = [
-        [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
-        [all_equivalent_point_isolations],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    row_and_column_insertion_and_cell_insertion = {
+        "batch_strategies": [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
+        "equivalence_strategies": [all_equivalent_point_isolations],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    row_and_column_insertion_and_cell_insertion_and_point_separation = [
-        [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
-        [all_equivalent_point_isolations, point_separation],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [components, reversibly_deletable_cells],
-        [subset_verified, is_empty]]
+    row_and_column_insertion_and_cell_insertion_and_point_separation = {
+        "batch_strategies": [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
+        "equivalence_strategies": [all_equivalent_point_isolations, point_separation],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [components, reversibly_deletable_cells],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    row_and_column_insertion_and_splittings = [
-        [all_row_and_column_insertions, all_point_isolations],
-        [all_equivalent_point_isolations],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [splittings],
-        [subset_verified, is_empty]]
+    row_and_column_insertion_and_splittings = {
+        "batch_strategies": [all_row_and_column_insertions, all_point_isolations],
+        "equivalence_strategies": [all_equivalent_point_isolations],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [splittings],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    row_and_column_insertion_and_cell_insertion_and_splittings = [
-        [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
-        [all_equivalent_point_isolations],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [splittings],
-        [subset_verified, is_empty]]
+    row_and_column_insertion_and_cell_insertion_and_splittings = {
+        "batch_strategies": [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
+        "equivalence_strategies": [all_equivalent_point_isolations],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [splittings],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    row_and_column_insertion_and_cell_insertion_and_point_separation_and_splittings = [
-        [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
-        [all_equivalent_point_isolations, point_separation],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [splittings],
-        [subset_verified, is_empty]]
+    row_and_column_insertion_and_cell_insertion_and_point_separation_and_splittings = {
+        "batch_strategies": [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
+        "equivalence_strategies": [all_equivalent_point_isolations, point_separation],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [splittings],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    jays_special = [
-        [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
-        [all_point_placements, all_equivalent_point_isolations, point_separation],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [splittings],
-        [subset_verified, is_empty]]
+    jays_special = {
+        "batch_strategies": [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
+        "equivalence_strategies": [all_point_placements, all_equivalent_point_isolations, point_separation],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [splittings],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    jays_special_no_rec = [
-        [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
-        [all_point_placements, all_equivalent_point_isolations, point_separation],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [],
-        [subset_verified, is_empty]]
+    jays_special_no_rec = {
+        "batch_strategies": [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
+        "equivalence_strategies": [all_point_placements, all_equivalent_point_isolations, point_separation],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
-    extreme_points = [
-        [extreme_point_boundaries, all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
-        [all_point_placements, all_equivalent_point_isolations, point_separation],
-        [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-        [splittings],
-        [subset_verified, is_empty]]
+    extreme_points = {
+        "batch_strategies": [extreme_point_boundaries, all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
+        "equivalence_strategies": [all_point_placements, all_equivalent_point_isolations, point_separation],
+        "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+        "recursive_strategies": [splittings],
+        "verification_strategies": [subset_verified, is_empty],
+        "symmetry": False,
+        "non_interleaving_recursion": False,
+        "early_splitting_only": False
+        }
 
     def __new__(_cls):
         raise RuntimeError("Block class should not be instantiated")
