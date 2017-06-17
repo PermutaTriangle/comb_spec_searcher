@@ -39,7 +39,7 @@ class ProofTreeNode(JsonAble):
         identifier = attr_dict["identifier"]
         children = map(cls._from_attr_dict, attr_dict["children"])
         recurse = eval(attr_dict["recurse"])
-        strategy_verified = attr_dict["strategy_verified"]
+        strategy_verified = attr_dict["strategy_verified"] if "strategy_verified" in attr_dict else False
         return cls(formal_step,
                    in_tiling,
                    out_tiling,
@@ -68,6 +68,16 @@ class ProofTree(JsonAble):
 
     def __init__(self, root):
         self.root = root
+    
+    def size(self, root=None):
+        if root == None:
+            root = self.root
+        return 1 + sum(self.size(child) for child in root.children) if root.children else 1
+
+    def depth(self, root=None):
+        if root == None:
+            root = self.root
+        return 1 + max(self.depth(child) for child in root.children) if root.children else 1
 
     @classmethod
     def _from_attr_dict(cls, attr_dict):
