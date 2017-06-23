@@ -526,6 +526,15 @@ class MetaTree(object):
                 formal_step = recursive_strategy.formal_step
                 tilings = recursive_strategy.tilings
 
+                sensible = True
+                for tiling in tilings:
+                    child_or_node = self.tiling_cache.get(tiling)
+                    if child_or_node is not None:
+                        if child_or_node in or_node.sibling_node:
+                            sensible = False
+                if not sensible:
+                    continue
+                    
                 '''We create the AND node for the strategy and connect it its parent.'''
                 recursive_and_node = AndNode(formal_step)
                 recursive_and_node.parents.append(or_node)
@@ -617,6 +626,22 @@ class MetaTree(object):
                 formal_step = batch_strategy.formal_step
                 tilings = batch_strategy.tilings
 
+                sensible = True
+                '''For each tiling in the strategy,'''
+                for index, tiling in enumerate(tilings):
+                    '''we use the inferral strategies.'''
+                    inferred_tiling = self._inferral(tiling)
+                    '''We replace the tiling in the strategy with the inferred tiling.'''
+                    tilings[index] = inferred_tiling
+                    child_or_node = self.tiling_cache.get(inferred_tiling)
+                    if child_or_node is not None:
+                        if child_or_node in or_node.sibling_node:
+                            sensible = False
+                            break
+
+                if not sensible:
+                    continue
+
                 '''We create the AND node containing the batch strategy
                 and connect it to its parent OR node.'''
                 batch_and_node = AndNode(formal_step)
@@ -625,13 +650,6 @@ class MetaTree(object):
 
                 '''We then keep track of the AND nodes to be propagated.'''
                 verified_sibling_nodes = set()
-
-                '''For each tiling in the strategy,'''
-                for index, tiling in enumerate(tilings):
-                    '''we use the inferral strategies.'''
-                    inferred_tiling = self._inferral(tiling)
-                    '''We replace the tiling in the strategy with the inferred tiling.'''
-                    tilings[index] = inferred_tiling
 
                 for tiling in tilings:
                     '''We attempt to find the OR node of the tiling in the cache.'''
