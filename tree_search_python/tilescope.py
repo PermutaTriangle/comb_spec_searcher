@@ -6,7 +6,7 @@
                          /_/
 """
 
-from collections import defaultdict
+from collections import defaultdict, deque
 
 class Node(object):
     def __init__(self, n, children = []):
@@ -24,7 +24,7 @@ def parse_table(text):
             fields = [ int(s) for s in row.split(' ') ]
             first, rest = fields[0], fields[1:]
             rules_dict[first] |= set((tuple(rest),))
-    return root, rules_dict
+    return rules_dict, root
 
 def read_table(fname):
     return parse_table(open(fname).read())
@@ -42,7 +42,9 @@ def prune(rules_dict):
                 del rules_dict[k]
     return prune(rules_dict) if changed else rules_dict
 
-def proof_trees_dfs(root, rules_dict, seen = set()):
+### DFS
+
+def proof_trees_dfs(rules_dict, root, seen = set()):
     seen = seen.copy()
     if root in rules_dict:
         rule_set = rules_dict[root]
@@ -53,25 +55,54 @@ def proof_trees_dfs(root, rules_dict, seen = set()):
         else:
             seen.add(root)
             for rule in rule_set:
-                for visited, trees in proof_forests_dfs(rule, rules_dict, seen):
+                for visited, trees in proof_forests_dfs(rules_dict, rule, seen):
                     root_node.children = trees
                     yield visited, root_node
 
-def proof_forests_dfs(roots, rules_dict, seen = set()):
+def proof_forests_dfs(rules_dict, roots, seen = set()):
     if not roots:
         yield seen, []
     else:
         root, roots = roots[0], roots[1:]
-        for seen1, tree in proof_trees_dfs(root, rules_dict, seen):
-            for seen2, trees in proof_forests_dfs(roots, rules_dict, seen1):
+        for seen1, tree in proof_trees_dfs(rules_dict, root, seen):
+            for seen2, trees in proof_forests_dfs(rules_dict, roots, seen1):
                 yield seen1.union(seen2), [tree] + trees
 
 def print_proof_tree_dfs(fname, n = 1):
-    root, rules_dict = read_table(fname)
+    rules_dict, root = read_table(fname)
     try:
-        gen = proof_trees_dfs(root, prune(rules_dict))
+        gen = proof_trees_dfs(prune(rules_dict), root)
         for i in range(n):
             _, tree = next(gen)
             print(tree)
     except StopIteration:
-        print("No proof tree found")
+        pass
+
+### BFS
+
+def proof_tree_bfs(rules_dict, root):
+    seen = set()
+    if root in rules_dict:
+        root_node = Node(root)
+        queue = deque([root_node])
+        while queue:
+            v = queue.popleft()
+            rule_set = rules_dict[v.label]
+            if v.label in seen or () in rule_set:
+                pass
+            elif rule_set:
+                rule = rule_set.pop()
+                children = [ Node(i) for i in rule ]
+                queue.extend(children)
+                v.children = children
+            else:
+                print("Oops: something went very wrong")
+            seen.add(v.label)
+        return seen, root_node
+
+def print_proof_tree_bfs(fname):
+    rules_dict, root = read_table(fname)
+    result = proof_tree_bfs(prune(rules_dict), root)
+    if result:
+        _, tree = result
+        print(tree)
