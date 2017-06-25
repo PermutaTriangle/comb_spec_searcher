@@ -93,22 +93,22 @@ def disambiguate(rules_dict):
 
 def proof_tree_bfs(unirules_dict, root):
     seen = set()
-    if root in unirules_dict:
-        root_node = Node(root)
-        queue = deque([root_node])
-        while queue:
-            v = queue.popleft()
-            rule = unirules_dict[v.label]
-            if not (v.label in seen or rule == ()):
-                children = [ Node(i) for i in rule ]
-                queue.extend(children)
-                v.children = children
-            seen.add(v.label)
-        return seen, root_node
+    root_node = Node(root)
+    queue = deque([root_node])
+    while queue:
+        v = queue.popleft()
+        rule = unirules_dict[v.label]
+        if not (v.label in seen or rule == ()):
+            children = [ Node(i) for i in rule ]
+            queue.extend(children)
+            v.children = children
+        seen.add(v.label)
+    return seen, root_node
 
 def proof_trees_bfs(rules_dict, root):
-    for d in disambiguate(prune(rules_dict)):
-        if root in d:
+    rdict = prune(rules_dict)
+    if root in rdict:
+        for d in disambiguate(rdict):
             yield proof_tree_bfs(d, root)
 
 def print_proof_trees_bfs(fname, n = 1):
