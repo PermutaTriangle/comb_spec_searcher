@@ -68,7 +68,7 @@ def proof_forests_dfs(rules_dict, roots, seen = set()):
             for seen2, trees in proof_forests_dfs(rules_dict, roots, seen1):
                 yield seen1.union(seen2), [tree] + trees
 
-def print_proof_tree_dfs(fname, n = 1):
+def print_proof_trees_dfs(fname, n = 1):
     rules_dict, root = read_table(fname)
     try:
         gen = proof_trees_dfs(prune(rules_dict), root)
@@ -80,29 +80,43 @@ def print_proof_tree_dfs(fname, n = 1):
 
 ### BFS
 
-def proof_tree_bfs(rules_dict, root):
+def disambiguate(rules_dict):
+    if not rules_dict:
+        yield dict()
+    else:
+        rdict = rules_dict.copy()
+        v, rule_set = rdict.popitem()
+        for rule in iter(rule_set):
+            for d in disambiguate(rdict):
+                d[v] = rule
+                yield d
+
+def proof_tree_bfs(unirules_dict, root):
     seen = set()
-    if root in rules_dict:
+    if root in unirules_dict:
         root_node = Node(root)
         queue = deque([root_node])
         while queue:
             v = queue.popleft()
-            rule_set = rules_dict[v.label]
-            if v.label in seen or () in rule_set:
-                pass
-            elif rule_set:
-                rule = rule_set.pop()
+            rule = unirules_dict[v.label]
+            if not (v.label in seen or rule == ()):
                 children = [ Node(i) for i in rule ]
                 queue.extend(children)
                 v.children = children
-            else:
-                print("Oops: something went very wrong")
             seen.add(v.label)
         return seen, root_node
 
-def print_proof_tree_bfs(fname):
+def proof_trees_bfs(rules_dict, root):
+    for d in disambiguate(prune(rules_dict)):
+        if root in d:
+            yield proof_tree_bfs(d, root)
+
+def print_proof_trees_bfs(fname, n = 1):
     rules_dict, root = read_table(fname)
-    result = proof_tree_bfs(prune(rules_dict), root)
-    if result:
-        _, tree = result
-        print(tree)
+    try:
+        gen = proof_trees_bfs(prune(rules_dict), root)
+        for i in range(n):
+            _, tree = next(gen)
+            print(tree)
+    except StopIteration:
+        pass
