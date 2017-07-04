@@ -1,4 +1,4 @@
-from sympy import diff, sympify, Function
+from sympy import diff, symbols, sympify, Function
 from sympy.abc import x
 from grids import Tiling, Block, PositiveClass, lex_min, Cell
 from permuta import Av
@@ -12,7 +12,7 @@ mongo = MongoClient('mongodb://webapp:c73f12a3@permpal.ru.is:27017/permsdb')
 __all__ = ["get_tiling_genf", "genf_from_db", "factor_from_db", "permeval", "taylor_expand"]
 
 
-def get_tiling_genf(tiling, identifier, inp_set, root_func):
+def get_tiling_genf(tiling, identifier, inp_set, root_func, substitutions, fcache):
     factorEqs = []
     for factor in tiling.find_factors():
         eq = None
@@ -22,8 +22,8 @@ def get_tiling_genf(tiling, identifier, inp_set, root_func):
                 with_point[k] = Block.point
                 with_point = Tiling(with_point)
                 empty = Tiling({kk: vv for kk, vv in factor.factor.items() if kk != k})
-                eq = (get_tiling_genf(with_point, identifier, inp_set, root_func)
-                      + get_tiling_genf(empty, identifier, inp_set, root_func))
+                eq = (get_tiling_genf(with_point, identifier, inp_set, root_func, substitutions, fcache)
+                      + get_tiling_genf(empty, identifier, inp_set, root_func, substitutions, fcache))
                 factorEqs.append(eq)
                 break
             if v is not Block.point and isinstance(v, PositiveClass):
@@ -31,14 +31,22 @@ def get_tiling_genf(tiling, identifier, inp_set, root_func):
                 non_positive[k] = v.perm_class
                 non_positive = Tiling(non_positive)
                 empty = Tiling({kk: vv for kk, vv in factor.factor.items() if kk != k})
-                eq = (get_tiling_genf(non_positive, identifier, inp_set, root_func)
-                      - get_tiling_genf(empty, identifier, inp_set, root_func))
+                eq = (get_tiling_genf(non_positive, identifier, inp_set, root_func, substitutions, fcache)
+                      - get_tiling_genf(empty, identifier, inp_set, root_func, substitutions, fcache))
                 factorEqs.append(eq)
                 break
         else:
+            minfac = factor.minimum()
+            facstr = str(minfac)
+            if facstr in fcache:
+                factorEqs.append(fcache[facstr])
+                continue
             eq = factor_from_db(factor)
+            new_symbol = symbols('C_'+str(len(substitutions)))
+            fcache[facstr] = new_symbol
+            factorEqs.append(new_symbol)
             if eq:
-                factorEqs.append(eq)
+                substitutions[new_symbol] = eq
                 continue
             func = 0
             sets = 0
@@ -48,7 +56,8 @@ def get_tiling_genf(tiling, identifier, inp_set, root_func):
                 ys.add(k[1])
                 if len(factor) == 1:
                     if v == inp_set:
-                        factorEqs.append(root_func)
+                        factorEqs[-1] = root_func
+                        del fcache[facstr]
                         break
                     if v is Block.point:
                         continue
@@ -56,7 +65,7 @@ def get_tiling_genf(tiling, identifier, inp_set, root_func):
                     if ext_genf is None:
                         raise RuntimeError("Cannot find generating function for " + str(identifier)
                                            + " because generating function for " + repr(v) + " is unknown")
-                    factorEqs.append(ext_genf)
+                    substitutions[new_symbol] = ext_genf
                     break
                 if v is not Block.point:
                     ext_genf = genf_from_db(v)
@@ -74,10 +83,10 @@ def get_tiling_genf(tiling, identifier, inp_set, root_func):
                     eq = x*diff(x*(func), x)
                     for _ in range(points-1):
                         eq = x*diff(x*eq, x)
-                    factorEqs.append(eq.doit())
+                    substitutions[new_symbol] = eq.doit()
                 else:
                     points = len(factor.factor)
-                    factorEqs.append(factorial(points)*x**points)
+                    substitutions[new_symbol] = factorial(points)*x**points
     return reduce(mul, factorEqs, 1)
 
 
@@ -103,18 +112,12 @@ def factor_from_db(factor):
 
 
 def taylor_expand(gen_func, terms=10):
-    coeffs = []
-    fac = 1
-    gen_func = gen_func.series(n=terms+1)
-    #print("After series:")
-    #print(gen_func)
-    for i in range(terms+1):
-        coeffs.append(gen_func.subs(x, 0)//fac)
-        gen_func = diff(gen_func)
-        #print(gen_func)
-        fac *= (i+1)
-
-    return coeffs
+    num,den = gen_func.as_numer_denom()
+    num = num.expand()
+    den = den.expand()
+    gen_func = num/den
+    expansion = gen_func.series(n=None)
+    return [next(expansion)/(x**i) for i in range(terms+1)]
 
 def permeval(text):
     if text.startswith("Av+"):

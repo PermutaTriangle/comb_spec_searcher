@@ -102,10 +102,19 @@ class ProofTree(JsonAble):
         for child in root.children:
             self._get_funcs(child, funcs)
 
-    def get_equations(self, funcs, avoid):
-        return self._get_equations(self.root, funcs, avoid)
+    def get_equations(self, funcs, avoid, substitutions=None, fcache=None):
+        res = None
+        f = False
+        if substitutions == None:
+            substitutions = {}
+            fcache = {}
+            f = True
+        res = self._get_equations(self.root, funcs, avoid, substitutions, fcache)
+        if f:
+            res = [v.subs(substitutions) for v in res]
+        return res
 
-    def _get_equations(self, root, funcs, avoid):
+    def _get_equations(self, root, funcs, avoid, substitutions, fcache):
         from .Helpers import get_tiling_genf
         from sympy import Eq
         from sympy.abc import x
@@ -120,8 +129,8 @@ class ProofTree(JsonAble):
         elif "contains no" in root.formal_step:
             rhs = 0
         else:
-            rhs = get_tiling_genf(root.out_tiling, root.identifier, avoid, funcs[self.root.identifier](x))
-        return reduce(add, [self._get_equations(child, funcs, avoid) for child in root.children], [Eq(lhs, rhs)])
+            rhs = get_tiling_genf(root.out_tiling, root.identifier, avoid, funcs[self.root.identifier](x), substitutions, fcache)
+        return reduce(add, [self._get_equations(child, funcs, avoid, substitutions, fcache) for child in root.children], [Eq(lhs, rhs)])
 
     def get_genf(self, verify=10, equations=False, expand=False):
         from .Helpers import taylor_expand
@@ -133,27 +142,30 @@ class ProofTree(JsonAble):
         f = funcs[self.root.identifier]
         avoid = self.root.in_tiling[Cell(i=0,j=0)]
         avoid = Av(lex_min(list(avoid.basis)))
-        eqs = self.get_equations(funcs, avoid)
+        substitutions = {}
+        fcache = {}
+        eqs = self.get_equations(funcs, avoid, substitutions, fcache)
         #for eq in eqs:
         #    print(eq)
-        solutions = solve(eqs, tuple([eq.lhs for eq in eqs]), dict=True)
+        solutions = solve(eqs, tuple([eq.lhs for eq in eqs]), dict=True, cubics=False, quartics=False, quintics=False)
         any_valid = False
         if solutions:
             coeffs = [len(avoid.of_length(i)) for i in range(verify+1)]
             for solution in solutions:
+                genf = solution[f(x)].subs(substitutions)
                 try:
-                    expansion = taylor_expand(solution[f(x)], verify)
+                    expansion = taylor_expand(genf, verify)
                 except TypeError:
                     continue
                 any_valid = True
                 if coeffs == expansion:
-                    sol = solution[f(x)].expand().simplify()
+                    sol = genf.expand().simplify()
                     if expand:
                         if equations:
-                            return sol,eqs,expansion
+                            return sol,[eq.subs(substitutions) for eq in eqs],expansion
                         return sol,expansion
                     if equations:
-                        return sol,eqs
+                        return sol,[eq.subs(substitutions) for eq in eqs]
                     return sol
             if any_valid:
                 raise RuntimeError("Incorrect generating function\n" + str(solutions))
