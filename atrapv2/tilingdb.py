@@ -109,3 +109,8 @@ class TilingDB(object):
 
     def set_empty(self, key):
         self._get_info(key).empty = True
+
+    def verified_labels(self):
+        for x in self.label_to_info:
+            if self.is_verified(x):
+                yield x

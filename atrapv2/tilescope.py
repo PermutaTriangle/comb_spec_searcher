@@ -15,6 +15,8 @@ from grids import Tiling
 from permuta import Av
 from permuta.descriptors import Basis
 from atrapv2.strategies import is_empty
+from .tree_searcher import prune, proof_tree_dfs
+from collections import defaultdict
 
 
 from atrap.strategies import BatchStrategy
@@ -47,8 +49,12 @@ class TileScope(object):
         self._inferral_cache = LRUCache(100000)
         if start_tiling is None:
             start_tiling = Tiling({(0,0): Av(basis)})
-            self.tilingdb.add(start_tiling, expandable=True)
-            self.tilingqueue.add_to_working(self.tilingdb.get_label(start_tiling))
+
+        self.tilingdb.add(start_tiling, expandable=True)
+        self.tilingqueue.add_to_working(self.tilingdb.get_label(start_tiling))
+
+        self.start_label = self.tilingdb.get_label(start_tiling)
+
 
         if batch_strategies is not None:
             self.strategy_generators = batch_strategies
@@ -138,6 +144,7 @@ class TileScope(object):
         return inferred_tiling
 
     def _basis_partitioning(self, tiling, length, basis, function_name=None):
+        # no caching for now - shortcut to see things working!
         return tiling.basis_partitioning(length, basis)
 
     def do_level(self):
@@ -180,3 +187,29 @@ class TileScope(object):
                             if isinstance(strategy, BatchStrategy):
                                 self.tilingdb.set_expandable(x)
             self.tilingdb.set_expanded(label)
+
+    def find_tree(self):
+        rules_dict = defaultdict(set)
+        # convert rules to equivalent labels
+        for rule in self.ruledb:
+            first, rest = rule
+            first = self.equivdb[first]
+            rest = tuple(sorted(self.equivdb[x] for x in rest))
+            rules_dict[first] |= set((tuple(rest),))
+        # add an empty rule, that represents verified in the tree searcher
+        for x in self.tilingdb.verified_labels():
+            verified_label = self.equivdb[x]
+            rules_dict[verified_label] |= set(((),))
+
+        # Prune all unverifiable labels (recursively)
+        rules_dict = prune(rules_dict)
+
+        # only verified labels in rules_dict, in particular, there is a tree if
+        # the start label is in the rules_dict
+        if self.equivdb[self.start_label] in rules_dict:
+            print("A tree was found! :)")
+            proof_tree = proof_tree_dfs(rules_dict, root=self.equivdb[self.start_label])
+            print(proof_tree)
+            return proof_tree_dfs(rules_dict, root=self.equivdb[self.start_label])
+        else:
+            print("No tree was found. :(")
