@@ -6,7 +6,7 @@ from grids import Tiling, PositiveClass
 from permuta import Perm
 from .recursive_class import RecursiveStrategy
 
-SPLITTINGS_HACK = True
+SPLITTINGS_HACK = False
 
 
 def standardize(p_list):
