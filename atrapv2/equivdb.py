@@ -70,3 +70,6 @@ class EquivalenceDB(object):
     def is_verified(self, tiling):
         """Return true if any equivalent tiling is verified"""
         return self[tiling] in self.verified_roots
+
+    def get_explanation(self, t1, t2):
+        return "They are equivalent"

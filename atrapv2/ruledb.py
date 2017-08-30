@@ -11,6 +11,7 @@ class RuleDB(object):
     def __init__(self):
         self.rules_dict = defaultdict(set)
         self.explanations = {}
+        self.back_maps = {}
 
     def add(self, start, end, explanation):
         print(start)

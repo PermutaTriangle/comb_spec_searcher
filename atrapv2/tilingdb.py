@@ -9,13 +9,14 @@ class Info(object):
     '''
     Information about a tiling.
     '''
-    def __init__(self, tiling, label, expanded=False, expandable=False, verified=None, empty=False):
+    def __init__(self, tiling, label, expanded=False, expandable=False, verified=None, empty=False, strategy_verified=False):
         self.tiling = tiling
         self.label = label
         self.expanded = expanded
         self.expandable = expandable
         self.verified = verified
         self.empty = empty
+        self.strategy_verified = strategy_verified
 
 class TilingDB(object):
     """
@@ -40,6 +41,10 @@ class TilingDB(object):
     def __init__(self):
         self.tiling_to_info = {}
         self.label_to_info = {}
+
+    def __iter__(self):
+        for key in self.label_to_info.keys():
+            yield key
 
     def add(self, tiling, expandable=False):
         if not isinstance(tiling, Tiling):
@@ -114,3 +119,9 @@ class TilingDB(object):
         for x in self.label_to_info:
             if self.is_verified(x):
                 yield x
+
+    def is_strategy_verified(self, key):
+        return self._get_info(key).strategy_verified
+
+    def set_strategy_verified(self, key, strategy_verified=True):
+        self._get_info(key).strategy_verified = strategy_verified

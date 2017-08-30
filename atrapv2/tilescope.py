@@ -11,6 +11,8 @@ from .ruledb import RuleDB
 from .tilingdb import TilingDB
 from .tilingqueue import TilingQueue
 from .LRUCache import LRUCache
+from .ProofTree import ProofTree
+from .ProofTree import ProofTreeNode
 from grids import Tiling
 from permuta import Av
 from permuta.descriptors import Basis
@@ -89,6 +91,7 @@ class TileScope(object):
                     raise TypeError("Attempting to verify with non VerificationStrategy.")
                 formal_step = verification_strategy.formal_step
                 self.tilingdb.set_verified(tiling, formal_step)
+                self.tilingdb.set_strategy_verified(tiling)
                 label = self.tilingdb.get_label(tiling)
                 self.equivdb.update_verified(label)
                 return
@@ -147,8 +150,8 @@ class TileScope(object):
         # no caching for now - shortcut to see things working!
         return tiling.basis_partitioning(length, basis)
 
-    def do_level(self):
-        for label in self.tilingqueue.do_level():
+    def do_level(self,cap=None):
+        for label in self.tilingqueue.do_level(cap=cap):
             if self.tilingdb.is_expanded(label) or self.tilingdb.is_verified(label):
                 continue
             elif not self.tilingdb.is_expandable(label):
@@ -169,6 +172,7 @@ class TileScope(object):
                     formal_step = strategy.formal_step
                     tilings = [self._inferral(t) for t in tilings]
                     tilings = [t for t in tilings if not self.is_empty(t)]
+                    # put information about deleted empty tilings into the formal step
 
                     # If we have an equivalent strategy
                     if len(tilings) == 1:
@@ -177,6 +181,7 @@ class TileScope(object):
                         self.tilingqueue.add_to_working(other_label)
                         if isinstance(strategy, EquivalenceStrategy) or isinstance(strategy, BatchStrategy):
                             self.tilingdb.set_expandable(other_label)
+                        self.try_verify(tilings[0])
                     else:
                         for t in tilings:
                             self.try_verify(t)
@@ -186,6 +191,10 @@ class TileScope(object):
                             self.tilingqueue.add_to_next(x)
                             if isinstance(strategy, BatchStrategy):
                                 self.tilingdb.set_expandable(x)
+                            elif isinstance(strategy, RecursiveStrategy):
+                                if label not in self.ruledb.back_maps:
+                                    self.ruledb.back_maps[label] = {}
+                                self.ruledb.back_maps[label][tuple(end_labels)] = strategy.back_maps
             self.tilingdb.set_expanded(label)
 
     def find_tree(self):
@@ -204,12 +213,79 @@ class TileScope(object):
         # Prune all unverifiable labels (recursively)
         rules_dict = prune(rules_dict)
 
+        already_verified = len(set([self.equivdb[x] for x in self.tilingdb.verified_labels()]))
+        print("Number previously verified: " + str(already_verified))
+        print("Number now verified: " + str(len(rules_dict.keys())))
+        print("Difference: " + str(len(rules_dict.keys()) - already_verified))
+        for label in rules_dict.keys():
+            self.equivdb.update_verified(label)
+
         # only verified labels in rules_dict, in particular, there is a tree if
         # the start label is in the rules_dict
         if self.equivdb[self.start_label] in rules_dict:
             print("A tree was found! :)")
-            proof_tree = proof_tree_dfs(rules_dict, root=self.equivdb[self.start_label])
+            _, proof_tree = proof_tree_dfs(rules_dict, root=self.equivdb[self.start_label])
             print(proof_tree)
-            return proof_tree_dfs(rules_dict, root=self.equivdb[self.start_label])
+            return proof_tree
         else:
             print("No tree was found. :(")
+
+    def get_proof_tree(self):
+        proof_tree_node = self.find_tree()
+        if proof_tree_node is not None:
+            return ProofTree(self._get_proof_tree(proof_tree_node))
+        else:
+            print("There is no proof tree yet.")
+
+    def _get_proof_tree(self, proof_tree_node, in_label=None):
+        label = proof_tree_node.label
+        children_labels = sorted([x.label for x in proof_tree_node.children])
+        if in_label is not None:
+            in_tiling = self.tilingdb.get_tiling(in_label)
+        if children_labels:
+            for rule in self.ruledb:
+                start, ends = rule
+                if self.equivdb[start] == label:
+                    equiv_labels = [self.equivdb[x] for x in ends]
+                    if sorted(equiv_labels) == children_labels:
+                        # we have a match!
+                        formal_step = self.ruledb.explanation(start, ends)
+                        out_tiling = self.tilingdb.get_tiling(start)
+                        if in_label is None:
+                            in_label = start
+                            in_tiling = out_tiling
+                        relation = self.equivdb.get_explanation(in_label, start)
+                        identifier = label
+                        children = [self._get_proof_tree(proof_tree_node.children[i], next_label) for i, next_label in enumerate(ends)]
+                        back_maps = None
+                        if start in self.ruledb.back_maps:
+                            if ends in self.ruledb.back_maps[start]:
+                                back_maps = self.ruledb.back_maps[start][ends]
+                        return ProofTreeNode(formal_step, in_tiling, out_tiling, relation, identifier, children=children, recurse=back_maps, strategy_verified=False)
+        else:
+            # we are verified by strategy or recursion
+            for x in self.tilingdb:
+                print(x)
+                print(self.equivdb[x])
+                print(label)
+                if self.equivdb[x] == label and self.tilingdb.is_strategy_verified(x):
+                    formal_step = "Verified"
+                    children = []
+                    if in_label is None:
+                        in_label = start
+                        in_tiling = out_tiling
+                    relation = self.equivdb.get_explanation(in_label, x)
+                    out_tiling = self.tilingdb.get_tiling(x)
+                    identifier = label
+                    return ProofTreeNode(formal_step, in_tiling, out_tiling, relation, identifier, children=children, recurse=None, strategy_verified=True)
+            # else we are recursively verified
+            formal_step = "recurse"
+            if in_label is None:
+                in_tiling = self.tilingdb.get_tiling(in_label)
+                out_tiling = in_tiling
+            else:
+                in_tiling = self.tilingdb.get_tiling(in_label)
+                out_tiling = in_tiling
+            identifier = label
+            relation = self.equivdb.get_explanation(in_label, in_label)
+            return ProofTreeNode(formal_step, in_tiling, out_tiling, relation, identifier, children=None, recurse=None, strategy_verified=False)
