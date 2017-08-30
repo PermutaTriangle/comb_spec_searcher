@@ -13,10 +13,11 @@ from .tilingqueue import TilingQueue
 from .LRUCache import LRUCache
 from .ProofTree import ProofTree
 from .ProofTree import ProofTreeNode
+from .Helpers import taylor_expand
 from grids import Tiling
 from permuta import Av
 from permuta.descriptors import Basis
-from atrapv2.strategies import is_empty
+from atrap.strategies import is_empty
 from .tree_searcher import prune, proof_tree_dfs
 from collections import defaultdict
 
@@ -98,11 +99,12 @@ class TileScope(object):
 
     def is_empty(self, tiling):
         label = self.tilingdb.get_label(tiling)
-        if self.tilingdb.is_empty(tiling):
-            return True
+        if self.tilingdb.is_empty(tiling) is not None:
+            return self.tilingdb.is_empty(tiling)
         for strategy in is_empty(tiling, self.basis):
             self.tilingdb.set_empty(tiling)
             return True
+        self.tilingdb.set_empty(tiling, empty=False)
         return False
 
 
@@ -159,7 +161,6 @@ class TileScope(object):
             tiling = self.tilingdb.get_tiling(label)
             print(tiling)
             for generator in self.strategy_generators:
-                '''For each recursive strategy.'''
                 for strategy in generator(tiling,
                                           basis=self.basis,
                                           basis_partitioning=self._basis_partitioning):
@@ -169,6 +170,7 @@ class TileScope(object):
                         tilings = [strategy.tiling]
                     elif isinstance(strategy, RecursiveStrategy):
                         tilings = strategy.tilings
+                        back_maps = strategy.back_maps
                     formal_step = strategy.formal_step
                     tilings = [self._inferral(t) for t in tilings]
                     tilings = [t for t in tilings if not self.is_empty(t)]
@@ -188,13 +190,15 @@ class TileScope(object):
                         end_labels = [self.tilingdb.get_label(t) for t in tilings]
                         self.ruledb.add(label, end_labels, formal_step)
                         for x in end_labels:
-                            self.tilingqueue.add_to_next(x)
                             if isinstance(strategy, BatchStrategy):
+                                # TODO: When labelled occurrences, we can also work from decomposed tilings
+                                # so you can add to the queue all the time.
+                                self.tilingqueue.add_to_next(x)
                                 self.tilingdb.set_expandable(x)
-                            elif isinstance(strategy, RecursiveStrategy):
-                                if label not in self.ruledb.back_maps:
-                                    self.ruledb.back_maps[label] = {}
-                                self.ruledb.back_maps[label][tuple(end_labels)] = strategy.back_maps
+                        if isinstance(strategy, RecursiveStrategy):
+                            if label not in self.ruledb.back_maps:
+                                self.ruledb.back_maps[label] = {}
+                            self.ruledb.back_maps[label][tuple(sorted(end_labels))] = back_maps
             self.tilingdb.set_expanded(label)
 
     def find_tree(self):
@@ -204,6 +208,7 @@ class TileScope(object):
             first, rest = rule
             first = self.equivdb[first]
             rest = tuple(sorted(self.equivdb[x] for x in rest))
+            # this means union
             rules_dict[first] |= set((tuple(rest),))
         # add an empty rule, that represents verified in the tree searcher
         for x in self.tilingdb.verified_labels():
@@ -230,10 +235,15 @@ class TileScope(object):
         else:
             print("No tree was found. :(")
 
-    def get_proof_tree(self):
+    def get_proof_tree(self, count=False):
         proof_tree_node = self.find_tree()
         if proof_tree_node is not None:
-            return ProofTree(self._get_proof_tree(proof_tree_node))
+            proof_tree = ProofTree(self._get_proof_tree(proof_tree_node))
+            print(proof_tree.to_json())
+            if count:
+                f = proof_tree.get_genf()
+                print(f)
+            return proof_tree
         else:
             print("There is no proof tree yet.")
 
@@ -259,15 +269,13 @@ class TileScope(object):
                         children = [self._get_proof_tree(proof_tree_node.children[i], next_label) for i, next_label in enumerate(ends)]
                         back_maps = None
                         if start in self.ruledb.back_maps:
+                            ends = tuple(sorted(ends))
                             if ends in self.ruledb.back_maps[start]:
                                 back_maps = self.ruledb.back_maps[start][ends]
                         return ProofTreeNode(formal_step, in_tiling, out_tiling, relation, identifier, children=children, recurse=back_maps, strategy_verified=False)
         else:
             # we are verified by strategy or recursion
             for x in self.tilingdb:
-                print(x)
-                print(self.equivdb[x])
-                print(label)
                 if self.equivdb[x] == label and self.tilingdb.is_strategy_verified(x):
                     formal_step = "Verified"
                     children = []

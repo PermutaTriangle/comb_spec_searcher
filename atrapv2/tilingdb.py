@@ -9,7 +9,7 @@ class Info(object):
     '''
     Information about a tiling.
     '''
-    def __init__(self, tiling, label, expanded=False, expandable=False, verified=None, empty=False, strategy_verified=False):
+    def __init__(self, tiling, label, expanded=False, expandable=False, verified=None, empty=None, strategy_verified=False):
         self.tiling = tiling
         self.label = label
         self.expanded = expanded
@@ -112,8 +112,8 @@ class TilingDB(object):
     def is_empty(self, key):
         return self._get_info(key).empty
 
-    def set_empty(self, key):
-        self._get_info(key).empty = True
+    def set_empty(self, key, empty=True):
+        self._get_info(key).empty = empty
 
     def verified_labels(self):
         for x in self.label_to_info:

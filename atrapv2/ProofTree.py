@@ -154,6 +154,7 @@ class ProofTree(JsonAble):
             for solution in solutions:
                 genf = solution[f(x)].subs(substitutions)
                 try:
+                    print(genf)
                     expansion = taylor_expand(genf, verify)
                 except TypeError:
                     continue
