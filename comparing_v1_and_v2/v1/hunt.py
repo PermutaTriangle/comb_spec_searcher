@@ -49,7 +49,7 @@ else:
     perms = sys.argv[1:]
 
 task = "_".join(perm for perm in perms)
-patts = [ Perm([ int(c)-1 for c in p ]) for p in task.split('_') ]
+patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 
 # print(sys.argv)
 if spectrum_mode:

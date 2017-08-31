@@ -23,12 +23,12 @@ def list_median(L):
         return S[(len(S)-1)//2]
 
 ### SET THESE VARIABLES ###
-testing_task = '123'
+testing_task = '0132_0231_1032_2031'
 num_repetions = 100
 hunt_file_location = "./hunt.py"
 status_print_frequency_in_seconds = 300
 summary_output_file = "./spectrum_results/summary_"+testing_task+"_"+str(num_repetions)+"_repetitions.txt"
-num_parallel = 1
+num_parallel = 4
 remove_temp_files = True
 ###########################
 
