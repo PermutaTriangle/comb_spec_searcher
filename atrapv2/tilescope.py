@@ -24,6 +24,8 @@ from collections import defaultdict
 import tqdm
 import sys
 
+from atrap.tools import find_symmetries
+
 from atrap.strategies import BatchStrategy
 from atrap.strategies import EquivalenceStrategy
 from atrap.strategies import InferralStrategy
@@ -60,6 +62,11 @@ class TileScope(object):
         self._cache_hits = set()
         self._cache_misses = 0
         self._cache_hits_count = 0
+        if symmetry:
+            '''A list of symmetry functions of tilings.'''
+            self.symmetry = find_symmetries(self.basis)
+        else:
+            self.symmetry = []
         if start_tiling is None:
             start_tiling = Tiling({(0,0): Av(self.basis)})
 
@@ -152,11 +159,35 @@ class TileScope(object):
                         inferred_tiling = soon_to_be_tiling
             for semi_inferred_tiling in semi_inferred_tilings:
                 self._inferral_cache.set(semi_inferred_tiling, inferred_tiling)
+                if self.symmetry:
+                    for sym_semi_inferred_tiling, sym_inferred_tiling in zip(self._symmetric_tilings(semi_inferred_tiling, ordered=True),
+                                                                             self._symmetric_tilings(inferred_tiling, ordered=True)):
+                        self._inferral_cache.set(sym_semi_inferred_tiling, sym_inferred_tiling)
                 # '''Clean up the cache'''
                 # if semi_inferred_tiling in self._basis_partitioning_cache:
                 #     self._basis_partitioning_cache.pop(semi_inferred_tiling)
             self._inferral_cache.set(inferred_tiling, inferred_tiling)
         return inferred_tiling
+
+    def _symmetric_tilings(self, tiling, ordered=False):
+        """Return all symmetries of tiling.
+
+        This function only works if symmetry is set to true.
+        It returns precisely those symmetries which are different from original tiling.
+        Sometimes, the order symmetries are appied are important. Therefore, if order=True,
+        this will return a list with each symmetry applied. This functionality is
+        needed for inferral.
+        """
+        if ordered:
+            return [sym(tiling) for sym in self.symmetry]
+        else:
+            symmetric_tilings = set()
+            for sym in self.symmetry:
+                symmetric_tiling = sym(tiling)
+                if symmetric_tiling != tiling:
+                    symmetric_tilings.add(symmetric_tiling)
+
+        return symmetric_tilings
 
     def _basis_partitioning(self, tiling, length, basis, function_name=None):
         # no caching for now - shortcut to see things working!
@@ -186,55 +217,85 @@ class TileScope(object):
         except KeyError:
             pass
 
-    def do_level(self,cap=None):
-        for label in self.tilingqueue.do_level(cap=cap):
-            if self.tilingdb.is_expanded(label) or self.tilingdb.is_verified(label):
-                continue
-            elif not self.tilingdb.is_expandable(label):
-                continue
-            tiling = self.tilingdb.get_tiling(label)
-            # print(tiling)
-            for generator in self.strategy_generators:
-                for strategy in generator(tiling,
-                                          basis=self.basis,
-                                          basis_partitioning=self._basis_partitioning):
-                    if isinstance(strategy, BatchStrategy):
-                        tilings = strategy.tilings
-                    elif isinstance(strategy, EquivalenceStrategy):
-                        tilings = [strategy.tiling]
-                    elif isinstance(strategy, RecursiveStrategy):
-                        tilings = strategy.tilings
-                        back_maps = strategy.back_maps
-                    formal_step = strategy.formal_step
-                    tilings = [self._inferral(t) for t in tilings]
-                    tilings = [t for t in tilings if not self.is_empty(t)]
-                    # put information about deleted empty tilings into the formal step
+    def expand(self, label):
+        tiling = self.tilingdb.get_tiling(label)
+        for generator in self.strategy_generators:
+            for strategy in generator(tiling,
+                                      basis=self.basis,
+                                      basis_partitioning=self._basis_partitioning):
+                if isinstance(strategy, BatchStrategy):
+                    tilings = strategy.tilings
+                elif isinstance(strategy, EquivalenceStrategy):
+                    tilings = [strategy.tiling]
+                elif isinstance(strategy, RecursiveStrategy):
+                    tilings = strategy.tilings
+                    back_maps = strategy.back_maps
+                formal_step = strategy.formal_step
+                tilings = [self._inferral(t) for t in tilings]
+                tilings = [t for t in tilings if not self.is_empty(t)]
+                # put information about deleted empty tilings into the formal step
 
-                    # If we have an equivalent strategy
-                    if len(tilings) == 1:
-                        other_label = self.tilingdb.get_label(tilings[0])
-                        self.equivdb.union(label, other_label, formal_step)
-                        self.tilingqueue.add_to_working(other_label)
-                        if isinstance(strategy, EquivalenceStrategy) or isinstance(strategy, BatchStrategy):
-                            self.tilingdb.set_expandable(other_label)
-                        self.try_verify(tilings[0])
-                    else:
-                        for t in tilings:
-                            self.try_verify(t)
-                        end_labels = [self.tilingdb.get_label(t) for t in tilings]
-                        self.ruledb.add(label, end_labels, formal_step)
-                        for x in end_labels:
-                            if isinstance(strategy, BatchStrategy):
-                                # TODO: When labelled occurrences, we can also work from decomposed tilings
-                                # so you can add to the queue all the time.
-                                self.tilingqueue.add_to_next(x)
-                                self.tilingdb.set_expandable(x)
-                        if isinstance(strategy, RecursiveStrategy):
-                            if label not in self.ruledb.back_maps:
-                                self.ruledb.back_maps[label] = {}
-                            self.ruledb.back_maps[label][tuple(sorted(end_labels))] = back_maps
-            self._clean_partitioning_cache(tiling)
-            self.tilingdb.set_expanded(label)
+                if self.symmetry:
+                    for t in tilings:
+                        if self.tilingdb.is_symmetry_expanded(t):
+                            continue
+                        for sym_t in self._symmetric_tilings(t):
+                            self.tilingdb.add(sym_t, expanding_other_sym=True, symmetry_expanded=True)
+
+                # If we have an equivalent strategy
+                if len(tilings) == 1:
+                    other_label = self.tilingdb.get_label(tilings[0])
+                    self.equivdb.union(label, other_label, formal_step)
+                    if isinstance(strategy, EquivalenceStrategy) or isinstance(strategy, BatchStrategy):
+                        self.tilingdb.set_expandable(other_label)
+                    self.try_verify(tilings[0])
+                    if self.tilingdb.is_expanded(other_label) or self.tilingdb.is_expanding_other_sym(other_label):
+                        continue
+                    self.tilingqueue.add_to_working(other_label)
+
+                else:
+                    for t in tilings:
+                        self.try_verify(t)
+                    end_labels = [self.tilingdb.get_label(t) for t in tilings]
+                    self.ruledb.add(label, end_labels, formal_step)
+                    for x in end_labels:
+                        if isinstance(strategy, BatchStrategy):
+                            # TODO: When labelled occurrences, we can also work from decomposed tilings
+                            # so you can add to the queue all the time.
+                            self.tilingdb.set_expandable(x)
+                            if self.tilingdb.is_expanded(x) or self.tilingdb.is_expanding_other_sym(x):
+                                continue
+                            self.tilingqueue.add_to_next(x)
+                    if isinstance(strategy, RecursiveStrategy):
+                        if label not in self.ruledb.back_maps:
+                            self.ruledb.back_maps[label] = {}
+                        self.ruledb.back_maps[label][tuple(sorted(end_labels))] = back_maps
+        self._clean_partitioning_cache(tiling)
+        self.tilingdb.set_expanded(label)
+
+    def do_level(self,cap=None):
+        if cap is None:
+            for label in self.tilingqueue.do_level():
+                if self.tilingdb.is_expanded(label) or self.tilingdb.is_verified(label):
+                    continue
+                elif not self.tilingdb.is_expandable(label):
+                    continue
+                elif self.tilingdb.is_expanding_other_sym(label):
+                    continue
+                self.expand(label)
+        else:
+            count = 0
+            while count < cap:
+                label = self.tilingqueue.next()
+                if self.tilingdb.is_expanded(label) or self.tilingdb.is_verified(label):
+                    continue
+                elif not self.tilingdb.is_expandable(label):
+                    continue
+                elif self.tilingdb.is_expanding_other_sym(label):
+                    continue
+                count += 1
+                self.expand(label)
+
 
     def auto_search(self,cap=None,f=sys.stdout):
         while True:

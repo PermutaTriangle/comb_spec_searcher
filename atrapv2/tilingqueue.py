@@ -20,6 +20,20 @@ class TilingQueue(object):
     def add_to_next(self, tiling):
         self.next_level.put(tiling)
 
+    def next(self):
+        if not self.working.empty():
+            return self.working.get()
+        elif not self.curr_level.empty():
+            return self.curr_level.get()
+        else:
+            if self.next_level.empty():
+                print("No more tilings to expand!")
+                return None
+            self.levels_completed += 1
+            self.curr_level = self.next_level
+            self.next_level = Queue()
+            return self.next()
+
     def do_level(self, cap=None):
         # if cap, return first "cap" many tilings.
         if cap is not None:

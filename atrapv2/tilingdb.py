@@ -9,10 +9,21 @@ class Info(object):
     '''
     Information about a tiling.
     '''
-    def __init__(self, tiling, label, expanded=False, expandable=False, verified=None, empty=None, strategy_verified=False):
+    def __init__(self,
+                 tiling,
+                 label,
+                 expanded=False,
+                 symmetry_expanded=False,
+                 expanding_other_sym=False,
+                 expandable=False,
+                 verified=None,
+                 empty=None,
+                 strategy_verified=False):
         self.tiling = tiling
         self.label = label
         self.expanded = expanded
+        self.symmetry_expanded = symmetry_expanded
+        self.expanding_other_sym = expanding_other_sym
         self.expandable = expandable
         self.verified = verified
         self.empty = empty
@@ -46,16 +57,32 @@ class TilingDB(object):
         for key in self.label_to_info.keys():
             yield key
 
-    def add(self, tiling, expandable=False):
+    def __contains__(self, key):
+        if isinstance(key, Tiling):
+            info = self.tiling_to_info.get(key)
+        if isinstance(key, int):
+            info = self.label_to_info.get(key)
+        return info is not None
+
+    def add(self, tiling, symmetry_expanded=False, expanding_other_sym=False, expandable=False):
         if not isinstance(tiling, Tiling):
             raise TypeError("Trying to add something that isn't a tiling.")
         if tiling not in self.tiling_to_info:
             label = len(self.tiling_to_info)
-            info = Info(tiling, len(self.tiling_to_info))
+            info = Info(tiling,
+                        label,
+                        symmetry_expanded=symmetry_expanded,
+                        expanding_other_sym=expanding_other_sym,
+                        expandable=expandable)
             self.tiling_to_info[tiling] = info
             self.label_to_info[label] = info
-        if expandable:
-            self.set_expandable(tiling)
+        else:
+            if expandable:
+                self.set_expandable(tiling)
+            if expanding_other_sym:
+                self.set_expanding_other_sym(tiling)
+            if symmetry_expanded:
+                self.set_symmetry_expanded(tiling)
 
 
     def _get_info(self, key):
@@ -125,3 +152,15 @@ class TilingDB(object):
 
     def set_strategy_verified(self, key, strategy_verified=True):
         self._get_info(key).strategy_verified = strategy_verified
+
+    def is_symmetry_expanded(self, key):
+        return self._get_info(key).symmetry_expanded
+
+    def set_symmetry_expanded(self, key, symmetry_expanded=True):
+        self._get_info(key).symmetry_expanded = symmetry_expanded
+
+    def is_expanding_other_sym(self, key):
+        return self._get_info(key).expanding_other_sym
+
+    def set_expanding_other_sym(self, key, expanding_other_sym=True):
+        self._get_info(key).expanding_other_sym = expanding_other_sym

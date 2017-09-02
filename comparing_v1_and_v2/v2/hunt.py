@@ -19,6 +19,7 @@ from atrap import StrategyPacks
 ### SET THESE VARIABLES ###
 OUTPUT_TO_FILE = False # automatically set to True if called from spectrum_test or run_batch
 STRATS_TO_USE = StrategyPacks.row_and_column_placements
+# STRATS_TO_USE["symmetry"] = True
 ###########################
 
 
