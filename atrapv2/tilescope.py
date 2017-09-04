@@ -234,6 +234,8 @@ class TileScope(object):
 
                 tilings = [self._inferral(t) for t in tilings]
                 for t, w in zip(tilings, workable):
+                    print(t)
+                    print(w)
                     self.try_verify(t)
                     if w:
                         self.tilingdb.set_expandable(t)
@@ -256,6 +258,9 @@ class TileScope(object):
                 if len(tilings) == 1:
                     other_label = self.tilingdb.get_label(tilings[0])
                     self.equivdb.union(label, other_label, formal_step)
+                    x = self.tilingdb.get_label(tilings[0])
+                    if not (self.tilingdb.is_expanded(x) or self.tilingdb.is_expanding_other_sym(x)):
+                        self.tilingqueue.add_to_working(x)
                 else:
                     end_labels = [self.tilingdb.get_label(t) for t in tilings]
                     self.ruledb.add(label, end_labels, formal_step)
@@ -287,6 +292,9 @@ class TileScope(object):
             count = 0
             while count < cap:
                 label = self.tilingqueue.next()
+                if label is None:
+                    count = cap
+                    continue
                 if self.tilingdb.is_expanded(label) or self.tilingdb.is_verified(label):
                     continue
                 elif not self.tilingdb.is_expandable(label):
