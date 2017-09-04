@@ -81,7 +81,11 @@ task = '021'
 # task = '0213_1032' # point placements - three symmetries.
 # task = '0231_1230' # separation and isolation - no symmetry.
 # task = '0231_2031' # separation and isolation - no symmetry.
-task = '1302_2031' # row_and_column_placements - seven symmetries.
+# task = '1302_2031' # row_and_column_placements - seven symmetries.
+# task = "0123_0132_0213_0231_0312_1023_1203_1230_2013_3012"
+task = "0123_0132_0213_0231_0312_1203_1230_2013_3012"
+# task = "0123_0132_0213_0231_0312_1203_1230_2013_3012"
+# task = "0123_0132_0213_0231_0312_1023_1203_1230_2013"
 
 # patts = [ Perm([ int(c) - 1 for c in p ]) for p in task.split('_') ]
 
@@ -91,10 +95,10 @@ strategies = [ [all_cell_insertions], [all_point_placements], [empty_cell_inferr
 # task = '0123_0132_0213_0231_0312_1023_1203_1230_2013_2301_3012'
 patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 
-strategies = StrategyPacks.point_placement
+strategies = StrategyPacks.binary_pattern_placement
 # strategies = enum_sch
 
-mtree = MetaTree( patts, *strategies, symmetry=True, non_interleaving_recursion=False )
+mtree = MetaTree(patts, **strategies)
 
 print("Using the strategies:")
 print(strategies)
