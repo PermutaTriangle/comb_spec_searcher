@@ -1,4 +1,4 @@
-from atrap.strategies import *
+from atrapv2.strategies import *
 
 
 class StrategyPacks(object):

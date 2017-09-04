@@ -1,5 +1,5 @@
 from atrapv2 import TileScope
-from atrap import StrategyPacks
+from atrapv2 import StrategyPacks
 
 basis = "012"
 
