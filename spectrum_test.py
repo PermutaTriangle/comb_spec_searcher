@@ -16,19 +16,19 @@ def nice_time_format(sec):
 
 def list_median(L):
     S = sorted(L)
-    
+
     if len(L) % 2 == 0:
         return (S[len(S)//2-1]+S[len(S)//2])/2
     else:
         return S[(len(S)-1)//2]
 
 ### SET THESE VARIABLES ###
-testing_task = '2314_3241'
+testing_task = '123'
 num_repetions = 100
 hunt_file_location = "./hunt.py"
 status_print_frequency_in_seconds = 300
 summary_output_file = "./spectrum_results/summary_"+testing_task+"_"+str(num_repetions)+"_repetitions.txt"
-num_parallel = 4
+num_parallel = 1
 remove_temp_files = True
 ###########################
 
@@ -52,7 +52,7 @@ while tasks_left > 0:
 
         active_processes.append(subprocess.Popen(["python3", hunt_file_location, "spectrum", str(next_task_num)]+testing_task.split("_"), preexec_fn=lambda : os.nice(20)))
         tasks_running.append([next_task_num, time.time()])
-        
+
         print("Starting repetition #", next_task_num)
         next_task_num += 1
 
@@ -65,7 +65,7 @@ while tasks_left > 0:
             tasks_completed.append([tasks_running[i][0], time.time()-tasks_running[i][1]])
             tasks_running.remove(tasks_running[i])
             tasks_left -= 1
-            
+
         else:
             i += 1
 
@@ -165,4 +165,3 @@ summary_file.close()
 if remove_temp_files:
     for temp_file in file_names:
         os.remove(temp_file)
-

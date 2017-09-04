@@ -334,7 +334,6 @@ class MetaTree(object):
         else:
             self.symmetry = []
 
-
         '''Initialise the proof strategies to be used.'''
         if batch_strategies is not None:
             self.batch_strategy_generators = batch_strategies
@@ -534,7 +533,7 @@ class MetaTree(object):
                             sensible = False
                 if not sensible:
                     continue
-                    
+
                 '''We create the AND node for the strategy and connect it its parent.'''
                 recursive_and_node = AndNode(formal_step)
                 recursive_and_node.parents.append(or_node)
