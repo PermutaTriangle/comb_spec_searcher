@@ -10,6 +10,7 @@ from atrap import StrategyPacks
 
 from atrap.Helpers import taylor_expand
 
+<<<<<<< HEAD
 # task = "0123_0132_0213_0231_0312_1023_1203_1230_2013_3012"
 task = "0123_0132_0213_0231_0312_1203_1230_2013_3012"
 # task = "0123_0132_0213_0231_0312_1203_1230_2013_3012"
@@ -17,13 +18,93 @@ task = "0123_0132_0213_0231_0312_1203_1230_2013_3012"
 
 # patts = [ Perm([ int(c) - 1 for c in p ]) for p in task.split('_') ]
 
+=======
+# mtree = MetaTree([Perm((0,2,1)), Perm((3,2,1,0))], *standard_strategies)
+
+# mtree = MetaTree(descriptors.Basis([Perm((0,1,2,3))]))
+
+# mtree = MetaTree([Perm((0,2,1))], recursive_strategies=[components], verification_strategies=[subset_verified] )
+
+# mtree = MetaTree(descriptors.Basis([Perm((0,1))]))
+
+# mtree = MetaTree([Perm((0,1,2))], *standard_strategies)
+
+# mtree = MetaTree([])
+
+# mtree = MetaTree([Perm((0,2,1)), Perm((0,1,2,3)), Perm((3,2,0,1)), Perm((2,3,0,1))], *all_strategies )
+
+# mtree = MetaTree([Perm((0,2,1)), Perm((0,1,2))], *mimic_regular_insertion_encoding )
+
+# mtree = MetaTree([Perm((1,3,0,2)), Perm((2,0,3,1))], *all_strategies)
+#
+# task = '012_2103_2301'
+
+# task = '1234_1243_1324_1342_1423_1432_2134_2143_2314_2341_3214'
+
+# task = '012_2301'
+
+# task = '012_0321_2103'
+
+# task = '012_0321_1032_2103'
+#
+# task = '012_1032_2301_2310'
+
+# task = '012_3210'
+# task = '0'
+#
+# task = '0123'
+# task = '0213'
+# task = '012_3210'
+
+task = '021'
+
+# task = '123'
+
+# task = '0'
+
+# task = '012'
+
+# task = '0132_0213_0231_3120'
+
+# task = '0213_0231'
+
+# task = "1302_2031"
+
+# task = '0231_1230_3012'
+
+# task = '0231_0321'
+
+# task = '0132_0213_0231_0312_0321_1032_1302_1320_2031_3021_3120'
+
+# task = '0132_1302' # row_and_column_placements - no symmetry.
+# task = '0213_0231' # row_and_column_placements - no symmetry.
+# task = '0213_1302' # row_and_column_placements - one symmetry.
+# task = '0231_1032' # row_and_column_placements - no symmetry.
+# task = '0231_1320' # row_and_column_placements - one symmetry.
+# task = '0321_1302' # column_placements - no symmetry.
+# task = '0321_2301' # row_and_column_placements - one symmetry.
+# task = '0132_1023' # point placements - three symmetry.
+# task = '0231_0321' # point placements - no symmetry.
+# task = '0231_1302' # row_and_column_placements - no symmetry.
+# task = '0123_0132' # separation and isolation and splitting - one symmetry.
+# task = '0132_0231' # point placements - no symmetry.
+# task = '0213_1032' # point placements - three symmetries.
+# task = '0231_1230' # separation and isolation - no symmetry.
+# task = '0231_2031' # separation and isolation - no symmetry.
+task = '1302_2031' # row_and_column_placements - seven symmetries.
+
+# patts = [ Perm([ int(c) - 1 for c in p ]) for p in task.split('_') ]
+
+#
+# mtree = MetaTree( patts, *mimic_regular_insertion_encoding )
+# strategies = [ [all_cell_insertions], [all_point_placements], [empty_cell_inferral], [components], [subset_verified, is_empty] ]
 # task = '0123_0132_0213_0231_0312_1023_1203_1230_2013_2301_3012'
 
 patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 
 strategies = StrategyPacks.binary_pattern_placement
 
-mtree = MetaTree(patts, **strategies)
+mtree = MetaTree( patts, **strategies )
 
 print("Using the strategies:", file=sys.stderr)
 print(strategies, file=sys.stderr)
