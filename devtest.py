@@ -81,17 +81,18 @@ task = '021'
 # task = '0213_1032' # point placements - three symmetries.
 # task = '0231_1230' # separation and isolation - no symmetry.
 # task = '0231_2031' # separation and isolation - no symmetry.
-task = '1302_2031' # row_and_column_placements - seven symmetries.
+# task = '1302_2031' # row_and_column_placements - seven symmetries.
+task = '4231_35142_42513_351624'
 
 # patts = [ Perm([ int(c) - 1 for c in p ]) for p in task.split('_') ]
 
 #
 # mtree = MetaTree( patts, *mimic_regular_insertion_encoding )
-strategies = [ [all_cell_insertions], [all_point_placements], [empty_cell_inferral], [components], [subset_verified, is_empty] ]
+# strategies = [ [all_cell_insertions], [all_point_placements], [empty_cell_inferral], [components], [subset_verified, is_empty] ]
 # task = '0123_0132_0213_0231_0312_1023_1203_1230_2013_2301_3012'
-patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
+patts = [ Perm([ int(c)-1 for c in p ]) for p in task.split('_') ]
 
-strategies = StrategyPacks.point_placement
+strategies = StrategyPacks.row_and_column_placements
 # strategies = enum_sch
 
 mtree = MetaTree( patts, *strategies, symmetry=True, non_interleaving_recursion=False )
