@@ -2,8 +2,8 @@
 
 from permuta import *
 from grids import Tiling, PositiveClass, Block
-from .batch_class import BatchStrategy
 from itertools import chain
+from atrapv2.strategies import Strategy
 
 # The coincidence class of the classical pattern 012
 coincidence_classification = {
@@ -156,8 +156,8 @@ def binary_pattern(tiling, basis, **kwargs):
                 print(patt)
                 tilings = [Tiling({(0, 0): PositiveClass(PermSet.avoiding(basis + (patt,)))}),
                         tiling_from_mesh_pattern(mpatt, block.perm_class)]
-                yield BatchStrategy(("Placing the binary pattern "
-                                     "{}").format(mpatt.latex()), tilings)
+                yield Strategy(("Placing the binary pattern "
+                                     "{}").format(mpatt.latex()), tilings, [False, True])
                 break
             break
 

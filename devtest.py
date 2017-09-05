@@ -46,7 +46,7 @@ from atrap.Helpers import taylor_expand
 # task = '0213'
 # task = '012_3210'
 
-task = '021'
+# task = '021'
 
 # task = '123'
 
@@ -83,6 +83,8 @@ task = '021'
 # task = '0231_2031' # separation and isolation - no symmetry.
 task = '1302_2031' # row_and_column_placements - seven symmetries.
 
+# task = '0132_0231_1032_2031'
+
 # patts = [ Perm([ int(c) - 1 for c in p ]) for p in task.split('_') ]
 
 #
@@ -91,7 +93,7 @@ task = '1302_2031' # row_and_column_placements - seven symmetries.
 # task = '0123_0132_0213_0231_0312_1023_1203_1230_2013_2301_3012'
 patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 
-strategies = StrategyPacks.point_placement
+strategies = StrategyPacks.row_and_column_placements
 # strategies = enum_sch
 
 mtree = MetaTree( patts, **strategies )
