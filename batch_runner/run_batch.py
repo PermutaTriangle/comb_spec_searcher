@@ -85,7 +85,7 @@ for basis in bases:
         print("Inferral: {}".format( strategies_to_str(strategy_pack[2])))
         print("Recursive: {}".format( strategies_to_str(strategy_pack[3])))
         print("Verification: {}".format( strategies_to_str(strategy_pack[4])) )
-        mtree = MetaTree( basis, *strategy_pack )
+        mtree = MetaTree( basis, **strategy_pack )
 
         start_time = time.time()
         end_time = start_time + max_time

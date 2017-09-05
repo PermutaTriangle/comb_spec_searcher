@@ -1,6 +1,7 @@
+import sys
+
 from atrap import MetaTree
 from permuta import Perm, Av
-
 
 from time import time
 from atrap.strategies import *
@@ -8,6 +9,13 @@ from atrap.ProofTree import ProofTree
 from atrap import StrategyPacks
 
 from atrap.Helpers import taylor_expand
+
+# task = "0123_0132_0213_0231_0312_1023_1203_1230_2013_3012"
+task = "0123_0132_0213_0231_0312_1203_1230_2013_3012"
+# task = "0123_0132_0213_0231_0312_1203_1230_2013_3012"
+# task = "0123_0132_0213_0231_0312_1023_1203_1230_2013"
+
+# patts = [ Perm([ int(c) - 1 for c in p ]) for p in task.split('_') ]
 
 # mtree = MetaTree([Perm((0,2,1)), Perm((3,2,1,0))], *standard_strategies)
 
@@ -46,7 +54,7 @@ from atrap.Helpers import taylor_expand
 # task = '0213'
 # task = '012_3210'
 
-task = '021'
+# task = '021'
 
 # task = '123'
 
@@ -84,6 +92,8 @@ task = '021'
 # task = '1302_2031' # row_and_column_placements - seven symmetries.
 task = '4231_35142_42513_351624'
 
+# task = '0132_0231_1032_2031'
+
 # patts = [ Perm([ int(c) - 1 for c in p ]) for p in task.split('_') ]
 
 #
@@ -95,14 +105,17 @@ patts = [ Perm([ int(c)-1 for c in p ]) for p in task.split('_') ]
 strategies = StrategyPacks.row_and_column_placements
 # strategies = enum_sch
 
-mtree = MetaTree( patts, *strategies, symmetry=True, non_interleaving_recursion=False )
+strategies = StrategyPacks.row_and_column_placements
+# strategies = enum_sch
+strategies = StrategyPacks.binary_pattern_placement
 
-print("Using the strategies:")
-print(strategies)
-print(mtree.symmetry)
+mtree = MetaTree( patts, **strategies )
 
-print(mtree.basis)
+print("Using the strategies:", file=sys.stderr)
+print(strategies, file=sys.stderr)
+print(mtree.symmetry, file=sys.stderr)
 
+print(mtree.basis, file=sys.stderr)
 
 def count_verified_tilings(mt):
     count = 0
@@ -122,23 +135,22 @@ def count_sibling_nodes(mt):
         s.add(or_node.sibling_node)
     return len(s), verified
 
-#mtree.do_level()
 start = time()
 max_time = 500
 while not mtree.has_proof_tree():
-    print("===============================")
+    print("===============================", file=sys.stderr)
     mtree.do_level(max_time=max_time)
-    print("We had {} inferral cache hits and {} partitioning cache hits.".format(mtree.inferral_cache_hits, mtree.partitioning_cache_hits))
-    print("The partitioning cache has {} tilings in it right now.".format( len(mtree._basis_partitioning_cache) ) )
-    print("The inferral cache has {} tilings in it right now.".format( len(mtree._inferral_cache) ) )
-    print("There are {} tilings in the search tree.".format( len(mtree.tiling_cache)))
-    print("There are {} verified tilings.".format(count_verified_tilings(mtree)))
-    print("There are {} SiblingNodes of which {} are verified.".format(*count_sibling_nodes(mtree)))
-    print("Time taken so far is {} seconds.".format( time() - start ) )
+    print("We had {} inferral cache hits and {} partitioning cache hits.".format(mtree.inferral_cache_hits, mtree.partitioning_cache_hits), file=sys.stderr)
+    print("The partitioning cache has {} tilings in it right now.".format( len(mtree._basis_partitioning_cache)), file=sys.stderr)
+    print("The inferral cache has {} tilings in it right now.".format( len(mtree._inferral_cache)), file=sys.stderr)
+    print("There are {} tilings in the search tree.".format( len(mtree.tiling_cache)), file=sys.stderr)
+    print("There are {} verified tilings.".format(count_verified_tilings(mtree)), file=sys.stderr)
+    print("There are {} SiblingNodes of which {} are verified.".format(*count_sibling_nodes(mtree)), file=sys.stderr)
+    print("Time taken so far is {} seconds.".format( time() - start), file=sys.stderr)
     print("")
     for function_name, calls in mtree._partitioning_calls.items():
-        print("The function {} called the partitioning cache *{}* times, ({} originating)".format(function_name, calls[0], calls[1]))
-    print("There were {} cache misses".format(mtree._cache_misses))
+        print("The function {} called the partitioning cache *{}* times, ({} originating)".format(function_name, calls[0], calls[1]), file=sys.stderr)
+    print("There were {} cache misses".format(mtree._cache_misses), file=sys.stderr)
     if mtree.depth_searched == 15 or mtree.timed_out:# or time() - start > max_time:
         break
 
@@ -148,16 +160,7 @@ if mtree.has_proof_tree():
     json = proof_tree.to_json(indent="  ")
     print(json)
     assert ProofTree.from_json(json).to_json(indent="  ") == json
-    # try:
-    #     f = proof_tree.get_genf()
-    #     print( f )
-    #     print("The coefficients from the generating function are")
-    #     print( taylor_expand(f, terms=10) )
-    #     print("The actual coefficients are")
-    #     print( [ len( Av(mtree.basis).of_length(i) ) for i in range(11)])
-    # except RuntimeError as e:
-    #     print(str(e))
 
 end = time()
 
-print("I took", end - start, "seconds")
+print("I took", end - start, "seconds", file=sys.stderr)
