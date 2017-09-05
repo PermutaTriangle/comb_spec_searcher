@@ -14,6 +14,7 @@ class Info(object):
                  label,
                  expanded=False,
                  symmetry_expanded=False,
+                 equivalent_expanded=False,
                  expanding_other_sym=False,
                  expandable=False,
                  verified=None,
@@ -23,6 +24,7 @@ class Info(object):
         self.label = label
         self.expanded = expanded
         self.symmetry_expanded = symmetry_expanded
+        self.equivalent_expanded = equivalent_expanded
         self.expanding_other_sym = expanding_other_sym
         self.expandable = expandable
         self.verified = verified
@@ -164,3 +166,9 @@ class TilingDB(object):
 
     def set_expanding_other_sym(self, key, expanding_other_sym=True):
         self._get_info(key).expanding_other_sym = expanding_other_sym
+
+    def is_equivalent_expanded(self, key):
+        return self._get_info(key).equivalent_expanded
+
+    def set_equivalent_expanded(self, key, equivalent_expanded=True):
+        self._get_info(key).equivalent_expanded = equivalent_expanded

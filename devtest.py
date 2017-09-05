@@ -10,7 +10,6 @@ from atrap import StrategyPacks
 
 from atrap.Helpers import taylor_expand
 
-<<<<<<< HEAD
 # task = "0123_0132_0213_0231_0312_1023_1203_1230_2013_3012"
 task = "0123_0132_0213_0231_0312_1203_1230_2013_3012"
 # task = "0123_0132_0213_0231_0312_1203_1230_2013_3012"
@@ -18,7 +17,6 @@ task = "0123_0132_0213_0231_0312_1203_1230_2013_3012"
 
 # patts = [ Perm([ int(c) - 1 for c in p ]) for p in task.split('_') ]
 
-=======
 # mtree = MetaTree([Perm((0,2,1)), Perm((3,2,1,0))], *standard_strategies)
 
 # mtree = MetaTree(descriptors.Basis([Perm((0,1,2,3))]))
@@ -56,7 +54,7 @@ task = "0123_0132_0213_0231_0312_1203_1230_2013_3012"
 # task = '0213'
 # task = '012_3210'
 
-task = '021'
+# task = '021'
 
 # task = '123'
 
@@ -93,6 +91,8 @@ task = '021'
 # task = '0231_2031' # separation and isolation - no symmetry.
 task = '1302_2031' # row_and_column_placements - seven symmetries.
 
+# task = '0132_0231_1032_2031'
+
 # patts = [ Perm([ int(c) - 1 for c in p ]) for p in task.split('_') ]
 
 #
@@ -102,6 +102,9 @@ task = '1302_2031' # row_and_column_placements - seven symmetries.
 
 patts = [ Perm([ int(c) for c in p ]) for p in task.split('_') ]
 
+
+strategies = StrategyPacks.row_and_column_placements
+# strategies = enum_sch
 strategies = StrategyPacks.binary_pattern_placement
 
 mtree = MetaTree( patts, **strategies )
