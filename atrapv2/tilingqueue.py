@@ -20,6 +20,9 @@ class TilingQueue(object):
     def add_to_next(self, tiling):
         self.next_level.put(tiling)
 
+    def add_to_curr(self, tiling):
+        self.curr_level.put(tiling)
+
     def next(self):
         if not self.working.empty():
             return self.working.get()

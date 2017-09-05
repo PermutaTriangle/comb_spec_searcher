@@ -10,7 +10,7 @@ basis = "1302_2031"
 
 start = time()
 
-tilescope = TileScope(basis, **StrategyPacks.row_and_column_placements_w_symm)
+tilescope = TileScope(basis, **StrategyPacks.row_and_column_placements)
 print(len(tilescope.symmetry))
 
 tree = tilescope.auto_search(1)
