@@ -154,7 +154,7 @@ def binary_pattern_classical_class(tiling, basis, **kwargs):
                 # print(patt, file=sys.stderr)
                 tilings = [Tiling({(0, 0): PositiveClass(PermSet.avoiding(basis + (patt,)))}),
                         tiling_from_mesh_pattern(mpatt, block.perm_class)]
-                yield Strategy(("Placing the binary pattern "
-                                     "{}").format(mpatt.latex()), tilings, [False, True])
+                yield Strategy(("Placing the binary pattern \n"
+                                     "{}").format(mpatt), tilings, [False, True])
                 break
             break

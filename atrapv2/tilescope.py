@@ -46,7 +46,7 @@ class TileScope(object):
                  symmetry=False,
                  early_splitting_only=False,
                  start_tiling=None):
-        # symmetry, early_splitting_only, non_interleaving_recursion are NOT implemented
+        # early_splitting_only,
         if isinstance(basis, str):
             self.basis = Basis([ Perm([ int(c) for c in p ]) for p in basis.split('_') ])
         else:
@@ -55,7 +55,7 @@ class TileScope(object):
         self.ruledb = RuleDB()
         self.tilingdb = TilingDB()
         self.tilingqueue = TilingQueue()
-        self.non_interleaving_recursion = non_interleaving_recursion
+        self.non_interleaving_decomposition = non_interleaving_recursion
         self._inferral_cache = LRUCache(100000)
         self._basis_partitioning_cache = {}
         self._cache_hits = set()
@@ -129,10 +129,10 @@ class TileScope(object):
         self.tilingdb.set_empty(tiling, empty=False)
         return False
 
-    def _has_interleaving_recursion(self, strategy):
+    def _has_interleaving_decomposition(self, strategy):
         if strategy.back_maps is None:
             return False
-        '''Return True if strategy has interleaving recursion'''
+        '''Return True if strategy has interleaving decomposition'''
         mixing = False
         x = [{c.i for c in dic.values()} for dic in strategy.back_maps]
         y = [{c.j for c in dic.values()} for dic in strategy.back_maps]
@@ -261,8 +261,8 @@ class TileScope(object):
                 workable = strategy.workable
                 back_maps = strategy.back_maps
 
-                if self.non_interleaving_recursion:
-                    if self._has_interleaving_recursion(strategy):
+                if self.non_interleaving_decomposition:
+                    if self._has_interleaving_decomposition(strategy):
                         continue
 
                 tilings = [self._inferral(t) for t in tilings]
@@ -323,6 +323,8 @@ class TileScope(object):
         It will apply the equivalence strategies as often as possible to
         find as many equivalent tilings as possible.
         """
+        if not self.tilingdb.is_expandable(tiling):
+            return
         equivalent_tilings = set([tiling])
         tilings_to_expand = set([tiling])
 
