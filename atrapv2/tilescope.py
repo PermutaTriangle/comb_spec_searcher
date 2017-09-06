@@ -60,6 +60,7 @@ class TileScope(object):
         self._cache_hits = set()
         self._cache_misses = 0
         self._cache_hits_count = 0
+        self.expanded_tilings = 0
         if symmetry:
             '''A list of symmetry functions of tilings.'''
             self.symmetry = find_symmetries(self.basis)
@@ -73,23 +74,27 @@ class TileScope(object):
 
         self.start_label = self.tilingdb.get_label(start_tiling)
 
+        if recursive_strategies is not None:
+            self.strategy_generators = list(recursive_strategies)
+        else:
+            self.strategy_generators = [components]
 
         if batch_strategies is not None:
-            self.strategy_generators = batch_strategies
+            self.strategy_generators.extend(batch_strategies)
         else:
-            self.batch_strategy_generators = [all_cell_insertions]
+            self.batch_strategy_generators.extend([all_cell_insertions])
+
         if equivalence_strategies is not None:
-            self.strategy_generators.extend(equivalence_strategies)
+            self.equivalence_strategy_generators = list(equivalence_strategies)
         else:
-            self.strategy_generators.extend([all_point_placements])
-        if recursive_strategies is not None:
-            self.strategy_generators.extend(recursive_strategies)
-        else:
-            self.strategy_generators.extend([components])
+            self.strategy_generators = [all_point_placements]
+
+
         if inferral_strategies is not None:
             self.inferral_strategy_generators = inferral_strategies
         else:
             self.inferral_strategy_generators = [empty_cell_inferral]
+
         if verification_strategies is not None:
             self.verification_strategy_generators = verification_strategies
         else:
@@ -189,7 +194,9 @@ class TileScope(object):
 
     def _basis_partitioning(self, tiling, length, basis, function_name=None):
         # no caching for now - shortcut to see things working!
-        assert len(self._basis_partitioning_cache) < 2
+        # assert len(self._basis_partitioning_cache) < 2
+        if len(self._basis_partitioning_cache) > 100:
+            print("The cache has" + str(len(self._basis_partitioning_cache)) + " many tilings in it")
         basis_partitioning_cache = self._basis_partitioning_cache.get(tiling)
         if basis_partitioning_cache is None:
             if tiling in self._cache_hits:
@@ -241,16 +248,11 @@ class TileScope(object):
                 tilings = [t for t in tilings if not self.is_empty(t)]
                 # put information about deleted empty tilings into the formal step
 
-                if self.symmetry:
-                    for t in tilings:
-                        if self.tilingdb.is_symmetry_expanded(t):
-                            continue
-                        for sym_t in self._symmetric_tilings(t):
-                            self.tilingdb.add(sym_t, expanding_other_sym=True, symmetry_expanded=True)
-                            self.equivdb.union(label, self.tilingdb.get_label(sym_t), "a symmetry")
-                            if self.tilingdb.is_expanded(x) or self.tilingdb.is_expanding_other_sym(x):
-                                continue
-                            self.tilingqueue.add_to_working(x)
+
+                for t in tilings:
+                    if self.symmetry:
+                        self._symmetry_expand(t)
+                    self._equivalent_expand(t)
 
                 # If we have an equivalent strategy
                 if len(tilings) == 1:
@@ -275,6 +277,58 @@ class TileScope(object):
 
         self._clean_partitioning_cache(tiling)
         self.tilingdb.set_expanded(label)
+        self.expanded_tilings += 1
+
+    def _symmetry_expand(self, tiling):
+        if not self.tilingdb.is_symmetry_expanded(tiling):
+            for sym_t in self._symmetric_tilings(tiling):
+                self.tilingdb.add(sym_t, expanding_other_sym=True, symmetry_expanded=True)
+                self.equivdb.union(self.tilingdb.get_label(tiling), self.tilingdb.get_label(sym_t), "a symmetry")
+
+    def _equivalent_expand(self, tiling):
+        """
+        Equivalent expand the tiling with given label and equivalent strategies.
+
+        It will apply the equivalence strategies as often as possible to
+        find as many equivalent tilings as possible.
+        """
+        equivalent_tilings = set([tiling])
+        tilings_to_expand = set([tiling])
+
+        while tilings_to_expand:
+            '''For each tiling to be expanded and'''
+            tiling = tilings_to_expand.pop()
+            if self.tilingdb.is_equivalent_expanded(tiling):
+                continue
+            label = self.tilingdb.get_label(tiling)
+            for equivalence_generator in self.equivalence_strategy_generators:
+                '''for all equivalent strategies'''
+                for strategy in equivalence_generator(tiling,
+                                                      basis=self.basis,
+                                                      basis_partitioning=self._basis_partitioning):
+
+                    if not isinstance(strategy, Strategy) or len(strategy.tilings) != 1:
+                        raise TypeError("Attempting to combine non EquivalenceStrategy.")
+
+                    formal_step = strategy.formal_step
+                    eq_tiling = self._inferral(strategy.tilings[0])
+
+                    '''If we have already seen this tiling while building, we skip it'''
+                    if eq_tiling in equivalent_tilings:
+                        continue
+
+                    self.tilingdb.add(eq_tiling, expandable=strategy.workable[0])
+                    eq_label = self.tilingdb.get_label(eq_tiling)
+                    self.equivdb.union(label, eq_label, formal_step)
+                    '''Add it to the equivalent tilings found'''
+                    equivalent_tilings.add(eq_tiling)
+                    '''And the tilings to be checked for equivalences'''
+                    tilings_to_expand.add(eq_tiling)
+                    self._symmetry_expand(eq_tiling)
+                    self.try_verify(eq_tiling)
+                    self.tilingqueue.add_to_next(eq_label)
+            self.tilingdb.set_equivalent_expanded(tiling)
+
 
     def do_level(self,cap=None):
         if cap is None:
@@ -292,6 +346,7 @@ class TileScope(object):
                 label = self.tilingqueue.next()
                 if label is None:
                     count = cap
+                    return True
                     continue
                 if self.tilingdb.is_expanded(label) or self.tilingdb.is_verified(label):
                     continue
@@ -305,10 +360,11 @@ class TileScope(object):
 
     def auto_search(self,cap=None,f=sys.stdout):
         while True:
-            self.do_level(cap=cap)
+            if self.do_level(cap=cap):
+                # TODO: if the above function does nothing, it returns True, need to catch this in a better way.
+                break
             proof_tree = self.get_proof_tree()
             if proof_tree is not None:
-                proof_tree.pretty_print(file=f)
                 return proof_tree
 
     def find_tree(self):

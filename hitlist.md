@@ -17,7 +17,7 @@ The classes we want ATRAP to find a proof tree for
     - [x] 0231_0312_0321_1302_3021
     - [x] 0231_0312_0321_1302_2031
 
-- [ ] Every subset of S4 with four or more patterns
+- [x] Every subset of S4 with four or more patterns
 
 - [ ] Almost all subsets of S4 with three patterns
 
@@ -58,8 +58,8 @@ The classes we want ATRAP to find a proof tree for
 
 - [ ] The smooth classes
 
-- [x] Av(1234) would be nice, since it has D-finite generating function
+- [x] Av(1234) would be nice, since it has a non-algebraic D-finite generating function
 
-- [ ] Some principle classes besides the monotone one
+- [ ] A principle class besides the monotone one
 
 - [ ] Av(1324), at least some very tight bounds

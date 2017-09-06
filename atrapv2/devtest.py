@@ -1,7 +1,8 @@
 from atrapv2 import TileScope
 from atrapv2 import StrategyPacks
+from time import time
 
-basis = "0123_0132_0213_0231_0312_1203_1230_2013_3012"
+# basis = "0123_0132_0213_0231_0312_1203_1230_2013_3012"
 
 tilescope = TileScope(basis, **StrategyPacks.binary_pattern_classical_class_placement)
 
