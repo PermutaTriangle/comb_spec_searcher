@@ -55,12 +55,14 @@ class TileScope(object):
         self.ruledb = RuleDB()
         self.tilingdb = TilingDB()
         self.tilingqueue = TilingQueue()
+        self.non_interleaving_recursion = non_interleaving_recursion
         self._inferral_cache = LRUCache(100000)
         self._basis_partitioning_cache = {}
         self._cache_hits = set()
         self._cache_misses = 0
         self._cache_hits_count = 0
         self.expanded_tilings = 0
+        self.recursively_expanded = 0
         if symmetry:
             '''A list of symmetry functions of tilings.'''
             self.symmetry = find_symmetries(self.basis)
@@ -75,19 +77,19 @@ class TileScope(object):
         self.start_label = self.tilingdb.get_label(start_tiling)
 
         if recursive_strategies is not None:
-            self.strategy_generators = list(recursive_strategies)
+            self.decomposition_strategy_generators = list(recursive_strategies)
         else:
-            self.strategy_generators = [components]
+            self.decomposition_strategy_generators = [components]
 
         if batch_strategies is not None:
-            self.strategy_generators.extend(batch_strategies)
+            self.strategy_generators = list(batch_strategies)
         else:
-            self.batch_strategy_generators.extend([all_cell_insertions])
+            self.strategy_generators = [all_cell_insertions]
 
         if equivalence_strategies is not None:
             self.equivalence_strategy_generators = list(equivalence_strategies)
         else:
-            self.strategy_generators = [all_point_placements]
+            self.equivalence_strategy_generators = [all_point_placements]
 
 
         if inferral_strategies is not None:
@@ -125,6 +127,22 @@ class TileScope(object):
             self.tilingdb.set_empty(tiling)
             return True
         self.tilingdb.set_empty(tiling, empty=False)
+        return False
+
+    def _has_interleaving_recursion(self, strategy):
+        if strategy.back_maps is None:
+            return False
+        '''Return True if strategy has interleaving recursion'''
+        mixing = False
+        x = [{c.i for c in dic.values()} for dic in strategy.back_maps]
+        y = [{c.j for c in dic.values()} for dic in strategy.back_maps]
+        for i in range(len(strategy.back_maps)):
+            for j in range(len(strategy.back_maps)):
+                if i != j:
+                    if len(x[i] & x[j]) > 0 or len(y[i] & y[j]) > 0:
+                        mixing = True
+        if mixing:
+            return True
         return False
 
 
@@ -224,7 +242,11 @@ class TileScope(object):
 
     def expand(self, label):
         tiling = self.tilingdb.get_tiling(label)
-        for generator in self.strategy_generators:
+        if not self.tilingdb.is_decomposition_expanded(label):
+            strategy_generators = self.decomposition_strategy_generators
+        else:
+            strategy_generators = self.strategy_generators
+        for generator in strategy_generators:
             for strategy in generator(tiling,
                                       basis=self.basis,
                                       basis_partitioning=self._basis_partitioning):
@@ -238,6 +260,10 @@ class TileScope(object):
                 formal_step = strategy.formal_step
                 workable = strategy.workable
                 back_maps = strategy.back_maps
+
+                if self.non_interleaving_recursion:
+                    if self._has_interleaving_recursion(strategy):
+                        continue
 
                 tilings = [self._inferral(t) for t in tilings]
                 for t, w in zip(tilings, workable):
@@ -276,8 +302,13 @@ class TileScope(object):
                     self.ruledb.back_maps[label][tuple(sorted(end_labels))] = back_maps
 
         self._clean_partitioning_cache(tiling)
-        self.tilingdb.set_expanded(label)
-        self.expanded_tilings += 1
+        if not self.tilingdb.is_decomposition_expanded(label):
+            self.tilingdb.set_decomposition_expanded(label)
+            self.tilingqueue.add_to_curr(label)
+            self.recursively_expanded += 1
+        else:
+            self.tilingdb.set_expanded(label)
+            self.expanded_tilings += 1
 
     def _symmetry_expand(self, tiling):
         if not self.tilingdb.is_symmetry_expanded(tiling):
@@ -423,7 +454,7 @@ class TileScope(object):
         if children_labels:
             for rule in self.ruledb:
                 start, ends = rule
-                if self.equivdb[start] == label:
+                if self.equivdb.equivalent(start, label):
                     equiv_labels = [self.equivdb[x] for x in ends]
                     if sorted(equiv_labels) == children_labels:
                         # we have a match!
@@ -434,7 +465,12 @@ class TileScope(object):
                             in_tiling = out_tiling
                         relation = self.equivdb.get_explanation(in_label, start)
                         identifier = label
-                        children = [self._get_proof_tree(proof_tree_node.children[i], next_label) for i, next_label in enumerate(ends)]
+                        children = []
+                        for next_label in ends:
+                            for child in proof_tree_node.children:
+                                if self.equivdb.equivalent(next_label, child.label):
+                                    children.append(self._get_proof_tree(child, next_label))
+                                    break
                         back_maps = None
                         if start in self.ruledb.back_maps:
                             ends = tuple(sorted(ends))
@@ -444,11 +480,11 @@ class TileScope(object):
         else:
             # we are verified by strategy or recursion
             for x in self.tilingdb:
-                if self.equivdb[x] == label and self.tilingdb.is_strategy_verified(x):
+                if self.equivdb.equivalent(x, label) and self.tilingdb.is_strategy_verified(x):
                     formal_step = "Verified"
                     children = []
                     if in_label is None:
-                        in_label = start
+                        in_label = x
                         in_tiling = out_tiling
                     relation = self.equivdb.get_explanation(in_label, x)
                     out_tiling = self.tilingdb.get_tiling(x)
