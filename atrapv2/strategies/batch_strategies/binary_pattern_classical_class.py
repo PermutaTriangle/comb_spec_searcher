@@ -8,6 +8,7 @@ from atrapv2.strategies import Strategy
 from itertools import chain
 from .util import *
 
+
 # The coincidence class of the classical pattern 012
 coincidence_classification = {
         Perm((0, 1, 2)) : [0, 1, 2, 3, 16, 17, 32, 33, 34, 35, 48, 49, 64, 65,

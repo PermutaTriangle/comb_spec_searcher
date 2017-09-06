@@ -5,29 +5,7 @@ from permuta import PermSet, Perm
 from grids import Tiling, PositiveClass, Block
 from .batch_class import BatchStrategy
 from itertools import chain
-
-
-def gen_classical_binary(basis, k):
-    """Given a basis, generate all classical patterns up to length k that are
-    binary under the basis"""
-    perm_set = PermSet.avoiding(basis)
-    patts = perm_set.of_length(k)
-    for length in range(k + 1, 2*k + 1):
-        for perm in perm_set.of_length(length):
-            patts = list(filter(lambda x: x.count_occurrences_in(perm) < 2,
-                patts))
-    return patts
-
-
-def tiling_from_classical_permutation(perm, perm_class):
-    """Given a classical pattern and perm_class, generate a tiling where
-    the classical pattern has been placed within the perm class."""
-    tiling = {(2*i, 2*j): perm_class
-            for i in range(len(perm) + 1) for j in range(len(perm) + 1)}
-    for i in range(len(perm)):
-        tiling[(2*i + 1, 2*perm[i] + 1)] = Block.point
-
-    return Tiling(tiling)
+from .util import *
 
 
 def classical_binary_pattern(tiling, basis, **kwargs):

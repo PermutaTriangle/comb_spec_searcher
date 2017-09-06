@@ -8,6 +8,7 @@ from atrapv2.strategies import Strategy
 from itertools import chain
 from .util import *
 from .coincidence_classification_012 import coincidence_classification as coincclass012
+from .coincidence_classification_021 import coincidence_classification as coincclass021
 
 def binary_pattern(tiling, basis, **kwargs):
     """Produces a binary pattern strategy from a tiling containing a single
@@ -29,35 +30,47 @@ def binary_pattern(tiling, basis, **kwargs):
         for patt in PermSet.avoiding(basis).of_length(k):
             if patt != Perm((0, 1, 2)):
                 continue
-            cclass = list(map(lambda m: MeshPatt.unrank(patt, m), coincidence_classification[patt]))
-            maximal = list()
-            last = None
+            inferred_patt = infer_empty_boxes(patt, basis)
+            inferred_patt_bin = shad_to_binary(inferred_patt.shading, len(inferred_patt) + 1)
+            print(inferred_patt)
+            print(inferred_patt_bin)
+            cclass = chain.from_iterable(clas for clas in coincclass012 if any(is_subset(c, inferred_patt_bin) for c in clas))
+            # cclass = chain.from_iterable(clas for clas in coincclass012 if any(is_subset(c, inferred_patt_bin) for c in clas))
+            maxibin = filter(lambda x: is_binary(MeshPatt.unrank(patt, x), basis), filter_maximal(cclass))
+            # maxibin = list(filter(lambda x: is_binary(x, basis), filter_maximal(cclass)))
+            # print(list(cclass))
 
-            for cur in sorted(cclass):
-                if cur == last:
-                    continue
-                add = True
-                for other in cclass:
-                    if cur < other:
-                        add = False
-                if add:
-                    maximal.append(cur)
-                last = cur
+            # cclass = list(map(lambda m: MeshPatt.unrank(patt, m), coincidence_classification[patt]))
+            # maximal = list()
+            # last = None
 
-            maxibin = filter(lambda x: is_binary(x, basis), maximal)
+            # for cur in sorted(cclass):
+                # if cur == last:
+                    # continue
+                # add = True
+                # for other in cclass:
+                    # if cur < other:
+                        # add = False
+                # if add:
+                    # maximal.append(cur)
+                # last = cur
+
+            # maxibin = filter(lambda x: is_binary(x, basis), maximal)
 
             # When printing out, the lazy iterator has to materialized
             # maxibin = list(filter(lambda x: is_binary(x, basis), maximal))
-            print("Length of maximal: ", len(maxibin), file=sys.stderr)
+            # print("Length of maximal: ", len(maxibin), file=sys.stderr)
+            # continue
 
-            for mpatt in maxibin:
+            for mpatt_bin in maxibin:
                 # print(mpatt, file=sys.stderr)
                 # print(None, file=sys.stderr)
                 # print(tiling_from_mesh_pattern(mpatt, block.perm_class), file=sys.stderr)
                 # print(patt, file=sys.stderr)
+                mpatt = MeshPatt.unrank(patt, mpatt_bin)
                 tilings = [Tiling({(0, 0): PositiveClass(PermSet.avoiding(basis + (patt,)))}),
                         tiling_from_mesh_pattern(mpatt, block.perm_class)]
                 yield Strategy(("Placing the binary pattern "
-                                     "{}").format(mpatt.latex()), tilings, [False, True])
+                                     "{}").format(mpatt), tilings, [False, True])
                 break
             break

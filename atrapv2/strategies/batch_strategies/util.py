@@ -11,6 +11,7 @@ def tiling_from_mesh_pattern(mpatt, perm_class):
 
     return Tiling(tiling)
 
+
 def is_binary(patt, basis):
     """Checks if a given pattern is binary with respect to the basis"""
     permset = PermSet.avoiding(basis)
@@ -19,3 +20,76 @@ def is_binary(patt, basis):
             if patt.count_occurrences_in(p) > 1:
                 return False
     return True
+
+
+def gen_classical_binary(basis, k):
+    """Given a basis, generate all classical patterns up to length k that are
+    binary under the basis"""
+    perm_set = PermSet.avoiding(basis)
+    patts = perm_set.of_length(k)
+    for length in range(k + 1, 2*k + 1):
+        for perm in perm_set.of_length(length):
+            patts = list(filter(lambda x: x.count_occurrences_in(perm) < 2,
+                patts))
+    return patts
+
+
+def tiling_from_classical_permutation(perm, perm_class):
+    """Given a classical pattern and perm_class, generate a tiling where
+    the classical pattern has been placed within the perm class."""
+    tiling = {(2*i, 2*j): perm_class
+            for i in range(len(perm) + 1) for j in range(len(perm) + 1)}
+    for i in range(len(perm)):
+        tiling[(2*i + 1, 2*perm[i] + 1)] = Block.point
+
+    return Tiling(tiling)
+
+def infer_empty_boxes(patt, basis):
+    """Given a permutation pattern, infer the shadable boxes from the basis.
+    For every non-shaded box in the pattern, we place a point. If this new
+    pattern contains any of the element in the basis, then the box can be
+    shaded.
+    """
+    if isinstance(patt, Perm):
+        patt = MeshPatt(patt, {})
+    elif not isinstance(patt, MeshPatt):
+        raise ValueError("Pattern must be a classical or mesh pattern")
+
+    n = len(patt)
+    shadable = list()
+    for i in range(n + 1):
+        for j in range(n + 1):
+            newpatt = patt.add_point((i,j))
+            if any(newpatt.pattern.contains(b) for b in basis):
+                shadable.append((i,j))
+    return patt.shade(shadable)
+
+def filter_maximal(patts):
+    last = None
+    maximal = list()
+    for cur in sorted(patts):
+        if cur == last:
+            continue
+        add = True
+        for other in patts:
+            if is_subset(cur, other) and cur != other:
+                add = False
+        if add:
+            maximal.append(cur)
+        last = cur
+    return maximal
+
+
+def task_to_basis(task):
+    return [Perm(map(int, t)) for t in task.split("_")]
+
+def shad_to_binary(shading, length):
+    res = 0
+    for (x, y) in shading:
+        res |= 1 << (x * length + y)
+    return res
+
+def is_subset(a, b):
+    return (a & ~b) == 0
+
+
