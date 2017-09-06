@@ -15,6 +15,7 @@ class Info(object):
                  expanded=False,
                  symmetry_expanded=False,
                  equivalent_expanded=False,
+                 decomposition_expanded=False,
                  expanding_other_sym=False,
                  expandable=False,
                  verified=None,
@@ -25,6 +26,7 @@ class Info(object):
         self.expanded = expanded
         self.symmetry_expanded = symmetry_expanded
         self.equivalent_expanded = equivalent_expanded
+        self.decomposition_expanded = decomposition_expanded
         self.expanding_other_sym = expanding_other_sym
         self.expandable = expandable
         self.verified = verified
@@ -172,3 +174,9 @@ class TilingDB(object):
 
     def set_equivalent_expanded(self, key, equivalent_expanded=True):
         self._get_info(key).equivalent_expanded = equivalent_expanded
+
+    def is_decomposition_expanded(self, key):
+        return self._get_info(key).decomposition_expanded
+
+    def set_decomposition_expanded(self, key, decomposition_expanded=True):
+        self._get_info(key).decomposition_expanded = decomposition_expanded

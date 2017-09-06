@@ -2042,3 +2042,4 @@ binary_pattern_placement  = {
     "non_interleaving_recursion": False,
     "early_splitting_only": False
     }
+>>>>>>> fd39b6886a6e444ab5488f92f9d62e51ed78023d

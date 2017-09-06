@@ -48,8 +48,8 @@ def classical_binary_pattern(tiling, basis, **kwargs):
                        tiling_from_classical_permutation(bpatt,
                                                          block.perm_class)]
             print("Found binary pattern:", bpatt)
-            yield BatchStrategy(("Placing the the classical binary pattern "
-                                 "{}").format(bpatt), tilings)
+            yield Strategy(("Placing the the classical binary pattern "
+                                 "{}").format(bpatt), tilings, [False, True])
 
 B = [Perm((0,1,2,3)), Perm((0,1,3,2)), Perm((0,2,1,3)), Perm((0,2,3,1)),
         Perm((0,3,1,2)), Perm((1,0,2,3)), Perm((1,2,0,3)), Perm((1,2,3,0)),
