@@ -234,8 +234,6 @@ class TileScope(object):
 
                 tilings = [self._inferral(t) for t in tilings]
                 for t, w in zip(tilings, workable):
-                    print(t)
-                    print(w)
                     self.try_verify(t)
                     if w:
                         self.tilingdb.set_expandable(t)
@@ -311,7 +309,6 @@ class TileScope(object):
             proof_tree = self.get_proof_tree()
             if proof_tree is not None:
                 proof_tree.pretty_print(file=f)
-                print(proof_tree.to_json(), file=f)
                 return proof_tree
 
     def find_tree(self):

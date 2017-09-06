@@ -29,4 +29,4 @@ from .insertion_encoding import minimum_insertion_encoding_row_placements
 from .insertion_encoding import maximum_insertion_encoding_row_placements
 
 from .classical_binary_pattern import classical_binary_pattern
-from .binary_pattern import binary_pattern
+from .binary_pattern_classical_class import binary_pattern_classical_class
