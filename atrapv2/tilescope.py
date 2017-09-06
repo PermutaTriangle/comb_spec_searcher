@@ -75,19 +75,19 @@ class TileScope(object):
         self.start_label = self.tilingdb.get_label(start_tiling)
 
         if recursive_strategies is not None:
-            self.strategy_generators = list(recursive_strategies)
+            self.decomposition_strategy_generators = list(recursive_strategies)
         else:
-            self.strategy_generators = [components]
+            self.decomposition_strategy_generators = [components]
 
         if batch_strategies is not None:
-            self.strategy_generators.extend(batch_strategies)
+            self.strategy_generators = list(batch_strategies)
         else:
-            self.batch_strategy_generators.extend([all_cell_insertions])
+            self.strategy_generators = [all_cell_insertions]
 
         if equivalence_strategies is not None:
             self.equivalence_strategy_generators = list(equivalence_strategies)
         else:
-            self.strategy_generators = [all_point_placements]
+            self.equivalence_strategy_generators = [all_point_placements]
 
 
         if inferral_strategies is not None:
@@ -224,7 +224,11 @@ class TileScope(object):
 
     def expand(self, label):
         tiling = self.tilingdb.get_tiling(label)
-        for generator in self.strategy_generators:
+        if not self.tilingdb.is_decomposition_expanded(label):
+            strategy_generators = self.decomposition_strategy_generators
+        else:
+            strategy_generators = self.strategy_generators
+        for generator in strategy_generators:
             for strategy in generator(tiling,
                                       basis=self.basis,
                                       basis_partitioning=self._basis_partitioning):
@@ -276,8 +280,12 @@ class TileScope(object):
                     self.ruledb.back_maps[label][tuple(sorted(end_labels))] = back_maps
 
         self._clean_partitioning_cache(tiling)
-        self.tilingdb.set_expanded(label)
-        self.expanded_tilings += 1
+        if not self.tilingdb.is_decomposition_expanded(label):
+            self.tilingdb.set_decomposition_expanded(label)
+            self.tilingqueue.add_to_curr(label)
+        else:
+            self.tilingdb.set_expanded(label)
+            self.expanded_tilings += 1
 
     def _symmetry_expand(self, tiling):
         if not self.tilingdb.is_symmetry_expanded(tiling):
