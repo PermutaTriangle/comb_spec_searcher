@@ -2033,7 +2033,7 @@ classical_binary_pattern_placement  = {
     }
 
 binary_pattern_placement  = {
-    "batch_strategies": [binary_pattern, all_cell_insertions, all_row_placements, all_column_placements],
+    "batch_strategies": [classical_binary_pattern, all_cell_insertions, all_row_placements, all_column_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
@@ -2042,4 +2042,3 @@ binary_pattern_placement  = {
     "non_interleaving_recursion": False,
     "early_splitting_only": False
     }
->>>>>>> fd39b6886a6e444ab5488f92f9d62e51ed78023d

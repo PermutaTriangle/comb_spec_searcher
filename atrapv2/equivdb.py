@@ -5,9 +5,11 @@ method. Also, explanations of how tilings are equivalent are maintained.
 Based on: https://www.ics.uci.edu/~eppstein/PADS/UnionFind.py
 '''
 
+from collections import deque
+
 class EquivalenceDB(object):
     '''
-    A database for equivalences. Supports three methods.
+    A database for equivalences. Supports four methods.
 
     - DB[x] return a name for the set containing x. Each set named by
     arbitrarily chosen member.
@@ -17,6 +19,10 @@ class EquivalenceDB(object):
 
     - DB.equivalent(t1, t2) returns True, if t1 and t2 are in the same set,
     otherwise returns False.
+
+    - DB.get_relation(t1, t2) returns a string explaining why t1 and t2 are
+      equivalent.
+
     '''
     def __init__(self):
         """Creates a new empty equivalent database."""
@@ -71,5 +77,83 @@ class EquivalenceDB(object):
         """Return true if any equivalent tiling is verified"""
         return self[tiling] in self.verified_roots
 
-    def get_explanation(self, t1, t2):
-        return "They are equivalent"
+    def get_explanation(self, tiling, other_tiling):
+        """Return how to tilings are equivalent using explanations."""
+        if tiling == other_tiling:
+            return ""
+
+        path = self.find_path(tiling, other_tiling)
+        if path:
+            explanation = "| "
+            for i in range(len(path) - 1):
+                for j in range(i+1, len(path)):
+                    t1 = path[i]
+                    t2 = path[j]
+                    key = (t1,t2)
+                    if key in self.explanations:
+                        explanation = explanation + self.explanations[key] + ". | "
+                    key = (self[t2], self[t1])
+                    if key in self.explanations:
+                        explanation = explanation + "The reverse of: " + self.explanations[key] + ". | "
+            return explanation
+        '''We hopefully never get here'''
+        return "they are on the same SiblingNode"
+
+    def find_path(self, tiling, other_tiling):
+        """
+        BFS for shortest path.
+
+        Used to find shortest explanation of why things are equivalent.
+        """
+
+        if not self.equivalent(tiling, other_tiling):
+            raise KeyError("The tilings given are not equivalent.")
+        equivalent_tilings = {}
+        reverse_map = {}
+
+        equivalent_label = self[tiling]
+
+        for x in self.parents:
+            n = len(equivalent_tilings)
+            if self.equivalent(tiling, x):
+                equivalent_tilings[x] = n
+                reverse_map[n] = x
+
+        adjacency_list = [[] for i in range(len(equivalent_tilings))]
+        for (t1, t2) in self.explanations:
+            if self.equivalent(t1, tiling):
+                u = equivalent_tilings[t1]
+                v = equivalent_tilings[t2]
+                adjacency_list[u].append(v)
+                adjacency_list[v].append(u)
+
+        dequeue = deque()
+
+        start = equivalent_tilings[tiling]
+        end = equivalent_tilings[other_tiling]
+
+        n = len(equivalent_tilings)
+
+        dequeue.append(start)
+        visited = [False for i in range(n)]
+        neighbour = [None for i in range(n)]
+        while len(dequeue) > 0:
+            u = dequeue.popleft()
+            if u == end:
+                break
+            if visited[u]:
+                continue
+            visited[u] = True
+
+            for v in adjacency_list[u]:
+                if not visited[v]:
+                    dequeue.append(v)
+                    neighbour[v] = u
+
+        path = [reverse_map[end]]
+        while neighbour[end] is not None:
+            t = reverse_map[neighbour[end]]
+            path.append(t)
+            end = neighbour[end]
+
+        return path[::-1]

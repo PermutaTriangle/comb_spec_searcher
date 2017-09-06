@@ -62,7 +62,8 @@ def reversibly_deletable_cells(tiling,
                                basis,
                                current_cell=None,
                                occurrences_by_perm=None,
-                               path=None, basis_partitioning=None,
+                               path=None,
+                               basis_partitioning=None,
                                **kwargs):
     """Yield all possile RecursiveStrategy from removing reversibly deletable cells."""
     if current_cell is None:
