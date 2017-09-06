@@ -14,7 +14,7 @@ strategy_pack = StrategyPacks.row_and_column_placements_w_symm
 strategy_pack["non_interleaving_recursion"] = True
 tilescope = TileScope(basis, **strategy_pack)
 
-print(len(tilescope.symmetry))
+print("We took advantage of " + str(len(tilescope.symmetry)) + " symmetries")
 
 tree = tilescope.auto_search(1)
 
@@ -23,8 +23,8 @@ tree.pretty_print()
 print(tree.to_json())
 
 tree = tilescope.get_proof_tree()
-print(len(tilescope.tilingdb.label_to_info))
-print(tilescope.expanded_tilings)
+print("There were " + str(tilescope.recursively_expanded) + " expanded by decomposition.")
+print("There were " + str(tilescope.expanded_tilings) + " full expanded tilings.")
 end = time()
 
 print("Time taken was " + str(end - start) + " seconds")

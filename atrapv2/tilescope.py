@@ -305,6 +305,7 @@ class TileScope(object):
         if not self.tilingdb.is_decomposition_expanded(label):
             self.tilingdb.set_decomposition_expanded(label)
             self.tilingqueue.add_to_curr(label)
+            self.recursively_expanded += 1
         else:
             self.tilingdb.set_expanded(label)
             self.expanded_tilings += 1
@@ -447,7 +448,6 @@ class TileScope(object):
 
     def _get_proof_tree(self, proof_tree_node, in_label=None):
         label = proof_tree_node.label
-        print(label, in_label)
         children_labels = sorted([x.label for x in proof_tree_node.children])
         if in_label is not None:
             in_tiling = self.tilingdb.get_tiling(in_label)
