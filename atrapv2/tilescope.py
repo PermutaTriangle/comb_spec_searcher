@@ -493,15 +493,12 @@ class TileScope(object):
                 print("Set {}: {}".format( str(i+1), self._strategies_to_str(strategies)), file=file)
             print("",file=file)
             self._time_taken = time.time() - start
-            self.status(file=file)
-            print("")
         if status_update is not None:
             count = 0
         while True:
             if self.do_level(cap=cap):
                 # TODO: if the above function does nothing, it returns True, need to catch this in a better way.
                 break
-            count += 1
             proof_tree = self.get_proof_tree()
             if proof_tree is not None:
                 if verbose:
