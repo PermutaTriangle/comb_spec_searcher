@@ -14,9 +14,6 @@ class RuleDB(object):
         self.back_maps = {}
 
     def add(self, start, end, explanation):
-        # print(start)
-        # print(end)
-        # print(explanation)
         if not isinstance(start, int):
             raise TypeError("A rule is an integer and an iterable of integers it goes to.")
         if not isinstance(end, Iterable):

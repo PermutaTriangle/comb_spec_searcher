@@ -22,6 +22,7 @@ from .tree_searcher import prune, proof_tree_dfs
 from collections import defaultdict
 
 import tqdm
+import time
 import sys
 
 from atrap.tools import find_symmetries
@@ -61,8 +62,6 @@ class TileScope(object):
         self._cache_hits = set()
         self._cache_misses = 0
         self._cache_hits_count = 0
-        self.expanded_tilings = 0
-        self.recursively_expanded = 0
         if symmetry:
             '''A list of symmetry functions of tilings.'''
             self.symmetry = find_symmetries(self.basis)
@@ -77,20 +76,31 @@ class TileScope(object):
         self.start_label = self.tilingdb.get_label(start_tiling)
 
         if recursive_strategies is not None:
-            self.decomposition_strategy_generators = list(recursive_strategies)
+            decomposition_strategy_generators = list(recursive_strategies)
         else:
-            self.decomposition_strategy_generators = [components]
+            decomposition_strategy_generators = [components]
 
         if batch_strategies is not None:
-            self.strategy_generators = list(batch_strategies)
+            batch_strategy_generators = list(batch_strategies)
         else:
-            self.strategy_generators = [all_cell_insertions]
+            batch_strategy_generators = [all_cell_insertions]
+
+        self.strategy_generators = [decomposition_strategy_generators, batch_strategy_generators]
+        self.expanded_tilings = [0 for _ in self.strategy_generators]
+        self.expansion_times = [0 for _ in self.strategy_generators]
+        self.equivalent_time = 0
+        self.verification_time = 0
+        self.inferral_time = 0
+        self.symmetry_time = 0
+        self.tree_search_time = 0
+        self.prepping_for_tree_search_time = 0
+        self._time_taken = None
+
 
         if equivalence_strategies is not None:
             self.equivalence_strategy_generators = list(equivalence_strategies)
         else:
             self.equivalence_strategy_generators = [all_point_placements]
-
 
         if inferral_strategies is not None:
             self.inferral_strategy_generators = inferral_strategies
@@ -102,9 +112,15 @@ class TileScope(object):
         else:
             self.verification_strategy_generators = [one_by_one_verification]
 
-    def try_verify(self, tiling):
+    def try_verify(self, tiling, force=False):
+        start = time.time()
         label = self.tilingdb.get_label(tiling)
-        if self.equivdb.is_verified(label):
+        if force:
+            if self.tilingdb.is_strategy_verified(label):
+                self.verification_time += time.time() - start
+                return
+        elif self.equivdb.is_verified(label):
+            self.verification_time += time.time() - start
             return
         for verification_generator in self.verification_strategy_generators:
             for verification_strategy in verification_generator(tiling,
@@ -117,6 +133,7 @@ class TileScope(object):
                 self.tilingdb.set_strategy_verified(tiling)
                 label = self.tilingdb.get_label(tiling)
                 self.equivdb.update_verified(label)
+                self.verification_time += time.time() - start
                 return
 
     def is_empty(self, tiling):
@@ -147,6 +164,7 @@ class TileScope(object):
 
 
     def _inferral(self, tiling):
+        start = time.time()
         """Return fully inferred tiling using InferralStrategies."""
         inferred_tiling = self._inferral_cache.get(tiling)
         semi_inferred_tilings = []
@@ -188,6 +206,7 @@ class TileScope(object):
                 # if semi_inferred_tiling in self._basis_partitioning_cache:
                 #     self._basis_partitioning_cache.pop(semi_inferred_tiling)
             self._inferral_cache.set(inferred_tiling, inferred_tiling)
+        self.inferral_time += time.time() - start
         return inferred_tiling
 
     def _symmetric_tilings(self, tiling, ordered=False):
@@ -213,12 +232,10 @@ class TileScope(object):
     def _basis_partitioning(self, tiling, length, basis, function_name=None):
         # no caching for now - shortcut to see things working!
         # assert len(self._basis_partitioning_cache) < 2
-        if len(self._basis_partitioning_cache) > 100:
-            print("The cache has" + str(len(self._basis_partitioning_cache)) + " many tilings in it")
         basis_partitioning_cache = self._basis_partitioning_cache.get(tiling)
         if basis_partitioning_cache is None:
             if tiling in self._cache_hits:
-                print("!!CACHE MISS!!")
+                print("!!CACHE MISS!!", file=sys.stderr)
                 self._cache_misses += 1
             else:
                 self._cache_hits.add(tiling)
@@ -241,19 +258,18 @@ class TileScope(object):
             pass
 
     def expand(self, label):
+        start = time.time()
         tiling = self.tilingdb.get_tiling(label)
-        if not self.tilingdb.is_decomposition_expanded(label):
-            strategy_generators = self.decomposition_strategy_generators
-        else:
-            strategy_generators = self.strategy_generators
+        expanding = self.tilingdb.number_times_expanded(label)
+        strategy_generators = self.strategy_generators[expanding]
         for generator in strategy_generators:
             for strategy in generator(tiling,
                                       basis=self.basis,
                                       basis_partitioning=self._basis_partitioning):
                 if not isinstance(strategy, Strategy):
-                    print(strategy)
-                    print(strategy.formal_step)
-                    print(generator)
+                    print(strategy, file=sys.stderr)
+                    print(strategy.formal_step, file=sys.stderr)
+                    print(generator, file=sys.stderr)
                     raise TypeError("Strategy given not of the right form.")
 
                 tilings = strategy.tilings
@@ -265,27 +281,33 @@ class TileScope(object):
                     if self._has_interleaving_decomposition(strategy):
                         continue
 
+                start -= time.time()
                 tilings = [self._inferral(t) for t in tilings]
+                start += time.time()
+
                 for t, w in zip(tilings, workable):
+                    start -= time.time()
                     self.try_verify(t)
+                    start += time.time()
                     if w:
                         self.tilingdb.set_expandable(t)
 
                 tilings = [t for t in tilings if not self.is_empty(t)]
                 # put information about deleted empty tilings into the formal step
 
-
+                start -= time.time()
                 for t in tilings:
                     if self.symmetry:
                         self._symmetry_expand(t)
                     self._equivalent_expand(t)
+                start += time.time()
 
                 # If we have an equivalent strategy
                 if len(tilings) == 1:
                     other_label = self.tilingdb.get_label(tilings[0])
                     self.equivdb.union(label, other_label, formal_step)
                     x = self.tilingdb.get_label(tilings[0])
-                    if not (self.tilingdb.is_expanded(x) or self.tilingdb.is_expanding_other_sym(x)):
+                    if not (self.is_expanded(x) or self.tilingdb.is_expanding_other_sym(x)):
                         self.tilingqueue.add_to_working(x)
                 else:
                     end_labels = [self.tilingdb.get_label(t) for t in tilings]
@@ -293,7 +315,7 @@ class TileScope(object):
                     for x in end_labels:
                         # TODO: When labelled occurrences, we can also work from decomposed tilings
                         # so you can add to the queue all the time.
-                        if self.tilingdb.is_expanded(x) or self.tilingdb.is_expanding_other_sym(x):
+                        if self.is_expanded(x) or self.tilingdb.is_expanding_other_sym(x):
                             continue
                         self.tilingqueue.add_to_next(x)
                 if back_maps is not None:
@@ -301,20 +323,26 @@ class TileScope(object):
                         self.ruledb.back_maps[label] = {}
                     self.ruledb.back_maps[label][tuple(sorted(end_labels))] = back_maps
 
-        self._clean_partitioning_cache(tiling)
-        if not self.tilingdb.is_decomposition_expanded(label):
-            self.tilingdb.set_decomposition_expanded(label)
-            self.tilingqueue.add_to_curr(label)
-            self.recursively_expanded += 1
-        else:
-            self.tilingdb.set_expanded(label)
-            self.expanded_tilings += 1
+        if not self.is_expanded(label):
+            self.tilingdb.increment_expanded(label)
+            self.expanded_tilings[expanding] += 1
+            self.expansion_times[expanding] += time.time() - start
+            if not self.is_expanded(label):
+                self.tilingqueue.add_to_curr(label)
+
+    def is_expanded(self, label):
+        number_times_expanded = self.tilingdb.number_times_expanded(label)
+        if number_times_expanded >= len(self.strategy_generators):
+            return True
+        return False
 
     def _symmetry_expand(self, tiling):
+        start = time.time()
         if not self.tilingdb.is_symmetry_expanded(tiling):
             for sym_t in self._symmetric_tilings(tiling):
                 self.tilingdb.add(sym_t, expanding_other_sym=True, symmetry_expanded=True)
                 self.equivdb.union(self.tilingdb.get_label(tiling), self.tilingdb.get_label(sym_t), "a symmetry")
+        self.symmetry_time += time.time() - start
 
     def _equivalent_expand(self, tiling):
         """
@@ -323,6 +351,7 @@ class TileScope(object):
         It will apply the equivalence strategies as often as possible to
         find as many equivalent tilings as possible.
         """
+        start = time.time()
         if not self.tilingdb.is_expandable(tiling):
             return
         equivalent_tilings = set([tiling])
@@ -344,7 +373,9 @@ class TileScope(object):
                         raise TypeError("Attempting to combine non EquivalenceStrategy.")
 
                     formal_step = strategy.formal_step
+                    start -= time.time()
                     eq_tiling = self._inferral(strategy.tilings[0])
+                    start += time.time()
 
                     '''If we have already seen this tiling while building, we skip it'''
                     if eq_tiling in equivalent_tilings:
@@ -357,16 +388,19 @@ class TileScope(object):
                     equivalent_tilings.add(eq_tiling)
                     '''And the tilings to be checked for equivalences'''
                     tilings_to_expand.add(eq_tiling)
+                    start -= time.time()
                     self._symmetry_expand(eq_tiling)
                     self.try_verify(eq_tiling)
+                    start += time.time()
                     self.tilingqueue.add_to_next(eq_label)
+            self.equivalent_time += time.time() - start
             self.tilingdb.set_equivalent_expanded(tiling)
 
 
     def do_level(self,cap=None):
         if cap is None:
             for label in self.tilingqueue.do_level():
-                if self.tilingdb.is_expanded(label) or self.tilingdb.is_verified(label):
+                if self.is_expanded(label) or self.tilingdb.is_verified(label):
                     continue
                 elif not self.tilingdb.is_expandable(label):
                     continue
@@ -381,7 +415,7 @@ class TileScope(object):
                     count = cap
                     return True
                     continue
-                if self.tilingdb.is_expanded(label) or self.tilingdb.is_verified(label):
+                if self.is_expanded(label) or self.tilingdb.is_verified(label):
                     continue
                 elif not self.tilingdb.is_expandable(label):
                     continue
@@ -390,17 +424,105 @@ class TileScope(object):
                 count += 1
                 self.expand(label)
 
+    def status(self, file=sys.stderr):
+        print(" ------------- ", file=file)
+        print("|STATUS UPDATE|", file=file)
+        print(" ------------- ", file=file)
+        print("", file=file)
 
-    def auto_search(self,cap=None,f=sys.stdout):
+        for i, expanded in enumerate(self.expanded_tilings):
+            print("Number of tilings expanded by Set {} is {}".format(str(i+1), str(expanded)), file=file)
+        all_labels = self.tilingdb.label_to_info.keys()
+        print("Total number of tilings is {}".format(str(len(all_labels))), file=file)
+        expandable = 0
+        verified = 0
+        strategy_verified = 0
+        empty = 0
+        for label in all_labels:
+            if self.tilingdb.is_expandable(label):
+                expandable += 1
+            if self.equivdb.is_verified(label):
+                verified += 1
+            if self.tilingdb.is_strategy_verified(label):
+                strategy_verified += 1
+            if self.tilingdb.is_empty(label):
+                empty += 1
+        print("Total number of expandable tilings is {}".format(str(expandable)), file=file)
+        print("Total number of verified tilings is {}".format(str(verified)), file=file)
+        print("Total number of strategy verified tilings is {}".format(str(strategy_verified)), file=file)
+        print("Total number of empty tilings is {}".format(str(empty)), file=file)
+        print("There were {} cache misses".format(str(self._cache_misses)), file=file)
+        print("", file=file)
+        print("Time spent equivalent expanding: {} seconds, ~{}%".format(str(self.equivalent_time), str(int(self.equivalent_time/self._time_taken * 100))), file=file)
+        print("Time spent strategy verifying: {} seconds, ~{}%".format(str(self.verification_time), str(int(self.verification_time/self._time_taken * 100))), file=file)
+        print("Time spent inferring: {} seconds, ~{}%".format(str(self.inferral_time), str(int(self.inferral_time/self._time_taken * 100))), file=file)
+        if self.symmetry:
+            print("Time spent symmetry expanding: {} seconds, ~{}%".format(str(self.symmetry_time), str(int(self.symmetry_time/self._time_taken * 100))), file=file)
+        for i, t in enumerate(self.expansion_times):
+            print("Time spent expanding Set {}: {} seconds, ~{}%".format(str(i+1), str(t), str(int(t/self._time_taken * 100))), file=file)
+        print("Time spent prepping for tree search: {} seconds, ~{}%".format(str(self.prepping_for_tree_search_time), str(int(self.prepping_for_tree_search_time/self._time_taken * 100))), file=file)
+        print("Time spent searching for tree: {} seconds, ~{}%".format(str(self.tree_search_time), str(int(self.tree_search_time/self._time_taken * 100))), file=file)
+        print("", file=file)
+
+
+    def _strategy_to_str(self, strategy):
+        return str(strategy).split(' ')[1]
+
+    def _strategies_to_str(self, strategies):
+        if len(strategies) == 0:
+            return ""
+        output = self._strategy_to_str( strategies[0] )
+        for strategy in strategies[1:]:
+            output = output + ", " + self._strategy_to_str(strategy)
+        return output
+
+    def auto_search(self,cap=None,verbose=False,status_update=None,file=sys.stderr):
+        if verbose:
+            start = time.time()
+            print("Auto search started", time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()),file=file)
+            print("", file=file)
+            print("Looking for proof tree for", self.basis)
+            print("",file=file)
+            print("The strategies being used are:",file=file)
+            print("Equivalent: {}".format(self._strategies_to_str(self.equivalence_strategy_generators)), file=file )
+            print("Inferral: {}".format(self._strategies_to_str(self.inferral_strategy_generators)), file=file )
+            print("Verification: {}".format(self._strategies_to_str(self.verification_strategy_generators)), file=file )
+            if self.symmetry:
+                print("Symmetries: {}".format(self._strategies_to_str(self.symmetry)), file=file)
+            for i, strategies in enumerate(self.strategy_generators):
+                print("Set {}: {}".format( str(i+1), self._strategies_to_str(strategies)), file=file)
+            print("",file=file)
+            self._time_taken = time.time() - start
+        if status_update is not None:
+            count = 0
         while True:
             if self.do_level(cap=cap):
                 # TODO: if the above function does nothing, it returns True, need to catch this in a better way.
                 break
             proof_tree = self.get_proof_tree()
             if proof_tree is not None:
+                if verbose:
+                    self.status(file=file)
+                    print("Proof tree found", time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()),file=file)
+                    end = time.time()
+                    time_taken = end - start
+                    self._time_taken = time_taken
+                    print("Time taken was " + str(time_taken) + " seconds", file=file)
+                    print("",file=file)
+                    proof_tree.pretty_print(file=file)
+                    print(proof_tree.to_json(), file=file)
                 return proof_tree
+            end = time.time()
+            time_taken = end - start
+            self._time_taken = time_taken
+            if status_update is not None:
+                count += 1
+                if count > status_update:
+                    self.status()
+                    count = 0
 
     def find_tree(self):
+        start = time.time()
         rules_dict = defaultdict(set)
         # convert rules to equivalent labels
         for rule in self.ruledb:
@@ -414,6 +536,8 @@ class TileScope(object):
             verified_label = self.equivdb[x]
             rules_dict[verified_label] |= set(((),))
 
+        self.prepping_for_tree_search_time += time.time() - start
+        start = time.time()
         # Prune all unverifiable labels (recursively)
         rules_dict = prune(rules_dict)
 
@@ -430,9 +554,10 @@ class TileScope(object):
             # print("A tree was found! :)")
             _, proof_tree = proof_tree_dfs(rules_dict, root=self.equivdb[self.start_label])
             # print(proof_tree)
+            self.tree_search_time += time.time() - start
             return proof_tree
         else:
-            pass
+            self.tree_search_time += time.time() - start
             # print("No tree was found. :(")
 
     def get_proof_tree(self, count=False):
@@ -478,7 +603,14 @@ class TileScope(object):
                             ends = tuple(sorted(ends))
                             if ends in self.ruledb.back_maps[start]:
                                 back_maps = self.ruledb.back_maps[start][ends]
-                        return ProofTreeNode(formal_step, in_tiling, out_tiling, relation, identifier, children=children, recurse=back_maps, strategy_verified=False)
+                        return ProofTreeNode(formal_step,
+                                             in_tiling,
+                                             out_tiling,
+                                             relation,
+                                             identifier,
+                                             children=children,
+                                             recurse=back_maps,
+                                             strategy_verified=False)
         else:
             # we are verified by strategy or recursion
             for x in self.tilingdb:
@@ -491,7 +623,14 @@ class TileScope(object):
                     relation = self.equivdb.get_explanation(in_label, x)
                     out_tiling = self.tilingdb.get_tiling(x)
                     identifier = label
-                    return ProofTreeNode(formal_step, in_tiling, out_tiling, relation, identifier, children=children, recurse=None, strategy_verified=True)
+                    return ProofTreeNode(formal_step,
+                                         in_tiling,
+                                         out_tiling,
+                                         relation,
+                                         identifier,
+                                         children=children,
+                                         recurse=None,
+                                         strategy_verified=True)
             # else we are recursively verified
             formal_step = "recurse"
             if in_label is None:
@@ -502,4 +641,11 @@ class TileScope(object):
                 out_tiling = in_tiling
             identifier = label
             relation = self.equivdb.get_explanation(in_label, in_label)
-            return ProofTreeNode(formal_step, in_tiling, out_tiling, relation, identifier, children=None, recurse=None, strategy_verified=False)
+            return ProofTreeNode(formal_step,
+                                 in_tiling,
+                                 out_tiling,
+                                 relation,
+                                 identifier,
+                                 children=None,
+                                 recurse=None,
+                                 strategy_verified=False)

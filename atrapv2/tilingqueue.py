@@ -35,7 +35,6 @@ class TilingQueue(object):
             self.levels_completed += 1
             self.curr_level = self.next_level
             self.next_level = Queue()
-            print("Starting level " + str(self.levels_completed + 1))
             return self.next()
 
     def do_level(self, cap=None):
@@ -65,7 +64,6 @@ class TilingQueue(object):
                     self.levels_completed += 1
                     self.curr_level = self.next_level
                     self.next_level = Queue()
-                    print("Starting level " + str(self.levels_completed + 1))
 
         # if no cap, then do exactly one level.
         else:
@@ -79,4 +77,3 @@ class TilingQueue(object):
             self.levels_completed += 1
             self.curr_level = self.next_level
             self.next_level = Queue()
-            print("Starting level " + str(self.levels_completed + 1))
