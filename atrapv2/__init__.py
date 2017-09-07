@@ -1,2 +1,2 @@
 from .tilescope import TileScope
-import StrategyPacks
+import atrapv2.StrategyPacks as StrategyPacks

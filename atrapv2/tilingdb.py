@@ -12,7 +12,7 @@ class Info(object):
     def __init__(self,
                  tiling,
                  label,
-                 expanded=False,
+                 expanded=0,
                  symmetry_expanded=False,
                  equivalent_expanded=False,
                  decomposition_expanded=False,
@@ -112,16 +112,14 @@ class TilingDB(object):
         info = self._get_info(key)
         return info.label
 
-    def is_expanded(self, key):
+    def number_times_expanded(self, key):
         info = self._get_info(key)
         return info.expanded
 
-    def set_expanded(self, key, expanded=True):
+    def increment_expanded(self, key):
         info = self._get_info(key)
-        self.tiling_to_info[info.tiling].expanded = expanded
+        self.tiling_to_info[info.tiling].expanded += 1
         assert self.tiling_to_info[info.tiling].expanded == self.label_to_info[info.label].expanded
-        # Do I need this line, testing with assert
-        self.label_to_info[info.label].expanded = expanded
 
     def is_expandable(self,key):
         info = self._get_info(key)
