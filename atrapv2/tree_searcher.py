@@ -2,7 +2,7 @@
 Finds and returns a proof tree.
 """
 
-__all__ = ["prune", "proof_tree_generator_dfs", "proof_tree_generator_bfs"]
+__all__ = ("prune", "proof_tree_generator_dfs", "proof_tree_generator_bfs")
 
 from random import choice, shuffle
 from copy import deepcopy

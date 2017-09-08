@@ -36,7 +36,6 @@ class TilingQueue(object):
             self.levels_completed += 1
             self.curr_level = self.next_level
             self.next_level = Queue()
-            print("Starting level " + str(self.levels_completed + 1), file=sys.stderr)
             return self.next()
 
     def do_level(self, cap=None):
@@ -59,7 +58,7 @@ class TilingQueue(object):
                     # x.update()
                 else:
                     if self.next_level.empty():
-                        print("No more tilings to expand!")
+                        print("No more tilings to expand!", file=sys.stderr)
                         # x.update(cap - i)
                         i = cap
 
