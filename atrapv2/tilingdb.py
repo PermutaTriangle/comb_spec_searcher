@@ -167,6 +167,10 @@ class TilingDB(object):
         """Update database about tiling being verified, with an explanation."""
         self._get_info(key).verified = explanation
 
+    def verification_reason(self, key):
+        """Return explanation of verification, None if not verified."""
+        return self._get_info(key).verified
+
     def is_empty(self, key):
         """Return True if tiling contains no permutation, False otherwise."""
         return self._get_info(key).empty
