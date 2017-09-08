@@ -214,7 +214,7 @@ class TileScope(object):
         # no caching for now - shortcut to see things working!
         # assert len(self._basis_partitioning_cache) < 2
         if len(self._basis_partitioning_cache) > 100:
-            print("The cache has" + str(len(self._basis_partitioning_cache)) + " many tilings in it")
+            print("The cache has" + str(len(self._basis_partitioning_cache)) + " many tilings in it", file=sys.stderr)
         basis_partitioning_cache = self._basis_partitioning_cache.get(tiling)
         if basis_partitioning_cache is None:
             if tiling in self._cache_hits:
@@ -251,9 +251,9 @@ class TileScope(object):
                                       basis=self.basis,
                                       basis_partitioning=self._basis_partitioning):
                 if not isinstance(strategy, Strategy):
-                    print(strategy)
-                    print(strategy.formal_step)
-                    print(generator)
+                    print(strategy, file=sys.stderr)
+                    print(strategy.formal_step, file=sys.stderr)
+                    print(generator, file=sys.stderr)
                     raise TypeError("Strategy given not of the right form.")
 
                 tilings = strategy.tilings

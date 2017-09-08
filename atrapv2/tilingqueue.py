@@ -3,6 +3,7 @@ A queue of tilings.
 """
 from queue import Queue
 import tqdm
+import sys
 
 class TilingQueue(object):
     """
@@ -30,12 +31,12 @@ class TilingQueue(object):
             return self.curr_level.get()
         else:
             if self.next_level.empty():
-                print("No more tilings to expand!")
+                print("No more tilings to expand!", file=sys.stderr)
                 return None
             self.levels_completed += 1
             self.curr_level = self.next_level
             self.next_level = Queue()
-            print("Starting level " + str(self.levels_completed + 1))
+            print("Starting level " + str(self.levels_completed + 1), file=sys.stderr)
             return self.next()
 
     def do_level(self, cap=None):
