@@ -3,7 +3,7 @@
 import sys
 from permuta import *
 from grids import Tiling, PositiveClass, Block
-from .batch_class import BatchStrategy
+from ..batch_class import BatchStrategy
 from atrapv2.strategies import Strategy
 from itertools import chain
 from .util import *
@@ -156,5 +156,3 @@ def binary_pattern_classical_class(tiling, basis, **kwargs):
                         tiling_from_mesh_pattern(mpatt, block.perm_class)]
                 yield Strategy(("Placing the binary pattern \n"
                                      "{}").format(mpatt), tilings, [False, True])
-                break
-            break
