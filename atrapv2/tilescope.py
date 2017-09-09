@@ -60,6 +60,7 @@ class TileScope(object):
         self._cache_hits = set()
         self._cache_misses = 0
         self._cache_hits_count = 0
+        self._has_proof_tree = False
         if symmetry:
             # A list of symmetry functions of tilings.
             self.symmetry = find_symmetries(self.basis)
@@ -464,6 +465,7 @@ class TileScope(object):
         print("|STATUS UPDATE|", file=file)
         print(" ------------- ", file=file)
         print("", file=file)
+        print("Time spent searching so far: {} seconds".format(self._time_taken), file=file)
 
         for i, expanded in enumerate(self.expanded_tilings):
             print("Number of tilings expanded by Set {} is {}".format(str(i+1),
@@ -536,7 +538,7 @@ class TileScope(object):
             output = output + ", " + str(strategy).split(' ')[1]
         return output
 
-    def auto_search(self, cap=None, verbose=False, status_update=None, file=sys.stderr):
+    def auto_search(self, cap=None, verbose=False, status_update=None, max_time=None, file=sys.stderr):
         """
         An automatic search function.
 
@@ -545,15 +547,17 @@ class TileScope(object):
         It will continue doing this until a proof tree is found.
 
         If verbose=True, a status update is given when a tree is found and
-        after status_update many tilings have been expanded. It will also print
+        after status_update many seconds have passed. It will also print
         the proof tree, in both json and pretty_print formats.
         """
         if verbose:
             start = time.time()
+            if status_update:
+                status_start = time.time()
             print("Auto search started", time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()),
                   file=file)
             print("", file=file)
-            print("Looking for proof tree for", self.basis)
+            print("Looking for proof tree for", self.basis, file=file)
             print("", file=file)
             print("The strategies being used are:", file=file)
             equiv_strats = self._strategies_to_str(self.equivalence_strategy_generators)
@@ -570,8 +574,6 @@ class TileScope(object):
                 print("Set {}: {}".format(str(i+1), strats), file=file)
             print("", file=file)
             self._time_taken = time.time() - start
-        if status_update is not None:
-            count = 0
         while True:
             if cap is None:
                 if self.do_level():
@@ -584,12 +586,12 @@ class TileScope(object):
             proof_tree = self.get_proof_tree()
             if proof_tree is not None:
                 if verbose:
-                    self.status(file=file)
-                    print("Proof tree found", time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()),
-                          file=file)
                     end = time.time()
                     time_taken = end - start
                     self._time_taken = time_taken
+                    self.status(file=file)
+                    print("Proof tree found", time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()),
+                          file=file)
                     print("", file=file)
                     proof_tree.pretty_print(file=file)
                     print(proof_tree.to_json(), file=file)
@@ -598,11 +600,19 @@ class TileScope(object):
             end = time.time()
             time_taken = end - start
             self._time_taken = time_taken
-            if status_update is not None:
-                count += 1
-                if count > status_update:
-                    self.status()
-                    count = 0
+            if max_time is not None:
+                if self._time_taken > max_time:
+                    self.status(file=file)
+                    print("Exceeded maximum time. Aborting auto search.", file=file)
+                    return
+
+            if status_update is not None and verbose:
+                if time.time() - status_start > status_update:
+                    self.status(file=file)
+                    status_start = time.time()
+
+    def has_proof_tree(self):
+        return self._has_proof_tree
 
     def find_tree(self):
         """Search for a tree based on current data found."""
@@ -631,6 +641,7 @@ class TileScope(object):
         # only verified labels in rules_dict, in particular, there is a tree if
         # the start label is in the rules_dict
         if self.equivdb[self.start_label] in rules_dict:
+            self._has_proof_tree = True
             # print("A tree was found! :)")
             _, proof_tree = proof_tree_dfs(rules_dict, root=self.equivdb[self.start_label])
             # print(proof_tree)
