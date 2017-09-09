@@ -4,39 +4,11 @@ from atrap.ProofTree import ProofTree
 
 import time
 
-# filename = 'length5' # the file with bases to be processed
-# filename = 'length5afterround1'
-filename = 'gaur'
+filename = 'length11' # the file with bases to be processed
+# filename = 'length11afterround1'
 
 # Will try each strategy pack in order.
-strategy_packs = [
-                    StrategyPacks.jays_special,
-                    StrategyPacks.extreme_points,
-                    StrategyPacks.minimum_row_no_rec,
-                    StrategyPacks.row_placements_no_rec,
-                    StrategyPacks.left_column_placements_no_rec,
-                    StrategyPacks.column_placements_no_rec,
-                    StrategyPacks.row_and_column_placements_no_rec,
-                    StrategyPacks.jays_special_no_rec,
-                    StrategyPacks.row_and_column_insertion,
-                    StrategyPacks.row_and_column_insertion_and_cell_insertion,
-                    StrategyPacks.row_and_column_insertion_and_cell_insertion_and_point_separation,
-                    StrategyPacks.row_and_column_insertion_and_splittings,
-                    StrategyPacks.row_and_column_insertion_and_cell_insertion_and_splittings,
-                    StrategyPacks.row_and_column_insertion_and_cell_insertion_and_point_separation_and_splittings,
-                    StrategyPacks.row_and_column_placements_and_all_321_boundaries,
-                    StrategyPacks.row_and_column_placements_and_all_321_boundaries_and_splittings,
-                    StrategyPacks.point_placement_and_all_321_boundaries,
-                    StrategyPacks.point_placement_and_all_321_boundaries_and_splittings,
-                    StrategyPacks.point_placement_and_all_lrm_and_rlm_placements,
-                    StrategyPacks.point_placement_and_all_lrm_and_rlm_placements_and_splittings,
-                    StrategyPacks.row_and_column_placements_and_all_lrm_and_rlm_placements,
-                    StrategyPacks.row_and_column_placements_and_all_lrm_and_rlm_placements_and_splittings,
-                    StrategyPacks.point_placement,
-                    StrategyPacks.point_placement_and_splittings,
-                    StrategyPacks.point_placement_and_point_separation,
-                    StrategyPacks.point_placement_and_splittings_and_point_separation,
-                    StrategyPacks.row_and_column_placements,
+strategy_packs = [  StrategyPacks.row_and_column_placements,
                     StrategyPacks.row_and_column_placements_and_splittings,
                     StrategyPacks.row_and_column_placements_and_point_separation,
                     StrategyPacks.row_and_column_placements_and_splittings_and_point_separation,
@@ -61,9 +33,8 @@ strategy_packs = [
                  ]
 
 
-# max_times = 30 # seconds for each strategy pack (must be integer)
-max_times = 60
-# max_times = 120
+max_times = 30 # seconds for each strategy pack (must be integer)
+# max_times = 60
 # max_times = [ 5, 6, 7, 8, 9, 10] # seconds for corresponding strategy pack
 
 def perm_to_str(perm):
