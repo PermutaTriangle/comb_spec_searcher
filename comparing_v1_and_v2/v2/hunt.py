@@ -8,7 +8,7 @@ from permuta import Perm,Av
 from time import time
 from atrap.ProofTree import ProofTree
 
-from atrap import StrategyPacks
+from atrapv2 import StrategyPacks
 
 
 
