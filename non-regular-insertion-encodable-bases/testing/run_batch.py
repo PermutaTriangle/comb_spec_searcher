@@ -153,6 +153,31 @@ for basis in bases:
             print("There were {} cache misses".format(mtree._cache_misses),file=f)
             print("",file=f)
 
+            equiv_perc = str(int(mtree.equivalent_time/mtree._time_taken * 100))
+            decom_perc = str(int(mtree.decomposition_time/mtree._time_taken * 100))
+            batch_perc = str(int(mtree.batch_time/mtree._time_taken * 100))
+            verif_perc = str(int(mtree.verification_time/mtree._time_taken * 100))
+            infer_perc = str(int(mtree.inferral_time/mtree._time_taken * 100))
+            symme_perc = str(int(mtree.symmetry_time/mtree._time_taken * 100))
+            propa_perc = str(int(mtree.propagation_time/mtree._time_taken * 100))
+            print("There were {} tilings decomposition expanded".format(mtree.decomposition_expanded))
+            print("There were {} tilings batch expanded".format(mtree.batch_expanded))
+            print("Time spent decomposition expanding: {} seconds, ~{}%".format(str(mtree.decomposition_time),
+                                                                                    decom_perc))
+            print("Time spent batch expanding: {} seconds, ~{}%".format(str(mtree.batch_time),
+                                                                            batch_perc))
+            print("Time spent equivalent expanding: {} seconds, ~{}%".format(str(mtree.equivalent_time),
+                                                                             equiv_perc))
+            print("Time spent strategy verifying: {} seconds, ~{}%".format(str(mtree.verification_time),
+                                                                           verif_perc))
+            print("Time spent inferring: {} seconds, ~{}%".format(str(mtree.inferral_time),
+                                                                  infer_perc))
+            print("Time spent propagating: {} seconds, ~{}%".format(str(mtree.propagation_time),
+                                                                    propa_perc))
+            if mtree.symmetry:
+                print("Time spent symmetry expanding: {} seconds, ~{}%".format(str(mtree.symmetry_time),
+                                                                               symme_perc))
+
             if mtree.has_proof_tree():
                 proof_tree = mtree.find_proof_tree()
                 print("A proof tree was found in {} seconds".format(total_time), file=f)
