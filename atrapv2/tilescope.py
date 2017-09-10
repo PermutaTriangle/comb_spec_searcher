@@ -550,8 +550,8 @@ class TileScope(object):
         after status_update many seconds have passed. It will also print
         the proof tree, in both json and pretty_print formats.
         """
+        start = time.time()
         if verbose:
-            start = time.time()
             if status_update:
                 status_start = time.time()
             print("Auto search started", time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()),

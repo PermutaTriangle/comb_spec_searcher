@@ -4,7 +4,7 @@ from atrap.ProofTree import ProofTree
 
 import time
 
-filename = 'length11' # the file with bases to be processed
+filename = 'gaur' # the file with bases to be processed
 # filename = 'length11afterround1'
 
 # Will try each strategy pack in order.
@@ -97,7 +97,12 @@ for basis in bases:
 
     print('-----------------------------------------------------------------')
     print('Now processing {}'.format(task))
-    for strategy_pack, max_time, attempt in zip(strategy_packs, max_times, range(len(strategy_packs))):
+    for new_strategy_pack, max_time, attempt in zip(strategy_packs, max_times, range(len(strategy_packs))):
+        strategy_pack = [new_strategy_pack['batch_strategies'],
+                         new_strategy_pack['equivalence_strategies'],
+                         new_strategy_pack['inferral_strategies'],
+                         new_strategy_pack['recursive_strategies'],
+                         new_strategy_pack['verification_strategies']]
         print()
         print("Attempt {} with the following strategies:".format(attempt))
         print("Batch: {}".format( strategies_to_str(strategy_pack[0])))
@@ -105,7 +110,7 @@ for basis in bases:
         print("Inferral: {}".format( strategies_to_str(strategy_pack[2])))
         print("Recursive: {}".format( strategies_to_str(strategy_pack[3])))
         print("Verification: {}".format( strategies_to_str(strategy_pack[4])) )
-        mtree = MetaTree( basis, *strategy_pack )
+        mtree = MetaTree(basis, **new_strategy_pack)
 
         start_time = time.time()
         end_time = start_time + max_time
