@@ -7,8 +7,7 @@ from ..batch_class import BatchStrategy
 from atrapv2.strategies import Strategy
 from itertools import chain
 from .util import *
-from .coincidence_classification_012 import coincidence_classification as coincclass012
-from .coincidence_classification_021 import coincidence_classification as coincclass021
+from .coincidence_classification import coincclass012, coincclass021
 
 coincidence_classes = {Perm((0,1,2)) : coincclass012,
                        Perm((0, 2, 1)) : coincclass021}
