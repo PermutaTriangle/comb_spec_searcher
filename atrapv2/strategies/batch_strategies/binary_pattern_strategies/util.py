@@ -83,13 +83,27 @@ def filter_maximal(patts):
 def task_to_basis(task):
     return [Perm(map(int, t)) for t in task.split("_")]
 
+
 def shad_to_binary(shading, length):
     res = 0
     for (x, y) in shading:
         res |= 1 << (x * length + y)
     return res
 
+
 def is_subset(a, b):
     return (a & ~b) == 0
 
 
+def flip_binshad_horizontal(binshad, length):
+    bits = list(bin(binshad)[2:].zfill(length*length))
+    for i in range(len(bits) // length):
+        bits[i*length:(i+1)*length] = bits[i*length:(i+1)*length][::-1]
+    return int(''.join(bits), 2)
+
+
+def flip_binshad_vertical(binshad, length):
+    bits = list(bin(binshad)[2:].zfill(length*length))
+    for i in range(len(bits) // (2*length)):
+        bits[i*length:(i+1)*length], bits[(length-i-1)*length:(length-i)*length] = bits[(length-i-1)*length:(length-i)*length], bits[i*length:(i+1)*length]
+    return int(''.join(bits), 2)
