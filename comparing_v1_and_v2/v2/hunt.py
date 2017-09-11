@@ -8,7 +8,7 @@ from permuta import Perm,Av
 from time import time
 from atrap.ProofTree import ProofTree
 
-from atrap import StrategyPacks
+from atrapv2 import StrategyPacks
 
 
 
@@ -64,7 +64,7 @@ else:
 tilescope = TileScope(patts, **STRATS_TO_USE)
 start = time()
 
-proof_tree = tilescope.auto_search(1,f=f)
+proof_tree = tilescope.auto_search(1,file=f)
 
 end = time()
 

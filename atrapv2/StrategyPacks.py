@@ -5,7 +5,7 @@ all_strategies = {
     "equivalence_strategies": [all_point_placements, point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -16,7 +16,7 @@ minimum_row_placements = {
     "equivalence_strategies": [all_equivalent_minimum_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -27,7 +27,7 @@ minimum_row_placements_and_splittings = {
     "equivalence_strategies": [all_equivalent_minimum_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -38,7 +38,7 @@ minimum_row_no_rec = {
     "equivalence_strategies": [all_equivalent_minimum_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -49,7 +49,7 @@ minimum_row_placements_and_point_separation = {
     "equivalence_strategies": [all_equivalent_minimum_row_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -60,7 +60,7 @@ minimum_row_placements_and_splittings_and_point_separation = {
     "equivalence_strategies": [all_equivalent_minimum_row_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -71,7 +71,7 @@ row_placements = {
     "equivalence_strategies": [all_equivalent_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -82,7 +82,7 @@ row_placements_and_splittings = {
     "equivalence_strategies": [all_equivalent_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -93,7 +93,7 @@ row_placements_no_rec = {
     "equivalence_strategies": [all_equivalent_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -104,7 +104,7 @@ row_placements_and_point_separation = {
     "equivalence_strategies": [all_equivalent_row_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -115,7 +115,7 @@ row_placements_and_splittings_and_point_separation = {
     "equivalence_strategies": [all_equivalent_row_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -126,7 +126,7 @@ left_column_placements = {
     "equivalence_strategies": [all_equivalent_leftmost_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -137,7 +137,7 @@ left_column_placements_and_splittings = {
     "equivalence_strategies": [all_equivalent_leftmost_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -148,7 +148,7 @@ left_column_placements_no_rec = {
     "equivalence_strategies": [all_equivalent_leftmost_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -159,7 +159,7 @@ left_column_placements_and_point_separation = {
     "equivalence_strategies": [all_equivalent_leftmost_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -170,7 +170,7 @@ left_column_placements_and_splittings_and_point_separation = {
     "equivalence_strategies": [all_equivalent_leftmost_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -181,7 +181,7 @@ column_placements = {
     "equivalence_strategies": [all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -192,7 +192,7 @@ column_placements_and_splittings = {
     "equivalence_strategies": [all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -203,7 +203,7 @@ column_placements_no_rec = {
     "equivalence_strategies": [all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -214,7 +214,7 @@ column_placements_and_point_separation = {
     "equivalence_strategies": [all_equivalent_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -225,7 +225,7 @@ column_placements_and_splittings_and_point_separation = {
     "equivalence_strategies": [all_equivalent_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -236,7 +236,7 @@ row_and_column_placements = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -247,7 +247,7 @@ row_and_column_placements_and_splittings = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -258,7 +258,7 @@ row_and_column_placements_no_rec = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -269,7 +269,7 @@ row_and_column_placements_and_point_separation = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -280,7 +280,7 @@ row_and_column_placements_and_splittings_and_point_separation = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -291,7 +291,7 @@ point_placement = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -302,7 +302,7 @@ point_placement_and_splittings = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -313,7 +313,7 @@ point_placement_and_point_separation = {
     "equivalence_strategies": [all_point_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -324,7 +324,7 @@ point_placement_and_splittings_and_point_separation = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -335,7 +335,7 @@ point_separation_and_isolation = {
     "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -346,7 +346,7 @@ point_separation_and_isolation_and_splittings = {
     "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -357,7 +357,7 @@ point_placement_and_all_lrm_and_rlm_placements = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -368,7 +368,7 @@ point_placement_and_all_lrm_and_rlm_placements_and_splittings = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -379,7 +379,7 @@ row_and_column_placements_and_all_lrm_and_rlm_placements = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -390,7 +390,7 @@ row_and_column_placements_and_all_lrm_and_rlm_placements_and_splittings = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -401,7 +401,7 @@ point_placement_and_all_321_boundaries = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -412,7 +412,7 @@ point_placement_and_all_321_boundaries_and_splittings = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -423,7 +423,7 @@ row_and_column_placements_and_all_321_boundaries = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -434,7 +434,7 @@ row_and_column_placements_and_all_321_boundaries_and_splittings = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -445,7 +445,7 @@ finite = {
     "equivalence_strategies": [all_equivalent_minimum_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -456,7 +456,7 @@ mimic_regular_insertion_encoding = {
     "equivalence_strategies": [],
     "inferral_strategies": [],
     "recursive_strategies": [reversibly_deletable_points],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -467,7 +467,7 @@ mimic_regular_insertion_encoding_flip = {
     "equivalence_strategies": [],
     "inferral_strategies": [],
     "recursive_strategies": [reversibly_deletable_points],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -478,7 +478,7 @@ mimic_regular_insertion_encoding_but_better = {
     "equivalence_strategies": [],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -489,7 +489,7 @@ mimic_regular_insertion_encoding_flip_but_better = {
     "equivalence_strategies": [],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -500,7 +500,7 @@ mimic_regular_insertion_encoding_but_better_from_all_angles = {
     "equivalence_strategies": [],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -511,7 +511,7 @@ mimic_Zeilberger_enumeration_schemes = {
     "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral],
     "recursive_strategies": [reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -522,7 +522,7 @@ left_to_right_maxima_123_and_point_placements = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -533,7 +533,7 @@ left_to_right_maxima_1234_and_point_placements = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -544,7 +544,7 @@ left_to_right_maxima_123_and_row_column_placements = {
     "equivalence_strategies": [all_equivalent_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -555,7 +555,7 @@ left_to_right_maxima_1234_and_row_column_placements = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -566,7 +566,7 @@ point_separation_and_isolation_with_left_to_right_maxima1234 = {
     "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -577,7 +577,7 @@ row_and_column_insertion = {
     "equivalence_strategies": [all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -588,7 +588,7 @@ row_and_column_insertion_and_cell_insertion = {
     "equivalence_strategies": [all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -599,7 +599,7 @@ row_and_column_insertion_and_cell_insertion_and_point_separation = {
     "equivalence_strategies": [all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -610,7 +610,7 @@ row_and_column_insertion_and_splittings = {
     "equivalence_strategies": [all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -621,7 +621,7 @@ row_and_column_insertion_and_cell_insertion_and_splittings = {
     "equivalence_strategies": [all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -632,7 +632,7 @@ row_and_column_insertion_and_cell_insertion_and_point_separation_and_splittings 
     "equivalence_strategies": [all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -643,7 +643,7 @@ jays_special = {
     "equivalence_strategies": [all_point_placements, all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -654,7 +654,7 @@ jays_special_no_rec = {
     "equivalence_strategies": [all_point_placements, all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -665,7 +665,7 @@ extreme_points = {
     "equivalence_strategies": [all_point_placements, all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -680,7 +680,7 @@ all_strategies_w_symm = {
     "equivalence_strategies": [all_point_placements, point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -691,7 +691,7 @@ minimum_row_placements_w_symm = {
     "equivalence_strategies": [all_equivalent_minimum_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -702,7 +702,7 @@ minimum_row_placements_and_splittings_w_symm = {
     "equivalence_strategies": [all_equivalent_minimum_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -713,7 +713,7 @@ minimum_row_no_rec_w_symm = {
     "equivalence_strategies": [all_equivalent_minimum_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -724,7 +724,7 @@ minimum_row_placements_and_point_separation_w_symm = {
     "equivalence_strategies": [all_equivalent_minimum_row_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -735,7 +735,7 @@ minimum_row_placements_and_splittings_and_point_separation_w_symm = {
     "equivalence_strategies": [all_equivalent_minimum_row_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -746,7 +746,7 @@ row_placements_w_symm = {
     "equivalence_strategies": [all_equivalent_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -757,7 +757,7 @@ row_placements_and_splittings_w_symm = {
     "equivalence_strategies": [all_equivalent_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -768,7 +768,7 @@ row_placements_no_rec_w_symm = {
     "equivalence_strategies": [all_equivalent_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -779,7 +779,7 @@ row_placements_and_point_separation_w_symm = {
     "equivalence_strategies": [all_equivalent_row_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -790,7 +790,7 @@ row_placements_and_splittings_and_point_separation_w_symm = {
     "equivalence_strategies": [all_equivalent_row_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -801,7 +801,7 @@ left_column_placements_w_symm = {
     "equivalence_strategies": [all_equivalent_leftmost_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -812,7 +812,7 @@ left_column_placements_and_splittings_w_symm = {
     "equivalence_strategies": [all_equivalent_leftmost_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -823,7 +823,7 @@ left_column_placements_no_rec_w_symm = {
     "equivalence_strategies": [all_equivalent_leftmost_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -834,7 +834,7 @@ left_column_placements_and_point_separation_w_symm = {
     "equivalence_strategies": [all_equivalent_leftmost_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -845,7 +845,7 @@ left_column_placements_and_splittings_and_point_separation_w_symm = {
     "equivalence_strategies": [all_equivalent_leftmost_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -856,7 +856,7 @@ column_placements_w_symm = {
     "equivalence_strategies": [all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -867,7 +867,7 @@ column_placements_and_splittings_w_symm = {
     "equivalence_strategies": [all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -878,7 +878,7 @@ column_placements_no_rec_w_symm = {
     "equivalence_strategies": [all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -889,7 +889,7 @@ column_placements_and_point_separation_w_symm = {
     "equivalence_strategies": [all_equivalent_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -900,7 +900,7 @@ column_placements_and_splittings_and_point_separation_w_symm = {
     "equivalence_strategies": [all_equivalent_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -911,7 +911,7 @@ row_and_column_placements_w_symm = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -922,7 +922,7 @@ row_and_column_placements_and_splittings_w_symm = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -933,7 +933,7 @@ row_and_column_placements_no_rec_w_symm = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -944,7 +944,7 @@ row_and_column_placements_and_point_separation_w_symm = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -955,7 +955,7 @@ row_and_column_placements_and_splittings_and_point_separation_w_symm = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -966,7 +966,7 @@ point_placement_w_symm = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -977,7 +977,7 @@ point_placement_and_splittings_w_symm = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -988,7 +988,7 @@ point_placement_and_point_separation_w_symm = {
     "equivalence_strategies": [all_point_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -999,7 +999,7 @@ point_placement_and_splittings_and_point_separation_w_symm = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1010,7 +1010,7 @@ point_separation_and_isolation_w_symm = {
     "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1021,7 +1021,7 @@ point_separation_and_isolation_and_splittings_w_symm = {
     "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1032,7 +1032,7 @@ point_placement_and_all_lrm_and_rlm_placements_w_symm = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1043,7 +1043,7 @@ point_placement_and_all_lrm_and_rlm_placements_and_splittings_w_symm = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1054,7 +1054,7 @@ row_and_column_placements_and_all_lrm_and_rlm_placements_w_symm = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1065,7 +1065,7 @@ row_and_column_placements_and_all_lrm_and_rlm_placements_and_splittings_w_symm =
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1076,7 +1076,7 @@ point_placement_and_all_321_boundaries_w_symm = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1087,7 +1087,7 @@ point_placement_and_all_321_boundaries_and_splittings_w_symm = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1098,7 +1098,7 @@ row_and_column_placements_and_all_321_boundaries_w_symm = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1109,7 +1109,7 @@ row_and_column_placements_and_all_321_boundaries_and_splittings_w_symm = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1120,7 +1120,7 @@ finite_w_symm = {
     "equivalence_strategies": [all_equivalent_minimum_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1131,7 +1131,7 @@ mimic_regular_insertion_encoding_w_symm = {
     "equivalence_strategies": [],
     "inferral_strategies": [],
     "recursive_strategies": [reversibly_deletable_points],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1142,7 +1142,7 @@ mimic_regular_insertion_encoding_flip_w_symm = {
     "equivalence_strategies": [],
     "inferral_strategies": [],
     "recursive_strategies": [reversibly_deletable_points],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1153,7 +1153,7 @@ mimic_regular_insertion_encoding_but_better_w_symm = {
     "equivalence_strategies": [],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1164,7 +1164,7 @@ mimic_regular_insertion_encoding_flip_but_better_w_symm = {
     "equivalence_strategies": [],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1175,7 +1175,7 @@ mimic_regular_insertion_encoding_but_better_from_all_angles_w_symm = {
     "equivalence_strategies": [],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1186,7 +1186,7 @@ mimic_Zeilberger_enumeration_schemes_w_symm = {
     "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral],
     "recursive_strategies": [reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1197,7 +1197,7 @@ left_to_right_maxima_123_and_point_placements_w_symm = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1208,7 +1208,7 @@ left_to_right_maxima_1234_and_point_placements_w_symm = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1219,7 +1219,7 @@ left_to_right_maxima_123_and_row_column_placements_w_symm = {
     "equivalence_strategies": [all_equivalent_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1230,7 +1230,7 @@ left_to_right_maxima_1234_and_row_column_placements_w_symm = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1241,7 +1241,7 @@ point_separation_and_isolation_with_left_to_right_maxima1234_w_symm = {
     "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1252,7 +1252,7 @@ row_and_column_insertion_w_symm = {
     "equivalence_strategies": [all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1263,7 +1263,7 @@ row_and_column_insertion_and_cell_insertion_w_symm = {
     "equivalence_strategies": [all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1274,7 +1274,7 @@ row_and_column_insertion_and_cell_insertion_and_point_separation_w_symm = {
     "equivalence_strategies": [all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1285,7 +1285,7 @@ row_and_column_insertion_and_splittings_w_symm = {
     "equivalence_strategies": [all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1296,7 +1296,7 @@ row_and_column_insertion_and_cell_insertion_and_splittings_w_symm = {
     "equivalence_strategies": [all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1307,7 +1307,7 @@ row_and_column_insertion_and_cell_insertion_and_point_separation_and_splittings_
     "equivalence_strategies": [all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1318,7 +1318,7 @@ jays_special_w_symm = {
     "equivalence_strategies": [all_point_placements, all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1329,7 +1329,7 @@ jays_special_no_rec_w_symm = {
     "equivalence_strategies": [all_point_placements, all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1340,7 +1340,7 @@ extreme_points_w_symm = {
     "equivalence_strategies": [all_point_placements, all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -1355,7 +1355,7 @@ all_strategies_non_interl = {
     "equivalence_strategies": [all_point_placements, point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1366,7 +1366,7 @@ minimum_row_placements_non_interl = {
     "equivalence_strategies": [all_equivalent_minimum_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1377,7 +1377,7 @@ minimum_row_placements_and_splittings_non_interl = {
     "equivalence_strategies": [all_equivalent_minimum_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1388,7 +1388,7 @@ minimum_row_no_rec_non_interl = {
     "equivalence_strategies": [all_equivalent_minimum_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1399,7 +1399,7 @@ minimum_row_placements_and_point_separation_non_interl = {
     "equivalence_strategies": [all_equivalent_minimum_row_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1410,7 +1410,7 @@ minimum_row_placements_and_splittings_and_point_separation_non_interl = {
     "equivalence_strategies": [all_equivalent_minimum_row_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1421,7 +1421,7 @@ row_placements_non_interl = {
     "equivalence_strategies": [all_equivalent_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1432,7 +1432,7 @@ row_placements_and_splittings_non_interl = {
     "equivalence_strategies": [all_equivalent_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1443,7 +1443,7 @@ row_placements_no_rec_non_interl = {
     "equivalence_strategies": [all_equivalent_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1454,7 +1454,7 @@ row_placements_and_point_separation_non_interl = {
     "equivalence_strategies": [all_equivalent_row_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1465,7 +1465,7 @@ row_placements_and_splittings_and_point_separation_non_interl = {
     "equivalence_strategies": [all_equivalent_row_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1476,7 +1476,7 @@ left_column_placements_non_interl = {
     "equivalence_strategies": [all_equivalent_leftmost_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1487,7 +1487,7 @@ left_column_placements_and_splittings_non_interl = {
     "equivalence_strategies": [all_equivalent_leftmost_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1498,7 +1498,7 @@ left_column_placements_no_rec_non_interl = {
     "equivalence_strategies": [all_equivalent_leftmost_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1509,7 +1509,7 @@ left_column_placements_and_point_separation_non_interl = {
     "equivalence_strategies": [all_equivalent_leftmost_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1520,7 +1520,7 @@ left_column_placements_and_splittings_and_point_separation_non_interl = {
     "equivalence_strategies": [all_equivalent_leftmost_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1531,7 +1531,7 @@ column_placements_non_interl = {
     "equivalence_strategies": [all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1542,7 +1542,7 @@ column_placements_and_splittings_non_interl = {
     "equivalence_strategies": [all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1553,7 +1553,7 @@ column_placements_no_rec_non_interl = {
     "equivalence_strategies": [all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1564,7 +1564,7 @@ column_placements_and_point_separation_non_interl = {
     "equivalence_strategies": [all_equivalent_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1575,7 +1575,7 @@ column_placements_and_splittings_and_point_separation_non_interl = {
     "equivalence_strategies": [all_equivalent_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1586,7 +1586,7 @@ row_and_column_placements_non_interl = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1597,7 +1597,7 @@ row_and_column_placements_and_splittings_non_interl = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1608,7 +1608,7 @@ row_and_column_placements_no_rec_non_interl = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1619,7 +1619,7 @@ row_and_column_placements_and_point_separation_non_interl = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1630,7 +1630,7 @@ row_and_column_placements_and_splittings_and_point_separation_non_interl = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1641,7 +1641,7 @@ point_placement_non_interl = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1652,7 +1652,7 @@ point_placement_and_splittings_non_interl = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1663,7 +1663,7 @@ point_placement_and_point_separation_non_interl = {
     "equivalence_strategies": [all_point_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1674,7 +1674,7 @@ point_placement_and_splittings_and_point_separation_non_interl = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1685,7 +1685,7 @@ point_separation_and_isolation_non_interl = {
     "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1696,7 +1696,7 @@ point_separation_and_isolation_and_splittings_non_interl = {
     "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1707,7 +1707,7 @@ point_placement_and_all_lrm_and_rlm_placements_non_interl = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1718,7 +1718,7 @@ point_placement_and_all_lrm_and_rlm_placements_and_splittings_non_interl = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1729,7 +1729,7 @@ row_and_column_placements_and_all_lrm_and_rlm_placements_non_interl = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1740,7 +1740,7 @@ row_and_column_placements_and_all_lrm_and_rlm_placements_and_splittings_non_inte
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1751,7 +1751,7 @@ point_placement_and_all_321_boundaries_non_interl = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1762,7 +1762,7 @@ point_placement_and_all_321_boundaries_and_splittings_non_interl = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1773,7 +1773,7 @@ row_and_column_placements_and_all_321_boundaries_non_interl = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1784,7 +1784,7 @@ row_and_column_placements_and_all_321_boundaries_and_splittings_non_interl = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1795,7 +1795,7 @@ finite_non_interl = {
     "equivalence_strategies": [all_equivalent_minimum_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1806,7 +1806,7 @@ mimic_regular_insertion_encoding_non_interl = {
     "equivalence_strategies": [],
     "inferral_strategies": [],
     "recursive_strategies": [reversibly_deletable_points],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1817,7 +1817,7 @@ mimic_regular_insertion_encoding_flip_non_interl = {
     "equivalence_strategies": [],
     "inferral_strategies": [],
     "recursive_strategies": [reversibly_deletable_points],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1828,7 +1828,7 @@ mimic_regular_insertion_encoding_but_better_non_interl = {
     "equivalence_strategies": [],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1839,7 +1839,7 @@ mimic_regular_insertion_encoding_flip_but_better_non_interl = {
     "equivalence_strategies": [],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1850,7 +1850,7 @@ mimic_regular_insertion_encoding_but_better_from_all_angles_non_interl = {
     "equivalence_strategies": [],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1861,7 +1861,7 @@ mimic_Zeilberger_enumeration_schemes_non_interl = {
     "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral],
     "recursive_strategies": [reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1872,7 +1872,7 @@ left_to_right_maxima_123_and_point_placements_non_interl = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1883,7 +1883,7 @@ left_to_right_maxima_1234_and_point_placements_non_interl = {
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1894,7 +1894,7 @@ left_to_right_maxima_123_and_row_column_placements_non_interl = {
     "equivalence_strategies": [all_equivalent_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1905,7 +1905,7 @@ left_to_right_maxima_1234_and_row_column_placements_non_interl = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1916,7 +1916,7 @@ point_separation_and_isolation_with_left_to_right_maxima1234_non_interl = {
     "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1927,7 +1927,7 @@ row_and_column_insertion_non_interl = {
     "equivalence_strategies": [all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1938,7 +1938,7 @@ row_and_column_insertion_and_cell_insertion_non_interl = {
     "equivalence_strategies": [all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1949,7 +1949,7 @@ row_and_column_insertion_and_cell_insertion_and_point_separation_non_interl = {
     "equivalence_strategies": [all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1960,7 +1960,7 @@ row_and_column_insertion_and_splittings_non_interl = {
     "equivalence_strategies": [all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1971,7 +1971,7 @@ row_and_column_insertion_and_cell_insertion_and_splittings_non_interl = {
     "equivalence_strategies": [all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1982,7 +1982,7 @@ row_and_column_insertion_and_cell_insertion_and_point_separation_and_splittings_
     "equivalence_strategies": [all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -1993,7 +1993,7 @@ jays_special_non_interl = {
     "equivalence_strategies": [all_point_placements, all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -2004,7 +2004,7 @@ jays_special_no_rec_non_interl = {
     "equivalence_strategies": [all_point_placements, all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -2015,7 +2015,7 @@ extreme_points_non_interl = {
     "equivalence_strategies": [all_point_placements, all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [splittings],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
@@ -2026,7 +2026,7 @@ classical_binary_pattern_placement  = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -2037,7 +2037,7 @@ binary_pattern_classical_class_placement  = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
@@ -2048,7 +2048,7 @@ binary_pattern_placement  = {
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified, is_empty],
+    "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False

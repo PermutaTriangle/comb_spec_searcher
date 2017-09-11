@@ -1,31 +1,31 @@
-'''
-A database to keep track of equivalent tilings. This is done using a union find
-method. Also, explanations of how tilings are equivalent are maintained.
+"""
+A database to keep track of equivalent tilings.
+
+This is done using a union find method. Also, explanations of how tilings are
+equivalent are maintained.
 
 Based on: https://www.ics.uci.edu/~eppstein/PADS/UnionFind.py
-'''
+"""
 
 from collections import deque
 
+
 class EquivalenceDB(object):
-    '''
+    """
     A database for equivalences. Supports four methods.
 
     - DB[x] return a name for the set containing x. Each set named by
     arbitrarily chosen member.
-
     - DB.union(t1, t2, explanation) merges the sets containing t1 and t2 and
     records why t1 and t2 are equivalent.
-
     - DB.equivalent(t1, t2) returns True, if t1 and t2 are in the same set,
     otherwise returns False.
-
     - DB.get_relation(t1, t2) returns a string explaining why t1 and t2 are
       equivalent.
+    """
 
-    '''
     def __init__(self):
-        """Creates a new empty equivalent database."""
+        """Create a new empty equivalent database."""
         self.parents = {}
         self.weights = {}
         self.explanations = {}
@@ -54,31 +54,32 @@ class EquivalenceDB(object):
         """Find sets containing t1 and t2 and merge them."""
         verified = self.is_verified(t1) or self.is_verified(t2)
         roots = [self[t1], self[t2]]
-        heaviest = max([(self.weights[r],r) for r in roots])[1]
+        heaviest = max([(self.weights[r], r) for r in roots])[1]
         for r in roots:
             if r != heaviest:
                 self.weights[heaviest] += self.weights[r]
                 self.parents[r] = heaviest
-        self.explanations[(t1,t2)] = explanation
-        if (t2,t1) not in self.explanations:
-            self.explanations[(t2,t1)] = "Reverse of: " + explanation
-
-        self.update_verified(t1)
-
+        self.explanations[(t1, t2)] = explanation
+        if (t2, t1) not in self.explanations:
+            self.explanations[(t2, t1)] = "Reverse of: " + explanation
+        if verified:
+            self.update_verified(t1)
 
     def equivalent(self, t1, t2):
+        """Return True if t1 and t2 are equivalent, False otherwise."""
         return self[t1] == self[t2]
 
     def update_verified(self, tiling):
+        """Update database that tilings euivalent to tiling are verified."""
         if not self.is_verified(tiling):
             self.verified_roots.add(self[tiling])
 
     def is_verified(self, tiling):
-        """Return true if any equivalent tiling is verified"""
+        """Return true if any equivalent tiling is verified."""
         return self[tiling] in self.verified_roots
 
     def get_explanation(self, tiling, other_tiling):
-        """Return how to tilings are equivalent using explanations."""
+        """Return how two tilings are equivalent using explanations."""
         if tiling == other_tiling:
             return ""
 
@@ -89,15 +90,17 @@ class EquivalenceDB(object):
                 for j in range(i+1, len(path)):
                     t1 = path[i]
                     t2 = path[j]
-                    key = (t1,t2)
+                    key = (t1, t2)
                     if key in self.explanations:
-                        explanation = explanation + self.explanations[key] + ". | "
+                        new_explanation = self.explanations[key]
+                        explanation = explanation + new_explanation + ". | "
                     key = (self[t2], self[t1])
                     if key in self.explanations:
-                        explanation = explanation + "The reverse of: " + self.explanations[key] + ". | "
+                        new_explanation = self.explanations[key]
+                        new_explanation = "The reverse of: " + new_explanation
+                        explanation = explanation + new_explanation + ". | "
             return explanation
-        '''We hopefully never get here'''
-        return "they are on the same SiblingNode"
+        raise KeyError("They are not equivalent.")
 
     def find_path(self, tiling, other_tiling):
         """
@@ -105,13 +108,10 @@ class EquivalenceDB(object):
 
         Used to find shortest explanation of why things are equivalent.
         """
-
         if not self.equivalent(tiling, other_tiling):
             raise KeyError("The tilings given are not equivalent.")
         equivalent_tilings = {}
         reverse_map = {}
-
-        equivalent_label = self[tiling]
 
         for x in self.parents:
             n = len(equivalent_tilings)
