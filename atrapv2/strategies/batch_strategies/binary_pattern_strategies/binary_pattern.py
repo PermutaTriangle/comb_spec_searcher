@@ -44,9 +44,9 @@ def binary_pattern(tiling, basis, **kwargs):
             # print(inferred_patt, file=sys.stderr)
             # print(inferred_patt_bin, file=sys.stderr)
             cclass = chain.from_iterable(clas for clas in coincidence_classification[patt] if any(is_subset(c, inferred_patt_bin) for c in clas))
-            maxibin = filter(lambda x: is_binary(MeshPatt.unrank(patt, x), basis), filter_maximal(cclass))
+            maxibin = list(filter(lambda x: is_binary(MeshPatt.unrank(patt, x), basis), filter_maximal(cclass)))
 
-            for mpatt_bin in maxibin:
+            for mpatt_bin in filter_maximal(maxibin):
                 # print(None, file=sys.stderr)
                 # print(tiling_from_mesh_pattern(mpatt, block.perm_class), file=sys.stderr)
                 # print(patt, file=sys.stderr)
@@ -55,3 +55,4 @@ def binary_pattern(tiling, basis, **kwargs):
                         tiling_from_mesh_pattern(mpatt, block.perm_class)]
                 yield Strategy(("Placing the binary pattern "
                                      "{}").format(mpatt), tilings, [False, True])
+    print("All binary pattern strategies exhausted", file=sys.stderr)

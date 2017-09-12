@@ -1,5 +1,7 @@
 from permuta import *
 from grids import Tiling, Block
+import sys
+from itertools import chain
 
 def tiling_from_mesh_pattern(mpatt, perm_class):
     """Given a mesh pattern and perm_class, generate a tiling where
@@ -107,3 +109,31 @@ def flip_binshad_vertical(binshad, length):
     for i in range(len(bits) // (2*length)):
         bits[i*length:(i+1)*length], bits[(length-i-1)*length:(length-i)*length] = bits[(length-i-1)*length:(length-i)*length], bits[i*length:(i+1)*length]
     return int(''.join(bits), 2)
+
+def count_maximal_binary_patterns(basis, coincidence_classification):
+    k = 3
+    res = 0
+    for patt in PermSet.avoiding(basis).of_length(k):
+        if patt not in coincidence_classification:
+            continue
+        inferred_patt = infer_empty_boxes(patt, basis)
+        inferred_patt_bin = shad_to_binary(inferred_patt.shading, len(inferred_patt) + 1)
+        cclass = chain.from_iterable(clas for clas in coincidence_classification[patt] if any(is_subset(c, inferred_patt_bin) for c in clas))
+        maxibin = filter_maximal(list(filter(lambda x: is_binary(MeshPatt.unrank(patt, x), basis), filter_maximal(cclass))))
+        # maxibin = sum(is_binary(MeshPatt.unrank(patt, x), basis) for x in filter_maximal(cclass))
+        res += len(maxibin)
+
+        print("{}: Number of  maximal binary patterns: {}".format(patt, len(maxibin)), file=sys.stdout)
+    return res
+
+def count_maximal_binary_patterns_from_classical_class(basis, coincidence_classification):
+    k = 3
+    res = 0
+    for patt in PermSet.avoiding(basis).of_length(k):
+        if patt not in coincidence_classification:
+            continue
+        maxibin = sum(is_binary(MeshPatt.unrank(patt, x), basis) for x in filter_maximal(coincidence_classification[patt][0]))
+        res += maxibin
+
+        print("{}: Number of maximal binary patterns in classclass: {}".format(patt, maxibin), file=sys.stdout)
+    return res
