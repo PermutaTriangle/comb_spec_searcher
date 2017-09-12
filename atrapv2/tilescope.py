@@ -341,7 +341,7 @@ class TileScope(object):
                 if strategy.back_maps is not None:
                     if label not in self.ruledb.back_maps:
                         self.ruledb.back_maps[label] = {}
-                    self.ruledb.back_maps[label][tuple(sorted(end_labels))] = strategy.tilings
+                    self.ruledb.back_maps[label][tuple(sorted(end_labels))] = strategy.back_maps
 
         if not self.is_expanded(label):
             self.tilingdb.increment_expanded(label)
