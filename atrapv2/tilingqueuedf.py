@@ -61,18 +61,17 @@ class TilingQueueDF(object):
         if current_depth < max_depth:
             for eq_label in self.equivalent_set(root):
                 yield eq_label
-                yield eq_label
                 rules = self.rules_dict[eq_label]
                 # print(rules)
                 for rule in rules:
-                    if self.is_verified is not None:
-                        previous = None
+                    # if self.is_verified is not None:
+                    #     previous = None
                     for child_label in rule:
-                        if self.is_verified is not None:
-                            if previous is None:
-                                previous = child_label
-                            else:
-                                if not self.is_verified(previous):
-                                    break
+                        # if self.is_verified is not None:
+                        #     if previous is None:
+                        #         previous = child_label
+                        #     else:
+                        #         if not self.is_verified(previous):
+                        #             break
                         for label in self.do_level_iter(child_label, current_depth + 1, max_depth):
                             yield label

@@ -291,6 +291,7 @@ class TileScope(object):
         """
         start = time.time()
         tiling = self.tilingdb.get_tiling(label)
+        print(tiling)
         expanding = self.tilingdb.number_times_expanded(label)
         strategy_generators = self.strategy_generators[expanding]
         for generator in strategy_generators:
@@ -335,6 +336,7 @@ class TileScope(object):
                     self.equivdb.union(label, other_label, strategy.formal_step)
                     if not (self.is_expanded(other_label)
                             or self.tilingdb.is_expanding_other_sym(other_label)):
+                        print("Added to working!")
                         self.tilingqueue.add_to_working(other_label)
                 else:
                     end_labels = [self.tilingdb.get_label(t) for t in strategy.tilings]
@@ -436,7 +438,7 @@ class TileScope(object):
         for label in self.tilingqueue.do_level():
             if label is None:
                 return True
-            if self.is_expanded(label) or self.tilingdb.is_verified(label):
+            if self.is_expanded(label) or self.equivdb.is_verified(label):
                 continue
             elif not self.tilingdb.is_expandable(label):
                 continue
@@ -451,7 +453,7 @@ class TileScope(object):
             label = self.tilingqueue.next()
             if label is None:
                 return True
-            if self.is_expanded(label) or self.tilingdb.is_verified(label):
+            if self.is_expanded(label) or self.equivdb.is_verified(label):
                 continue
             elif not self.tilingdb.is_expandable(label):
                 continue
