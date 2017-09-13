@@ -96,6 +96,7 @@ class TileScope(object):
         self.prepping_for_tree_search_time = 0
         self._time_taken = None
 
+
         if equivalence_strategies is not None:
             self.equivalence_strategy_generators = list(equivalence_strategies)
         else:
@@ -428,7 +429,7 @@ class TileScope(object):
         for label in self.tilingqueue.do_level():
             if label is None:
                 return True
-            if self.is_expanded(label) or self.tilingdb.is_verified(label):
+            if self.is_expanded(label) or self.equivdb.is_verified(label):
                 continue
             elif not self.tilingdb.is_expandable(label):
                 continue
@@ -443,7 +444,7 @@ class TileScope(object):
             label = self.tilingqueue.next()
             if label is None:
                 return True
-            if self.is_expanded(label) or self.tilingdb.is_verified(label):
+            if self.is_expanded(label) or self.equivdb.is_verified(label):
                 continue
             elif not self.tilingdb.is_expandable(label):
                 continue
