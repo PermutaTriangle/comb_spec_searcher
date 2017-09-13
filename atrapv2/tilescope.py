@@ -23,6 +23,8 @@ from .ruledb import RuleDB
 from .strategies import InferralStrategy, Strategy, VerificationStrategy
 from .tilingdb import TilingDB
 from .tilingqueue import TilingQueue
+from .tilingqueuedf import TilingQueueDF
+
 from .tree_searcher import proof_tree_dfs, prune
 
 
@@ -52,7 +54,7 @@ class TileScope(object):
         self.equivdb = EquivalenceDB()
         self.ruledb = RuleDB()
         self.tilingdb = TilingDB()
-        self.tilingqueue = TilingQueue()
+        # self.tilingqueue = TilingQueue()
         self.non_interleaving_decomposition = non_interleaving_recursion
         self.early_splitting_only = early_splitting_only
         self._inferral_cache = LRUCache(100000)
@@ -70,6 +72,12 @@ class TileScope(object):
             start_tiling = Tiling({(0, 0): Av(self.basis)})
 
         self.tilingdb.add(start_tiling, expandable=True)
+
+        self.tilingqueue = TilingQueueDF(rules_dict=self.ruledb.rules_dict,
+                                         root=self.tilingdb.get_label(start_tiling),
+                                         equivalent_set=self.equivdb.equivalent_set,
+                                         is_verified=self.equivdb.is_verified)
+
         self.tilingqueue.add_to_working(self.tilingdb.get_label(start_tiling))
 
         self.start_label = self.tilingdb.get_label(start_tiling)
@@ -341,7 +349,7 @@ class TileScope(object):
                 if strategy.back_maps is not None:
                     if label not in self.ruledb.back_maps:
                         self.ruledb.back_maps[label] = {}
-                    self.ruledb.back_maps[label][tuple(sorted(end_labels))] = strategy.tilings
+                    self.ruledb.back_maps[label][tuple(sorted(end_labels))] = strategy.back_maps
 
         if not self.is_expanded(label):
             self.tilingdb.increment_expanded(label)
