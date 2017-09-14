@@ -9,7 +9,7 @@ class TilingQueueDF(object):
     """
     The Queue determines the order that tilings are expanded by the tilescope.
     """
-    def __init__(self, rules_dict=None, root=None, equivalent_set=None, is_verified=None):
+    def __init__(self, rules_dict=None, root=None, equivalent_set=None):
         self.working = Queue()
         self.curr_level = Queue()
         self.next_level = Queue()
@@ -22,7 +22,6 @@ class TilingQueueDF(object):
             raise TypeError("TilingQueueDF requires a function that returns equivalent set.")
         self.equivalent_set = equivalent_set
         self.rules_dict = rules_dict
-        self.is_verified = is_verified
         self.root = root
         self.iter = None
 
@@ -62,16 +61,7 @@ class TilingQueueDF(object):
             for eq_label in self.equivalent_set(root):
                 yield eq_label
                 rules = self.rules_dict[eq_label]
-                # print(rules)
                 for rule in rules:
-                    # if self.is_verified is not None:
-                    #     previous = None
                     for child_label in rule:
-                        # if self.is_verified is not None:
-                        #     if previous is None:
-                        #         previous = child_label
-                        #     else:
-                        #         if not self.is_verified(previous):
-                        #             break
                         for label in self.do_level_iter(child_label, current_depth + 1, max_depth):
                             yield label

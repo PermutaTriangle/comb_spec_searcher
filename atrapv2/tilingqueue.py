@@ -33,6 +33,7 @@ class TilingQueue(object):
             if self.next_level.empty():
                 print("No more tilings to expand!", file=sys.stderr)
                 return None
+            print("++++Changing next to curr.++++",self.levels_completed)
             self.levels_completed += 1
             self.curr_level = self.next_level
             self.next_level = Queue()
