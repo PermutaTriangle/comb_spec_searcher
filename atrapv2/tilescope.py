@@ -329,7 +329,6 @@ class TileScope(object):
                     self.equivdb.union(label, other_label, strategy.formal_step)
                     if not (self.is_expanded(other_label)
                             or self.tilingdb.is_expanding_other_sym(other_label)):
-                        print("Added to working!")
                         self.tilingqueue.add_to_working(other_label)
                 else:
                     end_labels = [self.tilingdb.get_label(t) for t in strategy.tilings]
