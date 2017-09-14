@@ -23,7 +23,7 @@ from .ruledb import RuleDB
 from .strategies import InferralStrategy, Strategy, VerificationStrategy
 from .tilingdb import TilingDB
 from .tilingqueue import TilingQueue
-from .tree_searcher import proof_tree_dfs, prune
+from .tree_searcher import proof_tree_bfs, prune
 
 
 class TileScope(object):
@@ -94,7 +94,8 @@ class TileScope(object):
         self.symmetry_time = 0
         self.tree_search_time = 0
         self.prepping_for_tree_search_time = 0
-        self._time_taken = None
+        self.queue_time = 0
+        self._time_taken = 0
 
 
         if equivalence_strategies is not None:
@@ -426,6 +427,8 @@ class TileScope(object):
 
     def do_level(self):
         """Expand tilings in current queue. Tilings found added to next."""
+        start = time.time()
+        queue_start = time.time()
         for label in self.tilingqueue.do_level():
             if label is None:
                 return True
@@ -435,10 +438,16 @@ class TileScope(object):
                 continue
             elif self.tilingdb.is_expanding_other_sym(label):
                 continue
+            queue_start -= time.time()
             self.expand(label)
+            queue_start += time.time()
+        self.queue_time += time.time() - queue_start
+        self._time_taken += time.time() - start
 
     def expand_tilings(self, cap):
         """Will send "cap" many tilings to the expand function."""
+        start = time.time()
+        queue_start = time.time()
         count = 0
         while count < cap:
             label = self.tilingqueue.next()
@@ -451,7 +460,11 @@ class TileScope(object):
             elif self.tilingdb.is_expanding_other_sym(label):
                 continue
             count += 1
+            queue_start -= time.time()
             self.expand(label)
+            queue_start += time.time()
+        self.queue_time += time.time() - queue_start
+        self._time_taken += time.time() - start
 
     def status(self, file=sys.stderr):
         """
@@ -496,10 +509,10 @@ class TileScope(object):
         print("Total number of empty tilings is {}".format(str(empty)), file=file)
         print("There were {} cache misses".format(str(self._cache_misses)), file=file)
         print("", file=file)
-        equiv_perc = str(int(self.equivalent_time/self._time_taken * 100))
-        verif_perc = str(int(self.verification_time/self._time_taken * 100))
-        infer_perc = str(int(self.inferral_time/self._time_taken * 100))
-        symme_perc = str(int(self.symmetry_time/self._time_taken * 100))
+        equiv_perc = int(self.equivalent_time/self._time_taken * 100)
+        verif_perc = int(self.verification_time/self._time_taken * 100)
+        infer_perc = int(self.inferral_time/self._time_taken * 100)
+        symme_perc = int(self.symmetry_time/self._time_taken * 100)
         print("Time spent equivalent expanding: {} seconds, ~{}%".format(str(self.equivalent_time),
                                                                          equiv_perc),
               file=file)
@@ -519,16 +532,25 @@ class TileScope(object):
                                                                          str(exp_time),
                                                                          expand_perc),
                   file=file)
-        prpts_perc = str(int(self.prepping_for_tree_search_time/self._time_taken * 100))
+        queue_perc = int(self.queue_time/self._time_taken * 100)
         prep_time = self.prepping_for_tree_search_time
-        tsrch_perc = str(int(self.tree_search_time/self._time_taken * 100))
+        prpts_perc = int(prep_time/self._time_taken * 100)
+        tsrch_perc = int(self.tree_search_time/self._time_taken * 100)
+        print("Time spent queueing: {} seconds, ~{}%".format(str(self.queue_time),
+                                                             queue_perc),
+              file=file)
         print("Time spent prepping for tree search: {} seconds, ~{}%".format(str(prep_time),
                                                                              prpts_perc),
               file=file)
         print("Time spent searching for tree: {} seconds, ~{}%".format(str(self.tree_search_time),
                                                                        tsrch_perc),
               file=file)
+        total_perc = equiv_perc+verif_perc+infer_perc+symme_perc+queue_perc+prpts_perc+tsrch_perc
+        for i, exp_time in enumerate(self.expansion_times):
+            total_perc += int(exp_time/self._time_taken * 100)
+        print("Total of ~{}% accounted for.".format(str(total_perc)), file=file)
         print("", file=file)
+
 
     def _strategies_to_str(self, strategies):
         """Return names of strategies/functions."""
@@ -551,7 +573,6 @@ class TileScope(object):
         after status_update many seconds have passed. It will also print
         the proof tree, in both json and pretty_print formats.
         """
-        start = time.time()
         if verbose:
             if status_update:
                 status_start = time.time()
@@ -574,7 +595,6 @@ class TileScope(object):
                 strats = self._strategies_to_str(strategies)
                 print("Set {}: {}".format(str(i+1), strats), file=file)
             print("", file=file)
-            self._time_taken = time.time() - start
         while True:
             if cap is None:
                 if self.do_level():
@@ -587,20 +607,14 @@ class TileScope(object):
             proof_tree = self.get_proof_tree()
             if proof_tree is not None:
                 if verbose:
-                    end = time.time()
-                    time_taken = end - start
-                    self._time_taken = time_taken
                     self.status(file=file)
                     print("Proof tree found", time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()),
                           file=file)
                     print("", file=file)
                     proof_tree.pretty_print(file=file)
                     print(proof_tree.to_json(), file=file)
-                    print("Time taken was " + str(time_taken) + " seconds", file=file)
+                    print("Time taken was " + str(self._time_taken) + " seconds", file=file)
                 return proof_tree
-            end = time.time()
-            time_taken = end - start
-            self._time_taken = time_taken
             if max_time is not None:
                 if self._time_taken > max_time:
                     self.status(file=file)
@@ -632,6 +646,7 @@ class TileScope(object):
             rules_dict[verified_label] |= set(((),))
 
         self.prepping_for_tree_search_time += time.time() - start
+        self._time_taken += time.time() - start
         start = time.time()
         # Prune all unverifiable labels (recursively)
         rules_dict = prune(rules_dict)
@@ -644,13 +659,15 @@ class TileScope(object):
         if self.equivdb[self.start_label] in rules_dict:
             self._has_proof_tree = True
             # print("A tree was found! :)")
-            _, proof_tree = proof_tree_dfs(rules_dict, root=self.equivdb[self.start_label])
+            _, proof_tree = proof_tree_bfs(rules_dict, root=self.equivdb[self.start_label])
             # print(proof_tree)
             self.tree_search_time += time.time() - start
+            self._time_taken += time.time() - start
             return proof_tree
         else:
             self.tree_search_time += time.time() - start
             # print("No tree was found. :(")
+        self._time_taken += time.time() - start
 
     def get_proof_tree(self, count=False):
         """
