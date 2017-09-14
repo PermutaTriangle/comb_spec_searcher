@@ -3,7 +3,7 @@ from atrapv2.tilingqueue import TilingQueue
 from atrapv2.tilingqueuedf import TilingQueueDF
 import time
 
-filename = 'length11' # the file with bases to be processed
+filename = 'all_leq_S4' # the file with bases to be processed
 # filename = 'length11afterround1'
 
 # Will try each strategy pack in order.

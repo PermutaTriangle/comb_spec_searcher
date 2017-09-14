@@ -11,9 +11,9 @@ from atrapv2 import StrategyPacks
 
 
 """There are two ways to initialise the basis for the TileScope. The simplest
-way isto give the basis as a string where permutations are zero based and
+way is to give the basis as a string where permutations are zero based and
 separated by '_'. For example, for the basis {123, 231}, give the string
-'012_120' (Otherwise expect an iterable of Perm objects from Permuta). You also
+'012_120' (Otherwise expects an iterable of Perm objects from Permuta). You also
 need to choose a strategy pack to search with. Other options include:
     - strategy_pack: Set the strategy pack to search for. Must be an instance of
     StrategyPack.
@@ -32,6 +32,11 @@ need to choose a strategy pack to search with. Other options include:
     decomposition strategies used will be non-intereaving.
     - symmetry: Setting this to true will take advantage of all symmetries
     available with respect to the given basis.
+    - tilingqueue: By default, he tilescope searches with the order as given by
+    the 'TilingQueue' class. You can use an alternative queue system if you
+    prefer for example 'TilingQueueDF' searches in a method similar to the old
+    atrap. To change you need to import the class 'TilingQueueDF', and set this
+    keyword to equal the class. See example at line 103 of this file.
     - start_tiling: Set this to be the start tiling which the search starts
     from. The default setting is the 1x1 tiling with basis."""
 tilescope = TileScope("012_120", StrategyPacks.point_placement)
@@ -94,3 +99,14 @@ while proof_tree is None:
     proof_tree = tilescope.get_proof_tree()
 proof_tree.pretty_print()
 tilescope.status()
+
+"""If you wish to search using a different queue system, you will first need to
+import the queue class you wish to search with. For example, lets assume you
+wish to search with the old atrap style."""
+from atrapv2.tilingqueuedf import TilingQueueDF
+"""After importing you set the keyword 'tilingqueue' when initialising the
+tilescope"""
+tilescope = TileScope("0132_0231_0312_0321_1032_3120",
+                      StrategyPacks.minimum_row_placements,
+                      tilingqueue=TilingQueueDF)
+tilescope.auto_search(1, verbose=True, status_update=10)

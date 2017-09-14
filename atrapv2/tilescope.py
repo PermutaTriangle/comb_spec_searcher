@@ -24,6 +24,8 @@ from .ruledb import RuleDB
 from .strategies import InferralStrategy, Strategy, VerificationStrategy
 from .tilingdb import TilingDB
 from .tilingqueue import TilingQueue
+from .tilingqueuedf import TilingQueueDF
+
 from .tree_searcher import proof_tree_bfs, prune
 
 
@@ -41,6 +43,7 @@ class TileScope(object):
                  other_strategies=None,
                  non_interleaving_recursion=False,
                  symmetry=False,
+                 tilingqueue=TilingQueue,
                  start_tiling=None):
         """Initialise TileScope."""
         if isinstance(basis, str):
@@ -51,7 +54,7 @@ class TileScope(object):
         self.equivdb = EquivalenceDB()
         self.ruledb = RuleDB()
         self.tilingdb = TilingDB()
-        self.tilingqueue = TilingQueue()
+        # self.tilingqueue = TilingQueue()
         self.non_interleaving_decomposition = non_interleaving_recursion
         self._inferral_cache = LRUCache(100000)
         self._basis_partitioning_cache = {}
@@ -68,6 +71,14 @@ class TileScope(object):
             start_tiling = Tiling({(0, 0): Av(self.basis)})
 
         self.tilingdb.add(start_tiling, expandable=True)
+
+        if tilingqueue == TilingQueue:
+            self.tilingqueue = TilingQueue()
+        elif tilingqueue == TilingQueueDF:
+            self.tilingqueue = TilingQueueDF(rules_dict=self.ruledb.rules_dict,
+                                             root=self.tilingdb.get_label(start_tiling),
+                                             equivalent_set=self.equivdb.equivalent_set)
+
         self.tilingqueue.add_to_working(self.tilingdb.get_label(start_tiling))
 
         self.start_label = self.tilingdb.get_label(start_tiling)
