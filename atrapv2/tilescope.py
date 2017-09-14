@@ -291,7 +291,6 @@ class TileScope(object):
         """
         start = time.time()
         tiling = self.tilingdb.get_tiling(label)
-        print(tiling)
         expanding = self.tilingdb.number_times_expanded(label)
         strategy_generators = self.strategy_generators[expanding]
         for generator in strategy_generators:
