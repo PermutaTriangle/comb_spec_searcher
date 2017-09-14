@@ -14,9 +14,27 @@ from atrapv2 import StrategyPacks
 way isto give the basis as a string where permutations are zero based and
 separated by '_'. For example, for the basis {123, 231}, give the string
 '012_120' (Otherwise expect an iterable of Perm objects from Permuta). You also
-need to choose a strategy pack to search with, and then give it to the tilescope
-by preceeding it with a double splat (to unpack a dictionary)."""
-tilescope = TileScope("012_120", **StrategyPacks.point_placement)
+need to choose a strategy pack to search with. Other options include:
+    - strategy_pack: Set the strategy pack to search for. Must be an instance of
+    StrategyPack.
+    - equivalence_strategies: Must be a list of strategies. This will set the
+    equivalent strategies to search with. It will overwrite what was given by
+    the strategy pack.
+    - inferral_strategies: This will set the inferral strategies to search with.
+    It will overwrite what was given by the strategy pack.
+    - verification_strategies: Must be a list of strategies. This will set the
+    verification strategies to search with. It will overwrite what was given by
+    the strategy pack.
+    - other_strategies: Must be a list of lists of strategies. This will set the
+    other strategies to search with. It will overwrite what was given by the
+    strategy pack.
+    - non_interleaving_decomposition: Setting this to true will ensure that any
+    decomposition strategies used will be non-intereaving.
+    - symmetry: Setting this to true will take advantage of all symmetries
+    available with respect to the given basis.
+    - start_tiling: Set this to be the start tiling which the search starts
+    from. The default setting is the 1x1 tiling with basis."""
+tilescope = TileScope("012_120", StrategyPacks.point_placement)
 
 """Now the tilescope has been set, we are now ready to search. To easiest way to
 do this is to call the 'auto_search' function. If a proof tree is found this
@@ -50,7 +68,7 @@ are as follows:
     setting is 'sys.stderr'.
 These can be triggered as keyword arguments when calling the 'auto_search'
 function."""
-tilescope = TileScope("1302_2031", **StrategyPacks.row_and_column_placements)
+tilescope = TileScope("1302_2031", StrategyPacks.row_and_column_placements)
 tilescope.auto_search(cap=1, verbose=True, status_update=5, max_time=10)
 
 """If you wish to do the search more manually, then you can use the functions
@@ -62,7 +80,7 @@ proof_tree.pretty_print()
 
 """You can also instead use the 'do_level' function. This will expand the
 remainder of the current level."""
-tilescope = TileScope("012", **StrategyPacks.point_separation_and_isolation)
+tilescope = TileScope("012", StrategyPacks.point_separation_and_isolation)
 tilescope.do_level()
 proof_tree = tilescope.get_proof_tree()
 if proof_tree is not None:

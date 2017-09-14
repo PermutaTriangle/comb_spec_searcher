@@ -10,7 +10,8 @@ import sys
 import time
 from collections import defaultdict
 
-from atrap.strategies import is_empty
+from atrapv2.StrategyPacks import StrategyPack
+from atrapv2.strategies import is_empty
 from atrap.tools import find_symmetries
 from grids import Tiling
 from permuta import Av, Perm
@@ -33,17 +34,15 @@ class TileScope(object):
     """
     def __init__(self,
                  basis,
-                 batch_strategies=None,
+                 strategy_pack=None,
                  equivalence_strategies=None,
                  inferral_strategies=None,
-                 recursive_strategies=None,
                  verification_strategies=None,
+                 other_strategies=None,
                  non_interleaving_recursion=False,
                  symmetry=False,
-                 early_splitting_only=False,
                  start_tiling=None):
         """Initialise TileScope."""
-        # early_splitting_only not implemented
         if isinstance(basis, str):
             self.basis = Basis([Perm([int(c) for c in p])
                                 for p in basis.split('_')])
@@ -54,7 +53,6 @@ class TileScope(object):
         self.tilingdb = TilingDB()
         self.tilingqueue = TilingQueue()
         self.non_interleaving_decomposition = non_interleaving_recursion
-        self.early_splitting_only = early_splitting_only
         self._inferral_cache = LRUCache(100000)
         self._basis_partitioning_cache = {}
         self._cache_hits = set()
@@ -74,18 +72,24 @@ class TileScope(object):
 
         self.start_label = self.tilingdb.get_label(start_tiling)
 
-        if recursive_strategies is not None:
-            decomp_strat_gen = list(recursive_strategies)
-        else:
-            decomp_strat_gen = []
+        if strategy_pack is not None:
+            if not isinstance(strategy_pack, StrategyPack):
+                raise TypeError("Strategy pack given not instance of strategy pack.")
+            else:
+                self.equivalence_strategy_generators = strategy_pack.eq_strats
+                self.inferral_strategy_generators = strategy_pack.inf_strats
+                self.verif_strat_gen = strategy_pack.ver_strats
+                self.strategy_generators = strategy_pack.other_strats
 
-        if batch_strategies is not None:
-            batch_strategy_generators = list(batch_strategies)
-        else:
-            batch_strategy_generators = []
+        if equivalence_strategies is not None:
+            self.equivalence_strategy_generators = equivalence_strategies
+        if inferral_strategies is not None:
+            self.inferral_strategy_generators = inferral_strategies
+        if verification_strategies is not None:
+            self.verif_strat_gen = verification_strategies
+        if other_strategies is not None:
+            self.other_strategies = other_strategies
 
-        self.strategy_generators = [decomp_strat_gen,
-                                    batch_strategy_generators]
         self.expanded_tilings = [0 for _ in self.strategy_generators]
         self.expansion_times = [0 for _ in self.strategy_generators]
         self.equivalent_time = 0
@@ -97,21 +101,6 @@ class TileScope(object):
         self.queue_time = 0
         self._time_taken = 0
 
-
-        if equivalence_strategies is not None:
-            self.equivalence_strategy_generators = list(equivalence_strategies)
-        else:
-            self.equivalence_strategy_generators = []
-
-        if inferral_strategies is not None:
-            self.inferral_strategy_generators = inferral_strategies
-        else:
-            self.inferral_strategy_generators = []
-
-        if verification_strategies is not None:
-            self.verif_strat_gen = verification_strategies
-        else:
-            self.verif_strat_gen = []
 
     def try_verify(self, tiling, force=False):
         """
