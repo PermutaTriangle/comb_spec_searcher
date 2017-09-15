@@ -10,7 +10,8 @@ import sys
 import time
 from collections import defaultdict
 
-from atrap.strategies import is_empty
+from atrapv2.StrategyPacks import StrategyPack
+from atrapv2.strategies import is_empty
 from atrap.tools import find_symmetries
 from grids import Tiling
 from permuta import Av, Perm
@@ -23,7 +24,9 @@ from .ruledb import RuleDB
 from .strategies import InferralStrategy, Strategy, VerificationStrategy
 from .tilingdb import TilingDB
 from .tilingqueue import TilingQueue
-from .tree_searcher import proof_tree_dfs, prune
+from .tilingqueuedf import TilingQueueDF
+
+from .tree_searcher import proof_tree_bfs, prune
 
 
 class TileScope(object):
@@ -33,17 +36,16 @@ class TileScope(object):
     """
     def __init__(self,
                  basis,
-                 batch_strategies=None,
+                 strategy_pack=None,
                  equivalence_strategies=None,
                  inferral_strategies=None,
-                 recursive_strategies=None,
                  verification_strategies=None,
+                 other_strategies=None,
                  non_interleaving_recursion=False,
                  symmetry=False,
-                 early_splitting_only=False,
+                 tilingqueue=TilingQueue,
                  start_tiling=None):
         """Initialise TileScope."""
-        # early_splitting_only not implemented
         if isinstance(basis, str):
             self.basis = Basis([Perm([int(c) for c in p])
                                 for p in basis.split('_')])
@@ -52,9 +54,8 @@ class TileScope(object):
         self.equivdb = EquivalenceDB()
         self.ruledb = RuleDB()
         self.tilingdb = TilingDB()
-        self.tilingqueue = TilingQueue()
+        # self.tilingqueue = TilingQueue()
         self.non_interleaving_decomposition = non_interleaving_recursion
-        self.early_splitting_only = early_splitting_only
         self._inferral_cache = LRUCache(100000)
         self._basis_partitioning_cache = {}
         self._cache_hits = set()
@@ -70,22 +71,36 @@ class TileScope(object):
             start_tiling = Tiling({(0, 0): Av(self.basis)})
 
         self.tilingdb.add(start_tiling, expandable=True)
+
+        if tilingqueue == TilingQueue:
+            self.tilingqueue = TilingQueue()
+        elif tilingqueue == TilingQueueDF:
+            self.tilingqueue = TilingQueueDF(rules_dict=self.ruledb.rules_dict,
+                                             root=self.tilingdb.get_label(start_tiling),
+                                             equivalent_set=self.equivdb.equivalent_set)
+
         self.tilingqueue.add_to_working(self.tilingdb.get_label(start_tiling))
 
         self.start_label = self.tilingdb.get_label(start_tiling)
 
-        if recursive_strategies is not None:
-            decomp_strat_gen = list(recursive_strategies)
-        else:
-            decomp_strat_gen = []
+        if strategy_pack is not None:
+            if not isinstance(strategy_pack, StrategyPack):
+                raise TypeError("Strategy pack given not instance of strategy pack.")
+            else:
+                self.equivalence_strategy_generators = strategy_pack.eq_strats
+                self.inferral_strategy_generators = strategy_pack.inf_strats
+                self.verif_strat_gen = strategy_pack.ver_strats
+                self.strategy_generators = strategy_pack.other_strats
 
-        if batch_strategies is not None:
-            batch_strategy_generators = list(batch_strategies)
-        else:
-            batch_strategy_generators = []
+        if equivalence_strategies is not None:
+            self.equivalence_strategy_generators = equivalence_strategies
+        if inferral_strategies is not None:
+            self.inferral_strategy_generators = inferral_strategies
+        if verification_strategies is not None:
+            self.verif_strat_gen = verification_strategies
+        if other_strategies is not None:
+            self.other_strategies = other_strategies
 
-        self.strategy_generators = [decomp_strat_gen,
-                                    batch_strategy_generators]
         self.expanded_tilings = [0 for _ in self.strategy_generators]
         self.expansion_times = [0 for _ in self.strategy_generators]
         self.equivalent_time = 0
@@ -94,23 +109,9 @@ class TileScope(object):
         self.symmetry_time = 0
         self.tree_search_time = 0
         self.prepping_for_tree_search_time = 0
-        self._time_taken = None
+        self.queue_time = 0
+        self._time_taken = 0
 
-
-        if equivalence_strategies is not None:
-            self.equivalence_strategy_generators = list(equivalence_strategies)
-        else:
-            self.equivalence_strategy_generators = []
-
-        if inferral_strategies is not None:
-            self.inferral_strategy_generators = inferral_strategies
-        else:
-            self.inferral_strategy_generators = []
-
-        if verification_strategies is not None:
-            self.verif_strat_gen = verification_strategies
-        else:
-            self.verif_strat_gen = []
 
     def try_verify(self, tiling, force=False):
         """
@@ -426,6 +427,8 @@ class TileScope(object):
 
     def do_level(self):
         """Expand tilings in current queue. Tilings found added to next."""
+        start = time.time()
+        queue_start = time.time()
         for label in self.tilingqueue.do_level():
             if label is None:
                 return True
@@ -435,10 +438,16 @@ class TileScope(object):
                 continue
             elif self.tilingdb.is_expanding_other_sym(label):
                 continue
+            queue_start -= time.time()
             self.expand(label)
+            queue_start += time.time()
+        self.queue_time += time.time() - queue_start
+        self._time_taken += time.time() - start
 
     def expand_tilings(self, cap):
         """Will send "cap" many tilings to the expand function."""
+        start = time.time()
+        queue_start = time.time()
         count = 0
         while count < cap:
             label = self.tilingqueue.next()
@@ -451,7 +460,11 @@ class TileScope(object):
             elif self.tilingdb.is_expanding_other_sym(label):
                 continue
             count += 1
+            queue_start -= time.time()
             self.expand(label)
+            queue_start += time.time()
+        self.queue_time += time.time() - queue_start
+        self._time_taken += time.time() - start
 
     def status(self, file=sys.stderr):
         """
@@ -496,10 +509,10 @@ class TileScope(object):
         print("Total number of empty tilings is {}".format(str(empty)), file=file)
         print("There were {} cache misses".format(str(self._cache_misses)), file=file)
         print("", file=file)
-        equiv_perc = str(int(self.equivalent_time/self._time_taken * 100))
-        verif_perc = str(int(self.verification_time/self._time_taken * 100))
-        infer_perc = str(int(self.inferral_time/self._time_taken * 100))
-        symme_perc = str(int(self.symmetry_time/self._time_taken * 100))
+        equiv_perc = int(self.equivalent_time/self._time_taken * 100)
+        verif_perc = int(self.verification_time/self._time_taken * 100)
+        infer_perc = int(self.inferral_time/self._time_taken * 100)
+        symme_perc = int(self.symmetry_time/self._time_taken * 100)
         print("Time spent equivalent expanding: {} seconds, ~{}%".format(str(self.equivalent_time),
                                                                          equiv_perc),
               file=file)
@@ -519,16 +532,25 @@ class TileScope(object):
                                                                          str(exp_time),
                                                                          expand_perc),
                   file=file)
-        prpts_perc = str(int(self.prepping_for_tree_search_time/self._time_taken * 100))
+        queue_perc = int(self.queue_time/self._time_taken * 100)
         prep_time = self.prepping_for_tree_search_time
-        tsrch_perc = str(int(self.tree_search_time/self._time_taken * 100))
+        prpts_perc = int(prep_time/self._time_taken * 100)
+        tsrch_perc = int(self.tree_search_time/self._time_taken * 100)
+        print("Time spent queueing: {} seconds, ~{}%".format(str(self.queue_time),
+                                                             queue_perc),
+              file=file)
         print("Time spent prepping for tree search: {} seconds, ~{}%".format(str(prep_time),
                                                                              prpts_perc),
               file=file)
         print("Time spent searching for tree: {} seconds, ~{}%".format(str(self.tree_search_time),
                                                                        tsrch_perc),
               file=file)
+        total_perc = equiv_perc+verif_perc+infer_perc+symme_perc+queue_perc+prpts_perc+tsrch_perc
+        for i, exp_time in enumerate(self.expansion_times):
+            total_perc += int(exp_time/self._time_taken * 100)
+        print("Total of ~{}% accounted for.".format(str(total_perc)), file=file)
         print("", file=file)
+
 
     def _strategies_to_str(self, strategies):
         """Return names of strategies/functions."""
@@ -551,7 +573,6 @@ class TileScope(object):
         after status_update many seconds have passed. It will also print
         the proof tree, in both json and pretty_print formats.
         """
-        start = time.time()
         if verbose:
             if status_update:
                 status_start = time.time()
@@ -574,7 +595,6 @@ class TileScope(object):
                 strats = self._strategies_to_str(strategies)
                 print("Set {}: {}".format(str(i+1), strats), file=file)
             print("", file=file)
-            self._time_taken = time.time() - start
         while True:
             if cap is None:
                 if self.do_level():
@@ -587,20 +607,14 @@ class TileScope(object):
             proof_tree = self.get_proof_tree()
             if proof_tree is not None:
                 if verbose:
-                    end = time.time()
-                    time_taken = end - start
-                    self._time_taken = time_taken
                     self.status(file=file)
                     print("Proof tree found", time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()),
                           file=file)
                     print("", file=file)
                     proof_tree.pretty_print(file=file)
                     print(proof_tree.to_json(), file=file)
-                    print("Time taken was " + str(time_taken) + " seconds", file=file)
+                    print("Time taken was " + str(self._time_taken) + " seconds", file=file)
                 return proof_tree
-            end = time.time()
-            time_taken = end - start
-            self._time_taken = time_taken
             if max_time is not None:
                 if self._time_taken > max_time:
                     self.status(file=file)
@@ -632,6 +646,7 @@ class TileScope(object):
             rules_dict[verified_label] |= set(((),))
 
         self.prepping_for_tree_search_time += time.time() - start
+        self._time_taken += time.time() - start
         start = time.time()
         # Prune all unverifiable labels (recursively)
         rules_dict = prune(rules_dict)
@@ -644,13 +659,15 @@ class TileScope(object):
         if self.equivdb[self.start_label] in rules_dict:
             self._has_proof_tree = True
             # print("A tree was found! :)")
-            _, proof_tree = proof_tree_dfs(rules_dict, root=self.equivdb[self.start_label])
+            _, proof_tree = proof_tree_bfs(rules_dict, root=self.equivdb[self.start_label])
             # print(proof_tree)
             self.tree_search_time += time.time() - start
+            self._time_taken += time.time() - start
             return proof_tree
         else:
             self.tree_search_time += time.time() - start
             # print("No tree was found. :(")
+        self._time_taken += time.time() - start
 
     def get_proof_tree(self, count=False):
         """

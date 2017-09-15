@@ -78,6 +78,13 @@ class EquivalenceDB(object):
         """Return true if any equivalent tiling is verified."""
         return self[tiling] in self.verified_roots
 
+    def equivalent_set(self, tiling):
+        equivalent_tilings = set()
+        for t in self.parents:
+            if self.equivalent(tiling, t):
+                equivalent_tilings.add(t)
+        return equivalent_tilings
+
     def get_explanation(self, tiling, other_tiling):
         """Return how two tilings are equivalent using explanations."""
         if tiling == other_tiling:

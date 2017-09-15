@@ -509,6 +509,7 @@ class MetaTree(object):
 
         Return child SiblingNodes created.
         """
+        print(or_node.tiling)
         start = time.time()
         child_sibling_nodes = set()
 
@@ -633,6 +634,7 @@ class MetaTree(object):
 
         Return all unverified SiblingNodes found.
         """
+        print(or_node.tiling)
         start = time.time()
         child_sibling_nodes = set()
 

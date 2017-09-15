@@ -1,6 +1,29 @@
 from atrapv2.strategies import *
 
-all_strategies = {
+class StrategyPack(object):
+    def __init__(self, eq_strats = None, ver_strats = None, inf_strats = None, other_strats = None, list=None, old_pack=None):
+        if old_pack is not None:
+            self.eq_strats = old_pack["equivalence_strategies"]
+            self.ver_strats = old_pack["verification_strategies"]
+            self.inf_strats = old_pack["inferral_strategies"]
+            self.other_strats = [old_pack["recursive_strategies"],
+                                 old_pack["batch_strategies"]]
+        elif eq_strats is None:
+            raise TypeError("Strategy pack requires a (possibly empty) list of equivalence strategies.")
+        elif ver_strats is None:
+            raise TypeError("Strategy pack requires a (possibly empty) list of verification strategies.")
+        elif inf_strats is None:
+            raise TypeError("Strategy pack requires a (possibly empty) list of inferral strategies.")
+        elif other_strats is None:
+            raise TypeError("Strategy pack requires a (possibly empty) list of lists of other strategies.")
+        else:
+            self.eq_strats = eq_strats
+            self.inf_strats = inf_strats
+            self.ver_strats = ver_strats
+            self.other_strats = other_strats
+
+
+all_strategies = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_point_isolations],
     "equivalence_strategies": [all_point_placements, point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -9,9 +32,9 @@ all_strategies = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-minimum_row_placements = {
+minimum_row_placements = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_minimum_row_placements],
     "equivalence_strategies": [all_equivalent_minimum_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -20,9 +43,9 @@ minimum_row_placements = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-minimum_row_placements_and_splittings = {
+minimum_row_placements_and_splittings = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_minimum_row_placements],
     "equivalence_strategies": [all_equivalent_minimum_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -31,9 +54,9 @@ minimum_row_placements_and_splittings = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-minimum_row_no_rec = {
+minimum_row_no_rec = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_minimum_row_placements],
     "equivalence_strategies": [all_equivalent_minimum_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -42,9 +65,9 @@ minimum_row_no_rec = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-minimum_row_placements_and_point_separation = {
+minimum_row_placements_and_point_separation = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_minimum_row_placements],
     "equivalence_strategies": [all_equivalent_minimum_row_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -53,9 +76,9 @@ minimum_row_placements_and_point_separation = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-minimum_row_placements_and_splittings_and_point_separation = {
+minimum_row_placements_and_splittings_and_point_separation = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_minimum_row_placements],
     "equivalence_strategies": [all_equivalent_minimum_row_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -64,9 +87,9 @@ minimum_row_placements_and_splittings_and_point_separation = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_placements = {
+row_placements = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements],
     "equivalence_strategies": [all_equivalent_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -75,9 +98,9 @@ row_placements = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_placements_and_splittings = {
+row_placements_and_splittings = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements],
     "equivalence_strategies": [all_equivalent_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -86,9 +109,9 @@ row_placements_and_splittings = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_placements_no_rec = {
+row_placements_no_rec = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements],
     "equivalence_strategies": [all_equivalent_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -97,9 +120,9 @@ row_placements_no_rec = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_placements_and_point_separation = {
+row_placements_and_point_separation = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements],
     "equivalence_strategies": [all_equivalent_row_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -108,9 +131,9 @@ row_placements_and_point_separation = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_placements_and_splittings_and_point_separation = {
+row_placements_and_splittings_and_point_separation = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements],
     "equivalence_strategies": [all_equivalent_row_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -119,9 +142,9 @@ row_placements_and_splittings_and_point_separation = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-left_column_placements = {
+left_column_placements = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_leftmost_column_placements],
     "equivalence_strategies": [all_equivalent_leftmost_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -130,9 +153,9 @@ left_column_placements = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-left_column_placements_and_splittings = {
+left_column_placements_and_splittings = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_leftmost_column_placements],
     "equivalence_strategies": [all_equivalent_leftmost_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -141,9 +164,9 @@ left_column_placements_and_splittings = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-left_column_placements_no_rec = {
+left_column_placements_no_rec = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_leftmost_column_placements],
     "equivalence_strategies": [all_equivalent_leftmost_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -152,9 +175,9 @@ left_column_placements_no_rec = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-left_column_placements_and_point_separation = {
+left_column_placements_and_point_separation = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_leftmost_column_placements],
     "equivalence_strategies": [all_equivalent_leftmost_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -163,9 +186,9 @@ left_column_placements_and_point_separation = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-left_column_placements_and_splittings_and_point_separation = {
+left_column_placements_and_splittings_and_point_separation = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_leftmost_column_placements],
     "equivalence_strategies": [all_equivalent_leftmost_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -174,9 +197,9 @@ left_column_placements_and_splittings_and_point_separation = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-column_placements = {
+column_placements = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_column_placements],
     "equivalence_strategies": [all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -185,9 +208,9 @@ column_placements = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-column_placements_and_splittings = {
+column_placements_and_splittings = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_column_placements],
     "equivalence_strategies": [all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -196,9 +219,9 @@ column_placements_and_splittings = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-column_placements_no_rec = {
+column_placements_no_rec = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_column_placements],
     "equivalence_strategies": [all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -207,9 +230,9 @@ column_placements_no_rec = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-column_placements_and_point_separation = {
+column_placements_and_point_separation = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_column_placements],
     "equivalence_strategies": [all_equivalent_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -218,9 +241,9 @@ column_placements_and_point_separation = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-column_placements_and_splittings_and_point_separation = {
+column_placements_and_splittings_and_point_separation = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_column_placements],
     "equivalence_strategies": [all_equivalent_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -229,9 +252,9 @@ column_placements_and_splittings_and_point_separation = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements = {
+row_and_column_placements = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -240,9 +263,9 @@ row_and_column_placements = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements_and_splittings = {
+row_and_column_placements_and_splittings = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -251,9 +274,9 @@ row_and_column_placements_and_splittings = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements_no_rec = {
+row_and_column_placements_no_rec = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -262,9 +285,9 @@ row_and_column_placements_no_rec = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements_and_point_separation = {
+row_and_column_placements_and_point_separation = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -273,9 +296,9 @@ row_and_column_placements_and_point_separation = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements_and_splittings_and_point_separation = {
+row_and_column_placements_and_splittings_and_point_separation = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -284,9 +307,9 @@ row_and_column_placements_and_splittings_and_point_separation = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-point_placement = {
+point_placement = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -295,9 +318,9 @@ point_placement = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-point_placement_and_splittings = {
+point_placement_and_splittings = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -306,9 +329,9 @@ point_placement_and_splittings = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-point_placement_and_point_separation = {
+point_placement_and_point_separation = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions],
     "equivalence_strategies": [all_point_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -317,9 +340,9 @@ point_placement_and_point_separation = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-point_placement_and_splittings_and_point_separation = {
+point_placement_and_splittings_and_point_separation = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -328,9 +351,9 @@ point_placement_and_splittings_and_point_separation = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-point_separation_and_isolation = {
+point_separation_and_isolation = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_point_isolations],
     "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -339,9 +362,9 @@ point_separation_and_isolation = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-point_separation_and_isolation_and_splittings = {
+point_separation_and_isolation_and_splittings = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_point_isolations],
     "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -350,9 +373,9 @@ point_separation_and_isolation_and_splittings = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-point_placement_and_all_lrm_and_rlm_placements = {
+point_placement_and_all_lrm_and_rlm_placements = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_lrm_and_rlm_placements],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -361,9 +384,9 @@ point_placement_and_all_lrm_and_rlm_placements = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-point_placement_and_all_lrm_and_rlm_placements_and_splittings = {
+point_placement_and_all_lrm_and_rlm_placements_and_splittings = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_lrm_and_rlm_placements],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -372,9 +395,9 @@ point_placement_and_all_lrm_and_rlm_placements_and_splittings = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements_and_all_lrm_and_rlm_placements = {
+row_and_column_placements_and_all_lrm_and_rlm_placements = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements, all_lrm_and_rlm_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -383,9 +406,9 @@ row_and_column_placements_and_all_lrm_and_rlm_placements = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements_and_all_lrm_and_rlm_placements_and_splittings = {
+row_and_column_placements_and_all_lrm_and_rlm_placements_and_splittings = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements, all_lrm_and_rlm_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -394,9 +417,9 @@ row_and_column_placements_and_all_lrm_and_rlm_placements_and_splittings = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-point_placement_and_all_321_boundaries = {
+point_placement_and_all_321_boundaries = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_321_boundaries],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -405,9 +428,9 @@ point_placement_and_all_321_boundaries = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-point_placement_and_all_321_boundaries_and_splittings = {
+point_placement_and_all_321_boundaries_and_splittings = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_321_boundaries],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -416,9 +439,9 @@ point_placement_and_all_321_boundaries_and_splittings = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements_and_all_321_boundaries = {
+row_and_column_placements_and_all_321_boundaries = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements, all_321_boundaries],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -427,9 +450,9 @@ row_and_column_placements_and_all_321_boundaries = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements_and_all_321_boundaries_and_splittings = {
+row_and_column_placements_and_all_321_boundaries_and_splittings = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements, all_321_boundaries],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -438,9 +461,9 @@ row_and_column_placements_and_all_321_boundaries_and_splittings = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-finite = {
+finite = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_minimum_row_placements],
     "equivalence_strategies": [all_equivalent_minimum_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -449,9 +472,9 @@ finite = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-mimic_regular_insertion_encoding = {
+mimic_regular_insertion_encoding = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, minimum_insertion_encoding_row_placements],
     "equivalence_strategies": [],
     "inferral_strategies": [],
@@ -460,9 +483,9 @@ mimic_regular_insertion_encoding = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-mimic_regular_insertion_encoding_flip = {
+mimic_regular_insertion_encoding_flip = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, leftmost_insertion_encoding_column_placements],
     "equivalence_strategies": [],
     "inferral_strategies": [],
@@ -471,9 +494,9 @@ mimic_regular_insertion_encoding_flip = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-mimic_regular_insertion_encoding_but_better = {
+mimic_regular_insertion_encoding_but_better = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, minimum_insertion_encoding_row_placements],
     "equivalence_strategies": [],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -482,9 +505,9 @@ mimic_regular_insertion_encoding_but_better = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-mimic_regular_insertion_encoding_flip_but_better = {
+mimic_regular_insertion_encoding_flip_but_better = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, leftmost_insertion_encoding_column_placements],
     "equivalence_strategies": [],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -493,9 +516,9 @@ mimic_regular_insertion_encoding_flip_but_better = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-mimic_regular_insertion_encoding_but_better_from_all_angles = {
+mimic_regular_insertion_encoding_but_better_from_all_angles = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, insertion_encoding_row_placements, insertion_encoding_column_placements],
     "equivalence_strategies": [],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -504,9 +527,9 @@ mimic_regular_insertion_encoding_but_better_from_all_angles = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-mimic_Zeilberger_enumeration_schemes = {
+mimic_Zeilberger_enumeration_schemes = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_point_isolations],
     "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral],
@@ -515,9 +538,9 @@ mimic_Zeilberger_enumeration_schemes = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-left_to_right_maxima_123_and_point_placements = {
+left_to_right_maxima_123_and_point_placements = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, left_to_right_maxima123],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -526,9 +549,9 @@ left_to_right_maxima_123_and_point_placements = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-left_to_right_maxima_1234_and_point_placements = {
+left_to_right_maxima_1234_and_point_placements = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, left_to_right_maxima1234],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -537,9 +560,9 @@ left_to_right_maxima_1234_and_point_placements = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-left_to_right_maxima_123_and_row_column_placements = {
+left_to_right_maxima_123_and_row_column_placements = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, left_to_right_maxima123, all_row_placements],
     "equivalence_strategies": [all_equivalent_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -548,9 +571,9 @@ left_to_right_maxima_123_and_row_column_placements = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-left_to_right_maxima_1234_and_row_column_placements = {
+left_to_right_maxima_1234_and_row_column_placements = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, left_to_right_maxima1234, all_row_placements, all_column_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -559,9 +582,9 @@ left_to_right_maxima_1234_and_row_column_placements = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-point_separation_and_isolation_with_left_to_right_maxima1234 = {
+point_separation_and_isolation_with_left_to_right_maxima1234 = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, left_to_right_maxima1234, all_point_isolations],
     "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -570,9 +593,9 @@ point_separation_and_isolation_with_left_to_right_maxima1234 = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_insertion = {
+row_and_column_insertion = StrategyPack(old_pack={
     "batch_strategies": [all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -581,9 +604,9 @@ row_and_column_insertion = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_insertion_and_cell_insertion = {
+row_and_column_insertion_and_cell_insertion = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -592,9 +615,9 @@ row_and_column_insertion_and_cell_insertion = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_insertion_and_cell_insertion_and_point_separation = {
+row_and_column_insertion_and_cell_insertion_and_point_separation = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -603,9 +626,9 @@ row_and_column_insertion_and_cell_insertion_and_point_separation = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_insertion_and_splittings = {
+row_and_column_insertion_and_splittings = StrategyPack(old_pack={
     "batch_strategies": [all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -614,9 +637,9 @@ row_and_column_insertion_and_splittings = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_insertion_and_cell_insertion_and_splittings = {
+row_and_column_insertion_and_cell_insertion_and_splittings = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -625,9 +648,9 @@ row_and_column_insertion_and_cell_insertion_and_splittings = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_insertion_and_cell_insertion_and_point_separation_and_splittings = {
+row_and_column_insertion_and_cell_insertion_and_point_separation_and_splittings = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -636,9 +659,9 @@ row_and_column_insertion_and_cell_insertion_and_point_separation_and_splittings 
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-jays_special = {
+jays_special = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_point_placements, all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -647,9 +670,9 @@ jays_special = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-jays_special_no_rec = {
+jays_special_no_rec = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_point_placements, all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -658,9 +681,9 @@ jays_special_no_rec = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-extreme_points = {
+extreme_points = StrategyPack(old_pack={
     "batch_strategies": [extreme_point_boundaries, all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_point_placements, all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -669,13 +692,13 @@ extreme_points = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
 # --------------------------------------------------------------------------
 # Below is an exact copy of the strategy packs at the top, but with symmetries
 # --------------------------------------------------------------------------
 
-all_strategies_w_symm = {
+all_strategies_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_point_isolations],
     "equivalence_strategies": [all_point_placements, point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -684,9 +707,9 @@ all_strategies_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-minimum_row_placements_w_symm = {
+minimum_row_placements_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_minimum_row_placements],
     "equivalence_strategies": [all_equivalent_minimum_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -695,9 +718,9 @@ minimum_row_placements_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-minimum_row_placements_and_splittings_w_symm = {
+minimum_row_placements_and_splittings_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_minimum_row_placements],
     "equivalence_strategies": [all_equivalent_minimum_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -706,9 +729,9 @@ minimum_row_placements_and_splittings_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-minimum_row_no_rec_w_symm = {
+minimum_row_no_rec_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_minimum_row_placements],
     "equivalence_strategies": [all_equivalent_minimum_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -717,9 +740,9 @@ minimum_row_no_rec_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-minimum_row_placements_and_point_separation_w_symm = {
+minimum_row_placements_and_point_separation_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_minimum_row_placements],
     "equivalence_strategies": [all_equivalent_minimum_row_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -728,9 +751,9 @@ minimum_row_placements_and_point_separation_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-minimum_row_placements_and_splittings_and_point_separation_w_symm = {
+minimum_row_placements_and_splittings_and_point_separation_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_minimum_row_placements],
     "equivalence_strategies": [all_equivalent_minimum_row_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -739,9 +762,9 @@ minimum_row_placements_and_splittings_and_point_separation_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_placements_w_symm = {
+row_placements_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements],
     "equivalence_strategies": [all_equivalent_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -750,9 +773,9 @@ row_placements_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_placements_and_splittings_w_symm = {
+row_placements_and_splittings_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements],
     "equivalence_strategies": [all_equivalent_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -761,9 +784,9 @@ row_placements_and_splittings_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_placements_no_rec_w_symm = {
+row_placements_no_rec_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements],
     "equivalence_strategies": [all_equivalent_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -772,9 +795,9 @@ row_placements_no_rec_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_placements_and_point_separation_w_symm = {
+row_placements_and_point_separation_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements],
     "equivalence_strategies": [all_equivalent_row_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -783,9 +806,9 @@ row_placements_and_point_separation_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_placements_and_splittings_and_point_separation_w_symm = {
+row_placements_and_splittings_and_point_separation_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements],
     "equivalence_strategies": [all_equivalent_row_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -794,9 +817,9 @@ row_placements_and_splittings_and_point_separation_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-left_column_placements_w_symm = {
+left_column_placements_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_leftmost_column_placements],
     "equivalence_strategies": [all_equivalent_leftmost_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -805,9 +828,9 @@ left_column_placements_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-left_column_placements_and_splittings_w_symm = {
+left_column_placements_and_splittings_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_leftmost_column_placements],
     "equivalence_strategies": [all_equivalent_leftmost_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -816,9 +839,9 @@ left_column_placements_and_splittings_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-left_column_placements_no_rec_w_symm = {
+left_column_placements_no_rec_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_leftmost_column_placements],
     "equivalence_strategies": [all_equivalent_leftmost_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -827,9 +850,9 @@ left_column_placements_no_rec_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-left_column_placements_and_point_separation_w_symm = {
+left_column_placements_and_point_separation_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_leftmost_column_placements],
     "equivalence_strategies": [all_equivalent_leftmost_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -838,9 +861,9 @@ left_column_placements_and_point_separation_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-left_column_placements_and_splittings_and_point_separation_w_symm = {
+left_column_placements_and_splittings_and_point_separation_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_leftmost_column_placements],
     "equivalence_strategies": [all_equivalent_leftmost_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -849,9 +872,9 @@ left_column_placements_and_splittings_and_point_separation_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-column_placements_w_symm = {
+column_placements_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_column_placements],
     "equivalence_strategies": [all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -860,9 +883,9 @@ column_placements_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-column_placements_and_splittings_w_symm = {
+column_placements_and_splittings_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_column_placements],
     "equivalence_strategies": [all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -871,9 +894,9 @@ column_placements_and_splittings_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-column_placements_no_rec_w_symm = {
+column_placements_no_rec_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_column_placements],
     "equivalence_strategies": [all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -882,9 +905,9 @@ column_placements_no_rec_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-column_placements_and_point_separation_w_symm = {
+column_placements_and_point_separation_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_column_placements],
     "equivalence_strategies": [all_equivalent_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -893,9 +916,9 @@ column_placements_and_point_separation_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-column_placements_and_splittings_and_point_separation_w_symm = {
+column_placements_and_splittings_and_point_separation_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_column_placements],
     "equivalence_strategies": [all_equivalent_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -904,9 +927,9 @@ column_placements_and_splittings_and_point_separation_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements_w_symm = {
+row_and_column_placements_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -915,9 +938,9 @@ row_and_column_placements_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements_and_splittings_w_symm = {
+row_and_column_placements_and_splittings_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -926,9 +949,9 @@ row_and_column_placements_and_splittings_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements_no_rec_w_symm = {
+row_and_column_placements_no_rec_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -937,9 +960,9 @@ row_and_column_placements_no_rec_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements_and_point_separation_w_symm = {
+row_and_column_placements_and_point_separation_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -948,9 +971,9 @@ row_and_column_placements_and_point_separation_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements_and_splittings_and_point_separation_w_symm = {
+row_and_column_placements_and_splittings_and_point_separation_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -959,9 +982,9 @@ row_and_column_placements_and_splittings_and_point_separation_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-point_placement_w_symm = {
+point_placement_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -970,9 +993,9 @@ point_placement_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-point_placement_and_splittings_w_symm = {
+point_placement_and_splittings_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -981,9 +1004,9 @@ point_placement_and_splittings_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-point_placement_and_point_separation_w_symm = {
+point_placement_and_point_separation_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions],
     "equivalence_strategies": [all_point_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -992,9 +1015,9 @@ point_placement_and_point_separation_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-point_placement_and_splittings_and_point_separation_w_symm = {
+point_placement_and_splittings_and_point_separation_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1003,9 +1026,9 @@ point_placement_and_splittings_and_point_separation_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-point_separation_and_isolation_w_symm = {
+point_separation_and_isolation_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_point_isolations],
     "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1014,9 +1037,9 @@ point_separation_and_isolation_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-point_separation_and_isolation_and_splittings_w_symm = {
+point_separation_and_isolation_and_splittings_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_point_isolations],
     "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1025,9 +1048,9 @@ point_separation_and_isolation_and_splittings_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-point_placement_and_all_lrm_and_rlm_placements_w_symm = {
+point_placement_and_all_lrm_and_rlm_placements_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_lrm_and_rlm_placements],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1036,9 +1059,9 @@ point_placement_and_all_lrm_and_rlm_placements_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-point_placement_and_all_lrm_and_rlm_placements_and_splittings_w_symm = {
+point_placement_and_all_lrm_and_rlm_placements_and_splittings_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_lrm_and_rlm_placements],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1047,9 +1070,9 @@ point_placement_and_all_lrm_and_rlm_placements_and_splittings_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements_and_all_lrm_and_rlm_placements_w_symm = {
+row_and_column_placements_and_all_lrm_and_rlm_placements_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements, all_lrm_and_rlm_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1058,9 +1081,9 @@ row_and_column_placements_and_all_lrm_and_rlm_placements_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements_and_all_lrm_and_rlm_placements_and_splittings_w_symm = {
+row_and_column_placements_and_all_lrm_and_rlm_placements_and_splittings_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements, all_lrm_and_rlm_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1069,9 +1092,9 @@ row_and_column_placements_and_all_lrm_and_rlm_placements_and_splittings_w_symm =
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-point_placement_and_all_321_boundaries_w_symm = {
+point_placement_and_all_321_boundaries_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_321_boundaries],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1080,9 +1103,9 @@ point_placement_and_all_321_boundaries_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-point_placement_and_all_321_boundaries_and_splittings_w_symm = {
+point_placement_and_all_321_boundaries_and_splittings_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_321_boundaries],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1091,9 +1114,9 @@ point_placement_and_all_321_boundaries_and_splittings_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements_and_all_321_boundaries_w_symm = {
+row_and_column_placements_and_all_321_boundaries_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements, all_321_boundaries],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1102,9 +1125,9 @@ row_and_column_placements_and_all_321_boundaries_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements_and_all_321_boundaries_and_splittings_w_symm = {
+row_and_column_placements_and_all_321_boundaries_and_splittings_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements, all_321_boundaries],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1113,9 +1136,9 @@ row_and_column_placements_and_all_321_boundaries_and_splittings_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-finite_w_symm = {
+finite_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_minimum_row_placements],
     "equivalence_strategies": [all_equivalent_minimum_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1124,9 +1147,9 @@ finite_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-mimic_regular_insertion_encoding_w_symm = {
+mimic_regular_insertion_encoding_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, minimum_insertion_encoding_row_placements],
     "equivalence_strategies": [],
     "inferral_strategies": [],
@@ -1135,9 +1158,9 @@ mimic_regular_insertion_encoding_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-mimic_regular_insertion_encoding_flip_w_symm = {
+mimic_regular_insertion_encoding_flip_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, leftmost_insertion_encoding_column_placements],
     "equivalence_strategies": [],
     "inferral_strategies": [],
@@ -1146,9 +1169,9 @@ mimic_regular_insertion_encoding_flip_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-mimic_regular_insertion_encoding_but_better_w_symm = {
+mimic_regular_insertion_encoding_but_better_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, minimum_insertion_encoding_row_placements],
     "equivalence_strategies": [],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1157,9 +1180,9 @@ mimic_regular_insertion_encoding_but_better_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-mimic_regular_insertion_encoding_flip_but_better_w_symm = {
+mimic_regular_insertion_encoding_flip_but_better_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, leftmost_insertion_encoding_column_placements],
     "equivalence_strategies": [],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1168,9 +1191,9 @@ mimic_regular_insertion_encoding_flip_but_better_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-mimic_regular_insertion_encoding_but_better_from_all_angles_w_symm = {
+mimic_regular_insertion_encoding_but_better_from_all_angles_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, insertion_encoding_row_placements, insertion_encoding_column_placements],
     "equivalence_strategies": [],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1179,9 +1202,9 @@ mimic_regular_insertion_encoding_but_better_from_all_angles_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-mimic_Zeilberger_enumeration_schemes_w_symm = {
+mimic_Zeilberger_enumeration_schemes_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_point_isolations],
     "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral],
@@ -1190,9 +1213,9 @@ mimic_Zeilberger_enumeration_schemes_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-left_to_right_maxima_123_and_point_placements_w_symm = {
+left_to_right_maxima_123_and_point_placements_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, left_to_right_maxima123],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1201,9 +1224,9 @@ left_to_right_maxima_123_and_point_placements_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-left_to_right_maxima_1234_and_point_placements_w_symm = {
+left_to_right_maxima_1234_and_point_placements_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, left_to_right_maxima1234],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1212,9 +1235,9 @@ left_to_right_maxima_1234_and_point_placements_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-left_to_right_maxima_123_and_row_column_placements_w_symm = {
+left_to_right_maxima_123_and_row_column_placements_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, left_to_right_maxima123, all_row_placements],
     "equivalence_strategies": [all_equivalent_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1223,9 +1246,9 @@ left_to_right_maxima_123_and_row_column_placements_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-left_to_right_maxima_1234_and_row_column_placements_w_symm = {
+left_to_right_maxima_1234_and_row_column_placements_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, left_to_right_maxima1234, all_row_placements, all_column_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1234,9 +1257,9 @@ left_to_right_maxima_1234_and_row_column_placements_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-point_separation_and_isolation_with_left_to_right_maxima1234_w_symm = {
+point_separation_and_isolation_with_left_to_right_maxima1234_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, left_to_right_maxima1234, all_point_isolations],
     "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1245,9 +1268,9 @@ point_separation_and_isolation_with_left_to_right_maxima1234_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_insertion_w_symm = {
+row_and_column_insertion_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1256,9 +1279,9 @@ row_and_column_insertion_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_insertion_and_cell_insertion_w_symm = {
+row_and_column_insertion_and_cell_insertion_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1267,9 +1290,9 @@ row_and_column_insertion_and_cell_insertion_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_insertion_and_cell_insertion_and_point_separation_w_symm = {
+row_and_column_insertion_and_cell_insertion_and_point_separation_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1278,9 +1301,9 @@ row_and_column_insertion_and_cell_insertion_and_point_separation_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_insertion_and_splittings_w_symm = {
+row_and_column_insertion_and_splittings_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1289,9 +1312,9 @@ row_and_column_insertion_and_splittings_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_insertion_and_cell_insertion_and_splittings_w_symm = {
+row_and_column_insertion_and_cell_insertion_and_splittings_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1300,9 +1323,9 @@ row_and_column_insertion_and_cell_insertion_and_splittings_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_insertion_and_cell_insertion_and_point_separation_and_splittings_w_symm = {
+row_and_column_insertion_and_cell_insertion_and_point_separation_and_splittings_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1311,9 +1334,9 @@ row_and_column_insertion_and_cell_insertion_and_point_separation_and_splittings_
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-jays_special_w_symm = {
+jays_special_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_point_placements, all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1322,9 +1345,9 @@ jays_special_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-jays_special_no_rec_w_symm = {
+jays_special_no_rec_w_symm = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_point_placements, all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1333,9 +1356,9 @@ jays_special_no_rec_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-extreme_points_w_symm = {
+extreme_points_w_symm = StrategyPack(old_pack={
     "batch_strategies": [extreme_point_boundaries, all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_point_placements, all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1344,13 +1367,13 @@ extreme_points_w_symm = {
     "symmetry": True,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
 # --------------------------------------------------------------------------
 # Below is an exact copy of the strategy packs at the top, but without interleaving recursions
 # --------------------------------------------------------------------------
 
-all_strategies_non_interl = {
+all_strategies_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_point_isolations],
     "equivalence_strategies": [all_point_placements, point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1359,9 +1382,9 @@ all_strategies_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-minimum_row_placements_non_interl = {
+minimum_row_placements_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_minimum_row_placements],
     "equivalence_strategies": [all_equivalent_minimum_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1370,9 +1393,9 @@ minimum_row_placements_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-minimum_row_placements_and_splittings_non_interl = {
+minimum_row_placements_and_splittings_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_minimum_row_placements],
     "equivalence_strategies": [all_equivalent_minimum_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1381,9 +1404,9 @@ minimum_row_placements_and_splittings_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-minimum_row_no_rec_non_interl = {
+minimum_row_no_rec_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_minimum_row_placements],
     "equivalence_strategies": [all_equivalent_minimum_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1392,9 +1415,9 @@ minimum_row_no_rec_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-minimum_row_placements_and_point_separation_non_interl = {
+minimum_row_placements_and_point_separation_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_minimum_row_placements],
     "equivalence_strategies": [all_equivalent_minimum_row_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1403,9 +1426,9 @@ minimum_row_placements_and_point_separation_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-minimum_row_placements_and_splittings_and_point_separation_non_interl = {
+minimum_row_placements_and_splittings_and_point_separation_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_minimum_row_placements],
     "equivalence_strategies": [all_equivalent_minimum_row_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1414,9 +1437,9 @@ minimum_row_placements_and_splittings_and_point_separation_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-row_placements_non_interl = {
+row_placements_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements],
     "equivalence_strategies": [all_equivalent_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1425,9 +1448,9 @@ row_placements_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-row_placements_and_splittings_non_interl = {
+row_placements_and_splittings_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements],
     "equivalence_strategies": [all_equivalent_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1436,9 +1459,9 @@ row_placements_and_splittings_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-row_placements_no_rec_non_interl = {
+row_placements_no_rec_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements],
     "equivalence_strategies": [all_equivalent_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1447,9 +1470,9 @@ row_placements_no_rec_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-row_placements_and_point_separation_non_interl = {
+row_placements_and_point_separation_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements],
     "equivalence_strategies": [all_equivalent_row_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1458,9 +1481,9 @@ row_placements_and_point_separation_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-row_placements_and_splittings_and_point_separation_non_interl = {
+row_placements_and_splittings_and_point_separation_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements],
     "equivalence_strategies": [all_equivalent_row_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1469,9 +1492,9 @@ row_placements_and_splittings_and_point_separation_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-left_column_placements_non_interl = {
+left_column_placements_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_leftmost_column_placements],
     "equivalence_strategies": [all_equivalent_leftmost_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1480,9 +1503,9 @@ left_column_placements_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-left_column_placements_and_splittings_non_interl = {
+left_column_placements_and_splittings_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_leftmost_column_placements],
     "equivalence_strategies": [all_equivalent_leftmost_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1491,9 +1514,9 @@ left_column_placements_and_splittings_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-left_column_placements_no_rec_non_interl = {
+left_column_placements_no_rec_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_leftmost_column_placements],
     "equivalence_strategies": [all_equivalent_leftmost_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1502,9 +1525,9 @@ left_column_placements_no_rec_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-left_column_placements_and_point_separation_non_interl = {
+left_column_placements_and_point_separation_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_leftmost_column_placements],
     "equivalence_strategies": [all_equivalent_leftmost_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1513,9 +1536,9 @@ left_column_placements_and_point_separation_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-left_column_placements_and_splittings_and_point_separation_non_interl = {
+left_column_placements_and_splittings_and_point_separation_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_leftmost_column_placements],
     "equivalence_strategies": [all_equivalent_leftmost_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1524,9 +1547,9 @@ left_column_placements_and_splittings_and_point_separation_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-column_placements_non_interl = {
+column_placements_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_column_placements],
     "equivalence_strategies": [all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1535,9 +1558,9 @@ column_placements_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-column_placements_and_splittings_non_interl = {
+column_placements_and_splittings_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_column_placements],
     "equivalence_strategies": [all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1546,9 +1569,9 @@ column_placements_and_splittings_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-column_placements_no_rec_non_interl = {
+column_placements_no_rec_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_column_placements],
     "equivalence_strategies": [all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1557,9 +1580,9 @@ column_placements_no_rec_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-column_placements_and_point_separation_non_interl = {
+column_placements_and_point_separation_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_column_placements],
     "equivalence_strategies": [all_equivalent_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1568,9 +1591,9 @@ column_placements_and_point_separation_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-column_placements_and_splittings_and_point_separation_non_interl = {
+column_placements_and_splittings_and_point_separation_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_column_placements],
     "equivalence_strategies": [all_equivalent_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1579,9 +1602,9 @@ column_placements_and_splittings_and_point_separation_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements_non_interl = {
+row_and_column_placements_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1590,9 +1613,9 @@ row_and_column_placements_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements_and_splittings_non_interl = {
+row_and_column_placements_and_splittings_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1601,9 +1624,9 @@ row_and_column_placements_and_splittings_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements_no_rec_non_interl = {
+row_and_column_placements_no_rec_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1612,9 +1635,9 @@ row_and_column_placements_no_rec_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements_and_point_separation_non_interl = {
+row_and_column_placements_and_point_separation_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1623,9 +1646,9 @@ row_and_column_placements_and_point_separation_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements_and_splittings_and_point_separation_non_interl = {
+row_and_column_placements_and_splittings_and_point_separation_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1634,9 +1657,9 @@ row_and_column_placements_and_splittings_and_point_separation_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-point_placement_non_interl = {
+point_placement_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1645,9 +1668,9 @@ point_placement_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-point_placement_and_splittings_non_interl = {
+point_placement_and_splittings_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1656,9 +1679,9 @@ point_placement_and_splittings_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-point_placement_and_point_separation_non_interl = {
+point_placement_and_point_separation_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions],
     "equivalence_strategies": [all_point_placements, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1667,9 +1690,9 @@ point_placement_and_point_separation_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-point_placement_and_splittings_and_point_separation_non_interl = {
+point_placement_and_splittings_and_point_separation_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1678,9 +1701,9 @@ point_placement_and_splittings_and_point_separation_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-point_separation_and_isolation_non_interl = {
+point_separation_and_isolation_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_point_isolations],
     "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1689,9 +1712,9 @@ point_separation_and_isolation_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-point_separation_and_isolation_and_splittings_non_interl = {
+point_separation_and_isolation_and_splittings_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_point_isolations],
     "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1700,9 +1723,9 @@ point_separation_and_isolation_and_splittings_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-point_placement_and_all_lrm_and_rlm_placements_non_interl = {
+point_placement_and_all_lrm_and_rlm_placements_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_lrm_and_rlm_placements],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1711,9 +1734,9 @@ point_placement_and_all_lrm_and_rlm_placements_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-point_placement_and_all_lrm_and_rlm_placements_and_splittings_non_interl = {
+point_placement_and_all_lrm_and_rlm_placements_and_splittings_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_lrm_and_rlm_placements],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1722,9 +1745,9 @@ point_placement_and_all_lrm_and_rlm_placements_and_splittings_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements_and_all_lrm_and_rlm_placements_non_interl = {
+row_and_column_placements_and_all_lrm_and_rlm_placements_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements, all_lrm_and_rlm_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1733,9 +1756,9 @@ row_and_column_placements_and_all_lrm_and_rlm_placements_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements_and_all_lrm_and_rlm_placements_and_splittings_non_interl = {
+row_and_column_placements_and_all_lrm_and_rlm_placements_and_splittings_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements, all_lrm_and_rlm_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1744,9 +1767,9 @@ row_and_column_placements_and_all_lrm_and_rlm_placements_and_splittings_non_inte
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-point_placement_and_all_321_boundaries_non_interl = {
+point_placement_and_all_321_boundaries_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_321_boundaries],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1755,9 +1778,9 @@ point_placement_and_all_321_boundaries_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-point_placement_and_all_321_boundaries_and_splittings_non_interl = {
+point_placement_and_all_321_boundaries_and_splittings_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_321_boundaries],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1766,9 +1789,9 @@ point_placement_and_all_321_boundaries_and_splittings_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements_and_all_321_boundaries_non_interl = {
+row_and_column_placements_and_all_321_boundaries_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements, all_321_boundaries],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1777,9 +1800,9 @@ row_and_column_placements_and_all_321_boundaries_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_placements_and_all_321_boundaries_and_splittings_non_interl = {
+row_and_column_placements_and_all_321_boundaries_and_splittings_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements, all_321_boundaries],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1788,9 +1811,9 @@ row_and_column_placements_and_all_321_boundaries_and_splittings_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-finite_non_interl = {
+finite_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_minimum_row_placements],
     "equivalence_strategies": [all_equivalent_minimum_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1799,9 +1822,9 @@ finite_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-mimic_regular_insertion_encoding_non_interl = {
+mimic_regular_insertion_encoding_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, minimum_insertion_encoding_row_placements],
     "equivalence_strategies": [],
     "inferral_strategies": [],
@@ -1810,9 +1833,9 @@ mimic_regular_insertion_encoding_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-mimic_regular_insertion_encoding_flip_non_interl = {
+mimic_regular_insertion_encoding_flip_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, leftmost_insertion_encoding_column_placements],
     "equivalence_strategies": [],
     "inferral_strategies": [],
@@ -1821,9 +1844,9 @@ mimic_regular_insertion_encoding_flip_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-mimic_regular_insertion_encoding_but_better_non_interl = {
+mimic_regular_insertion_encoding_but_better_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, minimum_insertion_encoding_row_placements],
     "equivalence_strategies": [],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1832,9 +1855,9 @@ mimic_regular_insertion_encoding_but_better_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-mimic_regular_insertion_encoding_flip_but_better_non_interl = {
+mimic_regular_insertion_encoding_flip_but_better_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, leftmost_insertion_encoding_column_placements],
     "equivalence_strategies": [],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1843,9 +1866,9 @@ mimic_regular_insertion_encoding_flip_but_better_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-mimic_regular_insertion_encoding_but_better_from_all_angles_non_interl = {
+mimic_regular_insertion_encoding_but_better_from_all_angles_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, insertion_encoding_row_placements, insertion_encoding_column_placements],
     "equivalence_strategies": [],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1854,9 +1877,9 @@ mimic_regular_insertion_encoding_but_better_from_all_angles_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-mimic_Zeilberger_enumeration_schemes_non_interl = {
+mimic_Zeilberger_enumeration_schemes_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_point_isolations],
     "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral],
@@ -1865,9 +1888,9 @@ mimic_Zeilberger_enumeration_schemes_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-left_to_right_maxima_123_and_point_placements_non_interl = {
+left_to_right_maxima_123_and_point_placements_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, left_to_right_maxima123],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1876,9 +1899,9 @@ left_to_right_maxima_123_and_point_placements_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-left_to_right_maxima_1234_and_point_placements_non_interl = {
+left_to_right_maxima_1234_and_point_placements_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, left_to_right_maxima1234],
     "equivalence_strategies": [all_point_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1887,9 +1910,9 @@ left_to_right_maxima_1234_and_point_placements_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-left_to_right_maxima_123_and_row_column_placements_non_interl = {
+left_to_right_maxima_123_and_row_column_placements_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, left_to_right_maxima123, all_row_placements],
     "equivalence_strategies": [all_equivalent_row_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1898,9 +1921,9 @@ left_to_right_maxima_123_and_row_column_placements_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-left_to_right_maxima_1234_and_row_column_placements_non_interl = {
+left_to_right_maxima_1234_and_row_column_placements_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, left_to_right_maxima1234, all_row_placements, all_column_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1909,9 +1932,9 @@ left_to_right_maxima_1234_and_row_column_placements_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-point_separation_and_isolation_with_left_to_right_maxima1234_non_interl = {
+point_separation_and_isolation_with_left_to_right_maxima1234_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, left_to_right_maxima1234, all_point_isolations],
     "equivalence_strategies": [point_separation, all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1920,9 +1943,9 @@ point_separation_and_isolation_with_left_to_right_maxima1234_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_insertion_non_interl = {
+row_and_column_insertion_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1931,9 +1954,9 @@ row_and_column_insertion_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_insertion_and_cell_insertion_non_interl = {
+row_and_column_insertion_and_cell_insertion_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1942,9 +1965,9 @@ row_and_column_insertion_and_cell_insertion_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_insertion_and_cell_insertion_and_point_separation_non_interl = {
+row_and_column_insertion_and_cell_insertion_and_point_separation_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1953,9 +1976,9 @@ row_and_column_insertion_and_cell_insertion_and_point_separation_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_insertion_and_splittings_non_interl = {
+row_and_column_insertion_and_splittings_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1964,9 +1987,9 @@ row_and_column_insertion_and_splittings_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_insertion_and_cell_insertion_and_splittings_non_interl = {
+row_and_column_insertion_and_cell_insertion_and_splittings_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_equivalent_point_isolations],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1975,9 +1998,9 @@ row_and_column_insertion_and_cell_insertion_and_splittings_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-row_and_column_insertion_and_cell_insertion_and_point_separation_and_splittings_non_interl = {
+row_and_column_insertion_and_cell_insertion_and_point_separation_and_splittings_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1986,9 +2009,9 @@ row_and_column_insertion_and_cell_insertion_and_point_separation_and_splittings_
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-jays_special_non_interl = {
+jays_special_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_point_placements, all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -1997,9 +2020,9 @@ jays_special_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-jays_special_no_rec_non_interl = {
+jays_special_no_rec_non_interl = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_point_placements, all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -2008,9 +2031,9 @@ jays_special_no_rec_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-extreme_points_non_interl = {
+extreme_points_non_interl = StrategyPack(old_pack={
     "batch_strategies": [extreme_point_boundaries, all_cell_insertions, all_row_and_column_insertions, all_point_isolations],
     "equivalence_strategies": [all_point_placements, all_equivalent_point_isolations, point_separation],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -2019,9 +2042,9 @@ extreme_points_non_interl = {
     "symmetry": False,
     "non_interleaving_recursion": True,
     "early_splitting_only": False
-    }
+    })
 
-classical_binary_pattern_placement  = {
+classical_binary_pattern_placement  = StrategyPack(old_pack={
     "batch_strategies": [classical_binary_pattern, all_cell_insertions, all_row_placements, all_column_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -2030,9 +2053,9 @@ classical_binary_pattern_placement  = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-binary_pattern_classical_class_placement  = {
+binary_pattern_classical_class_placement  = StrategyPack(old_pack={
     "batch_strategies": [binary_pattern_classical_class, all_cell_insertions, all_row_placements, all_column_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -2041,9 +2064,9 @@ binary_pattern_classical_class_placement  = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
 
-binary_pattern_placement  = {
+binary_pattern_placement  = StrategyPack(old_pack={
     "batch_strategies": [binary_pattern, all_cell_insertions, all_row_placements, all_column_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
@@ -2052,4 +2075,4 @@ binary_pattern_placement  = {
     "symmetry": False,
     "non_interleaving_recursion": False,
     "early_splitting_only": False
-    }
+    })
