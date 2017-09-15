@@ -1,7 +1,8 @@
 from permuta import *
+from permuta.misc import *
 from grids import Tiling, Block
 import sys
-from itertools import chain
+from itertools import chain, permutations, product
 
 def tiling_from_mesh_pattern(mpatt, perm_class):
     """Given a mesh pattern and perm_class, generate a tiling where
@@ -137,3 +138,60 @@ def count_maximal_binary_patterns_from_classical_class(basis, coincidence_classi
 
         print("{}: Number of maximal binary patterns in classclass: {}".format(patt, maxibin), file=sys.stdout)
     return res
+
+
+def make_force_strength_func(force):
+    def keyfunc(occ, patt):
+        return [
+            -occ[i] if d == DIR_WEST else
+            occ[i] if d == DIR_EAST else
+            -patt[occ[i]] if d == DIR_SOUTH else
+            patt[occ[i]] for (i,d) in force]
+    return keyfunc
+
+
+def is_binary_force(patt, force, basis=[]):
+    """Given a classical pattern patt and a force, checks if the pattern is
+    binary with respect to the force and the basis."""
+    permset = PermSet.avoiding(basis)
+    perms = chain.from_iterable(permset.of_length(i) for i in range(len(force), 2*len(patt) - len(force) + 1))
+    force_strength = make_force_strength_func(force)
+    for p in perms:
+        forced = [force_strength(occ, p) for occ in patt.occurrences_in(p)]
+        if len(forced) > 0:
+            if forced.count(min(forced)) > 1:
+                return False
+    return True
+
+def force_backtrack(patt, cur_force, at_index, basis):
+    if at_index < len(patt):
+        for f in force_backtrack(patt, cur_force, at_index + 1, basis):
+            yield f
+        for d in DIRS:
+            next_force = cur_force + [(at_index, d)]
+            if is_binary_force(patt, next_force, basis):
+                yield next_force
+            else:
+                for f in force_backtrack(patt, next_force, at_index + 1, basis):
+                    yield f
+
+def generate_binary_forces_of_length(patt, length, basis=[]):
+    """Yields forces of given length on the classical pattern such that the
+    pattern is binary with respect to the force and the basis."""
+    for points in permutations(range(len(patt)), length):
+        for dirs in product(DIRS, repeat=length):
+            force = list(zip(points, dirs))
+            if is_binary_force(patt, force, basis):
+                yield force
+
+def generate_binary_forces(patt, basis=[]):
+    """Yields all forces on the classical pattern such that the pattern is
+    binary with respect to the force and the basis."""
+    for length in range(len(patt) + 1):
+        for force in generate_binary_forces_of_length(patt, length, basis):
+            yield force
+
+def generate_minimal_binary_forces(patt, basis=[]):
+    for f in force_backtrack(patt, [], 0, basis):
+        yield f
+
