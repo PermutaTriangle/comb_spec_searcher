@@ -41,7 +41,7 @@ class TileScope(object):
                  inferral_strategies=None,
                  verification_strategies=None,
                  other_strategies=None,
-                 non_interleaving_recursion=False,
+                 non_interleaving_decomposition=False,
                  symmetry=False,
                  tilingqueue=TilingQueue,
                  start_tiling=None):
@@ -55,7 +55,7 @@ class TileScope(object):
         self.ruledb = RuleDB()
         self.tilingdb = TilingDB()
         # self.tilingqueue = TilingQueue()
-        self.non_interleaving_decomposition = non_interleaving_recursion
+        self.non_interleaving_decomposition = non_interleaving_decomposition
         self._inferral_cache = LRUCache(100000)
         self._basis_partitioning_cache = {}
         self._cache_hits = set()

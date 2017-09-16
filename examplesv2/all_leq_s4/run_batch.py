@@ -32,9 +32,9 @@ strategy_packs = [  StrategyPacks.row_and_column_placements,
                  ]
 
 symmetry = False
-non_interleaving_recursion = False
-tilingqueue = TilingQueue # or TilingQueueDF for old atrap style
-max_time = 30 # seconds for each strategy pack (must be integer)
+non_interleaving_decomposition = False
+tilingqueue = TilingQueueDF # TilingQueue for new or TilingQueueDF for old atrap style
+max_time = 60 # seconds for each strategy pack (must be integer)
 status_update = None # how often you want an update
 
 start = time.time()
@@ -44,15 +44,19 @@ with open(filename) as bases:
         with open(task, "w") as f:
             print(task)
             print(task, file=f)
+            print("Symmetry:", symmetry, file=f)
+            print("Non-Interleaving Decompoition:", non_interleaving_decomposition, file=f)
+            print("Tiling Queue:", tilingqueue, file=f)
             print("", file=f)
 
             for strategy_pack in strategy_packs:
                 print("--------------------------------------------------------------------------", file=f)
+                print("Trying:", strategy_pack.name, file=f)
                 tilescope = TileScope(task,
                                       strategy_pack,
                                       tilingqueue=tilingqueue,
                                       symmetry=symmetry,
-                                      non_interleaving_recursion=non_interleaving_recursion)
+                                      non_interleaving_decomposition=non_interleaving_decomposition)
                 tilescope.auto_search(1, max_time=max_time, status_update=status_update, verbose=True, file=f)
                 print("", file=f)
                 if tilescope.has_proof_tree():
