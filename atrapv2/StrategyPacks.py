@@ -1,13 +1,14 @@
 from atrapv2.strategies import *
 
 class StrategyPack(object):
-    def __init__(self, eq_strats = None, ver_strats = None, inf_strats = None, other_strats = None, list=None, old_pack=None):
+    def __init__(self, eq_strats = None, ver_strats = None, inf_strats = None, other_strats = None, name=None, old_pack=None):
         if old_pack is not None:
             self.eq_strats = old_pack["equivalence_strategies"]
             self.ver_strats = old_pack["verification_strategies"]
             self.inf_strats = old_pack["inferral_strategies"]
             self.other_strats = [old_pack["recursive_strategies"],
                                  old_pack["batch_strategies"]]
+            self.name = "No name"
         elif eq_strats is None:
             raise TypeError("Strategy pack requires a (possibly empty) list of equivalence strategies.")
         elif ver_strats is None:
@@ -16,6 +17,8 @@ class StrategyPack(object):
             raise TypeError("Strategy pack requires a (possibly empty) list of inferral strategies.")
         elif other_strats is None:
             raise TypeError("Strategy pack requires a (possibly empty) list of lists of other strategies.")
+        elif name is None:
+            raise TypeError("Strategy pack requires a name.")
         else:
             self.eq_strats = eq_strats
             self.inf_strats = inf_strats
