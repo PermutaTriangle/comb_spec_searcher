@@ -9,4 +9,4 @@ export PYTHONPATH='/users/home/henningu/lib/python3.6/site-packages/'
 
 pwd
 
-python3 run_batchp.py
+python3 run_batch.py
