@@ -241,7 +241,7 @@ def get_perms_to_check(basis):
 
 def find_symmetries(basis):
     """
-    Return a list of symmetry functions, where the basis is closed with respect to the symmetries.
+    Return list of symmetry functions that basis is closed with respect to.
 
     The functions returned return a symmetry of the input tiling. The symmetry
     use will be closed  return corresponding symmetry of tiling.

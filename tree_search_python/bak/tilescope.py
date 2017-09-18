@@ -111,10 +111,8 @@ def proof_trees_bfs(rules_dict, root):
         for d in disambiguate(rdict):
             yield proof_tree_bfs(d, root)
 
-def print_proof_trees_bfs(fname, n = 1):
-    rules_dict, root = read_table(fname)
+def print_proof_trees_bfs(gen, n = 1):
     try:
-        gen = proof_trees_bfs(prune(rules_dict), root)
         for i in range(n):
             _, tree = next(gen)
             print(tree)

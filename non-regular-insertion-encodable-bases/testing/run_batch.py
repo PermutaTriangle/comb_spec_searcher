@@ -4,39 +4,11 @@ from atrap.ProofTree import ProofTree
 
 import time
 
-# filename = 'length5' # the file with bases to be processed
-# filename = 'length5afterround1'
-filename = 'gaur'
+filename = 'gaur' # the file with bases to be processed
+# filename = 'length11afterround1'
 
 # Will try each strategy pack in order.
-strategy_packs = [
-                    StrategyPacks.jays_special,
-                    StrategyPacks.extreme_points,
-                    StrategyPacks.minimum_row_no_rec,
-                    StrategyPacks.row_placements_no_rec,
-                    StrategyPacks.left_column_placements_no_rec,
-                    StrategyPacks.column_placements_no_rec,
-                    StrategyPacks.row_and_column_placements_no_rec,
-                    StrategyPacks.jays_special_no_rec,
-                    StrategyPacks.row_and_column_insertion,
-                    StrategyPacks.row_and_column_insertion_and_cell_insertion,
-                    StrategyPacks.row_and_column_insertion_and_cell_insertion_and_point_separation,
-                    StrategyPacks.row_and_column_insertion_and_splittings,
-                    StrategyPacks.row_and_column_insertion_and_cell_insertion_and_splittings,
-                    StrategyPacks.row_and_column_insertion_and_cell_insertion_and_point_separation_and_splittings,
-                    StrategyPacks.row_and_column_placements_and_all_321_boundaries,
-                    StrategyPacks.row_and_column_placements_and_all_321_boundaries_and_splittings,
-                    StrategyPacks.point_placement_and_all_321_boundaries,
-                    StrategyPacks.point_placement_and_all_321_boundaries_and_splittings,
-                    StrategyPacks.point_placement_and_all_lrm_and_rlm_placements,
-                    StrategyPacks.point_placement_and_all_lrm_and_rlm_placements_and_splittings,
-                    StrategyPacks.row_and_column_placements_and_all_lrm_and_rlm_placements,
-                    StrategyPacks.row_and_column_placements_and_all_lrm_and_rlm_placements_and_splittings,
-                    StrategyPacks.point_placement,
-                    StrategyPacks.point_placement_and_splittings,
-                    StrategyPacks.point_placement_and_point_separation,
-                    StrategyPacks.point_placement_and_splittings_and_point_separation,
-                    StrategyPacks.row_and_column_placements,
+strategy_packs = [  StrategyPacks.row_and_column_placements,
                     StrategyPacks.row_and_column_placements_and_splittings,
                     StrategyPacks.row_and_column_placements_and_point_separation,
                     StrategyPacks.row_and_column_placements_and_splittings_and_point_separation,
@@ -61,9 +33,8 @@ strategy_packs = [
                  ]
 
 
-# max_times = 30 # seconds for each strategy pack (must be integer)
-max_times = 60
-# max_times = 120
+max_times = 30 # seconds for each strategy pack (must be integer)
+# max_times = 60
 # max_times = [ 5, 6, 7, 8, 9, 10] # seconds for corresponding strategy pack
 
 def perm_to_str(perm):
@@ -126,7 +97,12 @@ for basis in bases:
 
     print('-----------------------------------------------------------------')
     print('Now processing {}'.format(task))
-    for strategy_pack, max_time, attempt in zip(strategy_packs, max_times, range(len(strategy_packs))):
+    for new_strategy_pack, max_time, attempt in zip(strategy_packs, max_times, range(len(strategy_packs))):
+        strategy_pack = [new_strategy_pack['batch_strategies'],
+                         new_strategy_pack['equivalence_strategies'],
+                         new_strategy_pack['inferral_strategies'],
+                         new_strategy_pack['recursive_strategies'],
+                         new_strategy_pack['verification_strategies']]
         print()
         print("Attempt {} with the following strategies:".format(attempt))
         print("Batch: {}".format( strategies_to_str(strategy_pack[0])))
@@ -134,7 +110,7 @@ for basis in bases:
         print("Inferral: {}".format( strategies_to_str(strategy_pack[2])))
         print("Recursive: {}".format( strategies_to_str(strategy_pack[3])))
         print("Verification: {}".format( strategies_to_str(strategy_pack[4])) )
-        mtree = MetaTree( basis, *strategy_pack )
+        mtree = MetaTree(basis, **new_strategy_pack)
 
         start_time = time.time()
         end_time = start_time + max_time
@@ -176,6 +152,31 @@ for basis in bases:
                 print("The function {} called the partitioning cache *{}* times, ({} originating)".format(function_name, calls[0], calls[1]),file=f)
             print("There were {} cache misses".format(mtree._cache_misses),file=f)
             print("",file=f)
+
+            equiv_perc = str(int(mtree.equivalent_time/mtree._time_taken * 100))
+            decom_perc = str(int(mtree.decomposition_time/mtree._time_taken * 100))
+            batch_perc = str(int(mtree.batch_time/mtree._time_taken * 100))
+            verif_perc = str(int(mtree.verification_time/mtree._time_taken * 100))
+            infer_perc = str(int(mtree.inferral_time/mtree._time_taken * 100))
+            symme_perc = str(int(mtree.symmetry_time/mtree._time_taken * 100))
+            propa_perc = str(int(mtree.propagation_time/mtree._time_taken * 100))
+            print("There were {} tilings decomposition expanded".format(mtree.decomposition_expanded))
+            print("There were {} tilings batch expanded".format(mtree.batch_expanded))
+            print("Time spent decomposition expanding: {} seconds, ~{}%".format(str(mtree.decomposition_time),
+                                                                                    decom_perc))
+            print("Time spent batch expanding: {} seconds, ~{}%".format(str(mtree.batch_time),
+                                                                            batch_perc))
+            print("Time spent equivalent expanding: {} seconds, ~{}%".format(str(mtree.equivalent_time),
+                                                                             equiv_perc))
+            print("Time spent strategy verifying: {} seconds, ~{}%".format(str(mtree.verification_time),
+                                                                           verif_perc))
+            print("Time spent inferring: {} seconds, ~{}%".format(str(mtree.inferral_time),
+                                                                  infer_perc))
+            print("Time spent propagating: {} seconds, ~{}%".format(str(mtree.propagation_time),
+                                                                    propa_perc))
+            if mtree.symmetry:
+                print("Time spent symmetry expanding: {} seconds, ~{}%".format(str(mtree.symmetry_time),
+                                                                               symme_perc))
 
             if mtree.has_proof_tree():
                 proof_tree = mtree.find_proof_tree()

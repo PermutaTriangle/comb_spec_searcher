@@ -18,7 +18,7 @@ from atrap import StrategyPacks
 
 ### SET THESE VARIABLES ###
 OUTPUT_TO_FILE = False # automatically set to True if called from spectrum_test or run_batch
-STRATS_TO_USE = StrategyPacks.row_insertion_testing
+STRATS_TO_USE = StrategyPacks.row_and_column_placements
 ###########################
 
 
@@ -57,7 +57,9 @@ if spectrum_mode:
     f = open(os.devnull, 'w')
 
     strats_file = open('spectrum_results/stratsused.txt', 'w')
-    for strat_type in STRATS_TO_USE:
+    for strat_type in STRATS_TO_USE.values():
+        if isinstance(strat_type, bool):
+            continue
         strats_file.write(", ".join([fff.__name__ for fff in strat_type]))
         strats_file.write("\n")
     strats_file.close()
@@ -66,7 +68,7 @@ else:
     f = (open('results/hunt_'+task+'_results.txt', 'w') if OUTPUT_TO_FILE else sys.stdout)
 
 
-mtree = MetaTree( patts, *STRATS_TO_USE ,early_splitting_only=True, symmetry=True)
+mtree = MetaTree( patts, **STRATS_TO_USE)
 
 def count_verified_tilings(mt):
     count = 0
@@ -109,7 +111,7 @@ while not mtree.has_proof_tree():
         print("The function {} called the partitioning cache *{}* times, ({} originating)".format(function_name, calls[0], calls[1]),file=f)
     print("There were {} cache misses".format(mtree._cache_misses),file=f)
     f.flush()
-    
+
 
 if mtree.has_proof_tree():
     proof_tree = mtree.find_proof_tree()

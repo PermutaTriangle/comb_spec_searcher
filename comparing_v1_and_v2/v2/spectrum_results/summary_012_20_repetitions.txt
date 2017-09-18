@@ -1,0 +1,30 @@
+Task: 012
+Repetitions: 20
+
+Strategies Used:
+	Batch stragies: all_cell_insertions, all_row_placements, all_column_placements
+	Equivalence stragies: all_equivalent_row_placements, all_equivalent_column_placements
+	Inferral stragies: empty_cell_inferral, row_and_column_separation, subclass_inferral
+	Recursive stragies: components, reversibly_deletable_cells
+	Verification stragies: subset_verified, is_empty
+
+Number of distinct proof trees: 1
+
+Fastest Proof Tree: 	0.22 seconds
+Slowest Proof Tree: 	0.7 seconds
+Mean Proof Tree: 		0.54 seconds
+Median Proof Tree: 		0.55 seconds
+
+
+==========================
+=== PROOF TREE SUMMARY ===
+==========================
+
+Tree #1:
+		number of occurrences: 	20
+		fastest occurrence: 	0.22 seconds
+		slowest occurrence: 	0.7 seconds
+		mean occurrence: 		0.54 seconds
+		median occurrence: 		0.55 seconds
+		tree written to: 		spectrum_results/spectrum_012_results_tree_number_1.txt
+

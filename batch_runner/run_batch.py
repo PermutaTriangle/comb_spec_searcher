@@ -6,12 +6,12 @@ import time
 
 filename = 'length11' # the file with bases to be processed
 
-strategy_packs = [ StrategyPacks.row_placements,
-                   StrategyPacks.column_placements,
-                   StrategyPacks.row_and_column_placements,
-                   StrategyPacks.point_separation_and_isolation,
-                   StrategyPacks.row_and_column_placements_point_separation,
-                   StrategyPacks.all_strategies ] # Will try each strategy pack in order.
+strategy_packs = [StrategyPacks.row_placements,
+                  StrategyPacks.column_placements,
+                  StrategyPacks.row_and_column_placements,
+                  StrategyPacks.point_separation_and_isolation,
+                  StrategyPacks.row_and_column_placements_point_separation,
+                  StrategyPacks.all_strategies] # Will try each strategy pack in order.
 
 
 max_times = 100 # seconds for each strategy pack (must be integer)
@@ -32,7 +32,7 @@ def strategy_to_str(strategy):
 def strategies_to_str(strategies):
     if len(strategies) == 0:
         return ""
-    output = strategy_to_str( strategies[0] )
+    output = strategy_to_str(strategies[0])
     for strategy in strategies[1:]:
         output = output + ", " + strategy_to_str(strategy)
     return output
@@ -85,7 +85,7 @@ for basis in bases:
         print("Inferral: {}".format( strategies_to_str(strategy_pack[2])))
         print("Recursive: {}".format( strategies_to_str(strategy_pack[3])))
         print("Verification: {}".format( strategies_to_str(strategy_pack[4])) )
-        mtree = MetaTree( basis, *strategy_pack )
+        mtree = MetaTree( basis, **strategy_pack )
 
         start_time = time.time()
         end_time = start_time + max_time

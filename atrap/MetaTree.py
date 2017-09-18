@@ -334,7 +334,6 @@ class MetaTree(object):
         else:
             self.symmetry = []
 
-
         '''Initialise the proof strategies to be used.'''
         if batch_strategies is not None:
             self.batch_strategy_generators = batch_strategies
@@ -356,6 +355,17 @@ class MetaTree(object):
             self.verification_strategy_generators = verification_strategies
         else:
             self.verification_strategy_generators = [one_by_one_verification]
+
+        self.batch_expanded = 0
+        self.decomposition_expanded = 0
+        self.batch_time = 0
+        self.decomposition_time = 0
+        self.equivalent_time = 0
+        self.verification_time = 0
+        self.inferral_time = 0
+        self.symmetry_time = 0
+        self.propagation_time = 0
+        self._time_taken = 0
 
         '''Initialise the tree with the one by one tiling, with Av(basis.'''
         root_tiling = Tiling({(0, 0): PermSet.avoiding(self.basis)})
@@ -394,7 +404,7 @@ class MetaTree(object):
 
         It stops when a proof tree is found, and returns it, if found.
         """
-        start_time = time.time()
+        start = time.time()
         if requested_depth is None:
             self.do_level(self.depth_searched + 1, f=f, max_time=max_time)
         else:
@@ -408,9 +418,11 @@ class MetaTree(object):
                 print("A proof tree has been found.", file=f)
                 proof_tree = self.find_proof_tree()
                 # proof_tree.pretty_print()
+                self._time_taken += time.time() - start
                 return proof_tree
+            self._time_taken += time.time() - start
             if max_time is not None:
-                if time.time() - start_time > max_time:
+                if time.time() - start > max_time:
                     self.timed_out = True
             if not self.timed_out:
                 self.depth_searched = requested_depth
@@ -497,6 +509,7 @@ class MetaTree(object):
 
         Return child SiblingNodes created.
         """
+        start = time.time()
         child_sibling_nodes = set()
 
         for recursive_generator in self.recursive_strategy_generators:
@@ -534,7 +547,7 @@ class MetaTree(object):
                             sensible = False
                 if not sensible:
                     continue
-                    
+
                 '''We create the AND node for the strategy and connect it its parent.'''
                 recursive_and_node = AndNode(formal_step)
                 recursive_and_node.parents.append(or_node)
@@ -557,6 +570,7 @@ class MetaTree(object):
                         self.tiling_cache[tiling] = child_or_node
                         child_sibling_node = SiblingNode()
                         child_sibling_node.add(child_or_node)  # unworkable SiblingNode created.
+                        start -= time.time()
                         if self.symmetry:
                             for sym_tiling in self._symmetric_tilings(tiling):
                                 assert not sym_tiling in self.tiling_cache
@@ -565,12 +579,15 @@ class MetaTree(object):
                                 child_sibling_node.add(sym_or_node)
                                 child_sibling_node.join(tiling, sym_tiling, "a symmetry")
                                 sym_or_node.expanded = True
+                        start += time.time()
                         '''We attempt to verify the tiling using verification strategies.'''
+                        start -= time.time()
                         if self._verify(child_or_node):
                             '''If it is verified we need to propagate the information to the sibling node'''
                             sibling_nodes_to_be_propagated.add(child_sibling_node)
                         else:
                             all_verified_or_exist = False
+                        start += time.time()
                     else:
                         child_sibling_node = child_or_node.sibling_node
 
@@ -595,15 +612,19 @@ class MetaTree(object):
 
                         #print("Here")
                         or_node.expanded = True
-
+                start -= time.time()
+                prop_start = time.time()
                 for sibling_node in sibling_nodes_to_be_propagated:
                     if sibling_node.is_verified():
                         '''clean the cache'''
                         self._sibling_node_cache_cleaner(sibling_node)
                     '''propagate the information'''
+                    prop_start = time.time()
                     self._propagate_sibling_node_verification(sibling_node)
-                self._propagate_and_node_verification(recursive_and_node)
-
+                start += time.time()
+                self.propagation_time += time.time() - prop_start
+        self.decomposition_time += time.time() - start
+        self.decomposition_expanded += 1
         return child_sibling_nodes
 
     def _batch_expand(self, or_node):
@@ -612,6 +633,7 @@ class MetaTree(object):
 
         Return all unverified SiblingNodes found.
         """
+        start = time.time()
         child_sibling_nodes = set()
 
         for batch_strategy_generator in self.batch_strategy_generators:
@@ -630,7 +652,9 @@ class MetaTree(object):
                 '''For each tiling in the strategy,'''
                 for index, tiling in enumerate(tilings):
                     '''we use the inferral strategies.'''
+                    start -= time.time()
                     inferred_tiling = self._inferral(tiling)
+                    start += time.time()
                     '''We replace the tiling in the strategy with the inferred tiling.'''
                     tilings[index] = inferred_tiling
                     child_or_node = self.tiling_cache.get(inferred_tiling)
@@ -661,8 +685,11 @@ class MetaTree(object):
                         self.tiling_cache[tiling] = child_or_node
                         '''Attempt to expand the new OR node into a maximal SiblingNode.
                         Symmetries handled in equivalent expand function.'''
+                        start -= time.time()
                         verified = self._equivalent_expand(child_or_node)
+                        start += time.time()
                         child_sibling_node = child_or_node.sibling_node
+                        start -= time.time()
                         if verified:
                             verified_sibling_nodes.add(child_sibling_node)
                         elif self._verify(child_or_node):
@@ -671,12 +698,15 @@ class MetaTree(object):
                             verified_sibling_nodes.add(child_sibling_node)
                         '''As it was found by a batch strategy it is workable'''
                         child_sibling_node.workable = True
+                        start += time.time()
                     else:
                         child_sibling_node = child_or_node.sibling_node
                         '''If it is not workable, then it was originally found by a recursive strategy
                         and therefore needs to be expanded by equivalent strategies'''
                         if not child_sibling_node.workable:
+                            start -= time.time()
                             verified = self._equivalent_expand(child_or_node)
+                            start += time.time()
                             child_sibling_node = child_or_node.sibling_node
                             if verified:
                                 verified_sibling_nodes.add(child_sibling_node)
@@ -696,12 +726,18 @@ class MetaTree(object):
                     child_sibling_nodes.add(child_sibling_node)
 
                 '''Propagate the verifications that need to be propagated'''
+                start -= time.time()
+                prop_start = time.time()
                 for sibling_node in verified_sibling_nodes:
                     '''clean the cache'''
                     self._sibling_node_cache_cleaner(sibling_node)
                     '''then propagate'''
                     self._propagate_sibling_node_verification(sibling_node)
                 self._propagate_and_node_verification(batch_and_node)
+                self.propagation_time += time.time() - prop_start
+                start += time.time()
+        self.batch_expanded += 1
+        self.batch_time += time.time() - start
         return child_sibling_nodes
 
     def _symmetric_tilings(self, tiling, ordered=False):
@@ -713,19 +749,23 @@ class MetaTree(object):
         this will return a list with each symmetry applied. This functionality is
         needed for inferral.
         """
+        start = time.time()
         if ordered:
-            return [sym(tiling) for sym in self.symmetry]
+            answer = [sym(tiling) for sym in self.symmetry]
+            self.symmetry_time += time.time() - start
+            return answer
         else:
             symmetric_tilings = set()
             for sym in self.symmetry:
                 symmetric_tiling = sym(tiling)
                 if symmetric_tiling != tiling:
                     symmetric_tilings.add(symmetric_tiling)
-
+        self.symmetry_time += time.time() - start
         return symmetric_tilings
 
     def _inferral(self, tiling):
         """Return fully inferred tiling using InferralStrategies."""
+        start = time.time()
         inferred_tiling = self._inferral_cache.get(tiling)
         semi_inferred_tilings = []
         if inferred_tiling is None:
@@ -758,18 +798,21 @@ class MetaTree(object):
                         inferred_tiling = soon_to_be_tiling
             for semi_inferred_tiling in semi_inferred_tilings:
                 self._inferral_cache.set(semi_inferred_tiling, inferred_tiling)
+                start -= time.time()
                 if self.symmetry:
                     for sym_semi_inferred_tiling, sym_inferred_tiling in zip(self._symmetric_tilings(semi_inferred_tiling, ordered=True),
                                                                              self._symmetric_tilings(inferred_tiling, ordered=True)):
                         self._inferral_cache.set(sym_semi_inferred_tiling, sym_inferred_tiling)
                     if sym_semi_inferred_tiling in self._basis_partitioning_cache:
                         self._basis_partitioning_cache.pop(sym_semi_inferred_tiling)
+                start += time.time()
                 '''Clean up the cache'''
                 if semi_inferred_tiling in self._basis_partitioning_cache:
                     self._basis_partitioning_cache.pop(semi_inferred_tiling)
             self._inferral_cache.set(inferred_tiling, inferred_tiling)
         else:
             self.inferral_cache_hits += 1
+        self.inferral_time += time.time() - start
         return inferred_tiling
 
     def _basis_partitioning(self, tiling, length, basis, function_name=None):
@@ -806,6 +849,7 @@ class MetaTree(object):
 
         It will connect an AND node carrying the formal step.
         """
+        start = time.time()
         tiling = or_node.tiling
         verified = False
         for verification_generator in self.verification_strategy_generators:
@@ -825,7 +869,9 @@ class MetaTree(object):
                 '''clean the cache'''
                 if or_node.tiling in self._basis_partitioning_cache:
                     self._basis_partitioning_cache.pop(or_node.tiling)
+                self.verification_time += time.time() - start
                 return True
+        self.verification_time += time.time() - start
         return False
 
     def _equivalent_expand(self, or_node):
@@ -836,11 +882,13 @@ class MetaTree(object):
         make the biggest SiblingNode possible. It will return true if
         any equivalent tiling is verified, false otherwise.
         """
+        start = time.time()
         if or_node.sibling_node is None:
             sibling_node = SiblingNode()
             sibling_node.add(or_node)
             equivalent_tilings = set([or_node.tiling])
             tilings_to_expand = set([or_node.tiling])
+            start -= time.time()
             if self.symmetry:
                 for sym_tiling in self._symmetric_tilings(or_node.tiling):
                     assert not sym_tiling in self.tiling_cache
@@ -851,6 +899,7 @@ class MetaTree(object):
                     sibling_node.join(or_node.tiling, sym_tiling, "a symmetry")
                     equivalent_tilings.add(sym_tiling)
             verified = False
+            start += time.time()
         else:
             sibling_node = or_node.sibling_node
             equivalent_tilings = set([or_node.tiling])
@@ -872,7 +921,9 @@ class MetaTree(object):
                         raise TypeError("Attempting to combine non EquivalenceStrategy.")
 
                     formal_step = equivalence_strategy.formal_step
+                    start -= time.time()
                     eq_tiling = self._inferral(equivalence_strategy.tiling)
+                    start += time.time()
 
                     '''If we have already seen this tiling while building, we skip it'''
                     if eq_tiling in equivalent_tilings:
@@ -893,6 +944,7 @@ class MetaTree(object):
                         '''And the tilings to be checked for equivalences'''
                         tilings_to_expand.add(eq_tiling)
 
+                        start -= time.time()
                         if self.symmetry:
                             for sym_tiling in self._symmetric_tilings(eq_tiling):
                                 assert not sym_tiling in self.tiling_cache
@@ -902,11 +954,14 @@ class MetaTree(object):
                                 sibling_node.add(sym_or_node)
                                 sibling_node.join(eq_tiling, sym_tiling, "a symmetry")
                                 equivalent_tilings.add(sym_tiling)
+                        start += time.time()
 
                         '''We try to verify the equivalent tiling'''
+                        start -= time.time()
                         if not verified:
                             if self._verify(eq_or_node):
                                 verified = True
+                        start += time.time()
                     else:
                         eq_sibling_node = eq_or_node.sibling_node
                         '''The SiblingNode can be verified in anyway that the equivalent SiblingNode can be'''
@@ -926,6 +981,7 @@ class MetaTree(object):
                                 sibling_node.add(sibling_or_node)
                                 equivalent_tilings.add(sibling_or_node.tiling)
                                 tilings_to_expand.add(sibling_or_node.tiling)
+        self.equivalent_time += time.time() - start
         return verified
 
     def _sibling_node_cache_cleaner(self, sibling_node):
