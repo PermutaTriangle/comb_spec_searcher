@@ -1,13 +1,13 @@
 0132_3120
 
 ===========================================
-Log created Wed, 21 Jun 2017 16:18:13
+Log created Tue, 27 Jun 2017 13:26:46
 
 Maximum depth fully searched was 4
 
 Maximum time set at 3600 seconds
 
-Total time taken was 3603 seconds
+Total time taken was 3862 seconds
 
 The strategies applied were:
 Batch: all_cell_insertions, all_row_and_column_insertions, all_point_isolations
@@ -15,26 +15,27 @@ Equivalent: all_point_placements, all_equivalent_point_isolations, point_separat
 Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
 Recursive: splittings
 Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
 
-There were 715359 inferral cache hits and 3122111 partitioning cache hits.
+There were 532049 inferral cache hits and 3055355 partitioning cache hits.
 The partitioning cache had 1 tilings in it right now.
 The inferral cache has 100000 tilings in it right now.
-There were 88415 tilings of which 1477 are verified.
-There were 20486 SiblingNodes of which 503 are verified.
+There were 128004 tilings of which 2323 are verified.
+There were 15594 SiblingNodes of which 443 are verified.
 
-The function splittings called the partitioning cache *3125000* times, (11078 originating)
+The function splittings called the partitioning cache *3057741* times, (9826 originating)
 There were 0 cache misses
 
-No proof tree was found after 3603 seconds
+No proof tree was found after 3862 seconds
 
 ===========================================
-Log created Wed, 21 Jun 2017 17:18:18
+Log created Tue, 27 Jun 2017 14:26:51
 
 Maximum depth fully searched was 3
 
 Maximum time set at 3600 seconds
 
-Total time taken was 3603 seconds
+Total time taken was 3604 seconds
 
 The strategies applied were:
 Batch: extreme_point_boundaries, all_cell_insertions, all_row_and_column_insertions, all_point_isolations
@@ -42,20 +43,21 @@ Equivalent: all_point_placements, all_equivalent_point_isolations, point_separat
 Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
 Recursive: splittings
 Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
 
-There were 388741 inferral cache hits and 26784284 partitioning cache hits.
-The partitioning cache had 11 tilings in it right now.
-The inferral cache has 100000 tilings in it right now.
-There were 38110 tilings of which 1239 are verified.
-There were 11742 SiblingNodes of which 654 are verified.
+There were 178029 inferral cache hits and 21778646 partitioning cache hits.
+The partitioning cache had 4 tilings in it right now.
+The inferral cache has 77478 tilings in it right now.
+There were 36776 tilings of which 2440 are verified.
+There were 7015 SiblingNodes of which 815 are verified.
 
-The function splittings called the partitioning cache *26785112* times, (4400 originating)
+The function splittings called the partitioning cache *21779043* times, (2200 originating)
 There were 0 cache misses
 
-No proof tree was found after 3603 seconds
+No proof tree was found after 3604 seconds
 
 ===========================================
-Log created Wed, 21 Jun 2017 18:18:20
+Log created Tue, 27 Jun 2017 15:26:52
 
 Maximum depth fully searched was 14
 
@@ -69,19 +71,74 @@ Equivalent: all_equivalent_minimum_row_placements
 Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
 Recursive: 
 Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
 
-There were 32474 inferral cache hits and 0 partitioning cache hits.
+There were 32730 inferral cache hits and 0 partitioning cache hits.
 The partitioning cache had 0 tilings in it right now.
-The inferral cache has 67773 tilings in it right now.
-There were 32145 tilings of which 10039 are verified.
-There were 8821 SiblingNodes of which 2089 are verified.
+The inferral cache has 100000 tilings in it right now.
+There were 65662 tilings of which 20420 are verified.
+There were 9008 SiblingNodes of which 2133 are verified.
 
 There were 0 cache misses
 
 No proof tree was found after 3600 seconds
 
 ===========================================
-Log created Wed, 21 Jun 2017 19:18:21
+Log created Tue, 27 Jun 2017 16:26:54
+
+Maximum depth fully searched was 11
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3600 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_row_placements
+Equivalent: all_equivalent_row_placements
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: 
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 47135 inferral cache hits and 0 partitioning cache hits.
+The partitioning cache had 0 tilings in it right now.
+The inferral cache has 100000 tilings in it right now.
+There were 120946 tilings of which 35218 are verified.
+There were 16966 SiblingNodes of which 2525 are verified.
+
+There were 0 cache misses
+
+No proof tree was found after 3600 seconds
+
+===========================================
+Log created Tue, 27 Jun 2017 17:27:06
+
+Maximum depth fully searched was 14
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3611 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_leftmost_column_placements
+Equivalent: all_equivalent_leftmost_column_placements
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: 
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 32335 inferral cache hits and 0 partitioning cache hits.
+The partitioning cache had 0 tilings in it right now.
+The inferral cache has 100000 tilings in it right now.
+There were 63588 tilings of which 19830 are verified.
+There were 8678 SiblingNodes of which 2051 are verified.
+
+There were 0 cache misses
+
+No proof tree was found after 3611 seconds
+
+===========================================
+Log created Tue, 27 Jun 2017 18:27:08
 
 Maximum depth fully searched was 11
 
@@ -90,82 +147,31 @@ Maximum time set at 3600 seconds
 Total time taken was 3601 seconds
 
 The strategies applied were:
-Batch: all_cell_insertions, all_row_placements
-Equivalent: all_equivalent_row_placements
+Batch: all_cell_insertions, all_column_placements
+Equivalent: all_equivalent_column_placements
 Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
 Recursive: 
 Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
 
-There were 48151 inferral cache hits and 0 partitioning cache hits.
+There were 37873 inferral cache hits and 0 partitioning cache hits.
 The partitioning cache had 0 tilings in it right now.
 The inferral cache has 100000 tilings in it right now.
-There were 60720 tilings of which 19064 are verified.
-There were 16068 SiblingNodes of which 2602 are verified.
+There were 103285 tilings of which 30033 are verified.
+There were 15104 SiblingNodes of which 2243 are verified.
 
 There were 0 cache misses
 
 No proof tree was found after 3601 seconds
 
 ===========================================
-Log created Wed, 21 Jun 2017 20:18:22
-
-Maximum depth fully searched was 13
-
-Maximum time set at 3600 seconds
-
-Total time taken was 3600 seconds
-
-The strategies applied were:
-Batch: all_cell_insertions, all_leftmost_column_placements
-Equivalent: all_equivalent_leftmost_column_placements
-Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
-Recursive: 
-Verification: subset_verified, is_empty
-
-There were 30896 inferral cache hits and 0 partitioning cache hits.
-The partitioning cache had 0 tilings in it right now.
-The inferral cache has 64006 tilings in it right now.
-There were 30267 tilings of which 9314 are verified.
-There were 8216 SiblingNodes of which 1921 are verified.
-
-There were 0 cache misses
-
-No proof tree was found after 3600 seconds
-
-===========================================
-Log created Wed, 21 Jun 2017 21:18:23
-
-Maximum depth fully searched was 11
-
-Maximum time set at 3600 seconds
-
-Total time taken was 3600 seconds
-
-The strategies applied were:
-Batch: all_cell_insertions, all_column_placements
-Equivalent: all_equivalent_column_placements
-Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
-Recursive: 
-Verification: subset_verified, is_empty
-
-There were 41246 inferral cache hits and 0 partitioning cache hits.
-The partitioning cache had 0 tilings in it right now.
-The inferral cache has 100000 tilings in it right now.
-There were 55689 tilings of which 17505 are verified.
-There were 15257 SiblingNodes of which 2459 are verified.
-
-There were 0 cache misses
-
-No proof tree was found after 3600 seconds
-
-===========================================
-Log created Wed, 21 Jun 2017 22:23:13
+Log created Tue, 27 Jun 2017 19:32:09
 
 Maximum depth fully searched was 5
 
 Maximum time set at 3600 seconds
 
-Total time taken was 3889 seconds
+Total time taken was 3899 seconds
 
 The strategies applied were:
 Batch: all_cell_insertions, all_row_placements, all_column_placements
@@ -173,20 +179,132 @@ Equivalent: all_equivalent_row_placements, all_equivalent_column_placements
 Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
 Recursive: components, reversibly_deletable_cells
 Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
 
-There were 9268 inferral cache hits and 35259 partitioning cache hits.
+There were 7120 inferral cache hits and 19822 partitioning cache hits.
 The partitioning cache had 1 tilings in it right now.
-The inferral cache has 50780 tilings in it right now.
-There were 25114 tilings of which 1606 are verified.
-There were 12031 SiblingNodes of which 870 are verified.
+The inferral cache has 44492 tilings in it right now.
+There were 34370 tilings of which 2707 are verified.
+There were 9301 SiblingNodes of which 1069 are verified.
 
-The function cells_of_occurrences_by_perms called the partitioning cache *37426* times, (18713 originating)
+The function cells_of_occurrences_by_perms called the partitioning cache *21012* times, (10506 originating)
 There were 0 cache misses
 
-No proof tree was found after 3889 seconds
+No proof tree was found after 3899 seconds
 
 ===========================================
-Log created Wed, 21 Jun 2017 23:23:16
+Log created Tue, 27 Jun 2017 20:32:10
+
+Maximum depth fully searched was 4
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3600 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_row_and_column_insertions, all_point_isolations
+Equivalent: all_point_placements, all_equivalent_point_isolations, point_separation
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: 
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 777183 inferral cache hits and 0 partitioning cache hits.
+The partitioning cache had 0 tilings in it right now.
+The inferral cache has 100000 tilings in it right now.
+There were 177259 tilings of which 4541 are verified.
+There were 17961 SiblingNodes of which 462 are verified.
+
+There were 0 cache misses
+
+No proof tree was found after 3600 seconds
+
+===========================================
+Log created Tue, 27 Jun 2017 21:32:20
+
+Maximum depth fully searched was 4
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3608 seconds
+
+The strategies applied were:
+Batch: all_row_and_column_insertions, all_point_isolations
+Equivalent: all_equivalent_point_isolations
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: components, reversibly_deletable_cells
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 435598 inferral cache hits and 44049 partitioning cache hits.
+The partitioning cache had 1 tilings in it right now.
+The inferral cache has 100000 tilings in it right now.
+There were 101592 tilings of which 1158 are verified.
+There were 16410 SiblingNodes of which 345 are verified.
+
+The function cells_of_occurrences_by_perms called the partitioning cache *46742* times, (23371 originating)
+There were 0 cache misses
+
+No proof tree was found after 3608 seconds
+
+===========================================
+Log created Tue, 27 Jun 2017 22:32:21
+
+Maximum depth fully searched was 4
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3600 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_row_and_column_insertions, all_point_isolations
+Equivalent: all_equivalent_point_isolations
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: components, reversibly_deletable_cells
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 454199 inferral cache hits and 42948 partitioning cache hits.
+The partitioning cache had 1 tilings in it right now.
+The inferral cache has 100000 tilings in it right now.
+There were 111200 tilings of which 1849 are verified.
+There were 22461 SiblingNodes of which 576 are verified.
+
+The function cells_of_occurrences_by_perms called the partitioning cache *45610* times, (22813 originating)
+There were 1 cache misses
+
+No proof tree was found after 3600 seconds
+
+===========================================
+Log created Tue, 27 Jun 2017 23:32:23
+
+Maximum depth fully searched was 4
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3600 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_row_and_column_insertions, all_point_isolations
+Equivalent: all_equivalent_point_isolations, point_separation
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: components, reversibly_deletable_cells
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 575359 inferral cache hits and 51642 partitioning cache hits.
+The partitioning cache had 2 tilings in it right now.
+The inferral cache has 100000 tilings in it right now.
+There were 135682 tilings of which 3766 are verified.
+There were 17551 SiblingNodes of which 547 are verified.
+
+The function cells_of_occurrences_by_perms called the partitioning cache *54816* times, (27408 originating)
+There were 0 cache misses
+
+No proof tree was found after 3600 seconds
+
+===========================================
+Log created Wed, 28 Jun 2017 00:32:27
 
 Maximum depth fully searched was 4
 
@@ -195,24 +313,138 @@ Maximum time set at 3600 seconds
 Total time taken was 3602 seconds
 
 The strategies applied were:
-Batch: all_cell_insertions, all_row_and_column_insertions, all_point_isolations
-Equivalent: all_point_placements, all_equivalent_point_isolations, point_separation
+Batch: all_row_and_column_insertions, all_point_isolations
+Equivalent: all_equivalent_point_isolations
 Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
-Recursive: 
+Recursive: splittings
 Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
 
-There were 828041 inferral cache hits and 0 partitioning cache hits.
-The partitioning cache had 0 tilings in it right now.
+There were 493878 inferral cache hits and 3592376 partitioning cache hits.
+The partitioning cache had 3 tilings in it right now.
 The inferral cache has 100000 tilings in it right now.
-There were 99701 tilings of which 1596 are verified.
-There were 23035 SiblingNodes of which 435 are verified.
+There were 114713 tilings of which 2180 are verified.
+There were 19461 SiblingNodes of which 634 are verified.
 
+The function splittings called the partitioning cache *3595696* times, (14404 originating)
 There were 0 cache misses
 
 No proof tree was found after 3602 seconds
 
 ===========================================
-Log created Thu, 22 Jun 2017 00:23:20
+Log created Wed, 28 Jun 2017 01:32:29
+
+Maximum depth fully searched was 4
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3600 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_row_and_column_insertions, all_point_isolations
+Equivalent: all_equivalent_point_isolations
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: splittings
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 580205 inferral cache hits and 2990335 partitioning cache hits.
+The partitioning cache had 0 tilings in it right now.
+The inferral cache has 100000 tilings in it right now.
+There were 139157 tilings of which 2127 are verified.
+There were 28143 SiblingNodes of which 693 are verified.
+
+The function splittings called the partitioning cache *2994012* times, (15543 originating)
+There were 0 cache misses
+
+No proof tree was found after 3600 seconds
+
+===========================================
+Log created Wed, 28 Jun 2017 02:32:31
+
+Maximum depth fully searched was 4
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3600 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_row_and_column_insertions, all_point_isolations
+Equivalent: all_equivalent_point_isolations, point_separation
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: splittings
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 608256 inferral cache hits and 2913825 partitioning cache hits.
+The partitioning cache had 19 tilings in it right now.
+The inferral cache has 100000 tilings in it right now.
+There were 145306 tilings of which 3424 are verified.
+There were 19245 SiblingNodes of which 503 are verified.
+
+The function splittings called the partitioning cache *2917026* times, (13395 originating)
+There were 0 cache misses
+
+No proof tree was found after 3600 seconds
+
+===========================================
+Log created Wed, 28 Jun 2017 03:33:10
+
+Maximum depth fully searched was 5
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3637 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_row_placements, all_column_placements, all_321_boundaries
+Equivalent: all_equivalent_row_placements, all_equivalent_column_placements
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: components, reversibly_deletable_cells
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 13016 inferral cache hits and 44974 partitioning cache hits.
+The partitioning cache had 1 tilings in it right now.
+The inferral cache has 99121 tilings in it right now.
+There were 65286 tilings of which 3915 are verified.
+There were 15821 SiblingNodes of which 1121 are verified.
+
+The function cells_of_occurrences_by_perms called the partitioning cache *47666* times, (23833 originating)
+There were 0 cache misses
+
+No proof tree was found after 3637 seconds
+
+===========================================
+Log created Wed, 28 Jun 2017 04:50:07
+
+Maximum depth fully searched was 5
+
+Maximum time set at 3600 seconds
+
+Total time taken was 4616 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_row_placements, all_column_placements, all_321_boundaries
+Equivalent: all_equivalent_row_placements, all_equivalent_column_placements
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: splittings
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 4049 inferral cache hits and 3460512 partitioning cache hits.
+The partitioning cache had 2 tilings in it right now.
+The inferral cache has 34043 tilings in it right now.
+There were 23850 tilings of which 1822 are verified.
+There were 6128 SiblingNodes of which 618 are verified.
+
+The function splittings called the partitioning cache *3461518* times, (4431 originating)
+There were 0 cache misses
+
+No proof tree was found after 4616 seconds
+
+===========================================
+Log created Wed, 28 Jun 2017 05:50:11
 
 Maximum depth fully searched was 4
 
@@ -221,25 +453,26 @@ Maximum time set at 3600 seconds
 Total time taken was 3603 seconds
 
 The strategies applied were:
-Batch: all_row_and_column_insertions, all_point_isolations
-Equivalent: all_equivalent_point_isolations
+Batch: all_cell_insertions, all_321_boundaries
+Equivalent: all_point_placements
 Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
 Recursive: components, reversibly_deletable_cells
 Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
 
-There were 486310 inferral cache hits and 51163 partitioning cache hits.
-The partitioning cache had 5 tilings in it right now.
+There were 7352 inferral cache hits and 27504 partitioning cache hits.
+The partitioning cache had 4 tilings in it right now.
 The inferral cache has 100000 tilings in it right now.
-There were 57712 tilings of which 1064 are verified.
-There were 20328 SiblingNodes of which 639 are verified.
+There were 81270 tilings of which 732 are verified.
+There were 10817 SiblingNodes of which 106 are verified.
 
-The function cells_of_occurrences_by_perms called the partitioning cache *54344* times, (27172 originating)
+The function cells_of_occurrences_by_perms called the partitioning cache *29200* times, (14600 originating)
 There were 0 cache misses
 
 No proof tree was found after 3603 seconds
 
 ===========================================
-Log created Thu, 22 Jun 2017 01:23:22
+Log created Wed, 28 Jun 2017 06:50:13
 
 Maximum depth fully searched was 4
 
@@ -248,79 +481,26 @@ Maximum time set at 3600 seconds
 Total time taken was 3600 seconds
 
 The strategies applied were:
-Batch: all_cell_insertions, all_row_and_column_insertions, all_point_isolations
-Equivalent: all_equivalent_point_isolations
-Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
-Recursive: components, reversibly_deletable_cells
-Verification: subset_verified, is_empty
-
-There were 501583 inferral cache hits and 47347 partitioning cache hits.
-The partitioning cache had 2 tilings in it right now.
-The inferral cache has 100000 tilings in it right now.
-There were 63014 tilings of which 1185 are verified.
-There were 25430 SiblingNodes of which 674 are verified.
-
-The function cells_of_occurrences_by_perms called the partitioning cache *50342* times, (25195 originating)
-There were 3 cache misses
-
-No proof tree was found after 3600 seconds
-
-===========================================
-Log created Thu, 22 Jun 2017 02:23:23
-
-Maximum depth fully searched was 4
-
-Maximum time set at 3600 seconds
-
-Total time taken was 3600 seconds
-
-The strategies applied were:
-Batch: all_cell_insertions, all_row_and_column_insertions, all_point_isolations
-Equivalent: all_equivalent_point_isolations, point_separation
-Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
-Recursive: components, reversibly_deletable_cells
-Verification: subset_verified, is_empty
-
-There were 543653 inferral cache hits and 52321 partitioning cache hits.
-The partitioning cache had 13 tilings in it right now.
-The inferral cache has 100000 tilings in it right now.
-There were 66448 tilings of which 1903 are verified.
-There were 17543 SiblingNodes of which 683 are verified.
-
-The function cells_of_occurrences_by_perms called the partitioning cache *55608* times, (27821 originating)
-There were 2 cache misses
-
-No proof tree was found after 3600 seconds
-
-===========================================
-Log created Thu, 22 Jun 2017 03:23:24
-
-Maximum depth fully searched was 4
-
-Maximum time set at 3600 seconds
-
-Total time taken was 3600 seconds
-
-The strategies applied were:
-Batch: all_row_and_column_insertions, all_point_isolations
-Equivalent: all_equivalent_point_isolations
+Batch: all_cell_insertions, all_321_boundaries
+Equivalent: all_point_placements
 Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
 Recursive: splittings
 Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
 
-There were 558442 inferral cache hits and 3808838 partitioning cache hits.
-The partitioning cache had 1 tilings in it right now.
+There were 6613 inferral cache hits and 29079518 partitioning cache hits.
+The partitioning cache had 4 tilings in it right now.
 The inferral cache has 100000 tilings in it right now.
-There were 65628 tilings of which 787 are verified.
-There were 22771 SiblingNodes of which 493 are verified.
+There were 79288 tilings of which 949 are verified.
+There were 10492 SiblingNodes of which 134 are verified.
 
-The function splittings called the partitioning cache *3812486* times, (15595 originating)
+The function splittings called the partitioning cache *29081156* times, (7302 originating)
 There were 0 cache misses
 
 No proof tree was found after 3600 seconds
 
 ===========================================
-Log created Thu, 22 Jun 2017 04:23:28
+Log created Wed, 28 Jun 2017 07:50:15
 
 Maximum depth fully searched was 4
 
@@ -329,220 +509,60 @@ Maximum time set at 3600 seconds
 Total time taken was 3600 seconds
 
 The strategies applied were:
-Batch: all_cell_insertions, all_row_and_column_insertions, all_point_isolations
-Equivalent: all_equivalent_point_isolations
+Batch: all_cell_insertions, all_lrm_and_rlm_placements
+Equivalent: all_point_placements
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: components, reversibly_deletable_cells
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 7964 inferral cache hits and 33594 partitioning cache hits.
+The partitioning cache had 1 tilings in it right now.
+The inferral cache has 100000 tilings in it right now.
+There were 94768 tilings of which 2114 are verified.
+There were 13760 SiblingNodes of which 421 are verified.
+
+The function cells_of_occurrences_by_perms called the partitioning cache *35666* times, (17833 originating)
+There were 0 cache misses
+
+No proof tree was found after 3600 seconds
+
+===========================================
+Log created Wed, 28 Jun 2017 08:50:17
+
+Maximum depth fully searched was 4
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3600 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_lrm_and_rlm_placements
+Equivalent: all_point_placements
 Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
 Recursive: splittings
 Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
 
-There were 560870 inferral cache hits and 2433758 partitioning cache hits.
+There were 7075 inferral cache hits and 29757290 partitioning cache hits.
 The partitioning cache had 0 tilings in it right now.
 The inferral cache has 100000 tilings in it right now.
-There were 69128 tilings of which 1522 are verified.
-There were 29072 SiblingNodes of which 974 are verified.
+There were 80749 tilings of which 755 are verified.
+There were 10657 SiblingNodes of which 89 are verified.
 
-The function splittings called the partitioning cache *2437524* times, (15394 originating)
+The function splittings called the partitioning cache *29758969* times, (7496 originating)
 There were 0 cache misses
 
 No proof tree was found after 3600 seconds
 
 ===========================================
-Log created Thu, 22 Jun 2017 05:23:30
-
-Maximum depth fully searched was 4
-
-Maximum time set at 3600 seconds
-
-Total time taken was 3600 seconds
-
-The strategies applied were:
-Batch: all_cell_insertions, all_row_and_column_insertions, all_point_isolations
-Equivalent: all_equivalent_point_isolations, point_separation
-Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
-Recursive: splittings
-Verification: subset_verified, is_empty
-
-There were 653971 inferral cache hits and 2112044 partitioning cache hits.
-The partitioning cache had 3 tilings in it right now.
-The inferral cache has 100000 tilings in it right now.
-There were 80647 tilings of which 2495 are verified.
-There were 20536 SiblingNodes of which 780 are verified.
-
-The function splittings called the partitioning cache *2116244* times, (16623 originating)
-There were 0 cache misses
-
-No proof tree was found after 3600 seconds
-
-===========================================
-Log created Fri, 23 Jun 2017 00:06:05
+Log created Wed, 28 Jun 2017 10:08:14
 
 Maximum depth fully searched was 5
 
 Maximum time set at 3600 seconds
 
-Total time taken was 67354 seconds
-
-The strategies applied were:
-Batch: all_cell_insertions, all_row_placements, all_column_placements, all_321_boundaries
-Equivalent: all_equivalent_row_placements, all_equivalent_column_placements
-Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
-Recursive: components, reversibly_deletable_cells
-Verification: subset_verified, is_empty
-
-There were 11713 inferral cache hits and 43407 partitioning cache hits.
-The partitioning cache had 4 tilings in it right now.
-The inferral cache has 60176 tilings in it right now.
-There were 30363 tilings of which 1862 are verified.
-There were 14932 SiblingNodes of which 1038 are verified.
-
-The function cells_of_occurrences_by_perms called the partitioning cache *46066* times, (23033 originating)
-There were 0 cache misses
-
-No proof tree was found after 67354 seconds
-
-===========================================
-Log created Fri, 23 Jun 2017 01:09:48
-
-Maximum depth fully searched was 5
-
-Maximum time set at 3600 seconds
-
-Total time taken was 3822 seconds
-
-The strategies applied were:
-Batch: all_cell_insertions, all_row_placements, all_column_placements, all_321_boundaries
-Equivalent: all_equivalent_row_placements, all_equivalent_column_placements
-Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
-Recursive: splittings
-Verification: subset_verified, is_empty
-
-There were 8322 inferral cache hits and 4998263 partitioning cache hits.
-The partitioning cache had 1 tilings in it right now.
-The inferral cache has 46890 tilings in it right now.
-There were 23586 tilings of which 1510 are verified.
-There were 11339 SiblingNodes of which 776 are verified.
-
-The function splittings called the partitioning cache *5000287* times, (9043 originating)
-There were 0 cache misses
-
-No proof tree was found after 3822 seconds
-
-===========================================
-Log created Fri, 23 Jun 2017 02:09:49
-
-Maximum depth fully searched was 4
-
-Maximum time set at 3600 seconds
-
-Total time taken was 3600 seconds
-
-The strategies applied were:
-Batch: all_cell_insertions, all_321_boundaries
-Equivalent: all_point_placements
-Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
-Recursive: components, reversibly_deletable_cells
-Verification: subset_verified, is_empty
-
-There were 9544 inferral cache hits and 35561 partitioning cache hits.
-The partitioning cache had 15 tilings in it right now.
-The inferral cache has 100000 tilings in it right now.
-There were 49270 tilings of which 1009 are verified.
-There were 14248 SiblingNodes of which 478 are verified.
-
-The function cells_of_occurrences_by_perms called the partitioning cache *37780* times, (18890 originating)
-There were 0 cache misses
-
-No proof tree was found after 3600 seconds
-
-===========================================
-Log created Fri, 23 Jun 2017 03:09:50
-
-Maximum depth fully searched was 4
-
-Maximum time set at 3600 seconds
-
-Total time taken was 3600 seconds
-
-The strategies applied were:
-Batch: all_cell_insertions, all_321_boundaries
-Equivalent: all_point_placements
-Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
-Recursive: splittings
-Verification: subset_verified, is_empty
-
-There were 7433 inferral cache hits and 21581987 partitioning cache hits.
-The partitioning cache had 8 tilings in it right now.
-The inferral cache has 100000 tilings in it right now.
-There were 41314 tilings of which 344 are verified.
-There were 10941 SiblingNodes of which 132 are verified.
-
-The function splittings called the partitioning cache *21583793* times, (7736 originating)
-There were 0 cache misses
-
-No proof tree was found after 3600 seconds
-
-===========================================
-Log created Fri, 23 Jun 2017 04:09:52
-
-Maximum depth fully searched was 4
-
-Maximum time set at 3600 seconds
-
-Total time taken was 3600 seconds
-
-The strategies applied were:
-Batch: all_cell_insertions, all_lrm_and_rlm_placements
-Equivalent: all_point_placements
-Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
-Recursive: components, reversibly_deletable_cells
-Verification: subset_verified, is_empty
-
-There were 6983 inferral cache hits and 28503 partitioning cache hits.
-The partitioning cache had 2 tilings in it right now.
-The inferral cache has 100000 tilings in it right now.
-There were 42648 tilings of which 391 are verified.
-There were 11326 SiblingNodes of which 115 are verified.
-
-The function cells_of_occurrences_by_perms called the partitioning cache *30302* times, (15151 originating)
-There were 0 cache misses
-
-No proof tree was found after 3600 seconds
-
-===========================================
-Log created Fri, 23 Jun 2017 05:09:55
-
-Maximum depth fully searched was 4
-
-Maximum time set at 3600 seconds
-
-Total time taken was 3602 seconds
-
-The strategies applied were:
-Batch: all_cell_insertions, all_lrm_and_rlm_placements
-Equivalent: all_point_placements
-Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
-Recursive: splittings
-Verification: subset_verified, is_empty
-
-There were 6852 inferral cache hits and 27181877 partitioning cache hits.
-The partitioning cache had 3 tilings in it right now.
-The inferral cache has 100000 tilings in it right now.
-There were 40589 tilings of which 376 are verified.
-There were 10885 SiblingNodes of which 106 are verified.
-
-The function splittings called the partitioning cache *27183564* times, (7230 originating)
-There were 0 cache misses
-
-No proof tree was found after 3602 seconds
-
-===========================================
-Log created Fri, 23 Jun 2017 06:16:02
-
-Maximum depth fully searched was 5
-
-Maximum time set at 3600 seconds
-
-Total time taken was 3966 seconds
+Total time taken was 4676 seconds
 
 The strategies applied were:
 Batch: all_cell_insertions, all_row_placements, all_column_placements, all_lrm_and_rlm_placements
@@ -550,26 +570,27 @@ Equivalent: all_equivalent_row_placements, all_equivalent_column_placements
 Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
 Recursive: components, reversibly_deletable_cells
 Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
 
-There were 9935 inferral cache hits and 39287 partitioning cache hits.
-The partitioning cache had 2 tilings in it right now.
-The inferral cache has 55118 tilings in it right now.
-There were 27486 tilings of which 1697 are verified.
-There were 13337 SiblingNodes of which 895 are verified.
+There were 6719 inferral cache hits and 21256 partitioning cache hits.
+The partitioning cache had 1 tilings in it right now.
+The inferral cache has 45265 tilings in it right now.
+There were 31791 tilings of which 1947 are verified.
+There were 7953 SiblingNodes of which 644 are verified.
 
-The function cells_of_occurrences_by_perms called the partitioning cache *41712* times, (20856 originating)
+The function cells_of_occurrences_by_perms called the partitioning cache *22538* times, (11269 originating)
 There were 0 cache misses
 
-No proof tree was found after 3966 seconds
+No proof tree was found after 4676 seconds
 
 ===========================================
-Log created Fri, 23 Jun 2017 07:17:00
+Log created Wed, 28 Jun 2017 12:06:40
 
 Maximum depth fully searched was 5
 
 Maximum time set at 3600 seconds
 
-Total time taken was 3657 seconds
+Total time taken was 7105 seconds
 
 The strategies applied were:
 Batch: all_cell_insertions, all_row_placements, all_column_placements, all_lrm_and_rlm_placements
@@ -577,20 +598,49 @@ Equivalent: all_equivalent_row_placements, all_equivalent_column_placements
 Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
 Recursive: splittings
 Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
 
-There were 9411 inferral cache hits and 8496069 partitioning cache hits.
-The partitioning cache had 1 tilings in it right now.
-The inferral cache has 48461 tilings in it right now.
-There were 24915 tilings of which 1603 are verified.
-There were 12494 SiblingNodes of which 963 are verified.
+There were 4015 inferral cache hits and 4263755 partitioning cache hits.
+The partitioning cache had 6 tilings in it right now.
+The inferral cache has 29035 tilings in it right now.
+There were 19860 tilings of which 1141 are verified.
+There were 4960 SiblingNodes of which 427 are verified.
 
-The function splittings called the partitioning cache *8498219* times, (9625 originating)
+The function splittings called the partitioning cache *4264574* times, (3687 originating)
 There were 0 cache misses
 
-No proof tree was found after 3657 seconds
+No proof tree was found after 7105 seconds
 
 ===========================================
-Log created Fri, 23 Jun 2017 08:17:01
+Log created Wed, 28 Jun 2017 13:06:44
+
+Maximum depth fully searched was 4
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3603 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions
+Equivalent: all_point_placements
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: components, reversibly_deletable_cells
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 8200 inferral cache hits and 34380 partitioning cache hits.
+The partitioning cache had 7 tilings in it right now.
+The inferral cache has 100000 tilings in it right now.
+There were 94924 tilings of which 1571 are verified.
+There were 13301 SiblingNodes of which 224 are verified.
+
+The function cells_of_occurrences_by_perms called the partitioning cache *36500* times, (18250 originating)
+There were 0 cache misses
+
+No proof tree was found after 3603 seconds
+
+===========================================
+Log created Wed, 28 Jun 2017 14:06:47
 
 Maximum depth fully searched was 4
 
@@ -602,55 +652,29 @@ The strategies applied were:
 Batch: all_cell_insertions
 Equivalent: all_point_placements
 Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
-Recursive: components, reversibly_deletable_cells
+Recursive: splittings
 Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
 
-There were 7318 inferral cache hits and 31276 partitioning cache hits.
-The partitioning cache had 12 tilings in it right now.
+There were 7189 inferral cache hits and 26015340 partitioning cache hits.
+The partitioning cache had 4 tilings in it right now.
 The inferral cache has 100000 tilings in it right now.
-There were 45266 tilings of which 700 are verified.
-There were 11950 SiblingNodes of which 198 are verified.
+There were 89343 tilings of which 927 are verified.
+There were 12343 SiblingNodes of which 159 are verified.
 
-The function cells_of_occurrences_by_perms called the partitioning cache *33244* times, (16622 originating)
+The function splittings called the partitioning cache *26017246* times, (8516 originating)
 There were 0 cache misses
 
 No proof tree was found after 3600 seconds
 
 ===========================================
-Log created Fri, 23 Jun 2017 09:17:09
+Log created Wed, 28 Jun 2017 15:06:53
 
 Maximum depth fully searched was 4
 
 Maximum time set at 3600 seconds
 
-Total time taken was 3606 seconds
-
-The strategies applied were:
-Batch: all_cell_insertions
-Equivalent: all_point_placements
-Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
-Recursive: splittings
-Verification: subset_verified, is_empty
-
-There were 6521 inferral cache hits and 18438248 partitioning cache hits.
-The partitioning cache had 4 tilings in it right now.
-The inferral cache has 100000 tilings in it right now.
-There were 41313 tilings of which 626 are verified.
-There were 11302 SiblingNodes of which 152 are verified.
-
-The function splittings called the partitioning cache *18440041* times, (7746 originating)
-There were 0 cache misses
-
-No proof tree was found after 3606 seconds
-
-===========================================
-Log created Fri, 23 Jun 2017 10:17:10
-
-Maximum depth fully searched was 4
-
-Maximum time set at 3600 seconds
-
-Total time taken was 3600 seconds
+Total time taken was 3604 seconds
 
 The strategies applied were:
 Batch: all_cell_insertions
@@ -658,26 +682,27 @@ Equivalent: all_point_placements, point_separation
 Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
 Recursive: components, reversibly_deletable_cells
 Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
 
-There were 18365 inferral cache hits and 42150 partitioning cache hits.
-The partitioning cache had 3 tilings in it right now.
+There were 16830 inferral cache hits and 38947 partitioning cache hits.
+The partitioning cache had 1 tilings in it right now.
 The inferral cache has 100000 tilings in it right now.
-There were 63102 tilings of which 1391 are verified.
-There were 13140 SiblingNodes of which 453 are verified.
+There were 108962 tilings of which 2066 are verified.
+There were 10533 SiblingNodes of which 216 are verified.
 
-The function cells_of_occurrences_by_perms called the partitioning cache *44798* times, (22408 originating)
-There were 1 cache misses
+The function cells_of_occurrences_by_perms called the partitioning cache *41346* times, (20673 originating)
+There were 0 cache misses
 
-No proof tree was found after 3600 seconds
+No proof tree was found after 3604 seconds
 
 ===========================================
-Log created Fri, 23 Jun 2017 11:17:11
+Log created Wed, 28 Jun 2017 16:06:56
 
 Maximum depth fully searched was 4
 
 Maximum time set at 3600 seconds
 
-Total time taken was 3600 seconds
+Total time taken was 3601 seconds
 
 The strategies applied were:
 Batch: all_cell_insertions
@@ -685,26 +710,27 @@ Equivalent: all_point_placements
 Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
 Recursive: splittings
 Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
 
-There were 8104 inferral cache hits and 20337233 partitioning cache hits.
-The partitioning cache had 8 tilings in it right now.
+There were 7471 inferral cache hits and 27858577 partitioning cache hits.
+The partitioning cache had 5 tilings in it right now.
 The inferral cache has 100000 tilings in it right now.
-There were 50573 tilings of which 832 are verified.
-There were 14331 SiblingNodes of which 424 are verified.
+There were 84699 tilings of which 1314 are verified.
+There were 11197 SiblingNodes of which 165 are verified.
 
-The function splittings called the partitioning cache *20339352* times, (9268 originating)
+The function splittings called the partitioning cache *27860404* times, (8170 originating)
 There were 0 cache misses
 
-No proof tree was found after 3600 seconds
+No proof tree was found after 3601 seconds
 
 ===========================================
-Log created Fri, 23 Jun 2017 12:30:15
+Log created Wed, 28 Jun 2017 17:11:33
 
 Maximum depth fully searched was 5
 
 Maximum time set at 3600 seconds
 
-Total time taken was 4382 seconds
+Total time taken was 3875 seconds
 
 The strategies applied were:
 Batch: all_cell_insertions, all_row_placements, all_column_placements
@@ -712,26 +738,27 @@ Equivalent: all_equivalent_row_placements, all_equivalent_column_placements
 Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
 Recursive: components, reversibly_deletable_cells
 Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
 
-There were 9915 inferral cache hits and 36503 partitioning cache hits.
+There were 4913 inferral cache hits and 17240 partitioning cache hits.
 The partitioning cache had 0 tilings in it right now.
-The inferral cache has 51069 tilings in it right now.
-There were 26576 tilings of which 1629 are verified.
-There were 13373 SiblingNodes of which 953 are verified.
+The inferral cache has 37631 tilings in it right now.
+There were 25898 tilings of which 1922 are verified.
+There were 6613 SiblingNodes of which 690 are verified.
 
-The function cells_of_occurrences_by_perms called the partitioning cache *38748* times, (19374 originating)
+The function cells_of_occurrences_by_perms called the partitioning cache *18286* times, (9143 originating)
 There were 0 cache misses
 
-No proof tree was found after 4382 seconds
+No proof tree was found after 3875 seconds
 
 ===========================================
-Log created Fri, 23 Jun 2017 13:47:55
+Log created Wed, 28 Jun 2017 20:14:46
 
 Maximum depth fully searched was 5
 
 Maximum time set at 3600 seconds
 
-Total time taken was 4660 seconds
+Total time taken was 10992 seconds
 
 The strategies applied were:
 Batch: all_cell_insertions, all_row_placements, all_column_placements
@@ -739,26 +766,27 @@ Equivalent: all_equivalent_row_placements, all_equivalent_column_placements
 Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
 Recursive: splittings
 Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
 
-There were 9133 inferral cache hits and 5898889 partitioning cache hits.
-The partitioning cache had 1 tilings in it right now.
-The inferral cache has 49198 tilings in it right now.
-There were 24946 tilings of which 1537 are verified.
-There were 12253 SiblingNodes of which 847 are verified.
+There were 4465 inferral cache hits and 3341068 partitioning cache hits.
+The partitioning cache had 6 tilings in it right now.
+The inferral cache has 37240 tilings in it right now.
+There were 25844 tilings of which 1860 are verified.
+There were 6661 SiblingNodes of which 552 are verified.
 
-The function splittings called the partitioning cache *5901118* times, (9900 originating)
+The function splittings called the partitioning cache *3342125* times, (4658 originating)
 There were 0 cache misses
 
-No proof tree was found after 4660 seconds
+No proof tree was found after 10992 seconds
 
 ===========================================
-Log created Fri, 23 Jun 2017 14:47:56
+Log created Wed, 28 Jun 2017 21:14:48
 
 Maximum depth fully searched was 5
 
 Maximum time set at 3600 seconds
 
-Total time taken was 3600 seconds
+Total time taken was 3601 seconds
 
 The strategies applied were:
 Batch: all_cell_insertions, all_row_placements, all_column_placements
@@ -766,15 +794,549 @@ Equivalent: all_equivalent_row_placements, all_equivalent_column_placements, poi
 Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
 Recursive: components, reversibly_deletable_cells
 Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
 
-There were 12429 inferral cache hits and 38599 partitioning cache hits.
-The partitioning cache had 3 tilings in it right now.
-The inferral cache has 40264 tilings in it right now.
-There were 24365 tilings of which 1602 are verified.
-There were 7075 SiblingNodes of which 456 are verified.
+There were 14673 inferral cache hits and 31334 partitioning cache hits.
+The partitioning cache had 8 tilings in it right now.
+The inferral cache has 54223 tilings in it right now.
+There were 45922 tilings of which 2698 are verified.
+There were 6498 SiblingNodes of which 518 are verified.
 
-The function cells_of_occurrences_by_perms called the partitioning cache *41044* times, (20522 originating)
+The function cells_of_occurrences_by_perms called the partitioning cache *33232* times, (16616 originating)
+There were 0 cache misses
+
+No proof tree was found after 3601 seconds
+
+===========================================
+Log created Wed, 28 Jun 2017 23:37:57
+
+Maximum depth fully searched was 5
+
+Maximum time set at 3600 seconds
+
+Total time taken was 8588 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_row_placements, all_column_placements
+Equivalent: all_equivalent_row_placements, all_equivalent_column_placements, point_separation
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: splittings
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 17161 inferral cache hits and 7523279 partitioning cache hits.
+The partitioning cache had 22 tilings in it right now.
+The inferral cache has 66956 tilings in it right now.
+There were 56384 tilings of which 3035 are verified.
+There were 8361 SiblingNodes of which 635 are verified.
+
+The function splittings called the partitioning cache *7525616* times, (10332 originating)
+There were 0 cache misses
+
+No proof tree was found after 8588 seconds
+
+===========================================
+Log created Thu, 29 Jun 2017 00:38:53
+
+Maximum depth fully searched was 5
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3654 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_point_isolations
+Equivalent: point_separation, all_equivalent_point_isolations
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: components, reversibly_deletable_cells
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 293611 inferral cache hits and 56840 partitioning cache hits.
+The partitioning cache had 9 tilings in it right now.
+The inferral cache has 100000 tilings in it right now.
+There were 80352 tilings of which 4134 are verified.
+There were 10556 SiblingNodes of which 539 are verified.
+
+The function cells_of_occurrences_by_perms called the partitioning cache *60360* times, (30197 originating)
+There were 2 cache misses
+
+No proof tree was found after 3654 seconds
+
+===========================================
+Log created Thu, 29 Jun 2017 01:39:14
+
+Maximum depth fully searched was 5
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3610 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_point_isolations
+Equivalent: point_separation, all_equivalent_point_isolations
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: splittings
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 455061 inferral cache hits and 3949448 partitioning cache hits.
+The partitioning cache had 2 tilings in it right now.
+The inferral cache has 100000 tilings in it right now.
+There were 120656 tilings of which 6073 are verified.
+There were 15310 SiblingNodes of which 896 are verified.
+
+The function splittings called the partitioning cache *3953862* times, (19160 originating)
+There were 0 cache misses
+
+No proof tree was found after 3610 seconds
+
+===========================================
+Log created Thu, 29 Jun 2017 03:44:30
+
+Maximum depth fully searched was 9
+
+Maximum time set at 3600 seconds
+
+Total time taken was 7514 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_row_placements
+Equivalent: all_equivalent_row_placements
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: components, reversibly_deletable_cells
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 1525 inferral cache hits and 13875 partitioning cache hits.
+The partitioning cache had 1 tilings in it right now.
+The inferral cache has 7689 tilings in it right now.
+There were 12726 tilings of which 3386 are verified.
+There were 4790 SiblingNodes of which 987 are verified.
+
+The function cells_of_occurrences_by_perms called the partitioning cache *14600* times, (7338 originating)
+There were 4 cache misses
+
+No proof tree was found after 7514 seconds
+
+===========================================
+Log created Thu, 29 Jun 2017 04:44:33
+
+Maximum depth fully searched was 9
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3602 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_row_placements
+Equivalent: all_equivalent_row_placements
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: splittings
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 1250 inferral cache hits and 2635417 partitioning cache hits.
+The partitioning cache had 2 tilings in it right now.
+The inferral cache has 6776 tilings in it right now.
+There were 11029 tilings of which 2805 are verified.
+There were 4158 SiblingNodes of which 805 are verified.
+
+The function splittings called the partitioning cache *2636054* times, (3665 originating)
+There were 0 cache misses
+
+No proof tree was found after 3602 seconds
+
+===========================================
+Log created Thu, 29 Jun 2017 05:45:12
+
+Maximum depth fully searched was 5
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3639 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_row_placements
+Equivalent: all_equivalent_row_placements, point_separation
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: components, reversibly_deletable_cells
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 2158 inferral cache hits and 8790 partitioning cache hits.
+The partitioning cache had 8 tilings in it right now.
+The inferral cache has 2888 tilings in it right now.
+There were 4359 tilings of which 371 are verified.
+There were 383 SiblingNodes of which 46 are verified.
+
+The function cells_of_occurrences_by_perms called the partitioning cache *9320* times, (4660 originating)
+There were 0 cache misses
+
+No proof tree was found after 3639 seconds
+
+===========================================
+Log created Thu, 29 Jun 2017 06:45:22
+
+Maximum depth fully searched was 6
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3600 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_row_placements
+Equivalent: all_equivalent_row_placements, point_separation
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: splittings
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 7924 inferral cache hits and 243954 partitioning cache hits.
+The partitioning cache had 5 tilings in it right now.
+The inferral cache has 10428 tilings in it right now.
+There were 14267 tilings of which 1289 are verified.
+There were 1116 SiblingNodes of which 152 are verified.
+
+The function splittings called the partitioning cache *245629* times, (6713 originating)
 There were 0 cache misses
 
 No proof tree was found after 3600 seconds
 
+===========================================
+Log created Thu, 29 Jun 2017 07:47:54
+
+Maximum depth fully searched was 11
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3751 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_minimum_row_placements
+Equivalent: all_equivalent_minimum_row_placements
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: components, reversibly_deletable_cells
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 320 inferral cache hits and 5902 partitioning cache hits.
+The partitioning cache had 1 tilings in it right now.
+The inferral cache has 2222 tilings in it right now.
+There were 5003 tilings of which 1385 are verified.
+There were 2203 SiblingNodes of which 567 are verified.
+
+The function cells_of_occurrences_by_perms called the partitioning cache *6196* times, (3098 originating)
+There were 0 cache misses
+
+No proof tree was found after 3751 seconds
+
+===========================================
+Log created Thu, 29 Jun 2017 08:56:14
+
+Maximum depth fully searched was 10
+
+Maximum time set at 3600 seconds
+
+Total time taken was 4097 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_minimum_row_placements
+Equivalent: all_equivalent_minimum_row_placements
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: splittings
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 363 inferral cache hits and 18931887 partitioning cache hits.
+The partitioning cache had 3 tilings in it right now.
+The inferral cache has 2464 tilings in it right now.
+There were 8612 tilings of which 2330 are verified.
+There were 3953 SiblingNodes of which 1071 are verified.
+
+The function splittings called the partitioning cache *18932117* times, (1425 originating)
+There were 0 cache misses
+
+No proof tree was found after 4097 seconds
+
+===========================================
+Log created Thu, 29 Jun 2017 09:57:51
+
+Maximum depth fully searched was 5
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3697 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_minimum_row_placements
+Equivalent: all_equivalent_minimum_row_placements, point_separation
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: components, reversibly_deletable_cells
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 1201 inferral cache hits and 5865 partitioning cache hits.
+The partitioning cache had 8 tilings in it right now.
+The inferral cache has 1380 tilings in it right now.
+There were 2299 tilings of which 147 are verified.
+There were 210 SiblingNodes of which 30 are verified.
+
+The function cells_of_occurrences_by_perms called the partitioning cache *6212* times, (3106 originating)
+There were 0 cache misses
+
+No proof tree was found after 3697 seconds
+
+===========================================
+Log created Thu, 29 Jun 2017 10:58:37
+
+Maximum depth fully searched was 6
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3635 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_minimum_row_placements
+Equivalent: all_equivalent_minimum_row_placements, point_separation
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: splittings
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 3984 inferral cache hits and 157554 partitioning cache hits.
+The partitioning cache had 17 tilings in it right now.
+The inferral cache has 4071 tilings in it right now.
+There were 6421 tilings of which 377 are verified.
+There were 486 SiblingNodes of which 63 are verified.
+
+The function splittings called the partitioning cache *158506* times, (3979 originating)
+There were 0 cache misses
+
+No proof tree was found after 3635 seconds
+
+===========================================
+Log created Thu, 29 Jun 2017 12:02:21
+
+Maximum depth fully searched was 9
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3823 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_column_placements
+Equivalent: all_equivalent_column_placements
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: components, reversibly_deletable_cells
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 1039 inferral cache hits and 12649 partitioning cache hits.
+The partitioning cache had 1 tilings in it right now.
+The inferral cache has 6930 tilings in it right now.
+There were 10984 tilings of which 3380 are verified.
+There were 4220 SiblingNodes of which 1023 are verified.
+
+The function cells_of_occurrences_by_perms called the partitioning cache *13320* times, (6708 originating)
+There were 5 cache misses
+
+No proof tree was found after 3823 seconds
+
+===========================================
+Log created Thu, 29 Jun 2017 13:03:57
+
+Maximum depth fully searched was 9
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3695 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_column_placements
+Equivalent: all_equivalent_column_placements
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: splittings
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 1369 inferral cache hits and 5360048 partitioning cache hits.
+The partitioning cache had 9 tilings in it right now.
+The inferral cache has 9080 tilings in it right now.
+There were 14844 tilings of which 4004 are verified.
+There were 5675 SiblingNodes of which 1220 are verified.
+
+The function splittings called the partitioning cache *5360785* times, (4323 originating)
+There were 0 cache misses
+
+No proof tree was found after 3695 seconds
+
+===========================================
+Log created Thu, 29 Jun 2017 14:04:36
+
+Maximum depth fully searched was 5
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3639 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_column_placements
+Equivalent: all_equivalent_column_placements, point_separation
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: components, reversibly_deletable_cells
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 2221 inferral cache hits and 9210 partitioning cache hits.
+The partitioning cache had 8 tilings in it right now.
+The inferral cache has 3192 tilings in it right now.
+There were 4633 tilings of which 397 are verified.
+There were 424 SiblingNodes of which 53 are verified.
+
+The function cells_of_occurrences_by_perms called the partitioning cache *9766* times, (4883 originating)
+There were 0 cache misses
+
+No proof tree was found after 3639 seconds
+
+===========================================
+Log created Thu, 29 Jun 2017 15:04:43
+
+Maximum depth fully searched was 6
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3600 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_column_placements
+Equivalent: all_equivalent_column_placements, point_separation
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: splittings
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 7275 inferral cache hits and 217720 partitioning cache hits.
+The partitioning cache had 26 tilings in it right now.
+The inferral cache has 11403 tilings in it right now.
+There were 14073 tilings of which 2069 are verified.
+There were 1098 SiblingNodes of which 167 are verified.
+
+The function splittings called the partitioning cache *219245* times, (6081 originating)
+There were 0 cache misses
+
+No proof tree was found after 3600 seconds
+
+===========================================
+Log created Thu, 29 Jun 2017 16:09:37
+
+Maximum depth fully searched was 11
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3893 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_leftmost_column_placements
+Equivalent: all_equivalent_leftmost_column_placements
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: components, reversibly_deletable_cells
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 313 inferral cache hits and 5749 partitioning cache hits.
+The partitioning cache had 1 tilings in it right now.
+The inferral cache has 2198 tilings in it right now.
+There were 4945 tilings of which 1393 are verified.
+There were 2175 SiblingNodes of which 570 are verified.
+
+The function cells_of_occurrences_by_perms called the partitioning cache *6036* times, (3018 originating)
+There were 0 cache misses
+
+No proof tree was found after 3893 seconds
+
+===========================================
+Log created Thu, 29 Jun 2017 17:11:11
+
+Maximum depth fully searched was 11
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3690 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_leftmost_column_placements
+Equivalent: all_equivalent_leftmost_column_placements
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: splittings
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 335 inferral cache hits and 2269543 partitioning cache hits.
+The partitioning cache had 1 tilings in it right now.
+The inferral cache has 2568 tilings in it right now.
+There were 5292 tilings of which 1316 are verified.
+There were 2276 SiblingNodes of which 525 are verified.
+
+The function splittings called the partitioning cache *2269836* times, (1877 originating)
+There were 0 cache misses
+
+No proof tree was found after 3690 seconds
+
+===========================================
+Log created Thu, 29 Jun 2017 18:11:43
+
+Maximum depth fully searched was 5
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3630 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_leftmost_column_placements
+Equivalent: all_equivalent_leftmost_column_placements, point_separation
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: components, reversibly_deletable_cells
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 1192 inferral cache hits and 5530 partitioning cache hits.
+The partitioning cache had 9 tilings in it right now.
+The inferral cache has 1336 tilings in it right now.
+There were 2169 tilings of which 119 are verified.
+There were 195 SiblingNodes of which 26 are verified.
+
+The function cells_of_occurrences_by_perms called the partitioning cache *5858* times, (2929 originating)
+There were 0 cache misses
+
+No proof tree was found after 3630 seconds
+
+===========================================
+Log created Thu, 29 Jun 2017 19:11:56
+
+Maximum depth fully searched was 6
+
+Maximum time set at 3600 seconds
+
+Total time taken was 3601 seconds
+
+The strategies applied were:
+Batch: all_cell_insertions, all_leftmost_column_placements
+Equivalent: all_equivalent_leftmost_column_placements, point_separation
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Recursive: splittings
+Verification: subset_verified, is_empty
+The 2 symmetries of the basis were used
+
+There were 3762 inferral cache hits and 147606 partitioning cache hits.
+The partitioning cache had 4 tilings in it right now.
+The inferral cache has 4009 tilings in it right now.
+There were 6194 tilings of which 406 are verified.
+There were 480 SiblingNodes of which 73 are verified.
+
+The function splittings called the partitioning cache *148487* times, (3658 originating)
+There were 0 cache misses
+
+No proof tree was found after 3601 seconds
+
+Unable to find a proof tree within the time limits
