@@ -33,8 +33,8 @@ strategy_packs = [  StrategyPacks.row_and_column_placements,
 
 symmetry = False
 non_interleaving_decomposition = False
-tilingqueue = TilingQueueDF # TilingQueue for new or TilingQueueDF for old atrap style
-max_time = 60 # seconds for each strategy pack (must be integer)
+tilingqueue = TilingQueue # TilingQueue for new or TilingQueueDF for old atrap style
+max_time = 30 # seconds for each strategy pack (must be integer)
 status_update = None # how often you want an update
 
 start = time.time()
@@ -63,4 +63,5 @@ with open(filename) as bases:
                     print("proof tree found")
                     break
 end = time.time()
-print("Total time taken was {} seconds".format(int(end-start)))
+with open("total", "w") as f:
+    print("Total time taken was {} seconds".format(int(end-start)), file=f)
