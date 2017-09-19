@@ -1,0 +1,155 @@
+0213_0231_0312_1302_1320_2031_2301_3021_3120
+Symmetry: False
+Non-Interleaving Decompoition: False
+Tiling Queue: <class 'atrapv2.tilingqueuedf.TilingQueueDF'>
+
+--------------------------------------------------------------------------
+Trying: No name
+Auto search started Tue, 19 Sep 2017 12:23:33
+
+Looking for proof tree for Basis((Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((1, 3, 0, 2)), Perm((1, 3, 2, 0)), Perm((2, 0, 3, 1)), Perm((2, 3, 0, 1)), Perm((3, 0, 2, 1)), Perm((3, 1, 2, 0))))
+
+The strategies being used are:
+Equivalent: all_equivalent_row_placements, all_equivalent_column_placements
+Inferral: empty_cell_inferral, row_and_column_separation, subclass_inferral
+Verification: subset_verified
+Set 1: components, reversibly_deletable_cells
+Set 2: all_cell_insertions, all_row_placements, all_column_placements
+
+ ------------- 
+|STATUS UPDATE|
+ ------------- 
+
+Time spent searching so far: 1.7369756698608398 seconds
+Number of tilings expanded by Set 1 is 20
+Number of tilings expanded by Set 2 is 10
+Total number of tilings is 96
+Total number of expandable tilings is 91
+Total number of verified tilings is 40
+Total number of strategy verified tilings is 15
+Total number of empty tilings is 0
+There were 0 cache misses
+
+Time spent equivalent expanding: 0.030158281326293945 seconds, ~1%
+Time spent strategy verifying: 0.10430240631103516 seconds, ~6%
+Time spent inferring: 0.5057854652404785 seconds, ~29%
+Time spent expanding Set 1: 0.9090890884399414 seconds, ~52%
+Time spent expanding Set 2: 0.014286518096923828 seconds, ~0%
+Time spent queueing: 0.0012671947479248047 seconds, ~0%
+Time spent prepping for tree search: 0.0028836727142333984 seconds, ~0%
+Time spent searching for tree: 0.011780023574829102 seconds, ~0%
+Total of ~88% accounted for.
+
+Proof tree found Tue, 19 Sep 2017 12:23:35
+
+root: 0
+      ├─────1
+      └─────2
+            ├─────3
+            └─────4
+                  ├─────5
+                  └─────6
+
+Label: 0
+
++-+
+|1|
++-+
+1: Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((1, 3, 0, 2)), Perm((1, 3, 2, 0)), Perm((2, 0, 3, 1)), Perm((2, 3, 0, 1)), Perm((3, 0, 2, 1)), Perm((3, 1, 2, 0)))
+
+Label: 1
+
++-+
+| |
++-+
+
+
+Label: 2
+
++-+
+|1|
++-+
+1: Av+(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((1, 3, 0, 2)), Perm((1, 3, 2, 0)), Perm((2, 0, 3, 1)), Perm((2, 3, 0, 1)), Perm((3, 0, 2, 1)), Perm((3, 1, 2, 0)))
+We use his sibling for the next strategy
++-+-+-+
+|2| |3|
++-+-+-+
+| |1| |
++-+-+-+
+1: point
+2: Av(Perm((0, 2, 1)), Perm((2, 0, 1)))
+3: Av(Perm((1, 0, 2)), Perm((1, 2, 0)), Perm((2, 0, 1)))
+
+Label: 3
+
++-+-+
+| |2|
++-+-+
+|1| |
++-+-+
+1: point
+2: Av(Perm((1, 0, 2)), Perm((1, 2, 0)), Perm((2, 0, 1)))
+
+Label: 4
+
++-+-+-+
+|2| |3|
++-+-+-+
+| |1| |
++-+-+-+
+1: point
+2: Av+(Perm((0, 2, 1)), Perm((2, 0, 1)))
+3: Av(Perm((1, 0, 2)), Perm((1, 2, 0)), Perm((2, 0, 1)))
+We use his sibling for the next strategy
++-+-+-+-+-+
+| | | | |4|
++-+-+-+-+-+
+| |3| | | |
++-+-+-+-+-+
+|1| | | | |
++-+-+-+-+-+
+| |2| |3| |
++-+-+-+-+-+
+| | |1| | |
++-+-+-+-+-+
+1: point
+2: Av(Perm((0, 1)))
+3: Av(Perm((1, 0)))
+4: Av(Perm((1, 0, 2)), Perm((1, 2, 0)), Perm((2, 0, 1)))
+
+Label: 5
+
++-+-+-+-+-+
+| | | | |4|
++-+-+-+-+-+
+|1| | | | |
++-+-+-+-+-+
+| |2| |3| |
++-+-+-+-+-+
+| | |1| | |
++-+-+-+-+-+
+1: point
+2: Av(Perm((0, 1)))
+3: Av(Perm((1, 0)))
+4: Av(Perm((1, 0, 2)), Perm((1, 2, 0)), Perm((2, 0, 1)))
+
+Label: 6
+
++-+-+-+-+
+| | | |4|
++-+-+-+-+
+| |3| | |
++-+-+-+-+
+|1| | | |
++-+-+-+-+
+| |2| | |
++-+-+-+-+
+| | |1| |
++-+-+-+-+
+1: point
+2: Av(Perm((0, 1)))
+3: Av+(Perm((1, 0)))
+4: Av(Perm((1, 0, 2)), Perm((1, 2, 0)), Perm((2, 0, 1)))
+{"root": {"formal_step": "We perform cell insertion into cell (0, 0); either it is empty or Av+(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((1, 3, 0, 2)), Perm((1, 3, 2, 0)), Perm((2, 0, 3, 1)), Perm((2, 3, 0, 1)), Perm((3, 0, 2, 1)), Perm((3, 1, 2, 0))).", "in_tiling": {"[0, 0]": "Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((1, 3, 0, 2)), Perm((1, 3, 2, 0)), Perm((2, 0, 3, 1)), Perm((2, 3, 0, 1)), Perm((3, 0, 2, 1)), Perm((3, 1, 2, 0)))"}, "out_tiling": {"[0, 0]": "Av(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((1, 3, 0, 2)), Perm((1, 3, 2, 0)), Perm((2, 0, 3, 1)), Perm((2, 3, 0, 1)), Perm((3, 0, 2, 1)), Perm((3, 1, 2, 0)))"}, "relation": "", "identifier": 0, "children": [{"formal_step": "Verified because it is a one by one tiling with a subclass", "in_tiling": {}, "out_tiling": {}, "relation": "", "identifier": 1, "children": [], "recurse": "[]", "strategy_verified": true}, {"formal_step": "We perform cell insertion into cell (0, 1); either it is empty or Av+(Perm((0, 2, 1)), Perm((2, 0, 1))).", "in_tiling": {"[0, 0]": "Av+(Perm((0, 2, 1, 3)), Perm((0, 2, 3, 1)), Perm((0, 3, 1, 2)), Perm((1, 3, 0, 2)), Perm((1, 3, 2, 0)), Perm((2, 0, 3, 1)), Perm((2, 3, 0, 1)), Perm((3, 0, 2, 1)), Perm((3, 1, 2, 0)))"}, "out_tiling": {"[1, 0]": "point", "[0, 1]": "Av(Perm((0, 2, 1)), Perm((2, 0, 1)))", "[2, 1]": "Av(Perm((1, 0, 2)), Perm((1, 2, 0)), Perm((2, 0, 1)))"}, "relation": "| Inserting the bottom most point in to the cell Cell(i=0, j=0). | ", "identifier": 3, "children": [{"formal_step": "The tiling is a subset of the subclass", "in_tiling": {"[0, 0]": "point", "[1, 1]": "Av(Perm((1, 0, 2)), Perm((1, 2, 0)), Perm((2, 0, 1)))"}, "out_tiling": {"[0, 0]": "point", "[1, 1]": "Av(Perm((1, 0, 2)), Perm((1, 2, 0)), Perm((2, 0, 1)))"}, "relation": "", "identifier": 17, "children": [], "recurse": "[]", "strategy_verified": true}, {"formal_step": "We perform cell insertion into cell (1, 3); either it is empty or Av+(Perm((1, 0))).", "in_tiling": {"[1, 0]": "point", "[0, 1]": "Av+(Perm((0, 2, 1)), Perm((2, 0, 1)))", "[2, 1]": "Av(Perm((1, 0, 2)), Perm((1, 2, 0)), Perm((2, 0, 1)))"}, "out_tiling": {"[2, 0]": "point", "[1, 1]": "Av(Perm((0, 1)))", "[3, 1]": "Av(Perm((1, 0)))", "[0, 2]": "point", "[1, 3]": "Av(Perm((1, 0)))", "[4, 4]": "Av(Perm((1, 0, 2)), Perm((1, 2, 0)), Perm((2, 0, 1)))"}, "relation": "| Inserting the left most point in to the cell Cell(i=0, j=1). | ", "identifier": 19, "children": [{"formal_step": "The tiling is a subset of the subclass", "in_tiling": {"[2, 0]": "point", "[1, 1]": "Av(Perm((0, 1)))", "[3, 1]": "Av(Perm((1, 0)))", "[0, 2]": "point", "[4, 3]": "Av(Perm((1, 0, 2)), Perm((1, 2, 0)), Perm((2, 0, 1)))"}, "out_tiling": {"[2, 0]": "point", "[1, 1]": "Av(Perm((0, 1)))", "[3, 1]": "Av(Perm((1, 0)))", "[0, 2]": "point", "[4, 3]": "Av(Perm((1, 0, 2)), Perm((1, 2, 0)), Perm((2, 0, 1)))"}, "relation": "", "identifier": 83, "children": [], "recurse": "[]", "strategy_verified": true}, {"formal_step": "The tiling is a subset of the subclass", "in_tiling": {"[2, 0]": "point", "[1, 1]": "Av(Perm((0, 1)))", "[0, 2]": "point", "[1, 3]": "Av+(Perm((1, 0)))", "[3, 4]": "Av(Perm((1, 0, 2)), Perm((1, 2, 0)), Perm((2, 0, 1)))"}, "out_tiling": {"[2, 0]": "point", "[1, 1]": "Av(Perm((0, 1)))", "[0, 2]": "point", "[1, 3]": "Av+(Perm((1, 0)))", "[3, 4]": "Av(Perm((1, 0, 2)), Perm((1, 2, 0)), Perm((2, 0, 1)))"}, "relation": "", "identifier": 85, "children": [], "recurse": "[]", "strategy_verified": true}], "recurse": "[]", "strategy_verified": false}], "recurse": "[]", "strategy_verified": false}], "recurse": "[]", "strategy_verified": false}}
+Time taken was 1.7369756698608398 seconds
+
