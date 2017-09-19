@@ -20,10 +20,28 @@ class StrategyPack(object):
         elif name is None:
             raise TypeError("Strategy pack requires a name.")
         else:
+            self.name = name
             self.eq_strats = eq_strats
             self.inf_strats = inf_strats
             self.ver_strats = ver_strats
             self.other_strats = other_strats
+
+something_else = StrategyPack(name='Mixing strats',
+                              eq_strats=[all_equivalent_row_placements, all_equivalent_column_placements],
+                              ver_strats=[subset_verified],
+                              inf_strats=[empty_cell_inferral, row_and_column_separation, subclass_inferral],
+                              other_strats=[[components, reversibly_deletable_cells, all_cell_insertions, all_row_placements, all_column_placements]])
+
+row_and_column_placements = StrategyPack(old_pack={
+    "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements],
+    "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
+    "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+    "recursive_strategies": [components, reversibly_deletable_cells],
+    "verification_strategies": [subset_verified],
+    "symmetry": False,
+    "non_interleaving_recursion": False,
+    "early_splitting_only": False
+    })
 
 
 all_strategies = StrategyPack(old_pack={
