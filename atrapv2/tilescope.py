@@ -351,6 +351,8 @@ class TileScope(object):
             self.expansion_times[expanding] += time.time() - start
             if not self.is_expanded(label):
                 self.tilingqueue.add_to_curr(label)
+            else:
+                self._clean_partitioning_cache(tiling)
 
     def is_expanded(self, label):
         """Return True if a tiling has been expanded by all strategies."""
@@ -491,6 +493,7 @@ class TileScope(object):
         verified = 0
         strategy_verified = 0
         empty = 0
+        equivalent_sets = set()
         for label in all_labels:
             if self.tilingdb.is_expandable(label):
                 expandable += 1
@@ -500,6 +503,16 @@ class TileScope(object):
                 strategy_verified += 1
             if self.tilingdb.is_empty(label):
                 empty += 1
+            equivalent_sets.add(self.equivdb[label])
+        for t in self._basis_partitioning_cache:
+            if self.is_expanded(self.tilingdb.get_label(t)):
+                print("Following in cache is already expanded:")
+                print(t)
+            elif not self.tilingdb.is_expandable(t):
+                print("Following in cache is not expandable:")
+                print(t)
+        print("Total number of equivalent sets is {}".format(str(len(equivalent_sets))),
+              file=file)
         print("Total number of expandable tilings is {}".format(str(expandable)),
               file=file)
         print("Total number of verified tilings is {}".format(str(verified)),

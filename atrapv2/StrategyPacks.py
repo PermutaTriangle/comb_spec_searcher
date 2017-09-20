@@ -26,11 +26,23 @@ class StrategyPack(object):
             self.ver_strats = ver_strats
             self.other_strats = other_strats
 
-something_else = StrategyPack(name='Mixing strats',
-                              eq_strats=[all_equivalent_row_placements, all_equivalent_column_placements],
-                              ver_strats=[subset_verified],
-                              inf_strats=[empty_cell_inferral, row_and_column_separation, subclass_inferral],
-                              other_strats=[[components, reversibly_deletable_cells, all_cell_insertions, all_row_placements, all_column_placements]])
+row_and_column_placements_at_once = StrategyPack(name="row_and_column_placements_at_once",
+     eq_strats=[all_equivalent_row_placements, all_equivalent_column_placements],
+     ver_strats=[subset_verified],
+     inf_strats=[empty_cell_inferral, row_and_column_separation, subclass_inferral],
+     other_strats=[[components, reversibly_deletable_cells, all_cell_insertions, all_row_placements, all_column_placements]])
+
+row_and_column_insertion_and_splittings_batch_first = StrategyPack(name="row_and_column_placements_batch_first",
+     eq_strats=[all_equivalent_point_isolations],
+     ver_strats=[subset_verified],
+     inf_strats=[empty_cell_inferral, row_and_column_separation, subclass_inferral],
+     other_strats=[[all_row_and_column_insertions, all_point_isolations],[splittings]])
+
+row_and_column_insertion_and_splittings_at_once = StrategyPack( name="row_and_column_insertion_and_splittings_at_once",
+    eq_strats =  [all_equivalent_point_isolations],
+    inf_strats = [empty_cell_inferral, row_and_column_separation, subclass_inferral],
+    ver_strats = [subset_verified],
+    other_strats = [[splittings, all_row_and_column_insertions, all_point_isolations]])
 
 row_and_column_placements = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements],
