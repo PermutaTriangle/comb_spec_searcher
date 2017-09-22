@@ -26,7 +26,7 @@ class StrategyPack(object):
             self.ver_strats = ver_strats
             self.other_strats = other_strats
 
-point_placement = StrategyPack(eq_strats=[],
+point_placement = StrategyPack(eq_strats=[all_point_placements],
                                ver_strats=[subset_verified],
                                inf_strats=[],
                                other_strats=[[all_cell_insertions]],

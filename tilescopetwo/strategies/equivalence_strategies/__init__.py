@@ -1,1 +1,2 @@
 from .equivalence_class import EquivalenceStrategy
+from .point_placement import all_point_placements
