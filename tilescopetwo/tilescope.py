@@ -736,8 +736,8 @@ class TileScope(object):
                             if ends in self.ruledb.back_maps[start]:
                                 back_maps = self.ruledb.back_maps[start][ends]
                         return ProofTreeNode(formal_step,
-                                             in_tiling,
-                                             out_tiling,
+                                             in_tiling.to_old_tiling(),
+                                             out_tiling.to_old_tiling(),
                                              relation,
                                              identifier,
                                              children=children,
@@ -757,8 +757,8 @@ class TileScope(object):
                     out_tiling = self.tilingdb.get_tiling(oth_label)
                     identifier = label
                     return ProofTreeNode(formal_step,
-                                         in_tiling,
-                                         out_tiling,
+                                         in_tiling.to_old_tiling(),
+                                         out_tiling.to_old_tiling(),
                                          relation,
                                          identifier,
                                          children=children,
@@ -775,8 +775,8 @@ class TileScope(object):
             identifier = label
             relation = self.equivdb.get_explanation(in_label, in_label)
             return ProofTreeNode(formal_step,
-                                 in_tiling,
-                                 out_tiling,
+                                 in_tiling.to_old_tiling(),
+                                 out_tiling.to_old_tiling(),
                                  relation,
                                  identifier,
                                  children=None,
