@@ -1,0 +1,1 @@
+from .decomposition_class import DecompositionStrategy
