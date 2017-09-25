@@ -2,10 +2,9 @@ from grids_two import Tiling
 from permuta.misc import DIR_EAST, DIR_NORTH, DIR_SOUTH, DIR_WEST  # , DIRS
 from .equivalence_class import EquivalenceStrategy
 ALL_DIR = [DIR_EAST, DIR_NORTH, DIR_SOUTH, DIR_WEST]
+ALL_DIR = [DIR_NORTH]
 
 def all_point_placements(tiling, **kwargs):
-    print("Placing into")
-    print(tiling)
     for cell in tiling.positive_cells:
         if tiling.only_positive_in_row_and_column(cell):
             for DIR in ALL_DIR:
@@ -55,6 +54,14 @@ def point_placement(tiling, cell, direction):
                 x += 2
             new_possibly_empty.append((x, y))
             new_possibly_empty.append((x, y + 2))
+        else:
+            x = old_cell[0]
+            y = old_cell[1]
+            if old_cell[0] > cell[0]:
+                x += 2
+            if old_cell[1] > cell[1]:
+                y += 2
+            new_possibly_empty.append((x,y))
 
     for old_cell in tiling.point_cells:
         x = old_cell[0]
@@ -67,15 +74,9 @@ def point_placement(tiling, cell, direction):
 
     obstructions = []
     for ob in tiling:
-        print(ob)
-        print(ob.place_point(cell, direction))
         obstructions.extend(ob.place_point(cell, direction))
-
-    print(obstructions)
 
     point_placed_tiling = Tiling(point_cells=new_point_cells, positive_cells=new_positive_cells,
                  possibly_empty=new_possibly_empty, obstructions=obstructions)
-    print(direction)
-    print(point_placed_tiling)
 
     return EquivalenceStrategy(formal_step="Placed point in cell {} in direction {}".format(cell, direction), tiling = point_placed_tiling)

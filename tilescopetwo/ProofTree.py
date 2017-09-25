@@ -115,7 +115,7 @@ class ProofTree(JsonAble):
         return res
 
     def _get_equations(self, root, funcs, avoid, substitutions, fcache):
-        from .Helpers import get_tiling_genf
+        from atrap.Helpers import get_tiling_genf
         from sympy import Eq
         from sympy.abc import x
         lhs = funcs[root.identifier](x)
@@ -133,7 +133,7 @@ class ProofTree(JsonAble):
         return reduce(add, [self._get_equations(child, funcs, avoid, substitutions, fcache) for child in root.children], [Eq(lhs, rhs)])
 
     def get_genf(self, verify=10, equations=False, expand=False):
-        from .Helpers import taylor_expand
+        from atrap.Helpers import taylor_expand
         from sympy import solve
         from sympy.abc import x
         if self.get_recursion_type() > 2:
