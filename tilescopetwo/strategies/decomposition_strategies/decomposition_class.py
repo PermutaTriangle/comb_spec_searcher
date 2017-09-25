@@ -1,4 +1,4 @@
-from atrapv2.strategies import Strategy
+from tilescopetwo.strategies import Strategy
 
 
 def DecompositionStrategy(formal_step, tilings, back_maps):

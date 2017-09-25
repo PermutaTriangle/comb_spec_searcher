@@ -145,13 +145,17 @@ class TileScope(object):
 
     def is_empty(self, tiling):
         """Return True if a tiling contains no permutations, False otherwise"""
+        start = time.time()
         if self.tilingdb.is_empty(tiling) is not None:
+            self.verification_time += time.time() - start
             return self.tilingdb.is_empty(tiling)
         for strategy in is_empty(tiling, self.basis):
             # NOTE: is_empty yields if True - functionality should be fixed!
             self.tilingdb.set_empty(tiling)
+            self.verification_time += time.time() - start
             return True
         self.tilingdb.set_empty(tiling, empty=False)
+        self.verification_time += time.time() - start
         return False
 
     def _has_interleaving_decomposition(self, strategy):
@@ -312,11 +316,11 @@ class TileScope(object):
                     if work:
                         self.tilingdb.set_expandable(til)
 
+                start -= time.time() # timing is_empty, symmetry and eq_expand
                 strategy.tilings = [t for t in strategy.tilings if not self.is_empty(t)]
                 # TODO: put information about deleted empty strategy.tilings into the
                 #       formal step
 
-                start -= time.time()
                 for til in strategy.tilings:
                     if self.symmetry:
                         self._symmetry_expand(til)

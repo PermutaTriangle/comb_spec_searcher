@@ -1,5 +1,5 @@
-from atrapv2.strategies import Strategy
-from grids import Tiling
+from tilescopetwo.strategies import Strategy
+from grids_two import Tiling
 
 def EquivalenceStrategy(formal_step, tiling):
     if not isinstance(tiling, Tiling):

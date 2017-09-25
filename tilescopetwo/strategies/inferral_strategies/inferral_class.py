@@ -1,7 +1,7 @@
 """A wrapper for inferral strategies."""
 
 
-from grids import Tiling
+from grids_two import Tiling
 
 
 class InferralStrategy(object):
