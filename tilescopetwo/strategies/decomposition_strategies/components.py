@@ -58,5 +58,5 @@ def components(tiling, basis, basis_partitioning=None, **kwargs):
                                point_cells=point_cells,
                                obstructions=obstructions))
 
-    yield DecompositionStrategy("The components of the tiling", strategy, [dict() for t in strategy])
+    yield DecompositionStrategy("The components of the tiling", strategy, [t.back_map for t in strategy])
 # Consider the union of components?

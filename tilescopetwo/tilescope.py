@@ -165,8 +165,8 @@ class TileScope(object):
         if strategy.back_maps is None:
             return False
         mixing = False
-        bmps1 = [{c.i for c in dic.values()} for dic in strategy.back_maps]
-        bmps2 = [{c.j for c in dic.values()} for dic in strategy.back_maps]
+        bmps1 = [{c[0] for c in dic.values()} for dic in strategy.back_maps]
+        bmps2 = [{c[1] for c in dic.values()} for dic in strategy.back_maps]
         for i in range(len(strategy.back_maps)):
             for j in range(len(strategy.back_maps)):
                 if i != j:
@@ -303,9 +303,13 @@ class TileScope(object):
                     print(generator, file=sys.stderr)
                     raise TypeError("Strategy given not of the right form.")
 
+
                 if self.non_interleaving_decomposition:
                     if self._has_interleaving_decomposition(strategy):
                         continue
+
+                if strategy.formal_step == "The components of the tiling":
+                    self.tilingdb.set_expanding_other_sym(label)
 
                 start -= time.time()
                 strategy.tilings = [self._inferral(t) for t in strategy.tilings]
@@ -432,8 +436,9 @@ class TileScope(object):
                     self.try_verify(eq_tiling)
                     start += time.time()
                     self.tilingqueue.add_to_next(eq_label)
-            self.equivalent_time += time.time() - start
             self.tilingdb.set_equivalent_expanded(tiling)
+        self.equivalent_time += time.time() - start
+
 
     def do_level(self):
         """Expand tilings in current queue. Tilings found added to next."""
