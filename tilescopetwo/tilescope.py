@@ -444,6 +444,8 @@ class TileScope(object):
                 return True
             if self.is_expanded(label) or self.equivdb.is_verified(label):
                 continue
+            if self.tilingdb.is_empty(label):
+                continue
             elif not self.tilingdb.is_expandable(label):
                 continue
             elif self.tilingdb.is_expanding_other_sym(label):
@@ -464,6 +466,8 @@ class TileScope(object):
             if label is None:
                 return True
             if self.is_expanded(label) or self.equivdb.is_verified(label):
+                continue
+            if self.tilingdb.is_empty(label):
                 continue
             elif not self.tilingdb.is_expandable(label):
                 continue

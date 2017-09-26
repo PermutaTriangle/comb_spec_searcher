@@ -28,6 +28,6 @@ class StrategyPack(object):
 
 point_placement = StrategyPack(eq_strats=[all_point_placements],
                                ver_strats=[subset_verified],
-                               inf_strats=[],
+                               inf_strats=[subobstruction_inferral],
                                other_strats=[[all_cell_insertions]],
                                name="Point placements.")
