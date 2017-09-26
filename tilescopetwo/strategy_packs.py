@@ -29,5 +29,5 @@ class StrategyPack(object):
 point_placement = StrategyPack(eq_strats=[all_point_placements],
                                ver_strats=[subset_verified],
                                inf_strats=[subobstruction_inferral],
-                               other_strats=[[all_cell_insertions]],
+                               other_strats=[[components], [all_cell_insertions]],
                                name="Point placements.")
