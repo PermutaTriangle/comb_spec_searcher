@@ -8,7 +8,8 @@ def subobstruction_inferral(tiling, **kwargs):
     removedcells = []
     for cell in tiling.positive_cells:
         obstructions = [ob.remove_cells((cell,))
-                        for ob in tiling.obstructions if ob.occupies(cell)]
+                        for ob in tiling.obstructions
+                        if sum(1 for _ in ob.points_in_cell(cell))]
         last = None
         for ob in sorted(obstructions):
             if ob == last:
