@@ -30,10 +30,6 @@ class TileScope(CombinatorialSpecificationSearcher):
     def __init__(self,
                  basis,
                  strategy_pack=None,
-                 equivalence_strategies=None,
-                 inferral_strategies=None,
-                 verification_strategies=None,
-                 other_strategies=None,
                  non_interleaving_decomposition=False,
                  symmetry=False,
                  objectqueue=ObjectQueue,
@@ -64,7 +60,8 @@ class TileScope(CombinatorialSpecificationSearcher):
             start_tiling = Tiling({(0, 0): Av(self.basis)})
 
         function_kwargs = {"basis": self.basis,
-                           "basis_partitioning": self._basis_partitioning}
+                           "basis_partitioning": self._basis_partitioning,
+                           "non_interleaving_decomposition": non_interleaving_decomposition}
 
         CombinatorialSpecificationSearcher.__init__(self,
                                                     start_object=start_tiling,
@@ -74,21 +71,11 @@ class TileScope(CombinatorialSpecificationSearcher):
                                                     is_empty_strategy=is_empty_strategy,
                                                     function_kwargs=function_kwargs)
 
-    def _has_interleaving_decomposition(self, strategy):
-        """Return True if decomposition strategy has interleaving recursion."""
-        if strategy.back_maps is None:
-            return False
-        mixing = False
-        bmps1 = [{c.i for c in dic.values()} for dic in strategy.back_maps]
-        bmps2 = [{c.j for c in dic.values()} for dic in strategy.back_maps]
-        for i in range(len(strategy.back_maps)):
-            for j in range(len(strategy.back_maps)):
-                if i != j:
-                    if (bmps1[i] & bmps1[j]) or (bmps2[i] & bmps2[j]):
-                        mixing = True
-        if mixing:
-            return True
-        return False
+    def expand(self, label):
+        super(TileScope, self).expand(label)
+        if self.is_expanded(label):
+            self._clean_partitioning_cache(self.objectdb.get_object(label))
+
 
     def _basis_partitioning(self, tiling, length, basis, function_name=None):
         """

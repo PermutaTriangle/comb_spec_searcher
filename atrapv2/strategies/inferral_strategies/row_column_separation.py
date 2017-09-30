@@ -250,7 +250,7 @@ def separations(inequalities, unprocessed_cells=None, current_cell=None, current
     return potential_states
 
 
-def row_and_column_separation(tiling, basis, basis_partitioning=None):
+def row_and_column_separation(tiling, basis, basis_partitioning=None, **kwargs):
     """Try separating all rows and columns."""
     if tiling.total_points + tiling.total_other + 2 < len(basis[0]):
         return

@@ -5,6 +5,7 @@ import itertools
 from grids import Tiling, PositiveClass
 from permuta import Perm
 from comb_spec_searcher import DecompositionStrategy
+from .tools import has_interleaving_decomposition
 
 SPLITTINGS_HACK = False
 
@@ -22,7 +23,12 @@ def standardize(p_list):
     return tuple(ordered.index(x) for x in p_list)
 
 
-def splittings(tiling, basis, basis_partitioning=None, verification_strategies=None, tiling_cache=None):
+def splittings(tiling,
+               basis,
+               basis_partitioning=None,
+               verification_strategies=None,
+               tiling_cache=None,
+               non_interleaving_decomposition=False):
 
     all_valid_splittings = find_good_splittings(tiling, basis, basis_partitioning=basis_partitioning)
 
@@ -57,8 +63,12 @@ def splittings(tiling, basis, basis_partitioning=None, verification_strategies=N
 
             if number_of_verified_results > 1:
                 continue
-
-        yield DecompositionStrategy("A splitting of the tiling", strategy, [tiling._back_map for tiling in strategy])
+        strategy = DecompositionStrategy("A splitting of the tiling", strategy, [tiling._back_map for tiling in strategy])
+        if non_interleaving_decomposition:
+            if not has_interleaving_decomposition(strategy):
+                yield strategy
+        else:
+            yield strategy
 
 
 def find_good_splittings(tiling, basis, basis_partitioning=None, built=[]):

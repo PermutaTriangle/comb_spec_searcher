@@ -6,7 +6,7 @@ from grids import PositiveClass
 from comb_spec_searcher import VerificationStrategy
 
 
-def is_empty_strategy(tiling, basis=None, basis_partitioning=None):
+def is_empty_strategy(tiling, basis=None, basis_partitioning=None, **kwargs):
     """Yield VerificationStrategy if for a tiling T, Av(B) intersected with T is the emptyset."""
     verification_length = tiling.total_points + len(basis[-1])
     verification_length += sum(1 for _, block in tiling.non_points if isinstance(block, PositiveClass))
