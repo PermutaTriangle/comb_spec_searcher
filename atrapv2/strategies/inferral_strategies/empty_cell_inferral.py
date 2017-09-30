@@ -7,7 +7,6 @@ from comb_spec_searcher import InferralStrategy
 
 def empty_cell_inferral(tiling, basis=None, **kwargs):
     """Yield InferralStrategy by removing all empty cells."""
-    print(tiling)
     new_tiling_dict = dict(tiling)
 
     point_cells = {}
