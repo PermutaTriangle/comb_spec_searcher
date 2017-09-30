@@ -5,7 +5,7 @@ from queue import Queue
 import tqdm
 import sys
 
-class TilingQueueDF(object):
+class ObjectQueueDF(object):
     """
     The Queue determines the order that tilings are expanded by the tilescope.
     """

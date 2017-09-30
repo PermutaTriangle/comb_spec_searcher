@@ -3,8 +3,8 @@
 import sys
 from permuta import *
 from grids import Tiling, PositiveClass, Block
-from ..batch_class import BatchStrategy
-from atrapv2.strategies import Strategy
+from comb_spec_searcher import BatchStrategy
+from comb_spec_searcher import Strategy
 from itertools import chain
 from .util import *
 from .coincidence_classification import *

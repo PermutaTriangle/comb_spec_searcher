@@ -1,4 +1,4 @@
-from .equivalence_class import EquivalenceStrategy
+from comb_spec_searcher import EquivalenceStrategy
 from grids import Tiling, Block, PositiveClass
 
 def all_equivalent_point_isolations(tiling, **kwargs):

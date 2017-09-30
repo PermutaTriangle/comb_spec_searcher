@@ -1,4 +1,3 @@
-from .equivalence_class import EquivalenceStrategy
 from .point_placement import all_point_placements
 from .point_placement import all_maximum_point_placements
 from .point_placement import point_separation

@@ -1,6 +1,6 @@
 from grids import Tiling, Block, PositiveClass
 
-from .batch_class import BatchStrategy
+from comb_spec_searcher import BatchStrategy
 
 
 def all_row_placements(tiling, **kwargs):

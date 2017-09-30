@@ -1,13 +1,9 @@
 """A wrapper for inferral strategies."""
 
-
-from grids import Tiling
-
-
 class InferralStrategy(object):
     """A wrapper for inferral strategies."""
 
-    def __init__(self, formal_step, tiling):
+    def __init__(self, formal_step, obj):
         """
         Constructor for InferralStrategy.
 
@@ -15,7 +11,5 @@ class InferralStrategy(object):
         """
         if not isinstance(formal_step, str):
             raise TypeError("Formal step not a string")
-        if not isinstance(tiling, Tiling):
-            raise TypeError("The tiling is not a Tiling")
         self.formal_step = formal_step
-        self.tiling = tiling
+        self.object = obj

@@ -5,7 +5,7 @@ import sys
 
 from permuta import PermSet, Perm
 from grids import Tiling, PositiveClass, Block
-from ..batch_class import BatchStrategy
+from comb_spec_searcher import BatchStrategy
 from itertools import chain
 from .util import *
 

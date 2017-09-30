@@ -4,7 +4,7 @@ from permuta import Perm, PermSet
 from permuta.descriptors import Basis
 from grids import Tiling, Block, PositiveClass
 from atrap.tools import get_class, get_perms_to_check
-from .inferral_class import InferralStrategy
+from comb_spec_searcher import InferralStrategy
 
 
 def cell_inferral(tiling, the_cell, input_set):
@@ -32,7 +32,7 @@ def cell_inferral(tiling, the_cell, input_set):
     return inferred_basis
 
 
-def jays_subclass_inferral(tiling, basis, **kwargs):
+def jays_subclass_inferral(tiling, basis=None, **kwargs):
     """Return a new tiling where all non-points have been inferred."""
 
     # print("inferring...")

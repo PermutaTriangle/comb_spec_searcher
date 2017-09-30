@@ -5,10 +5,10 @@ from grids import Tiling
 from atrap.tools import cells_of_occurrences
 from itertools import chain
 
-from .batch_class import BatchStrategy
+from comb_spec_searcher import BatchStrategy
 
 
-__all__ = ["all_cell_insertions"]
+__all__ = ("all_cell_insertions")
 
 
 def all_cell_insertions(tiling, **kwargs):

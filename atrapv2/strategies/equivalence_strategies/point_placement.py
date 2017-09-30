@@ -3,7 +3,7 @@ from grids import Block
 from grids import PositiveClass
 from grids import Tiling
 
-from .equivalence_class import EquivalenceStrategy
+from comb_spec_searcher import EquivalenceStrategy
 
 
 """

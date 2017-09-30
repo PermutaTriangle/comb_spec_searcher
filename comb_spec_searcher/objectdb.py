@@ -36,7 +36,7 @@ class Info(object):
         self.strategy_verified = strategy_verified
 
 
-class TilingDB(object):
+class ObjectDB(object):
     """
     A database for tilings.
 
@@ -120,7 +120,7 @@ class TilingDB(object):
                 raise KeyError("Key not in TilingDB.")
         return info
 
-    def get_tiling(self, key):
+    def get_object(self, key):
         """Return tiling of key."""
         info = self._get_info(key)
         return info.tiling

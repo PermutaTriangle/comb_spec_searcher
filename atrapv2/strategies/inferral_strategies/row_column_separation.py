@@ -4,10 +4,10 @@
 from collections import defaultdict
 from grids import Tiling, Block, PositiveClass, Cell
 from itertools import combinations
-from .inferral_class import InferralStrategy
+from comb_spec_searcher import InferralStrategy
 
 
-def row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=None):
+def row_and_column_inequalities_of_tiling(tiling, basis=None, basis_partitioning=None):
     """Return dictionaries with all inequalities of rows and columns."""
     point_cells = [cell for cell, block in tiling if isinstance(block, PositiveClass)]
     smaller_than_row = defaultdict(dict)

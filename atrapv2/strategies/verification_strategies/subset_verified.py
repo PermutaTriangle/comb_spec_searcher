@@ -2,11 +2,11 @@
 
 from grids import Tiling, PositiveClass
 from atrap.tools import tiling_generates_container
-from .verification_class import VerificationStrategy
+from comb_spec_searcher import VerificationStrategy
 from .one_by_one_verification import one_by_one_verification
 
 
-def subset_verified(tiling, basis, **kwargs):
+def subset_verified(tiling, basis=None, **kwargs):
     """Check that a tiling is a subset of Av(basis)."""
     if not isinstance(tiling, Tiling):
         raise TypeError

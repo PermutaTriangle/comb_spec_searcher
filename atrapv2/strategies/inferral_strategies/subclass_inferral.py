@@ -2,10 +2,10 @@
 
 from permuta import Perm, PermSet
 from grids import Tiling, Block, PositiveClass
-from .inferral_class import InferralStrategy
+from comb_spec_searcher import InferralStrategy
 
 
-def subclass_inferral(tiling, basis, **kwargs):
+def subclass_inferral(tiling, basis=None, **kwargs):
     """
     Return a new tiling where all non-points have been inferred.
 

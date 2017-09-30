@@ -4,7 +4,7 @@
 import itertools
 from grids import Tiling, PositiveClass
 from permuta import Perm
-from .recursive_class import RecursiveStrategy
+from comb_spec_searcher import DecompositionStrategy
 
 SPLITTINGS_HACK = False
 
@@ -58,7 +58,7 @@ def splittings(tiling, basis, basis_partitioning=None, verification_strategies=N
             if number_of_verified_results > 1:
                 continue
 
-        yield RecursiveStrategy("A splitting of the tiling", strategy, [tiling._back_map for tiling in strategy])
+        yield DecompositionStrategy("A splitting of the tiling", strategy, [tiling._back_map for tiling in strategy])
 
 
 def find_good_splittings(tiling, basis, basis_partitioning=None, built=[]):
