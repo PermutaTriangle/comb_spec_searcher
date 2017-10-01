@@ -17,17 +17,6 @@ separated by '_'. For example, for the basis {123, 231}, give the string
 need to choose a strategy pack to search with. Other options include:
     - strategy_pack: Set the strategy pack to search for. Must be an instance of
     StrategyPack.
-    - equivalence_strategies: Must be a list of strategies. This will set the
-    equivalent strategies to search with. It will overwrite what was given by
-    the strategy pack.
-    - inferral_strategies: This will set the inferral strategies to search with.
-    It will overwrite what was given by the strategy pack.
-    - verification_strategies: Must be a list of strategies. This will set the
-    verification strategies to search with. It will overwrite what was given by
-    the strategy pack.
-    - other_strategies: Must be a list of lists of strategies. This will set the
-    other strategies to search with. It will overwrite what was given by the
-    strategy pack.
     - non_interleaving_decomposition: Setting this to true will ensure that any
     decomposition strategies used will be non-intereaving.
     - symmetry: Setting this to true will take advantage of all symmetries

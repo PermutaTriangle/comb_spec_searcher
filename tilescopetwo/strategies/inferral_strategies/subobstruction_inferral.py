@@ -1,5 +1,5 @@
 from grids_two import Tiling
-from .inferral_class import InferralStrategy
+from comb_spec_searcher import InferralStrategy
 from itertools import combinations, chain
 from math import factorial
 from collections import defaultdict

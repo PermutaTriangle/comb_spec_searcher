@@ -1,6 +1,6 @@
 """A strategy for checking if a tiling is a subset of the class."""
 
-from .verification_class import VerificationStrategy
+from comb_spec_searcher import VerificationStrategy
 from permuta.descriptors import Basis
 
 

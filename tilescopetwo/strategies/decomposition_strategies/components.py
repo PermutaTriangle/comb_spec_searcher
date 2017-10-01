@@ -5,7 +5,7 @@ from grids_two import Tiling
 from permuta.misc import UnionFind
 from itertools import combinations
 
-from .decomposition_class import DecompositionStrategy
+from comb_spec_searcher import DecompositionStrategy
 
 
 def components(tiling, basis, basis_partitioning=None, **kwargs):

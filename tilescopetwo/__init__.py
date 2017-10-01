@@ -1,3 +1,2 @@
-from .tilescope import TileScope
+from .tilescopetwo import TileScopeTWO
 import tilescopetwo.strategy_packs as StrategyPacks
-from tilescopetwo.strategy_packs import StrategyPack

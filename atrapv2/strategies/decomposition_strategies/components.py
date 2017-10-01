@@ -53,6 +53,6 @@ def components(tiling, basis, basis_partitioning=None, non_interleaving_decompos
     strategy = DecompositionStrategy("The components of the tiling", strategy, [t._back_map for t in strategy])
     if non_interleaving_decomposition and has_interleaving_decomposition(strategy):
         return
-    
-    yield DecompositionStrategy("The components of the tiling", strategy, [t._back_map for t in strategy])
+
+    yield strategy
 # Consider the union of components?

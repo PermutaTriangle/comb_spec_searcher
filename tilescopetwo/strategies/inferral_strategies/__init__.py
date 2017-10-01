@@ -1,4 +1,3 @@
 
-from .inferral_class import InferralStrategy
 from .subobstruction_inferral import subobstruction_inferral
 from .subobstruction_inferral import super_subobstruction_inferral

@@ -1,6 +1,6 @@
 from grids_two import Tiling
 from permuta.misc import DIR_EAST, DIR_NORTH, DIR_SOUTH, DIR_WEST  # , DIRS
-from .equivalence_class import EquivalenceStrategy
+from comb_spec_searcher import EquivalenceStrategy
 ALL_DIR = [DIR_EAST, DIR_NORTH, DIR_SOUTH, DIR_WEST]
 
 def all_point_placements(tiling, **kwargs):

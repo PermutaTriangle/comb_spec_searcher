@@ -62,12 +62,12 @@ class TileScope(CombinatorialSpecificationSearcher):
                            "non_interleaving_decomposition": non_interleaving_decomposition}
 
         CombinatorialSpecificationSearcher.__init__(self,
-                                                    start_object=start_tiling,
-                                                    strategy_pack=strategy_pack,
-                                                    symmetry=symmetries,
-                                                    objectqueue=ObjectQueue,
-                                                    is_empty_strategy=is_empty_strategy,
-                                                    function_kwargs=function_kwargs)
+                                        start_object=start_tiling,
+                                        strategy_pack=strategy_pack,
+                                        symmetry=symmetries,
+                                        objectqueue=ObjectQueue,
+                                        is_empty_strategy=is_empty_strategy,
+                                        function_kwargs=function_kwargs)
 
     def expand(self, label):
         super(TileScope, self).expand(label)
