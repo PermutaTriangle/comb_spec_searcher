@@ -90,7 +90,7 @@ class CombinatorialSpecificationSearcher(object):
         self.prepping_for_tree_search_time = 0
         self.queue_time = 0
         self._time_taken = 0
-        self._cache_misses = 0
+        self._cache_misses = 0 # this for status and should be updated if you use a cache
 
 
 
@@ -225,9 +225,13 @@ class CombinatorialSpecificationSearcher(object):
                     print(generator, file=sys.stderr)
                     raise TypeError("Strategy given not of the right form.")
 
-                start -= time.time()
-                strategy.objects = [self._inferral(o) for o in strategy.objects]
-                start += time.time()
+                if strategy.back_maps:
+                    if all(w for w in strategy.workable):
+                        self.objectdb.set_workably_decomposed(label)
+                else:
+                    start -= time.time()
+                    strategy.objects = [self._inferral(o) for o in strategy.objects]
+                    start += time.time()
 
                 for ob, work in zip(strategy.objects, strategy.workable):
                     start -= time.time()
@@ -366,6 +370,8 @@ class CombinatorialSpecificationSearcher(object):
                 continue
             elif self.objectdb.is_expanding_other_sym(label):
                 continue
+            elif self.objectdb.is_workably_decomposed(label):
+                continue
             queue_start -= time.time()
             self.expand(label)
             queue_start += time.time()
@@ -388,6 +394,8 @@ class CombinatorialSpecificationSearcher(object):
             elif not self.objectdb.is_expandable(label):
                 continue
             elif self.objectdb.is_expanding_other_sym(label):
+                continue
+            elif self.objectdb.is_workably_decomposed(label):
                 continue
             count += 1
             queue_start -= time.time()

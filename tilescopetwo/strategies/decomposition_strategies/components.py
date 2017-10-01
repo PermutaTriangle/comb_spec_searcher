@@ -5,7 +5,7 @@ from grids_two import Tiling
 from permuta.misc import UnionFind
 from itertools import combinations
 
-from comb_spec_searcher import DecompositionStrategy
+from comb_spec_searcher import Strategy
 
 
 def components(tiling, basis, basis_partitioning=None, **kwargs):
@@ -58,5 +58,8 @@ def components(tiling, basis, basis_partitioning=None, **kwargs):
                                point_cells=point_cells,
                                obstructions=obstructions))
 
-    yield DecompositionStrategy("The components of the tiling", strategy, [t.back_map for t in strategy])
+    yield Strategy("The components of the tiling",
+                   strategy,
+                   workable=[True for _ in strategy],
+                   back_maps=[t.back_map for t in strategy])
 # Consider the union of components?

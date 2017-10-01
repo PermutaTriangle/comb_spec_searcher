@@ -20,6 +20,7 @@ class Info(object):
                  decomposition_expanded=False,
                  expanding_other_sym=False,
                  expandable=False,
+                 workably_decomposed=False,
                  verified=None,
                  empty=None,
                  strategy_verified=False):
@@ -31,6 +32,7 @@ class Info(object):
         self.equivalent_expanded = equivalent_expanded
         self.expanding_other_sym = expanding_other_sym
         self.expandable = expandable
+        self.workably_decomposed = workably_decomposed
         self.verified = verified
         self.empty = empty
         self.strategy_verified = strategy_verified
@@ -216,3 +218,11 @@ class ObjectDB(object):
     def set_equivalent_expanded(self, key, equivalent_expanded=True):
         """Update database that tiling was equivalent expanded."""
         self._get_info(key).equivalent_expanded = equivalent_expanded
+
+    def is_workably_decomposed(self, key):
+        """Return True if tiling was equivalent expanded."""
+        return self._get_info(key).workably_decomposed
+
+    def set_workably_decomposed(self, key, workably_decomposed=True):
+        """Update database that tiling was equivalent expanded."""
+        self._get_info(key).workably_decomposed = workably_decomposed

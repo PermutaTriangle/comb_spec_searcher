@@ -65,7 +65,11 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
 
 
     def _get_proof_tree(self, proof_tree_node, in_label=None):
-        """Recursive function for returning the root node of the proof tree."""
+        """
+        Recursive function for returning the root node of the proof tree.
+
+        The only difference from original is the 'to_old_tiling()' call.
+        """
         label = proof_tree_node.label
         children_labels = sorted([x.label for x in proof_tree_node.children])
         if in_label is not None:
