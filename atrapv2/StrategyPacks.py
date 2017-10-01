@@ -19,23 +19,37 @@ row_and_column_insertion_and_splittings_at_once = StrategyPack( name="row_and_co
     ver_strats = [subset_verified],
     other_strats = [[splittings, all_row_and_column_insertions, all_point_isolations]])
 
+
+# all mostly for testing purposes
+all_strategies = StrategyPack(name="all_strategies",
+                              eq_strats=[all_point_placements,
+                                         point_separation,
+                                         all_equivalent_point_isolations],
+                              inf_strats=[empty_cell_inferral,
+                                          row_and_column_separation,
+                                          subclass_inferral],
+                              ver_strats=[subset_verified],
+                              other_strats=[[all_cell_insertions,
+                                             all_point_isolations,
+                                             all_row_and_column_insertions,
+                                             all_row_placements,
+                                             all_column_placements,
+                                             binary_pattern,
+                                             binary_pattern_classical_class,
+                                             classical_binary_pattern,
+                                             extreme_point_boundaries,
+                                             insertion_encoding_row_placements,
+                                             insertion_encoding_column_placements,
+                                             all_321_boundaries],
+                                            [reversibly_deletable_cells,
+                                             components,
+                                             splittings]])
+
 row_and_column_placements = StrategyPack(old_pack={
     "batch_strategies": [all_cell_insertions, all_row_placements, all_column_placements],
     "equivalence_strategies": [all_equivalent_row_placements, all_equivalent_column_placements],
     "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
     "recursive_strategies": [components, reversibly_deletable_cells],
-    "verification_strategies": [subset_verified],
-    "symmetry": False,
-    "non_interleaving_recursion": False,
-    "early_splitting_only": False
-    })
-
-
-all_strategies = StrategyPack(old_pack={
-    "batch_strategies": [all_cell_insertions, all_point_isolations],
-    "equivalence_strategies": [all_point_placements, point_separation, all_equivalent_point_isolations],
-    "inferral_strategies": [empty_cell_inferral, row_and_column_separation, subclass_inferral],
-    "recursive_strategies": [splittings],
     "verification_strategies": [subset_verified],
     "symmetry": False,
     "non_interleaving_recursion": False,

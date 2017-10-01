@@ -37,8 +37,8 @@ class StrategyPack(object):
             self.eq_strats = old_pack["equivalence_strategies"]
             self.ver_strats = old_pack["verification_strategies"]
             self.inf_strats = old_pack["inferral_strategies"]
-            self.other_strats = [old_pack["recursive_strategies"],
-                                 old_pack["batch_strategies"]]
+            self.other_strats = [old_pack["batch_strategies"],
+                                 old_pack["recursive_strategies"]]
             self.name = "No name"
         elif eq_strats is None:
             raise TypeError("Strategy pack requires a (possibly empty) list of equivalence strategies.")

@@ -225,47 +225,49 @@ class CombinatorialSpecificationSearcher(object):
                     print(generator, file=sys.stderr)
                     raise TypeError("Strategy given not of the right form.")
 
-                if strategy.back_maps:
-                    if all(w for w in strategy.workable):
-                        self.objectdb.set_workably_decomposed(label)
-                else:
+                if not strategy.back_maps:
                     start -= time.time()
-                    strategy.objects = [self._inferral(o) for o in strategy.objects]
+                    objects = [self._inferral(o) for o in strategy.objects]
                     start += time.time()
+                else:
+                    objects = strategy.objects
 
-                for ob, work in zip(strategy.objects, strategy.workable):
+                for ob, work in zip(objects, strategy.workable):
                     start -= time.time()
                     self.try_verify(ob)
                     start += time.time()
                     if work:
                         self.objectdb.set_expandable(ob)
 
-                start -= time.time()
-                strategy.objects = [o for o in strategy.objects if not self.is_empty(o)]
-                start += time.time()
+                if strategy.back_maps:
+                    if all(self.objectdb.is_expandable(o) for o in objects):
+                        self.objectdb.set_workably_decomposed(label)
+
+                if not strategy.back_maps:
+                    start -= time.time()
+                    objects = [o for o in objects if not self.is_empty(o)]
+                    start += time.time()
                 # TODO: put information about deleted empty strategy.objects into the
                 #       formal step
 
                 start -= time.time()
-                for ob in strategy.objects:
+                for ob in objects:
                     if self.symmetry:
                         self._symmetry_expand(ob)
                     self._equivalent_expand(ob)
                 start += time.time()
 
                 # If we have an equivalent strategy
-                if len(strategy.objects) == 1:
-                    other_label = self.objectdb.get_label(strategy.objects[0])
+                if len(objects) == 1:
+                    other_label = self.objectdb.get_label(objects[0])
                     self.equivdb.union(label, other_label, strategy.formal_step)
                     if not (self.is_expanded(other_label)
                             or self.objectdb.is_expanding_other_sym(other_label)):
                         self.objectqueue.add_to_working(other_label)
                 else:
-                    end_labels = [self.objectdb.get_label(o) for o in strategy.objects]
+                    end_labels = [self.objectdb.get_label(o) for o in objects]
                     self.ruledb.add(label, end_labels, strategy.formal_step)
                     for end_label in end_labels:
-                        # TODO: When labelled occurrences, we can also work from decomposed strategy.objects
-                        # so you can add to the queue all the time.
                         if (self.is_expanded(end_label)
                             or self.objectdb.is_expanding_other_sym(end_label)):
                             continue
