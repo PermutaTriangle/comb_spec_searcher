@@ -7,8 +7,6 @@
 """
 
 import sys
-import time
-from collections import defaultdict
 
 from permuta.descriptors import Basis
 from permuta import Perm, Av
