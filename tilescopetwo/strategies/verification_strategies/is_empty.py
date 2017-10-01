@@ -1,7 +1,7 @@
 from atrap.tools import tiling_generates_avoider
 from grids import PositiveClass
 
-def is_empty_strategy(tiling, basis):
+def is_empty_strategy(tiling, basis, **kwargs):
     if tiling.is_empty():
         return True
     else:

@@ -2,7 +2,7 @@
 point"""
 
 from grids_two import Tiling
-from .batch_class import BatchStrategy
+from comb_spec_searcher import BatchStrategy
 
 def all_cell_insertions(tiling, **kwargs):
     for cell in tiling._possibly_empty:

@@ -5,7 +5,7 @@ Contains information about if tilings have been
 expanded, found by symmetries etc. It gives each tiling a unique label.
 """
 
-from grids import Tiling
+# from grids import Tiling
 
 
 class Info(object):
@@ -86,8 +86,8 @@ class ObjectDB(object):
 
         Can also set some information about the tiling on adding.
         """
-        if not isinstance(tiling, Tiling):
-            raise TypeError("Trying to add something that isn't a tiling.")
+        # if not isinstance(tiling, Tiling):
+        #     raise TypeError("Trying to add something that isn't a tiling.")
         if tiling not in self.tiling_to_info:
             label = len(self.tiling_to_info)
             info = Info(tiling,
@@ -107,7 +107,7 @@ class ObjectDB(object):
 
     def _get_info(self, key):
         """Return Info for given key."""
-        if isinstance(key, Tiling):
+        if not isinstance(key, int):
             info = self.tiling_to_info.get(key)
             if info is None:
                 label = len(self.tiling_to_info)

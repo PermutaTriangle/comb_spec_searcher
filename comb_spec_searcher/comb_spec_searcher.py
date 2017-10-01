@@ -90,6 +90,8 @@ class CombinatorialSpecificationSearcher(object):
         self.prepping_for_tree_search_time = 0
         self.queue_time = 0
         self._time_taken = 0
+        self._cache_misses = 0
+
 
 
     def try_verify(self, obj, force=False):
@@ -180,8 +182,6 @@ class CombinatorialSpecificationSearcher(object):
                                                     self._symmetric_objects(inferred_object,
                                                                         ordered=True)):
                         self._inferral_cache.set(sym_obj, sym_inf_obj)
-                # Clean up the cache
-                self._clean_partitioning_cache(semi_inferred_object)
             self._inferral_cache.set(inferred_object, inferred_object)
         self.inferral_time += time.time() - start
         return inferred_object
