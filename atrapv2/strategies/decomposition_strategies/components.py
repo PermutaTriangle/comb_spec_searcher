@@ -5,11 +5,12 @@ from grids import Tiling
 from permuta.misc import UnionFind
 from itertools import combinations
 from atrap.tools import cells_of_occurrences
+from .tools import has_interleaving_decomposition
 
-from .recursive_class import RecursiveStrategy
+from comb_spec_searcher import DecompositionStrategy
 
 
-def components(tiling, basis, basis_partitioning=None, **kwargs):
+def components(tiling, basis, basis_partitioning=None, non_interleaving_decomposition=False, **kwargs):
     """
     Yield strategy found by taking components of a tiling.
 
@@ -49,5 +50,9 @@ def components(tiling, basis, basis_partitioning=None, **kwargs):
     if len(strategy) <= 1:
         return
 
-    yield RecursiveStrategy("The components of the tiling", strategy, [t._back_map for t in strategy])
+    strategy = DecompositionStrategy("The components of the tiling", strategy, [t._back_map for t in strategy])
+    if non_interleaving_decomposition and has_interleaving_decomposition(strategy):
+        return
+
+    yield strategy
 # Consider the union of components?

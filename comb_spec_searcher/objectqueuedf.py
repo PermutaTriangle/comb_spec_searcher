@@ -1,13 +1,13 @@
 """
-A queue of tilings.
+A queue of objects.
 """
 from queue import Queue
 import tqdm
 import sys
 
-class TilingQueueDF(object):
+class ObjectQueueDF(object):
     """
-    The Queue determines the order that tilings are expanded by the tilescope.
+    The Queue determines the order that objects are expanded by the tilescope.
     """
     def __init__(self, rules_dict=None, root=None, equivalent_set=None):
         self.working = Queue()
@@ -25,13 +25,13 @@ class TilingQueueDF(object):
         self.root = root
         self.iter = None
 
-    def add_to_working(self, tiling):
+    def add_to_working(self, obj):
         pass
 
-    def add_to_next(self, tiling):
+    def add_to_next(self, obj):
         pass
 
-    def add_to_curr(self, tiling):
+    def add_to_curr(self, obj):
         pass
 
     def do_level(self):
@@ -52,7 +52,7 @@ class TilingQueueDF(object):
             try:
                 return next(self.iter)
             except StopIteration:
-                print("No more tilings to expand!", file=sys.stderr)
+                print("No more objects to expand!", file=sys.stderr)
                 return None
 
 

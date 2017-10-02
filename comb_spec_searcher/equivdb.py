@@ -1,7 +1,7 @@
 """
-A database to keep track of equivalent tilings.
+A database to keep track of equivalent objects.
 
-This is done using a union find method. Also, explanations of how tilings are
+This is done using a union find method. Also, explanations of how objects are
 equivalent are maintained.
 
 Based on: https://www.ics.uci.edu/~eppstein/PADS/UnionFind.py
@@ -31,16 +31,16 @@ class EquivalenceDB(object):
         self.explanations = {}
         self.verified_roots = set()
 
-    def __getitem__(self, tiling):
-        """Find and return root tiling for the set containing tiling."""
-        root = self.parents.get(tiling)
+    def __getitem__(self, obj):
+        """Find and return root object for the set containing object."""
+        root = self.parents.get(obj)
         if root is None:
-            self.parents[tiling] = tiling
-            self.weights[tiling] = 1
-            return tiling
+            self.parents[obj] = obj
+            self.weights[obj] = 1
+            return obj
 
-        # Find path of tiling leading to root.
-        path = [tiling]
+        # Find path of object leading to root.
+        path = [obj]
         while root != path[-1]:
             path.append(root)
             root = self.parents[root]
@@ -69,28 +69,28 @@ class EquivalenceDB(object):
         """Return True if t1 and t2 are equivalent, False otherwise."""
         return self[t1] == self[t2]
 
-    def update_verified(self, tiling):
-        """Update database that tilings euivalent to tiling are verified."""
-        if not self.is_verified(tiling):
-            self.verified_roots.add(self[tiling])
+    def update_verified(self, obj):
+        """Update database that objects euivalent to object are verified."""
+        if not self.is_verified(obj):
+            self.verified_roots.add(self[obj])
 
-    def is_verified(self, tiling):
-        """Return true if any equivalent tiling is verified."""
-        return self[tiling] in self.verified_roots
+    def is_verified(self, obj):
+        """Return true if any equivalent object is verified."""
+        return self[obj] in self.verified_roots
 
-    def equivalent_set(self, tiling):
-        equivalent_tilings = set()
+    def equivalent_set(self, obj):
+        equivalent_objs = set()
         for t in self.parents:
-            if self.equivalent(tiling, t):
-                equivalent_tilings.add(t)
-        return equivalent_tilings
+            if self.equivalent(obj, t):
+                equivalent_objs.add(t)
+        return equivalent_objs
 
-    def get_explanation(self, tiling, other_tiling):
-        """Return how two tilings are equivalent using explanations."""
-        if tiling == other_tiling:
+    def get_explanation(self, obj, other_obj):
+        """Return how two objects are equivalent using explanations."""
+        if obj == other_obj:
             return ""
 
-        path = self.find_path(tiling, other_tiling)
+        path = self.find_path(obj, other_obj)
         if path:
             explanation = "| "
             for i in range(len(path) - 1):
@@ -109,37 +109,37 @@ class EquivalenceDB(object):
             return explanation
         raise KeyError("They are not equivalent.")
 
-    def find_path(self, tiling, other_tiling):
+    def find_path(self, obj, other_obj):
         """
         BFS for shortest path.
 
         Used to find shortest explanation of why things are equivalent.
         """
-        if not self.equivalent(tiling, other_tiling):
-            raise KeyError("The tilings given are not equivalent.")
-        equivalent_tilings = {}
+        if not self.equivalent(obj, other_obj):
+            raise KeyError("The objects given are not equivalent.")
+        equivalent_objs = {}
         reverse_map = {}
 
         for x in self.parents:
-            n = len(equivalent_tilings)
-            if self.equivalent(tiling, x):
-                equivalent_tilings[x] = n
+            n = len(equivalent_objs)
+            if self.equivalent(obj, x):
+                equivalent_objs[x] = n
                 reverse_map[n] = x
 
-        adjacency_list = [[] for i in range(len(equivalent_tilings))]
+        adjacency_list = [[] for i in range(len(equivalent_objs))]
         for (t1, t2) in self.explanations:
-            if self.equivalent(t1, tiling):
-                u = equivalent_tilings[t1]
-                v = equivalent_tilings[t2]
+            if self.equivalent(t1, obj):
+                u = equivalent_objs[t1]
+                v = equivalent_objs[t2]
                 adjacency_list[u].append(v)
                 adjacency_list[v].append(u)
 
         dequeue = deque()
 
-        start = equivalent_tilings[tiling]
-        end = equivalent_tilings[other_tiling]
+        start = equivalent_objs[obj]
+        end = equivalent_objs[other_obj]
 
-        n = len(equivalent_tilings)
+        n = len(equivalent_objs)
 
         dequeue.append(start)
         visited = [False for i in range(n)]

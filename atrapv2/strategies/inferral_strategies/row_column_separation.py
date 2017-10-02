@@ -4,10 +4,10 @@
 from collections import defaultdict
 from grids import Tiling, Block, PositiveClass, Cell
 from itertools import combinations
-from .inferral_class import InferralStrategy
+from comb_spec_searcher import InferralStrategy
 
 
-def row_and_column_inequalities_of_tiling(tiling, basis, basis_partitioning=None):
+def row_and_column_inequalities_of_tiling(tiling, basis=None, basis_partitioning=None):
     """Return dictionaries with all inequalities of rows and columns."""
     point_cells = [cell for cell, block in tiling if isinstance(block, PositiveClass)]
     smaller_than_row = defaultdict(dict)
@@ -250,7 +250,7 @@ def separations(inequalities, unprocessed_cells=None, current_cell=None, current
     return potential_states
 
 
-def row_and_column_separation(tiling, basis, basis_partitioning=None):
+def row_and_column_separation(tiling, basis, basis_partitioning=None, **kwargs):
     """Try separating all rows and columns."""
     if tiling.total_points + tiling.total_other + 2 < len(basis[0]):
         return

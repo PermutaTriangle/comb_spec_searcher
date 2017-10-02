@@ -3,10 +3,10 @@
 
 from grids import PositiveClass, Block
 from permuta import PermSet, Perm
-from .verification_class import VerificationStrategy
+from comb_spec_searcher import VerificationStrategy
 
 
-def is_one_by_one_verified(tiling, basis, **kwargs):
+def is_one_by_one_verified(tiling, basis=None, **kwargs):
     """Return True if tiling is one by one and a subset of the class."""
     if tiling.dimensions.i == 1 and tiling.dimensions.j == 1:
         if len(tiling) > 0:

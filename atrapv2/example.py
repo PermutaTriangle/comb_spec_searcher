@@ -17,25 +17,14 @@ separated by '_'. For example, for the basis {123, 231}, give the string
 need to choose a strategy pack to search with. Other options include:
     - strategy_pack: Set the strategy pack to search for. Must be an instance of
     StrategyPack.
-    - equivalence_strategies: Must be a list of strategies. This will set the
-    equivalent strategies to search with. It will overwrite what was given by
-    the strategy pack.
-    - inferral_strategies: This will set the inferral strategies to search with.
-    It will overwrite what was given by the strategy pack.
-    - verification_strategies: Must be a list of strategies. This will set the
-    verification strategies to search with. It will overwrite what was given by
-    the strategy pack.
-    - other_strategies: Must be a list of lists of strategies. This will set the
-    other strategies to search with. It will overwrite what was given by the
-    strategy pack.
     - non_interleaving_decomposition: Setting this to true will ensure that any
     decomposition strategies used will be non-intereaving.
     - symmetry: Setting this to true will take advantage of all symmetries
     available with respect to the given basis.
-    - tilingqueue: By default, he tilescope searches with the order as given by
-    the 'TilingQueue' class. You can use an alternative queue system if you
-    prefer for example 'TilingQueueDF' searches in a method similar to the old
-    atrap. To change you need to import the class 'TilingQueueDF', and set this
+    - objectqueue: By default, he tilescope searches with the order as given by
+    the 'ObjectQueue' class. You can use an alternative queue system if you
+    prefer for example 'ObjectQueueDF' searches in a method similar to the old
+    atrap. To change you need to import the class 'objectQueueDF', and set this
     keyword to equal the class. See example at line 103 of this file.
     - start_tiling: Set this to be the start tiling which the search starts
     from. The default setting is the 1x1 tiling with basis."""
@@ -77,9 +66,9 @@ tilescope = TileScope("1302_2031", StrategyPacks.row_and_column_placements)
 tilescope.auto_search(cap=1, verbose=True, status_update=5, max_time=10)
 
 """If you wish to do the search more manually, then you can use the functions
-'expand_tilings' and 'get_proof_tree'. The 'get_proof_tree' function will return
+'expand_objects' and 'get_proof_tree'. The 'get_proof_tree' function will return
 a ProofTree object if one has been found, or else it will return 'None'."""
-tilescope.expand_tilings(20)
+tilescope.expand_objects(20)
 proof_tree = tilescope.get_proof_tree()
 proof_tree.pretty_print()
 
@@ -103,10 +92,10 @@ tilescope.status()
 """If you wish to search using a different queue system, you will first need to
 import the queue class you wish to search with. For example, lets assume you
 wish to search with the old atrap style."""
-from atrapv2.tilingqueuedf import TilingQueueDF
-"""After importing you set the keyword 'tilingqueue' when initialising the
+from comb_spec_searcher.objectqueuedf import ObjectQueueDF
+"""After importing you set the keyword 'objectqueue' when initialising the
 tilescope"""
 tilescope = TileScope("0132_0231_0312_0321_1032_3120",
                       StrategyPacks.minimum_row_placements,
-                      tilingqueue=TilingQueueDF)
+                      objectqueue=ObjectQueueDF)
 tilescope.auto_search(1, verbose=True, status_update=10)

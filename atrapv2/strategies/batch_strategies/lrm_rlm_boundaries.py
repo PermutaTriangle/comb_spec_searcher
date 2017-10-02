@@ -1,6 +1,6 @@
 from permuta import Perm, Av
 from grids import Tiling, Block, Cell
-from .batch_class import BatchStrategy
+from comb_spec_searcher import BatchStrategy
 
 def left_to_right_maxima(perm):
     """Return the indices of left to right maxima."""

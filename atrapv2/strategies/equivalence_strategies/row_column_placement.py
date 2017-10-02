@@ -7,7 +7,7 @@ positive class in its respective row/column.
 
 from grids import Tiling, Block, PositiveClass
 
-from .equivalence_class import EquivalenceStrategy
+from comb_spec_searcher import EquivalenceStrategy
 from .point_placement import all_unique_point_or_empty
 from .point_placement import all_minimum_and_maximum_decreasing
 from .point_placement import all_minimum_and_maximum_increasing

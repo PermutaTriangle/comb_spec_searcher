@@ -1,13 +1,13 @@
 """
-A queue of tilings.
+A queue of objects.
 """
 from queue import Queue
 import tqdm
 import sys
 
-class TilingQueue(object):
+class ObjectQueue(object):
     """
-    The Queue determines the order that tilings are expanded by the tilescope.
+    The Queue determines the order that objects are expanded by the tilescope.
     """
     def __init__(self):
         self.working = Queue()
@@ -15,14 +15,14 @@ class TilingQueue(object):
         self.next_level = Queue()
         self.levels_completed = 0
 
-    def add_to_working(self, tiling):
-        self.working.put(tiling)
+    def add_to_working(self, obj):
+        self.working.put(obj)
 
-    def add_to_next(self, tiling):
-        self.next_level.put(tiling)
+    def add_to_next(self, obj):
+        self.next_level.put(obj)
 
-    def add_to_curr(self, tiling):
-        self.curr_level.put(tiling)
+    def add_to_curr(self, obj):
+        self.curr_level.put(obj)
 
     def next(self):
         if not self.working.empty():
@@ -31,7 +31,7 @@ class TilingQueue(object):
             return self.curr_level.get()
         else:
             if self.next_level.empty():
-                print("No more tilings to expand!", file=sys.stderr)
+                print("No more objects to expand!", file=sys.stderr)
                 return None
             print("++++Changing next to curr.++++",self.levels_completed)
             self.levels_completed += 1
@@ -40,7 +40,7 @@ class TilingQueue(object):
             return self.next()
 
     def do_level(self, cap=None):
-        # if cap, return first "cap" many tilings.
+        # if cap, return first "cap" many objects.
         if cap is not None:
             # x = tqdm.tqdm(range(cap))
             if isinstance(cap, int):
@@ -59,7 +59,7 @@ class TilingQueue(object):
                     # x.update()
                 else:
                     if self.next_level.empty():
-                        print("No more tilings to expand!", file=sys.stderr)
+                        print("No more objects to expand!", file=sys.stderr)
                         # x.update(cap - i)
                         i = cap
 

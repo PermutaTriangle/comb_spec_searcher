@@ -1,4 +1,4 @@
-from .batch_class import BatchStrategy
+from comb_spec_searcher import BatchStrategy
 from grids import Tiling, PositiveClass, Block
 from itertools import combinations, chain
 from copy import copy

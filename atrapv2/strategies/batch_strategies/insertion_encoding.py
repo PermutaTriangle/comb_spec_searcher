@@ -1,7 +1,7 @@
 """The following strategies are used to mimic Regular Insertion Encoding."""
 
 from grids import Tiling, PositiveClass, Block
-from .batch_class import BatchStrategy
+from comb_spec_searcher import BatchStrategy
 
 
 def insertion_encoding_row_placements(tiling, **kwargs):

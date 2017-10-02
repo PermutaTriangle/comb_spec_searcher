@@ -3,13 +3,13 @@ from grids import Cell
 from permuta.misc import ordered_set_partitions
 import itertools
 
-from .equivalence_class import EquivalenceStrategy
+from comb_spec_searcher import EquivalenceStrategy
 
 # TODO: Pass in whole class to simplify basis testing, maybe?
 
 """
     Generates integer partitions
-    From: http://stackoverflow.com/questions/10244180/python-generating-integer-partitions 
+    From: http://stackoverflow.com/questions/10244180/python-generating-integer-partitions
     To get the integer compositions of n, do ruleGen(n, 1, lambda x: 1)
 """
 def ruleGen(n, m, sigma):
@@ -150,7 +150,7 @@ def row_inequalities_to_new_tilings( new_tilings, row_num, row_ineqs ):
 
         for new_row_arr in new_row_arrangements:
             assert new_row_arr.keys().isdisjoint(tiling_template.keys()), 'unioning two nondisjoint dicts is bad'
-            
+
             template_copy = dict(tiling_template)
             template_copy.update(new_row_arr)
 
@@ -219,4 +219,4 @@ def resolve_row_inequalities( row_data, row_ineqs ):
 #         resolve_row_inequalities()
 
 
-#     return 
+#     return

@@ -2,7 +2,7 @@ from grids import Tiling, Block, PositiveClass, Cell
 from permuta import Av
 from copy import copy
 
-from .batch_class import BatchStrategy
+from comb_spec_searcher import BatchStrategy
 
 PERFORM_INSERTION_ON_ROW_COL_OF_SIZE_1 = True
 
@@ -201,18 +201,3 @@ def rightmost_col_insertion(tiling, col_num):
         return [strategy, tilings_to_return]
     else:
         return [strategy, []]
-
-
-
-
-    
-    
-
-
-
-
-
-
-
-
-

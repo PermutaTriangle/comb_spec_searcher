@@ -1,5 +1,4 @@
 
-from .inferral_class import InferralStrategy
 from .subclass_inferral import subclass_inferral
 from .jays_subclass_inferral import jays_subclass_inferral
 from .empty_cell_inferral import empty_cell_inferral

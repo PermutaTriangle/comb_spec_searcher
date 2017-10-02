@@ -3,7 +3,7 @@ from grids import Tiling, Block, PositiveClass, Cell
 from permuta import Av
 from copy import copy
 
-from .equivalence_class import EquivalenceStrategy
+from comb_spec_searcher import EquivalenceStrategy
 
 def all_equivalent_row_and_column_insertions(tiling, **kwargs):
     for strategy, tilings in all_equivalent_row_insertions(tiling):
@@ -166,18 +166,3 @@ def equivalent_rightmost_col_insertion(tiling, col_num):
     else:
         print("You've done something terrible in equivalent_row_column_insertion")
         return [strategy, []]
-
-
-
-
-
-    
-
-
-
-
-
-
-
-
-

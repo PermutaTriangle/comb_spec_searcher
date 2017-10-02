@@ -1,18 +1,15 @@
 """
-A database for tilings found.
+A database for objects found.
 
-Contains information about if tilings have been
-expanded, found by symmetries etc. It gives each tiling a unique label.
+Contains information about if objects have been
+expanded, found by symmetries etc. It gives each object a unique label.
 """
 
-from grids import Tiling
-
-
 class Info(object):
-    """Information about a tiling."""
+    """Information about a object."""
 
     def __init__(self,
-                 tiling,
+                 obj,
                  label,
                  expanded=0,
                  symmetry_expanded=False,
@@ -20,48 +17,53 @@ class Info(object):
                  decomposition_expanded=False,
                  expanding_other_sym=False,
                  expandable=False,
+                 workably_decomposed=False,
                  verified=None,
                  empty=None,
                  strategy_verified=False):
         """Initialise information."""
-        self.tiling = tiling
+        self.obj = obj
         self.label = label
         self.expanded = expanded
         self.symmetry_expanded = symmetry_expanded
         self.equivalent_expanded = equivalent_expanded
         self.expanding_other_sym = expanding_other_sym
         self.expandable = expandable
+        self.workably_decomposed = workably_decomposed
         self.verified = verified
         self.empty = empty
         self.strategy_verified = strategy_verified
 
 
-class TilingDB(object):
+class ObjectDB(object):
     """
-    A database for tilings.
+    A database for objects.
 
-    Each tiling is given a unique integer label. The key to the database is
-    both the unique integer label and tiling. It supports the following
+    Each object is given a unique integer label. The key to the database is
+    both the unique integer label and object. It supports the following
     methods.
-    - DB.add(tiling) will label the tiling and add it to the database.
-    - DB.get_tiling(key) return the tiling with the given key.
+    - DB.add(obj) will label the object and add it to the database.
+    - DB.get_object(key) return the object with the given key.
     - DB.get_label(key) return the label of the given key.
     - DB.set_property(key) will set the property to true for key.
     - DB.is_property(key) will return True if the key has the property, False
     otherwise.
-    - Sets verified tilings with explanation.
+    - Sets verified objects with explanation.
     """
 
-    def __init__(self):
+    def __init__(self, combinatorial_object=None):
         """
         Initialise.
 
-        Two dictionaries allow you to call database with either the tiling, or
-        the unique label of the tiling. The key can therefore be either the
-        label or the tiling.
+        Two dictionaries allow you to call database with either the object, or
+        the unique label of the object. The key can therefore be either the
+        label or the object.
         """
-        self.tiling_to_info = {}
+        self.obj_to_info = {}
         self.label_to_info = {}
+        if combinatorial_object is None:
+            raise TypeError("Need to declare type of combinatorial object.")
+        self.combinatorial_object = combinatorial_object
 
     def __iter__(self):
         """Iterator of labels."""
@@ -70,60 +72,60 @@ class TilingDB(object):
 
     def __contains__(self, key):
         """Check for containment."""
-        if isinstance(key, Tiling):
-            info = self.tiling_to_info.get(key)
+        if isinstance(key, self.combinatorial_object):
+            info = self.obj_to_info.get(key)
         if isinstance(key, int):
             info = self.label_to_info.get(key)
         return info is not None
 
     def add(self,
-            tiling,
+            obj,
             symmetry_expanded=False,
             expanding_other_sym=False,
             expandable=False):
         """
-        Add a tiling to the database.
+        Add a object to the database.
 
-        Can also set some information about the tiling on adding.
+        Can also set some information about the object on adding.
         """
-        if not isinstance(tiling, Tiling):
-            raise TypeError("Trying to add something that isn't a tiling.")
-        if tiling not in self.tiling_to_info:
-            label = len(self.tiling_to_info)
-            info = Info(tiling,
+        if not isinstance(obj, self.combinatorial_object):
+            raise TypeError("Trying to add something that isn't a object.")
+        if obj not in self.obj_to_info:
+            label = len(self.obj_to_info)
+            info = Info(obj,
                         label,
                         symmetry_expanded=symmetry_expanded,
                         expanding_other_sym=expanding_other_sym,
                         expandable=expandable)
-            self.tiling_to_info[tiling] = info
+            self.obj_to_info[obj] = info
             self.label_to_info[label] = info
         else:
             if expandable:
-                self.set_expandable(tiling)
+                self.set_expandable(obj)
             if expanding_other_sym:
-                self.set_expanding_other_sym(tiling)
+                self.set_expanding_other_sym(obj)
             if symmetry_expanded:
-                self.set_symmetry_expanded(tiling)
+                self.set_symmetry_expanded(obj)
 
     def _get_info(self, key):
         """Return Info for given key."""
-        if isinstance(key, Tiling):
-            info = self.tiling_to_info.get(key)
+        if not isinstance(key, int):
+            info = self.obj_to_info.get(key)
             if info is None:
-                label = len(self.tiling_to_info)
-                info = Info(key, len(self.tiling_to_info))
-                self.tiling_to_info[key] = info
+                label = len(self.obj_to_info)
+                info = Info(key, len(self.obj_to_info))
+                self.obj_to_info[key] = info
                 self.label_to_info[label] = info
         elif isinstance(key, int):
             info = self.label_to_info.get(key)
             if info is None:
-                raise KeyError("Key not in TilingDB.")
+                raise KeyError("Key not in ObjectgDB.")
         return info
 
-    def get_tiling(self, key):
-        """Return tiling of key."""
+    def get_object(self, key):
+        """Return object of key."""
         info = self._get_info(key)
-        return info.tiling
+        return info.obj
 
     def get_label(self, key):
         """Return label of key."""
@@ -132,18 +134,18 @@ class TilingDB(object):
 
     def number_times_expanded(self, key):
         """
-        Return number of times tiling corresponding to key has been expanded.
+        Return number of times object corresponding to key has been expanded.
 
         i.e., the number of sets strategies that have been used to expanded
-        the tiling corresponding to the key.
+        the object corresponding to the key.
         """
         info = self._get_info(key)
         return info.expanded
 
     def increment_expanded(self, key):
-        """Increment the counter for number times a tiling was expanded."""
+        """Increment the counter for number times a object was expanded."""
         info = self._get_info(key)
-        self.tiling_to_info[info.tiling].expanded += 1
+        self.obj_to_info[info.obj].expanded += 1
 
     def is_expandable(self, key):
         """Return True if expandable, False otherwise."""
@@ -151,20 +153,20 @@ class TilingDB(object):
         return info.expandable
 
     def set_expandable(self, key, expandable=True):
-        """Update database about tilings expandability."""
+        """Update database about objects expandability."""
         info = self._get_info(key)
-        self.tiling_to_info[info.tiling].expandable = expandable
+        self.obj_to_info[info.obj].expandable = expandable
 
     def is_verified(self, key):
         """
-        Return True if tiling has been verified.
+        Return True if object has been verified.
 
         Verification must have an explanation, i.e, from a strategy.
         """
         return self._get_info(key).verified is not None
 
     def set_verified(self, key, explanation):
-        """Update database about tiling being verified, with an explanation."""
+        """Update database about object being verified, with an explanation."""
         self._get_info(key).verified = explanation
 
     def verification_reason(self, key):
@@ -172,11 +174,11 @@ class TilingDB(object):
         return self._get_info(key).verified
 
     def is_empty(self, key):
-        """Return True if tiling contains no permutation, False otherwise."""
+        """Return True if object contains no permutation, False otherwise."""
         return self._get_info(key).empty
 
     def set_empty(self, key, empty=True):
-        """Update database about tiling being empty."""
+        """Update database about object being empty."""
         self._get_info(key).empty = empty
 
     def verified_labels(self):
@@ -186,33 +188,41 @@ class TilingDB(object):
                 yield x
 
     def is_strategy_verified(self, key):
-        """Return True if tiling verified by a strategy."""
+        """Return True if object verified by a strategy."""
         return self._get_info(key).strategy_verified
 
     def set_strategy_verified(self, key, strategy_verified=True):
-        """Update database about tiling being verified by a strategy."""
+        """Update database about object being verified by a strategy."""
         self._get_info(key).strategy_verified = strategy_verified
 
     def is_symmetry_expanded(self, key):
-        """Return True if tiling was expanded by symmetries."""
+        """Return True if object was expanded by symmetries."""
         return self._get_info(key).symmetry_expanded
 
     def set_symmetry_expanded(self, key, symmetry_expanded=True):
-        """Update database that tiling was symmetry expanded."""
+        """Update database that object was symmetry expanded."""
         self._get_info(key).symmetry_expanded = symmetry_expanded
 
     def is_expanding_other_sym(self, key):
-        """Return True if a symmetry of tiling is being expaned."""
+        """Return True if a symmetry of object is being expaned."""
         return self._get_info(key).expanding_other_sym
 
     def set_expanding_other_sym(self, key, expanding_other_sym=True):
-        """Update database that a symmetry of tiling is being expanded."""
+        """Update database that a symmetry of object is being expanded."""
         self._get_info(key).expanding_other_sym = expanding_other_sym
 
     def is_equivalent_expanded(self, key):
-        """Return True if tiling was equivalent expanded."""
+        """Return True if object was equivalent expanded."""
         return self._get_info(key).equivalent_expanded
 
     def set_equivalent_expanded(self, key, equivalent_expanded=True):
-        """Update database that tiling was equivalent expanded."""
+        """Update database that object was equivalent expanded."""
         self._get_info(key).equivalent_expanded = equivalent_expanded
+
+    def is_workably_decomposed(self, key):
+        """Return True if object was equivalent expanded."""
+        return self._get_info(key).workably_decomposed
+
+    def set_workably_decomposed(self, key, workably_decomposed=True):
+        """Update database that object was equivalent expanded."""
+        self._get_info(key).workably_decomposed = workably_decomposed

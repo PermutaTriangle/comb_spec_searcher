@@ -3,7 +3,7 @@
 
 from permuta import Perm
 from grids import Tiling, PositiveClass, Block
-from .batch_class import BatchStrategy
+from comb_spec_searcher import BatchStrategy
 
 
 def left_to_right_maxima123(tiling, basis, **kwargs):

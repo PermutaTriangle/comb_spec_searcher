@@ -8,7 +8,8 @@ This definition is essentially equivalent to the one given in enumeration scheme
 from grids import Tiling, Block
 from atrap.tools import cells_of_occurrences_by_perms
 
-from .recursive_class import RecursiveStrategy
+from comb_spec_searcher import DecompositionStrategy
+from .tools import has_interleaving_decomposition
 
 
 def reversibly_deletable_points(tiling,
@@ -17,8 +18,9 @@ def reversibly_deletable_points(tiling,
                                 occurrences_by_perm=None,
                                 path=None,
                                 basis_partitioning=None,
+                                non_interleaving_decomposition=False,
                                 **kwargs):
-    """Yield all possibly RecursiveStrategy removing reversibly deletable points."""
+    """Yield all possibly DecompositionStrategy removing reversibly deletable points."""
     if current_cell is None:
         '''Take the smallest cell in the tiling'''
         current_cell = (-1, -1)
@@ -52,7 +54,12 @@ def reversibly_deletable_points(tiling,
             formal_step = "Reversibly delete the points at cells {}".format(path)
             points = Tiling({cell: Block.point for cell in path})
             strategy = [Tiling(new_tiling_dict), points]
-            yield RecursiveStrategy(formal_step, strategy, [t._back_map for t in strategy])
+            strategy = DecompositionStrategy(formal_step, strategy, [t._back_map for t in strategy])
+            if non_interleaving_decomposition:
+                if not has_interleaving_decomposition(strategy):
+                    yield strategy
+            else:
+                yield strategy
             for recursive_strategy in reversibly_deletable_points(tiling, basis, cell, new_occurrences_by_perm, path):
                 yield recursive_strategy
             path.pop()
@@ -64,8 +71,9 @@ def reversibly_deletable_cells(tiling,
                                occurrences_by_perm=None,
                                path=None,
                                basis_partitioning=None,
+                               non_interleaving_decomposition=False,
                                **kwargs):
-    """Yield all possile RecursiveStrategy from removing reversibly deletable cells."""
+    """Yield all possile DecompositionStrategy from removing reversibly deletable cells."""
     if current_cell is None:
         '''Take the smallest cell in the tiling'''
         current_cell = (-1, -1)
@@ -103,7 +111,12 @@ def reversibly_deletable_cells(tiling,
             formal_step = "Reversibly delete the blocks at cells {}".format(path)
             blocks = Tiling({cell: block for cell, block in blocks})
             tilings = [Tiling(new_tiling_dict), blocks]
-            yield RecursiveStrategy(formal_step, tilings, [t._back_map for t in tilings])
+            strategy = DecompositionStrategy(formal_step, tilings, [t._back_map for t in tilings])
+            if non_interleaving_decomposition:
+                if not has_interleaving_decomposition(strategy):
+                    yield strategy
+            else:
+                yield strategy
             for recursive_strategy in reversibly_deletable_cells(tiling, basis, cell, new_occurrences_by_perm, path):
                 yield recursive_strategy
             path.pop()
