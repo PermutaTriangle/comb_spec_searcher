@@ -451,6 +451,10 @@ class CombinatorialSpecificationSearcher(object):
         print("Total number of strategy verified objects is {}".format(str(strategy_verified)),
               file=file)
         print("Total number of empty objects is {}".format(str(empty)), file=file)
+        print("Currently on 'level' {}".format(str(self.objectqueue.levels_completed + 1)), file=file)
+        print("The size of the working queue is", self.objectqueue.working.qsize(), file=file)
+        print("The size of the current queue is", self.objectqueue.curr_level.qsize(), file=file)
+        print("The size of the next queue is", self.objectqueue.next_level.qsize(), file=file)
         print("There were {} cache misses".format(str(self._cache_misses)), file=file)
         print("", file=file)
         equiv_perc = int(self.equivalent_time/self._time_taken * 100)

@@ -8,7 +8,7 @@ from itertools import combinations
 from comb_spec_searcher import Strategy
 
 
-def components(tiling, basis, basis_partitioning=None, **kwargs):
+def components(tiling, non_interleaving_decomposition=False, **kwargs):
     """
     Yield strategy found by taking components of a tiling.
 
@@ -16,12 +16,20 @@ def components(tiling, basis, basis_partitioning=None, **kwargs):
     """
     cell_to_int = {}
 
-    cells = tiling.point_cells.union(tiling.possibly_empty).union(tiling.positive_cells)
+    cells = list(tiling.point_cells.union(tiling.possibly_empty).union(tiling.positive_cells))
     for cell in cells:
         # TODO: use integer mapping
         cell_to_int[cell] = len(cell_to_int)
 
     components_set = UnionFind(len(cell_to_int))
+
+    if non_interleaving_decomposition:
+        for i in range(len(cells)):
+            for j in range(i+1, len(cells)):
+                c1 = cells[i]
+                c2 = cells[j]
+                if c1[0] == c2[0] or c1[1] == c2[1]:
+                    components_set.unite(cell_to_int[c1], cell_to_int[c2])
 
     for ob in tiling:
         for i in range(len(ob.pos)):
