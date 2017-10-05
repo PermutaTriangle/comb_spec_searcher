@@ -24,6 +24,6 @@ point_placement_no_infer = StrategyPack(
 
 row_placements = StrategyPack(eq_strats=[],
                               ver_strats=[subset_verified],
-                              inf_strats=[],
+                              inf_strats=[subobstruction_inferral],
                               other_strats=[[components],[all_cell_insertions, row_placements]],
                               name="row_placements")
