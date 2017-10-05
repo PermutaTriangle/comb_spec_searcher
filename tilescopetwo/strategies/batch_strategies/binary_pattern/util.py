@@ -26,7 +26,7 @@ def gen_classical_binary(basis, k):
 
 
 def task_to_basis(task):
-    return [Perm(map(int, t)) for t in task.split("_")]
+    return [Perm.to_standard(map(int, t)) for t in task.split("_")]
 
 
 def make_force_strength_func(force):
