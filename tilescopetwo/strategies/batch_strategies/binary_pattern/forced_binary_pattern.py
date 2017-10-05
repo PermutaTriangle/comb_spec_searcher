@@ -5,6 +5,7 @@ from .util import generate_minimal_binary_forces as binary_forces
 from .util import make_force_strength_func
 from bisect import bisect, bisect_left
 from itertools import chain, combinations
+from comb_spec_searcher import BatchStrategy
 
 
 def opposite_dir(direction):
@@ -54,9 +55,9 @@ def perm_from_points(patt1, pos1, patt2, pos2):
 
     # Sort these tuples ((i, p[i]), (x, y)) by (y, p[i]), first by row and then
     # break ties with the value
-    sortedbyval = sorted(combined,
-                         key=lambda valpoint: (valpoint[1][1],
-                                               valpoint[0][1]))
+    sortedbyval = list(sorted(combined,
+                          key=lambda valpoint: (valpoint[1][1],
+                                                valpoint[0][1])))
 
     # Enumerate these sorted tuples ((i, p[i]), (x, y)) such that they become
     # (e, ((i, p[i]), (x, y))) and then sort them by (x, i) their column and
@@ -139,6 +140,7 @@ def place_pattern(tiling, patt):
                        bisect(insertedval, patt[idx]) * 2)
         insertedval.append(patt[idx])
         inserted_cell = (insert_cell[0] + 1, insert_cell[1] + 1)
+        pattpos = translate_set(insert_cell, pattpos)
         pattpos.append(inserted_cell)
         tiling = Tiling(point_cells=(translate_set(insert_cell,
                                                    tiling.point_cells) +
@@ -167,7 +169,7 @@ def place_forced_pattern(tiling, patt, pattpos, force, cell=(0, 0)):
 
 
 def forced_binary_pattern(tiling, **kwargs):
-    if tiling.dimensions != (1, 1):
+    if tiling.dimensions != (1, 1) or (0, 0) not in tiling.possibly_empty:
         return
 
     maxpattlen = kwargs.get('pattlen')
@@ -178,11 +180,10 @@ def forced_binary_pattern(tiling, **kwargs):
     if maxforcelen is None:
         maxforcelen = maxpattlen
 
-    for pattlen in range(1, maxpattlen + 1):
+    for pattlen in range(2, maxpattlen + 1):
         for patt in PermSet(pattlen):
             (placedtiling, pattpos) = place_pattern(tiling, patt)
             for force in binary_forces(patt, basis, maxforcelen):
-                # print("==============================================================")
                 forcedtiling = place_forced_pattern(placedtiling, patt,
                                                     pattpos, force)
                 avoidingtiling = Tiling(
@@ -191,4 +192,10 @@ def forced_binary_pattern(tiling, **kwargs):
                     tiling.possibly_empty,
                     tiling.obstructions + (Obstruction.single_cell(patt,
                                                                    (0, 0)),))
-                yield forcedtiling
+                assert avoidingtiling.dimensions == (1, 1)
+                assert forcedtiling.dimensions != (1, 1)
+
+                yield BatchStrategy(
+                    formal_step="Placing pattern {} with force {}".format(
+                        patt, force),
+                    tilings=[avoidingtiling, forcedtiling])
