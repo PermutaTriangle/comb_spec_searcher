@@ -55,16 +55,19 @@ def is_binary_force(patt, force, basis=[]):
     return True
 
 
-def force_backtrack(patt, cur_force, index, basis):
+def force_backtrack(patt, cur_force, index, basis, maxlen):
+    if len(cur_force) == maxlen:
+        return
     if index < len(patt):
-        for f in force_backtrack(patt, cur_force, index + 1, basis):
+        for f in force_backtrack(patt, cur_force, index + 1, basis, maxlen):
             yield f
         for d in DIRS:
             next_force = cur_force + [(index, d)]
             if is_binary_force(patt, next_force, basis):
                 yield next_force
             else:
-                for f in force_backtrack(patt, next_force, index + 1, basis):
+                for f in force_backtrack(patt, next_force, index + 1,
+                                         basis, maxlen):
                     yield f
 
 
@@ -86,6 +89,8 @@ def generate_binary_forces(patt, basis=[]):
             yield force
 
 
-def generate_minimal_binary_forces(patt, basis=[]):
-    for f in force_backtrack(patt, [], 0, basis):
+def generate_minimal_binary_forces(patt, basis=[], maxlen=None):
+    if maxlen is None:
+        maxlen = len(patt)
+    for f in force_backtrack(patt, [], 0, basis, maxlen):
         yield f
