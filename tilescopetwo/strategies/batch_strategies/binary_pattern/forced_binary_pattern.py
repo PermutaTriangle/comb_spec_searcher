@@ -183,7 +183,12 @@ def forced_binary_pattern(tiling, **kwargs):
             (placedtiling, pattpos) = place_pattern(tiling, patt)
             for force in binary_forces(patt, basis, maxforcelen):
                 # print("==============================================================")
-                til = place_forced_pattern(placedtiling, patt, pattpos, force)
-                # print(til)
-                yield til
-                # print(til)
+                forcedtiling = place_forced_pattern(placedtiling, patt,
+                                                    pattpos, force)
+                avoidingtiling = Tiling(
+                    tiling.point_cells,
+                    tiling.positive_cells,
+                    tiling.possibly_empty,
+                    tiling.obstructions + (Obstruction.single_cell(patt,
+                                                                   (0, 0)),))
+                yield forcedtiling
