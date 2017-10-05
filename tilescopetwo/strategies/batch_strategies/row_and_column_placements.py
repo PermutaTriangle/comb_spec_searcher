@@ -7,9 +7,10 @@ def row_placements(tiling, **kwargs):
     print("")
     print("The tiling:")
     print(tiling.to_old_tiling())
+    print(tiling)
     print("Gives the strategies:")
     for i in range(tiling.dimensions[1]):
-        row = tiling.get_cells_in_row(i)
+        row = tiling.cells_in_row(i)
         if not all(c in tiling.positive_cells or c in tiling.point_cells for c in row):
             continue
         if not all(tiling.only_positive_in_col(c) for c in row):
@@ -23,9 +24,13 @@ def row_placements(tiling, **kwargs):
         print("-----")
         for t in north:
             print(t.to_old_tiling())
+            print(t.is_empty())
+            print(t)
         print("-----")
         for t in south:
             print(t.to_old_tiling())
+            print(t.is_empty())
+            print(t)
         yield BatchStrategy(formal_step="Place maximum into row {}".format(i), tilings=north)
         yield BatchStrategy(formal_step="Place minimum into row {}".format(i), tilings=south)
     print("END")
