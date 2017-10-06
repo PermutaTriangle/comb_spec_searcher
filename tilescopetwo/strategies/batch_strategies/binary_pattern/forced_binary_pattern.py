@@ -136,9 +136,10 @@ def place_pattern(tiling, patt):
     pattpos = []
     insertedval = list()
     for idx in range(len(patt)):
+        validx = bisect(insertedval, patt[idx])
         insert_cell = (idx * 2,
-                       bisect(insertedval, patt[idx]) * 2)
-        insertedval.append(patt[idx])
+                       validx * 2)
+        insertedval.insert(validx, patt[idx])
         inserted_cell = (insert_cell[0] + 1, insert_cell[1] + 1)
         pattpos = translate_set(insert_cell, pattpos)
         pattpos.append(inserted_cell)
