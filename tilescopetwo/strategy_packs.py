@@ -22,8 +22,24 @@ point_placement_no_infer = StrategyPack(
          other_strats=[[components], [all_cell_insertions]],
          name="point_placement_no_infer")
 
-row_placements = StrategyPack(eq_strats=[],
-                              ver_strats=[subset_verified],
-                              inf_strats=[subobstruction_inferral],
-                              other_strats=[[components],[all_cell_insertions, row_placements]],
-                              name="row_placements")
+row_placements_with_subobstruction_inferral = StrategyPack(
+         eq_strats=[],
+         ver_strats=[subset_verified],
+         inf_strats=[subobstruction_inferral, row_and_column_separation],
+         other_strats=[[components],[all_cell_insertions, row_placements]],
+         name="row_placements_with_subobstruction_inferral")
+
+col_placements_with_subobstruction_inferral = StrategyPack(
+         eq_strats=[],
+         ver_strats=[subset_verified],
+         inf_strats=[subobstruction_inferral, row_and_column_separation],
+         other_strats=[[components], [all_cell_insertions, col_placements]],
+         name="col_placements_with_subobstruction_inferral")
+
+row_and_column_placements_with_subobstruction_inferral = StrategyPack(
+         eq_strats=[],
+         ver_strats=[subset_verified],
+         inf_strats=[subobstruction_inferral, row_and_column_separation],
+         other_strats=[[components],
+                       [all_cell_insertions, row_placements, col_placements]],
+         name="row_and_column_placements_with_subobstruction_inferral")
