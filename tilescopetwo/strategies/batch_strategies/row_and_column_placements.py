@@ -4,11 +4,11 @@ from permuta.misc import DIR_EAST, DIR_NORTH, DIR_SOUTH, DIR_WEST  # , DIRS
 
 
 def row_placements(tiling, **kwargs):
-    print("")
-    print("The tiling:")
-    print(tiling.to_old_tiling())
-    print(tiling)
-    print("Gives the strategies:")
+    # print("")
+    # print("The tiling:")
+    # print(tiling.to_old_tiling())
+    # print(tiling)
+    # print("Gives the strategies:")
     for i in range(tiling.dimensions[1]):
         row = tiling.cells_in_row(i)
         if not all(c in tiling.positive_cells or c in tiling.point_cells for c in row):
@@ -21,19 +21,19 @@ def row_placements(tiling, **kwargs):
             if cell in tiling.positive_cells:
                 north.append(row_place(tiling, cell, DIR_NORTH))
                 south.append(row_place(tiling, cell, DIR_SOUTH))
-        print("-----")
-        for t in north:
-            print(t.to_old_tiling())
-            print(t.is_empty())
-            print(t)
-        print("-----")
-        for t in south:
-            print(t.to_old_tiling())
-            print(t.is_empty())
-            print(t)
+        # print("-----")
+        # for t in north:
+        #     print(t.to_old_tiling())
+        #     print(t.is_empty())
+        #     print(t)
+        # print("-----")
+        # for t in south:
+        #     print(t.to_old_tiling())
+        #     print(t.is_empty())
+        #     print(t)
         yield BatchStrategy(formal_step="Place maximum into row {}".format(i), tilings=north)
         yield BatchStrategy(formal_step="Place minimum into row {}".format(i), tilings=south)
-    print("END")
+    # print("END")
 
 
 def row_place(tiling, cell, direction):

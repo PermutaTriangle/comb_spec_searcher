@@ -4,7 +4,7 @@ from comb_spec_searcher import StrategyPack
 point_placement_with_subobstruction_inferral = StrategyPack(
          eq_strats=[all_point_placements],
          ver_strats=[subset_verified],
-         inf_strats=[subobstruction_inferral_rec],
+         inf_strats=[subobstruction_inferral_rec, row_and_column_separation],
          other_strats=[[components], [all_cell_insertions]],
          name="point_placement_with_subobstruction_inferral")
 
