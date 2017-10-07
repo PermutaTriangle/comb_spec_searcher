@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import sys
 
 from permuta import Av
@@ -248,7 +250,7 @@ class ProofTree(JsonAble):
         tp_tee = ProofTree.__PRETTY_PRINT_DICT["T"]
         tp_empty = ProofTree.__PRETTY_PRINT_DICT["empty"]
         label_counter = legend[0][1]
-        print(prefix, label_counter, sep="", file=file)
+        print(prefix.encode('utf-8'), label_counter, sep="", file=file)
         legend.append([label_counter, (root.in_tiling, root.out_tiling)])
         legend[0][1] += 1
         for subtree_number in range(len(root.children)-1):
