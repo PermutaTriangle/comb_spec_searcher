@@ -207,6 +207,7 @@ def row_and_column_separation(tiling, **kwargs):
     # new_tiling_dict = dict(tiling)
     '''When creating the new tiling, we need to keep track of the shifted cell we
     add, in case a cell appears on a separated row and column'''
+    inferred = False
     row_map = {}
     shift = 0
     for row in range(tiling.dimensions[1]):
@@ -228,7 +229,12 @@ def row_and_column_separation(tiling, **kwargs):
                 second_last = row_separations[-2]
                 if len(separation) == len(second_last):
                     '''only use it if it is the unique longest'''
+                    # print("Multiple solutions")
+                    # print(tiling)
+                    # print(row, separation, second_last)
                     separation = row_separations[0]
+                else:
+                    inferred = True
         else:
             separation = [[c for c in tiling.cells_in_row(row)]]
 
@@ -255,7 +261,12 @@ def row_and_column_separation(tiling, **kwargs):
                 second_last = column_separations[-2]
                 if len(separation) == len(second_last):
                     '''only use it if it is the unique longest'''
+                    # print("Multiple solutions")
+                    # print(tiling)
+                    # print(col, separation, second_last)
                     separation = column_separations[0]
+                else:
+                    inferred = True
         else:
             separation = [[c for c in tiling.cells_in_col(col)]]
 
@@ -264,49 +275,49 @@ def row_and_column_separation(tiling, **kwargs):
                 col_map[cell] = cell[0] + shift + index
         shift += len(separation) - 1
 
-    cell_map = lambda c: (col_map[c], row_map[c])
+    if inferred:
+        cell_map = lambda c: (col_map[c], row_map[c])
 
-    point_cells = [cell_map(c) for c in tiling.point_cells]
-    possibly_empty = [cell_map(c) for c in tiling.possibly_empty]
-    positive_cells = [cell_map(c) for c in tiling.positive_cells]
+        point_cells = [cell_map(c) for c in tiling.point_cells]
+        possibly_empty = [cell_map(c) for c in tiling.possibly_empty]
+        positive_cells = [cell_map(c) for c in tiling.positive_cells]
 
-    obstructions = []
-    for ob in tiling.obstructions:
-        if len(ob) != 2:
-            obstructions.append(Obstruction(ob.patt,
-                                            [cell_map(c) for c in ob.pos]))
-        else:
-            c1, c2 = ob.pos
-            new_c1 = cell_map(c1)
-            new_c2 = cell_map(c2)
-            if new_c2[0] < new_c1[0]:
-                # print(ob, new_c1, new_c2)
-                continue
-            elif ob.patt[0] == 0:
-                if new_c2[1] < new_c1[1]:
+        obstructions = []
+        for ob in tiling.obstructions:
+            if len(ob) != 2:
+                obstructions.append(Obstruction(ob.patt,
+                                                [cell_map(c) for c in ob.pos]))
+            else:
+                c1, c2 = ob.pos
+                new_c1 = cell_map(c1)
+                new_c2 = cell_map(c2)
+                if new_c2[0] < new_c1[0]:
                     # print(ob, new_c1, new_c2)
                     continue
-            elif new_c2[1] > new_c1[1]:
-                # print(ob, new_c1, new_c2)
-                continue
-            obstructions.append(Obstruction(ob.patt,
-                                            [new_c1, new_c2]))
-    # print(point_cells)
-    # print(possibly_empty)
-    # print(positive_cells)
-    # for o in obstructions:
-    #     print(o)
+                elif ob.patt[0] == 0:
+                    if new_c2[1] < new_c1[1]:
+                        # print(ob, new_c1, new_c2)
+                        continue
+                elif new_c2[1] > new_c1[1]:
+                    # print(ob, new_c1, new_c2)
+                    continue
+                obstructions.append(Obstruction(ob.patt,
+                                                [new_c1, new_c2]))
+        # print(point_cells)
+        # print(possibly_empty)
+        # print(positive_cells)
+        # for o in obstructions:
+        #     print(o)
 
-    separated_tiling = Tiling(point_cells=point_cells,
-                              possibly_empty=possibly_empty,
-                              positive_cells=positive_cells,
-                              obstructions=obstructions)
-    # print(tiling.to_old_tiling())
-    # print(tiling)
-    # print(separated_tiling.to_old_tiling())
-    # print("")
-    # print(separated_tiling)
-    if tiling != separated_tiling:
+        separated_tiling = Tiling(point_cells=point_cells,
+                                  possibly_empty=possibly_empty,
+                                  positive_cells=positive_cells,
+                                  obstructions=obstructions)
+        # print(tiling.to_old_tiling())
+        # print(tiling)
+        # print(separated_tiling.to_old_tiling())
+        # print("")
+        # print(separated_tiling)
         '''we only return it if it is different'''
         # TODO: add the rows and columns separated to the formal_step
         formal_step = "Separated the rows and columns"
