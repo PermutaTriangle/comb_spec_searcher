@@ -56,13 +56,13 @@ def subobstruction_inferral_rec(tiling, **kwargs):
         if can_add_obstruction(tiling, subobstruction, copy(positive_cells)):
             adding.append(subobstruction)
 
-    if adding:
-        print("To the tiling:")
-        print(tiling.to_old_tiling())
-        print(tiling)
-        print("We are adding:")
-        for o in adding:
-            print(o)
+    # if adding:
+    #     print("To the tiling:")
+    #     print(tiling.to_old_tiling())
+    #     print(tiling)
+    #     print("We are adding:")
+    #     for o in adding:
+    #         print(o)
 
     new_tiling = Tiling(point_cells=tiling.point_cells,
                         positive_cells=tiling.positive_cells,

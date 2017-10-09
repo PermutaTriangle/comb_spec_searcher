@@ -257,8 +257,15 @@ class CombinatorialSpecificationSearcher(object):
                     self._equivalent_expand(ob)
                 start += time.time()
 
+                if not objects:
+                    # all the tilings are empty so the tiling itself must be empty!
+                    self.objectdb.set_empty(label)
+                    self.objectdb.set_verified(label, "This tiling contains no avoiding perms")
+                    self.objectdb.set_strategy_verified(label)
+                    self.equivdb.update_verified(label)
+                    break
                 # If we have an equivalent strategy
-                if len(objects) == 1:
+                elif len(objects) == 1:
                     other_label = self.objectdb.get_label(objects[0])
                     self.equivdb.union(label, other_label, strategy.formal_step)
                     if not (self.is_expanded(other_label)
