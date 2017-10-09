@@ -2,10 +2,14 @@ from tilescopetwo.strategies import *
 from comb_spec_searcher import StrategyPack
 from functools import partial
 
+# WARNING: To use full subobstruction inferral need strategy
+# 'subobstruction_inferral_rec' but it is a lot slower. The function
+# 'subobstruction_inferral' is a subset of the work.
+
 point_placement_with_subobstruction_inferral = StrategyPack(
          eq_strats=[all_point_placements],
          ver_strats=[subset_verified],
-         inf_strats=[subobstruction_inferral_rec, row_and_column_separation],
+         inf_strats=[subobstruction_inferral, row_and_column_separation],
          other_strats=[[components], [all_cell_insertions]],
          name="point_placement_with_subobstruction_inferral")
 
@@ -43,6 +47,16 @@ row_and_column_placements_with_subobstruction_inferral = StrategyPack(
          inf_strats=[subobstruction_inferral, row_and_column_separation],
          other_strats=[[components],
                        [all_cell_insertions, row_placements, col_placements]],
+         name="row_and_column_placements_with_subobstruction_inferral")
+
+point_separation_and_row_col_placements = StrategyPack(
+         eq_strats=[point_separation],
+         ver_strats=[subset_verified],
+         inf_strats=[subobstruction_inferral, row_and_column_separation],
+         other_strats=[[components],
+                       [all_cell_insertions,
+                        partial(row_placements, all_positive_in_row=False),
+                        partial(col_placements, all_positive_in_col=False)]],
          name="row_and_column_placements_with_subobstruction_inferral")
 
 # binary_force = StrategyPack(

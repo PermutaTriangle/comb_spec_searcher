@@ -6,37 +6,6 @@ from collections import defaultdict
 from copy import copy
 
 
-def subobstruction_inferral(tiling, **kwargs):
-    addedobstructions = []
-    removedcells = []
-    for cell in tiling.positive_cells:
-        obstructions = [ob.remove_cells((cell,))
-                        for ob in tiling.obstructions
-                        if sum(1 for _ in ob.points_in_cell(cell)) == 1]
-        last = None
-        for ob in sorted(obstructions):
-            if ob == last:
-                continue
-            last = ob
-            count = sum(1 for o in obstructions if o in ob)
-            theocount = ((sum(1 for _ in ob.get_points_row(cell[1])) + 1) *
-                         (sum(1 for _ in ob.get_points_col(cell[0])) + 1))
-            if count == theocount:
-                if not ob.patt:
-                    print("adding empty")
-                    print("theocount", theocount)
-                    print("count", count)
-                addedobstructions.append(ob)
-                removedcells.append(cell)
-    new_tiling = Tiling(point_cells=tiling.point_cells,
-           positive_cells=tiling.positive_cells,
-           possibly_empty=tiling.possibly_empty,
-           obstructions=tiling.obstructions + tuple(addedobstructions))
-    if tiling != new_tiling:
-        yield InferralStrategy(
-            ("The cells {} imply the reduction to the following obstructions: \n{}"
-             ).format(removedcells, "\n".join(map(str, addedobstructions))),
-             new_tiling)
 
 def subobstruction_inferral_rec(tiling, **kwargs):
 
@@ -74,8 +43,6 @@ def subobstruction_inferral_rec(tiling, **kwargs):
          ).format("\n".join(map(str, adding))),
          new_tiling)
 
-
-
 def can_add_obstruction(tiling, obstruction, positive_cells):
     while positive_cells:
         cell = positive_cells.pop()
@@ -86,6 +53,41 @@ def can_add_obstruction(tiling, obstruction, positive_cells):
             return True
         return all(can_add_obstruction(tiling, ob, positive_cells) for ob in obs)
     return any(o in obstruction for o in tiling.obstructions)
+
+
+def subobstruction_inferral(tiling, **kwargs):
+    addedobstructions = []
+    removedcells = []
+    for cell in tiling.positive_cells:
+        obstructions = [ob.remove_cells((cell,))
+                        for ob in tiling.obstructions
+                        if sum(1 for _ in ob.points_in_cell(cell)) == 1]
+        last = None
+        for ob in sorted(obstructions):
+            if ob == last:
+                continue
+            last = ob
+            count = sum(1 for o in obstructions if o in ob)
+            theocount = ((sum(1 for _ in ob.get_points_row(cell[1])) + 1) *
+                         (sum(1 for _ in ob.get_points_col(cell[0])) + 1))
+            if count == theocount:
+                if not ob.patt:
+                    print("adding empty")
+                    print("theocount", theocount)
+                    print("count", count)
+                addedobstructions.append(ob)
+                removedcells.append(cell)
+    new_tiling = Tiling(point_cells=tiling.point_cells,
+           positive_cells=tiling.positive_cells,
+           possibly_empty=tiling.possibly_empty,
+           obstructions=tiling.obstructions + tuple(addedobstructions))
+    if tiling != new_tiling:
+        yield InferralStrategy(
+            ("The cells {} imply the reduction to the following obstructions: \n{}"
+             ).format(removedcells, "\n".join(map(str, addedobstructions))),
+             new_tiling)
+
+
 
 
 #
