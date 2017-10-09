@@ -17,6 +17,8 @@ from .objectdb import ObjectDB
 from .objectqueue import ObjectQueue
 from .objectqueuedf import ObjectQueueDF
 
+from .objectdb_compress import CompressedObjectDB
+
 from .tree_searcher import proof_tree_bfs, prune
 
 
@@ -38,7 +40,7 @@ class CombinatorialSpecificationSearcher(object):
 
         self.equivdb = EquivalenceDB()
         self.ruledb = RuleDB()
-        self.objectdb = ObjectDB(type(start_object))
+        self.objectdb = CompressedObjectDB(type(start_object))
 
         self.objectdb.add(start_object, expandable=True)
         self.start_label = self.objectdb.get_label(start_object)
