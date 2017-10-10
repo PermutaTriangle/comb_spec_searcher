@@ -64,8 +64,6 @@ class CombinatorialSpecificationSearcher(object):
 
         self.objectqueue.add_to_working(self.start_label)
 
-
-
         if strategy_pack is not None:
             if not isinstance(strategy_pack, StrategyPack):
                 raise TypeError("Strategy pack given not instance of strategy pack.")
@@ -92,9 +90,7 @@ class CombinatorialSpecificationSearcher(object):
         self.prepping_for_tree_search_time = 0
         self.queue_time = 0
         self._time_taken = 0
-        self._cache_misses = 0 # this for status and should be updated if you use a cache
-
-
+        self._cache_misses = 0  # this for status and should be updated if you use a cache
 
     def try_verify(self, obj, force=False):
         """
@@ -146,7 +142,8 @@ class CombinatorialSpecificationSearcher(object):
         Will repeatedly use inferral strategies until object changes no more.
         """
         start = time.time()
-        inferred_object = self._inferral_cache.get(obj)
+        compressedobj = obj.compress()
+        inferred_object = self._inferral_cache.get(compressedobj)
         semi_inferred_objects = []
         if inferred_object is None:
             inferred_object = obj
@@ -163,28 +160,31 @@ class CombinatorialSpecificationSearcher(object):
 
                     # we infer as much as possible about the object and replace it.
                     soon_to_be_object = strategy.object
+                    compressedstbo = soon_to_be_object.compress()
 
                     if soon_to_be_object is inferred_object:
                         continue
 
-                    if soon_to_be_object in self._inferral_cache:
-                        soon_to_be_object = self._inferral_cache.get(soon_to_be_object)
+                    if compressedstbo in self._inferral_cache:
+                        compressedstdbo = self._inferral_cache.get(compressedstbo)
                         semi_inferred_objects.append(inferred_object)
-                        inferred_object = soon_to_be_object
+                        inferred_object = obj.__class_.decompress(compressedstdbo)
                         fully_inferred = True
                         break
                     else:
                         semi_inferred_objects.append(inferred_object)
                         inferred_object = soon_to_be_object
             for semi_inferred_object in semi_inferred_objects:
-                self._inferral_cache.set(semi_inferred_object, inferred_object)
+                self._inferral_cache.set(semi_inferred_object.compress(), inferred_object.compress())
                 if self.symmetry:
                     for sym_obj, sym_inf_obj in zip(self._symmetric_objects(semi_inferred_object,
                                                                         ordered=True),
                                                     self._symmetric_objects(inferred_object,
                                                                         ordered=True)):
-                        self._inferral_cache.set(sym_obj, sym_inf_obj)
-            self._inferral_cache.set(inferred_object, inferred_object)
+                        self._inferral_cache.set(sym_obj.compress(), sym_inf_obj.compress())
+            self._inferral_cache.set(inferred_object.compress(), inferred_object.compress())
+        else:
+            inferred_object = obj.__class__.decompress(inferred_object)
         self.inferral_time += time.time() - start
         return inferred_object
 
