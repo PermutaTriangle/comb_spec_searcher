@@ -51,6 +51,7 @@ def is_binary_force(patt, force, basis=[]):
         forced = [force_strength(occ, p) for occ in patt.occurrences_in(p)]
         if len(forced) > 0:
             if forced.count(max(forced)) > 1:
+                print(patt, forced)
                 return False
     return True
 
@@ -90,6 +91,9 @@ def generate_binary_forces(patt, basis=[]):
 
 
 def generate_minimal_binary_forces(patt, basis=[], maxlen=None):
+    if is_binary_force(patt, [], basis):
+        yield tuple()
+        return
     if maxlen is None:
         maxlen = len(patt)
     for f in force_backtrack(patt, [], 0, basis, maxlen):
