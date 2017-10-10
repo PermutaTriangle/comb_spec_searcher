@@ -91,15 +91,15 @@ class CompressedObjectDB(object):
         """
         if not isinstance(obj, self.combinatorial_object):
             raise TypeError("Trying to add something that isn't a object.")
-        obj = self._compress(obj)
-        if obj not in self.obj_to_info:
+        compressed_obj = self._compress(obj)
+        if compressed_obj not in self.obj_to_info:
             label = len(self.obj_to_info)
-            info = Info(obj,
+            info = Info(compressed_obj,
                         label,
                         symmetry_expanded=symmetry_expanded,
                         expanding_other_sym=expanding_other_sym,
                         expandable=expandable)
-            self.obj_to_info[obj] = info
+            self.obj_to_info[compressed_obj] = info
             self.label_to_info[label] = info
         else:
             if expandable:
@@ -128,7 +128,6 @@ class CompressedObjectDB(object):
         return info
 
     def _compress(self, key):
-        print(key)
         try:
             return key.compress()
         except AttributeError:
