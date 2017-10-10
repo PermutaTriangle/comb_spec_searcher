@@ -69,7 +69,7 @@ point_separation_and_row_col_placements = StrategyPack(
 
 binary_force = StrategyPack(
     eq_strats=[all_point_placements],
-    ver_strats=[subset_verified],
+    ver_strats=[subset_verified, database_verified],
     inf_strats=[subobstruction_inferral],
     other_strats=[[components], [all_cell_insertions],
                   [forced_binary_pattern]],
