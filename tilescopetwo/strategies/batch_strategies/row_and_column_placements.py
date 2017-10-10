@@ -3,7 +3,7 @@ from grids_two import Tiling
 from permuta.misc import DIR_EAST, DIR_NORTH, DIR_SOUTH, DIR_WEST  # , DIRS
 
 
-def row_placements(tiling, **kwargs):
+def row_placements(tiling, all_positive_in_row=True, **kwargs):
     # print("")
     # print("The tiling:")
     # print(tiling.to_old_tiling())
@@ -11,8 +11,9 @@ def row_placements(tiling, **kwargs):
     # print("Gives the strategies:")
     for i in range(tiling.dimensions[1]):
         row = tiling.cells_in_row(i)
-        if not all(c in tiling.positive_cells or c in tiling.point_cells for c in row):
-            continue
+        if all_positive_in_row:
+            if not all(c in tiling.positive_cells or c in tiling.point_cells for c in row):
+                continue
         if not all(tiling.only_positive_in_col(c) for c in row):
             continue
         north = []
@@ -21,6 +22,8 @@ def row_placements(tiling, **kwargs):
             if cell not in tiling.possibly_empty:
                 north.append(row_place(tiling, cell, DIR_NORTH))
                 south.append(row_place(tiling, cell, DIR_SOUTH))
+        if not north:
+            continue
         # print("-----")
         # for t in north:
         #     print(t.to_old_tiling())
@@ -140,7 +143,7 @@ def row_place(tiling, cell, direction):
                   possibly_empty=possibly_empty, obstructions=obstructions)
 
 
-def col_placements(tiling, **kwargs):
+def col_placements(tiling, all_positive_in_col=True, **kwargs):
     # print("")
     # print("The tiling:")
     # print(tiling.to_old_tiling())
@@ -148,8 +151,9 @@ def col_placements(tiling, **kwargs):
     # print("Gives the strategies:")
     for i in range(tiling.dimensions[0]):
         col = tiling.cells_in_col(i)
-        if not all(c in tiling.positive_cells or c in tiling.point_cells for c in col):
-            continue
+        if all_positive_in_col:
+            if not all(c in tiling.positive_cells or c in tiling.point_cells for c in col):
+                continue
         if not all(tiling.only_positive_in_row(c) for c in col):
             continue
         left = []
@@ -158,6 +162,8 @@ def col_placements(tiling, **kwargs):
             if cell not in tiling.possibly_empty:
                 left.append(col_place(tiling, cell, DIR_WEST))
                 right.append(col_place(tiling, cell, DIR_EAST))
+        if not left:
+            continue
         # print("-----")
         # for t in left:
         #     print(t.to_old_tiling())
@@ -168,8 +174,8 @@ def col_placements(tiling, **kwargs):
         #     print(t.to_old_tiling())
         #     print(t.is_empty())
         #     print(t)
-        yield BatchStrategy(formal_step="Place leftmost into row {}".format(i), tilings=left)
-        yield BatchStrategy(formal_step="Place rightmost into row {}".format(i), tilings=right)
+        yield BatchStrategy(formal_step="Place leftmost into col {}".format(i), tilings=left)
+        yield BatchStrategy(formal_step="Place rightmost into col {}".format(i), tilings=right)
     # print("END")
 
 
