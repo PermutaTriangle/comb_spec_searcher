@@ -51,7 +51,6 @@ def is_binary_force(patt, force, basis=[]):
         forced = [force_strength(occ, p) for occ in patt.occurrences_in(p)]
         if len(forced) > 0:
             if forced.count(max(forced)) > 1:
-                print(patt, forced)
                 return False
     return True
 
