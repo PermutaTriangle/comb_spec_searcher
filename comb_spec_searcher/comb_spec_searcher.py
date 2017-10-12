@@ -68,11 +68,16 @@ class CombinatorialSpecificationSearcher(object):
             if not isinstance(strategy_pack, StrategyPack):
                 raise TypeError("Strategy pack given not instance of strategy pack.")
             else:
-                self.equivalence_strategy_generators = strategy_pack.eq_strats
+                self.equivalence_strategy_generators = []
                 self.inferral_strategy_generators = strategy_pack.inf_strats
                 self.verif_strat_gen = strategy_pack.ver_strats
                 self.strategy_generators = strategy_pack.other_strats
-
+                if strategy_pack.eq_strats:
+                    if self.strategy_generators:
+                        self.strategy_generators[0].extend(strategy_pack.eq_strats)
+                    else:
+                        self.strategy_generators = strategy_pack.eq_strats
+                        
         self.kwargs = function_kwargs
 
         if not callable(is_empty_strategy):
@@ -265,12 +270,12 @@ class CombinatorialSpecificationSearcher(object):
                     self.equivdb.update_verified(label)
                     break
                 # If we have an equivalent strategy
-                elif len(objects) == 1:
-                    other_label = self.objectdb.get_label(objects[0])
-                    self.equivdb.union(label, other_label, strategy.formal_step)
-                    if not (self.is_expanded(other_label)
-                            or self.objectdb.is_expanding_other_sym(other_label)):
-                        self.objectqueue.add_to_working(other_label)
+                # elif len(objects) == 1:
+                #     other_label = self.objectdb.get_label(objects[0])
+                #     self.equivdb.union(label, other_label, strategy.formal_step)
+                #     if not (self.is_expanded(other_label)
+                #             or self.objectdb.is_expanding_other_sym(other_label)):
+                #         self.objectqueue.add_to_working(other_label)
                 else:
                     end_labels = [self.objectdb.get_label(o) for o in objects]
                     self.ruledb.add(label, end_labels, strategy.formal_step)
