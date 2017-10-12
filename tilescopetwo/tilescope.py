@@ -22,7 +22,6 @@ from comb_spec_searcher.ProofTree import ProofTree, ProofTreeNode
 from comb_spec_searcher.objectqueue import ObjectQueue
 
 
-
 class TileScopeTWO(CombinatorialSpecificationSearcher):
     """
     An instance of TileScope is used to build up knowledge about tilings with
@@ -44,8 +43,10 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
 
         if symmetry:
             # A list of symmetry functions of tilings.
-            raise NotImplementedError("Symmetries don't exist for obstructions yet.")
-            symmetries = find_symmetries(self.basis)
+            # raise NotImplementedError("Symmetries don't exist for obstructions yet.")
+            symmetries = [Tiling.inverse, Tiling.reverse, Tiling.complement,
+                          Tiling.antidiagonal, Tiling.rotate90,
+                          Tiling.rotate180, Tiling.rotate270]
         else:
             symmetries = []
 
