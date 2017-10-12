@@ -124,7 +124,7 @@ class CompressedObjectDB(object):
             if info is None:
                 raise KeyError("Key not in ObjectgDB.")
         else:
-            raise TypeError("ObjectDB only accepts one type of class: {}".format(self.combinatorial_object))
+            raise TypeError("CompressedObjectDB only accepts one type of class: {}".format(self.combinatorial_object))
         return info
 
     def _compress(self, key):
