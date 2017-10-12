@@ -83,10 +83,18 @@ binary_force_rowcolsep = StrategyPack(
                   [forced_binary_pattern]],
     name="binary_force w/ row-col separation")
 
-binary_force_rowcolsep_subobrec = StrategyPack(
+binary_force_rowcolsep_database = StrategyPack(
     eq_strats=[],
-    ver_strats=[subset_verified],
+    ver_strats=[subset_verified, database_verified],
     inf_strats=[subobstruction_inferral, row_and_column_separation],
     other_strats=[[components], [all_cell_insertions, row_placements, col_placements],
                   [forced_binary_pattern]],
-    name="binary_force w/ row-col separation, recursive subob inferral")
+    name="binary_force w/ row-col separation and database verification")
+
+# binary_force_rowcolsep_subobrec = StrategyPack(
+#     eq_strats=[],
+#     ver_strats=[subset_verified],
+#     inf_strats=[subobstruction_inferral, row_and_column_separation],
+#     other_strats=[[components], [all_cell_insertions, row_placements, col_placements],
+#                   [forced_binary_pattern]],
+#     name="binary_force w/ row-col separation, recursive subob inferral")
