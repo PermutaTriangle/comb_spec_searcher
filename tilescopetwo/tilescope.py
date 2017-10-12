@@ -31,8 +31,9 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
     def __init__(self,
                  basis,
                  strategy_pack=None,
-                 non_interleaving_decomposition=False,
+                 interleaving_decomposition=True,
                  symmetry=False,
+                 compress=False,
                  objectqueue=ObjectQueue,
                  start_tiling=None):
         """Initialise TileScope."""
@@ -53,12 +54,13 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
             start_tiling = Tiling(possibly_empty=[(0,0)], obstructions=[Obstruction.single_cell(patt, (0,0)) for patt in self.basis])
 
         function_kwargs = {"basis": self.basis,
-                           "non_interleaving_decomposition": non_interleaving_decomposition}
+                           "interleaving_decomposition": interleaving_decomposition}
 
         CombinatorialSpecificationSearcher.__init__(self,
                                             start_object=start_tiling,
                                             strategy_pack=strategy_pack,
                                             symmetry=symmetries,
+                                            compress=compress,
                                             objectqueue=ObjectQueue,
                                             is_empty_strategy=is_empty_strategy,
                                             function_kwargs=function_kwargs)

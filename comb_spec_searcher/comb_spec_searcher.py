@@ -31,6 +31,7 @@ class CombinatorialSpecificationSearcher(object):
                  start_object=None,
                  strategy_pack=None,
                  symmetry=False,
+                 compress=False,
                  objectqueue=ObjectQueue,
                  is_empty_strategy=None,
                  function_kwargs=dict()):
@@ -40,7 +41,10 @@ class CombinatorialSpecificationSearcher(object):
 
         self.equivdb = EquivalenceDB()
         self.ruledb = RuleDB()
-        self.objectdb = CompressedObjectDB(type(start_object))
+        if compress:
+            self.objectdb = CompressedObjectDB(type(start_object))
+        else:
+            self.objectdb = ObjectDB(type(start_object))
 
         self.objectdb.add(start_object, expandable=True)
         self.start_label = self.objectdb.get_label(start_object)

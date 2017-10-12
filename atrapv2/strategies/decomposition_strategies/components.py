@@ -10,7 +10,7 @@ from .tools import has_interleaving_decomposition
 from comb_spec_searcher import DecompositionStrategy
 
 
-def components(tiling, basis, basis_partitioning=None, non_interleaving_decomposition=False, **kwargs):
+def components(tiling, basis, basis_partitioning=None, interleaving_decomposition=True, **kwargs):
     """
     Yield strategy found by taking components of a tiling.
 
@@ -51,7 +51,7 @@ def components(tiling, basis, basis_partitioning=None, non_interleaving_decompos
         return
 
     strategy = DecompositionStrategy("The components of the tiling", strategy, [t._back_map for t in strategy])
-    if non_interleaving_decomposition and has_interleaving_decomposition(strategy):
+    if not interleaving_decomposition and has_interleaving_decomposition(strategy):
         return
 
     yield strategy
