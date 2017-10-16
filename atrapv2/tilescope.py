@@ -28,7 +28,7 @@ class TileScope(CombinatorialSpecificationSearcher):
     def __init__(self,
                  basis,
                  strategy_pack=None,
-                 non_interleaving_decomposition=False,
+                 interleaving_decomposition=True,
                  symmetry=False,
                  objectqueue=ObjectQueue,
                  start_tiling=None):
@@ -39,8 +39,6 @@ class TileScope(CombinatorialSpecificationSearcher):
         else:
             self.basis = Basis(basis)
 
-
-        self.non_interleaving_decomposition = non_interleaving_decomposition
 
         self._basis_partitioning_cache = {}
         self._cache_hits = set()
@@ -59,7 +57,7 @@ class TileScope(CombinatorialSpecificationSearcher):
 
         function_kwargs = {"basis": self.basis,
                            "basis_partitioning": self._basis_partitioning,
-                           "non_interleaving_decomposition": non_interleaving_decomposition}
+                           "interleaving_decomposition": interleaving_decomposition}
 
         CombinatorialSpecificationSearcher.__init__(self,
                                         start_object=start_tiling,

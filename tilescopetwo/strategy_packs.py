@@ -49,6 +49,14 @@ row_and_column_placements_with_subobstruction_inferral = StrategyPack(
                        [all_cell_insertions, row_placements, col_placements]],
          name="row_and_column_placements_with_subobstruction_inferral")
 
+row_and_column_placements_with_subobstruction_inferral_and_database = StrategyPack(
+         eq_strats=[],
+         ver_strats=[subset_verified, database_verified],
+         inf_strats=[subobstruction_inferral, row_and_column_separation],
+         other_strats=[[components],
+                       [all_cell_insertions, row_placements, col_placements]],
+         name="row_and_column_placements_with_subobstruction_inferral_and_database")
+
 point_separation_and_row_col_placements = StrategyPack(
          eq_strats=[point_separation],
          ver_strats=[subset_verified],
@@ -69,7 +77,7 @@ point_separation_and_row_col_placements = StrategyPack(
 
 binary_force = StrategyPack(
     eq_strats=[all_point_placements],
-    ver_strats=[subset_verified],
+    ver_strats=[subset_verified, database_verified],
     inf_strats=[subobstruction_inferral],
     other_strats=[[components], [all_cell_insertions],
                   [forced_binary_pattern]],
@@ -83,10 +91,18 @@ binary_force_rowcolsep = StrategyPack(
                   [forced_binary_pattern]],
     name="binary_force w/ row-col separation")
 
-binary_force_rowcolsep_subobrec = StrategyPack(
+binary_force_rowcolsep_database = StrategyPack(
     eq_strats=[],
-    ver_strats=[subset_verified],
+    ver_strats=[subset_verified, database_verified],
     inf_strats=[subobstruction_inferral, row_and_column_separation],
     other_strats=[[components], [all_cell_insertions, row_placements, col_placements],
                   [forced_binary_pattern]],
-    name="binary_force w/ row-col separation, recursive subob inferral")
+    name="binary_force w/ row-col separation and database verification")
+
+# binary_force_rowcolsep_subobrec = StrategyPack(
+#     eq_strats=[],
+#     ver_strats=[subset_verified],
+#     inf_strats=[subobstruction_inferral, row_and_column_separation],
+#     other_strats=[[components], [all_cell_insertions, row_placements, col_placements],
+#                   [forced_binary_pattern]],
+#     name="binary_force w/ row-col separation, recursive subob inferral")

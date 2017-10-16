@@ -8,7 +8,7 @@ from itertools import combinations
 from comb_spec_searcher import Strategy
 
 
-def components(tiling, non_interleaving_decomposition=False, **kwargs):
+def components(tiling, interleaving_decomposition=True, **kwargs):
     """
     Yield strategy found by taking components of a tiling.
 
@@ -23,7 +23,7 @@ def components(tiling, non_interleaving_decomposition=False, **kwargs):
 
     components_set = UnionFind(len(cell_to_int))
 
-    if non_interleaving_decomposition:
+    if not interleaving_decomposition:
         for i in range(len(cells)):
             for j in range(i+1, len(cells)):
                 c1 = cells[i]

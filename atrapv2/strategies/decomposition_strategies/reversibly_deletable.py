@@ -18,7 +18,7 @@ def reversibly_deletable_points(tiling,
                                 occurrences_by_perm=None,
                                 path=None,
                                 basis_partitioning=None,
-                                non_interleaving_decomposition=False,
+                                interleaving_decomposition=True,
                                 **kwargs):
     """Yield all possibly DecompositionStrategy removing reversibly deletable points."""
     if current_cell is None:
@@ -55,7 +55,7 @@ def reversibly_deletable_points(tiling,
             points = Tiling({cell: Block.point for cell in path})
             strategy = [Tiling(new_tiling_dict), points]
             strategy = DecompositionStrategy(formal_step, strategy, [t._back_map for t in strategy])
-            if non_interleaving_decomposition:
+            if not interleaving_decomposition:
                 if not has_interleaving_decomposition(strategy):
                     yield strategy
             else:
@@ -71,7 +71,7 @@ def reversibly_deletable_cells(tiling,
                                occurrences_by_perm=None,
                                path=None,
                                basis_partitioning=None,
-                               non_interleaving_decomposition=False,
+                               interleaving_decomposition=True,
                                **kwargs):
     """Yield all possile DecompositionStrategy from removing reversibly deletable cells."""
     if current_cell is None:
@@ -112,7 +112,7 @@ def reversibly_deletable_cells(tiling,
             blocks = Tiling({cell: block for cell, block in blocks})
             tilings = [Tiling(new_tiling_dict), blocks]
             strategy = DecompositionStrategy(formal_step, tilings, [t._back_map for t in tilings])
-            if non_interleaving_decomposition:
+            if not interleaving_decomposition:
                 if not has_interleaving_decomposition(strategy):
                     yield strategy
             else:

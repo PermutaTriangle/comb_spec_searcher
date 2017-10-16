@@ -17,7 +17,7 @@ separated by '_'. For example, for the basis {123, 231}, give the string
 need to choose a strategy pack to search with. Other options include:
     - strategy_pack: Set the strategy pack to search for. Must be an instance of
     StrategyPack.
-    - non_interleaving_decomposition: Setting this to true will ensure that any
+    - interleaving_decomposition: Setting this to False will ensure that any
     decomposition strategies used will be non-intereaving.
     - symmetry: Setting this to true will take advantage of all symmetries
     available with respect to the given basis.

@@ -28,7 +28,7 @@ def splittings(tiling,
                basis_partitioning=None,
                verification_strategies=None,
                tiling_cache=None,
-               non_interleaving_decomposition=False):
+               interleaving_decomposition=True):
 
     all_valid_splittings = find_good_splittings(tiling, basis, basis_partitioning=basis_partitioning)
 
@@ -64,7 +64,7 @@ def splittings(tiling,
             if number_of_verified_results > 1:
                 continue
         strategy = DecompositionStrategy("A splitting of the tiling", strategy, [tiling._back_map for tiling in strategy])
-        if non_interleaving_decomposition:
+        if not interleaving_decomposition:
             if not has_interleaving_decomposition(strategy):
                 yield strategy
         else:
