@@ -170,7 +170,7 @@ def place_forced_pattern(tiling, patt, pattpos, force, cell=(0, 0)):
 
 
 def forced_binary_pattern(tiling, **kwargs):
-    if tiling.dimensions != (1, 1) or (0, 0) not in tiling.possibly_empty:
+    if tiling.dimensions != (1, 1) or (0, 0) not in tiling.positive_cells:
         return
 
     maxpattlen = kwargs.get('pattlen')
@@ -180,6 +180,9 @@ def forced_binary_pattern(tiling, **kwargs):
         maxpattlen = max(map(len, basis)) - 1
     if maxforcelen is None:
         maxforcelen = maxpattlen
+
+    tiling._possibly_empty = tiling.positive_cells
+    tiling._positive_cells = frozenset()
 
     for pattlen in range(2, maxpattlen + 1):
         for patt in PermSet(pattlen):
@@ -195,8 +198,9 @@ def forced_binary_pattern(tiling, **kwargs):
                                                                    (0, 0)),))
                 assert avoidingtiling.dimensions == (1, 1)
                 assert forcedtiling.dimensions != (1, 1)
-
                 yield BatchStrategy(
                     formal_step="Placing pattern {} with force {}".format(
                         patt, force),
                     tilings=[avoidingtiling, forcedtiling])
+    tiling._positive_cells = tiling.possibly_empty
+    tiling._possibly_empty = frozenset()
