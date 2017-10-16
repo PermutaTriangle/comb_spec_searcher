@@ -49,6 +49,14 @@ row_and_column_placements_with_subobstruction_inferral = StrategyPack(
                        [all_cell_insertions, row_placements, col_placements]],
          name="row_and_column_placements_with_subobstruction_inferral")
 
+row_and_column_placements_with_subobstruction_inferral_and_database = StrategyPack(
+         eq_strats=[],
+         ver_strats=[subset_verified, database_verified],
+         inf_strats=[subobstruction_inferral, row_and_column_separation],
+         other_strats=[[components],
+                       [all_cell_insertions, row_placements, col_placements]],
+         name="row_and_column_placements_with_subobstruction_inferral_and_database")
+
 point_separation_and_row_col_placements = StrategyPack(
          eq_strats=[point_separation],
          ver_strats=[subset_verified],
