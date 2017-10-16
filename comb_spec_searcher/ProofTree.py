@@ -160,6 +160,8 @@ class ProofTree(JsonAble):
                     expansion = taylor_expand(genf, verify)
                 except TypeError:
                     continue
+                except StopIteration:
+                    continue
                 any_valid = True
                 if coeffs == expansion:
                     sol = genf.expand().simplify()
