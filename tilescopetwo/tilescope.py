@@ -43,8 +43,6 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
             self.basis = Basis(basis)
 
         if symmetry:
-            # A list of symmetry functions of tilings.
-            # raise NotImplementedError("Symmetries don't exist for obstructions yet.")
             symmetries = [Tiling.inverse, Tiling.reverse, Tiling.complement,
                           Tiling.antidiagonal, Tiling.rotate90,
                           Tiling.rotate180, Tiling.rotate270]
