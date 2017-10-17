@@ -22,7 +22,6 @@ from comb_spec_searcher.ProofTree import ProofTree, ProofTreeNode
 from comb_spec_searcher.objectqueue import ObjectQueue
 
 
-
 class TileScopeTWO(CombinatorialSpecificationSearcher):
     """
     An instance of TileScope is used to build up knowledge about tilings with
@@ -31,8 +30,9 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
     def __init__(self,
                  basis,
                  strategy_pack=None,
-                 non_interleaving_decomposition=False,
+                 interleaving_decomposition=True,
                  symmetry=False,
+                 compress=False,
                  objectqueue=ObjectQueue,
                  start_tiling=None):
         """Initialise TileScope."""
@@ -43,9 +43,9 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
             self.basis = Basis(basis)
 
         if symmetry:
-            # A list of symmetry functions of tilings.
-            raise NotImplementedError("Symmetries don't exist for obstructions yet.")
-            symmetries = find_symmetries(self.basis)
+            symmetries = [Tiling.inverse, Tiling.reverse, Tiling.complement,
+                          Tiling.antidiagonal, Tiling.rotate90,
+                          Tiling.rotate180, Tiling.rotate270]
         else:
             symmetries = []
 
@@ -53,12 +53,13 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
             start_tiling = Tiling(possibly_empty=[(0,0)], obstructions=[Obstruction.single_cell(patt, (0,0)) for patt in self.basis])
 
         function_kwargs = {"basis": self.basis,
-                           "non_interleaving_decomposition": non_interleaving_decomposition}
+                           "interleaving_decomposition": interleaving_decomposition}
 
         CombinatorialSpecificationSearcher.__init__(self,
                                             start_object=start_tiling,
                                             strategy_pack=strategy_pack,
                                             symmetry=symmetries,
+                                            compress=compress,
                                             objectqueue=ObjectQueue,
                                             is_empty_strategy=is_empty_strategy,
                                             function_kwargs=function_kwargs)
