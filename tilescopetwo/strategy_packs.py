@@ -106,3 +106,11 @@ binary_force_rowcolsep_database = StrategyPack(
 #     other_strats=[[components], [all_cell_insertions, row_placements, col_placements],
 #                   [forced_binary_pattern]],
 #     name="binary_force w/ row-col separation, recursive subob inferral")
+
+point_separation_and_isolation = StrategyPack(
+         eq_strats=[point_separation],
+         ver_strats=[subset_verified],
+         inf_strats=[subobstruction_inferral, row_and_column_separation],
+         other_strats=[[components],
+                       [all_cell_insertions, point_isolations]],
+         name="point_separation_and_isolation")

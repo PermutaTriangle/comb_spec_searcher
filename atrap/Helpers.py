@@ -107,6 +107,7 @@ def factor_from_db(factor):
     key = factor.minimum()
     result = mongo.permsdb.factor.find_one({'factor': str(key)})
     if not result:
+        # TODO: Add in those needed for database verification.
         return None
     return sympify(result['genf'])
 
