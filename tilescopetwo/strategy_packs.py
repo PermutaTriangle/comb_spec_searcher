@@ -96,7 +96,7 @@ binary_force_rowcolsep_database = StrategyPack(
     ver_strats=[subset_verified, database_verified],
     inf_strats=[subobstruction_inferral, row_and_column_separation],
     other_strats=[[components], [all_cell_insertions, row_placements, col_placements],
-                  [partial(forced_binary_pattern, forcelen=2, pattlen=(4, 4))]],
+                  [partial(forced_binary_pattern, forcelen=1)]],
     name="binary_force w/ row-col separation and database verification")
 
 binary_force_christian = StrategyPack(
