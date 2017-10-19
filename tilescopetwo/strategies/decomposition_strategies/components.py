@@ -11,7 +11,7 @@ from permuta.misc.ordered_set_partitions import ordered_set_partitions_list
 from permuta.misc import flatten
 
 
-def components(tiling, interleaving_decomposition=True, unions=True, **kwargs):
+def components(tiling, interleaving_decomposition=True, unions=True, workable=True, **kwargs):
     """
     Yield strategy found by taking components of a tiling.
 
@@ -69,10 +69,16 @@ def components(tiling, interleaving_decomposition=True, unions=True, **kwargs):
                                point_cells=point_cells,
                                obstructions=obstructions))
 
+    if workable:
+        work = [True for _ in strategy]
+    else:
+        work = [False for _ in strategy]
+
     yield Strategy("The components of the tiling",
                    strategy,
-                   workable=[True for _ in strategy],
+                   workable=[False for _ in strategy],
                    back_maps=[t.back_map for t in strategy])
+
 
     if unions:
         for part in ordered_set_partitions_list(cells_of_new_tilings):
