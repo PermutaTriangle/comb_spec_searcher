@@ -60,21 +60,6 @@ class CombinatorialSpecificationSearcher(object):
         else:
             self.symmetry = []
 
-        self.post_expand_objects_functions = []
-
-        if objectqueue == ObjectQueue:
-            self.objectqueue = ObjectQueue()
-        elif objectqueue == ObjectQueueDF:
-            self.objectqueue = ObjectQueueDF(rules_dict=self.ruledb.rules_dict,
-                                             root=self.start_label,
-                                             equivalent_set=self.equivdb.equivalent_set)
-        else:
-            # Default if it does not recognize queue class
-            # Give it a reference to the searcher
-            self.objectqueue = objectqueue(self)
-
-        self.objectqueue.add_to_working(self.start_label)
-
         if strategy_pack is not None:
             if not isinstance(strategy_pack, StrategyPack):
                 raise TypeError("Strategy pack given not instance of strategy pack.")
@@ -90,6 +75,21 @@ class CombinatorialSpecificationSearcher(object):
             raise ValueError("CombinatorialSpecificationSearcher requires a strategy that tests is an object is the empty set.")
         else:
             self.is_empty_strategy = is_empty_strategy
+
+        self.post_expand_objects_functions = []
+
+        if objectqueue == ObjectQueue:
+            self.objectqueue = ObjectQueue()
+        elif objectqueue == ObjectQueueDF:
+            self.objectqueue = ObjectQueueDF(rules_dict=self.ruledb.rules_dict,
+                                             root=self.start_label,
+                                             equivalent_set=self.equivdb.equivalent_set)
+        else:
+            # Default if it does not recognize queue class
+            # Give it a reference to the searcher
+            self.objectqueue = objectqueue(self)
+
+        self.objectqueue.add_to_working(self.start_label)
 
         self.expanded_objects = [0 for _ in self.strategy_generators]
         self.expansion_times = [0 for _ in self.strategy_generators]
