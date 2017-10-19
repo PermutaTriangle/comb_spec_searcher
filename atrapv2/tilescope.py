@@ -63,7 +63,7 @@ class TileScope(CombinatorialSpecificationSearcher):
                                         start_object=start_tiling,
                                         strategy_pack=strategy_pack,
                                         symmetry=symmetries,
-                                        objectqueue=ObjectQueue,
+                                        objectqueue=objectqueue,
                                         is_empty_strategy=is_empty_strategy,
                                         function_kwargs=function_kwargs)
 
