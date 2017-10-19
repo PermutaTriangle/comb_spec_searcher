@@ -71,21 +71,6 @@ def force_backtrack(patt, cur_force, index, basis, maxlen):
                     yield f
 
 
-def force_backtrack2(patt, cur_force, basis, maxlen):
-    if len(cur_force) == maxlen:
-        return
-    forced = set(i for (i, d) in cur_force)
-    for i in range(len(patt)):
-        if i not in forced:
-            for d in DIRS:
-                next_force = cur_force + [(i, d)]
-                if is_binary_force(patt, next_force, basis):
-                    yield next_force
-                else:
-                    for f in force_backtrack2(patt, next_force, basis, maxlen):
-                        yield f
-
-
 def generate_binary_forces_of_length(patt, length, basis=[]):
     """Yields forces of given length on the classical pattern such that the
     pattern is binary with respect to the force and the basis."""
@@ -110,9 +95,5 @@ def generate_minimal_binary_forces(patt, basis=[], maxlen=None):
         return
     if maxlen is None:
         maxlen = len(patt)
-    else:
-        maxlen = min(maxlen, len(patt))
-    # for f in force_backtrack(patt, [], 0, basis, maxlen):
-        # yield f
-    for f in force_backtrack2(patt, [], basis, maxlen):
+    for f in force_backtrack(patt, [], 0, basis, maxlen):
         yield f

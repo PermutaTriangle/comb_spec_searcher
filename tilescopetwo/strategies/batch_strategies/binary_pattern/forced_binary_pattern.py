@@ -6,7 +6,6 @@ from .util import make_force_strength_func
 from bisect import bisect, bisect_left
 from itertools import chain, combinations
 from comb_spec_searcher import BatchStrategy
-from copy import copy
 
 
 def opposite_dir(direction):
