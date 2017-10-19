@@ -60,12 +60,18 @@ class CombinatorialSpecificationSearcher(object):
         else:
             self.symmetry = []
 
+        self.post_expand_objects_functions = []
+
         if objectqueue == ObjectQueue:
             self.objectqueue = ObjectQueue()
         elif objectqueue == ObjectQueueDF:
             self.objectqueue = ObjectQueueDF(rules_dict=self.ruledb.rules_dict,
                                              root=self.start_label,
                                              equivalent_set=self.equivdb.equivalent_set)
+        else:
+            # Default if it does not recognize queue class
+            # Give it a reference to the searcher
+            self.objectqueue = objectqueue(self)
 
         self.objectqueue.add_to_working(self.start_label)
 
@@ -468,6 +474,9 @@ class CombinatorialSpecificationSearcher(object):
             queue_start -= time.time()
             self.expand(label)
             queue_start += time.time()
+        # TODO: Maybe you don't want timing to be affected by this
+        for function, args, kwargs in self.post_expand_objects_functions:
+            function(*args, **kwargs)
         self.queue_time += time.time() - queue_start
         self._time_taken += time.time() - start
 
