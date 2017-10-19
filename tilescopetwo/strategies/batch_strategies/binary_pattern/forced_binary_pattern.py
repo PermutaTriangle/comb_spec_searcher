@@ -6,6 +6,7 @@ from .util import make_force_strength_func
 from bisect import bisect, bisect_left
 from itertools import chain, combinations
 from comb_spec_searcher import BatchStrategy
+from copy import copy
 
 
 def opposite_dir(direction):
@@ -172,35 +173,34 @@ def place_forced_pattern(tiling, patt, pattpos, force, cell=(0, 0)):
 def forced_binary_pattern(tiling, **kwargs):
     if tiling.dimensions != (1, 1) or (0, 0) not in tiling.positive_cells:
         return
+    worktiling = copy(tiling)
 
     maxpattlen = kwargs.get('pattlen')
     maxforcelen = kwargs.get('forcelen')
     basis = [ob.patt for ob in tiling.obstructions]
     if maxpattlen is None:
-        maxpattlen = max(map(len, basis)) - 1
+        maxpattlen = (0, max(map(len, basis)) - 10)
     if maxforcelen is None:
-        maxforcelen = maxpattlen
+        maxforcelen = maxpattlen[1]
 
-    tiling._possibly_empty = tiling.positive_cells
-    tiling._positive_cells = frozenset()
+    worktiling._possibly_empty = worktiling.positive_cells
+    worktiling._positive_cells = frozenset()
 
-    for pattlen in range(2, maxpattlen + 1):
+    for pattlen in range(maxpattlen[0], maxpattlen[1] + 1):
         for patt in PermSet(pattlen):
-            (placedtiling, pattpos) = place_pattern(tiling, patt)
+            (placedtiling, pattpos) = place_pattern(worktiling, patt)
             for force in binary_forces(patt, basis, maxforcelen):
                 forcedtiling = place_forced_pattern(placedtiling, patt,
                                                     pattpos, force)
                 avoidingtiling = Tiling(
-                    tiling.point_cells,
-                    tiling.positive_cells,
-                    tiling.possibly_empty,
-                    tiling.obstructions + (Obstruction.single_cell(patt,
-                                                                   (0, 0)),))
+                    worktiling.point_cells,
+                    worktiling.positive_cells,
+                    worktiling.possibly_empty,
+                    (worktiling.obstructions +
+                     (Obstruction.single_cell(patt, (0, 0)),)))
                 assert avoidingtiling.dimensions == (1, 1)
                 assert forcedtiling.dimensions != (1, 1)
                 yield BatchStrategy(
                     formal_step="Placing pattern {} with force {}".format(
                         patt, force),
                     tilings=[avoidingtiling, forcedtiling])
-    tiling._positive_cells = tiling.possibly_empty
-    tiling._possibly_empty = frozenset()
