@@ -5,13 +5,43 @@ from copy import copy
 
 def point_isolations(tiling, **kwargs):
     for cell in tiling.point_cells:
-        if not tiling.only_positive_in_col(cell):
+        if not tiling.only_cell_in_col(cell):
+            # if equivalent and not tiling.only_positive_in_col(cell):
+            #     continue
+            # elif not equivalent and tiling.only_positive_in_col(cell):
+            #     continue
             for strategy in isolate_point_in_column(tiling, cell):
+                # if tiling.dimensions == (4, 2):
+                #     print("=========================")
+                #     print("The tiling:")
+                #     print(tiling.to_old_tiling())
+                #     print(tiling)
+                #     print()
+                #     print("Gave the strategy:", strategy.formal_step)
+                #     for t in strategy.objects:
+                #         print(t.to_old_tiling())
+                #         print(t)
+                #         print()
                 yield strategy
 
         if not tiling.only_cell_in_row(cell):
-             for strategy in isolate_point_in_row(tiling, cell):
-                 yield strategy
+            # if equivalent and not tiling.only_positive_in_row(cell):
+            #     continue
+            # elif not equivalent and tiling.only_positive_in_row(cell):
+            #     continue
+            for strategy in isolate_point_in_row(tiling, cell):
+                # if tiling.dimensions == (4, 2):
+                #     print("=========================")
+                #     print("The tiling:")
+                #     print(tiling.to_old_tiling())
+                #     print(tiling)
+                #     print()
+                #     print("Gave the strategy:", strategy.formal_step)
+                #     for t in strategy.objects:
+                #         print(t.to_old_tiling())
+                #         print(t)
+                #         print()
+                yield strategy
 
 def isolate_point_in_row(tiling, cell_to_be_isolated):
     positive_cells = []
@@ -86,6 +116,7 @@ def isolate_point_in_row(tiling, cell_to_be_isolated):
                                     point_cells=point_cells,
                                     possibly_empty=possibly_empty,
                                     obstructions=obstructions)])
+        return
     isolated_tilings = []
     for subset in powerset(in_row_points + in_row_positive_cells):
         above_empty_cells = []
@@ -240,6 +271,7 @@ def isolate_point_in_column(tiling, cell_to_be_isolated):
                                     point_cells=point_cells,
                                     possibly_empty=possibly_empty,
                                     obstructions=obstructions)])
+        return
     isolated_tilings = []
     for subset in powerset(in_col_points + in_col_positive_cells):
         above_empty_cells = []
