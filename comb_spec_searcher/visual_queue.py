@@ -25,7 +25,7 @@ def debug_print(*args, **kwargs):
 
 NODE_RADIUS = .2
 LEVEL_DIFF = 1
-LINE_WIDTH = 4
+LINE_WIDTH = 1
 
 
 class Color:
@@ -187,7 +187,7 @@ class VisualQueue:
                 raw_tree.children = []
                 debug_print("+++ Looking at subtree labeled", raw_tree.label)
                 # Add a description getter to the node
-                raw_tree.get_description = lambda rt=raw_tree: str(self.tilescope.objectdb.get_object(rt.label))
+                raw_tree.get_description = lambda rt=raw_tree: str(self.tilescope.objectdb.get_object(rt.label).to_old_tiling())
 
                 if self.tilescope.equivdb.is_verified(raw_tree.label):
                     debug_print("+++ It is verified")

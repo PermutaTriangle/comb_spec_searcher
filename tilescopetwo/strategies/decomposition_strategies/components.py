@@ -76,7 +76,7 @@ def components(tiling, interleaving_decomposition=True, unions=True, workable=Tr
 
     yield Strategy("The components of the tiling",
                    strategy,
-                   workable=[False for _ in strategy],
+                   workable=work,
                    back_maps=[t.back_map for t in strategy])
 
 
