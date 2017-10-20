@@ -11,6 +11,10 @@ def all_requirement_insertions(tiling, **kwargs):
                                 len(tiling.requirements[0]) != 1):
         return
 
+    if ((0, 0) not in tiling.positive_cells or
+            (0, 0) not in tiling.possibly_empty):
+        return
+
     maxreqlen = kwargs.get('maxreqlength')
     patterns = kwargs.get('patterns')
 
@@ -35,8 +39,8 @@ def all_requirement_insertions(tiling, **kwargs):
             formal_step=(
                 "Inserting requirement {} into cell {}").format(patt, (0, 0)),
             tilings=[Tiling(tiling.point_cells,
-                            tiling.positive_cells,
-                            tiling.possibly_empty,
+                            tiling.positive_cells | {(0, 0)},  # Make cell
+                            tiling.possibly_empty - {(0, 0)},  # positive
                             tiling.obstructions,
                             [[Requirement.single_cell(patt, (0, 0))]]),
                      Tiling(tiling.point_cells,
