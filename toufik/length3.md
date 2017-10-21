@@ -1,6 +1,5 @@
 # Automating Toufik's papers: 3x4
 
-
 ## Callan, D., & Mansour, T. (2017). On permutations avoiding 1324, 2143, and another 4-letter pattern. Pure Mathematics and Applications, 26(1), 1–10
 
 **9/9**
@@ -37,7 +36,7 @@ Table 1, page 2 lists the patterns treated in this paper
 
 - line 4 http://permpal.ru.is/perms/av/1243_2134_3412/
 - line 7 http://permpal.ru.is/perms/av/1243_2134_2341/ Interleaving, Tilescope can enumerate with a forced 123
-- line 9 http://permpal.ru.is/perms/av/1243_1342_2134/ Interleaving. Tilescope can enumerate with a forced 123
+- line 9 http://permpal.ru.is/perms/av/1243_1342_2134/ Interleaving, Tilescope can enumerate with a forced 123
 
 ## Mansour, T., & Shattuck, M. (2017). Nine classes of permutations enumerated by binomial transform of Fine’s sequence. Discrete Applied Mathematics, 226, 94–105
 
@@ -55,6 +54,33 @@ Theorem 1, page 2 lists the patterns treated in this paper
 - T8 http://permpal.ru.is/perms/av/1342_3142_3412/ Interleaving on ATRAP (but fake), Tilescope can enumerate
 - T9 http://permpal.ru.is/perms/av/2143_2413_3142/
 
+## Twelve subsets of permutations enumerated as maximally clustered permutations (has not appeared)
+
+**7/12**
+
+- 233.1 http://permpal.ru.is/perms/av/1243_1324_2143/
+- 233.2 http://permpal.ru.is/perms/av/1243_1324_2134/ Interleaving on ATRAP
+- 233.3 http://permpal.ru.is/perms/av/1234_1243_2134/ Interleaving on ATRAP
+- 233.4 http://permpal.ru.is/perms/av/1342_2341_3142/
+- 233.5 http://permpal.ru.is/perms/av/1342_3142_3241/
+- 233.6 http://permpal.ru.is/perms/av/1342_2413_2431/
+- 233.7 http://permpal.ru.is/perms/av/1324_1342_3142/
+- 233.8 http://permpal.ru.is/perms/av/1324_1342_3124/ Interleaving on ATRAP
+- 233.9 http://permpal.ru.is/perms/av/1324_1342_2314/ Interleaving on ATRAP
+- 233.10 http://permpal.ru.is/perms/av/1324_1432_2431/
+- 233.11 http://permpal.ru.is/perms/av/1342_1432_2431/
+- 233.12 http://permpal.ru.is/perms/av/1342_1423_2341/ Interleaving on ATRAP
+
+## Five subsets of permutations enumerated as weak sorting permutations (arxiv)
+
+**0/5**
+3 more are point interleaving, so might be doable with forward equivalence and kernel method
+
+- 236.1 http://permpal.ru.is/perms/av/1342_2314_2341/ Interleaving (point) on ATRAP
+- 236.2 http://permpal.ru.is/perms/av/1342_1432_4132/ Interleaving (point) on ATRAP
+- 236.3 http://permpal.ru.is/perms/av/1324_1342_1432/ Interleaving (point) on ATRAP
+- 236.4 http://permpal.ru.is/perms/av/1243_1324_1342/ Interleaving on ATRAP
+- 236.5 http://permpal.ru.is/perms/av/1234_1243_1342/ Interleaving on ATRAP
 
 ## Callan, D., Mansour, T., & Shattuck, M. (2017). Wilf classification of triples of 4-letter patterns I. Discrete Mathematics & Theoretical Computer Science, 19(1)
 
@@ -112,31 +138,3 @@ Table 1, page 2
 - 238.4 http://permpal.ru.is/perms/av/1324_1342_1423/ Interleaving (point) on ATRAP
 - 238.5 http://permpal.ru.is/perms/av/1243_1342_1423/ Interleaving on ATRAP
 - 239 Done in "Nine classes of permutations enumerated by binomial transform of Fine’s sequence"
-
-## Twelve subsets of permutations enumerated as maximally clustered permutations (has not appeared)
-
-**7/12**
-
-- 233.1 http://permpal.ru.is/perms/av/1243_1324_2143/
-- 233.2 http://permpal.ru.is/perms/av/1243_1324_2134/ Interleaving on ATRAP
-- 233.3 http://permpal.ru.is/perms/av/1234_1243_2134/ Interleaving on ATRAP
-- 233.4 http://permpal.ru.is/perms/av/1342_2341_3142/
-- 233.5 http://permpal.ru.is/perms/av/1342_3142_3241/
-- 233.6 http://permpal.ru.is/perms/av/1342_2413_2431/
-- 233.7 http://permpal.ru.is/perms/av/1324_1342_3142/
-- 233.8 http://permpal.ru.is/perms/av/1324_1342_3124/ Interleaving on ATRAP
-- 233.9 http://permpal.ru.is/perms/av/1324_1342_2314/ Interleaving on ATRAP
-- 233.10 http://permpal.ru.is/perms/av/1324_1432_2431/
-- 233.11 http://permpal.ru.is/perms/av/1342_1432_2431/
-- 233.12 http://permpal.ru.is/perms/av/1342_1423_2341/ Interleaving on ATRAP
-
-## Five subsets of permutations enumerated as weak sorting permutations (arxiv)
-
-**0/5**
-3 more are point interleaving, so might be doable with forward equivalence and kernel method
-
-- 236.1 http://permpal.ru.is/perms/av/1342_2314_2341/ Interleaving (point) on ATRAP
-- 236.2 http://permpal.ru.is/perms/av/1342_1432_4132/ Interleaving (point) on ATRAP
-- 236.3 http://permpal.ru.is/perms/av/1324_1342_1432/ Interleaving (point) on ATRAP
-- 236.4 http://permpal.ru.is/perms/av/1243_1324_1342/ Interleaving on ATRAP
-- 236.5 http://permpal.ru.is/perms/av/1234_1243_1342/ Interleaving on ATRAP
