@@ -3,8 +3,9 @@
 
 ## Callan, D., & Mansour, T. (2017). On permutations avoiding 1324, 2143, and another 4-letter pattern. Pure Mathematics and Applications, 26(1), 1–10
 
-Table 1, page 2 lists the patterns treated in this paper. We can do all of them
-by ATRAP
+**9/9**
+
+Table 1, page 2 lists the patterns treated in this paper
 
 - line 2 http://permpal.ru.is/perms/av/1243_3412_4231
 - line 3 http://permpal.ru.is/perms/av/1324_2143_4231
@@ -18,6 +19,8 @@ by ATRAP
 
 ## Callan, D., & Mansour, T. (2017). A Wilf Class Composed of 7 Symmetry Classes of Triples of 4-Letter Patterns. Journal of Analysis & Number Theory, 5(1), 19–26
 
+**7/7**
+
 - T1 http://permpal.ru.is/perms/av/1324_2413_3142
 - T2 http://permpal.ru.is/perms/av/1324_2143_2413/
 - T3 http://permpal.ru.is/perms/av/1324_1342_2143/
@@ -28,14 +31,17 @@ by ATRAP
 
 ## Callan, D., & Mansour, T. (2017). On permutations avoiding 1243, 2134, and another 4-letter pattern. Pure Mathematics and Applications, 26(1), 1–11
 
-Table 1, page 2 lists the patterns treated in this paper. We can do three of
-them by ATRAP
+**3/3**
+
+Table 1, page 2 lists the patterns treated in this paper
 
 - line 4 http://permpal.ru.is/perms/av/1243_2134_3412/
 - line 7 http://permpal.ru.is/perms/av/1243_2134_2341/ Interleaving, Tilescope can enumerate with a forced 123
-- line 9 http://permpal.ru.is/perms/av/1243_1342_2134/ Interleaving
+- line 9 http://permpal.ru.is/perms/av/1243_1342_2134/ Interleaving. Tilescope can enumerate with a forced 123
 
 ## Mansour, T., & Shattuck, M. (2017). Nine classes of permutations enumerated by binomial transform of Fine’s sequence. Discrete Applied Mathematics, 226, 94–105
+
+**5/9**
 
 Theorem 1, page 2 lists the patterns treated in this paper
 
@@ -51,6 +57,10 @@ Theorem 1, page 2 lists the patterns treated in this paper
 
 
 ## Callan, D., Mansour, T., & Shattuck, M. (2017). Wilf classification of triples of 4-letter patterns I. Discrete Mathematics & Theoretical Computer Science, 19(1)
+
+**11/18**
+3 more are fake interleaving, so should be easy
+1 more is point interleaving, so might be doable with forward equivalence and kernel method
 
 Table 1, page 2
 
@@ -74,6 +84,9 @@ Table 1, page 2
 - 201.2 http://permpal.ru.is/perms/av/1342_1423_2314/ Interleaving on ATRAP (but fake)
 
 ## Callan, D., Mansour, T., & Shattuck, M. (2017). Wilf classification of triples of 4-letter patterns II. Discrete Mathematics & Theoretical Computer Science
+
+**10/18**
+3 more are point interleaving, so might be doable with forward equivalence and kernel method
 
 Table 1, page 2
 
@@ -102,6 +115,8 @@ Table 1, page 2
 
 ## Twelve subsets of permutations enumerated as maximally clustered permutations (has not appeared)
 
+**7/12**
+
 - 233.1 http://permpal.ru.is/perms/av/1243_1324_2143/
 - 233.2 http://permpal.ru.is/perms/av/1243_1324_2134/ Interleaving on ATRAP
 - 233.3 http://permpal.ru.is/perms/av/1234_1243_2134/ Interleaving on ATRAP
@@ -116,6 +131,9 @@ Table 1, page 2
 - 233.12 http://permpal.ru.is/perms/av/1342_1423_2341/ Interleaving on ATRAP
 
 ## Five subsets of permutations enumerated as weak sorting permutations (arxiv)
+
+**0/5**
+3 more are point interleaving, so might be doable with forward equivalence and kernel method
 
 - 236.1 http://permpal.ru.is/perms/av/1342_2314_2341/ Interleaving (point) on ATRAP
 - 236.2 http://permpal.ru.is/perms/av/1342_1432_4132/ Interleaving (point) on ATRAP
