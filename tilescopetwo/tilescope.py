@@ -32,6 +32,7 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
                  strategy_pack=None,
                  interleaving_decomposition=True,
                  symmetry=False,
+                 forward_equivalence=False,
                  compress=False,
                  objectqueue=ObjectQueue,
                  start_tiling=None):
@@ -60,6 +61,7 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
                                             strategy_pack=strategy_pack,
                                             symmetry=symmetries,
                                             compress=compress,
+                                            forward_equivalence=forward_equivalence,
                                             objectqueue=ObjectQueue,
                                             is_empty_strategy=is_empty_strategy,
                                             function_kwargs=function_kwargs)
