@@ -200,7 +200,6 @@ def separations(inequalities, unprocessed_cells=None, current_cell=None, current
 
 
 def row_and_column_separation(tiling, **kwargs):
-
     '''First we calculate the set of inequalities for all the rows and columns'''
     row_ineqs, col_ineqs = row_and_column_inequalities_of_tiling(tiling)
 

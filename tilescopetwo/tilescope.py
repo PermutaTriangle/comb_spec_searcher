@@ -62,7 +62,7 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
                                             symmetry=symmetries,
                                             compress=compress,
                                             forward_equivalence=forward_equivalence,
-                                            objectqueue=ObjectQueue,
+                                            objectqueue=objectqueue,
                                             is_empty_strategy=is_empty_strategy,
                                             function_kwargs=function_kwargs)
 

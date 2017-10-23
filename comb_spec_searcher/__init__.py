@@ -1,6 +1,7 @@
 from .comb_spec_searcher import CombinatorialSpecificationSearcher
 from .objectqueue import ObjectQueue
 from .objectqueuedf import ObjectQueueDF
+from .visual_queue import VisualQueue
 from .strategies import BatchStrategy
 from .strategies import DecompositionStrategy
 from .strategies import EquivalenceStrategy
