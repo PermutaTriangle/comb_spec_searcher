@@ -32,6 +32,7 @@ class CombinatorialSpecificationSearcher(object):
                  strategy_pack=None,
                  symmetry=False,
                  compress=False,
+                 forward_equivalence=False,
                  objectqueue=ObjectQueue,
                  is_empty_strategy=None,
                  function_kwargs=dict()):
@@ -60,14 +61,20 @@ class CombinatorialSpecificationSearcher(object):
         else:
             self.symmetry = []
 
+        self.forward_equivalence = forward_equivalence
+
         if strategy_pack is not None:
             if not isinstance(strategy_pack, StrategyPack):
                 raise TypeError("Strategy pack given not instance of strategy pack.")
             else:
-                self.equivalence_strategy_generators = strategy_pack.eq_strats
+                if forward_equivalence:
+                    self.equivalence_strategy_generators = []
+                    self.strategy_generators = [strategy_pack.eq_strats] + strategy_pack.other_strats
+                else:
+                    self.equivalence_strategy_generators = strategy_pack.eq_strats
+                    self.strategy_generators = strategy_pack.other_strats
                 self.inferral_strategy_generators = strategy_pack.inf_strats
                 self.verif_strat_gen = strategy_pack.ver_strats
-                self.strategy_generators = strategy_pack.other_strats
 
         self.kwargs = function_kwargs
 
@@ -328,8 +335,8 @@ class CombinatorialSpecificationSearcher(object):
                     self.objectdb.set_strategy_verified(label)
                     self.equivdb.update_verified(label)
                     break
-                # If we have an equivalent strategy
-                elif len(objects) == 1:
+                elif not self.forward_equivalence and len(objects) == 1:
+                    # If we have an equivalent strategy
                     other_label = self.objectdb.get_label(objects[0])
                     self.equivdb.union(label, other_label, strategy.formal_step)
                     if not (self.is_expanded(other_label)
