@@ -1,3 +1,9 @@
+New additions
+
+Freely-braided permutations 3421_4231_4312_4321
+Example from p. 191 in Zeilberger's original enumeration schemes paper 1234_1324_1243
+
+
 The classes we want ATRAP to find a proof tree for
 
 - [x] Every subset of S3.

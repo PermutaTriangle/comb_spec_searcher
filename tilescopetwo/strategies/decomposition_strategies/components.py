@@ -3,12 +3,15 @@
 
 from grids_two import Tiling
 from permuta.misc import UnionFind
-from itertools import combinations
+from itertools import combinations, chain
 
 from comb_spec_searcher import Strategy
 
+from permuta.misc.ordered_set_partitions import ordered_set_partitions_list
+from permuta.misc import flatten
 
-def components(tiling, interleaving_decomposition=True, **kwargs):
+
+def components(tiling, interleaving_decomposition=True, unions=True, workable=True, **kwargs):
     """
     Yield strategy found by taking components of a tiling.
 
@@ -66,8 +69,42 @@ def components(tiling, interleaving_decomposition=True, **kwargs):
                                point_cells=point_cells,
                                obstructions=obstructions))
 
+    if workable:
+        work = [True for _ in strategy]
+    else:
+        work = [False for _ in strategy]
+
     yield Strategy("The components of the tiling",
                    strategy,
-                   workable=[True for _ in strategy],
+                   workable=work,
                    back_maps=[t.back_map for t in strategy])
-# Consider the union of components?
+
+
+    if unions:
+        for part in ordered_set_partitions_list(cells_of_new_tilings):
+            strategy = []
+            for new_cells in part:
+                new_cells = list(chain(*new_cells))
+                point_cells = []
+                possibly_empty = []
+                positive_cells = []
+                for cell in new_cells:
+                    if cell in tiling.possibly_empty:
+                        possibly_empty.append(cell)
+                    elif cell in tiling.point_cells:
+                        point_cells.append(cell)
+                    else:
+                        positive_cells.append(cell)
+                obstructions = [ob for ob in tiling if ob.pos[0] in new_cells]
+
+                strategy.append(Tiling(possibly_empty=possibly_empty,
+                                       positive_cells=positive_cells,
+                                       point_cells=point_cells,
+                                       obstructions=obstructions))
+            # print("A UNION IS:")
+            # for t in strategy:
+            #     print(t.to_old_tiling())
+            yield Strategy("The union of components of the tiling",
+                           strategy,
+                           workable=[False for _ in strategy],
+                           back_maps=[t.back_map for t in strategy])

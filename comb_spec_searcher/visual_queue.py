@@ -111,7 +111,7 @@ def debug_print(*args, **kwargs):
 
 NODE_RADIUS = .2
 LEVEL_DIFF = 1
-LINE_WIDTH = 4
+LINE_WIDTH = 1
 
 
 class Color:
