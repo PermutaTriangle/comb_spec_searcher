@@ -11,7 +11,12 @@ from permuta.misc.ordered_set_partitions import ordered_set_partitions_list
 from permuta.misc import flatten
 
 
-def components(tiling, interleaving_decomposition=True, unions=True, workable=True, **kwargs):
+def components(tiling,
+               interleaving_decomposition=True,
+               point_interleaving=False,
+               unions=True,
+               workable=True,
+               **kwargs):
     """
     Yield strategy found by taking components of a tiling.
 
@@ -31,6 +36,10 @@ def components(tiling, interleaving_decomposition=True, unions=True, workable=Tr
             for j in range(i+1, len(cells)):
                 c1 = cells[i]
                 c2 = cells[j]
+                if (point_interleaving
+                        and (c1 in tiling.point_cells or
+                                c2 in tiling.point_cells)):
+                    continue
                 if c1[0] == c2[0] or c1[1] == c2[1]:
                     components_set.unite(cell_to_int[c1], cell_to_int[c2])
 
