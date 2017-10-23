@@ -4,23 +4,109 @@ from collections import deque, defaultdict
 import enum
 
 import matplotlib as mpl
+mpl.use("TkAgg")
 from matplotlib import pyplot as plt
 from matplotlib import patches as mpatches
 from matplotlib.lines import Line2D
+import matplotlib.patheffects as path_effects
 
 from tpt_base.misc.colors import Solarized
 from tpt_base.algs.tree_drawing import walker
 from tpt_base.data_structures.graphs import AbstractOrderedTree
 
 
-mpl.use("TkAgg")
+# A class that allows for zooming and panning with mouse
+# A combination of answers from:
+# https://stackoverflow.com/questions/11551049/matplotlib-plot-zooming-with-scroll-wheel
 
 
-DEBUG = True
+class ZoomPan:
+    def __init__(self):
+        self.press = None
+        self.cur_xlim = None
+        self.cur_ylim = None
+        self.x0 = None
+        self.y0 = None
+        self.x1 = None
+        self.y1 = None
+        self.xpress = None
+        self.ypress = None
+
+    def zoom_factory(self, ax, base_scale = 2.):
+        def zoom(event):
+            cur_xlim = ax.get_xlim()
+            cur_ylim = ax.get_ylim()
+
+            xdata = event.xdata # get event x location
+            ydata = event.ydata # get event y location
+
+            if event.button == 'down':
+                # deal with zoom in
+                scale_factor = 1 / base_scale
+            elif event.button == 'up':
+                # deal with zoom out
+                scale_factor = base_scale
+            else:
+                # deal with something that should never happen
+                scale_factor = 1
+                print(event.button)
+
+            new_width = (cur_xlim[1] - cur_xlim[0]) * scale_factor
+            new_height = (cur_ylim[1] - cur_ylim[0]) * scale_factor
+
+            relx = (cur_xlim[1] - xdata)/(cur_xlim[1] - cur_xlim[0])
+            rely = (cur_ylim[1] - ydata)/(cur_ylim[1] - cur_ylim[0])
+
+            ax.set_xlim([xdata - new_width * (1-relx), xdata + new_width * (relx)])
+            ax.set_ylim([ydata - new_height * (1-rely), ydata + new_height * (rely)])
+            ax.figure.canvas.draw()
+
+        fig = ax.get_figure() # get the figure of interest
+        fig.canvas.mpl_connect('scroll_event', zoom)
+
+        return zoom
+
+    def pan_factory(self, ax):
+        def onPress(event):
+            if event.inaxes != ax: return
+            self.cur_xlim = ax.get_xlim()
+            self.cur_ylim = ax.get_ylim()
+            self.press = self.x0, self.y0, event.xdata, event.ydata
+            self.x0, self.y0, self.xpress, self.ypress = self.press
+
+        def onRelease(event):
+            self.press = None
+            ax.figure.canvas.draw()
+
+        def onMotion(event):
+            if self.press is None: return
+            if event.inaxes != ax: return
+            dx = event.xdata - self.xpress
+            dy = event.ydata - self.ypress
+            self.cur_xlim -= dx
+            self.cur_ylim -= dy
+            ax.set_xlim(self.cur_xlim)
+            ax.set_ylim(self.cur_ylim)
+
+            ax.figure.canvas.draw()
+
+        fig = ax.get_figure() # get the figure of interest
+
+        # attach the call back
+        fig.canvas.mpl_connect('button_press_event',onPress)
+        fig.canvas.mpl_connect('button_release_event',onRelease)
+        fig.canvas.mpl_connect('motion_notify_event',onMotion)
+
+        #return the function
+        return onMotion
+
+
+DEBUG = False
 
 
 def debug_print(*args, **kwargs):
-    print(*args, **kwargs)
+    if DEBUG:
+        print(*args, **kwargs)
 
 
 NODE_RADIUS = .2
@@ -29,12 +115,12 @@ LINE_WIDTH = 4
 
 
 class Color:
-    NORMAL = Solarized.yellow
+    NORMAL = Solarized.red
     VERIFIED = Solarized.green
-    PICKABLE = Solarized.red
+    PICKABLE = Solarized.yellow
     EQUIVALENCE = Solarized.base1
     SUM = Solarized.blue
-    PRODUCT = Solarized.cyan
+    PRODUCT = Solarized.violet
     BACKGROUND = Solarized.base3
     EDGE = Solarized.base1
 
@@ -133,9 +219,9 @@ class VisualQueue:
         ax.yaxis.set_visible(False)
         for spine in ax.spines.values():
             spine.set_visible(False)
-        ax.autoscale()  # Perhaps unnecessary
         self.ax = ax
         self.redraw_tree()
+        ax.autoscale()  # Perhaps unnecessary
         # Register redrawing function with tilescope
         self.tilescope.post_expand_objects_functions.append((self.redraw_tree, [], {}))
         # Make plot interactive and show it
@@ -211,7 +297,9 @@ class VisualQueue:
                         branch_control_node.data.add(Flag.CONTROL)
                         branch_control_node.data.add(
                             Flag.PRODUCT
-                            if (raw_tree.label, branch_labels) in self.tilescope.ruledb.back_maps else
+                            if raw_tree.label in self.tilescope.ruledb.back_maps
+                            and branch_labels in self.tilescope.ruledb.back_maps[raw_tree.label]
+                            else
                             Flag.SUM
                         )
                         branch_control_node.get_description = lambda l=raw_tree.label, \
@@ -267,14 +355,18 @@ class VisualQueue:
                 raw_tree, draw_tree, parent_xy = frontier.popleft()
                 data = raw_tree.data
                 xy = (float(draw_tree.x), -float(draw_tree.y))
+                x, y = xy
                 debug_print("+++ Drawing:")
                 debug_print("+++    ", raw_tree)
                 debug_print("+++    ", raw_tree.data)
                 debug_print("+++    ", xy)
                 if parent_xy is not None:
                     # TODO: Different lines for different types of nodes
-                    self.ax.add_line(TreeLine(parent_xy, xy))
-
+                    self.ax.add_line(TreeLine(
+                        parent_xy,
+                        xy,
+                        linestyle=":" if Flag.PHANTOM in data else "solid",
+                    ))
                 if Flag.OBJECT in data:
                     # Node is an object node
                     node = ObjNode(xy, raw_tree)
@@ -289,12 +381,28 @@ class VisualQueue:
                         node.set_color(Color.NORMAL)
                 elif Flag.CONTROL in data:
                     node = CtrlNode(xy, raw_tree)
+                    text = self.ax.text(
+                        x,
+                        y,
+                        "?",
+                        color="white",
+                        ha="center",
+                        va="center",
+                        size=64,
+                    )
+                    #text.set_path_effects([
+                    #    path_effects.Stroke(linewidth=3, foreground='black'),
+                    #    path_effects.Normal(),
+                    #])
                     if Flag.EQUIVALENCE in data:
                         node.set_color(Color.EQUIVALENCE)
+                        text.set_text("=")
                     elif Flag.PRODUCT in data:
                         node.set_color(Color.PRODUCT)
+                        text.set_text("x")
                     elif Flag.SUM in data:
                         node.set_color(Color.SUM)
+                        text.set_text("+")
                     else:
                         raise RuntimeError("Unknown control node type for drawing")
                 else:

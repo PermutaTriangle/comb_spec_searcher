@@ -20,7 +20,7 @@ def to_vis_pack(pack):
 
 visual_pack = to_vis_pack(StrategyPacks.point_placement)
 
-tilescope = TileScope("012", visual_pack, objectqueue=VisualQueue)
+tilescope = TileScope("0213", visual_pack, objectqueue=VisualQueue)
 proof_tree = tilescope.auto_search(cap=1)
 proof_tree.pretty_print()
 print(proof_tree.to_json())
