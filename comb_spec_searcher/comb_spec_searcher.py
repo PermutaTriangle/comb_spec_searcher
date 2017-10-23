@@ -61,6 +61,7 @@ class CombinatorialSpecificationSearcher(object):
         else:
             self.symmetry = []
 
+        self.forward_equivalence = forward_equivalence
 
         if strategy_pack is not None:
             if not isinstance(strategy_pack, StrategyPack):
