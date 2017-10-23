@@ -9,6 +9,7 @@ from matplotlib import pyplot as plt
 from matplotlib import patches as mpatches
 from matplotlib.lines import Line2D
 import matplotlib.patheffects as path_effects
+from matplotlib.textpath import TextPath
 
 from tpt_base.misc.colors import Solarized
 from tpt_base.algs.tree_drawing import walker
@@ -144,13 +145,17 @@ class Flag(enum.Enum):
 # The classes for the things we will draw on the screen
 
 
-class ObjNode(mpatches.Circle):
+class VisNode:
+    pass
+
+
+class ObjNode(mpatches.Circle, VisNode):
     def __init__(self, center, raw_tree, *args, **kwargs):
         super().__init__(center, NODE_RADIUS, *args, **kwargs)
         self.raw_tree = raw_tree
 
 
-class CtrlNode(mpatches.Rectangle):
+class CtrlNode(mpatches.Rectangle, VisNode):
     def __init__(self, center, raw_tree, *args, **kwargs):
         bottom_left = tuple(x_or_y - NODE_RADIUS for x_or_y in center)
         super().__init__(bottom_left, 2*NODE_RADIUS, 2*NODE_RADIUS, *args, **kwargs)
@@ -220,6 +225,9 @@ class VisualQueue:
         for spine in ax.spines.values():
             spine.set_visible(False)
         self.ax = ax
+        self.zp = ZoomPan()
+        self.zp.zoom_factory(self.ax, 1.1)
+        self.zp.pan_factory(self.ax)
         self.redraw_tree()
         ax.autoscale()  # Perhaps unnecessary
         # Register redrawing function with tilescope
@@ -231,6 +239,8 @@ class VisualQueue:
     def hover_event_handler(self, event):
         with self.lock:
             for patch in self.ax.patches:
+                if not isinstance(patch, VisNode):
+                    continue
                 if patch.contains(event)[0] and patch != self.last_hover:
                     self.last_hover = patch
                     print()
@@ -381,30 +391,25 @@ class VisualQueue:
                         node.set_color(Color.NORMAL)
                 elif Flag.CONTROL in data:
                     node = CtrlNode(xy, raw_tree)
-                    text = self.ax.text(
-                        x,
-                        y,
-                        "?",
-                        color="white",
-                        ha="center",
-                        va="center",
-                        size=64,
-                    )
-                    #text.set_path_effects([
-                    #    path_effects.Stroke(linewidth=3, foreground='black'),
-                    #    path_effects.Normal(),
-                    #])
                     if Flag.EQUIVALENCE in data:
                         node.set_color(Color.EQUIVALENCE)
-                        text.set_text("=")
+                        text_content = "="
                     elif Flag.PRODUCT in data:
                         node.set_color(Color.PRODUCT)
-                        text.set_text("x")
+                        text_content = "x"
                     elif Flag.SUM in data:
                         node.set_color(Color.SUM)
-                        text.set_text("+")
+                        text_content = "+"
                     else:
                         raise RuntimeError("Unknown control node type for drawing")
+                    text_path = TextPath(
+                        (x - (.09 if text_content == "x" else .125), y-.09),
+                        text_content,
+                        size=.3,
+                    )
+                    for a in text_path.to_polygons():
+                        p = mpatches.Polygon(a, fill=True, color="white", zorder=100)
+                        self.ax.add_patch(p)
                 else:
                     raise RuntimeError("Unknown node type for drawing")
 
@@ -419,7 +424,7 @@ class VisualQueue:
 
             # Redraw and scale viewport if needed
 
-            self.ax.autoscale()  # TODO: Will commenting this suffice to keep viewport?
+            #self.ax.autoscale()  # TODO: Will commenting this suffice to keep viewport?
             self.fig.canvas.draw()
 
     def next(self):
