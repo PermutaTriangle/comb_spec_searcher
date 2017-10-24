@@ -46,12 +46,11 @@ class CombinatorialSpecificationSearcher(object):
             self.objectdb = CompressedObjectDB(type(start_object))
         else:
             self.objectdb = ObjectDB(type(start_object))
-        self.compress = compress
 
         self.objectdb.add(start_object, expandable=True)
         self.start_label = self.objectdb.get_label(start_object)
 
-        self._inferral_cache = LRUCache(100000)
+        self._inferral_cache = LRUCache(100000, compress=compress, obj_type=type(start_object))
         self._has_proof_tree = False
         if symmetry:
             # A list of symmetry functions of objects.
@@ -73,7 +72,7 @@ class CombinatorialSpecificationSearcher(object):
                 else:
                     self.equivalence_strategy_generators = strategy_pack.eq_strats
                     self.strategy_generators = strategy_pack.other_strats
-                self.inferral_strategy_generators = strategy_pack.inf_strats
+                self.inferral_strategies = strategy_pack.inf_strats
                 self.verification_strategies = strategy_pack.ver_strats
 
         self.kwargs = function_kwargs
@@ -130,7 +129,6 @@ class CombinatorialSpecificationSearcher(object):
         for verification_strategy in self.verification_strategies:
             strategy = verification_strategy(obj, **self.kwargs)
             if strategy is not None:
-                # print(obj)
                 if not isinstance(strategy, VerificationStrategy):
                     raise TypeError("Attempting to verify with non VerificationStrategy.")
                 formal_step = strategy.formal_step
@@ -156,106 +154,29 @@ class CombinatorialSpecificationSearcher(object):
         return False
 
     def _inferral(self, obj):
-        """
-        Return fully inferred object.
-
-        Will repeatedly use inferral strategies until object changes no more.
-        """
-        if self.compress:
-            return self._inferral_compress(obj)
         start = time.time()
         inferred_object = self._inferral_cache.get(obj)
-        semi_inferred_objects = []
+        if inferred_object is not None:
+            return inferred_object
+        semi_inferred = [obj]
+        for inferral_strategy in self.inferral_strategies:
+            strategy = inferral_strategy(obj, **self.kwargs)
+            if strategy is None:
+                continue
+            if not isinstance(strategy, InferralStrategy):
+                raise TypeError("Attempted to infer on a non InferralStrategy")
+            # TODO: Where should the inferral formal step go?
+            if obj != strategy.object:
+                obj = strategy.object
+                inferred_object = self._inferral_cache.get(obj)
+                if inferred_object is not None:
+                    break
+                semi_inferred.append(obj)
+
         if inferred_object is None:
             inferred_object = obj
-            fully_inferred = False
-            for strategy_generator in self.inferral_strategy_generators:
-                # For each inferral strategy,
-                if fully_inferred:
-                    break
-                for strategy in strategy_generator(inferred_object,
-                                                   **self.kwargs):
-                    if not isinstance(strategy, InferralStrategy):
-                        raise TypeError("Attempted to infer on a non InferralStrategy")
-                    # TODO: Where should the inferral formal step go?
-
-                    # we infer as much as possible about the object and replace it.
-                    soon_to_be_object = strategy.object
-
-                    if soon_to_be_object is inferred_object:
-                        continue
-
-                    if soon_to_be_object in self._inferral_cache:
-                        soon_to_be_object = self._inferral_cache.get(soon_to_be_object)
-                        semi_inferred_objects.append(inferred_object)
-                        inferred_object = soon_to_be_object
-                        fully_inferred = True
-                        break
-                    else:
-                        semi_inferred_objects.append(inferred_object)
-                        inferred_object = soon_to_be_object
-            for semi_inferred_object in semi_inferred_objects:
-                self._inferral_cache.set(semi_inferred_object, inferred_object)
-                if self.symmetry:
-                    for sym_obj, sym_inf_obj in zip(self._symmetric_objects(semi_inferred_object,
-                                                                        ordered=True),
-                                                    self._symmetric_objects(inferred_object,
-                                                                        ordered=True)):
-                        self._inferral_cache.set(sym_obj, sym_inf_obj)
-            self._inferral_cache.set(inferred_object, inferred_object)
-        self.inferral_time += time.time() - start
-        return inferred_object
-
-    def _inferral_compress(self, obj):
-        """
-        Return fully inferred object.
-
-        Will repeatedly use inferral strategies until object changes no more.
-        """
-        start = time.time()
-        compressedobj = obj.compress()
-        inferred_object = self._inferral_cache.get(compressedobj)
-        semi_inferred_objects = []
-        if inferred_object is None:
-            inferred_object = obj
-            fully_inferred = False
-            for strategy_generator in self.inferral_strategy_generators:
-                # For each inferral strategy,
-                if fully_inferred:
-                    break
-                for strategy in strategy_generator(inferred_object,
-                                                   **self.kwargs):
-                    if not isinstance(strategy, InferralStrategy):
-                        raise TypeError("Attempted to infer on a non InferralStrategy")
-                    # TODO: Where should the inferral formal step go?
-
-                    # we infer as much as possible about the object and replace it.
-                    soon_to_be_object = strategy.object
-                    compressedstbo = soon_to_be_object.compress()
-
-                    if soon_to_be_object == inferred_object:
-                        continue
-
-                    if compressedstbo in self._inferral_cache:
-                        compressedstdbo = self._inferral_cache.get(compressedstbo)
-                        semi_inferred_objects.append(inferred_object)
-                        inferred_object = obj.__class__.decompress(compressedstdbo)
-                        fully_inferred = True
-                        break
-                    else:
-                        semi_inferred_objects.append(inferred_object)
-                        inferred_object = soon_to_be_object
-            for semi_inferred_object in semi_inferred_objects:
-                self._inferral_cache.set(semi_inferred_object.compress(), inferred_object.compress())
-                if self.symmetry:
-                    for sym_obj, sym_inf_obj in zip(self._symmetric_objects(semi_inferred_object,
-                                                                        ordered=True),
-                                                    self._symmetric_objects(inferred_object,
-                                                                        ordered=True)):
-                        self._inferral_cache.set(sym_obj.compress(), sym_inf_obj.compress())
-            self._inferral_cache.set(inferred_object.compress(), inferred_object.compress())
-        else:
-            inferred_object = obj.__class__.decompress(inferred_object)
+        for semi_inferred_obj in semi_inferred:
+            self._inferral_cache.set(semi_inferred_obj, inferred_object)
         self.inferral_time += time.time() - start
         return inferred_object
 
@@ -615,7 +536,7 @@ class CombinatorialSpecificationSearcher(object):
             print("", file=file)
             print("The strategies being used are:", file=file)
             equiv_strats = self._strategies_to_str(self.equivalence_strategy_generators)
-            infer_strats = self._strategies_to_str(self.inferral_strategy_generators)
+            infer_strats = self._strategies_to_str(self.inferral_strategies)
             verif_strats = self._strategies_to_str(self.verification_strategies)
             print("Equivalent: {}".format(equiv_strats), file=file)
             print("Inferral: {}".format(infer_strats), file=file)

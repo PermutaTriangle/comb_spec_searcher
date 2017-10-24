@@ -66,4 +66,4 @@ def jays_subclass_inferral(tiling, basis=None, **kwargs):
     # print(new_tiling)
 
     if not tiling == new_tiling:
-        yield InferralStrategy("After tiling subset inferral", new_tiling)
+        return InferralStrategy("After tiling subset inferral", new_tiling)
