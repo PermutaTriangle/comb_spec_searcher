@@ -184,17 +184,16 @@ def forced_binary_pattern(tiling, **kwargs):
     if not maxforcelen:
         maxforcelen = len(patt)
 
-    (placedtiling, pattpos) = place_pattern(tiling, patt)
+    worktiling = Tiling(point_cells=tiling.point_cells,
+                        positive_cells=[],
+                        possibly_empty=[(0, 0)],
+                        obstructions=tiling.obstructions,
+                        requirements=[])
+
+    (placedtiling, pattpos) = place_pattern(worktiling, patt)
     for force in binary_forces(patt, basis, maxforcelen):
         forcedtiling = place_forced_pattern(placedtiling, patt,
                                             pattpos, force)
-        avoidingtiling = Tiling(
-            tiling.point_cells,
-            tiling.positive_cells,
-            tiling.possibly_empty,
-            tiling.obstructions + (Obstruction.single_cell(patt,
-                                                           (0, 0)),))
-        assert avoidingtiling.dimensions == (1, 1)
         assert forcedtiling.dimensions != (1, 1)
 
         yield EquivalenceStrategy(
