@@ -1,6 +1,5 @@
 from comb_spec_searcher import BatchStrategy
 
-from .binary_pattern import forced_binary_pattern
 from .cell_insertion import all_cell_insertions
 from .isolate_points import point_isolations
 from .requirement_insertion import all_requirement_insertions
