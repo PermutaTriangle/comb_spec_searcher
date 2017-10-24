@@ -1,4 +1,4 @@
-from comb_spec_searcher import BatchStrategy
+from comb_spec_searcher import Strategy
 from permuta import PermSet, Perm
 from grids_two import Obstruction, Requirement, Tiling
 
@@ -11,7 +11,7 @@ def all_requirement_insertions(tiling, **kwargs):
                                 len(tiling.requirements[0]) != 1):
         return
 
-    if ((0, 0) not in tiling.positive_cells or
+    if ((0, 0) not in tiling.positive_cells and
             (0, 0) not in tiling.possibly_empty):
         return
 
@@ -34,17 +34,18 @@ def all_requirement_insertions(tiling, **kwargs):
     for patt in PermSet(len(req) + 1):
         if patterns and not any(p.contains(patt) for p in patterns):
             continue
-        yield BatchStrategy(
+        yield Strategy(
             formal_step=(
                 "Inserting requirement {} into cell {}").format(patt, (0, 0)),
-            tilings=[Tiling(tiling.point_cells,
-                            tiling.positive_cells | {(0, 0)},  # Make cell
-                            tiling.possibly_empty - {(0, 0)},  # positive
-                            tiling.obstructions,
-                            [[Requirement.single_cell(patt, (0, 0))]]),
-                     Tiling(tiling.point_cells,
+            objects=[Tiling(tiling.point_cells,
                             tiling.positive_cells,
                             tiling.possibly_empty,
                             tiling.obstructions + (
                                 Obstruction.single_cell(patt, (0, 0)),),
-                            tiling.requirements)])
+                            tiling.requirements),
+                     Tiling(tiling.point_cells,
+                            tiling.positive_cells | {(0, 0)},  # Make cell
+                            tiling.possibly_empty - {(0, 0)},  # positive
+                            tiling.obstructions,
+                            [[Requirement.single_cell(patt, (0, 0))]])],
+            workable=[False, True])
