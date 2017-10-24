@@ -107,6 +107,13 @@ binary_force_christian = StrategyPack(
     other_strats=[[components], [all_cell_insertions], [partial(forced_binary_pattern, forcelen=1)]],
     name="binary_force for the 'HARD' case")
 
+binary_force_only = StrategyPack(
+    eq_strats=[partial(forced_binary_pattern, forcelen=1)],
+    ver_strats=[subset_verified],
+    inf_strats=[],
+    other_strats=[[partial(all_requirement_insertions, maxreqlength=3)]],
+    name="binary_force w/ row-col separation and database verification")
+
 binary_force_rowcolsep_database = StrategyPack(
     eq_strats=[partial(all_requirement_insertions, patterns=[Perm((0, 1, 2))])],
     ver_strats=[subset_verified, database_verified],
