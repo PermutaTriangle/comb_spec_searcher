@@ -122,6 +122,14 @@ binary_force_rowcolsep_database = StrategyPack(
                   [partial(forced_binary_pattern, forcelen=2)]],
     name="binary_force w/ row-col separation and database verification")
 
+binary_force_rowcolsep_database = StrategyPack(
+    eq_strats=[partial(all_requirement_insertions, patterns=[Perm((0, 1, 2))])],
+    ver_strats=[subset_verified, database_verified],
+    inf_strats=[subobstruction_inferral, row_and_column_separation],
+    other_strats=[[components], [all_cell_insertions, row_placements, col_placements],
+                  [partial(forced_binary_pattern, forcelen=2)]],
+    name="binary_force w/ row-col separation and database verification")
+
 # binary_force_rowcolsep_subobrec = StrategyPack(
 #     eq_strats=[],
 #     ver_strats=[subset_verified],
