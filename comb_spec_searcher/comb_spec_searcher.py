@@ -74,12 +74,12 @@ class CombinatorialSpecificationSearcher(object):
                     self.equivalence_strategy_generators = strategy_pack.eq_strats
                     self.strategy_generators = strategy_pack.other_strats
                 self.inferral_strategy_generators = strategy_pack.inf_strats
-                self.verif_strat_gen = strategy_pack.ver_strats
+                self.verification_strategies = strategy_pack.ver_strats
 
         self.kwargs = function_kwargs
 
         if not callable(is_empty_strategy):
-            raise ValueError("CombinatorialSpecificationSearcher requires a strategy that tests is an object is the empty set.")
+            raise ValueError("CombinatorialSpecificationSearcher requires a strategy that tests if an object is the empty set.")
         else:
             self.is_empty_strategy = is_empty_strategy
 
@@ -127,17 +127,19 @@ class CombinatorialSpecificationSearcher(object):
         elif self.equivdb.is_verified(label):
             self.verification_time += time.time() - start
             return
-        for generator in self.verif_strat_gen:
-            for strategy in generator(obj,
-                                      **self.kwargs):
+        for verification_strategy in self.verification_strategies:
+            strategy = verification_strategy(obj, **self.kwargs)
+            if strategy is not None:
+                # print(obj)
                 if not isinstance(strategy, VerificationStrategy):
                     raise TypeError("Attempting to verify with non VerificationStrategy.")
                 formal_step = strategy.formal_step
                 self.objectdb.set_verified(obj, formal_step)
                 self.objectdb.set_strategy_verified(obj)
                 self.equivdb.update_verified(label)
-                self.verification_time += time.time() - start
-                return
+                break
+        self.verification_time += time.time() - start
+
 
     def is_empty(self, obj):
         """Return True if a object contains no permutations, False otherwise"""
@@ -614,7 +616,7 @@ class CombinatorialSpecificationSearcher(object):
             print("The strategies being used are:", file=file)
             equiv_strats = self._strategies_to_str(self.equivalence_strategy_generators)
             infer_strats = self._strategies_to_str(self.inferral_strategy_generators)
-            verif_strats = self._strategies_to_str(self.verif_strat_gen)
+            verif_strats = self._strategies_to_str(self.verification_strategies)
             print("Equivalent: {}".format(equiv_strats), file=file)
             print("Inferral: {}".format(infer_strats), file=file)
             print("Verification: {}".format(verif_strats), file=file)

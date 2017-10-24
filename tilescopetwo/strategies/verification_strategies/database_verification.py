@@ -65,4 +65,4 @@ database = {
 
 def database_verified(tiling, **kwargs):
     if tiling in database:
-        yield VerificationStrategy("Already in database!")
+        return VerificationStrategy("Already in database!")
