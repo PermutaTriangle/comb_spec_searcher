@@ -154,11 +154,15 @@ class CombinatorialSpecificationSearcher(object):
         return False
 
     def _inferral(self, obj):
+        """Return fully inferred object, along with an explanation."""
+        origin = obj
         start = time.time()
         inferred_object = self._inferral_cache.get(obj)
         if inferred_object is not None:
             return inferred_object
-        semi_inferred = [obj]
+        explanation = ""
+        semi_inferred = [[obj, ""]]
+
         for inferral_strategy in self.inferral_strategies:
             strategy = inferral_strategy(obj, **self.kwargs)
             if strategy is None:
@@ -167,18 +171,27 @@ class CombinatorialSpecificationSearcher(object):
                 raise TypeError("Attempted to infer on a non InferralStrategy")
             # TODO: Where should the inferral formal step go?
             if obj != strategy.object:
+                for pair in semi_inferred:
+                    pair[1] = pair[1] + strategy.formal_step
                 obj = strategy.object
                 inferred_object = self._inferral_cache.get(obj)
                 if inferred_object is not None:
+                    explanation = explanation + inferred_object[1]
+                    for pair in semi_inferred:
+                        pair[1] = pair[1] + inferred_object[1]
+                    obj = inferred_object[0]
                     break
-                semi_inferred.append(obj)
+                semi_inferred.append([obj, ""])
 
-        if inferred_object is None:
-            inferred_object = obj
-        for semi_inferred_obj in semi_inferred:
-            self._inferral_cache.set(semi_inferred_obj, inferred_object)
+        for pair in semi_inferred:
+            self._inferral_cache.set(pair[0], (obj, pair[1]))
+
+        if not semi_inferred[0][1]:
+            # TODO: remove when sure it is good.
+            assert origin == obj
+
         self.inferral_time += time.time() - start
-        return inferred_object
+        return obj, semi_inferred[0][1]
 
     def _symmetric_objects(self, obj, ordered=False):
         """Return all symmetries of an object.
@@ -199,7 +212,118 @@ class CombinatorialSpecificationSearcher(object):
 
         return symmetric_objects
 
+    def expand(self, label):
+        """
+        Will expand the object with given label.
 
+        The first time function called with label, it will expand with the
+        first set of other strategies, second time the second set etc.
+        """
+
+        obj = self.objectdb.get_object(label)
+        expanding = self.objectdb.number_times_expanded(label)
+        strategies = self.strategy_generators[expanding]
+
+        total_time = 0
+        for strategy_generator in strategies:
+            # function returns time it took.
+            total_time += self._expand_object_with_strategy(obj,
+                                                            strategy_generator,
+                                                            label)
+
+        if not self.is_expanded(label):
+            self.objectdb.increment_expanded(label)
+            self.expanded_objects[expanding] += 1
+            self.expansion_times[expanding] += total_time
+            if not self.is_expanded(label):
+                self.objectqueue.add_to_curr(label)
+
+    def _expand_object_with_strategy(obj, strategy_generator, label):
+        """
+        Will expand the object with given strategy.
+        """
+        start = time.time()
+        for strategy in strategy_generator(obj, self.kwargs):
+            start -= time.time()
+            strategy = self._strategy_cleanup(strategy)
+            start += time.time()
+            end_labels = [self.objectdb.get_label(o) for o in strategy.objects]
+
+            if strategy.back_maps:
+                if all(self.objectdb.is_expandable(x) for x in end_labels):
+                    self.objectdb.set_workably_decomposed(label)
+
+            if not end_labels:
+                # all the tilings are empty so the tiling itself must be empty!
+                self.objectdb.set_empty(label)
+                self.objectdb.set_verified(label, "This tiling contains no avoiding perms")
+                self.objectdb.set_strategy_verified(label)
+                self.equivdb.update_verified(label)
+                break
+            elif not self.forward_equivalence and len(end_labels) == 1:
+                # If we have an equivalent strategy
+                other_label = end_labels[0]
+                self.equivdb.union(label, other_label, strategy.formal_step)
+                if not (self.is_expanded(other_label)
+                        or self.objectdb.is_expanding_other_sym(other_label)):
+                    self.objectqueue.add_to_working(other_label)
+            else:
+                self.ruledb.add(label,
+                                end_labels,
+                                strategy.formal_step,
+                                strategy.back_maps)
+                for end_label in end_labels:
+                    if (self.is_expanded(end_label)
+                        or self.objectdb.is_expanding_other_sym(end_label)):
+                        continue
+                    self.objectqueue.add_to_next(end_label)
+            if strategy.back_maps is not None:
+                self.ruledb.add_back_maps(label, end_labels, strategy.back_maps)
+                if label not in self.ruledb.back_maps:
+                    self.ruledb.back_maps[label] = {}
+                self.ruledb.back_maps[label][tuple(sorted(end_labels))] = strategy.back_maps
+        # this return statements only purpose if for timing.
+        return start - time.time()
+
+    def strategy_cleanup(self, strategy):
+        """
+        Return cleaned strategy.
+
+        - infer objects
+        - try to verify objects
+        - set workability of objects
+        - remove empty objects
+        - symmetry expand objects
+        - equivalent expand object.
+        """
+        if not strategy.back_maps:
+            start -= time.time()
+            objects = [self._inferral(o)[0] for o in strategy.objects]
+            start += time.time()
+        else:
+            objects = strategy.objects
+
+        for ob, work in zip(objects, strategy.workable):
+            start -= time.time()
+            self.try_verify(ob)
+            start += time.time()
+            if work:
+                self.objectdb.set_expandable(ob)
+
+        if not strategy.back_maps:
+            start -= time.time()
+            objects = [o for o in objects if not self.is_empty(o)]
+            start += time.time()
+        # TODO: put information about deleted empty strategy.objects into the
+        #       formal step
+
+        start -= time.time()
+        for ob in objects:
+            if self.symmetry:
+                self._symmetry_expand(ob)
+            self._equivalent_expand(ob)
+        start += time.time()
+        
     def expand(self, label):
         """
         Will expand the object with given label.
@@ -218,38 +342,6 @@ class CombinatorialSpecificationSearcher(object):
                     print(strategy.formal_step, file=sys.stderr)
                     print(generator, file=sys.stderr)
                     raise TypeError("Strategy given not of the right form.")
-
-                if not strategy.back_maps:
-                    start -= time.time()
-                    objects = [self._inferral(o) for o in strategy.objects]
-                    start += time.time()
-                else:
-                    objects = strategy.objects
-
-                for ob, work in zip(objects, strategy.workable):
-                    start -= time.time()
-                    self.try_verify(ob)
-                    start += time.time()
-                    if work:
-                        self.objectdb.set_expandable(ob)
-
-                if strategy.back_maps:
-                    if all(self.objectdb.is_expandable(o) for o in objects):
-                        self.objectdb.set_workably_decomposed(label)
-
-                if not strategy.back_maps:
-                    start -= time.time()
-                    objects = [o for o in objects if not self.is_empty(o)]
-                    start += time.time()
-                # TODO: put information about deleted empty strategy.objects into the
-                #       formal step
-
-                start -= time.time()
-                for ob in objects:
-                    if self.symmetry:
-                        self._symmetry_expand(ob)
-                    self._equivalent_expand(ob)
-                start += time.time()
 
                 if not objects:
                     # all the tilings are empty so the tiling itself must be empty!
@@ -335,7 +427,7 @@ class CombinatorialSpecificationSearcher(object):
 
                     formal_step = strategy.formal_step
                     start -= time.time()
-                    eq_object = self._inferral(strategy.objects[0])
+                    eq_object = self._inferral(strategy.objects[0])[0]
                     start += time.time()
 
                     # If we have already seen this object while building, we skip it

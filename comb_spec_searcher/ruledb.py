@@ -26,7 +26,7 @@ class RuleDB(object):
         self.explanations = {}
         self.back_maps = {}
 
-    def add(self, start, end, explanation):
+    def add(self, start, end, explanation, back_maps=None):
         """
         Add a rule to the database.
 
@@ -48,6 +48,12 @@ class RuleDB(object):
             self.explanations[start][end] = explanation
         else:
             self.explanations[start] = {end: explanation}
+        if back_maps is not None:
+            if start in self.back_maps:
+                self.back_maps[start][end] = back_maps
+            else:
+                self.back_maps[start] = {end: back_maps}
+
 
     def __iter__(self):
         """Iterate through rules as the pairs (start, end)."""
