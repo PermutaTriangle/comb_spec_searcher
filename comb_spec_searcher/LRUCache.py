@@ -11,7 +11,7 @@ class LRUCache:
         self.compress = compress
         if self.compress:
             if obj_type is None:
-                raise ValueError("Need to declared type for decompression")
+                raise ValueError("Need to declare type for decompression")
             self.obj_type = obj_type
 
     def get(self, key):
@@ -21,7 +21,7 @@ class LRUCache:
             value = self.cache.pop(key)
             self.cache[key] = value
             if self.compress:
-                return self.obj_type.decompress(value)
+                return self.obj_type.decompress(value[0]), value[1]
             return value
         except KeyError:
             return None
@@ -32,7 +32,7 @@ class LRUCache:
     def set(self, key, value):
         if self.compress:
             key = key.compress()
-            value = value.compress()
+            value = (value[0].compress(), value[1])
         try:
             self.cache.pop(key)
         except KeyError:

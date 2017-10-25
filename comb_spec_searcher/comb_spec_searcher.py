@@ -238,16 +238,16 @@ class CombinatorialSpecificationSearcher(object):
             if not self.is_expanded(label):
                 self.objectqueue.add_to_curr(label)
 
-    def _expand_object_with_strategy(obj, strategy_generator, label):
+    def _expand_object_with_strategy(self, obj, strategy_generator, label):
         """
         Will expand the object with given strategy.
         """
         start = time.time()
-        for strategy in strategy_generator(obj, self.kwargs):
+        for strategy in strategy_generator(obj, **self.kwargs):
             start -= time.time()
-            strategy = self._strategy_cleanup(strategy)
+            objects, formal_step = self._strategy_cleanup(strategy)
             start += time.time()
-            end_labels = [self.objectdb.get_label(o) for o in strategy.objects]
+            end_labels = [self.objectdb.get_label(o) for o in objects]
 
             if strategy.back_maps:
                 if all(self.objectdb.is_expandable(x) for x in end_labels):
@@ -263,29 +263,25 @@ class CombinatorialSpecificationSearcher(object):
             elif not self.forward_equivalence and len(end_labels) == 1:
                 # If we have an equivalent strategy
                 other_label = end_labels[0]
-                self.equivdb.union(label, other_label, strategy.formal_step)
+                self.equivdb.union(label, other_label, formal_step)
                 if not (self.is_expanded(other_label)
                         or self.objectdb.is_expanding_other_sym(other_label)):
                     self.objectqueue.add_to_working(other_label)
             else:
                 self.ruledb.add(label,
                                 end_labels,
-                                strategy.formal_step,
+                                formal_step,
                                 strategy.back_maps)
                 for end_label in end_labels:
                     if (self.is_expanded(end_label)
                         or self.objectdb.is_expanding_other_sym(end_label)):
                         continue
                     self.objectqueue.add_to_next(end_label)
-            if strategy.back_maps is not None:
-                self.ruledb.add_back_maps(label, end_labels, strategy.back_maps)
-                if label not in self.ruledb.back_maps:
-                    self.ruledb.back_maps[label] = {}
-                self.ruledb.back_maps[label][tuple(sorted(end_labels))] = strategy.back_maps
-        # this return statements only purpose if for timing.
-        return start - time.time()
 
-    def strategy_cleanup(self, strategy):
+        # this return statements only purpose if for timing.
+        return time.time() - start
+
+    def _strategy_cleanup(self, strategy):
         """
         Return cleaned strategy.
 
@@ -296,86 +292,39 @@ class CombinatorialSpecificationSearcher(object):
         - symmetry expand objects
         - equivalent expand object.
         """
-        if not strategy.back_maps:
-            start -= time.time()
-            objects = [self._inferral(o)[0] for o in strategy.objects]
-            start += time.time()
-        else:
-            objects = strategy.objects
+        end_objects = []
+        inferral_steps = []
+        for ob, work in zip(strategy.objects, strategy.workable):
+            inferral_step = ""
+            if not strategy.back_maps:
+                ob, inferral_step = self._inferral(ob)
+            else:
+                inferral_step = ""
 
-        for ob, work in zip(objects, strategy.workable):
-            start -= time.time()
             self.try_verify(ob)
-            start += time.time()
-            if work:
-                self.objectdb.set_expandable(ob)
 
-        if not strategy.back_maps:
-            start -= time.time()
-            objects = [o for o in objects if not self.is_empty(o)]
-            start += time.time()
-        # TODO: put information about deleted empty strategy.objects into the
-        #       formal step
-
-        start -= time.time()
-        for ob in objects:
             if self.symmetry:
                 self._symmetry_expand(ob)
-            self._equivalent_expand(ob)
-        start += time.time()
-        
-    def expand(self, label):
-        """
-        Will expand the object with given label.
 
-        The first time function called with label, it will expand with the
-        first set of other strategies, second time the second set etc.
-        """
-        start = time.time()
-        obj = self.objectdb.get_object(label)
-        expanding = self.objectdb.number_times_expanded(label)
-        strategy_generators = self.strategy_generators[expanding]
-        for generator in strategy_generators:
-            for strategy in generator(obj, **self.kwargs):
-                if not isinstance(strategy, Strategy):
-                    print(strategy, file=sys.stderr)
-                    print(strategy.formal_step, file=sys.stderr)
-                    print(generator, file=sys.stderr)
-                    raise TypeError("Strategy given not of the right form.")
+            if not strategy.back_maps:
+                if self.is_empty(ob):
+                    inferral_steps.append(inferral_step + "Tiling is empty.")
+                    continue
+            if work:
+                self.objectdb.set_expandable(ob)
+                self._equivalent_expand(ob)
 
-                if not objects:
-                    # all the tilings are empty so the tiling itself must be empty!
-                    self.objectdb.set_empty(label)
-                    self.objectdb.set_verified(label, "This tiling contains no avoiding perms")
-                    self.objectdb.set_strategy_verified(label)
-                    self.equivdb.update_verified(label)
-                    break
-                elif not self.forward_equivalence and len(objects) == 1:
-                    # If we have an equivalent strategy
-                    other_label = self.objectdb.get_label(objects[0])
-                    self.equivdb.union(label, other_label, strategy.formal_step)
-                    if not (self.is_expanded(other_label)
-                            or self.objectdb.is_expanding_other_sym(other_label)):
-                        self.objectqueue.add_to_working(other_label)
-                else:
-                    end_labels = [self.objectdb.get_label(o) for o in objects]
-                    self.ruledb.add(label, end_labels, strategy.formal_step)
-                    for end_label in end_labels:
-                        if (self.is_expanded(end_label)
-                            or self.objectdb.is_expanding_other_sym(end_label)):
-                            continue
-                        self.objectqueue.add_to_next(end_label)
-                if strategy.back_maps is not None:
-                    if label not in self.ruledb.back_maps:
-                        self.ruledb.back_maps[label] = {}
-                    self.ruledb.back_maps[label][tuple(sorted(end_labels))] = strategy.back_maps
+            end_objects.append(ob)
+            inferral_steps.append(inferral_step)
 
-        if not self.is_expanded(label):
-            self.objectdb.increment_expanded(label)
-            self.expanded_objects[expanding] += 1
-            self.expansion_times[expanding] += time.time() - start
-            if not self.is_expanded(label):
-                self.objectqueue.add_to_curr(label)
+        inferral_step = "~"
+        for i, s in enumerate(inferral_steps):
+            inferral_step = inferral_step + "[" + str(i) + ": " + s + "]"
+        inferral_step = inferral_step + "~"
+        formal_step = strategy.formal_step + inferral_step
+
+        return end_objects, formal_step
+
 
     def is_expanded(self, label):
         """Return True if an object has been expanded by all strategies."""
