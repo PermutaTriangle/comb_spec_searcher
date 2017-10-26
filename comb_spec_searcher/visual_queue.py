@@ -116,7 +116,7 @@ LINE_WIDTH = 3
 
 
 class Color:
-    NORMAL = Solarized.red
+    NORMAL = Solarized.yellow
     VERIFIED = Solarized.green
     PICKABLE = Solarized.yellow
     EQUIVALENCE = Solarized.base1
@@ -261,6 +261,8 @@ class VisualQueue:
         with self.lock:
             if isinstance(event.artist, VisNode):
                 if isinstance(event.artist, CtrlNode):
+                    if Flag.PHANTOM in event.artist.raw_tree.data:
+                        return  # TODO: Is it more natural to click these?
                     identifier = event.artist.raw_tree.identifier
                     if identifier in self.show_children:
                         debug_print("+++ Remove id from show children ids:", identifier)
