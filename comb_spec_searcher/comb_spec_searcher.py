@@ -189,7 +189,7 @@ class CombinatorialSpecificationSearcher(object):
         self.inferral_time += time.time() - start
         return obj, semi_inferred[0][1]
 
-    def _symmetric_objects(self, obj, ordered=False):
+    def _symmetric_objects(self, obj, ordered=False, explanation=False):
         """Return all symmetries of an object.
 
         This function only works if symmetry strategies have been given to the
@@ -200,12 +200,17 @@ class CombinatorialSpecificationSearcher(object):
         if ordered:
             return [sym(obj) for sym in self.symmetry]
         else:
-            symmetric_objects = set()
+            symmetric_objects = []
             for sym in self.symmetry:
                 symmetric_object = sym(obj)
                 if symmetric_object != obj:
-                    symmetric_objects.add(symmetric_object)
-
+                    if explanation:
+                        if all(x != symmetric_object for x, _ in symmetric_objects):
+                            symmetric_objects.append((symmetric_object,
+                                                      str(sym).split(' ')[1]))
+                    else:
+                        if all(x != symmetric_object for x in symmetric_objects):
+                            symmetric_object.append(symmetric_object)
         return symmetric_objects
 
     def expand(self, label):
@@ -368,13 +373,14 @@ class CombinatorialSpecificationSearcher(object):
         """Add symmetries of object to the database."""
         start = time.time()
         if not self.objectdb.is_symmetry_expanded(obj):
-            for sym_o in self._symmetric_objects(obj):
+            for sym_o, formal_step in self._symmetric_objects(obj,
+                                                              explanation=True):
                 self.objectdb.add(sym_o,
                                   expanding_other_sym=True,
                                   symmetry_expanded=True)
                 self.equivdb.union(self.objectdb.get_label(obj),
                                    self.objectdb.get_label(sym_o),
-                                   "a symmetry")
+                                   formal_step)
         self.symmetry_time += time.time() - start
 
     def _equivalent_expand(self, obj):
@@ -629,7 +635,7 @@ class CombinatorialSpecificationSearcher(object):
         return self._has_proof_tree
 
     def tree_search_prep(self, empty=False):
-        start = time.time()
+        start_time = time.time()
         rules_dict = defaultdict(set)
 
         rules_to_add = []
@@ -643,7 +649,7 @@ class CombinatorialSpecificationSearcher(object):
 
         for rule in rules_to_add:
             start, ends = rule
-            self._add_rule(start, end, explanation="Complement verified.")
+            self._add_rule(start, ends, explanation="Complement verified.")
 
         if empty:
             for label in self.objectdb.empty_labels():
@@ -654,7 +660,7 @@ class CombinatorialSpecificationSearcher(object):
                 verified_label = self.equivdb[label]
                 rules_dict[verified_label] |= set(((),))
 
-        self.prepping_for_tree_search_time += time.time() - start
+        self.prepping_for_tree_search_time += time.time() - start_time
         return rules_dict
 
     def _add_rule_to_rules_dict(self, rule, rules_dict):
@@ -674,9 +680,10 @@ class CombinatorialSpecificationSearcher(object):
 
     def find_tree(self):
         """Search for a tree based on current data found."""
-        first_start = time.time()
+        start = time.time()
 
         rules_dict_empty = self.tree_search_prep(empty=True)
+        first_start = time.time()
         # Prune all unempty labels (recursively)
         rules_dict_empty = prune(rules_dict_empty)
         # only empty labels in rules_dict, in particular, there is an empty tree
@@ -704,7 +711,7 @@ class CombinatorialSpecificationSearcher(object):
             proof_tree = None
 
         self.tree_search_time += time.time() - second_start
-        self._time_taken += time.time() - first_start
+        self._time_taken += time.time() - start
         return proof_tree
 
     def get_proof_tree(self, count=False):
