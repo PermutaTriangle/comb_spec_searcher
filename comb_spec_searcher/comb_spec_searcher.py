@@ -219,12 +219,12 @@ class CombinatorialSpecificationSearcher(object):
         The first time function called with label, it will expand with the
         first set of other strategies, second time the second set etc.
         """
-
+        start = time.time()
         obj = self.objectdb.get_object(label)
         expanding = self.objectdb.number_times_expanded(label)
         strategies = self.strategy_generators[expanding]
 
-        total_time = 0
+        total_time = time.time() - start
         for strategy_generator in strategies:
             # function returns time it took.
             total_time += self._expand_object_with_strategy(obj,
@@ -238,12 +238,21 @@ class CombinatorialSpecificationSearcher(object):
             if not self.is_expanded(label):
                 self.objectqueue.add_to_curr(label)
 
-    def _expand_object_with_strategy(self, obj, strategy_generator, label):
+    def _expand_object_with_strategy(self, obj, strategy_generator, label, equivalent=False):
         """
         Will expand the object with given strategy.
+
+        If equivalent, then only allow equivalent strategies to be applied and
+        return objects found.
         """
         start = time.time()
+        if equivalent:
+            equivalent_objects = []
         for strategy in strategy_generator(obj, **self.kwargs):
+            if not isinstance(strategy, Strategy):
+                raise TypeError("Attempting to add non strategy type.")
+            if equivalent and len(strategy.objects) != 1:
+                raise TypeError("Attempting to combine non equivalent strategy.")
             start -= time.time()
             objects, formal_step = self._strategy_cleanup(strategy)
             start += time.time()
@@ -255,31 +264,55 @@ class CombinatorialSpecificationSearcher(object):
 
             if not end_labels:
                 # all the tilings are empty so the tiling itself must be empty!
-                self.objectdb.set_empty(label)
-                self.objectdb.set_verified(label, "This tiling contains no avoiding perms")
-                self.objectdb.set_strategy_verified(label)
-                self.equivdb.update_verified(label)
+                self._add_empty_rule(label)
                 break
             elif not self.forward_equivalence and len(end_labels) == 1:
                 # If we have an equivalent strategy
-                other_label = end_labels[0]
-                self.equivdb.union(label, other_label, formal_step)
-                if not (self.is_expanded(other_label)
-                        or self.objectdb.is_expanding_other_sym(other_label)):
-                    self.objectqueue.add_to_working(other_label)
+                self._add_equivalent_rule(label, end_labels[0],
+                                          formal_step, not equivalent)
+                if equivalent:
+                    equivalent_objects.append(objects[0])
             else:
-                self.ruledb.add(label,
-                                end_labels,
-                                formal_step,
-                                strategy.back_maps)
-                for end_label in end_labels:
-                    if (self.is_expanded(end_label)
-                        or self.objectdb.is_expanding_other_sym(end_label)):
-                        continue
-                    self.objectqueue.add_to_next(end_label)
+                self._add_rule(label, end_labels,
+                               strategy.back_maps, formal_step)
 
         # this return statements only purpose if for timing.
+        if equivalent:
+            return time.time() - start, equivalent_objects
         return time.time() - start
+
+    def _add_equivalent_rule(self, start, end, explanation=None, working=False):
+        '''Add equivalent strategy to equivdb and equivalent object to queue'''
+        if explanation is None:
+            explanation = "They are equivalent."
+        self.equivdb.union(start, end, explanation)
+        if not (self.is_expanded(end)
+                or self.objectdb.is_expanding_other_sym(end)):
+            if working:
+                self.objectqueue.add_to_working(end)
+            else:
+                self.objectqueue.add_to_next(end)
+
+    def _add_rule(self, start, ends, back_maps=None, explanation=None):
+        '''Add rule to the rule database and end labels to queue.'''
+        if explanation is None:
+            explanation = "Some strategy."
+        self.ruledb.add(start,
+                        ends,
+                        explanation,
+                        back_maps)
+        for end_label in ends:
+            if (self.is_expanded(end_label)
+                or self.objectdb.is_expanding_other_sym(end_label)):
+                continue
+            self.objectqueue.add_to_next(end_label)
+
+    def _add_empty_rule(self, label):
+        '''Mark label as empty. Treated as verified as can count empty set.'''
+        self.objectdb.set_empty(label)
+        self.objectdb.set_verified(label, "This tiling contains no avoiding perms")
+        self.objectdb.set_strategy_verified(label)
+        self.equivdb.update_verified(label)
 
     def _strategy_cleanup(self, strategy):
         """
@@ -353,52 +386,26 @@ class CombinatorialSpecificationSearcher(object):
         It will apply the equivalence strategies as often as possible to
         find as many equivalent objects as possible.
         """
-        if not self.objectdb.is_expandable(obj):
+        if (not self.objectdb.is_expandable(obj)
+                or self.objectdb.is_equivalent_expanded(obj)
+                    or self.objectdb.is_expanding_other_sym(obj)):
             return
-        start = time.time()
-        equivalent_objects = set([obj])
-        objects_to_expand = set([obj])
+        total_time = 0
+        label = self.objectdb.get_label(obj)
+        objects_to_expand = set()
+        for strategy_generator in self.equivalence_strategy_generators:
+            t, eq_objs = self._expand_object_with_strategy(obj,
+                                                           strategy_generator,
+                                                           label,
+                                                           equivalent=True)
+            total_time += t
+            objects_to_expand.update(eq_objs)
+        self.objectdb.set_equivalent_expanded(obj)
 
-        while objects_to_expand:
-            # For each object to be expanded and
-            obj = objects_to_expand.pop()
-            if self.objectdb.is_equivalent_expanded(obj):
-                continue
-            label = self.objectdb.get_label(obj)
-            for generator in self.equivalence_strategy_generators:
-                # for all equivalent strategies
-                for strategy in generator(obj,
-                                          **self.kwargs):
-
-                    if (not isinstance(strategy, Strategy)
-                            or len(strategy.objects) != 1):
-                        raise TypeError("Attempting to combine non equivalent strategy.")
-
-                    formal_step = strategy.formal_step
-                    start -= time.time()
-                    eq_object = self._inferral(strategy.objects[0])[0]
-                    start += time.time()
-
-                    # If we have already seen this object while building, we skip it
-                    if eq_object in equivalent_objects:
-                        continue
-
-                    self.objectdb.add(eq_object, expandable=strategy.workable[0])
-                    eq_label = self.objectdb.get_label(eq_object)
-                    self.equivdb.union(label, eq_label, formal_step)
-                    # Add it to the equivalent objects found
-                    equivalent_objects.add(eq_object)
-                    # And the objects to be checked for equivalencesß
-                    objects_to_expand.add(eq_object)
-                    start -= time.time()
-                    self._symmetry_expand(eq_object)
-                    self.try_verify(eq_object)
-                    start += time.time()
-                    self.objectqueue.add_to_next(eq_label)
-            self.objectdb.set_equivalent_expanded(obj)
-        self.equivalent_time += time.time() - start
-
-
+        for eqv_obj in objects_to_expand:
+            self._equivalent_expand(eqv_obj)
+        self.equivalent_time += total_time
+        
     def do_level(self):
         """Expand objects in current queue. Objects found added to next."""
         start = time.time()
