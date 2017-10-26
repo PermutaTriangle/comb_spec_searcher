@@ -283,7 +283,7 @@ class CombinatorialSpecificationSearcher(object):
         return time.time() - start
 
     def _add_equivalent_rule(self, start, end, explanation=None, working=False):
-        '''Add equivalent strategy to equivdb and equivalent object to queue'''
+        """Add equivalent strategy to equivdb and equivalent object to queue"""
         if explanation is None:
             explanation = "They are equivalent."
         self.equivdb.union(start, end, explanation)
@@ -295,7 +295,7 @@ class CombinatorialSpecificationSearcher(object):
                 self.objectqueue.add_to_next(end)
 
     def _add_rule(self, start, ends, back_maps=None, explanation=None):
-        '''Add rule to the rule database and end labels to queue.'''
+        """Add rule to the rule database and end labels to queue."""
         if explanation is None:
             explanation = "Some strategy."
         self.ruledb.add(start,
@@ -309,7 +309,7 @@ class CombinatorialSpecificationSearcher(object):
             self.objectqueue.add_to_next(end_label)
 
     def _add_empty_rule(self, label):
-        '''Mark label as empty. Treated as verified as can count empty set.'''
+        """Mark label as empty. Treated as verified as can count empty set."""
         if self.objectdb.is_empty(label):
             return
         self.objectdb.set_empty(label)
@@ -632,9 +632,16 @@ class CombinatorialSpecificationSearcher(object):
                     status_start = time.time()
 
     def has_proof_tree(self):
+        """Return True if a proof tree has been found, false otherwise."""
         return self._has_proof_tree
 
     def tree_search_prep(self, empty=False):
+        """
+        Return rule dictionary ready for tree searcher.
+
+        Also adds complement verified rules when applicable. If empty preps to
+        search for empty proof trees.
+        """
         start_time = time.time()
         rules_dict = defaultdict(set)
 
@@ -664,12 +671,14 @@ class CombinatorialSpecificationSearcher(object):
         return rules_dict
 
     def _add_rule_to_rules_dict(self, rule, rules_dict):
+        """Add a rule to given dictionary."""
         first, rest = rule
         eqv_first = self.equivdb[first]
         eqv_rest = tuple(sorted(self.equivdb[x] for x in rest))
         rules_dict[eqv_first] |= set((tuple(eqv_rest),))
 
     def complement_verified(self, rule):
+        """Return complement verified rule if exists due to rule, else None"""
         first, rest = rule
         if self.equivdb.is_verified(first):
             unverified_labels = [l for l in rest if self.equivdb.is_verified(l)]
