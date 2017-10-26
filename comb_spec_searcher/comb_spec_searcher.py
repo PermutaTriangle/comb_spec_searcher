@@ -305,6 +305,8 @@ class CombinatorialSpecificationSearcher(object):
 
     def _add_empty_rule(self, label):
         '''Mark label as empty. Treated as verified as can count empty set.'''
+        if self.objectdb.is_empty(label):
+            return
         self.objectdb.set_empty(label)
         self.objectdb.set_verified(label, "This tiling contains no avoiding perms")
         self.objectdb.set_strategy_verified(label)
@@ -626,45 +628,84 @@ class CombinatorialSpecificationSearcher(object):
     def has_proof_tree(self):
         return self._has_proof_tree
 
-    def find_tree(self):
-        """Search for a tree based on current data found."""
+    def tree_search_prep(self, empty=False):
         start = time.time()
         rules_dict = defaultdict(set)
-        # convert rules to equivalent labels
+
+        rules_to_add = []
         for rule in self.ruledb:
-            first, rest = rule
-            first = self.equivdb[first]
-            rest = tuple(sorted(self.equivdb[x] for x in rest))
-            # this means union
-            rules_dict[first] |= set((tuple(rest),))
-        # add an empty rule, that represents verified in the tree searcher
-        for label in self.objectdb.verified_labels():
-            verified_label = self.equivdb[label]
-            rules_dict[verified_label] |= set(((),))
+            self._add_rule_to_rules_dict(rule, rules_dict)
+
+            complement_rule = self.complement_verified(rule)
+            if complement_rule is not None:
+                rules_to_add.append(complement_rule)
+                self._add_rule_to_rules_dict(complement_rule, rules_dict)
+
+        for rule in rules_to_add:
+            start, ends = rule
+            self._add_rule(start, end, explanation="Complement verified.")
+
+        if empty:
+            for label in self.objectdb.empty_labels():
+                verified_label = self.equivdb[label]
+                rules_dict[verified_label] |= set(((),))
+        else:
+            for label in self.objectdb.verified_labels():
+                verified_label = self.equivdb[label]
+                rules_dict[verified_label] |= set(((),))
 
         self.prepping_for_tree_search_time += time.time() - start
-        self._time_taken += time.time() - start
-        start = time.time()
-        # Prune all unverifiable labels (recursively)
+        return rules_dict
+
+    def _add_rule_to_rules_dict(self, rule, rules_dict):
+        first, rest = rule
+        eqv_first = self.equivdb[first]
+        eqv_rest = tuple(sorted(self.equivdb[x] for x in rest))
+        rules_dict[eqv_first] |= set((tuple(eqv_rest),))
+
+    def complement_verified(self, rule):
+        first, rest = rule
+        if self.equivdb.is_verified(first):
+            unverified_labels = [l for l in rest if self.equivdb.is_verified(l)]
+            if len(unverified_labels) == 1:
+                complement_first = unverified_labels[0]
+                return (first,
+                        tuple(l for l in rest if l != complement_first))
+
+    def find_tree(self):
+        """Search for a tree based on current data found."""
+        first_start = time.time()
+
+        rules_dict_empty = self.tree_search_prep(empty=True)
+        # Prune all unempty labels (recursively)
+        rules_dict_empty = prune(rules_dict_empty)
+        # only empty labels in rules_dict, in particular, there is an empty tree
+        # if the start label is in the rules_dict
+        for label in rules_dict_empty.keys():
+            self._add_empty_rule(label)
+        self.tree_search_time += time.time() - first_start
+        rules_dict = self.tree_search_prep()
+
+        second_start = time.time()
+        # Prune all unverified labels (recursively)
         rules_dict = prune(rules_dict)
 
+        # only verified labels in rules_dict, in particular, there is an proof
+        # tree if the start label is in the rules_dict
         for label in rules_dict.keys():
             self.equivdb.update_verified(label)
 
-        # only verified labels in rules_dict, in particular, there is a tree if
-        # the start label is in the rules_dict
         if self.equivdb[self.start_label] in rules_dict:
             self._has_proof_tree = True
             # print("A tree was found! :)")
             _, proof_tree = proof_tree_bfs(rules_dict, root=self.equivdb[self.start_label])
             # print(proof_tree)
-            self.tree_search_time += time.time() - start
-            self._time_taken += time.time() - start
-            return proof_tree
         else:
-            self.tree_search_time += time.time() - start
-            # print("No tree was found. :(")
-        self._time_taken += time.time() - start
+            proof_tree = None
+
+        self.tree_search_time += time.time() - second_start
+        self._time_taken += time.time() - first_start
+        return proof_tree
 
     def get_proof_tree(self, count=False):
         """
