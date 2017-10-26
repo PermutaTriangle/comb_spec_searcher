@@ -341,16 +341,19 @@ class VisualQueue:
                 elif raw_tree.label not in self.show_children:
                     debug_print("+++ User doesn't want its child ctrl nodes displayed")
                 else:
+                    def is_product(bls):
+                        return raw_tree.label in self.tilescope.ruledb.back_maps \
+                           and bls in self.tilescope.ruledb.back_maps[raw_tree.label]
                     # Add branching things
-                    for branch_labels in self.tilescope.ruledb.rules_dict[raw_tree.label]:
+                    for branch_labels in sorted(self.tilescope.ruledb.rules_dict[raw_tree.label],
+                                                key=lambda bls: (1 if is_product(bls) else 0, bls)):
                         debug_print("+++ It branches to", branch_labels)
                         branch_ctrl_identifier = (raw_tree.label, branch_labels)
                         branch_ctrl_raw_tree = RawTree(children=[], identifier=branch_ctrl_identifier)
                         branch_ctrl_raw_tree.data.add(Flag.CONTROL)
                         branch_ctrl_raw_tree.data.add(
                             Flag.PRODUCT
-                            if raw_tree.label in self.tilescope.ruledb.back_maps
-                            and branch_labels in self.tilescope.ruledb.back_maps[raw_tree.label]
+                            if is_product(branch_labels)
                             else
                             Flag.SUM
                         )
@@ -371,7 +374,7 @@ class VisualQueue:
                         continue
                     # Mark as seen, all later-found nodes for same label will be phantoms
                     seen.add(raw_tree.label)
-                    for eqv_label in self.tilescope.equivdb.equivalent_set(raw_tree.label):
+                    for eqv_label in sorted(self.tilescope.equivdb.equivalent_set(raw_tree.label)):
                         if eqv_label == raw_tree.label:
                             debug_print("+++ Ignoring itself in eqv draw")
                             continue
