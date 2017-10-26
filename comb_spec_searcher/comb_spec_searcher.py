@@ -315,7 +315,8 @@ class CombinatorialSpecificationSearcher(object):
         if self.objectdb.is_empty(label):
             return
         self.objectdb.set_empty(label)
-        self.objectdb.set_verified(label, explanation)
+        # TODO: when new proof tree class, don't enumerate by this formal step.
+        self.objectdb.set_verified(label, "This tiling contains no avoiding perms.")
         self.objectdb.set_strategy_verified(label)
         self.equivdb.update_verified(label)
 
