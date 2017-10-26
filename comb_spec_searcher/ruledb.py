@@ -54,6 +54,23 @@ class RuleDB(object):
             else:
                 self.back_maps[start] = {end: back_maps}
 
+    def remove(self, start, end):
+        """Remove rule from database."""
+        if not isinstance(start, int):
+            raise TypeError("Rule is integer and an iterable of integers.")
+        if not isinstance(end, Iterable):
+            raise TypeError("Rule is integer and an iterable of integers.")
+        if any(not isinstance(x, int) for x in end):
+            raise TypeError("Rule is integer and an iterable of integers.")
+        if start in self.explanations:
+            if end in self.explanations[start]:
+                self.explanations[start].pop(end)
+        if start in self.back_maps:
+            if end in self.back_maps[start]:
+                self.back_maps[start].pop(end)
+        if start in self.rules_dict:
+            if end in self.rules_dict[start]:
+                self.rules_dict[start].remove(end)
 
     def __iter__(self):
         """Iterate through rules as the pairs (start, end)."""

@@ -34,6 +34,7 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
                  symmetry=False,
                  forward_equivalence=False,
                  compress=False,
+                 complement_verify=True,
                  objectqueue=ObjectQueue,
                  start_tiling=None):
         """Initialise TileScope."""
@@ -62,6 +63,7 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
                                             symmetry=symmetries,
                                             compress=compress,
                                             forward_equivalence=forward_equivalence,
+                                            complement_verify=complement_verify,
                                             objectqueue=objectqueue,
                                             is_empty_strategy=is_empty_strategy,
                                             function_kwargs=function_kwargs)

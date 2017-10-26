@@ -36,7 +36,7 @@ class Strategy(object):
         return self.back_maps is not None
 
 class StrategyPack(object):
-    def __init__(self, eq_strats = None, ver_strats = None, inf_strats = None, other_strats = None, name=None, old_pack=None):
+    def __init__(self, eq_strats=None, ver_strats=None, inf_strats=None, other_strats=None, name=None, old_pack=None):
         if old_pack is not None:
             self.eq_strats = old_pack["equivalence_strategies"]
             self.ver_strats = old_pack["verification_strategies"]

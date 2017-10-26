@@ -33,6 +33,7 @@ class CombinatorialSpecificationSearcher(object):
                  symmetry=False,
                  compress=False,
                  forward_equivalence=False,
+                 complement_verify=True,
                  objectqueue=ObjectQueue,
                  is_empty_strategy=None,
                  function_kwargs=dict()):
@@ -61,6 +62,7 @@ class CombinatorialSpecificationSearcher(object):
             self.symmetry = []
 
         self.forward_equivalence = forward_equivalence
+        self.complement_verify = complement_verify
 
         if strategy_pack is not None:
             if not isinstance(strategy_pack, StrategyPack):
@@ -265,7 +267,7 @@ class CombinatorialSpecificationSearcher(object):
 
             if not end_labels:
                 # all the tilings are empty so the tiling itself must be empty!
-                self._add_empty_rule(label)
+                self._add_empty_rule(label, "batch empty")
                 break
             elif not self.forward_equivalence and len(end_labels) == 1:
                 # If we have an equivalent strategy
@@ -308,12 +310,12 @@ class CombinatorialSpecificationSearcher(object):
                 continue
             self.objectqueue.add_to_next(end_label)
 
-    def _add_empty_rule(self, label):
+    def _add_empty_rule(self, label, explanation=None):
         """Mark label as empty. Treated as verified as can count empty set."""
         if self.objectdb.is_empty(label):
             return
         self.objectdb.set_empty(label)
-        self.objectdb.set_verified(label, "This tiling contains no avoiding perms")
+        self.objectdb.set_verified(label, explanation)
         self.objectdb.set_strategy_verified(label)
         self.equivdb.update_verified(label)
 
@@ -635,7 +637,7 @@ class CombinatorialSpecificationSearcher(object):
         """Return True if a proof tree has been found, false otherwise."""
         return self._has_proof_tree
 
-    def tree_search_prep(self, empty=False):
+    def tree_search_prep(self, empty=False, complement=False):
         """
         Return rule dictionary ready for tree searcher.
 
@@ -647,16 +649,22 @@ class CombinatorialSpecificationSearcher(object):
 
         rules_to_add = []
         for rule in self.ruledb:
-            self._add_rule_to_rules_dict(rule, rules_dict)
+            if self.complement_verify:
+                complement_rule = self.complement_verified(rule)
+                if complement_rule is not None:
+                    rules_to_add.append((complement_rule, rule))
+                    self._add_rule_to_rules_dict(complement_rule, rules_dict)
+                else:
+                    self._add_rule_to_rules_dict(rule, rules_dict)
+            else:
+                self._add_rule_to_rules_dict(rule, rules_dict)
 
-            complement_rule = self.complement_verified(rule)
-            if complement_rule is not None:
-                rules_to_add.append(complement_rule)
-                self._add_rule_to_rules_dict(complement_rule, rules_dict)
-
-        for rule in rules_to_add:
-            start, ends = rule
+        for rules in rules_to_add:
+            good_rule, old_rule = rules
+            start, ends = good_rule
             self._add_rule(start, ends, explanation="Complement verified.")
+            self.ruledb.remove(*old_rule)
+
 
         if empty:
             for label in self.objectdb.empty_labels():
@@ -681,11 +689,11 @@ class CombinatorialSpecificationSearcher(object):
         """Return complement verified rule if exists due to rule, else None"""
         first, rest = rule
         if self.equivdb.is_verified(first):
-            unverified_labels = [l for l in rest if self.equivdb.is_verified(l)]
+            unverified_labels = [l for l in rest if not self.equivdb.is_verified(l)]
             if len(unverified_labels) == 1:
                 complement_first = unverified_labels[0]
-                return (first,
-                        tuple(l for l in rest if l != complement_first))
+                return (complement_first,
+                        (first, ) + tuple(l for l in rest if l != complement_first))
 
     def find_tree(self):
         """Search for a tree based on current data found."""
@@ -698,8 +706,9 @@ class CombinatorialSpecificationSearcher(object):
         # only empty labels in rules_dict, in particular, there is an empty tree
         # if the start label is in the rules_dict
         for label in rules_dict_empty.keys():
-            self._add_empty_rule(label)
+            self._add_empty_rule(label, "Tree search empty")
         self.tree_search_time += time.time() - first_start
+
         rules_dict = self.tree_search_prep()
 
         second_start = time.time()
