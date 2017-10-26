@@ -66,12 +66,8 @@ class CombinatorialSpecificationSearcher(object):
             if not isinstance(strategy_pack, StrategyPack):
                 raise TypeError("Strategy pack given not instance of strategy pack.")
             else:
-                if forward_equivalence:
-                    self.equivalence_strategy_generators = []
-                    self.strategy_generators = [strategy_pack.eq_strats] + strategy_pack.other_strats
-                else:
-                    self.equivalence_strategy_generators = strategy_pack.eq_strats
-                    self.strategy_generators = strategy_pack.other_strats
+                self.equivalence_strategy_generators = strategy_pack.eq_strats
+                self.strategy_generators = strategy_pack.other_strats
                 self.inferral_strategies = strategy_pack.inf_strats
                 self.verification_strategies = strategy_pack.ver_strats
 
@@ -405,7 +401,7 @@ class CombinatorialSpecificationSearcher(object):
         for eqv_obj in objects_to_expand:
             self._equivalent_expand(eqv_obj)
         self.equivalent_time += total_time
-        
+
     def do_level(self):
         """Expand objects in current queue. Objects found added to next."""
         start = time.time()
