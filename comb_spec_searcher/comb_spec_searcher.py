@@ -254,7 +254,7 @@ class CombinatorialSpecificationSearcher(object):
             start += time.time()
             end_labels = [self.objectdb.get_label(o) for o in objects]
 
-            if strategy.back_maps:
+            if strategy.decomposition:
                 if all(self.objectdb.is_expandable(x) for x in end_labels):
                     self.objectdb.set_workably_decomposed(label)
 
@@ -327,7 +327,7 @@ class CombinatorialSpecificationSearcher(object):
         inferral_steps = []
         for ob, work in zip(strategy.objects, strategy.workable):
             inferral_step = ""
-            if not strategy.back_maps:
+            if not strategy.decomposition:
                 ob, inferral_step = self._inferral(ob)
             else:
                 inferral_step = ""
@@ -337,7 +337,7 @@ class CombinatorialSpecificationSearcher(object):
             if self.symmetry:
                 self._symmetry_expand(ob)
 
-            if not strategy.back_maps:
+            if not strategy.decomposition:
                 if self.is_empty(ob):
                     inferral_steps.append(inferral_step + "Tiling is empty.")
                     continue

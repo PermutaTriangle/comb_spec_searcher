@@ -38,8 +38,8 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
                  start_tiling=None):
         """Initialise TileScope."""
         if isinstance(basis, str):
-            self.basis = Basis([Perm([int(c) for c in p])
-                                for p in basis.split('_')])
+            self.basis = Basis([Perm.to_standard([int(c) for c in p])
+                                    for p in basis.split('_')])
         else:
             self.basis = Basis(basis)
 

@@ -31,6 +31,10 @@ class Strategy(object):
         self.objects = [object for object in objects]
         self.workable = [x for x in workable]
 
+    @property
+    def decomposition(self):
+        return self.back_maps is not None
+
 class StrategyPack(object):
     def __init__(self, eq_strats = None, ver_strats = None, inf_strats = None, other_strats = None, name=None, old_pack=None):
         if old_pack is not None:
