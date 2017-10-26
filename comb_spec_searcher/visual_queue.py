@@ -116,9 +116,9 @@ LINE_WIDTH = 3
 
 
 class Color:
-    NORMAL = Solarized.yellow
+    NORMAL = Solarized.orange
     VERIFIED = Solarized.green
-    PICKABLE = Solarized.yellow
+    PICKABLE = Solarized.orange
     EQUIVALENCE = Solarized.base1
     SUM = Solarized.blue
     PRODUCT = Solarized.violet
@@ -215,6 +215,7 @@ class VisualQueue:
         self.expanded = set()  # List of obj node labels that have been passed to tree
         self.show_children = set()  # List of node identifiers that has been clicked on (alternates to off)
         self.nodes = set()
+        self.done = False  # True iff currently just displaying non-interactive proof tree
         # Create figure
         self.fig = plt.figure()
         # Register event handlers
@@ -245,7 +246,8 @@ class VisualQueue:
     def hover_event_handler(self, event):
         with self.lock:
             for patch in self.nodes:
-                if patch.contains(event)[0] and patch != self.last_hover:
+                if patch.contains(event)[0] and (self.last_hover is None
+                                                 or patch.raw_tree.label != self.last_hover.raw_tree.label):
                     self.last_hover = patch
                     print()
                     print("HOVERING OVER:")
@@ -255,13 +257,14 @@ class VisualQueue:
                     break
 
     def pick_event_handler(self, event):
-        if event.mouseevent.button != 1:
+        if event.mouseevent.button != 1 or self.done:
             # We only care about clicking on the nodes
             return
         with self.lock:
             if isinstance(event.artist, VisNode):
                 if isinstance(event.artist, CtrlNode):
                     if Flag.PHANTOM in event.artist.raw_tree.data:
+                        debug_print("+++ Phantom node clicked")
                         return  # TODO: Is it more natural to click these?
                     identifier = event.artist.raw_tree.identifier
                     if identifier in self.show_children:
@@ -292,13 +295,79 @@ class VisualQueue:
             else:
                 raise RuntimeError("Unexpected non-node picker:", event.artist)
 
+    def draw_proof_tree_instead(self, proof_tree):
+        # Construct raw tree from proof_tree
+        raw_tree_root = RawTree(self.tilescope.start_label, children=[])
+        frontier = deque()
+        frontier.append((raw_tree_root, proof_tree.root))
+        while frontier:
+            raw_tree, proof_tree = frontier.popleft()
+            raw_tree.data.add(Flag.OBJECT)
+            raw_tree.data.add(Flag.VERIFIED)
+            raw_tree.get_description = lambda rt=raw_tree: str(self.tilescope.objectdb.get_object(rt.label))
+            branch_labels = tuple(self.tilescope.objectdb.get_label(child.in_tiling)
+                                  for child in proof_tree.children)
+
+            debug_print("In and out tiling for ", raw_tree.label, ":", sep="")
+            debug_print(proof_tree.in_tiling)
+            debug_print(proof_tree.out_tiling)
+
+            out_label = self.tilescope.objectdb.get_label(proof_tree.out_tiling)
+
+            if raw_tree.label != out_label:
+                debug_print("+++ Adding intermediate eqv ctrl node from", raw_tree.label, "to", out_label)
+                # Need eqv node between
+                eqv_ctrl_raw_tree = RawTree(children=[])
+                eqv_ctrl_raw_tree.data.add(Flag.CONTROL)
+                eqv_ctrl_raw_tree.data.add(Flag.EQUIVALENCE)
+                eqv_ctrl_raw_tree.get_description = lambda: "Equivalent to the following because: (TODO)"
+                eqv_obj_raw_tree = RawTree(out_label, children=[])
+                eqv_ctrl_raw_tree.children.append(eqv_obj_raw_tree)
+                raw_tree.children.append(eqv_ctrl_raw_tree)
+                frontier.appendleft((eqv_obj_raw_tree, proof_tree))
+            else:
+                # No eqv node needed, just branch
+                if not proof_tree.children:
+                    continue
+                branch_ctrl_raw_tree = RawTree(children=[])
+                raw_tree.children.append(branch_ctrl_raw_tree)
+                branch_ctrl_raw_tree.get_description = lambda pt=proof_tree: pt.formal_step
+                branch_ctrl_raw_tree.data.add(Flag.CONTROL)
+                def is_product(bls):
+                    return raw_tree.label in self.tilescope.ruledb.back_maps \
+                       and bls in self.tilescope.ruledb.back_maps[raw_tree.label]
+                branch_ctrl_raw_tree.data.add(
+                    Flag.PRODUCT
+                    if is_product(branch_labels)
+                    else
+                    Flag.SUM
+                )
+                for sub_proof_tree in proof_tree.children:
+                    branch_obj_raw_tree = RawTree(
+                        self.tilescope.objectdb.get_label(sub_proof_tree.in_tiling),
+                        children=[]
+                    )
+                    branch_ctrl_raw_tree.children.append(branch_obj_raw_tree)
+                    frontier.append((branch_obj_raw_tree, sub_proof_tree))
+
+        draw_tree_root = walker(raw_tree_root)
+
+        self.draw_to_mpl(draw_tree_root, raw_tree_root)
+
     def redraw_tree(self):
         debug_print("+++ Waiting on lock to redraw")
         with self.lock:
             debug_print("+++ Acquired lock to redraw")
-
-            self.nodes = set()
-            self.ax.cla()  # Clear axes
+            proof_tree = self.tilescope.get_proof_tree() if len(self.tilescope.objectdb.label_to_info) > 1 else None
+            if proof_tree is not None:
+                self.done = True
+                debug_print("+++ A tree has been found!")
+                debug_print(type(proof_tree))
+                debug_print(proof_tree)
+                self.draw_proof_tree_instead(proof_tree)
+                return
+            else:
+                debug_print("+++ A tree has yet to be found...")
 
             # Construct draw-able tree from tilescope data
 
@@ -309,9 +378,6 @@ class VisualQueue:
                 raw_tree_root.data.add(Flag.EXPANDABLE)
 
             debug_print("+++ Gathering information for raw_tree")
-            debug_print("+++ BEFORE We have a rules dict:")
-            for item in self.tilescope.ruledb.rules_dict.items():
-                debug_print("+++    ", item)
 
             seen = set()
             frontier = deque()
@@ -392,92 +458,94 @@ class VisualQueue:
                             eqv_ctrl_raw_tree.children = (eqv_obj_raw_tree,)
                         raw_tree.children.append(eqv_ctrl_raw_tree)
 
-            debug_print("+++ AFTER We have a rules dict:")
-            for item in self.tilescope.ruledb.rules_dict.items():
-                debug_print("+++    ", item)
-
             # Use algorithms to determine x and y positions; its DrawTree
 
             draw_tree_root = walker(raw_tree_root)
 
-            # Use the computed coordinates to do plot the raw data
+            #debug_print()
+            #debug_print("+++ DRAWTREE")
+            #debug_print("+++", draw_tree_root)
+            #debug_print("+++ RAWTREE ROOT DATA")
+            #debug_print("+++", raw_tree_root.data)
+            #debug_print()
+            self.draw_to_mpl(draw_tree_root, raw_tree_root)
 
-            debug_print()
-            debug_print("+++ DRAWTREE")
-            debug_print("+++", draw_tree_root)
-            debug_print("+++ RAWTREE ROOT DATA")
-            debug_print("+++", raw_tree_root.data)
-            debug_print()
+    def draw_to_mpl(self, draw_tree_root, raw_tree_root):
+        # Use the computed coordinates to do plot the raw data
+        self.nodes = set()
+        self.ax.cla()  # Clear axes
 
-            debug_print("+++ Drawing tree!")
-            debug_print()
-            frontier.append((raw_tree_root, draw_tree_root, None))
-            while frontier:
-                raw_tree, draw_tree, parent_xy = frontier.popleft()
-                data = raw_tree.data
-                xy = (float(draw_tree.x), -float(draw_tree.y))
-                x, y = xy
-                debug_print("+++ Drawing:")
-                debug_print("+++    ", raw_tree)
-                debug_print("+++    ", raw_tree.data)
-                debug_print("+++    ", xy)
-                if parent_xy is not None:
-                    # TODO: Different lines for different types of nodes
-                    self.ax.add_line(TreeLine(
-                        parent_xy,
-                        xy,
-                        linestyle=":" if Flag.PHANTOM in data else "solid",
-                    ))
-                if Flag.OBJECT in data:
-                    # Node is an object node
-                    node = ObjNode(xy, raw_tree)
-                    if Flag.EXPANDABLE in data:
-                        # Change color to notify of expandability
-                        node.set_color(Color.PICKABLE)
-                    elif Flag.VERIFIED in data:
-                        node.set_color(Color.VERIFIED)
-                    else:
-                        node.set_color(Color.NORMAL)
-                elif Flag.CONTROL in data:
-                    node = CtrlNode(xy, raw_tree)
-                    if Flag.EQUIVALENCE in data:
-                        node.set_color(Color.EQUIVALENCE)
-                        text_content = "="
-                    elif Flag.PRODUCT in data:
-                        node.set_color(Color.PRODUCT)
-                        text_content = "x"
-                    elif Flag.SUM in data:
-                        node.set_color(Color.SUM)
-                        text_content = "+"
-                    else:
-                        raise RuntimeError("Unknown control node type for drawing")
-                    # Make text on top of it
-                    text_path = TextPath(
-                        (x - (.09 if text_content == "x" else .125), y-.09),
-                        text_content,
-                        size=.3,
-                    )
-                    for a in text_path.to_polygons():
-                        p = mpatches.Polygon(a, fill=True, color="white", zorder=100)
-                        self.ax.add_patch(p)
+        frontier = deque()
+        debug_print()
+        debug_print("+++ Drawing tree!")
+        debug_print()
+        frontier.append((raw_tree_root, draw_tree_root, None))
+        while frontier:
+            raw_tree, draw_tree, parent_xy = frontier.popleft()
+            data = raw_tree.data
+            xy = (float(draw_tree.x), -float(draw_tree.y))
+            x, y = xy
+            debug_print("+++ Drawing:")
+            debug_print("+++    ", raw_tree)
+            debug_print("+++    ", raw_tree.data)
+            debug_print("+++    ", xy)
+            if parent_xy is not None:
+                # TODO: Different lines for different types of nodes
+                self.ax.add_line(TreeLine(
+                    parent_xy,
+                    xy,
+                    linestyle=":" if Flag.PHANTOM in data else "solid",
+                ))
+            if Flag.OBJECT in data:
+                # Node is an object node
+                node = ObjNode(xy, raw_tree)
+                if Flag.EXPANDABLE in data:
+                    # Change color to notify of expandability
+                    node.set_color(Color.PICKABLE)
+                elif Flag.VERIFIED in data:
+                    node.set_color(Color.VERIFIED)
                 else:
-                    raise RuntimeError("Unknown node type for drawing")
+                    node.set_color(Color.NORMAL)
+            elif Flag.CONTROL in data:
+                node = CtrlNode(xy, raw_tree)
+                if Flag.EQUIVALENCE in data:
+                    node.set_color(Color.EQUIVALENCE)
+                    text_content = "="
+                elif Flag.PRODUCT in data:
+                    node.set_color(Color.PRODUCT)
+                    text_content = "x"
+                elif Flag.SUM in data:
+                    node.set_color(Color.SUM)
+                    text_content = "+"
+                else:
+                    raise RuntimeError("Unknown control node type for drawing")
+                # Make text on top of it
+                text_path = TextPath(
+                    (x - (.09 if text_content == "x" else .125), y-.09),
+                    text_content,
+                    size=.3,
+                )
+                for a in text_path.to_polygons():
+                    p = mpatches.Polygon(a, fill=True, color="white", zorder=100)
+                    self.ax.add_patch(p)
+            else:
+                raise RuntimeError("Unknown node type for drawing")
 
-                debug_print()
+            debug_print()
 
-                node.set_picker(True)
-                self.ax.add_patch(node)
-                self.nodes.add(node)
+            node.set_picker(True)
+            self.ax.add_patch(node)
+            self.nodes.add(node)
 
-                # Add children to drawing frontier as well
-                frontier.extend((child_raw, child_draw, xy)
-                                for child_raw, child_draw
-                                in zip(raw_tree.children, draw_tree.children))
+            # Add children to drawing frontier as well
+            frontier.extend((child_raw, child_draw, xy)
+                            for child_raw, child_draw
+                            in zip(raw_tree.children, draw_tree.children))
 
-            # Redraw and scale viewport if needed
+        # Redraw and scale viewport if needed
 
-            #self.ax.autoscale()  # TODO: Will commenting this suffice to keep viewport?
-            self.fig.canvas.draw()
+        #self.ax.autoscale()  # TODO: Will commenting this suffice to keep viewport?
+        self.fig.canvas.draw()
 
     def next(self):
         while not self.queue:
