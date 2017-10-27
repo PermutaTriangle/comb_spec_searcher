@@ -8,10 +8,9 @@ def subset_verified(tiling, basis, **kwargs):
     """Return a strategy if tiling is subset verified."""
     if tiling.dimensions == (1, 1):
         if one_by_one_verified(tiling, basis):
-            yield VerificationStrategy(formal_step="The tiling is a subset of the class.")
-        return
-    if all(ob.is_single_cell() for ob in tiling):
-        yield VerificationStrategy(formal_step="The tiling is a subset of the class.")
+            return VerificationStrategy(formal_step="The tiling is a subset of the class.")
+    elif all(ob.is_single_cell() for ob in tiling):
+        return VerificationStrategy(formal_step="The tiling is a subset of the class.")
 
 def one_by_one_verified(tiling, basis):
     """Return true if tiling is a subset of the Av(basis)."""

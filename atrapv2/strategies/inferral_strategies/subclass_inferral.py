@@ -74,4 +74,4 @@ def subclass_inferral(tiling, basis=None, **kwargs):
     #         == InferralStrategy("After tiling subset inferral", inferred_tiling).tiling)
     if not tiling == inferred_tiling:
 
-        yield InferralStrategy("After tiling subset inferral", inferred_tiling)
+        return InferralStrategy("After tiling subset inferral", inferred_tiling)

@@ -32,6 +32,8 @@ class CombinatorialSpecificationSearcher(object):
                  strategy_pack=None,
                  symmetry=False,
                  compress=False,
+                 forward_equivalence=False,
+                 complement_verify=True,
                  objectqueue=ObjectQueue,
                  is_empty_strategy=None,
                  function_kwargs=dict()):
@@ -45,12 +47,11 @@ class CombinatorialSpecificationSearcher(object):
             self.objectdb = CompressedObjectDB(type(start_object))
         else:
             self.objectdb = ObjectDB(type(start_object))
-        self.compress = compress
 
         self.objectdb.add(start_object, expandable=True)
         self.start_label = self.objectdb.get_label(start_object)
 
-        self._inferral_cache = LRUCache(100000)
+        self._inferral_cache = LRUCache(100000, compress=compress, obj_type=type(start_object))
         self._has_proof_tree = False
         if symmetry:
             # A list of symmetry functions of objects.
@@ -60,19 +61,22 @@ class CombinatorialSpecificationSearcher(object):
         else:
             self.symmetry = []
 
+        self.forward_equivalence = forward_equivalence
+        self.complement_verify = complement_verify
+
         if strategy_pack is not None:
             if not isinstance(strategy_pack, StrategyPack):
                 raise TypeError("Strategy pack given not instance of strategy pack.")
             else:
                 self.equivalence_strategy_generators = strategy_pack.eq_strats
-                self.inferral_strategy_generators = strategy_pack.inf_strats
-                self.verif_strat_gen = strategy_pack.ver_strats
                 self.strategy_generators = strategy_pack.other_strats
+                self.inferral_strategies = strategy_pack.inf_strats
+                self.verification_strategies = strategy_pack.ver_strats
 
         self.kwargs = function_kwargs
 
         if not callable(is_empty_strategy):
-            raise ValueError("CombinatorialSpecificationSearcher requires a strategy that tests is an object is the empty set.")
+            raise ValueError("CombinatorialSpecificationSearcher requires a strategy that tests if an object is the empty set.")
         else:
             self.is_empty_strategy = is_empty_strategy
 
@@ -120,17 +124,18 @@ class CombinatorialSpecificationSearcher(object):
         elif self.equivdb.is_verified(label):
             self.verification_time += time.time() - start
             return
-        for generator in self.verif_strat_gen:
-            for strategy in generator(obj,
-                                      **self.kwargs):
+        for verification_strategy in self.verification_strategies:
+            strategy = verification_strategy(obj, **self.kwargs)
+            if strategy is not None:
                 if not isinstance(strategy, VerificationStrategy):
                     raise TypeError("Attempting to verify with non VerificationStrategy.")
                 formal_step = strategy.formal_step
                 self.objectdb.set_verified(obj, formal_step)
                 self.objectdb.set_strategy_verified(obj)
                 self.equivdb.update_verified(label)
-                self.verification_time += time.time() - start
-                return
+                break
+        self.verification_time += time.time() - start
+
 
     def is_empty(self, obj):
         """Return True if a object contains no permutations, False otherwise"""
@@ -147,110 +152,46 @@ class CombinatorialSpecificationSearcher(object):
         return False
 
     def _inferral(self, obj):
-        """
-        Return fully inferred object.
-
-        Will repeatedly use inferral strategies until object changes no more.
-        """
-        if self.compress:
-            return self._inferral_compress(obj)
+        """Return fully inferred object, along with an explanation."""
+        origin = obj
         start = time.time()
         inferred_object = self._inferral_cache.get(obj)
-        semi_inferred_objects = []
-        if inferred_object is None:
-            inferred_object = obj
-            fully_inferred = False
-            for strategy_generator in self.inferral_strategy_generators:
-                # For each inferral strategy,
-                if fully_inferred:
+        if inferred_object is not None:
+            return inferred_object
+        explanation = ""
+        semi_inferred = [[obj, ""]]
+
+        for inferral_strategy in self.inferral_strategies:
+            strategy = inferral_strategy(obj, **self.kwargs)
+            if strategy is None:
+                continue
+            if not isinstance(strategy, InferralStrategy):
+                raise TypeError("Attempted to infer on a non InferralStrategy")
+            # TODO: Where should the inferral formal step go?
+            if obj != strategy.object:
+                for pair in semi_inferred:
+                    pair[1] = pair[1] + strategy.formal_step
+                obj = strategy.object
+                inferred_object = self._inferral_cache.get(obj)
+                if inferred_object is not None:
+                    explanation = explanation + inferred_object[1]
+                    for pair in semi_inferred:
+                        pair[1] = pair[1] + inferred_object[1]
+                    obj = inferred_object[0]
                     break
-                for strategy in strategy_generator(inferred_object,
-                                                   **self.kwargs):
-                    if not isinstance(strategy, InferralStrategy):
-                        raise TypeError("Attempted to infer on a non InferralStrategy")
-                    # TODO: Where should the inferral formal step go?
+                semi_inferred.append([obj, ""])
 
-                    # we infer as much as possible about the object and replace it.
-                    soon_to_be_object = strategy.object
+        for pair in semi_inferred:
+            self._inferral_cache.set(pair[0], (obj, pair[1]))
 
-                    if soon_to_be_object is inferred_object:
-                        continue
+        if not semi_inferred[0][1]:
+            # TODO: remove when sure it is good.
+            assert origin == obj
 
-                    if soon_to_be_object in self._inferral_cache:
-                        soon_to_be_object = self._inferral_cache.get(soon_to_be_object)
-                        semi_inferred_objects.append(inferred_object)
-                        inferred_object = soon_to_be_object
-                        fully_inferred = True
-                        break
-                    else:
-                        semi_inferred_objects.append(inferred_object)
-                        inferred_object = soon_to_be_object
-            for semi_inferred_object in semi_inferred_objects:
-                self._inferral_cache.set(semi_inferred_object, inferred_object)
-                if self.symmetry:
-                    for sym_obj, sym_inf_obj in zip(self._symmetric_objects(semi_inferred_object,
-                                                                        ordered=True),
-                                                    self._symmetric_objects(inferred_object,
-                                                                        ordered=True)):
-                        self._inferral_cache.set(sym_obj, sym_inf_obj)
-            self._inferral_cache.set(inferred_object, inferred_object)
         self.inferral_time += time.time() - start
-        return inferred_object
+        return obj, semi_inferred[0][1]
 
-    def _inferral_compress(self, obj):
-        """
-        Return fully inferred object.
-
-        Will repeatedly use inferral strategies until object changes no more.
-        """
-        start = time.time()
-        compressedobj = obj.compress()
-        inferred_object = self._inferral_cache.get(compressedobj)
-        semi_inferred_objects = []
-        if inferred_object is None:
-            inferred_object = obj
-            fully_inferred = False
-            for strategy_generator in self.inferral_strategy_generators:
-                # For each inferral strategy,
-                if fully_inferred:
-                    break
-                for strategy in strategy_generator(inferred_object,
-                                                   **self.kwargs):
-                    if not isinstance(strategy, InferralStrategy):
-                        raise TypeError("Attempted to infer on a non InferralStrategy")
-                    # TODO: Where should the inferral formal step go?
-
-                    # we infer as much as possible about the object and replace it.
-                    soon_to_be_object = strategy.object
-                    compressedstbo = soon_to_be_object.compress()
-
-                    if soon_to_be_object == inferred_object:
-                        continue
-
-                    if compressedstbo in self._inferral_cache:
-                        compressedstdbo = self._inferral_cache.get(compressedstbo)
-                        semi_inferred_objects.append(inferred_object)
-                        inferred_object = obj.__class__.decompress(compressedstdbo)
-                        fully_inferred = True
-                        break
-                    else:
-                        semi_inferred_objects.append(inferred_object)
-                        inferred_object = soon_to_be_object
-            for semi_inferred_object in semi_inferred_objects:
-                self._inferral_cache.set(semi_inferred_object.compress(), inferred_object.compress())
-                if self.symmetry:
-                    for sym_obj, sym_inf_obj in zip(self._symmetric_objects(semi_inferred_object,
-                                                                        ordered=True),
-                                                    self._symmetric_objects(inferred_object,
-                                                                        ordered=True)):
-                        self._inferral_cache.set(sym_obj.compress(), sym_inf_obj.compress())
-            self._inferral_cache.set(inferred_object.compress(), inferred_object.compress())
-        else:
-            inferred_object = obj.__class__.decompress(inferred_object)
-        self.inferral_time += time.time() - start
-        return inferred_object
-
-    def _symmetric_objects(self, obj, ordered=False):
+    def _symmetric_objects(self, obj, ordered=False, explanation=False):
         """Return all symmetries of an object.
 
         This function only works if symmetry strategies have been given to the
@@ -261,14 +202,18 @@ class CombinatorialSpecificationSearcher(object):
         if ordered:
             return [sym(obj) for sym in self.symmetry]
         else:
-            symmetric_objects = set()
+            symmetric_objects = []
             for sym in self.symmetry:
                 symmetric_object = sym(obj)
                 if symmetric_object != obj:
-                    symmetric_objects.add(symmetric_object)
-
+                    if explanation:
+                        if all(x != symmetric_object for x, _ in symmetric_objects):
+                            symmetric_objects.append((symmetric_object,
+                                                      str(sym).split(' ')[1]))
+                    else:
+                        if all(x != symmetric_object for x in symmetric_objects):
+                            symmetric_object.append(symmetric_object)
         return symmetric_objects
-
 
     def expand(self, label):
         """
@@ -280,80 +225,145 @@ class CombinatorialSpecificationSearcher(object):
         start = time.time()
         obj = self.objectdb.get_object(label)
         expanding = self.objectdb.number_times_expanded(label)
-        strategy_generators = self.strategy_generators[expanding]
-        for generator in strategy_generators:
-            for strategy in generator(obj, **self.kwargs):
-                if not isinstance(strategy, Strategy):
-                    print(strategy, file=sys.stderr)
-                    print(strategy.formal_step, file=sys.stderr)
-                    print(generator, file=sys.stderr)
-                    raise TypeError("Strategy given not of the right form.")
+        strategies = self.strategy_generators[expanding]
 
-                if not strategy.back_maps:
-                    start -= time.time()
-                    objects = [self._inferral(o) for o in strategy.objects]
-                    start += time.time()
-                else:
-                    objects = strategy.objects
-
-                for ob, work in zip(objects, strategy.workable):
-                    start -= time.time()
-                    self.try_verify(ob)
-                    start += time.time()
-                    if work:
-                        self.objectdb.set_expandable(ob)
-
-                if strategy.back_maps:
-                    if all(self.objectdb.is_expandable(o) for o in objects):
-                        self.objectdb.set_workably_decomposed(label)
-
-                if not strategy.back_maps:
-                    start -= time.time()
-                    objects = [o for o in objects if not self.is_empty(o)]
-                    start += time.time()
-                # TODO: put information about deleted empty strategy.objects into the
-                #       formal step
-
-                start -= time.time()
-                for ob in objects:
-                    if self.symmetry:
-                        self._symmetry_expand(ob)
-                    self._equivalent_expand(ob)
-                start += time.time()
-
-                if not objects:
-                    # all the tilings are empty so the tiling itself must be empty!
-                    self.objectdb.set_empty(label)
-                    self.objectdb.set_verified(label, "This tiling contains no avoiding perms")
-                    self.objectdb.set_strategy_verified(label)
-                    self.equivdb.update_verified(label)
-                    break
-                # If we have an equivalent strategy
-                elif len(objects) == 1:
-                    other_label = self.objectdb.get_label(objects[0])
-                    self.equivdb.union(label, other_label, strategy.formal_step)
-                    if not (self.is_expanded(other_label)
-                            or self.objectdb.is_expanding_other_sym(other_label)):
-                        self.objectqueue.add_to_working(other_label)
-                else:
-                    end_labels = [self.objectdb.get_label(o) for o in objects]
-                    self.ruledb.add(label, end_labels, strategy.formal_step)
-                    for end_label in end_labels:
-                        if (self.is_expanded(end_label)
-                            or self.objectdb.is_expanding_other_sym(end_label)):
-                            continue
-                        self.objectqueue.add_to_next(end_label)
-                if strategy.back_maps is not None:
-                    if label not in self.ruledb.back_maps:
-                        self.ruledb.back_maps[label] = {}
-                    self.ruledb.back_maps[label][tuple(sorted(end_labels))] = strategy.back_maps
+        total_time = time.time() - start
+        for strategy_generator in strategies:
+            # function returns time it took.
+            total_time += self._expand_object_with_strategy(obj,
+                                                            strategy_generator,
+                                                            label)
 
         if not self.is_expanded(label):
             self.objectdb.increment_expanded(label)
             self.expanded_objects[expanding] += 1
-            self.expansion_times[expanding] += time.time() - start
+            self.expansion_times[expanding] += total_time
             if not self.is_expanded(label):
                 self.objectqueue.add_to_curr(label)
+
+    def _expand_object_with_strategy(self, obj, strategy_generator, label, equivalent=False):
+        """
+        Will expand the object with given strategy.
+
+        If equivalent, then only allow equivalent strategies to be applied and
+        return objects found.
+        """
+        start = time.time()
+        if equivalent:
+            equivalent_objects = []
+        for strategy in strategy_generator(obj, **self.kwargs):
+            if not isinstance(strategy, Strategy):
+                raise TypeError("Attempting to add non strategy type.")
+            if equivalent and len(strategy.objects) != 1:
+                raise TypeError("Attempting to combine non equivalent strategy.")
+            start -= time.time()
+            objects, formal_step = self._strategy_cleanup(strategy)
+            start += time.time()
+            end_labels = [self.objectdb.get_label(o) for o in objects]
+
+            if strategy.decomposition:
+                if all(self.objectdb.is_expandable(x) for x in end_labels):
+                    self.objectdb.set_workably_decomposed(label)
+
+            if not end_labels:
+                # all the tilings are empty so the tiling itself must be empty!
+                self._add_empty_rule(label, "batch empty")
+                break
+            elif not self.forward_equivalence and len(end_labels) == 1:
+                # If we have an equivalent strategy
+                self._add_equivalent_rule(label, end_labels[0],
+                                          formal_step, not equivalent)
+                if equivalent:
+                    equivalent_objects.append(objects[0])
+            else:
+                self._add_rule(label, end_labels,
+                               strategy.back_maps, formal_step)
+
+        # this return statements only purpose if for timing.
+        if equivalent:
+            return time.time() - start, equivalent_objects
+        return time.time() - start
+
+    def _add_equivalent_rule(self, start, end, explanation=None, working=False):
+        """Add equivalent strategy to equivdb and equivalent object to queue"""
+        if explanation is None:
+            explanation = "They are equivalent."
+        self.equivdb.union(start, end, explanation)
+        if not (self.is_expanded(end)
+                or self.objectdb.is_expanding_other_sym(end)):
+            if working:
+                self.objectqueue.add_to_working(end)
+            else:
+                self.objectqueue.add_to_next(end)
+
+    def _add_rule(self, start, ends, back_maps=None, explanation=None):
+        """Add rule to the rule database and end labels to queue."""
+        if explanation is None:
+            explanation = "Some strategy."
+        self.ruledb.add(start,
+                        ends,
+                        explanation,
+                        back_maps)
+        for end_label in ends:
+            if (self.is_expanded(end_label)
+                or self.objectdb.is_expanding_other_sym(end_label)):
+                continue
+            self.objectqueue.add_to_next(end_label)
+
+    def _add_empty_rule(self, label, explanation=None):
+        """Mark label as empty. Treated as verified as can count empty set."""
+        if self.objectdb.is_empty(label):
+            return
+        self.objectdb.set_empty(label)
+        # TODO: when new proof tree class, don't enumerate by this formal step.
+        self.objectdb.set_verified(label, "This tiling contains no avoiding perms.")
+        self.objectdb.set_strategy_verified(label)
+        self.equivdb.update_verified(label)
+
+    def _strategy_cleanup(self, strategy):
+        """
+        Return cleaned strategy.
+
+        - infer objects
+        - try to verify objects
+        - set workability of objects
+        - remove empty objects
+        - symmetry expand objects
+        - equivalent expand object.
+        """
+        end_objects = []
+        inferral_steps = []
+        for ob, work in zip(strategy.objects, strategy.workable):
+            inferral_step = ""
+            if not strategy.decomposition:
+                ob, inferral_step = self._inferral(ob)
+            else:
+                inferral_step = ""
+
+            self.try_verify(ob)
+
+            if self.symmetry:
+                self._symmetry_expand(ob)
+
+            if not strategy.decomposition:
+                if self.is_empty(ob):
+                    inferral_steps.append(inferral_step + "Tiling is empty.")
+                    continue
+            if work:
+                self.objectdb.set_expandable(ob)
+                self._equivalent_expand(ob)
+
+            end_objects.append(ob)
+            inferral_steps.append(inferral_step)
+
+        inferral_step = "~"
+        for i, s in enumerate(inferral_steps):
+            inferral_step = inferral_step + "[" + str(i) + ": " + s + "]"
+        inferral_step = inferral_step + "~"
+        formal_step = strategy.formal_step + inferral_step
+
+        return end_objects, formal_step
+
 
     def is_expanded(self, label):
         """Return True if an object has been expanded by all strategies."""
@@ -366,13 +376,14 @@ class CombinatorialSpecificationSearcher(object):
         """Add symmetries of object to the database."""
         start = time.time()
         if not self.objectdb.is_symmetry_expanded(obj):
-            for sym_o in self._symmetric_objects(obj):
+            for sym_o, formal_step in self._symmetric_objects(obj,
+                                                              explanation=True):
                 self.objectdb.add(sym_o,
                                   expanding_other_sym=True,
                                   symmetry_expanded=True)
                 self.equivdb.union(self.objectdb.get_label(obj),
                                    self.objectdb.get_label(sym_o),
-                                   "a symmetry")
+                                   formal_step)
         self.symmetry_time += time.time() - start
 
     def _equivalent_expand(self, obj):
@@ -382,51 +393,25 @@ class CombinatorialSpecificationSearcher(object):
         It will apply the equivalence strategies as often as possible to
         find as many equivalent objects as possible.
         """
-        if not self.objectdb.is_expandable(obj):
+        if (not self.objectdb.is_expandable(obj)
+                or self.objectdb.is_equivalent_expanded(obj)
+                    or self.objectdb.is_expanding_other_sym(obj)):
             return
-        start = time.time()
-        equivalent_objects = set([obj])
-        objects_to_expand = set([obj])
+        total_time = 0
+        label = self.objectdb.get_label(obj)
+        objects_to_expand = set()
+        for strategy_generator in self.equivalence_strategy_generators:
+            t, eq_objs = self._expand_object_with_strategy(obj,
+                                                           strategy_generator,
+                                                           label,
+                                                           equivalent=True)
+            total_time += t
+            objects_to_expand.update(eq_objs)
+        self.objectdb.set_equivalent_expanded(obj)
 
-        while objects_to_expand:
-            # For each object to be expanded and
-            obj = objects_to_expand.pop()
-            if self.objectdb.is_equivalent_expanded(obj):
-                continue
-            label = self.objectdb.get_label(obj)
-            for generator in self.equivalence_strategy_generators:
-                # for all equivalent strategies
-                for strategy in generator(obj,
-                                          **self.kwargs):
-
-                    if (not isinstance(strategy, Strategy)
-                            or len(strategy.objects) != 1):
-                        raise TypeError("Attempting to combine non equivalent strategy.")
-
-                    formal_step = strategy.formal_step
-                    start -= time.time()
-                    eq_object = self._inferral(strategy.objects[0])
-                    start += time.time()
-
-                    # If we have already seen this object while building, we skip it
-                    if eq_object in equivalent_objects:
-                        continue
-
-                    self.objectdb.add(eq_object, expandable=strategy.workable[0])
-                    eq_label = self.objectdb.get_label(eq_object)
-                    self.equivdb.union(label, eq_label, formal_step)
-                    # Add it to the equivalent objects found
-                    equivalent_objects.add(eq_object)
-                    # And the objects to be checked for equivalencesß
-                    objects_to_expand.add(eq_object)
-                    start -= time.time()
-                    self._symmetry_expand(eq_object)
-                    self.try_verify(eq_object)
-                    start += time.time()
-                    self.objectqueue.add_to_next(eq_label)
-            self.objectdb.set_equivalent_expanded(obj)
-        self.equivalent_time += time.time() - start
-
+        for eqv_obj in objects_to_expand:
+            self._equivalent_expand(eqv_obj)
+        self.equivalent_time += total_time
 
     def do_level(self):
         """Expand objects in current queue. Objects found added to next."""
@@ -606,8 +591,8 @@ class CombinatorialSpecificationSearcher(object):
             print("", file=file)
             print("The strategies being used are:", file=file)
             equiv_strats = self._strategies_to_str(self.equivalence_strategy_generators)
-            infer_strats = self._strategies_to_str(self.inferral_strategy_generators)
-            verif_strats = self._strategies_to_str(self.verif_strat_gen)
+            infer_strats = self._strategies_to_str(self.inferral_strategies)
+            verif_strats = self._strategies_to_str(self.verification_strategies)
             print("Equivalent: {}".format(equiv_strats), file=file)
             print("Inferral: {}".format(infer_strats), file=file)
             print("Verification: {}".format(verif_strats), file=file)
@@ -650,47 +635,103 @@ class CombinatorialSpecificationSearcher(object):
                     status_start = time.time()
 
     def has_proof_tree(self):
+        """Return True if a proof tree has been found, false otherwise."""
         return self._has_proof_tree
+
+    def tree_search_prep(self, empty=False, complement=False):
+        """
+        Return rule dictionary ready for tree searcher.
+
+        Also adds complement verified rules when applicable. If empty preps to
+        search for empty proof trees.
+        """
+        start_time = time.time()
+        rules_dict = defaultdict(set)
+
+        rules_to_add = []
+        for rule in self.ruledb:
+            if self.complement_verify:
+                complement_rule = self.complement_verified(rule)
+                if complement_rule is not None:
+                    rules_to_add.append((complement_rule, rule))
+                    self._add_rule_to_rules_dict(complement_rule, rules_dict)
+                else:
+                    self._add_rule_to_rules_dict(rule, rules_dict)
+            else:
+                self._add_rule_to_rules_dict(rule, rules_dict)
+
+        for rules in rules_to_add:
+            good_rule, old_rule = rules
+            start, ends = good_rule
+            self._add_rule(start, ends, explanation="Complement verified.")
+            self.ruledb.remove(*old_rule)
+
+
+        if empty:
+            for label in self.objectdb.empty_labels():
+                verified_label = self.equivdb[label]
+                rules_dict[verified_label] |= set(((),))
+        else:
+            for label in self.objectdb.verified_labels():
+                verified_label = self.equivdb[label]
+                rules_dict[verified_label] |= set(((),))
+
+        self.prepping_for_tree_search_time += time.time() - start_time
+        return rules_dict
+
+    def _add_rule_to_rules_dict(self, rule, rules_dict):
+        """Add a rule to given dictionary."""
+        first, rest = rule
+        eqv_first = self.equivdb[first]
+        eqv_rest = tuple(sorted(self.equivdb[x] for x in rest))
+        rules_dict[eqv_first] |= set((tuple(eqv_rest),))
+
+    def complement_verified(self, rule):
+        """Return complement verified rule if exists due to rule, else None"""
+        first, rest = rule
+        if self.equivdb.is_verified(first):
+            unverified_labels = [l for l in rest if not self.equivdb.is_verified(l)]
+            if len(unverified_labels) == 1:
+                complement_first = unverified_labels[0]
+                return (complement_first,
+                        (first, ) + tuple(l for l in rest if l != complement_first))
 
     def find_tree(self):
         """Search for a tree based on current data found."""
         start = time.time()
-        rules_dict = defaultdict(set)
-        # convert rules to equivalent labels
-        for rule in self.ruledb:
-            first, rest = rule
-            first = self.equivdb[first]
-            rest = tuple(sorted(self.equivdb[x] for x in rest))
-            # this means union
-            rules_dict[first] |= set((tuple(rest),))
-        # add an empty rule, that represents verified in the tree searcher
-        for label in self.objectdb.verified_labels():
-            verified_label = self.equivdb[label]
-            rules_dict[verified_label] |= set(((),))
 
-        self.prepping_for_tree_search_time += time.time() - start
-        self._time_taken += time.time() - start
-        start = time.time()
-        # Prune all unverifiable labels (recursively)
+        rules_dict_empty = self.tree_search_prep(empty=True)
+        first_start = time.time()
+        # Prune all unempty labels (recursively)
+        rules_dict_empty = prune(rules_dict_empty)
+        # only empty labels in rules_dict, in particular, there is an empty tree
+        # if the start label is in the rules_dict
+        for label in rules_dict_empty.keys():
+            self._add_empty_rule(label, "Tree search empty")
+        self.tree_search_time += time.time() - first_start
+
+        rules_dict = self.tree_search_prep()
+
+        second_start = time.time()
+        # Prune all unverified labels (recursively)
         rules_dict = prune(rules_dict)
 
+        # only verified labels in rules_dict, in particular, there is an proof
+        # tree if the start label is in the rules_dict
         for label in rules_dict.keys():
             self.equivdb.update_verified(label)
 
-        # only verified labels in rules_dict, in particular, there is a tree if
-        # the start label is in the rules_dict
         if self.equivdb[self.start_label] in rules_dict:
             self._has_proof_tree = True
             # print("A tree was found! :)")
             _, proof_tree = proof_tree_bfs(rules_dict, root=self.equivdb[self.start_label])
             # print(proof_tree)
-            self.tree_search_time += time.time() - start
-            self._time_taken += time.time() - start
-            return proof_tree
         else:
-            self.tree_search_time += time.time() - start
-            # print("No tree was found. :(")
+            proof_tree = None
+
+        self.tree_search_time += time.time() - second_start
         self._time_taken += time.time() - start
+        return proof_tree
 
     def get_proof_tree(self, count=False):
         """

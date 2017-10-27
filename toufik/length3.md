@@ -138,3 +138,96 @@ Table 1, page 2
 - 238.4 http://permpal.ru.is/perms/av/1324_1342_1423/ Interleaving (point) on ATRAP
 - 238.5 http://permpal.ru.is/perms/av/1243_1342_1423/ Interleaving on ATRAP
 - 239 Done in "Nine classes of permutations enumerated by binomial transform of Fine’s sequence"
+
+## Callan, D., & Mansour, T. (2017, May 2). Enumeration of small Wilf classes avoiding 1324 and two other 4-letter patterns. arXiv.org
+
+**14/28**
+1 more are fake interleaving, so should be easy
+2 more are point interleaving, so might be doable with forward equivalence and kernel method
+
+- 49 http://permpal.ru.is/perms/av/1324_2341_4123/ Interleaving on ATRAP
+- 69 http://permpal.ru.is/perms/av/1234_1324_3412/ Interleaving on ATRAP
+- 72 1243, 1324, 3412 not on permpal
+- 75 1243, 1324, 4231 not on permpal
+- 76 1324, 2341, 3412 not on permpal
+- 80 http://permpal.ru.is/perms/av/1243_1432_4231/
+- 84 1324, 1432, 4231 not on permpal
+- 86 http://permpal.ru.is/perms/av/1324_2431_3412/ Interleaving on ATRAP (but fake)
+- 88 http://permpal.ru.is/perms/av/1243_2143_4231/
+- 93 http://permpal.ru.is/perms/av/1243_2413_4231/
+- 99 http://permpal.ru.is/perms/av/1324_2413_4231/
+- 132 http://permpal.ru.is/perms/av/1324_2341_2413/
+- 150 1243, 1342, 4231 not on permpal
+- 151 http://permpal.ru.is/perms/av/1243_2431_4231/
+- 153 1324, 1342, 4231 not on permpal
+- 156 http://permpal.ru.is/perms/av/1324_2341_2431/
+- 158 http://permpal.ru.is/perms/av/1324_1342_3412/
+- 180 http://permpal.ru.is/perms/av/1324_2431_4132/
+- 184 http://permpal.ru.is/perms/av/1324_2431_3241/
+- 187 http://permpal.ru.is/perms/av/1324_1342_3241/
+- 193 http://permpal.ru.is/perms/av/1324_2413_3241/
+- 195 http://permpal.ru.is/perms/av/1243_1324_2341/ Interleaving (point) on ATRAP
+- 210 http://permpal.ru.is/perms/av/1243_1324_2431/ Interleaving on ATRAP
+- 211 1234, 1324, 2341 not on permpal
+- 212 http://permpal.ru.is/perms/av/1324_2413_2431/
+- 213 http://permpal.ru.is/perms/av/1324_1342_2431/
+- 231 http://permpal.ru.is/perms/av/1324_1342_2341/ Interleaving (point) on ATRAP
+- 241 1243, 1324, 1432 not on permpal
+
+## Callan, D., & Mansour, T. (2017, July 30). Enumeration of small Wilf classes avoiding 1342 and two other 4-letter patterns. arXiv.org
+
+**18/35**
+
+- 77 http://permpal.ru.is/perms/av/1243_2314_3412/ Interleaving on ATRAP
+- 90 http://permpal.ru.is/perms/av/1243_2431_3412/
+- 103 http://permpal.ru.is/perms/av/1342_2314_4123/ Interleaving (point) on ATRAP
+- 106 http://permpal.ru.is/perms/av/1342_2143_3412/ Interleaving on ATRAP
+- 118 http://permpal.ru.is/perms/av/1234_1342_3412/ Interleaving on ATRAP
+- 130 http://permpal.ru.is/perms/av/1342_3124_3412/
+- 131 http://permpal.ru.is/perms/av/1243_2314_4123/ Interleaving on ATRAP
+- 133 http://permpal.ru.is/perms/av/1342_2143_2314/
+- 159 http://permpal.ru.is/perms/av/1243_1342_3412/
+- 162 http://permpal.ru.is/perms/av/1342_3412_4123/ Interleaving on ATRAP
+- 163 http://permpal.ru.is/perms/av/1342_2314_3412/
+- 164 http://permpal.ru.is/perms/av/1342_2341_4123/ Interleaving on ATRAP
+- 165 http://permpal.ru.is/perms/av/1243_2431_4132/ Interleaving on ATRAP
+- 175 http://permpal.ru.is/perms/av/1342_2413_4123/
+- 176 http://permpal.ru.is/perms/av/1342_2143_2431/
+- 178 http://permpal.ru.is/perms/av/1342_2314_2431/
+- 182 http://permpal.ru.is/perms/av/1342_2143_4132/ Interleaving on ATRAP
+- 190 http://permpal.ru.is/perms/av/1342_2413_3124/
+- 192 http://permpal.ru.is/perms/av/1243_1342_2431/
+- 194 http://permpal.ru.is/perms/av/1243_2314_2341/ Interleaving (point) on ATRAP
+- 197 http://permpal.ru.is/perms/av/1243_2413_4132/
+- 198 http://permpal.ru.is/perms/av/1234_1342_4123/ Interleaving on ATRAP
+- 199 http://permpal.ru.is/perms/av/1243_1342_4123/ Interleaving on ATRAP
+- 204 http://permpal.ru.is/perms/av/1243_1342_3124/ Interleaving on ATRAP
+- 208 http://permpal.ru.is/perms/av/1234_1342_3124/ Interleaving on ATRAP
+- 214 http://permpal.ru.is/perms/av/1342_2341_3412/ Interleaving on ATRAP
+- 217 1243, 1342, 4132 not on permpal
+- 219 http://permpal.ru.is/perms/av/1342_2413_3412/
+- 220 http://permpal.ru.is/perms/av/1342_2413_3241/
+- 222 http://permpal.ru.is/perms/av/1243_2143_2431/
+- 223 http://permpal.ru.is/perms/av/1243_1342_2413/
+- 224 http://permpal.ru.is/perms/av/1342_1423_2431/
+- 226 http://permpal.ru.is/perms/av/1342_2143_2413/
+- 232 http://permpal.ru.is/perms/av/1234_1342_2341/ Interleaving (point) on ATRAP
+- 242 http://permpal.ru.is/perms/av/1342_1423_1432/ System of equations
+
+## Callan, D., Mansour, T., & Shattuck, M. (2017, September 13). Enumeration of permutations avoiding a triple of 4-letter patterns is all done. arXiv.org
+
+**4/13**
+
+- 74 http://permpal.ru.is/perms/av/1234_1243_3412/ Interleaving on ATRAP
+- 109 http://permpal.ru.is/perms/av/1243_2143_3412/
+- 121 http://permpal.ru.is/perms/av/1243_2341_3412/ Interleaving on ATRAP
+- 125 1243, 2341, 4123 not on permpal
+- 149 1234, 2341, 3412 not on permpal
+- 185 1234, 2341, 4123 not on permpal
+- 188 1432, 2143, 3214 not on permpal
+- 209 http://permpal.ru.is/perms/av/1243_1432_2413/ System of equations
+- 216 http://permpal.ru.is/perms/av/2143_2413_3412/ Interleaving on ATRAP
+- 225 http://permpal.ru.is/perms/av/1243_2413_3142/
+- 228 http://permpal.ru.is/perms/av/1432_2143_2413/ System of equations
+- 230 http://permpal.ru.is/perms/av/1234_1243_2341/ Interleaving (point) on ATRAP
+- 240 1243, 1432, 2143 not on permpal

@@ -127,7 +127,10 @@ class ProofTree(JsonAble):
         if root.recurse:
             rhs = reduce(mul, [funcs[child.identifier](x) for child in root.children], 1)
         elif root.children:
-            rhs = reduce(add, [funcs[child.identifier](x) for child in root.children], 0)
+            if "Complement verified" in root.formal_step:
+                rhs = funcs[root.children[0].identifier](x) - reduce(add, [funcs[child.identifier](x) for child in root.children[1:]], 0)
+            else:
+                rhs = reduce(add, [funcs[child.identifier](x) for child in root.children], 0)
         elif "contains no" in root.formal_step:
             rhs = 0
         else:
@@ -142,8 +145,10 @@ class ProofTree(JsonAble):
             raise RuntimeError("Can not find generating function, due to interleaving decomposition. ")
         funcs = self.get_funcs()
         f = funcs[self.root.identifier]
-        avoid = self.root.in_tiling[Cell(i=0,j=0)]
-        avoid = Av(lex_min(list(avoid.basis)))
+        # avoid = self.root.in_tiling[Cell(i=0,j=0)]
+        from permuta import Perm
+        avoid = [Perm((0,1,2))]
+        avoid = Av(lex_min(list(avoid)))
         substitutions = {}
         fcache = {}
         eqs = self.get_equations(funcs, avoid, substitutions, fcache)

@@ -22,6 +22,6 @@ def is_one_by_one_verified(tiling, basis=None, **kwargs):
 
 
 def one_by_one_verification(tiling, basis, **kwargs):
-    """Yield a verification strategy if one by one verified."""
+    """Returns a verification strategy if one by one verified."""
     if is_one_by_one_verified(tiling, basis):
-        yield VerificationStrategy("Verified because it is a one by one tiling with a subclass")
+        return VerificationStrategy("Verified because it is a one by one tiling with a subclass")

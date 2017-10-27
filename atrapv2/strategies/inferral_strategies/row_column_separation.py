@@ -343,4 +343,4 @@ def row_and_column_separation(tiling, basis, basis_partitioning=None, **kwargs):
         '''we only return it if it is different'''
         # TODO: add the rows and columns separated to the formal_step
         formal_step = "Separated the rows and columns"
-        yield InferralStrategy(formal_step, separated_tiling)
+        return InferralStrategy(formal_step, separated_tiling)

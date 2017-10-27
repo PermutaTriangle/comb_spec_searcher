@@ -38,7 +38,7 @@ def subobstruction_inferral_rec(tiling, **kwargs):
                         possibly_empty=tiling.possibly_empty,
                         obstructions=tiling.obstructions + tuple(adding))
 
-    yield InferralStrategy(
+    return InferralStrategy(
         ("Adding the following obstructions: \n{}"
          ).format("\n".join(map(str, adding))),
          new_tiling)
@@ -82,7 +82,7 @@ def subobstruction_inferral(tiling, **kwargs):
            possibly_empty=tiling.possibly_empty,
            obstructions=tiling.obstructions + tuple(addedobstructions))
     if tiling != new_tiling:
-        yield InferralStrategy(
+        return InferralStrategy(
             ("The cells {} imply the reduction to the following obstructions: \n{}"
              ).format(removedcells, "\n".join(map(str, addedobstructions))),
              new_tiling)
