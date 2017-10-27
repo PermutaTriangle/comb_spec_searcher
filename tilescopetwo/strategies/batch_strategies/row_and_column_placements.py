@@ -14,6 +14,8 @@ def row_placements(tiling, all_positive_in_row=True, **kwargs):
         if all_positive_in_row:
             if not all(c in tiling.positive_cells or c in tiling.point_cells for c in row):
                 continue
+        if len(row) == 1 and row[0] in tiling.point_cells:
+            continue
         if not all(tiling.only_positive_in_col(c) for c in row):
             continue
         north = []
@@ -154,6 +156,8 @@ def col_placements(tiling, all_positive_in_col=True, **kwargs):
         if all_positive_in_col:
             if not all(c in tiling.positive_cells or c in tiling.point_cells for c in col):
                 continue
+        if len(col) == 1 and col[0] in tiling.point_cells:
+            continue
         if not all(tiling.only_positive_in_row(c) for c in col):
             continue
         left = []

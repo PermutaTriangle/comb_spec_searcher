@@ -5,14 +5,23 @@ import collections
 
 
 class LRUCache:
-    def __init__(self, capacity):
+    def __init__(self, capacity, compress=False, obj_type=None):
         self.capacity = capacity
         self.cache = collections.OrderedDict()
+        self.compress = compress
+        if self.compress:
+            if obj_type is None:
+                raise ValueError("Need to declare type for decompression")
+            self.obj_type = obj_type
 
     def get(self, key):
+        if self.compress:
+            key = key.compress()
         try:
             value = self.cache.pop(key)
             self.cache[key] = value
+            if self.compress:
+                return self.obj_type.decompress(value[0]), value[1]
             return value
         except KeyError:
             return None
@@ -21,6 +30,9 @@ class LRUCache:
         return self.cache.pop(key)
 
     def set(self, key, value):
+        if self.compress:
+            key = key.compress()
+            value = (value[0].compress(), value[1])
         try:
             self.cache.pop(key)
         except KeyError:
@@ -32,4 +44,6 @@ class LRUCache:
         return len(self.cache)
 
     def __contains__(self, key):
+        if self.compress:
+            key = key.compress()
         return key in self.cache

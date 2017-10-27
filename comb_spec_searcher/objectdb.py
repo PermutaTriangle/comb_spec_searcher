@@ -187,6 +187,12 @@ class ObjectDB(object):
             if self.is_verified(x):
                 yield x
 
+    def empty_labels(self):
+        """Yield all the labels that are verified."""
+        for x in self.label_to_info:
+            if self.is_empty(x):
+                yield x
+
     def is_strategy_verified(self, key):
         """Return True if object verified by a strategy."""
         return self._get_info(key).strategy_verified
