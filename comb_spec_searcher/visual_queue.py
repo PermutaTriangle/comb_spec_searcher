@@ -155,8 +155,14 @@ class VisNode:
 
 class ObjNode(mpatches.Circle, VisNode):
     def __init__(self, center, raw_tree, *args, **kwargs):
+        self.original_color = None
         super().__init__(center, NODE_RADIUS, *args, **kwargs)
         self.raw_tree = raw_tree
+
+    def set_facecolor(self, color):
+        super().set_facecolor(color)
+        if self.original_color is None:
+            self.original_color = color
 
 
 class CtrlNode(mpatches.Rectangle, VisNode):
@@ -176,6 +182,7 @@ class TreeLine(Line2D):
             *args,
             color=Color.EDGE,
             linewidth=LINE_WIDTH,
+            zorder=-100,
             **kwargs,
         )
 
@@ -265,13 +272,14 @@ class VisualQueue:
             if found_patch:
                 patch = self.last_hover
                 if isinstance(patch, ObjNode):
+                    # TODO: Do more efficiently
                     for obj_node in self.obj_nodes:
                         if obj_node.raw_tree.label == patch.raw_tree.label:
-                            obj_node.set_linewidth(10)
-                            obj_node.set_edgecolor(Color.EMPH)
+                            obj_node.set_radius(obj_node.radius + .05)
+                            obj_node.set_facecolor(Color.EMPH)
                         else:
-                            obj_node.set_linewidth(0)
-
+                            obj_node.set_radius(NODE_RADIUS)
+                            obj_node.set_facecolor(obj_node.original_color)
 
     def pick_event_handler(self, event):
         if event.mouseevent.button != 1 or self.done:
