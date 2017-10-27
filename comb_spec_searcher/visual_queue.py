@@ -115,15 +115,19 @@ LEVEL_DIFF = 1
 LINE_WIDTH = 3
 
 
+LIGHT = True
+
+
 class Color:
-    NORMAL = Solarized.orange
+    NORMAL = Solarized.violet
     VERIFIED = Solarized.green
-    PICKABLE = Solarized.orange
-    EQUIVALENCE = Solarized.base1
+    #PICKABLE = Solarized.blue
+    EQUIVALENCE = Solarized.base1 if LIGHT else Solarized.base01
     SUM = Solarized.blue
-    PRODUCT = Solarized.violet
-    BACKGROUND = Solarized.base3
-    EDGE = Solarized.base1
+    PRODUCT = Solarized.cyan
+    BACKGROUND = Solarized.base3 if LIGHT else Solarized.base03
+    EDGE = Solarized.base1 if LIGHT else Solarized.base01
+    EMPH = Solarized.yellow
 
 
 class Flag(enum.Enum):
@@ -215,6 +219,7 @@ class VisualQueue:
         self.expanded = set()  # List of obj node labels that have been passed to tree
         self.show_children = set()  # List of node identifiers that has been clicked on (alternates to off)
         self.nodes = set()
+        self.obj_nodes = set()
         self.done = False  # True iff currently just displaying non-interactive proof tree
         # Create figure
         self.fig = plt.figure()
@@ -245,16 +250,28 @@ class VisualQueue:
 
     def hover_event_handler(self, event):
         with self.lock:
+            found_patch = False
             for patch in self.nodes:
-                if patch.contains(event)[0] and (self.last_hover is None
-                                                 or patch.raw_tree.label != self.last_hover.raw_tree.label):
-                    self.last_hover = patch
-                    print()
-                    print("HOVERING OVER:")
-                    print()
-                    print(patch.raw_tree.get_description())
-                    print()
+                if patch.contains(event)[0]:
+                    if self.last_hover is None or patch.raw_tree.label != self.last_hover.raw_tree.label:
+                        found_patch = True
+                        self.last_hover = patch
+                        print()
+                        print("HOVERING OVER:")
+                        print()
+                        print(patch.raw_tree.get_description())
+                        print()
                     break
+            if found_patch:
+                patch = self.last_hover
+                if isinstance(patch, ObjNode):
+                    for obj_node in self.obj_nodes:
+                        if obj_node.raw_tree.label == patch.raw_tree.label:
+                            obj_node.set_linewidth(10)
+                            obj_node.set_edgecolor(Color.EMPH)
+                        else:
+                            obj_node.set_linewidth(0)
+
 
     def pick_event_handler(self, event):
         if event.mouseevent.button != 1 or self.done:
@@ -308,9 +325,9 @@ class VisualQueue:
             branch_labels = tuple(self.tilescope.objectdb.get_label(child.in_tiling)
                                   for child in proof_tree.children)
 
-            debug_print("In and out tiling for ", raw_tree.label, ":", sep="")
-            debug_print(proof_tree.in_tiling)
-            debug_print(proof_tree.out_tiling)
+            debug_print("+++ Proof tree rooted at", raw_tree.label)
+            if not proof_tree.children and not proof_tree.strategy_verified:
+                debug_print("+++ Possible need to resolve recursion")
 
             out_label = self.tilescope.objectdb.get_label(proof_tree.out_tiling)
 
@@ -320,7 +337,8 @@ class VisualQueue:
                 eqv_ctrl_raw_tree = RawTree(children=[])
                 eqv_ctrl_raw_tree.data.add(Flag.CONTROL)
                 eqv_ctrl_raw_tree.data.add(Flag.EQUIVALENCE)
-                eqv_ctrl_raw_tree.get_description = lambda: "Equivalent to the following because: (TODO)"
+                eqv_ctrl_raw_tree.get_description = lambda l=raw_tree.label, el=out_label: \
+                    self.tilescope.equivdb.get_explanation(l, el)
                 eqv_obj_raw_tree = RawTree(out_label, children=[])
                 eqv_ctrl_raw_tree.children.append(eqv_obj_raw_tree)
                 raw_tree.children.append(eqv_ctrl_raw_tree)
@@ -473,6 +491,7 @@ class VisualQueue:
     def draw_to_mpl(self, draw_tree_root, raw_tree_root):
         # Use the computed coordinates to do plot the raw data
         self.nodes = set()
+        self.obj_nodes = set()
         self.ax.cla()  # Clear axes
 
         frontier = deque()
@@ -499,10 +518,10 @@ class VisualQueue:
             if Flag.OBJECT in data:
                 # Node is an object node
                 node = ObjNode(xy, raw_tree)
-                if Flag.EXPANDABLE in data:
-                    # Change color to notify of expandability
-                    node.set_color(Color.PICKABLE)
-                elif Flag.VERIFIED in data:
+#                if Flag.EXPANDABLE in data:
+#                    # Change color to notify of expandability
+#                    node.set_color(Color.PICKABLE)
+                if Flag.VERIFIED in data:
                     node.set_color(Color.VERIFIED)
                 else:
                     node.set_color(Color.NORMAL)
@@ -536,6 +555,8 @@ class VisualQueue:
             node.set_picker(True)
             self.ax.add_patch(node)
             self.nodes.add(node)
+            if Flag.OBJECT in raw_tree.data:
+                self.obj_nodes.add(node)
 
             # Add children to drawing frontier as well
             frontier.extend((child_raw, child_draw, xy)
