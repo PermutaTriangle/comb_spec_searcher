@@ -102,7 +102,10 @@ class ZoomPan:
         return onMotion
 
 
-DEBUG = True
+DEBUG = False
+LIGHT = True
+AUTOSCALE = True
+
 
 
 def debug_print(*args, **kwargs):
@@ -113,9 +116,6 @@ def debug_print(*args, **kwargs):
 NODE_RADIUS = .2
 LEVEL_DIFF = 1
 LINE_WIDTH = 3
-
-
-LIGHT = True
 
 
 class Color:
@@ -248,7 +248,6 @@ class VisualQueue:
         self.zp.zoom_factory(self.ax, 1.1)
         self.zp.pan_factory(self.ax)
         self.redraw_tree()
-        ax.autoscale()  # Perhaps unnecessary
         # Register redrawing function with tilescope
         self.tilescope.post_expand_objects_functions.append((self.redraw_tree, [], {}))
         # Make plot interactive and show it
@@ -573,7 +572,8 @@ class VisualQueue:
 
         # Redraw and scale viewport if needed
 
-        #self.ax.autoscale()  # TODO: Will commenting this suffice to keep viewport?
+        if AUTOSCALE:
+            self.ax.autoscale()
         self.fig.canvas.draw()
 
     def next(self):
