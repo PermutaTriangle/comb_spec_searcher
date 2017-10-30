@@ -36,7 +36,44 @@ class ProofTree(object):
         #     raise TypeError("Requires a CombinatorialSpecificationSearcher.")
         if not isinstance(root, tree_searcher_node):
             raise TypeError("Requires a tree searcher node, treated as root.")
+        proof_tree = ProofTree(ProofTree.from_comb_spec_searcher_node(root, css))
+        proof_tree._recursion_fixer(css)
         return ProofTree(ProofTree.from_comb_spec_searcher_node(root, css))
+
+    def _recursion_fixer(self, css, root=None, in_labels=None):
+        if root is None:
+            root = self.root
+        if in_labels is None:
+            in_labels = list(self.non_recursive_in_labels())
+        if root.recursion:
+            in_label = root.label
+            for eqv_label in in_labels:
+                if css.equivdb.equivalent(in_label, eqv_label):
+                    # eqv label is the one we want
+                    break
+            print(in_label)
+            assert css.equivdb.equivalent(in_label, eqv_label)
+
+            eqv_path = css.equivdb.find_path(in_label, eqv_label)
+            eqv_objs = [css.objectdb.get_object(l) for l in eqv_path]
+            eqv_explanations = [css.equivdb.get_explanation(x, y) for x, y in zip(eqv_path[:-1], eqv_path[1:])]
+
+            root.eqv_path_labels = eqv_path
+            root.eqv_path_objects = eqv_objs
+            root.eqv_explanations = eqv_explanations
+        for child in root.children:
+            self._recursion_fixer(css, child, in_labels)
+
+
+
+    def non_recursive_in_labels(self, root=None):
+        if root is None:
+            root = self.root
+        if not root.recursion:
+            yield root.eqv_path_labels[0]
+        for child in root.children:
+            for x in self.non_recursive_in_labels(child):
+                yield x
 
 
     @classmethod
@@ -106,16 +143,15 @@ class ProofTree(object):
                                      formal_step=formal_step,
                                      children=strat_children)
 
-    def pretty_print(self, tab="----"):
-        self._pretty_print_helper(self.root, tab=tab)
-
-    def _pretty_print_helper(self, root, tab="----"):
-        for i, o in enumerate(root.eqv_path_objects):
-            print(tab, repr(o))
-            print()
-            if len(root.eqv_explanations) != i:
-                explanation = root.eqv_explanations[i]
-                print(tab, explanation)
-                print()
-            for child in root.children:
-                self._pretty_print_helper(child, tab=tab+tab)
+    # def pretty_print(self, tab="----"):
+    #     self._pretty_print_helper(self.root, tab=tab)
+    #
+    # def _pretty_print_helper(self, root, tab="----"):
+    #     print(tab)
+    #     for i, o in enumerate(root.eqv_path_objects):
+    #         print(repr(o))
+    #         if len(root.eqv_explanations) != i:
+    #             explanation = root.eqv_explanations[i]
+    #             print(explanation)
+    #         for child in root.children:
+    #             self._pretty_print_helper(child, tab=tab+tab)

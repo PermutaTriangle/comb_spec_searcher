@@ -89,7 +89,6 @@ class EquivalenceDB(object):
         """Return how two objects are equivalent using explanations."""
         if obj == other_obj:
             return ""
-        print(obj, other_obj)
 
         path = self.find_path(obj, other_obj)
         if path:
@@ -107,7 +106,6 @@ class EquivalenceDB(object):
                         new_explanation = self.explanations[key]
                         new_explanation = "The reverse of: " + new_explanation
                         explanation = explanation + new_explanation + ". | "
-            print(explanation)
             return explanation
         raise KeyError("They are not equivalent.")
 
