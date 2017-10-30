@@ -85,13 +85,13 @@ class EquivalenceDB(object):
                 equivalent_objs.add(t)
         return equivalent_objs
 
-    def get_explanation(self, obj, other_obj, with_path=False):
+    def get_explanation(self, obj, other_obj):
         """Return how two objects are equivalent using explanations."""
         if obj == other_obj:
             return ""
+        print(obj, other_obj)
 
-        if path is None:
-            path = self.find_path(obj, other_obj)
+        path = self.find_path(obj, other_obj)
         if path:
             explanation = "| "
             for i in range(len(path) - 1):
@@ -107,8 +107,7 @@ class EquivalenceDB(object):
                         new_explanation = self.explanations[key]
                         new_explanation = "The reverse of: " + new_explanation
                         explanation = explanation + new_explanation + ". | "
-            if with_path:
-                return explanation, path
+            print(explanation)
             return explanation
         raise KeyError("They are not equivalent.")
 
@@ -126,6 +125,8 @@ class EquivalenceDB(object):
         """
         if not self.equivalent(obj, other_obj):
             raise KeyError("The objects given are not equivalent.")
+        if obj == other_obj:
+            return [obj]
         equivalent_objs = {}
         reverse_map = {}
 

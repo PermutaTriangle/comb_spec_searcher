@@ -86,3 +86,9 @@ class RuleDB(object):
         if end not in self.explanations[start]:
             raise KeyError("No such strategy.")
         return self.explanations[start][end]
+
+    def get_back_maps(self, start, end):
+        end = tuple(sorted(end))
+        if start in self.back_maps:
+            if end in self.back_maps[start]:
+                return self.back_maps[start][end]

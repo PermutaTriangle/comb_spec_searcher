@@ -21,6 +21,8 @@ from .objectdb_compress import CompressedObjectDB
 
 from .tree_searcher import proof_tree_bfs, prune
 
+from .proof_tree import ProofTree as NewProofTree
+
 
 class CombinatorialSpecificationSearcher(object):
     """
@@ -699,8 +701,16 @@ class CombinatorialSpecificationSearcher(object):
     def equivalent_strategy_verified_label(self, label):
         """Return equivalent strategy verified label if one exists, else None"""
         for eqv_label in self.equivdb.equivalent_set(label):
-            if self.object.is_strategy_verified(eqv_label):
+            if self.objectdb.is_strategy_verified(eqv_label):
                 return eqv_label
+
+    def rule_from_equivence_rule(self, eqv_start, eqv_ends):
+        for rule in self.ruledb:
+            start, ends = rule
+            if not self.equivdb.equivalent(start, eqv_start):
+                continue
+            if tuple(sorted(eqv_ends)) == tuple(sorted(self.equivdb[l] for l in ends)):
+                return start, ends
 
     def find_tree(self):
         """Search for a tree based on current data found."""
@@ -738,6 +748,14 @@ class CombinatorialSpecificationSearcher(object):
         self.tree_search_time += time.time() - second_start
         self._time_taken += time.time() - start
         return proof_tree
+
+    def alternative_get_proof_tree(self):
+        """Return proof tree if one exists."""
+        proof_tree_node = self.find_tree()
+        if proof_tree_node is not None:
+            proof_tree = NewProofTree.from_comb_spec_searcher(proof_tree_node, self)
+            return proof_tree
+
 
     def get_proof_tree(self, count=False):
         """
