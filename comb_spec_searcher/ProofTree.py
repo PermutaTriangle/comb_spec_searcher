@@ -10,7 +10,7 @@ from collections import Counter
 from functools import reduce
 from operator import add, mul
 
-__all__ = ["ProofTree", "ProofTreeNode"]
+__all__ = ("ProofTree", "ProofTreeNode")
 
 
 class ProofTreeNode(JsonAble):

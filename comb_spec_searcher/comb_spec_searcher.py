@@ -696,6 +696,12 @@ class CombinatorialSpecificationSearcher(object):
                 return (complement_first,
                         (first, ) + tuple(l for l in rest if l != complement_first))
 
+    def equivalent_strategy_verified_label(self, label):
+        """Return equivalent strategy verified label if one exists, else None"""
+        for eqv_label in self.equivdb.equivalent_set(label):
+            if self.object.is_strategy_verified(eqv_label):
+                return eqv_label
+
     def find_tree(self):
         """Search for a tree based on current data found."""
         start = time.time()
