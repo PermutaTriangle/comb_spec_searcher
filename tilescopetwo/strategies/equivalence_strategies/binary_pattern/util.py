@@ -55,7 +55,7 @@ def is_binary_force(patt, force, basis=[]):
     return True
 
 
-def force_backtrack(patt, cur_force, index, basis, maxlen):
+def force_backtrack_fail(patt, cur_force, index, basis, maxlen):
     if len(cur_force) == maxlen:
         return
     if index < len(patt):
@@ -69,6 +69,22 @@ def force_backtrack(patt, cur_force, index, basis, maxlen):
                 for f in force_backtrack(patt, next_force, index + 1,
                                          basis, maxlen):
                     yield f
+
+
+def force_backtrack(patt, cur_force, basis, maxlen):
+    if is_binary_force(patt, cur_force, basis):
+        yield cur_force
+        return
+    if len(cur_force) == maxlen:
+        return
+    forced = set(i for (i, d) in cur_force)
+    for i in range(len(patt)):
+        if i in forced:
+            continue
+        for d in DIRS:
+            next_force = cur_force + [(i, d)]
+            for binforce in force_backtrack(patt, next_force, basis, maxlen):
+                yield binforce
 
 
 def generate_binary_forces_of_length(patt, length, basis=[]):
@@ -90,10 +106,10 @@ def generate_binary_forces(patt, basis=[]):
 
 
 def generate_minimal_binary_forces(patt, basis=[], maxlen=None):
-    if is_binary_force(patt, [], basis):
-        yield tuple()
-        return
+    # if is_binary_force(patt, [], basis):
+        # yield tuple()
+        # return
     if maxlen is None:
         maxlen = len(patt)
-    for f in force_backtrack(patt, [], 0, basis, maxlen):
+    for f in force_backtrack(patt, [], basis, maxlen):
         yield f
