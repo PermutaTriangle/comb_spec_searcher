@@ -12,9 +12,7 @@ def subset_verified(tiling, basis=None, **kwargs):
         raise TypeError
 
     if len(tiling) <= 1:
-        for verification_strategy in one_by_one_verification(tiling, basis):
-            yield verification_strategy
-        return
+        return one_by_one_verification(tiling, basis)
 
     else:
         # We only need to check permutations up to this length because any longer
@@ -40,4 +38,4 @@ def subset_verified(tiling, basis=None, **kwargs):
 
         # Tiling is verified if all perms avoid; i.e., none contain
         if verified:
-            yield VerificationStrategy("The tiling is a subset of the subclass")
+            return VerificationStrategy("The tiling is a subset of the subclass")

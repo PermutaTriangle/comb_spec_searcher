@@ -14,7 +14,7 @@ from permuta.misc import flatten
 def components(tiling,
                interleaving_decomposition=True,
                point_interleaving=False,
-               unions=True,
+               unions=False,
                workable=True,
                **kwargs):
     """

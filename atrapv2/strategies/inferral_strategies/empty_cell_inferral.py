@@ -6,7 +6,7 @@ from comb_spec_searcher import InferralStrategy
 
 
 def empty_cell_inferral(tiling, basis=None, **kwargs):
-    """Yield InferralStrategy by removing all empty cells."""
+    """Return InferralStrategy by removing all empty cells."""
     new_tiling_dict = dict(tiling)
 
     point_cells = {}
@@ -29,4 +29,4 @@ def empty_cell_inferral(tiling, basis=None, **kwargs):
         new_tiling = Tiling(new_tiling_dict)
         formal_step = "The cells {} are empty."
         formal_step = formal_step.format(tuple(cells_removed))
-        yield InferralStrategy(formal_step, new_tiling)
+        return InferralStrategy(formal_step, new_tiling)

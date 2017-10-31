@@ -32,8 +32,8 @@ class ATRAPStrategyPack(StrategyPack):
                                          ver_strats,
                                          inf_strats,
                                          chain.from_iterable(other_strats)))
-            print(all_strats_used)
-            print(list((strat.func, strat.func in ATRAPStrategyPack._valid_with_reqins) if isinstance(strat, functools.partial) else (strat, strat in ATRAPStrategyPack._valid_with_reqins) for strat in all_strats_used))
+            # print(all_strats_used)
+            # print(list((strat.func, strat.func in ATRAPStrategyPack._valid_with_reqins) if isinstance(strat, functools.partial) else (strat, strat in ATRAPStrategyPack._valid_with_reqins) for strat in all_strats_used))
             if not all((strat in ATRAPStrategyPack._valid_with_reqins or
                         (isinstance(strat, functools.partial) and
                          strat.func in ATRAPStrategyPack._valid_with_reqins))

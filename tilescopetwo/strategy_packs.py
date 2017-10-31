@@ -68,75 +68,12 @@ point_separation_and_row_col_placements = ATRAPStrategyPack(
                         partial(col_placements, all_positive_in_col=False)]],
          name="row_and_column_placements_with_subobstruction_inferral")
 
-# binary_force = ATRAPStrategyPack(
-    # eq_strats=[all_point_placements],
-    # ver_strats=[subset_verified],
-    # inf_strats=[subobstruction_inferral],
-    # other_strats=[[components], [all_cell_insertions],
-                  # [partial(forced_binary_pattern, maxlen=3, forcelen=2)]],
-    # name="binary_force")
-
-binary_force = ATRAPStrategyPack(
-    eq_strats=[all_point_placements],
-    ver_strats=[subset_verified, database_verified],
-    inf_strats=[subobstruction_inferral],
-    other_strats=[[components], [all_cell_insertions],
-                  [forced_binary_pattern]],
-    name="binary_force")
-
-binary_force_rowcolsep = ATRAPStrategyPack(
-    eq_strats=[],
-    ver_strats=[subset_verified],
-    inf_strats=[subobstruction_inferral, row_and_column_separation],
-    other_strats=[[components], [all_cell_insertions, row_placements, col_placements],
-                  [forced_binary_pattern]],
-    name="binary_force w/ row-col separation")
-
-binary_force_rowcolsep_database = ATRAPStrategyPack(
-    eq_strats=[],
-    ver_strats=[subset_verified, database_verified],
-    inf_strats=[subobstruction_inferral, row_and_column_separation],
-    other_strats=[[components], [all_cell_insertions, row_placements, col_placements],
-                  [partial(forced_binary_pattern, forcelen=1)]],
-    name="binary_force w/ row-col separation and database verification")
-
-binary_force_christian = ATRAPStrategyPack(
-    eq_strats=[],
-    ver_strats=[subset_verified, database_verified],
-    inf_strats=[subobstruction_inferral, row_and_column_separation],
-    other_strats=[[components], [all_cell_insertions], [partial(forced_binary_pattern, forcelen=1)]],
-    name="binary_force for the 'HARD' case")
-
 binary_force_only = ATRAPStrategyPack(
     eq_strats=[partial(forced_binary_pattern, forcelen=1)],
     ver_strats=[],
     inf_strats=[],
     other_strats=[[partial(all_requirement_insertions, maxreqlength=3)]],
     name="binary_force w/ row-col separation and database verification")
-
-binary_force_rowcolsep_database = ATRAPStrategyPack(
-    eq_strats=[partial(forced_binary_pattern, forcelen=2), point_separation],
-    ver_strats=[subset_verified, database_verified],
-    inf_strats=[subobstruction_inferral, row_and_column_separation],
-    other_strats=[[components], [all_cell_insertions, row_placements, col_placements],
-                  [partial(all_requirement_insertions, patterns=[Perm((0, 1, 2))])]],
-    name="binary_force w/ row-col separation and database verification")
-
-binary_force_rowcolsep_database = ATRAPStrategyPack(
-    eq_strats=[partial(all_requirement_insertions, patterns=[Perm((0, 1, 2))])],
-    ver_strats=[subset_verified, database_verified],
-    inf_strats=[subobstruction_inferral, row_and_column_separation],
-    other_strats=[[components], [all_cell_insertions, row_placements, col_placements],
-                  [partial(forced_binary_pattern, forcelen=2)]],
-    name="binary_force w/ row-col separation and database verification")
-
-# binary_force_rowcolsep_subobrec = ATRAPStrategyPack(
-#     eq_strats=[],
-#     ver_strats=[subset_verified],
-#     inf_strats=[subobstruction_inferral, row_and_column_separation],
-#     other_strats=[[components], [all_cell_insertions, row_placements, col_placements],
-#                   [forced_binary_pattern]],
-#     name="binary_force w/ row-col separation, recursive subob inferral")
 
 point_separation_and_isolation = ATRAPStrategyPack(
          eq_strats=[point_separation],

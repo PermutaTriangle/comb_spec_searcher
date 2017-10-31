@@ -31,6 +31,7 @@ class TileScope(CombinatorialSpecificationSearcher):
                  interleaving_decomposition=True,
                  symmetry=False,
                  forward_equivalence=False,
+                 complement_verify=True,
                  objectqueue=ObjectQueue,
                  start_tiling=None):
         """Initialise TileScope."""
@@ -65,6 +66,7 @@ class TileScope(CombinatorialSpecificationSearcher):
                                         strategy_pack=strategy_pack,
                                         symmetry=symmetries,
                                         forward_equivalence=forward_equivalence,
+                                        complement_verify=complement_verify,
                                         objectqueue=objectqueue,
                                         is_empty_strategy=is_empty_strategy,
                                         function_kwargs=function_kwargs)
