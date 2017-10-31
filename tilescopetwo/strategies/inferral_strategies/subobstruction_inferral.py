@@ -4,6 +4,7 @@ from itertools import combinations, chain
 from math import factorial
 from collections import defaultdict
 from copy import copy
+from itertools import chain
 
 
 
@@ -58,7 +59,7 @@ def can_add_obstruction(tiling, obstruction, positive_cells):
 def subobstruction_inferral(tiling, **kwargs):
     addedobstructions = []
     removedcells = []
-    for cell in tiling.positive_cells:
+    for cell in chain(tiling.positive_cells, tiling.point_cells):
         obstructions = [ob.remove_cells((cell,))
                         for ob in tiling.obstructions
                         if sum(1 for _ in ob.points_in_cell(cell)) == 1]
