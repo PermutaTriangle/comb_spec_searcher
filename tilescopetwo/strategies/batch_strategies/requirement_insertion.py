@@ -3,7 +3,7 @@ from permuta import PermSet, Perm
 from grids_two import Obstruction, Requirement, Tiling
 
 
-def all_requirement_insertions(tiling, **kwargs):
+def all_requirement_insertions(tiling, basis, **kwargs):
     if tiling.dimensions != (1, 1):
         return
 
@@ -31,7 +31,7 @@ def all_requirement_insertions(tiling, **kwargs):
                              "the target patterns {}").format(req.patt,
                                                               patterns))
 
-    for patt in PermSet(len(req) + 1):
+    for patt in PermSet.avoiding(basis).of_length(len(req) + 1):
         if patterns and not any(p.contains(patt) for p in patterns):
             continue
         yield Strategy(

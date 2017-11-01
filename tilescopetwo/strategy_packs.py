@@ -69,11 +69,12 @@ point_separation_and_row_col_placements = ATRAPStrategyPack(
          name="row_and_column_placements_with_subobstruction_inferral")
 
 binary_force_only = ATRAPStrategyPack(
-    eq_strats=[partial(forced_binary_pattern, forcelen=1)],
-    ver_strats=[],
-    inf_strats=[],
-    other_strats=[[partial(all_requirement_insertions, maxreqlength=3)]],
-    name="binary_force w/ row-col separation and database verification")
+ver_strats=[subset_verified],
+    inf_strats=[subobstruction_inferral, row_and_column_separation],
+    other_strats=[[all_cell_insertions],
+                  [partial(all_requirement_insertions, maxreqlength=4)],
+                  [partial(components, unions=True)]],
+    name="binary_force w/ row-col separation and cell insertions"))
 
 point_separation_and_isolation = ATRAPStrategyPack(
          eq_strats=[point_separation],

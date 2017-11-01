@@ -8,6 +8,9 @@ from copy import copy
 
 
 def subobstruction_inferral_rec(tiling, **kwargs):
+    '''Can't handle requirements, so rage quit.'''
+    if tiling.requirements:
+        return
 
     positive_cells = list(tiling.positive_cells.union(tiling.point_cells))
 
@@ -56,6 +59,10 @@ def can_add_obstruction(tiling, obstruction, positive_cells):
 
 
 def subobstruction_inferral(tiling, **kwargs):
+    '''Can't handle requirements, so rage quit.'''
+    if tiling.requirements:
+        return
+    
     addedobstructions = []
     removedcells = []
     for cell in tiling.positive_cells:
