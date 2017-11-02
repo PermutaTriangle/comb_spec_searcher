@@ -10,7 +10,7 @@ from collections import Counter
 from functools import reduce
 from operator import add, mul
 
-__all__ = ["ProofTree", "ProofTreeNode"]
+__all__ = ("ProofTree", "ProofTreeNode")
 
 
 class ProofTreeNode(JsonAble):
@@ -145,15 +145,11 @@ class ProofTree(JsonAble):
             raise RuntimeError("Can not find generating function, due to interleaving decomposition. ")
         funcs = self.get_funcs()
         f = funcs[self.root.identifier]
-        # avoid = self.root.in_tiling[Cell(i=0,j=0)]
-        from permuta import Perm
-        avoid = [Perm((0,1,2))]
-        avoid = Av(lex_min(list(avoid)))
+        avoid = self.root.in_tiling[Cell(i=0,j=0)]
+        avoid = Av(lex_min(list(avoid.basis)))
         substitutions = {}
         fcache = {}
         eqs = self.get_equations(funcs, avoid, substitutions, fcache)
-        #for eq in eqs:
-        #    print(eq)
         solutions = solve(eqs, tuple([eq.lhs for eq in eqs]), dict=True, cubics=False, quartics=False, quintics=False)
         any_valid = False
         if solutions:
@@ -168,6 +164,8 @@ class ProofTree(JsonAble):
                 except StopIteration:
                     continue
                 any_valid = True
+                print("actual", coeffs)
+                print("trees", expansion)
                 if coeffs == expansion:
                     sol = genf.expand().simplify()
                     if expand:

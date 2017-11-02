@@ -742,7 +742,7 @@ class CombinatorialSpecificationSearcher(object):
         """
         proof_tree_node = self.find_tree()
         if proof_tree_node is not None:
-            proof_tree = ProofTree(self._get_proof_tree(proof_tree_node))
+            proof_tree = ProofTree(self._get_proof_tree(proof_tree_node, in_label=self.start_label))
             # print(proof_tree.to_json())
             if count:
                 function = proof_tree.get_genf()
