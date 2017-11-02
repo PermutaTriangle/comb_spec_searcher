@@ -150,8 +150,6 @@ class ProofTree(JsonAble):
         substitutions = {}
         fcache = {}
         eqs = self.get_equations(funcs, avoid, substitutions, fcache)
-        #for eq in eqs:
-        #    print(eq)
         solutions = solve(eqs, tuple([eq.lhs for eq in eqs]), dict=True, cubics=False, quartics=False, quintics=False)
         any_valid = False
         if solutions:
@@ -166,6 +164,8 @@ class ProofTree(JsonAble):
                 except StopIteration:
                     continue
                 any_valid = True
+                print("actual", coeffs)
+                print("trees", expansion)
                 if coeffs == expansion:
                     sol = genf.expand().simplify()
                     if expand:

@@ -19,7 +19,7 @@ def subobstruction_inferral_rec(tiling, **kwargs):
     for obstruction in tiling.obstructions:
         if all(c not in positive_cells for c in obstruction.pos):
             continue
-        for subobstruction in obstruction.all_subobs():
+        for subobstruction in obstruction.all_subperms():
             subobstructions.add(subobstruction)
 
     adding = []
@@ -60,13 +60,15 @@ def can_add_obstruction(tiling, obstruction, positive_cells):
 
 
 def subobstruction_inferral(tiling, **kwargs):
+    raise ValueError("subobstruction_inferral is broken")
     '''Can't handle requirements, so rage quit.'''
     if tiling.requirements:
         return
-    
+
     addedobstructions = []
     removedcells = []
-    for cell in chain(tiling.positive_cells, tiling.point_cells):
+    positive_cells = list(tiling.positive_cells.union(tiling.point_cells))
+    for cell in positive_cells:
         obstructions = [ob.remove_cells((cell,))
                         for ob in tiling.obstructions
                         if sum(1 for _ in ob.points_in_cell(cell)) == 1]
@@ -85,10 +87,22 @@ def subobstruction_inferral(tiling, **kwargs):
                     print("count", count)
                 addedobstructions.append(ob)
                 removedcells.append(cell)
+
+    for ob in addedobstructions:
+        if not can_add_obstruction(tiling, ob, positive_cells):
+            print(repr(ob))
+            print(tiling.to_old_tiling())
+            for o in tiling:
+                print(repr(o))
+            print("count",sum(1 for o in obstructions if o in ob))
+            print("theo", ((sum(1 for _ in ob.get_points_row(cell[1])) + 1) *
+                         (sum(1 for _ in ob.get_points_col(cell[0])) + 1)))
+            assert False
     new_tiling = Tiling(point_cells=tiling.point_cells,
            positive_cells=tiling.positive_cells,
            possibly_empty=tiling.possibly_empty,
            obstructions=tiling.obstructions + tuple(addedobstructions))
+
     if tiling != new_tiling:
         return InferralStrategy(
             ("The cells {} imply the reduction to the following obstructions: \n{}"

@@ -756,4 +756,5 @@ class CombinatorialSpecificationSearcher(object):
         proof_tree_node = self.find_tree()
         if proof_tree_node is not None:
             proof_tree = ProofTree.from_comb_spec_searcher(proof_tree_node, self)
+            assert proof_tree is not None
             return proof_tree
