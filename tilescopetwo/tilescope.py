@@ -34,7 +34,7 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
                  symmetry=False,
                  forward_equivalence=False,
                  compress=False,
-                 complement_verify=True,
+                 complement_verify=False,
                  objectqueue=ObjectQueue,
                  start_tiling=None):
         """Initialise TileScope."""
