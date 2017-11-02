@@ -1,12 +1,14 @@
 # from comb_spec_searcher import CombinatorialSpecificationSearcher
 from .tree_searcher import Node as tree_searcher_node
+import sys
+
 
 class ProofTreeNode(object):
     def __init__(self, label, eqv_path_labels, eqv_path_objects,
                  eqv_explanations=[], children=[], strategy_verified=False,
                  comlement_verified=False, decomposition=False,
                  disjoint_union=False, recursion=False, formal_step="",
-                 back_maps=None, forward_maps=None, dependencies=[]):
+                 back_maps=None, forward_maps=None):
         self.label = label
         self.eqv_path_labels = eqv_path_labels
         self.eqv_path_objects = eqv_path_objects
@@ -20,9 +22,8 @@ class ProofTreeNode(object):
         self.recursion = recursion
         # TODO: Add assertions for assumptions made about each type of strategy.
         self.formal_step = formal_step
-        self.back_maps = []
+        self.back_maps = back_maps
         self.forward_maps = forward_maps
-        self.dependencies = dependencies
 
 class ProofTree(object):
     def __init__(self, root):
@@ -75,6 +76,37 @@ class ProofTree(object):
             for x in self.non_recursive_in_labels(child):
                 yield x
 
+    def to_old_proof_tree(self):
+        from .ProofTree import ProofTree as OldProofTree
+        old_proof_tree = OldProofTree(self._to_old_proof_tree_node(self.root))
+        return old_proof_tree
+
+
+    def _to_old_proof_tree_node(self, root):
+        from .ProofTree import ProofTreeNode as OldProofTreeNode
+        relation = ""
+        for x in relation:
+            relation = relation + x
+        return OldProofTreeNode(root.formal_step,
+                                root.eqv_path_objects[0].to_old_tiling(),
+                                root.eqv_path_objects[-1].to_old_tiling(),
+                                relation,
+                                root.label,
+                                children=[self._to_old_proof_tree_node(x) for x in root.children],
+                                recurse=root.back_maps,
+                                strategy_verified=root.strategy_verified)
+
+    def to_json(self):
+        """Return json of old proof tree class."""
+        return self.to_old_proof_tree().to_json()
+
+    def pretty_print(self, file=sys.stderr):
+        """Pretty print using olf proof tree class."""
+        self.to_old_proof_tree().pretty_print(file=file)
+
+    def get_genf(self):
+        """Try to enumerate using olf proof tree class."""
+        return self.to_old_proof_tree().get_genf()
 
     @classmethod
     def from_comb_spec_searcher_node(cls, root, css, in_label=None):
@@ -128,6 +160,7 @@ class ProofTree(object):
                 #decomposition!
                 return ProofTreeNode(label, eqv_path, eqv_objs,
                                      eqv_explanations, decomposition=True,
+                                     back_maps=back_maps,
                                      formal_step=formal_step,
                                      children=strat_children)
             else:
@@ -136,22 +169,8 @@ class ProofTree(object):
                     return ProofTreeNode(label, eqv_path, eqv_objs,
                                          eqv_explanations,
                                          complement_verified=True,
-                                         back_maps=back_maps,
                                          formal_step=formal_step)
                 return ProofTreeNode(label, eqv_path, eqv_objs,
                                      eqv_explanations, disjoint_union=True,
                                      formal_step=formal_step,
                                      children=strat_children)
-
-    # def pretty_print(self, tab="----"):
-    #     self._pretty_print_helper(self.root, tab=tab)
-    #
-    # def _pretty_print_helper(self, root, tab="----"):
-    #     print(tab)
-    #     for i, o in enumerate(root.eqv_path_objects):
-    #         print(repr(o))
-    #         if len(root.eqv_explanations) != i:
-    #             explanation = root.eqv_explanations[i]
-    #             print(explanation)
-    #         for child in root.children:
-    #             self._pretty_print_helper(child, tab=tab+tab)

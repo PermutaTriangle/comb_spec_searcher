@@ -5,7 +5,6 @@ from collections import defaultdict
 
 from .equivdb import EquivalenceDB
 from .LRUCache import LRUCache
-from .ProofTree import ProofTree, ProofTreeNode
 from .ruledb import RuleDB
 
 from .strategies import InferralStrategy
@@ -21,7 +20,7 @@ from .objectdb_compress import CompressedObjectDB
 
 from .tree_searcher import proof_tree_bfs, prune
 
-from .proof_tree import ProofTree as NewProofTree
+from .proof_tree import ProofTree as ProofTree
 
 
 class CombinatorialSpecificationSearcher(object):
@@ -749,109 +748,12 @@ class CombinatorialSpecificationSearcher(object):
         self._time_taken += time.time() - start
         return proof_tree
 
-    def alternative_get_proof_tree(self):
-        """Return proof tree if one exists."""
-        proof_tree_node = self.find_tree()
-        if proof_tree_node is not None:
-            proof_tree = NewProofTree.from_comb_spec_searcher(proof_tree_node, self)
-            return proof_tree
-
 
     def get_proof_tree(self, count=False):
         """
         Return proof tree if one exists.
-
-        If count=True, then will return proof_tree, generating function where
-        possible.
         """
         proof_tree_node = self.find_tree()
         if proof_tree_node is not None:
-            proof_tree = ProofTree(self._get_proof_tree(proof_tree_node, in_label=self.start_label))
-            # print(proof_tree.to_json())
-            if count:
-                function = proof_tree.get_genf()
-                # print(f)
-                return proof_tree, function
+            proof_tree = ProofTree.from_comb_spec_searcher(proof_tree_node, self)
             return proof_tree
-        else:
-            pass
-            # print("There is no proof tree yet.")
-
-    def _get_proof_tree(self, proof_tree_node, in_label=None):
-        """Recursive function for returning the root node of the proof tree."""
-        label = proof_tree_node.label
-        children_labels = sorted([x.label for x in proof_tree_node.children])
-        if in_label is not None:
-            in_object = self.objectdb.get_object(in_label)
-        if children_labels:
-            for rule in self.ruledb:
-                start, ends = rule
-                if self.equivdb.equivalent(start, label):
-                    equiv_labels = [self.equivdb[x] for x in ends]
-                    if sorted(equiv_labels) == children_labels:
-                        # we have a match!
-                        formal_step = self.ruledb.explanation(start, ends)
-                        out_object = self.objectdb.get_object(start)
-                        if in_label is None:
-                            in_label = start
-                            in_object = out_object
-                        relation = self.equivdb.get_explanation(in_label, start)
-                        identifier = label
-                        children = []
-                        for next_label in ends:
-                            for child in proof_tree_node.children:
-                                if self.equivdb.equivalent(next_label, child.label):
-                                    children.append(self._get_proof_tree(child, next_label))
-                                    break
-                        back_maps = None
-                        if start in self.ruledb.back_maps:
-                            ends = tuple(sorted(ends))
-                            if ends in self.ruledb.back_maps[start]:
-                                back_maps = self.ruledb.back_maps[start][ends]
-                        return ProofTreeNode(formal_step,
-                                             in_object,
-                                             out_object,
-                                             relation,
-                                             identifier,
-                                             children=children,
-                                             recurse=back_maps,
-                                             strategy_verified=False)
-        else:
-            # we are verified by strategy or recursion
-            for oth_label in self.objectdb:
-                if (self.equivdb.equivalent(oth_label, label)
-                        and self.objectdb.is_strategy_verified(oth_label)):
-                    formal_step = self.objectdb.verification_reason(oth_label)
-                    children = []
-                    if in_label is None:
-                        in_label = oth_label
-                        in_object = out_object
-                    relation = self.equivdb.get_explanation(in_label, oth_label)
-                    out_object = self.objectdb.get_object(oth_label)
-                    identifier = label
-                    return ProofTreeNode(formal_step,
-                                         in_object,
-                                         out_object,
-                                         relation,
-                                         identifier,
-                                         children=children,
-                                         recurse=None,
-                                         strategy_verified=True)
-            # else we are recursively verified
-            formal_step = "recurse" # this formal step is needed as hard coded in Arnar's code.
-            if in_label is None:
-                in_object = self.objectdb.get_object(in_label)
-                out_object = in_object
-            else:
-                in_object = self.objectdb.get_object(in_label)
-                out_object = in_object
-            identifier = label
-            relation = self.equivdb.get_explanation(in_label, in_label)
-            return ProofTreeNode(formal_step,
-                                 in_object,
-                                 out_object,
-                                 relation,
-                                 identifier,
-                                 children=None,
-                                 recurse=None,
-                                 strategy_verified=False)
