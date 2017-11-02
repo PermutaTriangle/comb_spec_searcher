@@ -31,6 +31,46 @@ class ProofTree(object):
             raise TypeError("Root must be a ProofTreeNode.")
         self.root = root
 
+    def to_old_proof_tree(self):
+        from .ProofTree import ProofTree as OldProofTree
+        old_proof_tree = OldProofTree(self._to_old_proof_tree_node(self.root))
+        return old_proof_tree
+
+
+    def _to_old_proof_tree_node(self, root):
+        from .ProofTree import ProofTreeNode as OldProofTreeNode
+        relation = ""
+        for x in root.eqv_explanations:
+            relation = relation + x
+        return OldProofTreeNode(root.formal_step,
+                                root.eqv_path_objects[0].to_old_tiling(),
+                                root.eqv_path_objects[-1].to_old_tiling(),
+                                relation,
+                                root.label,
+                                children=[self._to_old_proof_tree_node(x) for x in root.children],
+                                recurse=root.back_maps,
+                                strategy_verified=root.strategy_verified)
+
+    def to_json(self):
+        """Return json of old proof tree class."""
+        return self.to_old_proof_tree().to_json()
+
+    def pretty_print(self, file=sys.stderr):
+        """Pretty print using olf proof tree class."""
+        self.to_old_proof_tree().pretty_print(file=file)
+
+    def get_genf(self):
+        """Try to enumerate using olf proof tree class."""
+        return self.to_old_proof_tree().get_genf()
+
+    def nodes(self, root=None):
+        if root is None:
+            root = self.root
+        yield root
+        for child in root.children:
+            for node in self.nodes(root=child):
+                yield node
+
     @classmethod
     def from_comb_spec_searcher(cls, root, css):
         # if not isinstance(css, CombinatorialSpecificationSearcher):
@@ -65,8 +105,6 @@ class ProofTree(object):
         for child in root.children:
             self._recursion_fixer(css, child, in_labels)
 
-
-
     def non_recursive_in_labels(self, root=None):
         if root is None:
             root = self.root
@@ -75,38 +113,6 @@ class ProofTree(object):
         for child in root.children:
             for x in self.non_recursive_in_labels(child):
                 yield x
-
-    def to_old_proof_tree(self):
-        from .ProofTree import ProofTree as OldProofTree
-        old_proof_tree = OldProofTree(self._to_old_proof_tree_node(self.root))
-        return old_proof_tree
-
-
-    def _to_old_proof_tree_node(self, root):
-        from .ProofTree import ProofTreeNode as OldProofTreeNode
-        relation = ""
-        for x in relation:
-            relation = relation + x
-        return OldProofTreeNode(root.formal_step,
-                                root.eqv_path_objects[0].to_old_tiling(),
-                                root.eqv_path_objects[-1].to_old_tiling(),
-                                relation,
-                                root.label,
-                                children=[self._to_old_proof_tree_node(x) for x in root.children],
-                                recurse=root.back_maps,
-                                strategy_verified=root.strategy_verified)
-
-    def to_json(self):
-        """Return json of old proof tree class."""
-        return self.to_old_proof_tree().to_json()
-
-    def pretty_print(self, file=sys.stderr):
-        """Pretty print using olf proof tree class."""
-        self.to_old_proof_tree().pretty_print(file=file)
-
-    def get_genf(self):
-        """Try to enumerate using olf proof tree class."""
-        return self.to_old_proof_tree().get_genf()
 
     @classmethod
     def from_comb_spec_searcher_node(cls, root, css, in_label=None):

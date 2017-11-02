@@ -10,6 +10,7 @@ class ATRAPStrategyPack(StrategyPack):
                           strats.all_requirement_insertions,
                           strats.forced_binary_pattern,
                           strats.components,
+                          strats.empty_cell_inferral,
                           strats.subobstruction_inferral,
                           strats.subobstruction_inferral_rec,
                           strats.row_and_column_separation,

@@ -65,6 +65,11 @@ class CombinatorialSpecificationSearcher(object):
         self.forward_equivalence = forward_equivalence
         self.complement_verify = complement_verify
 
+        if complement_verify:
+            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            print("WARNING: CAN LEAD TO TAUTOLOGIES!")
+            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+
         if strategy_pack is not None:
             if not isinstance(strategy_pack, StrategyPack):
                 raise TypeError("Strategy pack given not instance of strategy pack.")
