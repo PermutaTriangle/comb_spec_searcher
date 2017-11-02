@@ -31,6 +31,14 @@ class ProofTree(object):
             raise TypeError("Root must be a ProofTreeNode.")
         self.root = root
 
+    def print_equivalences(self):
+        for node in self.nodes():
+            print("===============")
+            print(node.label)
+            for o in node.eqv_path_objects:
+                print(o)
+                print()
+
     def to_old_proof_tree(self):
         from .ProofTree import ProofTree as OldProofTree
         old_proof_tree = OldProofTree(self._to_old_proof_tree_node(self.root))
@@ -92,7 +100,6 @@ class ProofTree(object):
                 if css.equivdb.equivalent(in_label, eqv_label):
                     # eqv label is the one we want
                     break
-            print(in_label)
             assert css.equivdb.equivalent(in_label, eqv_label)
 
             eqv_path = css.equivdb.find_path(in_label, eqv_label)
