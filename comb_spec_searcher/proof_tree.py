@@ -25,6 +25,7 @@ class ProofTreeNode(object):
         self.back_maps = back_maps
         self.forward_maps = forward_maps
 
+
 class ProofTree(object):
     def __init__(self, root):
         if not isinstance(root, ProofTreeNode):
@@ -87,28 +88,37 @@ class ProofTree(object):
             raise TypeError("Requires a tree searcher node, treated as root.")
         proof_tree = ProofTree(ProofTree.from_comb_spec_searcher_node(root, css))
         proof_tree._recursion_fixer(css)
-        return ProofTree(ProofTree.from_comb_spec_searcher_node(root, css))
+        return proof_tree
 
     def _recursion_fixer(self, css, root=None, in_labels=None):
         if root is None:
             root = self.root
         if in_labels is None:
+            print("The in labels are")
             in_labels = list(self.non_recursive_in_labels())
+            for l in in_labels:
+                print(l)
+                print(css.objectdb.get_object(l).to_old_tiling())
+                print()
+            print('==============')
         if root.recursion:
-            in_label = root.label
+            in_label = root.eqv_path_labels[0]
+            out_label = in_label
             for eqv_label in in_labels:
                 if css.equivdb.equivalent(in_label, eqv_label):
-                    # eqv label is the one we want
+                    out_label = eqv_label
                     break
-            assert css.equivdb.equivalent(in_label, eqv_label)
+            print("recurse becomes", in_label, "to", out_label)
+            assert css.equivdb.equivalent(in_label, out_label)
 
-            eqv_path = css.equivdb.find_path(in_label, eqv_label)
+            eqv_path = css.equivdb.find_path(in_label, out_label)
             eqv_objs = [css.objectdb.get_object(l) for l in eqv_path]
             eqv_explanations = [css.equivdb.get_explanation(x, y) for x, y in zip(eqv_path[:-1], eqv_path[1:])]
 
-            root.eqv_path_labels = eqv_path
-            root.eqv_path_objects = eqv_objs
+            root.eqv_path_labels = eqv_path_labels
+            root.eqv_path_objects = eqv_path_objects
             root.eqv_explanations = eqv_explanations
+
         for child in root.children:
             self._recursion_fixer(css, child, in_labels)
 
@@ -129,9 +139,8 @@ class ProofTree(object):
             raise TypeError("Requires a tree searcher node, treated as root.")
         label = root.label
         if in_label is None:
-            label = root.label
+            in_label = root.label
         else:
-            label = in_label
             assert css.equivdb.equivalent(root.label, in_label)
         children = root.children
 
@@ -139,7 +148,7 @@ class ProofTree(object):
             eqv_ver_label = css.equivalent_strategy_verified_label(label)
             if eqv_ver_label is not None:
                 #verified!
-                eqv_path = css.equivdb.find_path(label, eqv_ver_label)
+                eqv_path = css.equivdb.find_path(in_label, eqv_ver_label)
                 eqv_objs = [css.objectdb.get_object(l) for l in eqv_path]
                 eqv_explanations = [css.equivdb.get_explanation(x, y) for x, y in zip(eqv_path[:-1], eqv_path[1:])]
 
@@ -149,8 +158,8 @@ class ProofTree(object):
                                      formal_step=formal_step)
             else:
                 #recurse! we reparse these at the end, so recursed labels etc are not interesting.
-                return ProofTreeNode(label, [label],
-                                    [css.objectdb.get_object(label)],
+                return ProofTreeNode(label, [in_label],
+                                    [css.objectdb.get_object(in_label)],
                                     formal_step="recurse",
                                     recursion=True)
         else:
@@ -169,6 +178,7 @@ class ProofTree(object):
                     if css.equivdb.equivalent(next_label, child.label):
                         sub_tree = ProofTree.from_comb_spec_searcher_node(child, css, next_label)
                         strat_children.append(sub_tree)
+                        break
             if back_maps is not None:
                 #decomposition!
                 return ProofTreeNode(label, eqv_path, eqv_objs,
