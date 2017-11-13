@@ -115,8 +115,8 @@ class ProofTree(object):
             eqv_objs = [css.objectdb.get_object(l) for l in eqv_path]
             eqv_explanations = [css.equivdb.get_explanation(x, y) for x, y in zip(eqv_path[:-1], eqv_path[1:])]
 
-            root.eqv_path_labels = eqv_path_labels
-            root.eqv_path_objects = eqv_path_objects
+            root.eqv_path_labels = eqv_path
+            root.eqv_path_objects = eqv_objs
             root.eqv_explanations = eqv_explanations
 
         for child in root.children:

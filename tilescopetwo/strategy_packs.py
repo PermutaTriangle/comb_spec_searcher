@@ -82,6 +82,6 @@ point_separation_and_isolation = ATRAPStrategyPack(
          eq_strats=[point_separation],
          ver_strats=[subset_verified],
          inf_strats=[empty_cell_inferral, row_and_column_separation],
-         other_strats=[[components],
+         other_strats=[[partial(components, workable=False, unions=True)],
                        [all_cell_insertions, point_isolations]],
          name="point_separation_and_isolation")
