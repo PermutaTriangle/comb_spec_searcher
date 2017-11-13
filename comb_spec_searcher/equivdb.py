@@ -109,6 +109,12 @@ class EquivalenceDB(object):
             return explanation
         raise KeyError("They are not equivalent.")
 
+    def get_equiv_info(self, obj, other_obj):
+        path = self.find_path(obj, other_obj)
+        formal_step = self.get_explanation(obj, other_obj, path)
+
+
+
     def find_path(self, obj, other_obj):
         """
         BFS for shortest path.
@@ -117,6 +123,8 @@ class EquivalenceDB(object):
         """
         if not self.equivalent(obj, other_obj):
             raise KeyError("The objects given are not equivalent.")
+        if obj == other_obj:
+            return [obj]
         equivalent_objs = {}
         reverse_map = {}
 

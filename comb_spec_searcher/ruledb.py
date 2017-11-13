@@ -65,12 +65,19 @@ class RuleDB(object):
         if start in self.explanations:
             if end in self.explanations[start]:
                 self.explanations[start].pop(end)
+                if not self.explanations[start]:
+                    self.explanation.pop(start)
         if start in self.back_maps:
             if end in self.back_maps[start]:
                 self.back_maps[start].pop(end)
+                if not self.back_maps[start]:
+                    self.back_maps.pop(start)
         if start in self.rules_dict:
             if end in self.rules_dict[start]:
                 self.rules_dict[start].remove(end)
+                if not self.rules_dict[start]:
+                    self.back_maps.pop(start)
+
 
     def __iter__(self):
         """Iterate through rules as the pairs (start, end)."""
@@ -86,3 +93,9 @@ class RuleDB(object):
         if end not in self.explanations[start]:
             raise KeyError("No such strategy.")
         return self.explanations[start][end]
+
+    def get_back_maps(self, start, end):
+        end = tuple(sorted(end))
+        if start in self.back_maps:
+            if end in self.back_maps[start]:
+                return self.back_maps[start][end]

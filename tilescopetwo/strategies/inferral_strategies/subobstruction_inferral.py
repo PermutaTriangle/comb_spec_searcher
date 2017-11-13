@@ -1,11 +1,35 @@
-from grids_two import Tiling
+from grids_two import Tiling, Obstruction
+from permuta import Perm
 from comb_spec_searcher import InferralStrategy
 from itertools import combinations, chain
 from math import factorial
 from collections import defaultdict
 from copy import copy
+from itertools import chain
 
 
+def empty_cell_inferral(tiling, **kwargs):
+    positive_cells = list(tiling.positive_cells.union(tiling.point_cells))
+    adding = []
+    empty_cells = []
+    empty_ob = Obstruction.empty_perm()
+    if can_add_obstruction(tiling, empty_ob, positive_cells):
+        adding.append(empty_ob)
+    else:
+        for cell in tiling.possibly_empty:
+            ob = Obstruction.single_cell(Perm((0,)), cell)
+            if can_add_obstruction(tiling, ob, positive_cells):
+                adding.append(ob)
+                empty_cells.append(cell)
+
+
+    new_tiling = Tiling(point_cells=tiling.point_cells,
+                        positive_cells=tiling.positive_cells,
+                        possibly_empty=tiling.possibly_empty,
+                        obstructions=tiling.obstructions + tuple(adding))
+
+    return InferralStrategy("The cells {} are empty".format(empty_cells),
+                            new_tiling)
 
 def subobstruction_inferral_rec(tiling, **kwargs):
     '''Can't handle requirements, so rage quit.'''

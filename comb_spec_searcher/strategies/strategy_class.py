@@ -1,6 +1,10 @@
 '''
-A wrapper for strategies. This covers the types Batch, Equivalence and Recursion.
-Inferral and Verification have their own classes.
+A wrapper for strategies. This covers the types Batch, Equivalence and
+Decomposition. Inferral and Verification have their own classes.
+
+You should also declare the method needed for counting. The types supported for a
+strategy a -> b_1, b_2, ..., b_k are
+    - disjoint union: f(a)
 '''
 
 from collections import Iterable
@@ -17,8 +21,9 @@ class Strategy(object):
 
         if not isinstance(workable, Iterable):
             raise TypeError("Workable should an iterable")
+        if not objects:
             raise TypeError("There are no objects, a strategy contains a list of objects")
-        if any( not isinstance(x, bool) for x in workable ):
+        if any(not isinstance(x, bool) for x in workable):
             raise TypeError("Workable should be an iterable of booleans")
         if back_maps is not None:
             if any(not isinstance(hopefully_dict, dict) for hopefully_dict in back_maps):
