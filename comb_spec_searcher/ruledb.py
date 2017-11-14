@@ -66,7 +66,7 @@ class RuleDB(object):
             if end in self.explanations[start]:
                 self.explanations[start].pop(end)
                 if not self.explanations[start]:
-                    self.explanation.pop(start)
+                    self.explanations.pop(start)
         if start in self.back_maps:
             if end in self.back_maps[start]:
                 self.back_maps[start].pop(end)
@@ -76,7 +76,7 @@ class RuleDB(object):
             if end in self.rules_dict[start]:
                 self.rules_dict[start].remove(end)
                 if not self.rules_dict[start]:
-                    self.back_maps.pop(start)
+                    self.rules_dict.pop(start)
 
 
     def __iter__(self):

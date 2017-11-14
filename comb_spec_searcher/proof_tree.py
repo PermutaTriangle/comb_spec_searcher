@@ -145,7 +145,7 @@ class ProofTree(object):
         children = root.children
 
         if not children:
-            eqv_ver_label = css.equivalent_strategy_verified_label(label)
+            eqv_ver_label = css.equivalent_strategy_verified_label(in_label)
             if eqv_ver_label is not None:
                 #verified!
                 eqv_path = css.equivdb.find_path(in_label, eqv_ver_label)
@@ -168,7 +168,7 @@ class ProofTree(object):
             formal_step = css.ruledb.explanation(start, ends)
             back_maps = css.ruledb.get_back_maps(start, ends)
 
-            eqv_path = css.equivdb.find_path(label, start)
+            eqv_path = css.equivdb.find_path(in_label, start)
             eqv_objs = [css.objectdb.get_object(l) for l in eqv_path]
             eqv_explanations = [css.equivdb.get_explanation(x, y) for x, y in zip(eqv_path[:-1], eqv_path[1:])]
 
