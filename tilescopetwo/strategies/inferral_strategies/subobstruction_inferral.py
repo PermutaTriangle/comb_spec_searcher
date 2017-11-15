@@ -26,7 +26,8 @@ def empty_cell_inferral(tiling, **kwargs):
     new_tiling = Tiling(point_cells=tiling.point_cells,
                         positive_cells=tiling.positive_cells,
                         possibly_empty=tiling.possibly_empty,
-                        obstructions=tiling.obstructions + tuple(adding))
+                        obstructions=tiling.obstructions + tuple(adding),
+                        requirements=tiling.requirements)
 
     return InferralStrategy("The cells {} are empty".format(empty_cells),
                             new_tiling)
@@ -63,7 +64,8 @@ def subobstruction_inferral_rec(tiling, **kwargs):
     new_tiling = Tiling(point_cells=tiling.point_cells,
                         positive_cells=tiling.positive_cells,
                         possibly_empty=tiling.possibly_empty,
-                        obstructions=tiling.obstructions + tuple(adding))
+                        obstructions=tiling.obstructions + tuple(adding),
+                        requirements=tiling.requirements)
 
     return InferralStrategy(
         ("Adding the following obstructions: \n{}"
