@@ -1,5 +1,5 @@
 from tilescopetwo.strategies import *
-from atrapstrategypack import ATRAPStrategyPack
+from comb_spec_searcher import StrategyPack
 from functools import partial
 from permuta import Perm
 
@@ -7,42 +7,93 @@ from permuta import Perm
 # 'subobstruction_inferral_rec' but it is a lot slower. The function
 # 'subobstruction_inferral' is a subset of the work.
 
-point_placement = ATRAPStrategyPack(
+################################################################################
+###################### STRATEGY PACKS FOR RUN 15/11/2017 #######################
+################################################################################
+
+forced_patterns_3 = StrategyPack(
+        eq_strats=[forced_binary_pattern],
+        ver_strats=[subset_verified, database_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, unions=True)],
+                      [partial(all_requirement_insertions, maxreqlen=3),
+                       all_cell_insertions]],
+        name="forced_patterns_3")
+
+forced_patterns_with_row_column_placements = StrategyPack(
+        eq_strats=[forced_binary_pattern],
+        ver_strats=[subset_verified, database_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, unions=True)],
+                      [partial(all_requirement_insertions, maxreqlen=3),
+                       all_cell_insertions, row_placements, col_placements]],
+        name="forced_patterns_with_row_column_placements")
+
+row_column_placements = StrategyPack(
+        eq_strats=[],
+        ver_strats=[subset_verified, database_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[components],
+                      [all_cell_insertions, row_placements, col_placements]],
+        name="forced_patterns_with_row_column_placements")
+
+point_sep_and_iso = StrategyPack(
+        eq_strats=[point_separation],
+        ver_strats=[subset_verified, database_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, unions=True, workable=False)],
+                      [all_cell_insertions, point_isolations]],
+        name="forced_patterns_with_row_column_placements")
+
+forced_patterns_4 = StrategyPack(
+        eq_strats=[forced_binary_pattern],
+        ver_strats=[subset_verified, database_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, unions=True)],
+                      [partial(all_requirement_insertions, maxreqlen=4),
+                       all_cell_insertions]],
+        name="forced_patterns_4")
+
+################################################################################
+################################################################################
+
+
+point_placement = StrategyPack(
          eq_strats=[all_point_placements],
          ver_strats=[subset_verified],
          inf_strats=[empty_cell_inferral, row_and_column_separation],
          other_strats=[[components], [all_cell_insertions]],
          name="point_placement")
 
-point_placement_one_cell_inferral = ATRAPStrategyPack(
+point_placement_one_cell_inferral = StrategyPack(
          eq_strats=[all_point_placements],
          ver_strats=[subset_verified],
          inf_strats=[empty_cell_inferral],
          other_strats=[[components], [all_cell_insertions]],
          name="point_placement")
 
-point_placement_no_infer = ATRAPStrategyPack(
+point_placement_no_infer = StrategyPack(
          eq_strats=[all_point_placements],
          ver_strats=[subset_verified],
          inf_strats=[empty_cell_inferral],
          other_strats=[[components], [all_cell_insertions]],
          name="point_placement_no_infer")
 
-row_placements_only = ATRAPStrategyPack(
+row_placements_only = StrategyPack(
          eq_strats=[],
          ver_strats=[subset_verified],
          inf_strats=[empty_cell_inferral, row_and_column_separation],
          other_strats=[[components],[all_cell_insertions, row_placements]],
          name="row_placements")
 
-col_placements_only = ATRAPStrategyPack(
+col_placements_only = StrategyPack(
          eq_strats=[],
          ver_strats=[subset_verified],
          inf_strats=[empty_cell_inferral, row_and_column_separation],
          other_strats=[[components], [all_cell_insertions, col_placements]],
          name="col_placements")
 
-row_and_column_placements = ATRAPStrategyPack(
+row_and_column_placements = StrategyPack(
          eq_strats=[],
          ver_strats=[subset_verified],
          inf_strats=[empty_cell_inferral, row_and_column_separation],
@@ -50,7 +101,7 @@ row_and_column_placements = ATRAPStrategyPack(
                        [all_cell_insertions, row_placements, col_placements]],
          name="row_and_column_placements")
 
-row_and_column_placements_and_database = ATRAPStrategyPack(
+row_and_column_placements_and_database = StrategyPack(
          eq_strats=[],
          ver_strats=[subset_verified, database_verified],
          inf_strats=[empty_cell_inferral, row_and_column_separation],
@@ -58,7 +109,7 @@ row_and_column_placements_and_database = ATRAPStrategyPack(
                        [all_cell_insertions, row_placements, col_placements]],
          name="row_and_column_placements_and_database")
 
-point_separation_and_row_col_placements = ATRAPStrategyPack(
+point_separation_and_row_col_placements = StrategyPack(
          eq_strats=[point_separation],
          ver_strats=[subset_verified],
          inf_strats=[empty_cell_inferral, row_and_column_separation],
@@ -68,7 +119,7 @@ point_separation_and_row_col_placements = ATRAPStrategyPack(
                         partial(col_placements, all_positive_in_col=False)]],
          name="row_and_column_placements")
 
-binary_force_only = ATRAPStrategyPack(
+binary_force_only = StrategyPack(
     eq_strats=[forced_binary_pattern],
     ver_strats=[subset_verified],
     inf_strats=[empty_cell_inferral, row_and_column_separation],
@@ -78,7 +129,7 @@ binary_force_only = ATRAPStrategyPack(
                   ],
     name="binary_force w/ row-col separation and cell insertions")
 
-point_separation_and_isolation = ATRAPStrategyPack(
+point_separation_and_isolation = StrategyPack(
          eq_strats=[point_separation],
          ver_strats=[subset_verified],
          inf_strats=[empty_cell_inferral, row_and_column_separation],

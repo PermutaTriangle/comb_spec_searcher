@@ -4,6 +4,9 @@ from comb_spec_searcher import EquivalenceStrategy
 ALL_DIR = [DIR_EAST, DIR_NORTH, DIR_SOUTH, DIR_WEST]
 
 def all_point_placements(tiling, **kwargs):
+    '''Can't handle requirements, so rage quit.'''
+    if tiling.requirements:
+        return
     for cell in tiling.positive_cells:
         if tiling.only_positive_in_row_and_column(cell):
             for DIR in ALL_DIR:

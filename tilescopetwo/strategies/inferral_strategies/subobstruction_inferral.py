@@ -33,10 +33,6 @@ def empty_cell_inferral(tiling, **kwargs):
                             new_tiling)
 
 def subobstruction_inferral_rec(tiling, **kwargs):
-    '''Can't handle requirements, so rage quit.'''
-    if tiling.requirements:
-        return
-
     positive_cells = list(tiling.positive_cells.union(tiling.point_cells))
 
     subobstructions = set()

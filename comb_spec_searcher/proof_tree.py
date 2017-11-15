@@ -94,13 +94,7 @@ class ProofTree(object):
         if root is None:
             root = self.root
         if in_labels is None:
-            print("The in labels are")
             in_labels = list(self.non_recursive_in_labels())
-            for l in in_labels:
-                print(l)
-                print(css.objectdb.get_object(l).to_old_tiling())
-                print()
-            print('==============')
         if root.recursion:
             in_label = root.eqv_path_labels[0]
             out_label = in_label
@@ -108,7 +102,6 @@ class ProofTree(object):
                 if css.equivdb.equivalent(in_label, eqv_label):
                     out_label = eqv_label
                     break
-            print("recurse becomes", in_label, "to", out_label)
             assert css.equivdb.equivalent(in_label, out_label)
 
             eqv_path = css.equivdb.find_path(in_label, out_label)

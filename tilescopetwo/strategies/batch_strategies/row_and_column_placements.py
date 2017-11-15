@@ -4,11 +4,9 @@ from permuta.misc import DIR_EAST, DIR_NORTH, DIR_SOUTH, DIR_WEST  # , DIRS
 
 
 def row_placements(tiling, all_positive_in_row=True, **kwargs):
-    # print("")
-    # print("The tiling:")
-    # print(tiling.to_old_tiling())
-    # print(tiling)
-    # print("Gives the strategies:")
+    '''Can't handle requirements, so rage quit.'''
+    if tiling.requirements:
+        return
     for i in range(tiling.dimensions[1]):
         row = tiling.cells_in_row(i)
         if all_positive_in_row:
@@ -26,19 +24,8 @@ def row_placements(tiling, all_positive_in_row=True, **kwargs):
                 south.append(row_place(tiling, cell, DIR_SOUTH))
         if not north:
             continue
-        # print("-----")
-        # for t in north:
-        #     print(t.to_old_tiling())
-        #     print(t.is_empty())
-        #     print(t)
-        # print("-----")
-        # for t in south:
-        #     print(t.to_old_tiling())
-        #     print(t.is_empty())
-        #     print(t)
         yield BatchStrategy(formal_step="Place maximum into row {}".format(i), tilings=north)
         yield BatchStrategy(formal_step="Place minimum into row {}".format(i), tilings=south)
-    # print("END")
 
 
 def row_place(tiling, cell, direction):
@@ -135,22 +122,15 @@ def row_place(tiling, cell, direction):
     for ob in tiling:
         obstructions.extend([o for o in ob.place_point(cell, direction)
                              if not any(o.occupies(c) for c in empty_cells)])
-    # print("points:", point_cells)
-    # print("positive:", positive_cells)
-    # print("possibly_empty:", possibly_empty)
-    # print("empty_cells:", empty_cells)
-    # print(Tiling(point_cells=point_cells, positive_cells=positive_cells,
-    #               possibly_empty=possibly_empty, obstructions=obstructions).to_old_tiling())
     return Tiling(point_cells=point_cells, positive_cells=positive_cells,
                   possibly_empty=possibly_empty, obstructions=obstructions)
 
 
 def col_placements(tiling, all_positive_in_col=True, **kwargs):
-    # print("")
-    # print("The tiling:")
-    # print(tiling.to_old_tiling())
-    # print(tiling)
-    # print("Gives the strategies:")
+    '''Can't handle requirements, so rage quit.'''
+    if tiling.requirements:
+        return
+
     for i in range(tiling.dimensions[0]):
         col = tiling.cells_in_col(i)
         if all_positive_in_col:
@@ -168,19 +148,8 @@ def col_placements(tiling, all_positive_in_col=True, **kwargs):
                 right.append(col_place(tiling, cell, DIR_EAST))
         if not left:
             continue
-        # print("-----")
-        # for t in left:
-        #     print(t.to_old_tiling())
-        #     print(t.is_empty())
-        #     print(t)
-        # print("-----")
-        # for t in right:
-        #     print(t.to_old_tiling())
-        #     print(t.is_empty())
-        #     print(t)
         yield BatchStrategy(formal_step="Place leftmost into col {}".format(i), tilings=left)
         yield BatchStrategy(formal_step="Place rightmost into col {}".format(i), tilings=right)
-    # print("END")
 
 
 def col_place(tiling, cell, direction):
@@ -279,11 +248,6 @@ def col_place(tiling, cell, direction):
     for ob in tiling:
         obstructions.extend([o for o in ob.place_point(cell, direction)
                              if not any(o.occupies(c) for c in empty_cells)])
-    # print("points:", point_cells)
-    # print("positive:", positive_cells)
-    # print("possibly_empty:", possibly_empty)
-    # print("empty_cells:", empty_cells)
-    # print(Tiling(point_cells=point_cells, positive_cells=positive_cells,
-    #               possibly_empty=possibly_empty, obstructions=obstructions).to_old_tiling())
+
     return Tiling(point_cells=point_cells, positive_cells=positive_cells,
                   possibly_empty=possibly_empty, obstructions=obstructions)

@@ -5,6 +5,9 @@ from grids_two import Tiling
 from comb_spec_searcher import BatchStrategy
 
 def all_cell_insertions(tiling, **kwargs):
+    '''Can't handle requirements, so rage quit.'''
+    if tiling.requirements:
+        return
     for cell in tiling._possibly_empty:
         yield BatchStrategy(formal_step="Insert into cell {}.".format(cell),
                             tilings=[tiling.delete_cell(cell),

@@ -4,10 +4,9 @@ from permuta.misc import DIR_EAST, DIR_NORTH, DIR_SOUTH, DIR_WEST  # , DIRS
 
 
 def point_separation(tiling, **kwargs):
-    # print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-    # print("The tiling:")
-    # print(tiling.to_old_tiling())
-    # print("Gives the tilings:")
+    '''Can't handle requirements, so rage quit.'''
+    if tiling.requirements:
+        return
     for cell in tiling.positive_cells:
         if tiling.only_cell_in_row(cell):
             for direction in (DIR_NORTH, DIR_SOUTH):

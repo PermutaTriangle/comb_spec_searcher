@@ -22,6 +22,9 @@ def components(tiling,
 
     Two cells are in the same component if there exists an occurrence using both cells.
     """
+    '''Can't handle requirements, so rage quit.'''
+    if tiling.requirements:
+        return
     cell_to_int = {}
 
     cells = list(tiling.point_cells.union(tiling.possibly_empty).union(tiling.positive_cells))

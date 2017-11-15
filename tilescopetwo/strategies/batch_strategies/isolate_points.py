@@ -4,6 +4,9 @@ from itertools import chain, combinations
 from copy import copy
 
 def point_isolations(tiling, **kwargs):
+    '''Can't handle requirements, so rage quit.'''
+    if tiling.requirements:
+        return
     for cell in tiling.point_cells:
         if not tiling.only_cell_in_col(cell):
             # if equivalent and not tiling.only_positive_in_col(cell):
