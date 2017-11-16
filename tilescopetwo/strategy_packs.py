@@ -35,7 +35,7 @@ row_column_placements = StrategyPack(
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[components],
                       [all_cell_insertions, row_placements, col_placements]],
-        name="forced_patterns_with_row_column_placements")
+        name="row_column_placements")
 
 point_sep_and_iso = StrategyPack(
         eq_strats=[point_separation],
@@ -43,7 +43,7 @@ point_sep_and_iso = StrategyPack(
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[partial(components, unions=True, workable=False)],
                       [all_cell_insertions, point_isolations]],
-        name="forced_patterns_with_row_column_placements")
+        name="point_sep_and_iso")
 
 forced_patterns_4 = StrategyPack(
         eq_strats=[forced_binary_pattern],

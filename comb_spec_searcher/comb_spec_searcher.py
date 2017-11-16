@@ -609,13 +609,15 @@ class CombinatorialSpecificationSearcher(object):
                 strats = self._strategies_to_str(strategies)
                 print("Set {}: {}".format(str(i+1), strats), file=file)
             print("", file=file)
-        while True:
+
+        expanding = True
+        while expanding:
             if cap is None:
                 if self.do_level():
                     break
             else:
                 if self.expand_objects(cap):
-                    break
+                    expanding = False
                 # TODO: if the above functions does nothing, it returns True,
                 #       need to catch this in a better way.
             proof_tree = self.get_proof_tree()
