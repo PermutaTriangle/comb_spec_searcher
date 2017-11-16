@@ -18,6 +18,7 @@ def row_placements(tiling, all_positive_in_row=True, equivalence_only=False,
         if not all(tiling.only_positive_in_col(c) for c in row):
             continue
 
+        # TODO: Equiv stuff won't work if not all_positive_in_row
         if equivalence_only or ignore_equivalence:
             if len(row) == 1 and tiling.only_positive_in_row(row[0]):
                 if ignore_equivalence:
@@ -151,6 +152,7 @@ def col_placements(tiling, all_positive_in_col=True, equivalence_only=False,
         if not all(tiling.only_positive_in_row(c) for c in col):
             continue
 
+        # TODO: Equiv stuff won't work if not all_positive_in_col
         if equivalence_only or ignore_equivalence:
             if len(col) == 1 and tiling.only_positive_in_col(col[0]):
                 if ignore_equivalence:
