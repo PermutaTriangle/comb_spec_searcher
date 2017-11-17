@@ -3,7 +3,8 @@ from grids_two import Tiling
 from permuta.misc import DIR_EAST, DIR_NORTH, DIR_SOUTH, DIR_WEST  # , DIRS
 
 
-def row_placements(tiling, all_positive_in_row=True, **kwargs):
+def row_placements(tiling, all_positive_in_row=True, equivalence_only=False,
+                   ignore_equivalence=False, **kwargs):
     '''Can't handle requirements, so rage quit.'''
     if tiling.requirements:
         return
@@ -16,6 +17,15 @@ def row_placements(tiling, all_positive_in_row=True, **kwargs):
             continue
         if not all(tiling.only_positive_in_col(c) for c in row):
             continue
+
+        # TODO: Equiv stuff won't work if not all_positive_in_row
+        if equivalence_only or ignore_equivalence:
+            if len(row) == 1 and tiling.only_positive_in_row(row[0]):
+                if ignore_equivalence:
+                    continue
+            elif equivalence_only:
+                continue
+
         north = []
         south = []
         for cell in row:
@@ -126,7 +136,8 @@ def row_place(tiling, cell, direction):
                   possibly_empty=possibly_empty, obstructions=obstructions)
 
 
-def col_placements(tiling, all_positive_in_col=True, **kwargs):
+def col_placements(tiling, all_positive_in_col=True, equivalence_only=False,
+                   ignore_equivalence=False, **kwargs):
     '''Can't handle requirements, so rage quit.'''
     if tiling.requirements:
         return
@@ -140,6 +151,15 @@ def col_placements(tiling, all_positive_in_col=True, **kwargs):
             continue
         if not all(tiling.only_positive_in_row(c) for c in col):
             continue
+
+        # TODO: Equiv stuff won't work if not all_positive_in_col
+        if equivalence_only or ignore_equivalence:
+            if len(col) == 1 and tiling.only_positive_in_col(col[0]):
+                if ignore_equivalence:
+                    continue
+            elif equivalence_only:
+                continue
+
         left = []
         right = []
         for cell in col:

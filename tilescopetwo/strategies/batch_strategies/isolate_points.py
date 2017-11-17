@@ -3,24 +3,52 @@ from grids_two import Tiling
 from itertools import chain, combinations
 from copy import copy
 
-def point_isolations(tiling, **kwargs):
+def point_isolations(tiling, equivalence_only=False, ignore_equivalence=False, **kwargs):
     '''Can't handle requirements, so rage quit.'''
     if tiling.requirements:
         return
     for cell in tiling.point_cells:
         if not tiling.only_cell_in_col(cell):
-            # if equivalent and not tiling.only_positive_in_col(cell):
-            #     continue
-            # elif not equivalent and tiling.only_positive_in_col(cell):
-            #     continue
+
+            if equivalence_only or ignore_equivalence:
+                if tiling.only_positive_in_col(cell):
+                    if ignore_equivalence:
+                        # print("Due to ignore equivalence I am ignoring")
+                        # print(tiling.to_old_tiling())
+                        # print(tiling)
+                        # print("isolating col", cell)
+                        # print()
+                        continue
+                elif equivalence_only:
+                    # print("Due to equivalence only I am ignoring")
+                    # print(tiling.to_old_tiling())
+                    # print(tiling)
+                    # print("isolating col", cell)
+                    # print()
+                    continue
+
             for strategy in isolate_point_in_column(tiling, cell):
                 yield strategy
 
         if not tiling.only_cell_in_row(cell):
-            # if equivalent and not tiling.only_positive_in_row(cell):
-            #     continue
-            # elif not equivalent and tiling.only_positive_in_row(cell):
-            #     continue
+
+            if equivalence_only or ignore_equivalence:
+                if tiling.only_positive_in_row(cell):
+                    if ignore_equivalence:
+                        # print("Due to ignore equivalence I am ignoring")
+                        # print(tiling.to_old_tiling())
+                        # print(tiling)
+                        # print("isolating row", cell)
+                        # print()
+                        continue
+                elif equivalence_only:
+                    # print("Due to ignore equivalence I am ignoring")
+                    # print(tiling.to_old_tiling())
+                    # print(tiling)
+                    # print("isolating row", cell)
+                    # print()
+                    continue
+
             for strategy in isolate_point_in_row(tiling, cell):
                 yield strategy
 
