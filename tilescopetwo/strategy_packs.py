@@ -12,21 +12,22 @@ from permuta import Perm
 ################################################################################
 
 forced_patterns_3 = StrategyPack(
-        eq_strats=[forced_binary_pattern],
+        eq_strats=[],
         ver_strats=[subset_verified, database_verified, globally_verified],
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[partial(components, unions=True)],
                       [partial(all_requirement_insertions, maxreqlen=3),
-                       all_cell_insertions]],
+                       all_cell_insertions, forced_binary_pattern]],
         name="forced_patterns_3")
 
 forced_patterns_with_row_column_placements = StrategyPack(
-        eq_strats=[forced_binary_pattern],
+        eq_strats=[],
         ver_strats=[subset_verified, database_verified, globally_verified],
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[partial(components, unions=True)],
                       [partial(all_requirement_insertions, maxreqlen=3),
-                       all_cell_insertions, row_placements, col_placements]],
+                       all_cell_insertions, row_placements, col_placements,
+                       forced_binary_pattern]],
         name="forced_patterns_with_row_column_placements")
 
 row_column_placements = StrategyPack(
@@ -46,12 +47,12 @@ point_sep_and_iso = StrategyPack(
         name="point_sep_and_iso")
 
 forced_patterns_4 = StrategyPack(
-        eq_strats=[forced_binary_pattern],
+        eq_strats=[],
         ver_strats=[subset_verified, database_verified, globally_verified],
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[partial(components, unions=True)],
                       [partial(all_requirement_insertions, maxreqlen=4),
-                       all_cell_insertions]],
+                       all_cell_insertions, forced_binary_pattern]],
         name="forced_patterns_4")
 
 ################################################################################
