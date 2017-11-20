@@ -179,7 +179,6 @@ def forced_binary_pattern(tiling, **kwargs):
 
     basis = [ob.patt for ob in tiling.obstructions]
     patt = tiling.requirements[0][0].patt
-
     maxforcelen = kwargs.get('forcelen')
     if not maxforcelen:
         maxforcelen = len(patt)
