@@ -85,15 +85,15 @@ all_strategies = StrategyPack(
                    partial(point_isolations, equivalence_only=True)],
          ver_strats=[subset_verified, database_verified, globally_verified],
          inf_strats=[empty_cell_inferral, row_and_column_separation],
-         other_strats=[[partial(components, unions=True)]
+         other_strats=[[partial(components, unions=True)],
                        [partial(root_requirement_insertions, maxreqlen=4),
                         partial(all_requirement_insertions, maxreqlen=4),
                         partial(forced_binary_pattern, forcelen=2)],
                        [all_cell_insertions,
                         partial(row_placements, ignore_equivalence=True),
                         partial(col_placements, ignore_equivalence=True),
-                        partial(point_isolations, ignore_equivalence=True)]
-)
+                        partial(point_isolations, ignore_equivalence=True)]],
+        name="all_strategies")
 
 ################################################################################
 ################################################################################
@@ -119,8 +119,6 @@ row_column_eqv_placements = StrategyPack(
                        partial(row_placements, ignore_equivalence=True),
                        partial(col_placements, ignore_equivalence=True)]],
         name="row_column_placements")
-
-
 
 
 point_placement_one_cell_inferral = StrategyPack(

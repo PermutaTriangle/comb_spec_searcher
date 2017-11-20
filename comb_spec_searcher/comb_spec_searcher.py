@@ -230,7 +230,7 @@ class CombinatorialSpecificationSearcher(object):
         """
         start = time.time()
         obj = self.objectdb.get_object(label)
-        self.queue_time = time.time() - start
+        self.queue_time += time.time() - start
         expanding = self.objectdb.number_times_expanded(label)
         strategies = self.strategy_generators[expanding]
 
