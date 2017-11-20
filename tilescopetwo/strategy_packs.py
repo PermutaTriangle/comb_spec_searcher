@@ -52,8 +52,19 @@ forced_patterns_4 = StrategyPack(
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[partial(components, unions=True)],
                       [partial(all_requirement_insertions, maxreqlen=4),
-                       all_cell_insertions, forced_binary_pattern]],
+                       all_cell_insertions,
+                       partial(forced_binary_pattern, forcelen=2)]],
         name="forced_patterns_4")
+
+root_requirement_placements = StrategyPack(
+        eq_strats=[partial(row_placements, equivalence_only=True)],
+        ver_strats=[subset_verified, database_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[components],
+                      [partial(root_requirement_insertions, maxreqlen=4),
+                       partial(forced_binary_pattern, forcelen=2)],
+                      [all_cell_insertions, row_placements,  col_placements]],
+        name="root_requirement_placements")
 
 ################################################################################
 ################################################################################

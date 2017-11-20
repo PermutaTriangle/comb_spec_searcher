@@ -2,6 +2,32 @@ from comb_spec_searcher import Strategy
 from permuta import PermSet, Perm
 from grids_two import Obstruction, Requirement, Tiling
 
+def root_requirement_insertions(tiling, basis, maxreqlen=None, **kwargs):
+    if tiling.dimensions != (1, 1):
+        return
+    if tiling.requirements:
+        return
+    if maxreqlen is None:
+        maxreqlen = max(len(x) for x in basis)
+    if ((0, 0)) in tiling.possibly_empty:
+        for length in range(1, maxreqlen + 1):
+            for patt in PermSet.avoiding(basis).of_length(length):
+                yield Strategy(
+                    formal_step=(
+                        "Inserting requirement {} into cell {}").format(patt, (0, 0)),
+                    objects=[Tiling(tiling.point_cells,
+                                    tiling.positive_cells,
+                                    tiling.possibly_empty,
+                                    tiling.obstructions + (
+                                        Obstruction.single_cell(patt, (0, 0)),),
+                                    tiling.requirements),
+                             Tiling(tiling.point_cells,
+                                    tiling.positive_cells | {(0, 0)},  # Make cell
+                                    tiling.possibly_empty - {(0, 0)},  # positive
+                                    tiling.obstructions,
+                                    [[Requirement.single_cell(patt, (0, 0))]])],
+                    workable=[False, True])
+
 
 def all_requirement_insertions(tiling, basis, **kwargs):
     if tiling.dimensions != (1, 1):
