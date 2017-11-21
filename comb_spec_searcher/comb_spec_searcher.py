@@ -234,7 +234,7 @@ class CombinatorialSpecificationSearcher(object):
         expanding = self.objectdb.number_times_expanded(label)
         strategies = self.strategy_generators[expanding]
 
-        total_time = time.time() - start
+        total_time = 0
         for strategy_generator in strategies:
             # function returns time it took.
             total_time += self._expand_object_with_strategy(obj,

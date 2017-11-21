@@ -41,8 +41,10 @@ def all_requirement_insertions(tiling, basis, **kwargs):
             (0, 0) not in tiling.possibly_empty):
         return
 
-    maxreqlen = kwargs.get('maxreqlength')
+    maxreqlen = kwargs.get('maxreqlen')
     patterns = kwargs.get('patterns')
+    if maxreqlen is None:
+        maxreqlen = max(len(patt) for patt in basis)
 
     if not tiling.requirements:
         req = Requirement.single_cell(Perm(), (0, 0))

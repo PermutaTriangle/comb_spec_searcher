@@ -53,7 +53,7 @@ forced_patterns_4 = StrategyPack(
         other_strats=[[partial(components, unions=True)],
                       [partial(all_requirement_insertions, maxreqlen=4),
                        all_cell_insertions,
-                       partial(forced_binary_pattern, forcelen=2)]],
+                       forced_binary_pattern]],
         name="forced_patterns_4")
 
 ################################################################################
