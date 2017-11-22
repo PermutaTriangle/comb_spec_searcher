@@ -99,6 +99,7 @@ class CombinatorialSpecificationSearcher(object):
             # Give it a reference to the searcher
             self.objectqueue = objectqueue(self)
 
+
         self.objectqueue.add_to_working(self.start_label)
 
         self.expanded_objects = [0 for _ in self.strategy_generators]
@@ -112,6 +113,8 @@ class CombinatorialSpecificationSearcher(object):
         self.queue_time = 0
         self._time_taken = 0
         self._cache_misses = 0  # this for status and should be updated if you use a cache
+
+
 
     def try_verify(self, obj, force=False):
         """
@@ -150,7 +153,7 @@ class CombinatorialSpecificationSearcher(object):
             self.verification_time += time.time() - start
             return self.objectdb.is_empty(obj)
         if self.is_empty_strategy(obj, **self.kwargs):
-            self.objectdb.set_empty(obj)
+            self._add_empty_rule(self.objectdb.get_label(obj))
             self.verification_time += time.time() - start
             return True
         self.objectdb.set_empty(obj, empty=False)
@@ -316,6 +319,7 @@ class CombinatorialSpecificationSearcher(object):
                 or self.objectdb.is_expanding_other_sym(end_label)):
                 continue
             self.objectqueue.add_to_next(end_label)
+            obj = self.objectdb.get_object(end_label)
 
     def _add_empty_rule(self, label, explanation=None):
         """Mark label as empty. Treated as verified as can count empty set."""
@@ -461,6 +465,8 @@ class CombinatorialSpecificationSearcher(object):
             elif self.objectdb.is_expanding_other_sym(label):
                 continue
             elif self.objectdb.is_workably_decomposed(label):
+                continue
+            if self.is_empty_strategy(self.objectdb.get_object(label)):
                 continue
             count += 1
             queue_start -= time.time()
@@ -647,7 +653,7 @@ class CombinatorialSpecificationSearcher(object):
         """Return True if a proof tree has been found, false otherwise."""
         return self._has_proof_tree
 
-    def tree_search_prep(self, empty=False, complement=False):
+    def tree_search_prep(self, complement=False):
         """
         Return rule dictionary ready for tree searcher.
 
@@ -676,14 +682,9 @@ class CombinatorialSpecificationSearcher(object):
             self.ruledb.remove(*old_rule)
 
 
-        if empty:
-            for label in self.objectdb.empty_labels():
-                verified_label = self.equivdb[label]
-                rules_dict[verified_label] |= set(((),))
-        else:
-            for label in self.objectdb.verified_labels():
-                verified_label = self.equivdb[label]
-                rules_dict[verified_label] |= set(((),))
+        for label in self.objectdb.verified_labels():
+            verified_label = self.equivdb[label]
+            rules_dict[verified_label] |= set(((),))
 
         self.prepping_for_tree_search_time += time.time() - start_time
         return rules_dict
@@ -723,19 +724,7 @@ class CombinatorialSpecificationSearcher(object):
         """Search for a tree based on current data found."""
         start = time.time()
 
-        rules_dict_empty = self.tree_search_prep(empty=True)
-        first_start = time.time()
-        # Prune all unempty labels (recursively)
-        rules_dict_empty = prune(rules_dict_empty)
-        # only empty labels in rules_dict, in particular, there is an empty tree
-        # if the start label is in the rules_dict
-        for label in rules_dict_empty.keys():
-            self._add_empty_rule(label, "Tree search empty")
-        self.tree_search_time += time.time() - first_start
-
         rules_dict = self.tree_search_prep()
-
-        second_start = time.time()
         # Prune all unverified labels (recursively)
         rules_dict = prune(rules_dict)
 
@@ -752,7 +741,7 @@ class CombinatorialSpecificationSearcher(object):
         else:
             proof_tree = None
 
-        self.tree_search_time += time.time() - second_start
+        self.tree_search_time += time.time() - start
         self._time_taken += time.time() - start
         return proof_tree
 

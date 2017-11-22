@@ -21,16 +21,15 @@ def empty_cell_inferral(tiling, **kwargs):
             if can_add_obstruction(tiling, ob, positive_cells):
                 adding.append(ob)
                 empty_cells.append(cell)
+    if adding:
+        new_tiling = Tiling(point_cells=tiling.point_cells,
+                            positive_cells=tiling.positive_cells,
+                            possibly_empty=tiling.possibly_empty,
+                            obstructions=tiling.obstructions + tuple(adding),
+                            requirements=tiling.requirements)
 
-
-    new_tiling = Tiling(point_cells=tiling.point_cells,
-                        positive_cells=tiling.positive_cells,
-                        possibly_empty=tiling.possibly_empty,
-                        obstructions=tiling.obstructions + tuple(adding),
-                        requirements=tiling.requirements)
-
-    return InferralStrategy("The cells {} are empty".format(empty_cells),
-                            new_tiling)
+        return InferralStrategy("The cells {} are empty".format(empty_cells),
+                                new_tiling)
 
 def subobstruction_inferral_rec(tiling, **kwargs):
     positive_cells = list(tiling.positive_cells.union(tiling.point_cells))
@@ -69,14 +68,13 @@ def subobstruction_inferral_rec(tiling, **kwargs):
          new_tiling)
 
 def can_add_obstruction(tiling, obstruction, positive_cells):
-    while positive_cells:
-        cell = positive_cells.pop()
+    for i, cell in enumerate(positive_cells):
         if obstruction.occupies(cell):
             continue
         obs = list(obstruction.insert_point(cell))
         if all(any(o in ob for o in tiling.obstructions) for ob in obs):
             return True
-        return all(can_add_obstruction(tiling, ob, positive_cells) for ob in obs)
+        return all(can_add_obstruction(tiling, ob, positive_cells[i+1:]) for ob in obs)
     return any(o in obstruction for o in tiling.obstructions)
 
 
