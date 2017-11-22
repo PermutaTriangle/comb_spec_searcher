@@ -33,64 +33,63 @@ class ProofTreeNode(object):
         self.back_maps = back_maps
         self.forward_maps = forward_maps
 
+    def _error_string(self, parent, children, strat_type, length, parent_total, children_total):
+        error = "Insane " + strat_type + " Strategy Found!\n"
+        error += "Found at length {} \n".format(length)
+        error += "The parent tiling was:\n{}\n".format(parent.__repr__())
+        error += "It produced {} many things\n".format(length)
+        error += "The children were:\n"
+        for obj in children:
+            error += parent.__repr__()
+            error += "\n"
+        error += "They produced {} many things\n\n".format(children_total)
+        return error
+
+
     def sanity_check(self, length=8):
         if self.complement_verified:
-            raise ValueError("Don't use complement_verified, its dangerous.")
+            return ("Don't use complement_verified, its dangerous.")
         for i in range(length):
             number_perms = len(list(self.eqv_path_objects[0].gridded_perms_of_length(i)))
             for obj in self.eqv_path_objects[1:]:
                 eqv_number = len(list(obj.gridded_perms_of_length(i)))
                 if number_perms != eqv_number:
-                    print("Failed at length", i)
-                    print("The tiling below produced", number_perms, "many things")
-                    print(self.eqv_path_objects[0].to_old_tiling())
-                    print(self.eqv_path_objects[0])
-                    print()
-                    print("The equivalent tiling below produced", eqv_number, "many things")
-                    print(obj.to_old_tiling())
-                    print(obj)
-                    print()
-                    raise ValueError("An equivalent object has a different number of gridded perms.")
+                    return self._error_string(self.eqv_path_objects[0],
+                                              [obj],
+                                              "Equivalent",
+                                              i,
+                                              number_perms,
+                                              eqv_number)
+
+
             if self.disjoint_union:
                 child_objs = [child.eqv_path_objects[0] for child in self.children]
                 total = 0
                 for obj in child_objs:
                     total += len(list(obj.gridded_perms_of_length(i)))
                 if number_perms != total:
-                    print("Failed at length", i)
-                    print("The parent object below produced", number_perms, "many things")
-                    print(self.eqv_path_objects[0].to_old_tiling())
-                    print(self.eqv_path_objects[0])
-                    print()
-                    print("The batch strategy below produced", total, "many things")
-                    for o in child_objs:
-                        print(o.to_old_tiling())
-                        print(o)
-                        print()
-
-                    raise ValueError("A batch strategy has a different number of gridded perms.")
+                    return self._error_string(self.eqv_path_objects[0],
+                                              child_objs,
+                                              "Batch",
+                                              i,
+                                              number_perms,
+                                              total)
             if self.decomposition:
-                if self.has_interleaving_decomposition():
-                    raise ValueError("It has interleaving.. can't test for sanity yet.")
-                child_objs = [child.eqv_path_objects[0] for child in self.children]
-                total = 0
-                for part in partitions_of_n_of_size_k(i, len(child_objs)):
-                    subtotal = 1
-                    for obj, partlen in zip(child_objs, part):
-                        subtotal *= len(list(obj.gridded_perms_of_length(partlen)))
-                    total += subtotal
-                if number_perms != total:
-                    print("Failed at length", i)
-                    print("The parent object below produced", number_perms, "many things")
-                    print(self.eqv_path_objects[0].to_old_tiling())
-                    print(self.eqv_path_objects[0])
-                    print()
-                    print("The decomposition strategy produced", total, "many things")
-                    for o in child_objs:
-                        print(o.to_old_tiling())
-                        print(o)
-                        print()
-                    raise ValueError("A decomposition strategy has a different number of gridded perms.")
+                if not self.has_interleaving_decomposition():
+                    child_objs = [child.eqv_path_objects[0] for child in self.children]
+                    total = 0
+                    for part in partitions_of_n_of_size_k(i, len(child_objs)):
+                        subtotal = 1
+                        for obj, partlen in zip(child_objs, part):
+                            subtotal *= len(list(obj.gridded_perms_of_length(partlen)))
+                        total += subtotal
+                    if number_perms != total:
+                        return self._error_string(self.eqv_path_objects[0],
+                                                  child_objs,
+                                                  "Decomposition",
+                                                  i,
+                                                  number_perms,
+                                                  total)
 
     def has_interleaving_decomposition(self):
         if self.back_maps is None:
@@ -163,11 +162,16 @@ class ProofTree(object):
             for node in self.nodes(root=child):
                 yield node
 
-    def sanity_check(self):
+    def sanity_check(self, length=8):
+        overall_error = ""
         for node in self.nodes():
-            print("Checking", node.label)
-            node.sanity_check()
-        print("SANITY CHECKED, ALL GOOD")
+            error = node.sanity_check()
+            if error is not None:
+                overall_error += error
+        if overall_error:
+            return overall_error
+        else:
+            return "Sanity checked, all good to length {}".format(length)
 
 
     @classmethod
