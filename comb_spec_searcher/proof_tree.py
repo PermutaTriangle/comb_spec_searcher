@@ -169,9 +169,9 @@ class ProofTree(object):
             if error is not None:
                 overall_error += error
         if overall_error:
-            return overall_error
+            return False, overall_error
         else:
-            return "Sanity checked, all good to length {}".format(length)
+            return True, "Sanity checked, all good to length {}".format(length)
 
 
     @classmethod
