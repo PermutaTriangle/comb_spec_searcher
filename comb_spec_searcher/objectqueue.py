@@ -34,7 +34,7 @@ class ObjectQueue(object):
                 print("No more objects to expand!", file=sys.stderr)
                 return None
             self.levels_completed += 1
-            print("++++Changing next to curr.++++",self.levels_completed)
+            # print("++++Changing next to curr.++++",self.levels_completed, file=sys.stderr)
             self.curr_level = self.next_level
             self.next_level = Queue()
             return self.next()

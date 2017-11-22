@@ -165,7 +165,7 @@ class ProofTree(object):
     def sanity_check(self, length=8):
         overall_error = ""
         for node in self.nodes():
-            error = node.sanity_check()
+            error = node.sanity_check(length)
             if error is not None:
                 overall_error += error
         if overall_error:
