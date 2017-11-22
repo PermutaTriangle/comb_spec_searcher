@@ -32,7 +32,7 @@ forced_patterns_with_row_column_placements = StrategyPack(
 
 row_column_placements = StrategyPack(
         eq_strats=[],
-        ver_strats=[subset_verified, database_verified, globally_verified],
+        ver_strats=[subset_verified],
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[components],
                       [all_cell_insertions, partial(row_placements, all_positive_in_row=False),  partial(col_placements, all_positive_in_row=False)]],

@@ -1,5 +1,13 @@
-# from comb_spec_searcher import CombinatorialSpecificationSearcher
+"""
+A proof tree class.
+
+This has been built specific to tilings and gridded perms. Needs to be
+generalised.
+"""
+
 from .tree_searcher import Node as tree_searcher_node
+from permuta.misc.ordered_set_partitions import partitions_of_n_of_size_k
+
 import sys
 
 
@@ -24,6 +32,81 @@ class ProofTreeNode(object):
         self.formal_step = formal_step
         self.back_maps = back_maps
         self.forward_maps = forward_maps
+
+    def sanity_check(self, length=8):
+        if self.complement_verified:
+            raise ValueError("Don't use complement_verified, its dangerous.")
+        for i in range(length):
+            number_perms = len(list(self.eqv_path_objects[0].gridded_perms_of_length(i)))
+            for obj in self.eqv_path_objects[1:]:
+                eqv_number = len(list(obj.gridded_perms_of_length(i)))
+                if number_perms != eqv_number:
+                    print("Failed at length", i)
+                    print("The tiling below produced", number_perms, "many things")
+                    print(self.eqv_path_objects[0].to_old_tiling())
+                    print(self.eqv_path_objects[0])
+                    print()
+                    print("The equivalent tiling below produced", eqv_number, "many things")
+                    print(obj.to_old_tiling())
+                    print(obj)
+                    print()
+                    raise ValueError("An equivalent object has a different number of gridded perms.")
+            if self.disjoint_union:
+                child_objs = [child.eqv_path_objects[0] for child in self.children]
+                total = 0
+                for obj in child_objs:
+                    total += len(list(obj.gridded_perms_of_length(i)))
+                if number_perms != total:
+                    print("Failed at length", i)
+                    print("The parent object below produced", number_perms, "many things")
+                    print(self.eqv_path_objects[0].to_old_tiling())
+                    print(self.eqv_path_objects[0])
+                    print()
+                    print("The batch strategy below produced", total, "many things")
+                    for o in child_objs:
+                        print(o.to_old_tiling())
+                        print(o)
+                        print()
+
+                    raise ValueError("A batch strategy has a different number of gridded perms.")
+            if self.decomposition:
+                if self.has_interleaving_decomposition():
+                    raise ValueError("It has interleaving.. can't test for sanity yet.")
+                child_objs = [child.eqv_path_objects[0] for child in self.children]
+                total = 0
+                for part in partitions_of_n_of_size_k(i, len(child_objs)):
+                    subtotal = 1
+                    for obj, partlen in zip(child_objs, part):
+                        subtotal *= len(list(obj.gridded_perms_of_length(partlen)))
+                    total += subtotal
+                if number_perms != total:
+                    print("Failed at length", i)
+                    print("The parent object below produced", number_perms, "many things")
+                    print(self.eqv_path_objects[0].to_old_tiling())
+                    print(self.eqv_path_objects[0])
+                    print()
+                    print("The decomposition strategy produced", total, "many things")
+                    for o in child_objs:
+                        print(o.to_old_tiling())
+                        print(o)
+                        print()
+                    raise ValueError("A decomposition strategy has a different number of gridded perms.")
+
+    def has_interleaving_decomposition(self):
+        if self.back_maps is None:
+            return False
+        mixing = False
+        bmps1 = [{c.i for c in dic.values()} for dic in self.back_maps]
+        bmps2 = [{c.j for c in dic.values()} for dic in self.back_maps]
+        for i in range(len(self.back_maps)):
+            for j in range(len(self.back_maps)):
+                if i != j:
+                    if (bmps1[i] & bmps1[j]) or (bmps2[i] & bmps2[j]):
+                        mixing = True
+        if mixing:
+            return True
+        return False
+
 
 
 class ProofTree(object):
@@ -80,10 +163,15 @@ class ProofTree(object):
             for node in self.nodes(root=child):
                 yield node
 
+    def sanity_check(self):
+        for node in self.nodes():
+            print("Checking", node.label)
+            node.sanity_check()
+        print("SANITY CHECKED, ALL GOOD")
+
+
     @classmethod
     def from_comb_spec_searcher(cls, root, css):
-        # if not isinstance(css, CombinatorialSpecificationSearcher):
-        #     raise TypeError("Requires a CombinatorialSpecificationSearcher.")
         if not isinstance(root, tree_searcher_node):
             raise TypeError("Requires a tree searcher node, treated as root.")
         proof_tree = ProofTree(ProofTree.from_comb_spec_searcher_node(root, css))
@@ -126,8 +214,6 @@ class ProofTree(object):
 
     @classmethod
     def from_comb_spec_searcher_node(cls, root, css, in_label=None):
-        # if not isinstance(css, CombinatorialSpecificationSearcher):
-        #     raise TypeError("Requires a CombinatorialSpecificationSearcher.")
         if not isinstance(root, tree_searcher_node):
             raise TypeError("Requires a tree searcher node, treated as root.")
         label = root.label
