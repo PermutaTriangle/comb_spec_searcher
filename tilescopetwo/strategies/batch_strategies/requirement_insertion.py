@@ -60,6 +60,8 @@ def all_requirement_insertions(tiling, basis, **kwargs):
                                                               patterns))
 
     for patt in PermSet.avoiding(basis).of_length(len(req) + 1):
+        if patt.avoids(req.patt):
+            continue
         if patterns and not any(p.contains(patt) for p in patterns):
             continue
         yield Strategy(

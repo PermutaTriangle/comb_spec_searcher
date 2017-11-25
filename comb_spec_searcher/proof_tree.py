@@ -40,7 +40,7 @@ class ProofTreeNode(object):
         error += "It produced {} many things\n".format(length)
         error += "The children were:\n"
         for obj in children:
-            error += parent.__repr__()
+            error += obj.__repr__()
             error += "\n"
         error += "They produced {} many things\n\n".format(children_total)
         return error
@@ -119,7 +119,7 @@ class ProofTree(object):
             print("===============")
             print(node.label)
             for o in node.eqv_path_objects:
-                print(o)
+                print(o.__repr__())
                 print()
 
     def to_old_proof_tree(self):
