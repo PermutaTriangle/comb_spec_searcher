@@ -179,9 +179,9 @@ class ProofTree(object):
         return len(list(self.nodes))
 
     def number_of_objects(self):
-        count = 1
+        count = 0
         for node in self.nodes():
-            count += len(node.eqv_path_objects) - 1
+            count += len(node.eqv_path_objects)
         return count
 
     def sanity_check(self, length=8):
