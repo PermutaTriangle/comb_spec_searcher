@@ -176,7 +176,7 @@ class ProofTree(object):
                 yield node
 
     def number_of_nodes(self):
-        return len(list(self.nodes))
+        return len(list(self.nodes()))
 
     def number_of_objects(self):
         count = 0
