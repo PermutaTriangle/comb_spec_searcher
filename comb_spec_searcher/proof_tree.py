@@ -46,13 +46,15 @@ class ProofTreeNode(object):
         return error
 
 
-    def sanity_check(self, length=8):
+    def sanity_check(self, length=8, of_length=None):
+        if of_length is None:
+            raise ValueError("of_length is undefined.")
         if self.complement_verified:
             return ("Don't use complement_verified, its dangerous.")
         for i in range(length):
-            number_perms = len(list(self.eqv_path_objects[0].gridded_perms_of_length(i)))
+            number_perms = of_length(self.eqv_path_objects[0], i)
             for obj in self.eqv_path_objects[1:]:
-                eqv_number = len(list(obj.gridded_perms_of_length(i)))
+                eqv_number = of_length(obj, i)
                 if number_perms != eqv_number:
                     return self._error_string(self.eqv_path_objects[0],
                                               [obj],
@@ -60,13 +62,11 @@ class ProofTreeNode(object):
                                               i,
                                               number_perms,
                                               eqv_number)
-
-
             if self.disjoint_union:
                 child_objs = [child.eqv_path_objects[0] for child in self.children]
                 total = 0
                 for obj in child_objs:
-                    total += len(list(obj.gridded_perms_of_length(i)))
+                    total += of_length(obj, i)
                 if number_perms != total:
                     return self._error_string(self.eqv_path_objects[0],
                                               child_objs,
@@ -81,7 +81,7 @@ class ProofTreeNode(object):
                     for part in partitions_of_n_of_size_k(i, len(child_objs)):
                         subtotal = 1
                         for obj, partlen in zip(child_objs, part):
-                            subtotal *= len(list(obj.gridded_perms_of_length(partlen)))
+                            subtotal *= of_length(obj, partlen)
                         total += subtotal
                     if number_perms != total:
                         return self._error_string(self.eqv_path_objects[0],
@@ -113,6 +113,19 @@ class ProofTree(object):
         if not isinstance(root, ProofTreeNode):
             raise TypeError("Root must be a ProofTreeNode.")
         self.root = root
+        self._of_length_cache = {}
+
+    def _of_length(self, obj, length):
+        if obj not in self._of_length_cache:
+            self._of_length_cache[obj] = {}
+
+        number = self._of_length_cache[obj].get(length)
+
+        if number is None:
+            number = len(list(obj.gridded_perms_of_length(length)))
+            self._of_length_cache[obj][length] = number
+
+        return number
 
     def print_equivalences(self):
         for node in self.nodes():
@@ -162,10 +175,19 @@ class ProofTree(object):
             for node in self.nodes(root=child):
                 yield node
 
+    def number_of_nodes(self):
+        return len(list(self.nodes))
+
+    def number_of_objects(self):
+        count = 0
+        for node in self.nodes():
+            count += len(node.eqv_path_objects)
+        return count
+
     def sanity_check(self, length=8):
         overall_error = ""
         for node in self.nodes():
-            error = node.sanity_check(length)
+            error = node.sanity_check(length, self._of_length)
             if error is not None:
                 overall_error += error
         if overall_error:
