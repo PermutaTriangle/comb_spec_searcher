@@ -39,7 +39,8 @@ class ProofTreeNode(object):
         output = dict()
         output['label'] = self.label
         output['eqv_path_labels'] = [x for x in self.eqv_path_labels]
-        output['eqv_path_objects'] = [x.to_jsonable() for x in self.eqv_path_objects]
+        output['eqv_path_objects'] = [x.to_jsonable()
+                                      for x in self.eqv_path_objects]
         output['eqv_explanations'] = [x for x in self.eqv_explanations]
         output['children'] = [child.to_jsonable() for child in self.children]
         output['strategy_verified'] = self.strategy_verified
@@ -49,7 +50,8 @@ class ProofTreeNode(object):
         output['recursion'] = self.recursion
         output['formal_step'] = self.formal_step
         if self.back_maps is not None:
-            output['back_maps'] = [[(x, y) for x, y in bm.items()] for bm in self.back_maps]
+            output['back_maps'] = [[(x, y) for x, y in bm.items()]
+                                 for bm in self.back_maps]
         if self.forward_maps is not None:
             output['forward_maps'] = [fm for fm in self.forward_maps]
         return output
@@ -66,9 +68,11 @@ class ProofTreeNode(object):
             raise NotImplementedError('Fix forward maps in jsoning!!!')
         return cls(label=jsondict['label'],
                    eqv_path_labels=jsondict['eqv_path_labels'],
-                   eqv_path_objects=[Tiling.from_dict(x) for x in jsondict['eqv_path_objects']],
+                   eqv_path_objects=[Tiling.from_dict(x)
+                                     for x in jsondict['eqv_path_objects']],
                    eqv_explanations=jsondict['eqv_explanations'],
-                   children=[ProofTreeNode.from_dict(child) for child in jsondict['children']],
+                   children=[ProofTreeNode.from_dict(child)
+                             for child in jsondict['children']],
                    strategy_verified=jsondict['strategy_verified'],
                    complement_verified=jsondict['complement_verified'],
                    decomposition=jsondict['decomposition'],
@@ -127,7 +131,8 @@ class ProofTreeNode(object):
                                           total)
         if self.decomposition:
             if not self.has_interleaving_decomposition():
-                child_objs = [child.eqv_path_objects[0] for child in self.children]
+                child_objs = [child.eqv_path_objects[0]
+                              for child in self.children]
                 total = 0
                 for part in partitions_of_n_of_size_k(length, len(child_objs)):
                     subtotal = 1
@@ -195,8 +200,6 @@ class ProofTree(object):
     @classmethod
     def from_dict(cls, jsondict):
         root = ProofTreeNode.from_dict(jsondict['root'])
-        print(root)
-        print(type(root))
         return cls(root)
 
     @classmethod
@@ -246,7 +249,8 @@ class ProofTree(object):
                                 root.eqv_path_objects[-1].to_old_tiling(),
                                 relation,
                                 root.label,
-                                children=[self._to_old_proof_tree_node(x) for x in root.children],
+                                children=[self._to_old_proof_tree_node(x)
+                                          for x in root.children],
                                 recurse=recurse,
                                 strategy_verified=root.strategy_verified)
 
@@ -293,7 +297,8 @@ class ProofTree(object):
     def from_comb_spec_searcher(cls, root, css):
         if not isinstance(root, tree_searcher_node):
             raise TypeError("Requires a tree searcher node, treated as root.")
-        proof_tree = ProofTree(ProofTree.from_comb_spec_searcher_node(root, css))
+        proof_tree = ProofTree(ProofTree.from_comb_spec_searcher_node(root,
+                                                                      css))
         proof_tree._recursion_fixer(css)
         return proof_tree
 
@@ -313,7 +318,8 @@ class ProofTree(object):
 
             eqv_path = css.equivdb.find_path(in_label, out_label)
             eqv_objs = [css.objectdb.get_object(l) for l in eqv_path]
-            eqv_explanations = [css.equivdb.get_explanation(x, y) for x, y in zip(eqv_path[:-1], eqv_path[1:])]
+            eqv_explanations = [css.equivdb.get_explanation(x, y)
+                                for x, y in zip(eqv_path[:-1], eqv_path[1:])]
 
             root.eqv_path_labels = eqv_path
             root.eqv_path_objects = eqv_objs
@@ -348,33 +354,39 @@ class ProofTree(object):
                 #verified!
                 eqv_path = css.equivdb.find_path(in_label, eqv_ver_label)
                 eqv_objs = [css.objectdb.get_object(l) for l in eqv_path]
-                eqv_explanations = [css.equivdb.get_explanation(x, y) for x, y in zip(eqv_path[:-1], eqv_path[1:])]
+                eqv_explanations = [css.equivdb.get_explanation(x, y)
+                                    for x, y in zip(eqv_path[:-1], eqv_path[1:])]
 
                 formal_step = css.objectdb.verification_reason(eqv_ver_label)
                 return ProofTreeNode(label, eqv_path, eqv_objs,
                                      eqv_explanations, strategy_verified=True,
                                      formal_step=formal_step)
             else:
-                #recurse! we reparse these at the end, so recursed labels etc are not interesting.
+                #recurse! we reparse these at the end, so recursed labels etc
+                #are not interesting.
                 return ProofTreeNode(label, [in_label],
                                     [css.objectdb.get_object(in_label)],
                                     formal_step="recurse",
                                     recursion=True)
         else:
             start, ends = css.rule_from_equivence_rule(root.label,
-                                                       tuple(c.label for c in root.children))
+                                                       tuple(c.label
+                                                             for c in root.children))
             formal_step = css.ruledb.explanation(start, ends)
             back_maps = css.ruledb.get_back_maps(start, ends)
 
             eqv_path = css.equivdb.find_path(in_label, start)
             eqv_objs = [css.objectdb.get_object(l) for l in eqv_path]
-            eqv_explanations = [css.equivdb.get_explanation(x, y) for x, y in zip(eqv_path[:-1], eqv_path[1:])]
+            eqv_explanations = [css.equivdb.get_explanation(x, y)
+                                for x, y in zip(eqv_path[:-1], eqv_path[1:])]
 
             strat_children = []
             for next_label in ends:
                 for child in root.children:
                     if css.equivdb.equivalent(next_label, child.label):
-                        sub_tree = ProofTree.from_comb_spec_searcher_node(child, css, next_label)
+                        sub_tree = ProofTree.from_comb_spec_searcher_node(child,
+                                                                          css,
+                                                                          next_label)
                         strat_children.append(sub_tree)
                         break
             if back_maps is not None:
