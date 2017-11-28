@@ -33,7 +33,8 @@ class ProofTreeNode(object):
         self.back_maps = back_maps
         self.forward_maps = forward_maps
 
-    def _error_string(self, parent, children, strat_type, length, parent_total, children_total):
+    def _error_string(self, parent, children, strat_type,
+                      length, parent_total, children_total):
         error = "Insane " + strat_type + " Strategy Found!\n"
         error += "Found at length {} \n".format(length)
         error += "The parent tiling was:\n{}\n".format(parent.__repr__())
@@ -46,50 +47,52 @@ class ProofTreeNode(object):
         return error
 
 
-    def sanity_check(self, length=8, of_length=None):
+    def sanity_check(self, length, of_length=None):
         if of_length is None:
             raise ValueError("of_length is undefined.")
         if self.complement_verified:
             return ("Don't use complement_verified, its dangerous.")
-        for i in range(length):
-            number_perms = of_length(self.eqv_path_objects[0], i)
-            for obj in self.eqv_path_objects[1:]:
-                eqv_number = of_length(obj, i)
-                if number_perms != eqv_number:
-                    return self._error_string(self.eqv_path_objects[0],
-                                              [obj],
-                                              "Equivalent",
-                                              i,
-                                              number_perms,
-                                              eqv_number)
-            if self.disjoint_union:
+
+        number_perms = of_length(self.eqv_path_objects[0], length)
+        for obj in self.eqv_path_objects[1:]:
+            eqv_number = of_length(obj, length)
+            if number_perms != eqv_number:
+                return self._error_string(self.eqv_path_objects[0],
+                                          [obj],
+                                          "Equivalent",
+                                          length,
+                                          number_perms,
+                                          eqv_number)
+        if self.disjoint_union:
+            child_objs = [child.eqv_path_objects[0] for child in self.children]
+            total = 0
+            for obj in child_objs:
+                total += of_length(obj, length)
+            if number_perms != total:
+                return self._error_string(self.eqv_path_objects[0],
+                                          child_objs,
+                                          "Batch",
+                                          length,
+                                          number_perms,
+                                          total)
+        if self.decomposition:
+            if not self.has_interleaving_decomposition():
                 child_objs = [child.eqv_path_objects[0] for child in self.children]
                 total = 0
-                for obj in child_objs:
-                    total += of_length(obj, i)
+                for part in partitions_of_n_of_size_k(length, len(child_objs)):
+                    subtotal = 1
+                    for obj, partlen in zip(child_objs, part):
+                        if subtotal == 0:
+                            break
+                        subtotal *= of_length(obj, partlen)
+                    total += subtotal
                 if number_perms != total:
                     return self._error_string(self.eqv_path_objects[0],
                                               child_objs,
-                                              "Batch",
-                                              i,
+                                              "Decomposition",
+                                              length,
                                               number_perms,
                                               total)
-            if self.decomposition:
-                if not self.has_interleaving_decomposition():
-                    child_objs = [child.eqv_path_objects[0] for child in self.children]
-                    total = 0
-                    for part in partitions_of_n_of_size_k(i, len(child_objs)):
-                        subtotal = 1
-                        for obj, partlen in zip(child_objs, part):
-                            subtotal *= of_length(obj, partlen)
-                        total += subtotal
-                    if number_perms != total:
-                        return self._error_string(self.eqv_path_objects[0],
-                                                  child_objs,
-                                                  "Decomposition",
-                                                  i,
-                                                  number_perms,
-                                                  total)
 
     def has_interleaving_decomposition(self):
         if self.back_maps is None:
@@ -106,7 +109,8 @@ class ProofTreeNode(object):
             return True
         return False
 
-
+class InsaneTreeError(Exception):
+    pass
 
 class ProofTree(object):
     def __init__(self, root):
@@ -184,17 +188,19 @@ class ProofTree(object):
             count += len(node.eqv_path_objects)
         return count
 
-    def sanity_check(self, length=8):
+    def sanity_check(self, length=8, raiseerror=True):
         overall_error = ""
         for node in self.nodes():
             error = node.sanity_check(length, self._of_length)
             if error is not None:
-                overall_error += error
+                if raiseerror:
+                    raise InsaneTreeError(error)
+                else:
+                    overall_error += error
         if overall_error:
             return False, overall_error
         else:
-            return True, "Sanity checked, all good to length {}".format(length)
-
+            return True, "Sanity checked, all good at length {}".format(length)
 
     @classmethod
     def from_comb_spec_searcher(cls, root, css):

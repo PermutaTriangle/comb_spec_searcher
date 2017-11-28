@@ -98,6 +98,15 @@ all_strategies = StrategyPack(
 ################################################################################
 ################################################################################
 
+forced_patterns_2_basic = StrategyPack(
+        eq_strats=[],
+        ver_strats=[subset_verified, database_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[components],
+                      [partial(all_requirement_insertions, maxreqlen=2),
+                       all_cell_insertions, forced_binary_pattern]],
+        name="forced_patterns_2_basic")
+
 point_sep_equiv_iso = StrategyPack(
         eq_strats=[point_separation,
                    partial(point_isolations, equivalence_only=True)],
