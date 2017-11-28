@@ -9,4 +9,4 @@ from .strategies import InferralStrategy
 from .strategies import Strategy
 from .strategies import VerificationStrategy
 from .strategies import StrategyPack
-from .ProofTree import ProofTree
+from .proof_tree import ProofTree
