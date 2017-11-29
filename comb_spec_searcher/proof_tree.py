@@ -179,8 +179,10 @@ class ProofTreeNode(object):
                     self.back_maps == other.back_maps,
                     self.forward_maps == other.forward_maps])
 
+
 class InsaneTreeError(Exception):
     pass
+
 
 class ProofTree(object):
     def __init__(self, root):
@@ -193,7 +195,7 @@ class ProofTree(object):
         return {'root': self.root.to_jsonable()}
 
     def to_json(self):
-        from .ProofTree import ProofTree as OldProofTree
+        from .old_proof_tree import ProofTree as OldProofTree
         old_proof_tree = OldProofTree(self._to_old_proof_tree_node(self.root))
         return old_proof_tree.to_json()
 
@@ -228,20 +230,19 @@ class ProofTree(object):
                 print()
 
     def to_old_proof_tree(self):
-        from .ProofTree import ProofTree as OldProofTree
+        from .old_proof_tree import ProofTree as OldProofTree
         old_proof_tree = OldProofTree(self._to_old_proof_tree_node(self.root))
         return old_proof_tree
 
-
     def _to_old_proof_tree_node(self, root):
-        from .ProofTree import ProofTreeNode as OldProofTreeNode
+        from .old_proof_tree import ProofTreeNode as OldProofTreeNode
         relation = ""
         for x in root.eqv_explanations:
             relation = relation + x
         if root.back_maps:
             from grids import Cell
             recurse = [{Cell(*key): Cell(*val) for key, val in bm.items()}
-                      for bm in root.back_maps]
+                       for bm in root.back_maps]
         else:
             recurse = None
         return OldProofTreeNode(root.formal_step,
