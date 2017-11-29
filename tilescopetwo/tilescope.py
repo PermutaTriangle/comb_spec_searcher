@@ -18,7 +18,7 @@ from permuta.descriptors import Basis
 
 from comb_spec_searcher import CombinatorialSpecificationSearcher
 
-from comb_spec_searcher.ProofTree import ProofTree, ProofTreeNode
+from comb_spec_searcher.old_proof_tree import ProofTree, ProofTreeNode
 from comb_spec_searcher.objectqueue import ObjectQueue
 
 
