@@ -153,8 +153,8 @@ class ProofTreeNode(object):
         if self.back_maps is None:
             return False
         mixing = False
-        bmps1 = [{c.i for c in dic.values()} for dic in self.back_maps]
-        bmps2 = [{c.j for c in dic.values()} for dic in self.back_maps]
+        bmps1 = [{c[0] for c in dic.values()} for dic in self.back_maps]
+        bmps2 = [{c[1] for c in dic.values()} for dic in self.back_maps]
         for i in range(len(self.back_maps)):
             for j in range(len(self.back_maps)):
                 if i != j:
