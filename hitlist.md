@@ -47,7 +47,7 @@ The classes we want ATRAP to find a proof tree for
 
 - [ ] The Shubert variety classes (one of Albert and Brignall, a more complicated one of Masaki Ikeda (alex woo's student))
     - [ ] LCI Schubert varieties 53241_52341_52431_35142_42513_426153
-    - [ ] DBI
+    - [x] DBI
 
 - [ ] The substitution closure of Av(321), which equals Av(25314, 35142, 41352, 42513, 362514, 531642) (see a paper of Atkinson, Ruskuc, and Smith)
 
