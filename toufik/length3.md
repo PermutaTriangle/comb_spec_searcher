@@ -139,14 +139,13 @@ Table 1, page 2
 
 ## Callan, D., & Mansour, T. (2017, May 2). Enumeration of small Wilf classes avoiding 1324 and two other 4-letter patterns. arXiv.org
 
-**20/28 found a tree with TileScope**
-1 more are fake interleaving, so should be easy
+**24/28 found a tree with TileScope**
 2 more are point interleaving, so might be doable with forward equivalence and kernel method
 
 - 49 http://permpal.ru.is/perms/av/1324_2341_4123/
-- 69 http://permpal.ru.is/perms/av/1234_1324_3412/ Interleaving on ATRAP No TileScope tree
-- 72 1243, 1324, 3412 not on permpal No TileScope tree
-- 75 1243, 1324, 4231 not on permpal No TileScope tree
+- 69 http://permpal.ru.is/perms/av/1234_1324_3412/
+- 72 1243, 1324, 3412 not on permpal
+- 75 1243, 1324, 4231 not on permpal
 - 76 1324, 2341, 3412 not on permpal
 - 80 http://permpal.ru.is/perms/av/1243_1432_4231/
 - 84 1324, 1432, 4231 not on permpal
@@ -165,7 +164,7 @@ Table 1, page 2
 - 187 http://permpal.ru.is/perms/av/1324_1342_3241/
 - 193 http://permpal.ru.is/perms/av/1324_2413_3241/
 - 195 http://permpal.ru.is/perms/av/1243_1324_2341/ Interleaving (point) on ATRAP No TileScope tree
-- 210 http://permpal.ru.is/perms/av/1243_1324_2431/ Interleaving on ATRAP No TileScope tree
+- 210 http://permpal.ru.is/perms/av/1243_1324_2431/ Interleaving on ATRAP
 - 211 1234, 1324, 2341 not on permpal No TileScope tree
 - 212 http://permpal.ru.is/perms/av/1324_2413_2431/
 - 213 http://permpal.ru.is/perms/av/1324_1342_2431/
@@ -174,7 +173,7 @@ Table 1, page 2
 
 ## Callan, D., & Mansour, T. (2017, July 30). Enumeration of small Wilf classes avoiding 1342 and two other 4-letter patterns. arXiv.org
 
-**28/35 found a tree with TileScope**
+**29/35 found a tree with TileScope**
 
 - 77 http://permpal.ru.is/perms/av/1243_2314_3412/
 - 90 http://permpal.ru.is/perms/av/1243_2431_3412/
@@ -187,7 +186,7 @@ Table 1, page 2
 - 159 http://permpal.ru.is/perms/av/1243_1342_3412
 - 162 http://permpal.ru.is/perms/av/1342_3412_4123/
 - 163 http://permpal.ru.is/perms/av/1342_2314_3412
-- 164 http://permpal.ru.is/perms/av/1342_2341_4123/ Interleaving on ATRAP No TileScope tree
+- 164 http://permpal.ru.is/perms/av/1342_2341_4123/ Interleaving on ATRAP
 - 165 http://permpal.ru.is/perms/av/1243_2431_4132/
 - 175 http://permpal.ru.is/perms/av/1342_2413_4123/
 - 176 http://permpal.ru.is/perms/av/1342_2143_2431/
@@ -214,15 +213,15 @@ Table 1, page 2
 
 ## Callan, D., Mansour, T., & Shattuck, M. (2017, September 13). Enumeration of permutations avoiding a triple of 4-letter patterns is all done. arXiv.org
 
-**6/13**
+**8/13**
 
 - 74 http://permpal.ru.is/perms/av/1234_1243_3412/
 - 109 http://permpal.ru.is/perms/av/1243_2143_3412/
 - 121 http://permpal.ru.is/perms/av/1243_2341_3412/
 - 125 1243, 2341, 4123 not on permpal No TileScope tree
-- 149 1234, 2341, 3412 not on permpal No TileScope tree
+- 149 1234, 2341, 3412 not on permpal
 - 185 1234, 2341, 4123 not on permpal No TileScope tree
-- 188 1432, 2143, 3214 not on permpal No TileScope tree
+- 188 1432, 2143, 3214 not on permpal
 - 209 http://permpal.ru.is/perms/av/1243_1432_2413/ System of equations
 - 216 http://permpal.ru.is/perms/av/2143_2413_3412/ Interleaving on ATRAP No TileScope tree
 - 225 http://permpal.ru.is/perms/av/1243_2413_3142/
