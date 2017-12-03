@@ -57,11 +57,16 @@ class StrategyPack(object):
             raise TypeError("Strategy pack requires a (possibly empty) list of inferral strategies.")
         elif other_strats is None:
             raise TypeError("Strategy pack requires a (possibly empty) list of lists of other strategies.")
-        elif name is None:
-            raise TypeError("Strategy pack requires a name.")
-        else:
-            self.name = name
-            self.eq_strats = eq_strats
-            self.inf_strats = inf_strats
-            self.ver_strats = ver_strats
-            self.other_strats = other_strats
+        
+        # TODO: Probably shouldn't do this...
+        name = self
+        for k, v in locals().items():
+            if v is name:
+                name_as_str = k
+
+        self.name = name_as_str
+
+        self.eq_strats = eq_strats
+        self.inf_strats = inf_strats
+        self.ver_strats = ver_strats
+        self.other_strats = other_strats
