@@ -6,20 +6,14 @@
  .-/.__.(__._/_.-(__.'_    ) `---'`-' /`-' (__.'.-/._  (   .   )(    /
 (_/  `-              (_.--'          /         (_/  `-  `-' `-'  `-.'
 """
-
-from tilescopetwo.strategies import is_empty_strategy
-
-from grids_two import Obstruction, Tiling
-
-from grids import Cell
-
-from permuta import Perm
-from permuta.descriptors import Basis
+from collections import Iterable
 
 from comb_spec_searcher import CombinatorialSpecificationSearcher
-
-from comb_spec_searcher.old_proof_tree import ProofTree, ProofTreeNode
 from comb_spec_searcher.objectqueue import ObjectQueue
+from grids_two import Obstruction, Tiling
+from permuta import Perm
+from permuta.descriptors import Basis
+from tilescopetwo.strategies import is_empty_strategy
 
 
 class TileScopeTWO(CombinatorialSpecificationSearcher):
@@ -28,7 +22,7 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
     respect to the given basis.
     """
     def __init__(self,
-                 basis,
+                 basis=None,
                  strategy_pack=None,
                  interleaving_decomposition=True,
                  symmetry=False,
@@ -40,9 +34,11 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
         """Initialise TileScope."""
         if isinstance(basis, str):
             self.basis = Basis([Perm.to_standard([int(c) for c in p])
-                                    for p in basis.split('_')])
-        else:
+                                for p in basis.split('_')])
+        elif isinstance(basis, Iterable):
             self.basis = Basis(basis)
+        else:
+            self.basis = []
 
         if symmetry:
             symmetries = [Tiling.inverse, Tiling.reverse, Tiling.complement,
@@ -52,18 +48,23 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
             symmetries = []
 
         if start_tiling is None:
-            start_tiling = Tiling(possibly_empty=[(0,0)], obstructions=[Obstruction.single_cell(patt, (0,0)) for patt in self.basis])
+            start_tiling = Tiling(
+                possibly_empty=[(0, 0)],
+                obstructions=[Obstruction.single_cell(patt, (0, 0))
+                              for patt in self.basis])
 
-        function_kwargs = {"basis": self.basis,
-                           "interleaving_decomposition": interleaving_decomposition}
+        function_kwargs = {
+            "basis": self.basis,
+            "interleaving_decomposition": interleaving_decomposition}
 
-        CombinatorialSpecificationSearcher.__init__(self,
-                                            start_object=start_tiling,
-                                            strategy_pack=strategy_pack,
-                                            symmetry=symmetries,
-                                            compress=compress,
-                                            forward_equivalence=forward_equivalence,
-                                            complement_verify=complement_verify,
-                                            objectqueue=objectqueue,
-                                            is_empty_strategy=is_empty_strategy,
-                                            function_kwargs=function_kwargs)
+        CombinatorialSpecificationSearcher.__init__(
+            self,
+            start_object=start_tiling,
+            strategy_pack=strategy_pack,
+            symmetry=symmetries,
+            compress=compress,
+            forward_equivalence=forward_equivalence,
+            complement_verify=complement_verify,
+            objectqueue=objectqueue,
+            is_empty_strategy=is_empty_strategy,
+            function_kwargs=function_kwargs)
