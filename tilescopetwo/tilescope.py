@@ -32,21 +32,24 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
                  start_tiling=None):
         """Initialise TileScope."""
         if basis is None and start_tiling is None:
-            raise ValueError("Tilescope requires either a start tiling or a basis.")
+            raise ValueError(("Tilescope requires either a start tiling or a "
+                              "basis."))
         if basis is not None and start_tiling is not None:
-            raise ValueError("Tilescope takes either a basis or a start_tiling, not both.")
+            raise ValueError(("Tilescope takes either a basis or a "
+                              "start_tiling, not both."))
 
         if basis is not None:
             if isinstance(basis, str):
                 self.basis = Basis([Perm.to_standard([int(c) for c in p])
-                                        for p in basis.split('_')])
+                                    for p in basis.split('_')])
             else:
                 self.basis = Basis(basis)
             start_tiling = Tiling(
                 possibly_empty=[(0, 0)],
-                obstructions=[Obstruction.single_cell(patt, (0, 0)) for patt in self.basis])
+                obstructions=[Obstruction.single_cell(patt, (0, 0))
+                              for patt in self.basis])
         else:
-            self.basis = None
+            self.basis = []
 
         if symmetry:
             symmetries = [Tiling.inverse, Tiling.reverse, Tiling.complement,
