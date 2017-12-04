@@ -6,20 +6,14 @@
  .-/.__.(__._/_.-(__.'_    ) `---'`-' /`-' (__.'.-/._  (   .   )(    /
 (_/  `-              (_.--'          /         (_/  `-  `-' `-'  `-.'
 """
-
-from tilescopetwo.strategies import is_empty_strategy
-
-from grids_two import Obstruction, Tiling
-
-from grids import Cell
-
-from permuta import Perm
-from permuta.descriptors import Basis
+from collections import Iterable
 
 from comb_spec_searcher import CombinatorialSpecificationSearcher
-
-from comb_spec_searcher.old_proof_tree import ProofTree, ProofTreeNode
 from comb_spec_searcher.objectqueue import ObjectQueue
+from grids_two import Obstruction, Tiling
+from permuta import Perm
+from permuta.descriptors import Basis
+from tilescopetwo.strategies import is_empty_strategy
 
 
 class TileScopeTWO(CombinatorialSpecificationSearcher):
@@ -38,19 +32,24 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
                  start_tiling=None):
         """Initialise TileScope."""
         if basis is None and start_tiling is None:
-            raise ValueError("Tilescope requires either a start tiling or a basis.")
+            raise ValueError(("Tilescope requires either a start tiling or a "
+                              "basis."))
         if basis is not None and start_tiling is not None:
-            raise ValueError("Tilescope takes either a basis or a start_tiling, not both.")
+            raise ValueError(("Tilescope takes either a basis or a "
+                              "start_tiling, not both."))
 
         if basis is not None:
             if isinstance(basis, str):
                 self.basis = Basis([Perm.to_standard([int(c) for c in p])
-                                        for p in basis.split('_')])
+                                    for p in basis.split('_')])
             else:
                 self.basis = Basis(basis)
-            start_tiling = Tiling(possibly_empty=[(0,0)], obstructions=[Obstruction.single_cell(patt, (0,0)) for patt in self.basis])
+            start_tiling = Tiling(
+                possibly_empty=[(0, 0)],
+                obstructions=[Obstruction.single_cell(patt, (0, 0))
+                              for patt in self.basis])
         else:
-            self.basis = None
+            self.basis = []
 
         if symmetry:
             symmetries = [Tiling.inverse, Tiling.reverse, Tiling.complement,
@@ -59,16 +58,16 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
         else:
             symmetries = []
 
-
         function_kwargs = {"basis": self.basis}
 
-        CombinatorialSpecificationSearcher.__init__(self,
-                                            start_object=start_tiling,
-                                            strategy_pack=strategy_pack,
-                                            symmetry=symmetries,
-                                            compress=compress,
-                                            forward_equivalence=forward_equivalence,
-                                            complement_verify=complement_verify,
-                                            objectqueue=objectqueue,
-                                            is_empty_strategy=is_empty_strategy,
-                                            function_kwargs=function_kwargs)
+        CombinatorialSpecificationSearcher.__init__(
+            self,
+            start_object=start_tiling,
+            strategy_pack=strategy_pack,
+            symmetry=symmetries,
+            compress=compress,
+            forward_equivalence=forward_equivalence,
+            complement_verify=complement_verify,
+            objectqueue=objectqueue,
+            is_empty_strategy=is_empty_strategy,
+            function_kwargs=function_kwargs)
