@@ -14,7 +14,8 @@ def subset_verified(tiling, basis, **kwargs):
 
 def one_by_one_verified(tiling, basis):
     """Return true if tiling is a subset of the Av(basis)."""
-    patts = Basis([ob.patt for ob in tiling])
-    if basis == patts:
-        return False
-    return True
+    if basis is not None:
+        patts = Basis([ob.patt for ob in tiling])
+        if basis == patts:
+            return False
+        return True

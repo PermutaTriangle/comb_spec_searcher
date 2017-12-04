@@ -24,7 +24,6 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
     def __init__(self,
                  basis=None,
                  strategy_pack=None,
-                 interleaving_decomposition=True,
                  symmetry=False,
                  forward_equivalence=False,
                  compress=False,
@@ -32,13 +31,22 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
                  objectqueue=ObjectQueue,
                  start_tiling=None):
         """Initialise TileScope."""
-        if isinstance(basis, str):
-            self.basis = Basis([Perm.to_standard([int(c) for c in p])
-                                for p in basis.split('_')])
-        elif isinstance(basis, Iterable):
-            self.basis = Basis(basis)
+        if basis is None and start_tiling is None:
+            raise ValueError("Tilescope requires either a start tiling or a basis.")
+        if basis is not None and start_tiling is not None:
+            raise ValueError("Tilescope takes either a basis or a start_tiling, not both.")
+
+        if basis is not None:
+            if isinstance(basis, str):
+                self.basis = Basis([Perm.to_standard([int(c) for c in p])
+                                        for p in basis.split('_')])
+            else:
+                self.basis = Basis(basis)
+            start_tiling = Tiling(
+                possibly_empty=[(0, 0)],
+                obstructions=[Obstruction.single_cell(patt, (0, 0)) for patt in self.basis])
         else:
-            self.basis = []
+            self.basis = None
 
         if symmetry:
             symmetries = [Tiling.inverse, Tiling.reverse, Tiling.complement,
@@ -47,15 +55,7 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
         else:
             symmetries = []
 
-        if start_tiling is None:
-            start_tiling = Tiling(
-                possibly_empty=[(0, 0)],
-                obstructions=[Obstruction.single_cell(patt, (0, 0))
-                              for patt in self.basis])
-
-        function_kwargs = {
-            "basis": self.basis,
-            "interleaving_decomposition": interleaving_decomposition}
+        function_kwargs = {"basis": self.basis}
 
         CombinatorialSpecificationSearcher.__init__(
             self,
