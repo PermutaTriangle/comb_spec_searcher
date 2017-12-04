@@ -1,4 +1,5 @@
-from .strategy_class import Strategy, StrategyPack
+from .strategy import Strategy
+from .strategy_pack import StrategyPack
 from .equivalence_strategies import *
 from .decomposition_strategies import *
 from .inferral_strategies import *
