@@ -12,7 +12,7 @@ from permuta.misc import flatten
 
 
 def components(tiling,
-               interleaving_decomposition=True,
+               interleaving_decomposition=False,
                point_interleaving=False,
                unions=False,
                workable=True,
