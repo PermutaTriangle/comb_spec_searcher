@@ -2,25 +2,20 @@
 import sys
 import time
 from collections import defaultdict
+from logzero import logger
+import json
 
 from .equivdb import EquivalenceDB
 from .LRUCache import LRUCache
-from .ruledb import RuleDB
-
-from .strategies import InferralStrategy
-from .strategies import Strategy
-from .strategies import VerificationStrategy
-from .strategies import StrategyPack
-
 from .objectdb import ObjectDB
+from .objectdb_compress import CompressedObjectDB
 from .objectqueue import ObjectQueue
 from .objectqueuedf import ObjectQueueDF
-
-from .objectdb_compress import CompressedObjectDB
-
-from .tree_searcher import proof_tree_bfs, prune
-
 from .proof_tree import ProofTree as ProofTree
+from .ruledb import RuleDB
+from .strategies import (InferralStrategy, Strategy, StrategyPack,
+                         VerificationStrategy)
+from .tree_searcher import proof_tree_bfs, prune
 
 
 class CombinatorialSpecificationSearcher(object):
@@ -37,7 +32,8 @@ class CombinatorialSpecificationSearcher(object):
                  complement_verify=True,
                  objectqueue=ObjectQueue,
                  is_empty_strategy=None,
-                 function_kwargs=dict()):
+                 function_kwargs=dict(),
+                 logger_kwargs=dict()):
         """Initialise CombinatorialSpecificationSearcher."""
         if start_object is None:
             raise ValueError("CombinatorialSpecificationSearcher requires a start object.")
@@ -66,9 +62,7 @@ class CombinatorialSpecificationSearcher(object):
         self.complement_verify = complement_verify
 
         if complement_verify:
-            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            print("WARNING: CAN LEAD TO TAUTOLOGIES!")
-            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            logger.warn("WARNING: COMPLEMENT VERIFY CAN LEAD TO TAUTOLOGIES!", extra=self.logger_kwargs)
 
         if strategy_pack is not None:
             if not isinstance(strategy_pack, StrategyPack):
@@ -113,6 +107,7 @@ class CombinatorialSpecificationSearcher(object):
         self.queue_time = 0
         self._time_taken = 0
         self._cache_misses = 0  # this for status and should be updated if you use a cache
+        self.logger_kwargs = logger_kwargs
 
 
 
@@ -478,27 +473,28 @@ class CombinatorialSpecificationSearcher(object):
         self.queue_time += time.time() - queue_start
         self._time_taken += time.time() - start
 
-    def status(self, file=sys.stderr):
+    def status(self):
         """
-        Print the current status of the tilescope.
+        Return a string of the current status of the tilescope.
 
         It includes:
         - number of objects, and information about verification
         - the times spent in each of the main functions
         """
-
-        print(" ------------- ", file=file)
-        print("|STATUS UPDATE|", file=file)
-        print(" ------------- ", file=file)
-        print("", file=file)
-        print("Time spent searching so far: {} seconds".format(self._time_taken), file=file)
-
+        status = ""
+        status += "Currently on 'level' {}\n".format(str(self.objectqueue.levels_completed + 1))
+        status += "Time spent searching so far: {} seconds\n".format(self._time_taken)
         for i, expanded in enumerate(self.expanded_objects):
-            print("Number of objects expanded by Set {} is {}".format(str(i+1),
-                                                                      str(expanded)),
-                  file=file)
+            status += "Number of objects expanded by Set {} is {}\n".format(str(i+1),   str(expanded))
+        status += "The size of the working queue is {}\n".format(self.objectqueue.working.qsize())
+        status += "The size of the current queue is {}\n".format(self.objectqueue.curr_level.qsize())
+        status += "The size of the next queue is {}\n".format(self.objectqueue.next_level.qsize())
+        status += "There were {} cache misses\n".format(str(self._cache_misses))
+
+
+
         all_labels = self.objectdb.label_to_info.keys()
-        print("Total number of objects is {}".format(str(len(all_labels))), file=file)
+        status += "Total number of objects is {}\n".format(str(len(all_labels)))
         expandable = 0
         verified = 0
         strategy_verified = 0
@@ -507,70 +503,50 @@ class CombinatorialSpecificationSearcher(object):
         for label in all_labels:
             if self.objectdb.is_expandable(label):
                 expandable += 1
-            if self.objectdb.is_verified(label):
+            if self.equivdb.is_verified(label):
                 verified += 1
             if self.objectdb.is_strategy_verified(label):
                 strategy_verified += 1
             if self.objectdb.is_empty(label):
                 empty += 1
             equivalent_sets.add(self.equivdb[label])
-        print("Total number of equivalent sets is {}".format(str(len(equivalent_sets))),
-              file=file)
-        print("Total number of expandable objects is {}".format(str(expandable)),
-              file=file)
-        print("Total number of verified objects is {}".format(str(verified)),
-              file=file)
-        print("Total number of strategy verified objects is {}".format(str(strategy_verified)),
-              file=file)
-        print("Total number of empty objects is {}".format(str(empty)), file=file)
-        print("Currently on 'level' {}".format(str(self.objectqueue.levels_completed + 1)), file=file)
-        print("The size of the working queue is", self.objectqueue.working.qsize(), file=file)
-        print("The size of the current queue is", self.objectqueue.curr_level.qsize(), file=file)
-        print("The size of the next queue is", self.objectqueue.next_level.qsize(), file=file)
-        print("There were {} cache misses".format(str(self._cache_misses)), file=file)
-        print("", file=file)
+
+        status += "Total number of equivalent sets is {}\n".format(str(len(equivalent_sets)))
+        status += "Total number of expandable objects is {}\n".format(str(expandable))
+        status += "Total number of verified objects is {}\n".format(str(verified))
+        status += "Total number of strategy verified objects is {}\n".format(str(strategy_verified))
+        status += "Total number of empty objects is {}\n".format(str(empty))
+
         equiv_perc = int(self.equivalent_time/self._time_taken * 100)
         verif_perc = int(self.verification_time/self._time_taken * 100)
         infer_perc = int(self.inferral_time/self._time_taken * 100)
         symme_perc = int(self.symmetry_time/self._time_taken * 100)
-        print("Time spent equivalent expanding: {} seconds, ~{}%".format(str(self.equivalent_time),
-                                                                         equiv_perc),
-              file=file)
-        print("Time spent strategy verifying: {} seconds, ~{}%".format(str(self.verification_time),
-                                                                       verif_perc),
-              file=file)
-        print("Time spent inferring: {} seconds, ~{}%".format(str(self.inferral_time),
-                                                              infer_perc),
-              file=file)
+
+        status += "Time spent equivalent expanding: {} seconds, ~{}%\n".format(str(self.equivalent_time), equiv_perc)
+        status += "Time spent strategy verifying: {} seconds, ~{}%\n".format(str(self.verification_time), verif_perc)
+        status += "Time spent inferring: {} seconds, ~{}%\n".format(str(self.inferral_time), infer_perc)
+
         if self.symmetry:
-            print("Time spent symmetry expanding: {} seconds, ~{}%".format(str(self.symmetry_time),
-                                                                           symme_perc),
-                  file=file)
+            status += "Time spent symmetry expanding: {} seconds, ~{}%\n".format(str(self.symmetry_time), symme_perc)
+
         for i, exp_time in enumerate(self.expansion_times):
             expand_perc = str(int(exp_time/self._time_taken * 100))
-            print("Time spent expanding Set {}: {} seconds, ~{}%".format(str(i+1),
-                                                                         str(exp_time),
-                                                                         expand_perc),
-                  file=file)
+            status += "Time spent expanding Set {}: {} seconds, ~{}%\n".format(str(i+1), str(exp_time), expand_perc)
+
         queue_perc = int(self.queue_time/self._time_taken * 100)
         prep_time = self.prepping_for_tree_search_time
         prpts_perc = int(prep_time/self._time_taken * 100)
         tsrch_perc = int(self.tree_search_time/self._time_taken * 100)
-        print("Time spent queueing: {} seconds, ~{}%".format(str(self.queue_time),
-                                                             queue_perc),
-              file=file)
-        print("Time spent prepping for tree search: {} seconds, ~{}%".format(str(prep_time),
-                                                                             prpts_perc),
-              file=file)
-        print("Time spent searching for tree: {} seconds, ~{}%".format(str(self.tree_search_time),
-                                                                       tsrch_perc),
-              file=file)
+
+        status += "Time spent queueing: {} seconds, ~{}%\n".format(str(self.queue_time), queue_perc)
+        status += "Time spent prepping for tree search: {} seconds, ~{}%\n".format(str(prep_time), prpts_perc)
+        status += "Time spent searching for tree: {} seconds, ~{}%\n".format(str(self.tree_search_time), tsrch_perc)
+
         total_perc = equiv_perc+verif_perc+infer_perc+symme_perc+queue_perc+prpts_perc+tsrch_perc
         for i, exp_time in enumerate(self.expansion_times):
             total_perc += int(exp_time/self._time_taken * 100)
-        print("Total of ~{}% accounted for.".format(str(total_perc)), file=file)
-        print("", file=file)
-
+        status += "Total of ~{}% accounted for.\n".format(str(total_perc))
+        return status
 
     def _strategies_to_str(self, strategies):
         """Return names of strategies/functions."""
@@ -581,7 +557,7 @@ class CombinatorialSpecificationSearcher(object):
             output = output + ", " + str(strategy).split(' ')[1]
         return output
 
-    def auto_search(self, cap=None, verbose=False, status_update=None, max_time=None, file=sys.stderr):
+    def auto_search(self, cap=None, verbose=False, status_update=None, max_time=None):
         """
         An automatic search function.
 
@@ -591,31 +567,30 @@ class CombinatorialSpecificationSearcher(object):
 
         If verbose=True, a status update is given when a tree is found and
         after status_update many seconds have passed. It will also print
-        the proof tree, in both json and pretty_print formats.
+        the proof tree, in json formats.
         """
         if verbose:
             if status_update:
                 status_start = time.time()
-            print("Auto search started", time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()),
-                  file=file)
-            print("", file=file)
-            print("Looking for proof tree for:", file=file)
-            print(self.objectdb.get_object(self.start_label), file=file)
-            print("", file=file)
-            print("The strategies being used are:", file=file)
+            start_string = ""
+            start_string += "Auto search started {}\n".format(time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()))
+            start_string += "Looking for proof tree for:\n"
+            start_string += self.objectdb.get_object(self.start_label).__repr__()
+            start_string += "\n"
+            start_string += "The strategies being used are:\n"
             equiv_strats = self._strategies_to_str(self.equivalence_strategy_generators)
             infer_strats = self._strategies_to_str(self.inferral_strategies)
             verif_strats = self._strategies_to_str(self.verification_strategies)
-            print("Equivalent: {}".format(equiv_strats), file=file)
-            print("Inferral: {}".format(infer_strats), file=file)
-            print("Verification: {}".format(verif_strats), file=file)
+            start_string += "Equivalent: {}\n".format(equiv_strats)
+            start_string += "Inferral: {}\n".format(infer_strats)
+            start_string += "Verification: {}\n".format(verif_strats)
             if self.symmetry:
                 symme_strats = self._strategies_to_str(self.symmetry)
-                print("Symmetries: {}".format(symme_strats), file=file)
+                start_string += "Symmetries: {}\n".format(symme_strats)
             for i, strategies in enumerate(self.strategy_generators):
                 strats = self._strategies_to_str(strategies)
-                print("Set {}: {}".format(str(i+1), strats), file=file)
-            print("", file=file)
+                start_string += "Set {}: {}\n".format(str(i+1), strats)
+            logger.info(start_string, extra=self.logger_kwargs)
 
         expanding = True
         while expanding:
@@ -630,23 +605,22 @@ class CombinatorialSpecificationSearcher(object):
             proof_tree = self.get_proof_tree()
             if proof_tree is not None:
                 if verbose:
-                    self.status(file=file)
-                    print("Proof tree found", time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()),
-                          file=file)
-                    print("", file=file)
-                    proof_tree.pretty_print(file=file)
-                    print(proof_tree.to_json(), file=file)
-                    print("Time taken was " + str(self._time_taken) + " seconds", file=file)
+                    found_string = self.status()
+                    found_string += "Proof tree found {}\n".format(time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()))
+                    found_string += "Time taken was {} seconds\n\n".format(self._time_taken)
+                    found_string += proof_tree.to_json() + "\n\n"
+                    found_string += json.dumps(proof_tree.to_jsonable())
+                    logger.info(found_string, extra=self.logger_kwargs)
                 return proof_tree
             if max_time is not None:
                 if self._time_taken > max_time:
-                    self.status(file=file)
-                    print("Exceeded maximum time. Aborting auto search.", file=file)
+                    self.status()
+                    logger.warn("Exceeded maximum time. Aborting auto search.", extra=self.logger_kwargs)
                     return
 
             if status_update is not None and verbose:
                 if time.time() - status_start > status_update:
-                    self.status(file=file)
+                    self.status()
                     status_start = time.time()
 
     def has_proof_tree(self):
@@ -735,9 +709,7 @@ class CombinatorialSpecificationSearcher(object):
 
         if self.equivdb[self.start_label] in rules_dict:
             self._has_proof_tree = True
-            # print("A tree was found! :)")
             _, proof_tree = proof_tree_bfs(rules_dict, root=self.equivdb[self.start_label])
-            # print(proof_tree)
         else:
             proof_tree = None
 
