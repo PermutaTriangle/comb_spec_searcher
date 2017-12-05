@@ -620,7 +620,8 @@ class CombinatorialSpecificationSearcher(object):
 
             if status_update is not None and verbose:
                 if time.time() - status_start > status_update:
-                    self.status()
+                    status = self.status()
+                    logger.info(status, extra=self.logger_kwargs)
                     status_start = time.time()
 
     def has_proof_tree(self):
