@@ -61,7 +61,7 @@ class CombinatorialSpecificationSearcher(object):
         self.complement_verify = complement_verify
 
         if complement_verify:
-            print("WARNING: COMPLEMENT VERIFY CAN LEAD TO TAUTOLOGIES!")
+            logger.warn("WARNING: COMPLEMENT VERIFY CAN LEAD TO TAUTOLOGIES!", extra=self.logger_kwargs)
 
         if strategy_pack is not None:
             if not isinstance(strategy_pack, StrategyPack):
@@ -566,7 +566,7 @@ class CombinatorialSpecificationSearcher(object):
 
         If verbose=True, a status update is given when a tree is found and
         after status_update many seconds have passed. It will also print
-        the proof tree, in both json and pretty_print formats.
+        the proof tree, in json formats.
         """
         if verbose:
             if status_update:
@@ -589,7 +589,7 @@ class CombinatorialSpecificationSearcher(object):
             for i, strategies in enumerate(self.strategy_generators):
                 strats = self._strategies_to_str(strategies)
                 start_string += "Set {}: {}\n".format(str(i+1), strats)
-            print(start_string)
+            logger.info(start_string, extra=self.logger_kwargs)
 
         expanding = True
         while expanding:
@@ -604,16 +604,17 @@ class CombinatorialSpecificationSearcher(object):
             proof_tree = self.get_proof_tree()
             if proof_tree is not None:
                 if verbose:
-                    self.status()
+                    logger.info(self.status(), extra=self.logger_kwargs)
                     found_string = ""
                     found_string += "Proof tree found {}\n".format(time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()))
                     found_string += "Time taken was {} seconds\n".format(self._time_taken)
-                    print(found_string)
+                    found_string += proof_tree.to_json() + "\n"
+                    logger.info(found_string, extra=self.logger_kwargs)
                 return proof_tree
             if max_time is not None:
                 if self._time_taken > max_time:
                     self.status()
-                    print("Exceeded maximum time. Aborting auto search.")
+                    logger.warn("Exceeded maximum time. Aborting auto search.", extra=self.logger_kwargs)
                     return
 
             if status_update is not None and verbose:
@@ -707,9 +708,7 @@ class CombinatorialSpecificationSearcher(object):
 
         if self.equivdb[self.start_label] in rules_dict:
             self._has_proof_tree = True
-            # print("A tree was found! :)")
             _, proof_tree = proof_tree_bfs(rules_dict, root=self.equivdb[self.start_label])
-            # print(proof_tree)
         else:
             proof_tree = None
 
