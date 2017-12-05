@@ -12,7 +12,7 @@ from permuta.misc import flatten
 
 
 def components(tiling,
-               interleaving_decomposition=False,
+               interleaving=False,
                point_interleaving=False,
                unions=False,
                workable=True,
@@ -34,7 +34,7 @@ def components(tiling,
 
     components_set = UnionFind(len(cell_to_int))
 
-    if not interleaving_decomposition:
+    if not interleaving:
         for i in range(len(cells)):
             for j in range(i+1, len(cells)):
                 c1 = cells[i]

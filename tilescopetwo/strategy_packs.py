@@ -205,6 +205,38 @@ point_sep_equiv_iso_pi = StrategyPack(
 
 ################################################################################
 ################################################################################
+########################## interleaving strategy packs #########################
+################################################################################
+
+point_placement_i = StrategyPack(
+         eq_strats=[all_point_placements],
+         ver_strats=[subset_verified, globally_verified],
+         inf_strats=[empty_cell_inferral, row_and_column_separation],
+         other_strats=[[partial(components, interleaving=True)],
+                       [all_cell_insertions]],
+         name="point_placement_i")
+
+row_column_placements_i = StrategyPack(
+        eq_strats=[],
+        ver_strats=[subset_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, interleaving=True)],
+                      [all_cell_insertions, row_placements,  col_placements]],
+        name="row_column_placements_i")
+
+point_sep_equiv_iso_i = StrategyPack(
+        eq_strats=[point_separation,
+                   partial(point_isolations, equivalence_only=True)],
+        ver_strats=[subset_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, unions=True,
+                               workable=False, interleaving=True)],
+                      [all_cell_insertions,
+                       partial(point_isolations, ignore_equivalence=True)]],
+        name="point_sep_equiv_iso_i")
+
+################################################################################
+################################################################################
 
 forced_patterns_2_basic = StrategyPack(
         eq_strats=[],
