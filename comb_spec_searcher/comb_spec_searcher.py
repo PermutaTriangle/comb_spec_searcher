@@ -3,6 +3,7 @@ import sys
 import time
 from collections import defaultdict
 from logzero import logger
+import json
 
 from .equivdb import EquivalenceDB
 from .LRUCache import LRUCache
@@ -604,11 +605,11 @@ class CombinatorialSpecificationSearcher(object):
             proof_tree = self.get_proof_tree()
             if proof_tree is not None:
                 if verbose:
-                    logger.info(self.status(), extra=self.logger_kwargs)
-                    found_string = ""
+                    found_string = self.status()
                     found_string += "Proof tree found {}\n".format(time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()))
-                    found_string += "Time taken was {} seconds\n".format(self._time_taken)
-                    found_string += proof_tree.to_json() + "\n"
+                    found_string += "Time taken was {} seconds\n\n".format(self._time_taken)
+                    found_string += proof_tree.to_json() + "\n\n"
+                    found_string += json.dumps(proof_tree.to_jsonable())
                     logger.info(found_string, extra=self.logger_kwargs)
                 return proof_tree
             if max_time is not None:
