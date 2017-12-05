@@ -26,7 +26,7 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
                  strategy_pack=None,
                  symmetry=False,
                  forward_equivalence=False,
-                 compress=False,
+                 compress=True,
                  complement_verify=False,
                  objectqueue=ObjectQueue,
                  start_tiling=None):
