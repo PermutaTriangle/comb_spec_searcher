@@ -2,25 +2,19 @@
 import sys
 import time
 from collections import defaultdict
+from logzero import logger
 
 from .equivdb import EquivalenceDB
 from .LRUCache import LRUCache
-from .ruledb import RuleDB
-
-from .strategies import InferralStrategy
-from .strategies import Strategy
-from .strategies import VerificationStrategy
-from .strategies import StrategyPack
-
 from .objectdb import ObjectDB
+from .objectdb_compress import CompressedObjectDB
 from .objectqueue import ObjectQueue
 from .objectqueuedf import ObjectQueueDF
-
-from .objectdb_compress import CompressedObjectDB
-
-from .tree_searcher import proof_tree_bfs, prune
-
 from .proof_tree import ProofTree as ProofTree
+from .ruledb import RuleDB
+from .strategies import (InferralStrategy, Strategy, StrategyPack,
+                         VerificationStrategy)
+from .tree_searcher import proof_tree_bfs, prune
 
 
 class CombinatorialSpecificationSearcher(object):
@@ -37,7 +31,8 @@ class CombinatorialSpecificationSearcher(object):
                  complement_verify=True,
                  objectqueue=ObjectQueue,
                  is_empty_strategy=None,
-                 function_kwargs=dict()):
+                 function_kwargs=dict(),
+                 logger_kwargs=dict()):
         """Initialise CombinatorialSpecificationSearcher."""
         if start_object is None:
             raise ValueError("CombinatorialSpecificationSearcher requires a start object.")
@@ -113,6 +108,7 @@ class CombinatorialSpecificationSearcher(object):
         self.queue_time = 0
         self._time_taken = 0
         self._cache_misses = 0  # this for status and should be updated if you use a cache
+        self.logger_kwargs = logger_kwargs
 
 
 

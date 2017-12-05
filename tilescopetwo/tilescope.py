@@ -29,7 +29,8 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
                  compress=False,
                  complement_verify=False,
                  objectqueue=ObjectQueue,
-                 start_tiling=None):
+                 start_tiling=None,
+                 logger_kwargs={'processname': 'runner'}):
         """Initialise TileScope."""
         if basis is None and start_tiling is None:
             raise ValueError(("Tilescope requires either a start tiling or a "
@@ -70,4 +71,5 @@ class TileScopeTWO(CombinatorialSpecificationSearcher):
             complement_verify=complement_verify,
             objectqueue=objectqueue,
             is_empty_strategy=is_empty_strategy,
-            function_kwargs=function_kwargs)
+            function_kwargs=function_kwargs,
+            logger_kwargs=logger_kwargs)
