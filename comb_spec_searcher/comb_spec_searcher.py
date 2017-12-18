@@ -335,7 +335,7 @@ class CombinatorialSpecificationSearcher(object):
         - set workability of objects
         - remove empty objects
         - symmetry expand objects
-        - equivalent expand object.
+        - equivalent expand objects.
         """
         end_objects = []
         inferral_steps = []
@@ -413,10 +413,8 @@ class CombinatorialSpecificationSearcher(object):
                                                            equivalent=True)
             total_time += t
             objects_to_expand.update(eq_objs)
-        self.objectdb.set_equivalent_expanded(obj)
 
-        for eqv_obj in objects_to_expand:
-            self._equivalent_expand(eqv_obj)
+        self.objectdb.set_equivalent_expanded(obj)
         self.equivalent_time += total_time
 
     def do_level(self):
@@ -557,13 +555,12 @@ class CombinatorialSpecificationSearcher(object):
             output = output + ", " + str(strategy).split(' ')[1]
         return output
 
-    def auto_search(self, cap=None, verbose=False, status_update=None, max_time=None):
+    def auto_search(self, cap=100, verbose=False, status_update=None, max_time=None):
         """
         An automatic search function.
 
-        It will either search for a proof tree after cap many objects have been
-        expanded, or if cap=None, call do_level, before searching for tree.
-        It will continue doing this until a proof tree is found.
+        It will expand tilings until cap*(tree search time) has passed and then
+        search for a tree.
 
         If verbose=True, a status update is given when a tree is found and
         after status_update many seconds have passed. It will also print
@@ -592,17 +589,20 @@ class CombinatorialSpecificationSearcher(object):
                 start_string += "Set {}: {}\n".format(str(i+1), strats)
             logger.info(start_string, extra=self.logger_kwargs)
 
+        max_search_time = 0
         expanding = True
         while expanding:
-            if cap is None:
-                if self.do_level():
-                    break
-            else:
-                if self.expand_objects(cap):
+            start = time.time() + 0.00001
+            while time.time() - start < max_search_time:
+                if self.expand_objects(1):
                     expanding = False
-                # TODO: if the above functions does nothing, it returns True,
-                #       need to catch this in a better way.
+                    break
+
+            # TODO: if the above functions does nothing, it returns True,
+            #       need to catch this in a better way.
+            start = time.time()
             proof_tree = self.get_proof_tree()
+            max_search_time = min(cap*(time.time() - start), 3600) #worst case, search every hour!
             if proof_tree is not None:
                 if verbose:
                     found_string = "Proof tree found {}\n".format(time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()))
@@ -623,6 +623,7 @@ class CombinatorialSpecificationSearcher(object):
                     status = self.status()
                     logger.info(status, extra=self.logger_kwargs)
                     status_start = time.time()
+
 
     def has_proof_tree(self):
         """Return True if a proof tree has been found, false otherwise."""
