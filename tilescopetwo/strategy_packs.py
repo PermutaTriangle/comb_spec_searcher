@@ -203,6 +203,48 @@ all_strategies_no_req_no_eqv = StrategyPack(
 
 ################################################################################
 ################################################################################
+###################### STRATEGY PACKS FOR RUN 20/12/2017 #######################
+################################################################################
+
+forced_patterns_3_with_point_placements = StrategyPack(
+        eq_strats=[all_point_placements],
+        ver_strats=[subset_verified, database_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, unions=True)],
+                      [partial(all_requirement_insertions, maxreqlen=3),
+                       all_cell_insertions, forced_binary_pattern]],
+        name="forced_patterns_3_with_point_placements")
+
+forced_patterns_4_with_point_placements = StrategyPack(
+        eq_strats=[all_point_placements],
+        ver_strats=[subset_verified, database_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, unions=True)],
+                      [partial(all_requirement_insertions, maxreqlen=4),
+                       all_cell_insertions, forced_binary_pattern]],
+        name="forced_patterns_4_with_point_placements")
+
+point_sep_and_iso_no_unions = StrategyPack(
+        eq_strats=[point_separation],
+        ver_strats=[subset_verified, database_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[components],
+                      [all_cell_insertions, point_isolations]],
+        name="point_sep_and_iso_no_unions")
+
+point_sep_equiv_iso_no_unions = StrategyPack(
+        eq_strats=[point_separation,
+                   partial(point_isolations, equivalence_only=True)],
+        ver_strats=[subset_verified, database_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[components],
+                      [all_cell_insertions,
+                       partial(point_isolations, ignore_equivalence=True)]],
+        name="point_sep_equiv_iso_no_unions")
+
+
+################################################################################
+################################################################################
 ###################### point interleaving strategy packs #######################
 ################################################################################
 
@@ -317,6 +359,45 @@ all_strategies_no_req_no_eqv_pi = StrategyPack(
                         point_separation, row_placements, col_placements,
                         point_isolations]],
         name="all_strategies_no_req_no_eqv_pi")
+
+forced_patterns_3_with_point_placements_pi = StrategyPack(
+        eq_strats=[all_point_placements],
+        ver_strats=[subset_verified, database_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, unions=True,
+                               point_interleaving=True)],
+                      [partial(all_requirement_insertions, maxreqlen=3),
+                       all_cell_insertions, forced_binary_pattern]],
+        name="forced_patterns_3_with_point_placements_pi")
+
+forced_patterns_4_with_point_placements_pi = StrategyPack(
+        eq_strats=[all_point_placements],
+        ver_strats=[subset_verified, database_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, unions=True,
+                               point_interleaving=True)],
+                      [partial(all_requirement_insertions, maxreqlen=4),
+                       all_cell_insertions, forced_binary_pattern]],
+        name="forced_patterns_4_with_point_placements_pi")
+
+point_sep_and_iso_no_unions_pi = StrategyPack(
+        eq_strats=[point_separation],
+        ver_strats=[subset_verified, database_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, point_interleaving=True)],
+                      [all_cell_insertions, point_isolations]],
+        name="point_sep_and_iso_no_unions_pi")
+
+point_sep_equiv_iso_no_unions_pi = StrategyPack(
+        eq_strats=[point_separation,
+                   partial(point_isolations, equivalence_only=True)],
+        ver_strats=[subset_verified, database_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, point_interleaving=True)],
+                      [all_cell_insertions,
+                       partial(point_isolations, ignore_equivalence=True)]],
+        name="point_sep_equiv_iso_no_unions_pi")
+
 
 ################################################################################
 ### WE SHOULD CONSIDER RUNNING POINT SEP AND ISO WITHOUT UNIONS OF COMPONENTS ##
