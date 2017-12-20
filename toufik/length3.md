@@ -213,12 +213,12 @@ Table 1, page 2
 
 ## Callan, D., Mansour, T., & Shattuck, M. (2017, September 13). Enumeration of permutations avoiding a triple of 4-letter patterns is all done. arXiv.org
 
-**8/13**
+**9/13**
 
 - 74 http://permpal.ru.is/perms/av/1234_1243_3412/
 - 109 http://permpal.ru.is/perms/av/1243_2143_3412/
 - 121 http://permpal.ru.is/perms/av/1243_2341_3412/
-- 125 1243, 2341, 4123 not on permpal No TileScope tree
+- 125 1243, 2341, 4123 not on permpal TileScope tree was found on December 4
 - 149 1234, 2341, 3412 not on permpal
 - 185 1234, 2341, 4123 not on permpal No TileScope tree
 - 188 1432, 2143, 3214 not on permpal
