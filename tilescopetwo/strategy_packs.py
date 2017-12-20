@@ -89,7 +89,7 @@ root_requirement_placements_4_point_placements = StrategyPack(
                       [partial(root_requirement_insertions, maxreqlen=4),
                        forced_binary_pattern],
                       [all_cell_insertions, row_placements,  col_placements]],
-        name="root_requirement_placements_4")
+        name="root_requirement_placements_4_point_placements")
 
 root_requirement_placements_3_point_placements = StrategyPack(
         eq_strats=[all_point_placements],
@@ -99,7 +99,7 @@ root_requirement_placements_3_point_placements = StrategyPack(
                       [partial(root_requirement_insertions, maxreqlen=4),
                        forced_binary_pattern],
                       [all_cell_insertions, row_placements,  col_placements]],
-        name="root_requirement_placements_3")
+        name="root_requirement_placements_3_point_placements")
 
 point_placement = StrategyPack(
          eq_strats=[all_point_placements],
