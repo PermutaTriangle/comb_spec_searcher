@@ -172,7 +172,7 @@ all_strategies = StrategyPack(
 # all_strategies_no_req_no_eqv
 
 root_requirement_placements_5 = StrategyPack(
-        eq_strats=[partial(row_placements, equivalence_only=True)],
+        eq_strats=[],
         ver_strats=[subset_verified, database_verified, globally_verified],
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[components],
@@ -353,7 +353,7 @@ all_strategies_no_req_no_eqv_pi = StrategyPack(
 
 point_sep_and_iso_no_unions_pi = StrategyPack(
         eq_strats=[point_separation],
-        ver_strats=[subset_verified, database_verified, globally_verified],
+        ver_strats=[subset_verified, globally_verified],
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[partial(components, point_interleaving=True)],
                       [all_cell_insertions, point_isolations]],
@@ -362,7 +362,7 @@ point_sep_and_iso_no_unions_pi = StrategyPack(
 point_sep_equiv_iso_no_unions_pi = StrategyPack(
         eq_strats=[point_separation,
                    partial(point_isolations, equivalence_only=True)],
-        ver_strats=[subset_verified, database_verified, globally_verified],
+        ver_strats=[subset_verified, globally_verified],
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[partial(components, point_interleaving=True)],
                       [all_cell_insertions,
