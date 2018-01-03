@@ -461,6 +461,16 @@ forced_patterns_4_with_point_placements_pi = StrategyPack(
                        all_cell_insertions, forced_binary_pattern]],
         name="forced_patterns_4_with_point_placements_pi")
 
+
+point_placement_miner = StrategyPack(
+         eq_strats=[all_point_placements],
+         ver_strats=[subset_verified, miner_verified],
+         inf_strats=[empty_cell_inferral, row_and_column_separation],
+         other_strats=[[components],
+                       [all_cell_insertions]],
+         name="point_placement_i")
+
+
 #
 # point_placement_one_cell_inferral = StrategyPack(
 #          eq_strats=[all_point_placements],
