@@ -474,7 +474,7 @@ all_strategies_no_req_no_eqv_i = StrategyPack(
                         point_isolations]],
         name="all_strategies_no_req_no_eqv_i")
 
-oint_sep_and_iso_no_unions_i = StrategyPack(
+point_sep_and_iso_no_unions_i = StrategyPack(
         eq_strats=[point_separation],
         ver_strats=[subset_verified, globally_verified],
         inf_strats=[empty_cell_inferral, row_and_column_separation],
