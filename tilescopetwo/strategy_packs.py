@@ -468,7 +468,16 @@ point_placement_miner = StrategyPack(
          inf_strats=[empty_cell_inferral, row_and_column_separation],
          other_strats=[[components],
                        [all_cell_insertions]],
-         name="point_placement_i")
+         name="point_placement_miner")
+
+forced_patterns_3_miner = StrategyPack(
+        eq_strats=[all_point_placements],
+        ver_strats=[subset_verified, database_verified, globally_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[components],
+                      [partial(all_requirement_insertions, maxreqlen=3),
+                       all_cell_insertions, forced_binary_pattern]],
+        name="forced_patterns_2_miner")
 
 
 #
