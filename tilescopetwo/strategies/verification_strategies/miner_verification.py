@@ -61,11 +61,9 @@ def miner_verified(tiling, basis, **kwargs):
             topbasis = Basis(top)
             if ((topbool == 0 and topbasis == Basis([Perm((0, 1, 2))]))
                 or (topbool == 1 and topbasis == Basis([Perm((2, 1, 0))]))):
-                if Basis(bottom) != basis:
-                    return VerificationStrategy("Miner verified!")
+                return VerificationStrategy("Miner verified!")
         elif bottombool is not None:
             bottombasis = Basis(bottom)
             if ((bottombool == 0 and Basis(bottom) == Basis([Perm((0, 1, 2))]))
                 or (bottombool == 1 and bottombasis == Basis([Perm((2, 1, 0))]))):
-                if Basis(top) != basis:
-                    return VerificationStrategy("Miner verified!")
+                return VerificationStrategy("Miner verified!")
