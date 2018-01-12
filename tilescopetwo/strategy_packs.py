@@ -377,6 +377,10 @@ point_sep_equiv_iso_no_unions_pi = StrategyPack(
 ########################## interleaving strategy packs #########################
 ################################################################################
 
+# SYMMETRY FLAG TURNED TO TRUE!!!!!!!
+
+# QUEUE INTO NORMAL
+
 point_placement_i = StrategyPack(
          eq_strats=[all_point_placements],
          ver_strats=[subset_verified, globally_verified],
@@ -393,6 +397,26 @@ row_column_placements_i = StrategyPack(
                       [all_cell_insertions, row_placements,  col_placements]],
         name="row_column_placements_i")
 
+row_column_eqv_placements_i = StrategyPack(
+        eq_strats=[partial(row_placements, equivalence_only=True),
+                   partial(col_placements, equivalence_only=True)],
+        ver_strats=[subset_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, interleaving=True)],
+                      [all_cell_insertions,
+                       partial(row_placements, ignore_equivalence=True),
+                       partial(col_placements, ignore_equivalence=True)]],
+        name="row_column_eqv_placements_i")
+
+point_sep_and_iso_i = StrategyPack(
+        eq_strats=[point_separation],
+        ver_strats=[subset_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, unions=True,
+                               interleaving=True, workable=False)],
+                      [all_cell_insertions, point_isolations]],
+        name="point_sep_and_iso_i")
+
 point_sep_equiv_iso_i = StrategyPack(
         eq_strats=[point_separation,
                    partial(point_isolations, equivalence_only=True)],
@@ -403,6 +427,81 @@ point_sep_equiv_iso_i = StrategyPack(
                       [all_cell_insertions,
                        partial(point_isolations, ignore_equivalence=True)]],
         name="point_sep_equiv_iso_i")
+
+root_requirement_placements_3_i = StrategyPack(
+        eq_strats=[],
+        ver_strats=[subset_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, interleaving=True)],
+                      [partial(root_requirement_insertions, maxreqlen=3),
+                       forced_binary_pattern],
+                      [all_cell_insertions, row_placements,  col_placements]],
+        name="root_requirement_placements_3_i")
+
+root_requirement_placements_4_i = StrategyPack(
+        eq_strats=[],
+        ver_strats=[subset_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, interleaving=True)],
+                      [partial(root_requirement_insertions, maxreqlen=4),
+                       forced_binary_pattern],
+                      [all_cell_insertions, row_placements,  col_placements]],
+        name="root_requirement_placements_4_i")
+
+all_strategies_no_req_i = StrategyPack(
+        eq_strats=[all_point_placements, point_separation,
+                   partial(row_placements, equivalence_only=True),
+                   partial(col_placements, equivalence_only=True),
+                   partial(point_isolations, equivalence_only=True)],
+         ver_strats=[subset_verified, globally_verified],
+         inf_strats=[empty_cell_inferral, row_and_column_separation],
+         other_strats=[[partial(components, interleaving=True,
+                                unions=True)],
+                       [all_cell_insertions,
+                        partial(row_placements, ignore_equivalence=True),
+                        partial(col_placements, ignore_equivalence=True),
+                        partial(point_isolations, ignore_equivalence=True)]],
+        name="all_strategies_no_req_i")
+
+all_strategies_no_req_no_eqv_i = StrategyPack(
+        eq_strats=[],
+         ver_strats=[subset_verified, globally_verified],
+         inf_strats=[empty_cell_inferral, row_and_column_separation],
+         other_strats=[[partial(components, interleaving=True,
+                                unions=True)],
+                       [all_cell_insertions, all_point_placements,
+                        point_separation, row_placements, col_placements,
+                        point_isolations]],
+        name="all_strategies_no_req_no_eqv_i")
+
+point_sep_and_iso_no_unions_i = StrategyPack(
+        eq_strats=[point_separation],
+        ver_strats=[subset_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, interleaving=True)],
+                      [all_cell_insertions, point_isolations]],
+        name="point_sep_and_iso_no_unions_i")
+
+point_sep_equiv_iso_no_unions_i = StrategyPack(
+        eq_strats=[point_separation,
+                   partial(point_isolations, equivalence_only=True)],
+        ver_strats=[subset_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, interleaving=True)],
+                      [all_cell_insertions,
+                       partial(point_isolations, ignore_equivalence=True)]],
+        name="point_sep_equiv_iso_no_unions_i")
+
+for_last_6x4 = StrategyPack(
+        eq_strats=[partial(row_placements, equivalence_only=True),
+                   partial(col_placements, equivalence_only=True)],
+        ver_strats=[subset_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, interleaving=True, unions=True, workable=False)],
+                      [all_cell_insertions,
+                       partial(row_placements, ignore_equivalence=True),
+                       partial(col_placements, ignore_equivalence=True)]],
+        name="for_last_6x4")
 
 ################################################################################
 ### WE SHOULD CONSIDER RUNNING POINT SEP AND ISO WITHOUT UNIONS OF COMPONENTS ##
