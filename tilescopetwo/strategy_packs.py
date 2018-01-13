@@ -61,16 +61,6 @@ forced_patterns_4 = StrategyPack(
 ###################### STRATEGY PACKS FOR RUN 21/11/2017 #######################
 ################################################################################
 
-root_requirement_placements_4 = StrategyPack(
-        eq_strats=[],
-        ver_strats=[subset_verified, database_verified, globally_verified],
-        inf_strats=[empty_cell_inferral, row_and_column_separation],
-        other_strats=[[components],
-                      [partial(root_requirement_insertions, maxreqlen=4),
-                       forced_binary_pattern],
-                      [all_cell_insertions, row_placements,  col_placements]],
-        name="root_requirement_placements_4")
-
 root_requirement_placements_3 = StrategyPack(
         eq_strats=[],
         ver_strats=[subset_verified, database_verified, globally_verified],
@@ -81,6 +71,26 @@ root_requirement_placements_3 = StrategyPack(
                       [all_cell_insertions, row_placements,  col_placements]],
         name="root_requirement_placements_3")
 
+root_requirement_placements_4 = StrategyPack(
+        eq_strats=[],
+        ver_strats=[subset_verified, database_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[components],
+                      [partial(root_requirement_insertions, maxreqlen=4),
+                       forced_binary_pattern],
+                      [all_cell_insertions, row_placements,  col_placements]],
+        name="root_requirement_placements_4")
+
+root_requirement_placements_3_point_placements = StrategyPack(
+        eq_strats=[all_point_placements],
+        ver_strats=[subset_verified, database_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[components],
+                      [partial(root_requirement_insertions, maxreqlen=3),
+                       forced_binary_pattern],
+                      [all_cell_insertions]],
+        name="root_requirement_placements_3_point_placements")
+
 root_requirement_placements_4_point_placements = StrategyPack(
         eq_strats=[all_point_placements],
         ver_strats=[subset_verified, database_verified, globally_verified],
@@ -90,16 +100,6 @@ root_requirement_placements_4_point_placements = StrategyPack(
                        forced_binary_pattern],
                       [all_cell_insertions]],
         name="root_requirement_placements_4_point_placements")
-
-root_requirement_placements_3_point_placements = StrategyPack(
-        eq_strats=[all_point_placements],
-        ver_strats=[subset_verified, database_verified, globally_verified],
-        inf_strats=[empty_cell_inferral, row_and_column_separation],
-        other_strats=[[components],
-                      [partial(root_requirement_insertions, maxreqlen=4),
-                       forced_binary_pattern],
-                      [all_cell_insertions]],
-        name="root_requirement_placements_3_point_placements")
 
 point_placement = StrategyPack(
          eq_strats=[all_point_placements],
@@ -377,6 +377,10 @@ point_sep_equiv_iso_no_unions_pi = StrategyPack(
 ########################## interleaving strategy packs #########################
 ################################################################################
 
+# SYMMETRY FLAG TURNED TO TRUE!!!!!!!
+
+# QUEUE INTO NORMAL
+
 point_placement_i = StrategyPack(
          eq_strats=[all_point_placements],
          ver_strats=[subset_verified, globally_verified],
@@ -393,6 +397,26 @@ row_column_placements_i = StrategyPack(
                       [all_cell_insertions, row_placements,  col_placements]],
         name="row_column_placements_i")
 
+row_column_eqv_placements_i = StrategyPack(
+        eq_strats=[partial(row_placements, equivalence_only=True),
+                   partial(col_placements, equivalence_only=True)],
+        ver_strats=[subset_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, interleaving=True)],
+                      [all_cell_insertions,
+                       partial(row_placements, ignore_equivalence=True),
+                       partial(col_placements, ignore_equivalence=True)]],
+        name="row_column_eqv_placements_i")
+
+point_sep_and_iso_i = StrategyPack(
+        eq_strats=[point_separation],
+        ver_strats=[subset_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, unions=True,
+                               interleaving=True, workable=False)],
+                      [all_cell_insertions, point_isolations]],
+        name="point_sep_and_iso_i")
+
 point_sep_equiv_iso_i = StrategyPack(
         eq_strats=[point_separation,
                    partial(point_isolations, equivalence_only=True)],
@@ -403,6 +427,259 @@ point_sep_equiv_iso_i = StrategyPack(
                       [all_cell_insertions,
                        partial(point_isolations, ignore_equivalence=True)]],
         name="point_sep_equiv_iso_i")
+
+root_requirement_placements_3_i = StrategyPack(
+        eq_strats=[],
+        ver_strats=[subset_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, interleaving=True)],
+                      [partial(root_requirement_insertions, maxreqlen=3),
+                       forced_binary_pattern],
+                      [all_cell_insertions, row_placements,  col_placements]],
+        name="root_requirement_placements_3_i")
+
+root_requirement_placements_4_i = StrategyPack(
+        eq_strats=[],
+        ver_strats=[subset_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, interleaving=True)],
+                      [partial(root_requirement_insertions, maxreqlen=4),
+                       forced_binary_pattern],
+                      [all_cell_insertions, row_placements,  col_placements]],
+        name="root_requirement_placements_4_i")
+
+all_strategies_no_req_i = StrategyPack(
+        eq_strats=[all_point_placements, point_separation,
+                   partial(row_placements, equivalence_only=True),
+                   partial(col_placements, equivalence_only=True),
+                   partial(point_isolations, equivalence_only=True)],
+         ver_strats=[subset_verified, globally_verified],
+         inf_strats=[empty_cell_inferral, row_and_column_separation],
+         other_strats=[[partial(components, interleaving=True,
+                                unions=True)],
+                       [all_cell_insertions,
+                        partial(row_placements, ignore_equivalence=True),
+                        partial(col_placements, ignore_equivalence=True),
+                        partial(point_isolations, ignore_equivalence=True)]],
+        name="all_strategies_no_req_i")
+
+all_strategies_no_req_no_eqv_i = StrategyPack(
+        eq_strats=[],
+         ver_strats=[subset_verified, globally_verified],
+         inf_strats=[empty_cell_inferral, row_and_column_separation],
+         other_strats=[[partial(components, interleaving=True,
+                                unions=True)],
+                       [all_cell_insertions, all_point_placements,
+                        point_separation, row_placements, col_placements,
+                        point_isolations]],
+        name="all_strategies_no_req_no_eqv_i")
+
+point_sep_and_iso_no_unions_i = StrategyPack(
+        eq_strats=[point_separation],
+        ver_strats=[subset_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, interleaving=True)],
+                      [all_cell_insertions, point_isolations]],
+        name="point_sep_and_iso_no_unions_i")
+
+point_sep_equiv_iso_no_unions_i = StrategyPack(
+        eq_strats=[point_separation,
+                   partial(point_isolations, equivalence_only=True)],
+        ver_strats=[subset_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, interleaving=True)],
+                      [all_cell_insertions,
+                       partial(point_isolations, ignore_equivalence=True)]],
+        name="point_sep_equiv_iso_no_unions_i")
+
+for_last_6x4 = StrategyPack(
+        eq_strats=[partial(row_placements, equivalence_only=True),
+                   partial(col_placements, equivalence_only=True)],
+        ver_strats=[subset_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, interleaving=True, unions=True, workable=False)],
+                      [all_cell_insertions,
+                       partial(row_placements, ignore_equivalence=True),
+                       partial(col_placements, ignore_equivalence=True)]],
+        name="for_last_6x4")
+
+############################### Miner verified run Jan 12
+########################## interleaving strategy packs #########################
+################################################################################
+
+# SYMMETRY FLAG TURNED TO FALSE!!!!!!!
+
+# QUEUE INTO omnip
+
+# Time limit: 10 minutes
+
+forced_patterns_3_miner = StrategyPack(
+        eq_strats=[all_point_placements],
+        ver_strats=[subset_verified, database_verified, globally_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[components],
+                      [partial(all_requirement_insertions, maxreqlen=3),
+                       all_cell_insertions, forced_binary_pattern]],
+        name="forced_patterns_2_miner")
+
+point_placement_miner = StrategyPack(
+         eq_strats=[all_point_placements],
+         ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+         inf_strats=[empty_cell_inferral, row_and_column_separation],
+         other_strats=[[components],
+                       [all_cell_insertions]],
+         name="point_placement_miner")
+
+row_column_placements_miner = StrategyPack(
+        eq_strats=[],
+        ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[components],
+                      [all_cell_insertions, row_placements,  col_placements]],
+        name="row_column_placements_miner")
+
+row_column_eqv_placements_miner = StrategyPack(
+        eq_strats=[partial(row_placements, equivalence_only=True),
+                   partial(col_placements, equivalence_only=True)],
+        ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[components],
+                      [all_cell_insertions,
+                       partial(row_placements, ignore_equivalence=True),
+                       partial(col_placements, ignore_equivalence=True)]],
+        name="row_column_eqv_placements_miner")
+
+point_sep_and_iso_miner = StrategyPack(
+        eq_strats=[point_separation],
+        ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, unions=True, workable=False)],
+                      [all_cell_insertions, point_isolations]],
+        name="point_sep_and_iso_miner")
+
+point_sep_equiv_iso_miner = StrategyPack(
+        eq_strats=[point_separation,
+                   partial(point_isolations, equivalence_only=True)],
+        ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, unions=True, workable=False)],
+                      [all_cell_insertions,
+                       partial(point_isolations, ignore_equivalence=True)]],
+        name="point_sep_equiv_iso_miner")
+
+root_requirement_placements_3_point_placements_miner = StrategyPack(
+        eq_strats=[all_point_placements],
+        ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[components],
+                      [partial(root_requirement_insertions, maxreqlen=3),
+                       forced_binary_pattern],
+                      [all_cell_insertions]],
+        name="root_requirement_placements_3_point_placements_miner")
+
+root_requirement_placements_4_point_placements_miner = StrategyPack(
+        eq_strats=[all_point_placements],
+        ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[components],
+                      [partial(root_requirement_insertions, maxreqlen=4),
+                       forced_binary_pattern],
+                      [all_cell_insertions]],
+        name="root_requirement_placements_4_point_placements_miner")
+
+forced_patterns_3_with_point_placements_miner = StrategyPack(
+        eq_strats=[all_point_placements],
+        ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, unions=True)],
+                      [partial(all_requirement_insertions, maxreqlen=3),
+                       all_cell_insertions, forced_binary_pattern]],
+        name="forced_patterns_3_with_point_placements_miner")
+
+forced_patterns_3_with_row_column_placements_miner = StrategyPack(
+        eq_strats=[],
+        ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, unions=True)],
+                      [partial(all_requirement_insertions, maxreqlen=3),
+                       all_cell_insertions, row_placements, col_placements,
+                       forced_binary_pattern]],
+        name="forced_patterns_3_with_row_column_placements_miner")
+
+forced_patterns_4_with_point_placements = StrategyPack(
+        eq_strats=[all_point_placements],
+        ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, unions=True)],
+                      [partial(all_requirement_insertions, maxreqlen=4),
+                       all_cell_insertions, forced_binary_pattern]],
+        name="forced_patterns_4_with_point_placements_miner")
+
+forced_patterns_4_with_row_column_placements_miner = StrategyPack(
+        eq_strats=[],
+        ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, unions=True)],
+                      [partial(all_requirement_insertions, maxreqlen=4),
+                       all_cell_insertions, row_placements, col_placements,
+                       forced_binary_pattern]],
+        name="forced_patterns_4_with_row_column_placements_miner")
+
+all_strategies_no_req_miner = StrategyPack(
+        eq_strats=[all_point_placements, point_separation,
+                   partial(row_placements, equivalence_only=True),
+                   partial(col_placements, equivalence_only=True),
+                   partial(point_isolations, equivalence_only=True)],
+         ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+         inf_strats=[empty_cell_inferral, row_and_column_separation],
+         other_strats=[[partial(components, unions=True)],
+                       [all_cell_insertions,
+                        partial(row_placements, ignore_equivalence=True),
+                        partial(col_placements, ignore_equivalence=True),
+                        partial(point_isolations, ignore_equivalence=True)]],
+        name="all_strategies_no_req_miner")
+
+all_strategies_no_req_no_eqv_miner = StrategyPack(
+        eq_strats=[],
+         ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+         inf_strats=[empty_cell_inferral, row_and_column_separation],
+         other_strats=[[partial(components, unions=True)],
+                       [all_cell_insertions, all_point_placements,
+                        point_separation, row_placements, col_placements,
+                        point_isolations]],
+        name="all_strategies_no_req_no_eqv_miner")
+
+point_sep_and_iso_no_unions_miner = StrategyPack(
+        eq_strats=[point_separation],
+        ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[components],
+                      [all_cell_insertions, point_isolations]],
+        name="point_sep_and_iso_no_unions_miner")
+
+point_sep_equiv_iso_no_unions_miner = StrategyPack(
+        eq_strats=[point_separation,
+                   partial(point_isolations, equivalence_only=True)],
+        ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[components],
+                      [all_cell_insertions,
+                       partial(point_isolations, ignore_equivalence=True)]],
+        name="point_sep_equiv_iso_no_unions_miner")
+
+for_last_6x4_miner = StrategyPack(
+        eq_strats=[partial(row_placements, equivalence_only=True),
+                   partial(col_placements, equivalence_only=True)],
+        ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, unions=True, workable=False)],
+                      [all_cell_insertions,
+                       partial(row_placements, ignore_equivalence=True),
+                       partial(col_placements, ignore_equivalence=True)]],
+        name="for_last_6x4_miner")
+
+# then put in a fusion run modelled on interleaving because we need forward_equivalence
+# remember to turn of symmetries
 
 ################################################################################
 ### WE SHOULD CONSIDER RUNNING POINT SEP AND ISO WITHOUT UNIONS OF COMPONENTS ##
@@ -460,24 +737,6 @@ forced_patterns_4_with_point_placements_pi = StrategyPack(
                       [partial(all_requirement_insertions, maxreqlen=4),
                        all_cell_insertions, forced_binary_pattern]],
         name="forced_patterns_4_with_point_placements_pi")
-
-
-point_placement_miner = StrategyPack(
-         eq_strats=[all_point_placements],
-         ver_strats=[subset_verified, miner_verified],
-         inf_strats=[empty_cell_inferral, row_and_column_separation],
-         other_strats=[[components],
-                       [all_cell_insertions]],
-         name="point_placement_miner")
-
-forced_patterns_3_miner = StrategyPack(
-        eq_strats=[all_point_placements, forced_binary_pattern],
-        ver_strats=[subset_verified, database_verified, globally_verified, miner_verified],
-        inf_strats=[empty_cell_inferral, row_and_column_separation],
-        other_strats=[[components],
-                      [partial(all_requirement_insertions, maxreqlen=3),
-                       all_cell_insertions]],
-        name="forced_patterns_2_miner")
 
 point_placement_fusion = StrategyPack(
          eq_strats=[all_point_placements, fusion],

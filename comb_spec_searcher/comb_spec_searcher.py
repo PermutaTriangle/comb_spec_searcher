@@ -594,13 +594,20 @@ class CombinatorialSpecificationSearcher(object):
         while expanding:
             start = time.time() + 0.00001
             while time.time() - start < max_search_time:
+                if status_update is not None and verbose:
+                    if time.time() - status_start > status_update:
+                        status = self.status()
+                        logger.info(status, extra=self.logger_kwargs)
+                        status_start = time.time()
                 if self.expand_objects(1):
                     expanding = False
                     break
 
+
             # TODO: if the above functions does nothing, it returns True,
             #       need to catch this in a better way.
             start = time.time()
+            logger.info("Searching for tree", extra=self.logger_kwargs)
             proof_tree = self.get_proof_tree()
             max_search_time = min(cap*(time.time() - start), 3600) #worst case, search every hour!
             if proof_tree is not None:
@@ -618,11 +625,6 @@ class CombinatorialSpecificationSearcher(object):
                     logger.warn("Exceeded maximum time. Aborting auto search.", extra=self.logger_kwargs)
                     return
 
-            if status_update is not None and verbose:
-                if time.time() - status_start > status_update:
-                    status = self.status()
-                    logger.info(status, extra=self.logger_kwargs)
-                    status_start = time.time()
 
 
     def has_proof_tree(self):
