@@ -854,6 +854,23 @@ forced_patterns_4_with_point_placements_pi = StrategyPack(
                        all_cell_insertions, forced_binary_pattern]],
         name="forced_patterns_4_with_point_placements_pi")
 
+point_placement_fusion = StrategyPack(
+         eq_strats=[all_point_placements, fusion],
+         ver_strats=[subset_verified],
+         inf_strats=[empty_cell_inferral, row_and_column_separation],
+         other_strats=[[components],
+                       [all_cell_insertions]],
+         name="point_placement_fusion")
+
+point_sep_equiv_iso_fusion = StrategyPack(
+        eq_strats=[point_separation, fusion,
+                   partial(point_isolations, equivalence_only=True)],
+        ver_strats=[subset_verified, globally_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, interleaving=False)],
+                      [all_cell_insertions,
+                       partial(point_isolations, ignore_equivalence=True)]],
+        name="point_sep_equiv_iso_fusion")
 
 #
 # point_placement_one_cell_inferral = StrategyPack(
