@@ -16,7 +16,7 @@ import json
 class ProofTreeNode(object):
     def __init__(self, label, eqv_path_labels, eqv_path_objects,
                  eqv_explanations=[], children=[], strategy_verified=False,
-                 complement_verified=False, decomposition=False,
+                 complement_verified=False, decomposition=False, fusion=False,
                  disjoint_union=False, recursion=False, formal_step="",
                  back_maps=None, forward_maps=None):
         self.label = label
@@ -29,6 +29,7 @@ class ProofTreeNode(object):
         self.complement_verified = complement_verified
         self.decomposition = decomposition
         self.disjoint_union = disjoint_union
+        self.fusion = fusion
         self.recursion = recursion
         # TODO: Add assertions for assumptions made about each type of strategy.
         self.formal_step = formal_step
@@ -148,6 +149,8 @@ class ProofTreeNode(object):
                                               length,
                                               number_perms,
                                               total)
+        if self.fusion:
+            pass
 
     def has_interleaving_decomposition(self):
         if self.back_maps is None:
@@ -403,6 +406,10 @@ class ProofTree(object):
                     return ProofTreeNode(label, eqv_path, eqv_objs,
                                          eqv_explanations,
                                          complement_verified=True,
+                                         formal_step=formal_step)
+                if "Fuse" in formal_step:
+                    return ProofTreeNode(label, eqv_path, eqv_objs,
+                                         eqv_explanations, fusion=True,
                                          formal_step=formal_step)
                 return ProofTreeNode(label, eqv_path, eqv_objs,
                                      eqv_explanations, disjoint_union=True,
