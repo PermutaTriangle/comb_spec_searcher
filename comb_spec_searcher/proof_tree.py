@@ -410,7 +410,8 @@ class ProofTree(object):
                 if "Fuse" in formal_step:
                     return ProofTreeNode(label, eqv_path, eqv_objs,
                                          eqv_explanations, fusion=True,
-                                         formal_step=formal_step)
+                                         formal_step=formal_step,
+                                         children=strat_children)
                 return ProofTreeNode(label, eqv_path, eqv_objs,
                                      eqv_explanations, disjoint_union=True,
                                      formal_step=formal_step,
