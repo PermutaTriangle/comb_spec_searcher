@@ -1037,7 +1037,7 @@ point_sep_equiv_iso_fusion = StrategyPack(
                        partial(point_isolations, ignore_equivalence=True)]],
         name="point_sep_equiv_iso_fusion")
 
-point_placement_deflation = StrategyPack(
+point_placement_deflation_fusion = StrategyPack(
          eq_strats=[all_point_placements, deflation, fusion],
          ver_strats=[subset_verified, miner_verified],
          inf_strats=[empty_cell_inferral, row_and_column_separation],
