@@ -492,7 +492,7 @@ point_sep_equiv_iso_no_unions_i = StrategyPack(
                        partial(point_isolations, ignore_equivalence=True)]],
         name="point_sep_equiv_iso_no_unions_i")
 
-for_last_6x4 = StrategyPack(
+mimic_old_atrap = StrategyPack(
         eq_strats=[partial(row_placements, equivalence_only=True),
                    partial(col_placements, equivalence_only=True)],
         ver_strats=[subset_verified, globally_verified],
@@ -501,7 +501,7 @@ for_last_6x4 = StrategyPack(
                       [all_cell_insertions,
                        partial(row_placements, ignore_equivalence=True),
                        partial(col_placements, ignore_equivalence=True)]],
-        name="for_last_6x4")
+        name="mimic_old_atrap")
 
 ############################### Miner verified run Jan 12
 ################################################################################
@@ -657,7 +657,7 @@ point_sep_equiv_iso_no_unions_miner = StrategyPack(
                        partial(point_isolations, ignore_equivalence=True)]],
         name="point_sep_equiv_iso_no_unions_miner")
 
-for_last_6x4_miner = StrategyPack(
+mimic_old_atrap_miner = StrategyPack(
         eq_strats=[partial(row_placements, equivalence_only=True),
                    partial(col_placements, equivalence_only=True)],
         ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
@@ -666,7 +666,7 @@ for_last_6x4_miner = StrategyPack(
                       [all_cell_insertions,
                        partial(row_placements, ignore_equivalence=True),
                        partial(col_placements, ignore_equivalence=True)]],
-        name="for_last_6x4_miner")
+        name="mimic_old_atrap_miner")
 
 ############################### Fusion run Jan 12
 ################################################################################
@@ -786,7 +786,7 @@ point_sep_equiv_iso_no_unions_fusion = StrategyPack(
                        partial(point_isolations, ignore_equivalence=True)]],
         name="point_sep_equiv_iso_no_unions_fusion")
 
-for_last_6x4_fusion = StrategyPack(
+mimic_old_atrap_fusion = StrategyPack(
         eq_strats=[fusion, partial(row_placements, equivalence_only=True),
                    partial(col_placements, equivalence_only=True)],
         ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
@@ -795,7 +795,7 @@ for_last_6x4_fusion = StrategyPack(
                       [all_cell_insertions,
                        partial(row_placements, ignore_equivalence=True),
                        partial(col_placements, ignore_equivalence=True)]],
-        name="for_last_6x4_fusion")
+        name="mimic_old_atrap_fusion")
 
 
 ############################### Deflation run Jan 17
@@ -950,7 +950,7 @@ point_sep_equiv_iso_no_unions_deflation = StrategyPack(
                        partial(point_isolations, ignore_equivalence=True)]],
         name="point_sep_equiv_iso_no_unions_deflation")
 
-for_last_6x4_deflation = StrategyPack(
+mimic_old_atrap_deflation = StrategyPack(
         eq_strats=[partial(row_placements, equivalence_only=True),
                    partial(col_placements, equivalence_only=True),
                    deflation],
@@ -960,7 +960,7 @@ for_last_6x4_deflation = StrategyPack(
                       [all_cell_insertions,
                        partial(row_placements, ignore_equivalence=True),
                        partial(col_placements, ignore_equivalence=True)]],
-        name="for_last_6x4_deflation")
+        name="mimic_old_atrap_deflation")
 
 ################################################################################
 ### WE SHOULD CONSIDER RUNNING POINT SEP AND ISO WITHOUT UNIONS OF COMPONENTS ##
