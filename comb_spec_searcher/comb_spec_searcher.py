@@ -607,7 +607,7 @@ class CombinatorialSpecificationSearcher(object):
             # TODO: if the above functions does nothing, it returns True,
             #       need to catch this in a better way.
             start = time.time()
-            logger.info("Searching for tree", extra=self.logger_kwargs)
+            logger.debug("Searching for tree", extra=self.logger_kwargs)
             proof_tree = self.get_proof_tree()
             max_search_time = min(cap*(time.time() - start), 3600) #worst case, search every hour!
             if proof_tree is not None:

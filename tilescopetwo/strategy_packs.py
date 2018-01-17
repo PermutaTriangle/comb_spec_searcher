@@ -797,6 +797,171 @@ for_last_6x4_fusion = StrategyPack(
                        partial(col_placements, ignore_equivalence=True)]],
         name="for_last_6x4_fusion")
 
+
+############################### Deflation run Jan 17
+################################################################################
+
+point_placement_deflation = StrategyPack(
+         eq_strats=[all_point_placements, deflation],
+         ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+         inf_strats=[empty_cell_inferral, row_and_column_separation],
+         other_strats=[[components],
+                       [all_cell_insertions]],
+         name="point_placement_deflation")
+
+row_column_placements_deflation = StrategyPack(
+        eq_strats=[deflation],
+        ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[components],
+                      [all_cell_insertions, row_placements,  col_placements]],
+        name="row_column_placements_deflation")
+
+row_column_eqv_placements_deflation = StrategyPack(
+        eq_strats=[partial(row_placements, equivalence_only=True),
+                   partial(col_placements, equivalence_only=True),
+                   deflation],
+        ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[components],
+                      [all_cell_insertions,
+                       partial(row_placements, ignore_equivalence=True),
+                       partial(col_placements, ignore_equivalence=True)]],
+        name="row_column_eqv_placements_deflation")
+
+point_sep_and_iso_deflation = StrategyPack(
+        eq_strats=[point_separation, deflation],
+        ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, unions=True, workable=False)],
+                      [all_cell_insertions, point_isolations]],
+        name="point_sep_and_iso_deflation")
+
+point_sep_equiv_iso_deflation = StrategyPack(
+        eq_strats=[point_separation,
+                   partial(point_isolations, equivalence_only=True),
+                   deflation],
+        ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, unions=True, workable=False)],
+                      [all_cell_insertions,
+                       partial(point_isolations, ignore_equivalence=True)]],
+        name="point_sep_equiv_iso_deflation")
+
+root_requirement_placements_3_point_placements_deflation = StrategyPack(
+        eq_strats=[all_point_placements, deflation],
+        ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[components],
+                      [partial(root_requirement_insertions, maxreqlen=3),
+                       forced_binary_pattern],
+                      [all_cell_insertions]],
+        name="root_requirement_placements_3_point_placements_deflation")
+
+root_requirement_placements_4_point_placements_deflation = StrategyPack(
+        eq_strats=[all_point_placements, deflation],
+        ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[components],
+                      [partial(root_requirement_insertions, maxreqlen=4),
+                       forced_binary_pattern],
+                      [all_cell_insertions]],
+        name="root_requirement_placements_4_point_placements_deflation")
+
+forced_patterns_3_with_point_placements_deflation = StrategyPack(
+        eq_strats=[all_point_placements, deflation],
+        ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, unions=True)],
+                      [partial(all_requirement_insertions, maxreqlen=3),
+                       all_cell_insertions, forced_binary_pattern]],
+        name="forced_patterns_3_with_point_placements_deflation")
+
+forced_patterns_3_with_row_column_placements_deflation = StrategyPack(
+        eq_strats=[deflation],
+        ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, unions=True)],
+                      [partial(all_requirement_insertions, maxreqlen=3),
+                       all_cell_insertions, row_placements, col_placements,
+                       forced_binary_pattern]],
+        name="forced_patterns_3_with_row_column_placements_deflation")
+
+forced_patterns_4_with_point_placements = StrategyPack(
+        eq_strats=[all_point_placements, deflation],
+        ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, unions=True)],
+                      [partial(all_requirement_insertions, maxreqlen=4),
+                       all_cell_insertions, forced_binary_pattern]],
+        name="forced_patterns_4_with_point_placements_deflation")
+
+forced_patterns_4_with_row_column_placements_deflation = StrategyPack(
+        eq_strats=[deflation],
+        ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, unions=True)],
+                      [partial(all_requirement_insertions, maxreqlen=4),
+                       all_cell_insertions, row_placements, col_placements,
+                       forced_binary_pattern]],
+        name="forced_patterns_4_with_row_column_placements_deflation")
+
+all_strategies_no_req_deflation = StrategyPack(
+        eq_strats=[all_point_placements, point_separation,
+                   partial(row_placements, equivalence_only=True),
+                   partial(col_placements, equivalence_only=True),
+                   partial(point_isolations, equivalence_only=True),
+                   deflation],
+         ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+         inf_strats=[empty_cell_inferral, row_and_column_separation],
+         other_strats=[[partial(components, unions=True)],
+                       [all_cell_insertions,
+                        partial(row_placements, ignore_equivalence=True),
+                        partial(col_placements, ignore_equivalence=True),
+                        partial(point_isolations, ignore_equivalence=True)]],
+        name="all_strategies_no_req_deflation")
+
+all_strategies_no_req_no_eqv_deflation = StrategyPack(
+        eq_strats=[deflation],
+         ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+         inf_strats=[empty_cell_inferral, row_and_column_separation],
+         other_strats=[[partial(components, unions=True)],
+                       [all_cell_insertions, all_point_placements,
+                        point_separation, row_placements, col_placements,
+                        point_isolations]],
+        name="all_strategies_no_req_no_eqv_deflation")
+
+point_sep_and_iso_no_unions_deflation = StrategyPack(
+        eq_strats=[point_separation, deflation],
+        ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[components],
+                      [all_cell_insertions, point_isolations]],
+        name="point_sep_and_iso_no_unions_deflation")
+
+point_sep_equiv_iso_no_unions_deflation = StrategyPack(
+        eq_strats=[point_separation,
+                   partial(point_isolations, equivalence_only=True),
+                   deflation],
+        ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[components],
+                      [all_cell_insertions,
+                       partial(point_isolations, ignore_equivalence=True)]],
+        name="point_sep_equiv_iso_no_unions_deflation")
+
+for_last_6x4_deflation = StrategyPack(
+        eq_strats=[partial(row_placements, equivalence_only=True),
+                   partial(col_placements, equivalence_only=True),
+                   deflation],
+        ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
+        inf_strats=[empty_cell_inferral, row_and_column_separation],
+        other_strats=[[partial(components, unions=True, workable=False)],
+                      [all_cell_insertions,
+                       partial(row_placements, ignore_equivalence=True),
+                       partial(col_placements, ignore_equivalence=True)]],
+        name="for_last_6x4_deflation")
+
 ################################################################################
 ### WE SHOULD CONSIDER RUNNING POINT SEP AND ISO WITHOUT UNIONS OF COMPONENTS ##
 ################################################################################
@@ -871,6 +1036,14 @@ point_sep_equiv_iso_fusion = StrategyPack(
                       [all_cell_insertions,
                        partial(point_isolations, ignore_equivalence=True)]],
         name="point_sep_equiv_iso_fusion")
+
+point_placement_deflation = StrategyPack(
+         eq_strats=[all_point_placements, deflation, fusion],
+         ver_strats=[subset_verified, miner_verified],
+         inf_strats=[empty_cell_inferral, row_and_column_separation],
+         other_strats=[[components],
+                       [all_cell_insertions]],
+         name="point_placement_deflation")
 
 #
 # point_placement_one_cell_inferral = StrategyPack(
