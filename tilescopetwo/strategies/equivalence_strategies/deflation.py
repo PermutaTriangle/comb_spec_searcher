@@ -2,12 +2,14 @@ from permuta import Perm
 from grids_two import Obstruction, Tiling
 from comb_spec_searcher import EquivalenceStrategy
 
-def deflation(tiling, **kwargs):
+def deflation(tiling, interleaving=True, **kwargs):
     if tiling.is_empty():
         return
     if tiling.requirements:
         return
     n, m = tiling.dimensions
+    if n == m == 1:
+        return
     array_tiling = [[[] for i in range(m)] for j in range(n)]
 
     for ob in tiling:
@@ -20,23 +22,49 @@ def deflation(tiling, **kwargs):
     for cell in tiling.point_cells:
         array_tiling[cell[0]][cell[1]] = "point"
 
-    rows = {}
-    for i in range(len(array_tiling)):
-        rows[i] = [j for j in range(len(array_tiling[0])) if array_tiling[i][j] != []]
-    cols = {}
-    for j in range(len(array_tiling[0])):
-        cols[j] = [i for i in range(len(array_tiling)) if array_tiling[i][j] != []]
+    if not interleaving:
+        rows = {}
+        for i in range(len(array_tiling)):
+            rows[i] = [j for j in range(len(array_tiling[0])) if array_tiling[i][j] != []]
+        cols = {}
+        for j in range(len(array_tiling[0])):
+            cols[j] = [i for i in range(len(array_tiling)) if array_tiling[i][j] != []]
 
     for cell in tiling.possibly_empty:
         basis = array_tiling[cell[0]][cell[1]]
         if is_sum_indecomposable(basis):
-            if can_deflate(tiling, cell, rows[cell[0]], cols[cell[1]]):
-                yield EquivalenceStrategy("Sum deflate cell {}".format(cell),
-                                          deflated_tiling(tiling, cell))
+            if not interleaving:
+                if can_deflate_interleaving(tiling, cell, rows[cell[0]],
+                                            cols[cell[1]]):
+                    yield EquivalenceStrategy("Sum deflate cell {}".format(cell),
+                                              deflated_tiling(tiling, cell))
+            else:
+                non_interleaving_cells = can_deflate(tiling, cell)
+                if non_interleaving_cells is not None:
+                    formal_step = "Sum deflate cell {}".format(cell)
+                    if non_interleaving_cells:
+                        formal_step += ", but don't interleave {}".format(non_interleaving_cells)
+                    yield EquivalenceStrategy(formal_step,
+                                              deflated_tiling(tiling, cell))
+
         if is_skew_indecomposable(basis):
-            if can_deflate(tiling, cell, rows[cell[0]], cols[cell[1]], sum_decomp=False):
-                yield EquivalenceStrategy("Skew deflate cell {}".format(cell),
-                                          deflated_tiling(tiling, cell, sum_decomp=False))
+            if not interleaving:
+                if can_deflate_interleaving(tiling, cell, rows[cell[0]],
+                                            cols[cell[1]], sum_decomp=False):
+                    yield EquivalenceStrategy("Skew deflate cell {}".format(cell),
+                                              deflated_tiling(tiling, cell,
+                                                              sum_decomp=False))
+            else:
+                non_interleaving_cells = can_deflate(tiling, cell,
+                                                     sum_decomp=False)
+                if non_interleaving_cells is not None:
+                    formal_step = "Skew deflate cell {}".format(cell)
+                    if non_interleaving_cells:
+                        formal_step += ", but don't interleave {}".format(non_interleaving_cells)
+                    yield EquivalenceStrategy(formal_step,
+                                              deflated_tiling(tiling, cell,
+                                                              sum_decomp=False))
+
 
 def deflated_tiling(tiling, cell, sum_decomp=True):
     if sum_decomp:
@@ -64,7 +92,63 @@ def deflated_tiling(tiling, cell, sum_decomp=True):
                   requirements=tiling.requirements,
                   obstructions=tiling.obstructions + (extra, ))
 
-def can_deflate(tiling, cell, row, col, sum_decomp=True):
+def can_deflate(tiling, cell, sum_decomp=True):
+    '''
+    Return None if can not deflate, else return the possibly_empty list of non
+    interleaving cells for defation.
+    '''
+    non_interleaving_cells = []
+    # print()
+    # print(tiling.to_old_tiling())
+    # for o in tiling:
+    #     if not o.is_single_cell():
+    #         print(repr(o))
+    # print("considiring:", cell, sum_decomp)
+    # print()
+    for ob in tiling:
+        if ob.is_single_cell() or len(ob) <= 2 or not ob.occupies(cell):
+            continue
+        n = sum(1 for c in ob.pos if c == cell)
+        if n == 1:
+            continue
+        if n != 2:
+            return None
+        else:
+            if len(ob.patt) != 3:
+                return None
+            other_cell = [c for c in ob.pos if c != cell][0]
+            # print("considered:", repr(ob), other_cell)
+            if all(x != y for x, y in zip(other_cell, cell)):
+                return None
+            elif other_cell[0] == cell[0]:
+                if other_cell[1] > cell[1]:
+                    if ((sum_decomp and ob.patt == Perm((1, 2, 0))) or
+                        (not sum_decomp and ob.patt == Perm((0, 2, 1)))):
+                        non_interleaving_cells.append(other_cell)
+                    else:
+                        return None
+                else:
+                    if ((sum_decomp and ob.patt == Perm((2, 0, 1))) or
+                        (not sum_decomp and ob.patt == Perm((1, 0, 2)))):
+                        non_interleaving_cells.append(other_cell)
+                    else:
+                        return None
+            else:# other_cell[1] == other_cell[1]:
+                if other_cell[0] > cell[0]:
+                    if ((sum_decomp and ob.patt == Perm((2, 0, 1))) or
+                        (not sum_decomp and ob.patt == Perm((0, 2, 1)))):
+                        non_interleaving_cells.append(other_cell)
+                    else:
+                        return None
+                else:
+                    if ((sum_decomp and ob.patt == Perm((1, 2, 0))) or
+                        (not sum_decomp and ob.patt == Perm((1, 0, 2)))):
+                        non_interleaving_cells.append(other_cell)
+                    else:
+                        return None
+    return non_interleaving_cells
+
+def can_deflate_interleaving(tiling, cell, row, col, sum_decomp=True):
     col_deflatable = {i: False for i in row if i != cell[1]}
     row_deflatable = {j: False for j in col if j != cell[0]}
     if not row_deflatable and not col_deflatable:
