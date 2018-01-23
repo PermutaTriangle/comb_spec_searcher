@@ -325,7 +325,7 @@ class ProofTree(object):
 
             eqv_path = css.equivdb.find_path(in_label, out_label)
             eqv_objs = [css.objectdb.get_object(l) for l in eqv_path]
-            eqv_explanations = [css.equivdb.get_explanation(x, y)
+            eqv_explanations = [css.equivdb.get_explanation(x, y, one_step=True)
                                 for x, y in zip(eqv_path[:-1], eqv_path[1:])]
 
             root.eqv_path_labels = eqv_path
@@ -361,7 +361,7 @@ class ProofTree(object):
                 #verified!
                 eqv_path = css.equivdb.find_path(in_label, eqv_ver_label)
                 eqv_objs = [css.objectdb.get_object(l) for l in eqv_path]
-                eqv_explanations = [css.equivdb.get_explanation(x, y)
+                eqv_explanations = [css.equivdb.get_explanation(x, y, one_step=True)
                                     for x, y in zip(eqv_path[:-1], eqv_path[1:])]
 
                 formal_step = css.objectdb.verification_reason(eqv_ver_label)
@@ -384,7 +384,7 @@ class ProofTree(object):
 
             eqv_path = css.equivdb.find_path(in_label, start)
             eqv_objs = [css.objectdb.get_object(l) for l in eqv_path]
-            eqv_explanations = [css.equivdb.get_explanation(x, y)
+            eqv_explanations = [css.equivdb.get_explanation(x, y, one_step=True)
                                 for x, y in zip(eqv_path[:-1], eqv_path[1:])]
 
             strat_children = []

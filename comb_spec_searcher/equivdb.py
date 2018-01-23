@@ -85,10 +85,18 @@ class EquivalenceDB(object):
                 equivalent_objs.add(t)
         return equivalent_objs
 
-    def get_explanation(self, obj, other_obj):
+    def get_explanation(self, obj, other_obj, one_step=False):
         """Return how two objects are equivalent using explanations."""
         if obj == other_obj:
             return ""
+
+        if one_step:
+            explanation = self.explanations.get((obj, other_obj))
+            if explanation is None:
+                explanation = self.explanations.get((other_obj, obj))
+                assert explanation is not None
+                explanation = "The reverse of: " + explanation
+            return explanation
 
         path = self.find_path(obj, other_obj)
         if path:
