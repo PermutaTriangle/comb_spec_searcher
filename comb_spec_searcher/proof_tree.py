@@ -5,6 +5,8 @@ This has been built specific to tilings and gridded perms. Needs to be
 generalised.
 """
 
+from grids_two import Tiling
+
 from .tree_searcher import Node as tree_searcher_node
 from permuta.misc.ordered_set_partitions import partitions_of_n_of_size_k
 
@@ -285,7 +287,7 @@ class ProofTree(object):
         res = self._get_equations(self.root, me, funcs, substitutions, fcache)
         if f:
             res = [v.subs(substitutions) for v in res]
-        return res
+        return sorted(set(res), key = lambda x: int(str(x.lhs)[2:-3]))
 
     def _get_equations(self, root, me, funcs, substitutions, fcache):
         #from atrap.Helpers import get_tiling_genf
@@ -315,7 +317,7 @@ class ProofTree(object):
 
 
     def get_genf(self, verify=10, equations=False, expand=False, verbose=False):
-        """Try to enumerate using olf proof tree class."""
+        """Try to enumerate."""
         from sympy import solve
         from sympy.abc import x
         # TODO: interleaving decomposition
@@ -325,12 +327,12 @@ class ProofTree(object):
         substitutions, fcache = {}, {}
         eqs = self.get_equations(me, funcs, substitutions, fcache)
         if verbose:
-            print("The system of equations:")
+            print("The system of", len(eqs), "equations:")
             for eq in eqs:
                 print(eq.lhs, "=", eq.rhs)
-            print("\nThe substitutions:")
-            for k,v in sorted(substitutions.items()):
-                print(k, "=", v)
+            print("\nThe", len(substitutions), "substitutions:")
+            for k in sorted(substitutions.keys(), key=str):
+                print(k, "=", substitutions[k])
             print()
             print("Solving...")
         solutions = solve(eqs, tuple([eq.lhs for eq in eqs]), dict=True, cubics=False, quartics=False, quintics=False)
@@ -341,14 +343,15 @@ class ProofTree(object):
         if solutions:
             permcounts = [len(list(me.gridded_perms_of_length(i))) for i in range(verify+1)]
             for solution in solutions:
-                genf = solution[f(x)].subs(substitutions).doit()
+                genf = solution[f(x)]
+                genf = genf.subs(substitutions).doit().expand().simplify()
                 try:
                     expansion = taylor_expand(genf, verify)
                 except TypeError:
                     continue
                 any_valid = True
                 if permcounts == expansion:
-                    sol = genf.expand().simplify()
+                    sol = genf
                     if expand:
                         if equations:
                             return sol,[eq.subs(substitutions) for eq in eqs],expansion
