@@ -7,9 +7,6 @@ from comb_spec_searcher import EquivalenceStrategy
 ALL_DIR = [DIR_EAST, DIR_NORTH, DIR_SOUTH, DIR_WEST]
 
 def all_point_requirement_placements(tiling, **kwargs):
-    '''Can't handle requirements, so rage quit.'''
-    if tiling.requirements:
-        return
     n, m = tiling.dimensions
     array_tiling = [[[] for i in range(m)] for j in range(n)]
 
