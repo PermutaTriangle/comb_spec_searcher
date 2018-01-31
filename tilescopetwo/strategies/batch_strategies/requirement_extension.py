@@ -26,13 +26,13 @@ def all_requirement_extensions(tiling, basis, **kwargs):
         if not req.is_single_cell():
             continue
 
-        if len(req) >= maxlenreq:
+        if len(req) >= maxreqlen:
             continue
 
         for patt in PermSet.avoiding(basis).of_length(len(req) + 1):
             yield Strategy(
                 formal_step=(
                     "Extending requirement {} to {} in cell {}").format(req, patt, req.pos[0]),
-                objects=[Tiling.add_single_cell_obstruction(cell, patt),
-                         Tiling.add_single_cell_requirement(cell, patt),],
+                objects=[tiling.add_single_cell_obstruction(req.pos[0], patt),
+                         tiling.add_single_cell_requirement(req.pos[0], patt),],
                 workable=[True, True])

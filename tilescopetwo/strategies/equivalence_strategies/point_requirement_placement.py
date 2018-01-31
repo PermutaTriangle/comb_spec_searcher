@@ -22,7 +22,7 @@ def all_point_requirement_placements(tiling, **kwargs):
             continue
         req = reqs[0]
         for i, cell in enumerate(req.pos):
-            basis = array_tilling[cell[0]][cell[1]]
+            basis = array_tiling[cell[0]][cell[1]]
             if len(basis) == 2 and all(len(b) == 2 for b in basis):
                 yield point_requirement_placement(tiling, cell, req, i, DIR_NORTH)
             elif len(basis) == 1 and len(basis[0]) == 2:
