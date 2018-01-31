@@ -1289,6 +1289,14 @@ point_sep_equiv_iso_fusion = StrategyPack(
                        partial(point_isolations, ignore_equivalence=True)]],
         name="point_sep_equiv_iso_fusion")
 
+unnars_mad_point_placements = StrategyPack(
+        eq_strats=[],
+        ver_strats=[subset_verified],
+        inf_strats=[],
+        other_strats=[[all_requirement_extensions, all_point_insertions, requirement_calculus, all_point_requirement_placements]],
+        name="unnars_mad_point_placements"
+)
+
 # point_placement_deflation_fusion = StrategyPack(
 #          eq_strats=[all_point_placements, deflation, fusion],
 #          ver_strats=[subset_verified, miner_verified],

@@ -7,3 +7,5 @@ from .binary_pattern import forced_binary_pattern
 from .fusion import fusion
 
 from .deflation import deflation
+
+from .point_requirement_placement import all_point_requirement_placements
