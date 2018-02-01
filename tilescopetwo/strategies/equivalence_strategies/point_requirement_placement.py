@@ -2,7 +2,7 @@
 placing one of the points in a requirement with any possible force"""
 
 from grids_two import Tiling
-from permuta.misc import DIR_EAST, DIR_NORTH, DIR_SOUTH, DIR_WEST  # , DIRS
+from permuta.misc import DIR_EAST, DIR_NORTH, DIR_SOUTH, DIR_WEST, DIR_NONE  # , DIRS
 from comb_spec_searcher import EquivalenceStrategy
 ALL_DIR = [DIR_EAST, DIR_NORTH, DIR_SOUTH, DIR_WEST]
 
@@ -37,6 +37,7 @@ def point_requirement_placement(tiling, cell, req, index, force):
     new_positive_cells = []
     new_point_cells = []
     new_possibly_empty = []
+
     for old_cell in tiling.positive_cells:
         if old_cell == cell:
             x = old_cell[0]
@@ -54,8 +55,17 @@ def point_requirement_placement(tiling, cell, req, index, force):
             if old_cell[1] > cell[1]:
                 y += 2
             new_positive_cells.append((x,y))
+
     for old_cell in tiling.possibly_empty:
-        if old_cell[0] == cell[0]:
+        if old_cell == cell:
+                x = old_cell[0]
+                y = old_cell[1]
+                new_point_cells.append((x + 1, y + 1))
+                new_possibly_empty.append((x, y))
+                new_possibly_empty.append((x, y + 2))
+                new_possibly_empty.append((x + 2, y))
+                new_possibly_empty.append((x + 2, y + 2))
+        elif old_cell[0] == cell[0]:
             x = old_cell[0]
             y = old_cell[1]
             if old_cell[1] > cell[1]:
@@ -86,10 +96,10 @@ def point_requirement_placement(tiling, cell, req, index, force):
         if old_cell[1] > cell[1]:
             y += 2
         new_point_cells.append((x, y))
-    
+
     obstructions = []
     for ob in tiling:
-        obstructions.extend(ob.place_point(cell, (force+2)%4))
+        obstructions.extend(ob.place_point(cell, DIR_NONE))
 
     requirements = []
     for req_list in tiling.requirements:
@@ -101,9 +111,14 @@ def point_requirement_placement(tiling, cell, req, index, force):
             reqs = []
             for r in req_list:
                 reqs.extend(r.place_point(cell, (force+2)%4))
-            requirements.append(reqs)
-        
-    point_placed_tiling = Tiling(point_cells=new_point_cells, positive_cells=new_positive_cells,
-                 possibly_empty=new_possibly_empty, obstructions=obstructions)
 
-    return EquivalenceStrategy(formal_step="Placed point at index {} in requirement {} with force {}".format(index, req, force), tiling = point_placed_tiling)
+            requirements.append([r for r in reqs if r])
+
+    point_placed_tiling = Tiling(point_cells=new_point_cells,
+                                 positive_cells=new_positive_cells,
+                                 possibly_empty=new_possibly_empty,
+                                 obstructions=obstructions,
+                                 requirements=requirements)
+
+    return EquivalenceStrategy(formal_step="Placed point at index {} in requirement {} with force {}".format(index, req, force),
+                               tiling = point_placed_tiling)

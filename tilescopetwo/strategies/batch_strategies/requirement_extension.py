@@ -7,10 +7,10 @@ from grids_two import Obstruction, Requirement, Tiling
 
 def all_requirement_extensions(tiling, basis, **kwargs):
     # maxreqlen is the maximum length it tries to extend the requirement to
-    maxreqlen = kwargs.get('maxreqlen') 
+    maxreqlen = kwargs.get('maxreqlen')
     patterns = kwargs.get('patterns')
     if maxreqlen is None:
-        maxreqlen = 4
+        maxreqlen = 3
 
     if not tiling.requirements:
         return
@@ -30,9 +30,10 @@ def all_requirement_extensions(tiling, basis, **kwargs):
             continue
 
         for patt in PermSet.avoiding(basis).of_length(len(req) + 1):
-            yield Strategy(
-                formal_step=(
-                    "Extending requirement {} to {} in cell {}").format(req, patt, req.pos[0]),
-                objects=[tiling.add_single_cell_obstruction(req.pos[0], patt),
-                         tiling.add_single_cell_requirement(req.pos[0], patt),],
-                workable=[True, True])
+            if req.patt in patt:
+                yield Strategy(
+                    formal_step=(
+                        "Extending requirement {} to {} in cell {}").format(req, patt, req.pos[0]),
+                    objects=[tiling.add_single_cell_obstruction(req.pos[0], patt),
+                             tiling.add_single_cell_requirement(req.pos[0], patt),],
+                    workable=[True, True])

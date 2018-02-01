@@ -8,7 +8,7 @@ from grids_two import Obstruction, Requirement, Tiling
 def requirement_calculus(tiling, **kwargs):
     if not tiling.requirements:
         return
-    
+
     for i, reqs in enumerate(tiling.requirements):
         if len(reqs) == 1:
             continue
@@ -19,17 +19,17 @@ def requirement_calculus(tiling, **kwargs):
             tiling_list.append(Tiling(tiling._point_cells,
                                  tiling._positive_cells,
                                  tiling._possibly_empty,
-                                 tiling._obstructions + obstruction_list,
+                                 tiling._obstructions + tuple(obstruction_list),
                                  [req_list for j, req_list in enumerate(tiling.requirements) if i != j]
-                                 + [req]))
+                                 + [[req]]))
             obstruction_list.append(Obstruction(req.patt, req.pos))
 
         yield BatchStrategy(
             formal_step=(
                 "Calculus of requirement list {}").format(reqs),
-                objects=tiling_list)
+                tilings=tiling_list)
 
-    '''         
+    '''
         for req in reqs:
             tiling_list.append(Tiling(tiling._point_cells,
                                  tiling._positive_cells,
