@@ -1293,7 +1293,7 @@ unnars_mad_point_placements = StrategyPack(
         eq_strats=[],
         ver_strats=[subset_verified],
         inf_strats=[],
-        other_strats=[[all_requirement_extensions, all_point_insertions, requirement_calculus, all_point_requirement_placements]],
+        other_strats=[[components], [all_requirement_extensions, all_point_insertions, requirement_calculus, all_point_requirement_placements]],
         name="unnars_mad_point_placements"
 )
 

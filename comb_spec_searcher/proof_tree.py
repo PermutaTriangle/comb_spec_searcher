@@ -94,9 +94,10 @@ class ProofTreeNode(object):
         jsondict = json.loads(jsonstr)
         return cls.from_dict(jsondict)
 
-    def _error_string(self, parent, children, strat_type,
+    def _error_string(self, parent, children, strat_type, formal_step,
                       length, parent_total, children_total):
         error = "Insane " + strat_type + " Strategy Found!\n"
+        error += formal_step + "\n"
         error += "Found at length {} \n".format(length)
         error += "The parent tiling was:\n{}\n".format(parent.__repr__())
         error += "It produced {} many things\n".format(length)
@@ -115,12 +116,16 @@ class ProofTreeNode(object):
             return ("Don't use complement_verified, its dangerous.")
 
         number_perms = of_length(self.eqv_path_objects[0], length)
-        for obj in self.eqv_path_objects[1:]:
+        for i, obj in enumerate(self.eqv_path_objects[1:]):
             eqv_number = of_length(obj, length)
             if number_perms != eqv_number:
+                formal_step = ""
+                for i in range(i+1):
+                    formal_step += self.eqv_explanations[i]
                 return self._error_string(self.eqv_path_objects[0],
                                           [obj],
                                           "Equivalent",
+                                          formal_step,
                                           length,
                                           number_perms,
                                           eqv_number)
@@ -133,6 +138,7 @@ class ProofTreeNode(object):
                 return self._error_string(self.eqv_path_objects[0],
                                           child_objs,
                                           "Batch",
+                                          self.formal_step,
                                           length,
                                           number_perms,
                                           total)
@@ -152,6 +158,7 @@ class ProofTreeNode(object):
                     return self._error_string(self.eqv_path_objects[0],
                                               child_objs,
                                               "Decomposition",
+                                              self.formal_step, 
                                               length,
                                               number_perms,
                                               total)
@@ -269,7 +276,7 @@ class ProofTree(object):
     def pretty_print(self, file=sys.stderr):
         """Pretty print using olf proof tree class."""
         self.to_old_proof_tree().pretty_print(file=file)
-    
+
     def get_funcs(self):
         """Creates a dictionary mapping from labels to function names"""
         funcs = {}
@@ -282,7 +289,7 @@ class ProofTree(object):
             funcs[root.label] = Function("F_"+str(root.label))
         for child in root.children:
             self._get_funcs(child, funcs)
-    
+
     def get_equations(self, me, funcs, substitutions=None, fcache=None):
         res = None
         f = False # should we substitute before returning?
@@ -319,7 +326,7 @@ class ProofTree(object):
             return []
         else:
             raise RuntimeError("WAT, this should not happen!")
-        return reduce(add, [self._get_equations(child, me, funcs, substitutions, fcache) for child in root.children], [Eq(lhs, rhs)]) 
+        return reduce(add, [self._get_equations(child, me, funcs, substitutions, fcache) for child in root.children], [Eq(lhs, rhs)])
 
 
     def get_genf(self, verify=10, equations=False, expand=False, verbose=False):
