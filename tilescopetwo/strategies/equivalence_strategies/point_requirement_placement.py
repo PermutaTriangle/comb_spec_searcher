@@ -119,5 +119,5 @@ def point_requirement_placement(tiling, cell, req, index, force):
                                  obstructions=obstructions,
                                  requirements=requirements)
 
-    return EquivalenceStrategy(formal_step="Placed point at index {} in requirement {} with force {}".format(index, req, force),
+    return EquivalenceStrategy(formal_step="Placed point at index {} in requirement {} with force {}".format(index, repr(req), force),
                                tiling = point_placed_tiling)

@@ -5,7 +5,7 @@ from comb_spec_searcher import Strategy
 from permuta import PermSet, Perm
 from grids_two import Obstruction, Requirement, Tiling
 
-def all_requirement_extensions(tiling, basis, **kwargs):
+def all_requirement_extensions(tiling, **kwargs):
     # maxreqlen is the maximum length it tries to extend the requirement to
     maxreqlen = kwargs.get('maxreqlen')
     patterns = kwargs.get('patterns')
@@ -28,6 +28,9 @@ def all_requirement_extensions(tiling, basis, **kwargs):
 
         if len(req) >= maxreqlen:
             continue
+
+        basis = [ob.patt for ob in tiling
+                 if ob.is_single_cell() and ob.pos[0] == req.pos[0]]
 
         for patt in PermSet.avoiding(basis).of_length(len(req) + 1):
             if req.patt in patt:

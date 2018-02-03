@@ -1292,7 +1292,7 @@ point_sep_equiv_iso_fusion = StrategyPack(
 requirement_equivalent_point_placements = StrategyPack(
     eq_strats=[all_point_requirement_placements],
     ver_strats=[subset_verified, globally_verified, database_verified],
-    inf_strats=[],
+    inf_strats=[empty_cell_inferral],
     other_strats=[[partial(components, unions=True)],
                   [all_requirement_extensions, all_point_insertions,
                    requirement_calculus]],
@@ -1302,7 +1302,7 @@ requirement_equivalent_point_placements = StrategyPack(
 requirement_point_placements = StrategyPack(
         eq_strats=[],
         ver_strats=[subset_verified, globally_verified, database_verified],
-        inf_strats=[],
+        inf_strats=[empty_cell_inferral],
         other_strats=[[components],
                       [all_requirement_extensions, all_point_insertions,
                        requirement_calculus, all_point_requirement_placements]],
