@@ -1289,12 +1289,24 @@ point_sep_equiv_iso_fusion = StrategyPack(
                        partial(point_isolations, ignore_equivalence=True)]],
         name="point_sep_equiv_iso_fusion")
 
-unnars_mad_point_placements = StrategyPack(
+requirement_equivalent_point_placements = StrategyPack(
+    eq_strats=[all_point_requirement_placements],
+    ver_strats=[subset_verified, globally_verified, database_verified],
+    inf_strats=[],
+    other_strats=[[partial(components, unions=True)],
+                  [all_requirement_extensions, all_point_insertions,
+                   requirement_calculus]],
+    name="requirement_equivalent_point_placements"
+)
+
+requirement_point_placements = StrategyPack(
         eq_strats=[],
-        ver_strats=[subset_verified],
+        ver_strats=[subset_verified, globally_verified, database_verified],
         inf_strats=[],
-        other_strats=[[components], [all_requirement_extensions, all_point_insertions, requirement_calculus, all_point_requirement_placements]],
-        name="unnars_mad_point_placements"
+        other_strats=[[components],
+                      [all_requirement_extensions, all_point_insertions,
+                       requirement_calculus, all_point_requirement_placements]],
+        name="requirement_point_placements"
 )
 
 # point_placement_deflation_fusion = StrategyPack(
