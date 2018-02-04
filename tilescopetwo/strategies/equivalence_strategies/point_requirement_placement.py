@@ -111,8 +111,9 @@ def point_requirement_placement(tiling, cell, req, index, force):
         else:
             reqs = []
             for r in req_list:
-                reqs.extend(r.place_point(cell, (force+2)%4))
+                reqs.extend(r.place_point(cell, DIR_NONE))
             requirements.append([r for r in reqs if r])
+
     point_placed_tiling = Tiling(point_cells=new_point_cells,
                                  positive_cells=new_positive_cells,
                                  possibly_empty=new_possibly_empty,

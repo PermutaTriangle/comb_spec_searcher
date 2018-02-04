@@ -38,5 +38,5 @@ def all_requirement_extensions(tiling, **kwargs):
                     formal_step=(
                         "Extending requirement {} to {} in cell {}").format(req, patt, req.pos[0]),
                     objects=[tiling.add_single_cell_obstruction(req.pos[0], patt),
-                             tiling.add_single_cell_requirement(req.pos[0], patt),],
+                             tiling.add_single_cell_requirement(req.pos[0], patt)],
                     workable=[True, True])
