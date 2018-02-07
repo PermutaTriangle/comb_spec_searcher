@@ -1310,6 +1310,17 @@ requirement_point_placements = StrategyPack(
         name="requirement_point_placements"
 )
 
+point_placements_with_requirements = StrategyPack(
+        eq_strats=[],
+        ver_strats=[subset_verified, globally_verified, database_verified],
+        inf_strats=[empty_cell_inferral],
+        other_strats=[[components],
+                      [all_point_insertions, requirement_calculus,
+                       all_point_requirement_placements]],
+        name="point_placements_with_requirements"
+)
+
+
 # point_placement_deflation_fusion = StrategyPack(
 #          eq_strats=[all_point_placements, deflation, fusion],
 #          ver_strats=[subset_verified, miner_verified],
