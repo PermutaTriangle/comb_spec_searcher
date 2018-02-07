@@ -23,8 +23,6 @@ def components(tiling,
     Two cells are in the same component if there exists an occurrence using both cells.
     """
     '''Can't handle requirements, so rage quit.'''
-    if tiling.requirements:
-        return
     cell_to_int = {}
 
     cells = list(tiling.point_cells.union(tiling.possibly_empty).union(tiling.positive_cells))
@@ -51,6 +49,13 @@ def components(tiling,
             for j in range(i+1,len(ob.pos)):
                 components_set.unite(cell_to_int[ob.pos[i]], cell_to_int[ob.pos[j]])
 
+    for req_list in tiling.requirements:
+        for req in req_list:
+            for i in range(len(req.pos)):
+                for j in range(i+1,len(req.pos)):
+                    components_set.unite(cell_to_int[req.pos[i]], cell_to_int[req.pos[j]])
+
+
     all_components = {}
     for cell in cells:
         i = components_set.find(cell_to_int[cell])
@@ -75,11 +80,13 @@ def components(tiling,
             else:
                 positive_cells.append(cell)
         obstructions = [ob for ob in tiling if ob.pos[0] in new_cells]
+        requirements = [req for req in tiling.requirements if req[0].pos[0] in new_cells]
 
         strategy.append(Tiling(possibly_empty=possibly_empty,
                                positive_cells=positive_cells,
                                point_cells=point_cells,
-                               obstructions=obstructions))
+                               obstructions=obstructions,
+                               requirements=requirements))
 
     if workable:
         work = [True for _ in strategy]
@@ -108,11 +115,13 @@ def components(tiling,
                     else:
                         positive_cells.append(cell)
                 obstructions = [ob for ob in tiling if ob.pos[0] in new_cells]
+                requirements = [req for req in tiling.requirements if req[0].pos[0] in new_cells]
 
                 strategy.append(Tiling(possibly_empty=possibly_empty,
                                        positive_cells=positive_cells,
                                        point_cells=point_cells,
-                                       obstructions=obstructions))
+                                       obstructions=obstructions,
+                                       requirements=requirements))
             # print("A UNION IS:")
             # for t in strategy:
             #     print(t.to_old_tiling())

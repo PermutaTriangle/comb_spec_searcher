@@ -29,7 +29,7 @@ def root_requirement_insertions(tiling, basis, maxreqlen=None, **kwargs):
                     workable=[False, True])
 
 
-def all_requirement_insertions(tiling, basis, **kwargs):
+def all_one_by_one_requirement_insertions(tiling, basis, **kwargs):
     if tiling.dimensions != (1, 1):
         return
 

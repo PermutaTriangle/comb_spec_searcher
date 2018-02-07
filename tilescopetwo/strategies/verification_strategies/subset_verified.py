@@ -10,7 +10,8 @@ def subset_verified(tiling, basis, **kwargs):
         if one_by_one_verified(tiling, basis):
             return VerificationStrategy(formal_step="The tiling is a subset of the class.")
     elif all(ob.is_single_cell() for ob in tiling):
-        return VerificationStrategy(formal_step="The tiling is a subset of the class.")
+        if all(all(r.is_single_cell() for r in req) for req in tiling.requirements):
+            return VerificationStrategy(formal_step="The tiling is a subset of the class.")
 
 def one_by_one_verified(tiling, basis):
     """Return true if tiling is a subset of the Av(basis)."""

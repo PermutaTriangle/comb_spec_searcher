@@ -9,7 +9,19 @@ from itertools import chain
 
 
 def empty_cell_inferral(tiling, **kwargs):
-    positive_cells = list(tiling.positive_cells.union(tiling.point_cells))
+    positive_cells = set(tiling.positive_cells.union(tiling.point_cells))
+
+    for req_list in tiling.requirements:
+        req_cells = set()
+        for req in req_list:
+            req_cells.update(req.pos)
+        for cell in req_cells:
+            if (not cell in positive_cells and
+                all(cell in req.pos for req in req_list)):
+                positive_cells.add(cell)
+
+    positive_cells = list(positive_cells)
+
     adding = []
     empty_cells = []
     empty_ob = Obstruction.empty_perm()

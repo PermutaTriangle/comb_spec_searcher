@@ -16,7 +16,7 @@ forced_patterns_3 = StrategyPack(
         ver_strats=[subset_verified, database_verified, globally_verified],
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[partial(components, unions=True)],
-                      [partial(all_requirement_insertions, maxreqlen=3),
+                      [partial(all_one_by_one_requirement_insertions, maxreqlen=3),
                        all_cell_insertions, forced_binary_pattern]],
         name="forced_patterns_3")
 
@@ -25,7 +25,7 @@ forced_patterns_3_with_row_column_placements = StrategyPack(
         ver_strats=[subset_verified, database_verified, globally_verified],
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[partial(components, unions=True)],
-                      [partial(all_requirement_insertions, maxreqlen=3),
+                      [partial(all_one_by_one_requirement_insertions, maxreqlen=3),
                        all_cell_insertions, row_placements, col_placements,
                        forced_binary_pattern]],
         name="forced_patterns_3_with_row_column_placements")
@@ -51,7 +51,7 @@ forced_patterns_4 = StrategyPack(
         ver_strats=[subset_verified, database_verified, globally_verified],
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[partial(components, unions=True)],
-                      [partial(all_requirement_insertions, maxreqlen=4),
+                      [partial(all_one_by_one_requirement_insertions, maxreqlen=4),
                        all_cell_insertions,
                        forced_binary_pattern]],
         name="forced_patterns_4")
@@ -151,7 +151,7 @@ all_strategies = StrategyPack(
          ver_strats=[subset_verified, database_verified, globally_verified],
          inf_strats=[empty_cell_inferral, row_and_column_separation],
          other_strats=[[partial(components, unions=True)],
-                       [partial(all_requirement_insertions, maxreqlen=4),
+                       [partial(all_one_by_one_requirement_insertions, maxreqlen=4),
                         forced_binary_pattern],
                        [all_cell_insertions,
                         partial(row_placements, ignore_equivalence=True),
@@ -186,7 +186,7 @@ forced_patterns_4_with_row_column_placements = StrategyPack(
         ver_strats=[subset_verified, database_verified, globally_verified],
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[partial(components, unions=True)],
-                      [partial(all_requirement_insertions, maxreqlen=4),
+                      [partial(all_one_by_one_requirement_insertions, maxreqlen=4),
                        all_cell_insertions, row_placements, col_placements,
                        forced_binary_pattern]],
         name="forced_patterns_4_with_row_column_placements")
@@ -220,7 +220,7 @@ forced_patterns_3_with_point_placements = StrategyPack(
         ver_strats=[subset_verified, database_verified, globally_verified],
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[partial(components, unions=True)],
-                      [partial(all_requirement_insertions, maxreqlen=3),
+                      [partial(all_one_by_one_requirement_insertions, maxreqlen=3),
                        all_cell_insertions, forced_binary_pattern]],
         name="forced_patterns_3_with_point_placements")
 
@@ -229,7 +229,7 @@ forced_patterns_4_with_point_placements = StrategyPack(
         ver_strats=[subset_verified, database_verified, globally_verified],
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[partial(components, unions=True)],
-                      [partial(all_requirement_insertions, maxreqlen=4),
+                      [partial(all_one_by_one_requirement_insertions, maxreqlen=4),
                        all_cell_insertions, forced_binary_pattern]],
         name="forced_patterns_4_with_point_placements")
 
@@ -582,7 +582,7 @@ forced_patterns_3_with_point_placements_miner = StrategyPack(
         ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[partial(components, unions=True)],
-                      [partial(all_requirement_insertions, maxreqlen=3),
+                      [partial(all_one_by_one_requirement_insertions, maxreqlen=3),
                        all_cell_insertions, forced_binary_pattern]],
         name="forced_patterns_3_with_point_placements_miner")
 
@@ -591,7 +591,7 @@ forced_patterns_3_with_row_column_placements_miner = StrategyPack(
         ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[partial(components, unions=True)],
-                      [partial(all_requirement_insertions, maxreqlen=3),
+                      [partial(all_one_by_one_requirement_insertions, maxreqlen=3),
                        all_cell_insertions, row_placements, col_placements,
                        forced_binary_pattern]],
         name="forced_patterns_3_with_row_column_placements_miner")
@@ -601,7 +601,7 @@ forced_patterns_4_with_point_placements = StrategyPack(
         ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[partial(components, unions=True)],
-                      [partial(all_requirement_insertions, maxreqlen=4),
+                      [partial(all_one_by_one_requirement_insertions, maxreqlen=4),
                        all_cell_insertions, forced_binary_pattern]],
         name="forced_patterns_4_with_point_placements_miner")
 
@@ -610,7 +610,7 @@ forced_patterns_4_with_row_column_placements_miner = StrategyPack(
         ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[partial(components, unions=True)],
-                      [partial(all_requirement_insertions, maxreqlen=4),
+                      [partial(all_one_by_one_requirement_insertions, maxreqlen=4),
                        all_cell_insertions, row_placements, col_placements,
                        forced_binary_pattern]],
         name="forced_patterns_4_with_row_column_placements_miner")
@@ -873,7 +873,7 @@ forced_patterns_3_with_point_placements_deflation = StrategyPack(
         ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[partial(components, unions=True)],
-                      [partial(all_requirement_insertions, maxreqlen=3),
+                      [partial(all_one_by_one_requirement_insertions, maxreqlen=3),
                        all_cell_insertions, forced_binary_pattern]],
         name="forced_patterns_3_with_point_placements_deflation")
 
@@ -882,7 +882,7 @@ forced_patterns_3_with_row_column_placements_deflation = StrategyPack(
         ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[partial(components, unions=True)],
-                      [partial(all_requirement_insertions, maxreqlen=3),
+                      [partial(all_one_by_one_requirement_insertions, maxreqlen=3),
                        all_cell_insertions, row_placements, col_placements,
                        forced_binary_pattern]],
         name="forced_patterns_3_with_row_column_placements_deflation")
@@ -892,7 +892,7 @@ forced_patterns_4_with_point_placements = StrategyPack(
         ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[partial(components, unions=True)],
-                      [partial(all_requirement_insertions, maxreqlen=4),
+                      [partial(all_one_by_one_requirement_insertions, maxreqlen=4),
                        all_cell_insertions, forced_binary_pattern]],
         name="forced_patterns_4_with_point_placements_deflation")
 
@@ -901,7 +901,7 @@ forced_patterns_4_with_row_column_placements_deflation = StrategyPack(
         ver_strats=[subset_verified, globally_verified, database_verified, miner_verified],
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[partial(components, unions=True)],
-                      [partial(all_requirement_insertions, maxreqlen=4),
+                      [partial(all_one_by_one_requirement_insertions, maxreqlen=4),
                        all_cell_insertions, row_placements, col_placements,
                        forced_binary_pattern]],
         name="forced_patterns_4_with_row_column_placements_deflation")
@@ -1223,7 +1223,7 @@ forced_patterns_2_basic = StrategyPack(
         ver_strats=[subset_verified, database_verified, globally_verified],
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[components],
-                      [partial(all_requirement_insertions, maxreqlen=2),
+                      [partial(all_one_by_one_requirement_insertions, maxreqlen=2),
                        all_cell_insertions, forced_binary_pattern]],
         name="forced_patterns_2_basic")
 
@@ -1235,7 +1235,7 @@ forced_patterns_3_with_row_column_placements_pi = StrategyPack(
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[partial(components, unions=True,
                                point_interleaving=True)],
-                      [partial(all_requirement_insertions, maxreqlen=3),
+                      [partial(all_one_by_one_requirement_insertions, maxreqlen=3),
                        all_cell_insertions, row_placements, col_placements,
                        forced_binary_pattern]],
         name="forced_patterns_3_with_row_column_placements_pi")
@@ -1246,7 +1246,7 @@ forced_patterns_4_with_row_column_placements_pi = StrategyPack(
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[partial(components, unions=True,
                                point_interleaving=True)],
-                      [partial(all_requirement_insertions, maxreqlen=4),
+                      [partial(all_one_by_one_requirement_insertions, maxreqlen=4),
                        all_cell_insertions, row_placements, col_placements,
                        forced_binary_pattern]],
         name="forced_patterns_4_with_row_column_placements_pi")
@@ -1257,7 +1257,7 @@ forced_patterns_3_with_point_placements_pi = StrategyPack(
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[partial(components, unions=True,
                                point_interleaving=True)],
-                      [partial(all_requirement_insertions, maxreqlen=3),
+                      [partial(all_one_by_one_requirement_insertions, maxreqlen=3),
                        all_cell_insertions, forced_binary_pattern]],
         name="forced_patterns_3_with_point_placements_pi")
 
@@ -1267,7 +1267,7 @@ forced_patterns_4_with_point_placements_pi = StrategyPack(
         inf_strats=[empty_cell_inferral, row_and_column_separation],
         other_strats=[[partial(components, unions=True,
                                point_interleaving=True)],
-                      [partial(all_requirement_insertions, maxreqlen=4),
+                      [partial(all_one_by_one_requirement_insertions, maxreqlen=4),
                        all_cell_insertions, forced_binary_pattern]],
         name="forced_patterns_4_with_point_placements_pi")
 
@@ -1288,6 +1288,38 @@ point_sep_equiv_iso_fusion = StrategyPack(
                       [all_cell_insertions,
                        partial(point_isolations, ignore_equivalence=True)]],
         name="point_sep_equiv_iso_fusion")
+
+requirement_equivalent_point_placements = StrategyPack(
+    eq_strats=[all_point_requirement_placements],
+    ver_strats=[subset_verified, globally_verified, database_verified],
+    inf_strats=[empty_cell_inferral],
+    other_strats=[[partial(components, unions=True)],
+                  [all_requirement_extensions, all_point_insertions,
+                   requirement_calculus, all_requirement_insertions]],
+    name="requirement_equivalent_point_placements"
+)
+
+requirement_point_placements = StrategyPack(
+        eq_strats=[],
+        ver_strats=[subset_verified, globally_verified, database_verified],
+        inf_strats=[empty_cell_inferral],
+        other_strats=[[components],
+                      [all_requirement_extensions, all_point_insertions,
+                       requirement_calculus, all_point_requirement_placements,
+                       all_requirement_insertions]],
+        name="requirement_point_placements"
+)
+
+point_placements_with_requirements = StrategyPack(
+        eq_strats=[],
+        ver_strats=[subset_verified, globally_verified, database_verified],
+        inf_strats=[empty_cell_inferral],
+        other_strats=[[components],
+                      [all_point_insertions, requirement_calculus,
+                       all_point_requirement_placements]],
+        name="point_placements_with_requirements"
+)
+
 
 # point_placement_deflation_fusion = StrategyPack(
 #          eq_strats=[all_point_placements, deflation, fusion],
@@ -1358,7 +1390,7 @@ point_sep_equiv_iso_fusion = StrategyPack(
 #     inf_strats=[empty_cell_inferral, row_and_column_separation],
 #     other_strats=[[partial(components, unions=True)],
 #                   [all_cell_insertions],
-#                   [partial(all_requirement_insertions, maxreqlength=4)],
+#                   [partial(all_one_by_one_requirement_insertions, maxreqlength=4)],
 #                   ],
 #     name="binary_force w/ row-col separation and cell insertions")
 #
