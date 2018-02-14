@@ -4,18 +4,14 @@ A proof tree class.
 This has been built specific to tilings and gridded perms. Needs to be
 generalised.
 """
-
-from grids_two import Tiling
-
-from .tree_searcher import Node as tree_searcher_node
-from permuta.misc.ordered_set_partitions import partitions_of_n_of_size_k
-
+import json
+import sys
 from functools import reduce
 from operator import add, mul
 
-import sys
+from permuta.misc.ordered_set_partitions import partitions_of_n_of_size_k
 
-import json
+from .tree_searcher import Node as tree_searcher_node
 
 
 class ProofTreeNode(object):
