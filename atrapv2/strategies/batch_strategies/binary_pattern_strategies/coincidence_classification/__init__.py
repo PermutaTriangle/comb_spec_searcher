@@ -1,6 +1,0 @@
-from .coincidence_classification_012 import coincidence_classification as coincclass012
-from .coincidence_classification_021 import coincidence_classification as coincclass021
-from .coincidence_classification_201 import coincidence_classification as coincclass201
-from .coincidence_classification_102 import coincidence_classification as coincclass102
-from .coincidence_classification_120 import coincidence_classification as coincclass120
-from .coincidence_classification_210 import coincidence_classification as coincclass210
