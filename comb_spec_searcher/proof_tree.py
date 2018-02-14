@@ -212,11 +212,6 @@ class ProofTree(object):
     def to_jsonable(self):
         return {'root': self.root.to_jsonable()}
 
-    def to_json(self):
-        from .old_proof_tree import ProofTree as OldProofTree
-        old_proof_tree = OldProofTree(self._to_old_proof_tree_node(self.root))
-        return old_proof_tree.to_json()
-
     @classmethod
     def from_dict(cls, jsondict):
         root = ProofTreeNode.from_dict(jsondict['root'])

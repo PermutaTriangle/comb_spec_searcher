@@ -615,7 +615,6 @@ class CombinatorialSpecificationSearcher(object):
                     found_string = "Proof tree found {}\n".format(time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()))
                     found_string += "Time taken was {} seconds\n\n".format(self._time_taken)
                     found_string += self.status()
-                    found_string += proof_tree.to_json() + "\n\n"
                     found_string += json.dumps(proof_tree.to_jsonable())
                     logger.info(found_string, extra=self.logger_kwargs)
                 return proof_tree
