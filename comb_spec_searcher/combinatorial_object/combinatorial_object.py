@@ -1,40 +1,56 @@
+import abc
 import sympy.abc
 
 __all__ = ("CombinatorialObject")
 
-class CombinatorialObject(object):
+
+class CombinatorialObject(abc.ABC):
     """
+    Base class for CombSpecSearcher combinatorial object
+
     This is a base combinatorial object that CombinatorialSpecificationSearcher
     works with. Combintorial objects to be used with the searcher should
     inherhit from this class.
     """
+
+    @abc.abstractmethod
     def get_genf(self, *args, **kwargs):
-        print("I should return the generation function for the base CombinatorialObject of %s. Override me!" % self._get_class_name())
+        """Return the generating function for the combinatorial object"""
         return sympy.abc.x**0
 
+    @abc.abstractmethod
     def objects_of_length(self, length):
-        print("I should return an iterable")
+        """Returns an interable of combinatorial objects of a given length"""
+        return []
 
+    @abc.abstractmethod
     def to_jsonable(self):
-        print("I should return a data structure that represents the object which is JSONable")
+        """Return JSONable data structure of the obect"""
+        return
 
+    @abc.abstractmethod
     def __init__(self):
-        print("I'm the constructor for the base CombinatorialObject of %s. Override me!" % self._get_class_name())
+        return
 
+    @abc.abstractmethod
     def __eq__(self, other):
-        print("I'm the __eq__ function for the base CombinatorialObject of %s. Override me!" % self._get_class_name())
+        return False
 
+    @abc.abstractmethod
     def __hash__(self):
-        print("I'm the __hash__ function for the base CombinatorialObject of %s. Override me!" % self._get_class_name())
+        return
 
+    @abc.abstractmethod
     def __iter__(self):
-        print("I'm the __iter__ function for the base CombinatorialObject of %s. Override me!" % self._get_class_name())
+        return
 
+    @abc.abstractmethod
     def __repr__(self):
-        print("I'm the __repr__ function for the base CombinatorialObject of %s. Override me!" % self._get_class_name())
+        return
 
+    @abc.abstractmethod
     def __str__(self):
-        print("I'm the __str__ function for the base CombinatorialObject of %s. Override me!" % self._get_class_name())
+        return
 
     def _get_class_name(self):
         return type(self).__name__

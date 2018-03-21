@@ -1,4 +1,5 @@
 from .comb_spec_searcher import CombinatorialSpecificationSearcher
+from .combinatorial_object import CombinatorialObject
 from .objectqueue import ObjectQueue
 from .objectqueuedf import ObjectQueueDF
 from .strategies import BatchStrategy
