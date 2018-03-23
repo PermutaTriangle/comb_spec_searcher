@@ -96,7 +96,7 @@ class ProofTreeNode(object):
         error += formal_step + "\n"
         error += "Found at length {} \n".format(length)
         error += "The parent tiling was:\n{}\n".format(parent.__repr__())
-        error += "It produced {} many things\n".format(length)
+        error += "It produced {} many things\n".format(parent_total)
         error += "The children were:\n"
         for obj in children:
             error += obj.__repr__()
@@ -154,7 +154,7 @@ class ProofTreeNode(object):
                     return self._error_string(self.eqv_path_objects[0],
                                               child_objs,
                                               "Decomposition",
-                                              self.formal_step, 
+                                              self.formal_step,
                                               length,
                                               number_perms,
                                               total)
