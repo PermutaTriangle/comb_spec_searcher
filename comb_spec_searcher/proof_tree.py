@@ -285,7 +285,6 @@ class ProofTree(object):
             raise RuntimeError("WAT, this should not happen!")
         return reduce(add, [self._get_equations(child, me, funcs, substitutions, fcache) for child in root.children], [Eq(lhs, rhs)])
 
-
     def get_genf(self, verify=10, equations=False, expand=False, verbose=False):
         """Try to enumerate."""
         from sympy import solve
