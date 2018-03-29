@@ -15,11 +15,11 @@ class ObjectQueueDF(object):
         self.next_level = Queue()
         self.levels_completed = 0
         if rules_dict is None:
-            raise TypeError("TilingQueueDF requires a rules dict.")
+            raise TypeError("ObjectQueueDF requires a rules dict.")
         if root is None:
             raise TypeError("Root must be given.")
         if equivalent_set is None:
-            raise TypeError("TilingQueueDF requires a function that returns equivalent set.")
+            raise TypeError("ObjectQueueDF requires a function that returns equivalent set.")
         self.equivalent_set = equivalent_set
         self.rules_dict = rules_dict
         self.root = root

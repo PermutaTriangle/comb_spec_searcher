@@ -1,8 +1,7 @@
 """
 A proof tree class.
 
-This has been built specific to tilings and gridded perms. Needs to be
-generalised.
+This can be used to get the generating function for the class.
 """
 import json
 import sys
@@ -60,8 +59,7 @@ class ProofTreeNode(object):
         return output
 
     @classmethod
-    def from_dict(cls, jsondict):
-        from grids_two import Tiling
+    def from_dict(cls, combclass, jsondict):
         back_maps = jsondict.get('back_maps')
         if back_maps is not None:
             back_maps = [{tuple(x): tuple(y) for x, y in bm}
@@ -71,10 +69,10 @@ class ProofTreeNode(object):
             raise NotImplementedError('Fix forward maps in jsoning!!!')
         return cls(label=jsondict['label'],
                    eqv_path_labels=jsondict['eqv_path_labels'],
-                   eqv_path_objects=[Tiling.from_dict(x)
+                   eqv_path_objects=[combclass.from_dict(x)
                                      for x in jsondict['eqv_path_objects']],
                    eqv_explanations=jsondict['eqv_explanations'],
-                   children=[ProofTreeNode.from_dict(child)
+                   children=[ProofTreeNode.from_dict(combclass, child)
                              for child in jsondict['children']],
                    strategy_verified=jsondict['strategy_verified'],
                    complement_verified=jsondict['complement_verified'],
@@ -86,16 +84,16 @@ class ProofTreeNode(object):
                    forward_maps=forward_maps)
 
     @classmethod
-    def from_json(cls, jsonstr):
+    def from_json(cls, combclass, jsonstr):
         jsondict = json.loads(jsonstr)
-        return cls.from_dict(jsondict)
+        return cls.from_dict(combclass, jsondict)
 
     def _error_string(self, parent, children, strat_type, formal_step,
                       length, parent_total, children_total):
         error = "Insane " + strat_type + " Strategy Found!\n"
         error += formal_step + "\n"
         error += "Found at length {} \n".format(length)
-        error += "The parent tiling was:\n{}\n".format(parent.__repr__())
+        error += "The parent object was:\n{}\n".format(parent.__repr__())
         error += "It produced {} many things\n".format(parent_total)
         error += "The children were:\n"
         for obj in children:
@@ -111,10 +109,10 @@ class ProofTreeNode(object):
         if self.complement_verified:
             return ("Don't use complement_verified, its dangerous.")
 
-        number_perms = of_length(self.eqv_path_objects[0], length)
+        number_objs = of_length(self.eqv_path_objects[0], length)
         for i, obj in enumerate(self.eqv_path_objects[1:]):
             eqv_number = of_length(obj, length)
-            if number_perms != eqv_number:
+            if number_objs != eqv_number:
                 formal_step = ""
                 for i in range(i+1):
                     formal_step += self.eqv_explanations[i]
@@ -123,20 +121,20 @@ class ProofTreeNode(object):
                                           "Equivalent",
                                           formal_step,
                                           length,
-                                          number_perms,
+                                          number_objs,
                                           eqv_number)
         if self.disjoint_union:
             child_objs = [child.eqv_path_objects[0] for child in self.children]
             total = 0
             for obj in child_objs:
                 total += of_length(obj, length)
-            if number_perms != total:
+            if number_objs != total:
                 return self._error_string(self.eqv_path_objects[0],
                                           child_objs,
                                           "Batch",
                                           self.formal_step,
                                           length,
-                                          number_perms,
+                                          number_objs,
                                           total)
         if self.decomposition:
             if not self.has_interleaving_decomposition():
@@ -150,13 +148,13 @@ class ProofTreeNode(object):
                             break
                         subtotal *= of_length(obj, partlen)
                     total += subtotal
-                if number_perms != total:
+                if number_objs != total:
                     return self._error_string(self.eqv_path_objects[0],
                                               child_objs,
                                               "Decomposition",
                                               self.formal_step,
                                               length,
-                                              number_perms,
+                                              number_objs,
                                               total)
         if self.fusion:
             pass
@@ -209,14 +207,14 @@ class ProofTree(object):
         return {'root': self.root.to_jsonable()}
 
     @classmethod
-    def from_dict(cls, jsondict):
-        root = ProofTreeNode.from_dict(jsondict['root'])
+    def from_dict(cls, combclass, jsondict):
+        root = ProofTreeNode.from_dict(combclass, jsondict['root'])
         return cls(root)
 
     @classmethod
-    def from_json(cls, jsonstr):
+    def from_json(cls, combclass, jsonstr):
         jsondict = json.loads(jsonstr)
-        return cls.from_dict(jsondict)
+        return cls.from_dict(combclass, jsondict)
 
     def _of_length(self, obj, length):
         if obj not in self._of_length_cache:
@@ -225,7 +223,7 @@ class ProofTree(object):
         number = self._of_length_cache[obj].get(length)
 
         if number is None:
-            number = len(list(obj.gridded_perms_of_length(length)))
+            number = len(list(obj.object_of_length(length)))
             self._of_length_cache[obj][length] = number
 
         return number
@@ -237,36 +235,6 @@ class ProofTree(object):
             for o in node.eqv_path_objects:
                 print(o.__repr__())
                 print()
-
-    def to_old_proof_tree(self):
-        from .old_proof_tree import ProofTree as OldProofTree
-        old_proof_tree = OldProofTree(self._to_old_proof_tree_node(self.root))
-        return old_proof_tree
-
-    def _to_old_proof_tree_node(self, root):
-        from .old_proof_tree import ProofTreeNode as OldProofTreeNode
-        relation = ""
-        for x in root.eqv_explanations:
-            relation = relation + x
-        if root.back_maps:
-            from grids import Cell
-            recurse = [{Cell(*key): Cell(*val) for key, val in bm.items()}
-                       for bm in root.back_maps]
-        else:
-            recurse = None
-        return OldProofTreeNode(root.formal_step,
-                                root.eqv_path_objects[0].to_old_tiling(),
-                                root.eqv_path_objects[-1].to_old_tiling(),
-                                relation,
-                                root.label,
-                                children=[self._to_old_proof_tree_node(x)
-                                          for x in root.children],
-                                recurse=recurse,
-                                strategy_verified=root.strategy_verified)
-
-    def pretty_print(self, file=sys.stderr):
-        """Pretty print using olf proof tree class."""
-        self.to_old_proof_tree().pretty_print(file=file)
 
     def get_funcs(self):
         """Creates a dictionary mapping from labels to function names"""
@@ -294,7 +262,6 @@ class ProofTree(object):
         return sorted(set(res), key = lambda x: int(str(x.lhs)[2:-3]))
 
     def _get_equations(self, root, me, funcs, substitutions, fcache):
-        #from atrap.Helpers import get_tiling_genf
         from sympy import Eq
         from sympy.abc import x
         lhs = funcs[root.label](x)
@@ -345,7 +312,7 @@ class ProofTree(object):
         # TODO: sanity check
         any_valid = False
         if solutions:
-            permcounts = [len(list(me.gridded_perms_of_length(i))) for i in range(verify+1)]
+            objcounts = [len(list(me.objects_of_length(i))) for i in range(verify+1)]
             for solution in solutions:
                 genf = solution[f(x)]
                 genf = genf.subs(substitutions).doit().expand().simplify()
@@ -354,7 +321,7 @@ class ProofTree(object):
                 except TypeError:
                     continue
                 any_valid = True
-                if permcounts == expansion:
+                if objcounts == expansion:
                     sol = genf
                     if expand:
                         if equations:
@@ -366,7 +333,6 @@ class ProofTree(object):
             if any_valid:
                 raise RuntimeError("Incorrect generating function\n" + str(solutions))
         raise RuntimeError("No solution was found for this tree")
-        #return self.to_old_proof_tree().get_genf()
 
     def nodes(self, root=None):
         if root is None:

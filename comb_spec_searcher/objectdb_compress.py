@@ -191,7 +191,7 @@ class CompressedObjectDB(object):
         return self._get_info(key).verified
 
     def is_empty(self, key):
-        """Return True if object contains no permutation, False otherwise."""
+        """Return True if object is empty set, False otherwise."""
         return self._get_info(key).empty
 
     def set_empty(self, key, empty=True):
