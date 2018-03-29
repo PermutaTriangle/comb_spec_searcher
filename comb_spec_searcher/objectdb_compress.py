@@ -5,6 +5,8 @@ Contains information about if objects have been
 expanded, found by symmetries etc. It gives each object a unique label.
 """
 
+from .combinatorial_class import CombinatorialClass
+
 class Info(object):
     """Information about a object."""
 
@@ -72,7 +74,7 @@ class CompressedObjectDB(object):
 
     def __contains__(self, key):
         """Check for containment."""
-        if isinstance(key, self.combinatorial_object):
+        if isinstance(key, CombinatorialClass):
             self._compress(key)
             info = self.obj_to_info.get(key)
         if isinstance(key, int):
@@ -89,7 +91,7 @@ class CompressedObjectDB(object):
 
         Can also set some information about the object on adding.
         """
-        if not isinstance(obj, self.combinatorial_object):
+        if not isinstance(obj, CombinatorialClass):
             raise TypeError("Trying to add something that isn't a object.")
         compressed_obj = self._compress(obj)
         if compressed_obj not in self.obj_to_info:

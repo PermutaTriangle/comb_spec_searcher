@@ -43,7 +43,7 @@ class CombinatorialSpecificationSearcher(object):
         if compress:
             self.objectdb = CompressedObjectDB(type(start_object))
         else:
-            self.objectdb = ObjectDB(type(start_object))
+            self.objectdb = ObjectDB()
 
         self.objectdb.add(start_object, expandable=True)
         self.start_label = self.objectdb.get_label(start_object)
