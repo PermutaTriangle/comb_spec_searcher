@@ -113,7 +113,7 @@ class CompressedObjectDB(object):
 
     def _get_info(self, key):
         """Return Info for given key."""
-        if isinstance(key, self.combinatorial_object):
+        if isinstance(key, CombinatorialClass):
             key = self._compress(key)
             info = self.obj_to_info.get(key)
             if info is None:
@@ -126,7 +126,9 @@ class CompressedObjectDB(object):
             if info is None:
                 raise KeyError("Key not in ObjectgDB.")
         else:
-            raise TypeError("CompressedObjectDB only accepts one type of class: {}".format(self.combinatorial_object))
+            raise TypeError('CompressedObjectDB only accepts'\
+                            'CombinatorialClass and will decompress with'\
+                            '{}.'.format(self.combinatorial_object))
         return info
 
     def _compress(self, key):
