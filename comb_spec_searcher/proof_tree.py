@@ -33,7 +33,7 @@ class ProofTreeNode(object):
         self.fusion = fusion
         self.deflate = deflate
         self.recursion = recursion
-        # TODO: Add assertions for assumptions made about each type of strategy.
+        # TODO: Add assertions for assumptions made about each type of strategy
         self.formal_step = formal_step
         self.back_maps = back_maps
         self.forward_maps = forward_maps
@@ -52,9 +52,9 @@ class ProofTreeNode(object):
         output['disjoint_union'] = self.disjoint_union
         output['recursion'] = self.recursion
         output['formal_step'] = self.formal_step
-        if self.back_maps is not None:
+        if isinstance(self.back_maps, dict):
             output['back_maps'] = [[(x, y) for x, y in bm.items()]
-                                 for bm in self.back_maps]
+                                   for bm in self.back_maps]
         if self.forward_maps is not None:
             output['forward_maps'] = [fm for fm in self.forward_maps]
         return output
@@ -103,7 +103,6 @@ class ProofTreeNode(object):
             error += "\n"
         error += "They produced {} many things\n\n".format(children_total)
         return error
-
 
     def sanity_check(self, length, of_length=None):
         if of_length is None:
