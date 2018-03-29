@@ -222,7 +222,7 @@ class ProofTree(object):
         number = self._of_length_cache[obj].get(length)
 
         if number is None:
-            number = len(list(obj.object_of_length(length)))
+            number = len(list(obj.objects_of_length(length)))
             self._of_length_cache[obj][length] = number
 
         return number
