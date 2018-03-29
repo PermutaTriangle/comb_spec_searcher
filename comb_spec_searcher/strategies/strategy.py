@@ -7,6 +7,7 @@ types supported for a strategy a -> b_1, b_2, ..., b_k are
     - disjoint union: f(a)
 '''
 from collections import Iterable
+from functools import partial
 
 
 class Strategy(object):
@@ -27,8 +28,8 @@ class Strategy(object):
         if any(not isinstance(x, bool) for x in workable):
             raise TypeError("Workable should be an iterable of booleans")
         if back_maps is not None:
-            if any(not isinstance(hopefully_dict, dict)
-                   for hopefully_dict in back_maps):
+            if any(not isinstance(bm, dict) and not isinstance(bm, partial)
+                   for bm in back_maps):
                 raise TypeError("One of the maps is not a dictionary")
             self.back_maps = [part_map for part_map in back_maps]
         else:
