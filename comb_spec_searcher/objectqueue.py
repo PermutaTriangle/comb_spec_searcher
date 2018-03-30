@@ -41,7 +41,6 @@ class ObjectQueue(object):
     def do_level(self, cap=None):
         # if cap, return first "cap" many objects.
         if cap is not None:
-            # x = tqdm.tqdm(range(cap))
             if isinstance(cap, int):
                 i = 0
             else:
@@ -51,15 +50,12 @@ class ObjectQueue(object):
                 if not self.working.empty():
                     yield self.working.get()
                     i += 1
-                    # x.update()
                 elif not self.curr_level.empty():
                     yield self.curr_level.get()
                     i += 1
-                    # x.update()
                 else:
                     if self.next_level.empty():
                         print("No more objects to expand!", file=sys.stderr)
-                        # x.update(cap - i)
                         i = cap
 
                     self.levels_completed += 1
@@ -68,13 +64,11 @@ class ObjectQueue(object):
 
         # if no cap, then do exactly one level.
         else:
-            # x = tqdm.tqdm(self.curr_level.queue)
             while not self.working.empty() or not self.curr_level.empty():
                 while not self.working.empty():
                     yield self.working.get()
                 if not self.curr_level.empty():
                     yield self.curr_level.get()
-                    # x.update()
             self.levels_completed += 1
             self.curr_level = self.next_level
             self.next_level = Queue()
