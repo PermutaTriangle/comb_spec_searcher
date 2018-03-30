@@ -20,12 +20,12 @@ class CombinatorialClass(abc.ABC):
 
     @abc.abstractmethod
     def objects_of_length(self, length):
-        """Returns an interable of combinatorial objects of a given length"""
+        """Returns an iterable of combinatorial objects of a given length"""
         return []
 
     @abc.abstractmethod
     def to_jsonable(self):
-        """Return JSONable data structure of the obect"""
+        """Return JSONable data structure of the object"""
         return
 
     @abc.abstractmethod

@@ -2,7 +2,6 @@
 A queue of objects.
 """
 from queue import Queue
-import tqdm
 import sys
 
 class ObjectQueue(object):
