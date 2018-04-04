@@ -1,15 +1,15 @@
 import abc
 import sympy.abc
 
-__all__ = ("CombinatorialObject")
+__all__ = ("CombinatorialClass")
 
 
-class CombinatorialObject(abc.ABC):
+class CombinatorialClass(abc.ABC):
     """
-    Base class for CombSpecSearcher combinatorial object
+    Base class for CombSpecSearcher combinatorial class
 
-    This is a base combinatorial object that CombinatorialSpecificationSearcher
-    works with. Combintorial objects to be used with the searcher should
+    This is a base combinatorial class that CombinatorialSpecificationSearcher
+    works with. Combintorial classes to be used with the searcher should
     inherhit from this class.
     """
 
@@ -38,10 +38,6 @@ class CombinatorialObject(abc.ABC):
 
     @abc.abstractmethod
     def __hash__(self):
-        return
-
-    @abc.abstractmethod
-    def __iter__(self):
         return
 
     @abc.abstractmethod

@@ -5,6 +5,8 @@ Contains information about if objects have been
 expanded, found by symmetries etc. It gives each object a unique label.
 """
 
+from .combinatorial_class import CombinatorialClass
+
 class Info(object):
     """Information about a object."""
 
@@ -51,7 +53,7 @@ class ObjectDB(object):
     - Sets verified objects with explanation.
     """
 
-    def __init__(self, combinatorial_object=None):
+    def __init__(self):
         """
         Initialise.
 
@@ -63,7 +65,6 @@ class ObjectDB(object):
         self.label_to_info = {}
         if combinatorial_object is None:
             raise TypeError("Need to declare type of combinatorial object.")
-        self.combinatorial_object = combinatorial_object
 
     def __iter__(self):
         """Iterator of labels."""
@@ -72,7 +73,7 @@ class ObjectDB(object):
 
     def __contains__(self, key):
         """Check for containment."""
-        if isinstance(key, self.combinatorial_object):
+        if isinstance(key, CombinatorialClass):
             info = self.obj_to_info.get(key)
         if isinstance(key, int):
             info = self.label_to_info.get(key)
@@ -88,8 +89,8 @@ class ObjectDB(object):
 
         Can also set some information about the object on adding.
         """
-        if not isinstance(obj, self.combinatorial_object):
-            raise TypeError("Trying to add something that isn't a object.")
+        if not isinstance(obj, CombinatorialClass):
+            raise TypeError("Trying to add non CombinatorialClass.")
         if obj not in self.obj_to_info:
             label = len(self.obj_to_info)
             info = Info(obj,
@@ -174,7 +175,7 @@ class ObjectDB(object):
         return self._get_info(key).verified
 
     def is_empty(self, key):
-        """Return True if object contains no permutation, False otherwise."""
+        """Return True if object is empty set, False otherwise."""
         return self._get_info(key).empty
 
     def set_empty(self, key, empty=True):

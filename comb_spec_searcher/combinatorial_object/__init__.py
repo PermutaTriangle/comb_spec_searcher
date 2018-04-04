@@ -1,1 +1,0 @@
-from .combinatorial_object import CombinatorialObject

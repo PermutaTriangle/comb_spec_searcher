@@ -43,7 +43,7 @@ class CombinatorialSpecificationSearcher(object):
         if compress:
             self.objectdb = CompressedObjectDB(type(start_object))
         else:
-            self.objectdb = ObjectDB(type(start_object))
+            self.objectdb = ObjectDB()
 
         self.objectdb.add(start_object, expandable=True)
         self.start_label = self.objectdb.get_label(start_object)
@@ -142,7 +142,7 @@ class CombinatorialSpecificationSearcher(object):
 
 
     def is_empty(self, obj):
-        """Return True if a object contains no permutations, False otherwise"""
+        """Return True if a object contains no objects, False otherwise"""
         start = time.time()
         if self.objectdb.is_empty(obj) is not None:
             self.verification_time += time.time() - start
@@ -271,7 +271,7 @@ class CombinatorialSpecificationSearcher(object):
                     self.objectdb.set_workably_decomposed(label)
 
             if not end_labels:
-                # all the tilings are empty so the tiling itself must be empty!
+                # all the objects are empty so the object itself must be empty!
                 self._add_empty_rule(label, "batch empty")
                 break
             elif not self.forward_equivalence and len(end_labels) == 1:
@@ -321,8 +321,7 @@ class CombinatorialSpecificationSearcher(object):
         if self.objectdb.is_empty(label):
             return
         self.objectdb.set_empty(label)
-        # TODO: when new proof tree class, don't enumerate by this formal step.
-        self.objectdb.set_verified(label, "This tiling contains no avoiding perms.")
+        self.objectdb.set_verified(label, "Contains no avoiding objects.")
         self.objectdb.set_strategy_verified(label)
         self.equivdb.update_verified(label)
 
@@ -353,7 +352,7 @@ class CombinatorialSpecificationSearcher(object):
 
             if not strategy.decomposition:
                 if self.is_empty(ob):
-                    inferral_steps.append(inferral_step + "Tiling is empty.")
+                    inferral_steps.append(inferral_step + "Object is empty.")
                     continue
             if work:
                 self.objectdb.set_expandable(ob)
@@ -559,7 +558,7 @@ class CombinatorialSpecificationSearcher(object):
         """
         An automatic search function.
 
-        It will expand tilings until cap*(tree search time) has passed and then
+        It will expand objects until cap*(tree search time) has passed and then
         search for a tree.
 
         If verbose=True, a status update is given when a tree is found and

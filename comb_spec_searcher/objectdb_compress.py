@@ -5,6 +5,8 @@ Contains information about if objects have been
 expanded, found by symmetries etc. It gives each object a unique label.
 """
 
+from .combinatorial_class import CombinatorialClass
+
 class Info(object):
     """Information about a object."""
 
@@ -72,7 +74,7 @@ class CompressedObjectDB(object):
 
     def __contains__(self, key):
         """Check for containment."""
-        if isinstance(key, self.combinatorial_object):
+        if isinstance(key, CombinatorialClass):
             self._compress(key)
             info = self.obj_to_info.get(key)
         if isinstance(key, int):
@@ -89,7 +91,7 @@ class CompressedObjectDB(object):
 
         Can also set some information about the object on adding.
         """
-        if not isinstance(obj, self.combinatorial_object):
+        if not isinstance(obj, CombinatorialClass):
             raise TypeError("Trying to add something that isn't a object.")
         compressed_obj = self._compress(obj)
         if compressed_obj not in self.obj_to_info:
@@ -111,7 +113,7 @@ class CompressedObjectDB(object):
 
     def _get_info(self, key):
         """Return Info for given key."""
-        if isinstance(key, self.combinatorial_object):
+        if isinstance(key, CombinatorialClass):
             key = self._compress(key)
             info = self.obj_to_info.get(key)
             if info is None:
@@ -124,7 +126,9 @@ class CompressedObjectDB(object):
             if info is None:
                 raise KeyError("Key not in ObjectgDB.")
         else:
-            raise TypeError("CompressedObjectDB only accepts one type of class: {}".format(self.combinatorial_object))
+            raise TypeError('CompressedObjectDB only accepts'\
+                            'CombinatorialClass and will decompress with'\
+                            '{}.'.format(self.combinatorial_object))
         return info
 
     def _compress(self, key):
@@ -191,7 +195,7 @@ class CompressedObjectDB(object):
         return self._get_info(key).verified
 
     def is_empty(self, key):
-        """Return True if object contains no permutation, False otherwise."""
+        """Return True if object is empty set, False otherwise."""
         return self._get_info(key).empty
 
     def set_empty(self, key, empty=True):
