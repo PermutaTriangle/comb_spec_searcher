@@ -63,8 +63,6 @@ class ObjectDB(object):
         """
         self.obj_to_info = {}
         self.label_to_info = {}
-        if combinatorial_object is None:
-            raise TypeError("Need to declare type of combinatorial object.")
 
     def __iter__(self):
         """Iterator of labels."""
