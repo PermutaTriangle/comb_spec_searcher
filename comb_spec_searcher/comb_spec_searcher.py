@@ -702,7 +702,7 @@ class CombinatorialSpecificationSearcher(object):
 
         rules_dict = self.tree_search_prep()
         # Prune all unverified labels (recursively)
-        rules_dict = prune(rules_dict)
+        rules_dict = prune(rules_dict, root=self.start_label)
 
         # only verified labels in rules_dict, in particular, there is an proof
         # tree if the start label is in the rules_dict
