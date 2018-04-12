@@ -15,7 +15,8 @@ from .proof_tree import ProofTree as ProofTree
 from .ruledb import RuleDB
 from .strategies import (InferralStrategy, Strategy, StrategyPack,
                          VerificationStrategy)
-from .tree_searcher import proof_tree_bfs, prune
+from .tree_searcher import (proof_tree_bfs, prune, iterative_prune,
+                            iterative_proof_tree_bfs)
 
 
 class CombinatorialSpecificationSearcher(object):
@@ -72,6 +73,7 @@ class CombinatorialSpecificationSearcher(object):
                 self.strategy_generators = strategy_pack.other_strats
                 self.inferral_strategies = strategy_pack.inf_strats
                 self.verification_strategies = strategy_pack.ver_strats
+                self.iterative = strategy_pack.iterative
 
         self.kwargs = function_kwargs
 
@@ -570,7 +572,7 @@ class CombinatorialSpecificationSearcher(object):
                 status_start = time.time()
             start_string = ""
             start_string += "Auto search started {}\n".format(time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()))
-            start_string += "Looking for proof tree for:\n"
+            start_string += "Looking for {} combinatorial specification for:\n".format('iterative' if self.iterative else 'recursive')
             start_string += self.objectdb.get_object(self.start_label).__repr__()
             start_string += "\n"
             start_string += "The strategies being used are:\n"
@@ -702,7 +704,11 @@ class CombinatorialSpecificationSearcher(object):
 
         rules_dict = self.tree_search_prep()
         # Prune all unverified labels (recursively)
-        rules_dict = prune(rules_dict, root=self.start_label)
+        if self.iterative:
+            rules_dict = iterative_prune(rules_dict,
+                                         root=self.equivdb[self.start_label])
+        else:
+            rules_dict = prune(rules_dict)
 
         # only verified labels in rules_dict, in particular, there is an proof
         # tree if the start label is in the rules_dict
@@ -711,7 +717,12 @@ class CombinatorialSpecificationSearcher(object):
 
         if self.equivdb[self.start_label] in rules_dict:
             self._has_proof_tree = True
-            _, proof_tree = proof_tree_bfs(rules_dict, root=self.equivdb[self.start_label])
+            if self.iterative:
+                proof_tree = iterative_proof_tree_bfs(rules_dict,
+                                        root=self.equivdb[self.start_label])
+            else:
+                _, proof_tree = proof_tree_bfs(rules_dict,
+                                        root=self.equivdb[self.start_label])
         else:
             proof_tree = None
 

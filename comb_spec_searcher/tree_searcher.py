@@ -15,7 +15,7 @@ class Node(object):
     def __str__(self):
         return "".join(["(", str(self.label), *map(str, self.children), ")"])
 
-def prune(rules_dict, root=None):
+def prune(rules_dict):
     """Prune all unverifiable nodes (recursively)
     """
     rdict = deepcopy(rules_dict)
@@ -99,7 +99,7 @@ def iterative_proof_tree_bfs(rules_dict, root):
             queue.extend([child for child in children
                           if not child.label == root])
             v.children = children
-    return set(), root_node
+    return root_node
 
 def proof_tree_bfs(rules_dict, root):
     seen = set()

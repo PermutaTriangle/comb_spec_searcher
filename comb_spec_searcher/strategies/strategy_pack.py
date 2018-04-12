@@ -5,7 +5,7 @@ Base class for strategy packs.
 
 class StrategyPack(object):
     def __init__(self, eq_strats=None, ver_strats=None, inf_strats=None,
-                 other_strats=None, name=None, old_pack=None):
+                 other_strats=None, iterative=False, name=None, old_pack=None):
         if old_pack is not None:
             self.eq_strats = old_pack["equivalence_strategies"]
             self.ver_strats = old_pack["verification_strategies"]
@@ -26,6 +26,7 @@ class StrategyPack(object):
             raise TypeError(("Strategy pack requires a (possibly empty) list "
                              "of lists of other strategies."))
         self.name = name
+        self.iterative = iterative
         self.eq_strats = eq_strats
         self.inf_strats = inf_strats
         self.ver_strats = ver_strats
