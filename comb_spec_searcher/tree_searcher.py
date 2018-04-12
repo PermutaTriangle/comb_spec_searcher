@@ -29,6 +29,27 @@ def prune(rules_dict):
                 del rdict[k]
     return prune(rdict) if changed else rdict
 
+def iterative_prune(rules_dict, root=None):
+    verified_labels = []
+    if root is not None:
+        verified_labels.append(root)
+    rdict = deepcopy(rules_dict)
+    new_rules_dict = defaultdict(set)
+    while True:
+        changed = False
+        for k, rule_set in list(rdict.items()):
+            for rule in list(rule_set):
+                if all(x in verified_labels for x in rule):
+                    changed = True
+                    verified_labels.append(k)
+                    new_rules_dict[k].add(rule)
+                    rdict[k].remove(rule)
+            if not rule_set:
+                del rdict[k]
+        if not changed:
+            break
+    return new_rules_dict
+
 ### DFS
 
 def proof_tree_dfs(rules_dict, root, seen = set()):
@@ -66,6 +87,20 @@ def proof_tree_generator_dfs(rules_dict, root):
 
 ### BFS
 
+def iterative_proof_tree_bfs(rules_dict, root):
+    """Takes in a iterative_pruned rules_dict"""
+    root_node = Node(root)
+    queue = deque([root_node])
+    while queue:
+        v = queue.popleft()
+        rule = sorted(rules_dict[v.label])[0]
+        if not rule == ():
+            children = [Node(i) for i in rule]
+            queue.extend([child for child in children
+                          if not child.label == root])
+            v.children = children
+    return root_node
+
 def proof_tree_bfs(rules_dict, root):
     seen = set()
     root_node = Node(root)
@@ -74,7 +109,7 @@ def proof_tree_bfs(rules_dict, root):
         v = queue.popleft()
         rule = choice(list(rules_dict[v.label]))
         if not (v.label in seen or rule == ()):
-            children = [ Node(i) for i in rule ]
+            children = [Node(i) for i in rule]
             shuffle(children)
             queue.extend(children)
             v.children = children
