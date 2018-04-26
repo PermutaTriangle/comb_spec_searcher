@@ -30,9 +30,9 @@ def prune(rules_dict):
     return prune(rdict) if changed else rdict
 
 def iterative_prune(rules_dict, root=None):
-    verified_labels = []
+    verified_labels = set()
     if root is not None:
-        verified_labels.append(root)
+        verified_labels.add(root)
     rdict = deepcopy(rules_dict)
     new_rules_dict = defaultdict(set)
     while True:
@@ -41,7 +41,7 @@ def iterative_prune(rules_dict, root=None):
             for rule in list(rule_set):
                 if all(x in verified_labels for x in rule):
                     changed = True
-                    verified_labels.append(k)
+                    verified_labels.add(k)
                     new_rules_dict[k].add(rule)
                     rdict[k].remove(rule)
             if not rule_set:

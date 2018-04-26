@@ -29,7 +29,6 @@ class CombinatorialSpecificationSearcher(object):
                  strategy_pack=None,
                  symmetry=False,
                  compress=False,
-                 forward_equivalence=False,
                  complement_verify=True,
                  objectqueue=ObjectQueue,
                  is_empty_strategy=None,
@@ -59,7 +58,7 @@ class CombinatorialSpecificationSearcher(object):
         else:
             self.symmetry = []
 
-        self.forward_equivalence = forward_equivalence
+        self.forward_equivalence = strategy_pack.forward_equivalence
         self.complement_verify = complement_verify
 
         if complement_verify:
