@@ -5,6 +5,7 @@ This can be used to get the generating function for the class.
 """
 import json
 import sys
+import sympy
 from functools import reduce
 from operator import add, mul
 
@@ -36,6 +37,7 @@ class ProofTreeNode(object):
         self.formal_step = formal_step
         self.back_maps = back_maps
         self.forward_maps = forward_maps
+        self.sympy_function = None
 
     def to_jsonable(self):
         output = dict()
@@ -190,6 +192,33 @@ class ProofTreeNode(object):
                     self.back_maps == other.back_maps,
                     self.forward_maps == other.forward_maps])
 
+    def get_function(self):
+        if self.sympy_function is None:
+            self.sympy_function = sympy.Function("F_"+
+                                                 str(self.label))(sympy.abc.x)
+        return self.sympy_function
+
+    def get_equation(self, root_func=None, root_object=None,
+                     substitutions=False):
+        lhs = self.get_function()
+        if self.disjoint_union:
+            rhs = reduce(add,
+                         [child.get_function() for child in self.children],
+                         0)
+        elif self.decomposition:
+            rhs = reduce(mul,
+                         [child.get_function() for child in self.children],
+                         1)
+        elif self.recursion:
+            rhs = lhs
+        elif self.strategy_verified:
+            rhs = self.eqv_path_objects[-1].get_genf(root_func=root_func,
+                                                     root_object=root_object)
+        else:
+            raise NotImplementedError("Using an unimplemented constructor")
+        return sympy.Eq(lhs, rhs)
+
+
 
 class InsaneTreeError(Exception):
     pass
@@ -235,102 +264,51 @@ class ProofTree(object):
                 print(o.__repr__())
                 print()
 
-    def get_funcs(self):
-        """Creates a dictionary mapping from labels to function names"""
-        funcs = {}
-        self._get_funcs(self.root, funcs)
-        return funcs
+    def get_equations(self):
+        eqs = []
+        subs = {}
+        root_func = self.root.get_function()
+        root_object = self.root.eqv_path_objects[0]
+        for node in self.nodes():
+            if node.recursion:
+                continue
+            eqs.append(node.get_equation(substitutions=True,
+                                         root_func=root_func,
+                                         root_object=root_object))
+        return eqs
 
-    def _get_funcs(self, root, funcs):
-        from sympy import Function
-        if root.label not in funcs:
-            funcs[root.label] = Function("F_"+str(root.label))
-        for child in root.children:
-            self._get_funcs(child, funcs)
-
-    def get_equations(self, me, funcs, substitutions=None, fcache=None):
-        res = None
-        f = False # should we substitute before returning?
-        if substitutions == None:
-            substitutions = {}
-            fcache = {}
-            f = True
-        res = self._get_equations(self.root, me, funcs, substitutions, fcache)
-        if f:
-            res = [v.subs(substitutions) for v in res]
-        return sorted(set(res), key = lambda x: int(str(x.lhs)[2:-3]))
-
-    def _get_equations(self, root, me, funcs, substitutions, fcache):
-        from sympy import Eq
-        from sympy.abc import x
-        lhs = funcs[root.label](x)
-        rhs = 0
-        assert(root.decomposition + root.disjoint_union + root.complement_verified + root.strategy_verified + root.recursion == 1)
-        if root.decomposition:
-            assert(len(root.children) > 0)
-            rhs = reduce(mul, [funcs[child.label](x) for child in root.children], 1)
-        elif root.disjoint_union:
-            assert(len(root.children) > 0)
-            rhs = reduce(add, [funcs[child.label](x) for child in root.children], 0)
-        elif root.complement_verified:
-            raise NotImplementedError("Complement verified is not available at this time")
-            rhs = funcs[root.children[0].label](x) - reduce(add, [funcs[child.label](x) for child in root.children[1:]], 0)
-        elif root.strategy_verified:
-            assert(len(root.children) == 0)
-            rhs = root.eqv_path_objects[-1].get_genf(root.label, me, funcs[self.root.label](x), substitutions, fcache)
-        elif root.recursion:
-            assert(len(root.children) == 0)
-            return []
-        else:
-            raise RuntimeError("WAT, this should not happen!")
-        return reduce(add, [self._get_equations(child, me, funcs, substitutions, fcache) for child in root.children], [Eq(lhs, rhs)])
-
-    def get_genf(self, verify=10, equations=False, expand=False, verbose=False):
-        """Try to enumerate."""
-        from sympy import solve
-        from sympy.abc import x
-        # TODO: interleaving decomposition
-        funcs = self.get_funcs()
-        f = funcs[self.root.label]
-        me = self.root.eqv_path_objects[0]
-        substitutions, fcache = {}, {}
-        eqs = self.get_equations(me, funcs, substitutions, fcache)
+    def get_genf(self, verbose=False, verify=8):
+        """Find generating function for proof tree. Return None if no solution
+        is found. If not verify will return list of possible solutions."""
+        # TODO: add substitutions, so as to solve with symbols first.
+        eqs = self.get_equations()
         if verbose:
             print("The system of", len(eqs), "equations:")
             for eq in eqs:
                 print(eq.lhs, "=", eq.rhs)
-            print("\nThe", len(substitutions), "substitutions:")
-            for k in sorted(substitutions.keys(), key=str):
-                print(k, "=", substitutions[k])
             print()
             print("Solving...")
-        solutions = solve(eqs, tuple([eq.lhs for eq in eqs]), dict=True, cubics=False, quartics=False, quintics=False)
-        if verbose:
-            print("Done!")
-        # TODO: sanity check
-        any_valid = False
+        solutions = sympy.solve(eqs, tuple([eq.lhs for eq in eqs]), dict=True,
+                                cubics=False, quartics=False, quintics=False)
         if solutions:
-            objcounts = [len(list(me.objects_of_length(i))) for i in range(verify+1)]
+            if not verify:
+                return solutions
+            if verbose and verify:
+                print("Solved, verifying solutions.")
+            objcounts = [len(list(root_object.objects_of_length(i)))
+                         for i in range(verify + 1)]
             for solution in solutions:
-                genf = solution[f(x)]
-                genf = genf.subs(substitutions).doit().expand().simplify()
+                genf = solution[root_func]
                 try:
                     expansion = taylor_expand(genf, verify)
-                except TypeError:
+                except TypeError as e:
+                    print(e)
                     continue
-                any_valid = True
                 if objcounts == expansion:
-                    sol = genf
-                    if expand:
-                        if equations:
-                            return sol,[eq.subs(substitutions) for eq in eqs],expansion
-                        return sol,expansion
-                    if equations:
-                        return sol,[eq.subs(substitutions) for eq in eqs]
-                    return sol
-            if any_valid:
-                raise RuntimeError("Incorrect generating function\n" + str(solutions))
-        raise RuntimeError("No solution was found for this tree")
+                    return genf
+        if solutions:
+            raise RuntimeError(("Incorrect generating function\n" +
+                                str(solutions)))
 
     def nodes(self, root=None):
         if root is None:
@@ -388,7 +366,8 @@ class ProofTree(object):
 
             eqv_path = css.equivdb.find_path(in_label, out_label)
             eqv_objs = [css.objectdb.get_object(l) for l in eqv_path]
-            eqv_explanations = [css.equivdb.get_explanation(x, y, one_step=True)
+            eqv_explanations = [css.equivdb.get_explanation(x, y,
+                                                            one_step=True)
                                 for x, y in zip(eqv_path[:-1], eqv_path[1:])]
 
             root.eqv_path_labels = eqv_path
@@ -424,8 +403,10 @@ class ProofTree(object):
                 #verified!
                 eqv_path = css.equivdb.find_path(in_label, eqv_ver_label)
                 eqv_objs = [css.objectdb.get_object(l) for l in eqv_path]
-                eqv_explanations = [css.equivdb.get_explanation(x, y, one_step=True)
-                                    for x, y in zip(eqv_path[:-1], eqv_path[1:])]
+                eqv_explanations = [css.equivdb.get_explanation(x, y,
+                                                                one_step=True)
+                                    for x, y in zip(eqv_path[:-1],
+                                                    eqv_path[1:])]
 
                 formal_step = css.objectdb.verification_reason(eqv_ver_label)
                 return ProofTreeNode(label, eqv_path, eqv_objs,
@@ -440,23 +421,22 @@ class ProofTree(object):
                                     recursion=True)
         else:
             start, ends = css.rule_from_equivence_rule(root.label,
-                                                       tuple(c.label
-                                                             for c in root.children))
+                                       tuple(c.label for c in root.children))
             formal_step = css.ruledb.explanation(start, ends)
             back_maps = css.ruledb.get_back_maps(start, ends)
 
             eqv_path = css.equivdb.find_path(in_label, start)
             eqv_objs = [css.objectdb.get_object(l) for l in eqv_path]
-            eqv_explanations = [css.equivdb.get_explanation(x, y, one_step=True)
+            eqv_explanations = [css.equivdb.get_explanation(x, y,
+                                                            one_step=True)
                                 for x, y in zip(eqv_path[:-1], eqv_path[1:])]
 
             strat_children = []
             for next_label in ends:
                 for child in root.children:
                     if css.equivdb.equivalent(next_label, child.label):
-                        sub_tree = ProofTree.from_comb_spec_searcher_node(child,
-                                                                          css,
-                                                                          next_label)
+                        sub_tree = ProofTree.from_comb_spec_searcher_node(
+                                                        child, css, next_label)
                         strat_children.append(sub_tree)
                         break
             if back_maps is not None:
@@ -489,7 +469,8 @@ class ProofTree(object):
                                      children=strat_children)
 
     def __eq__(self, other):
-        return all(node1 == node2 for node1, node2 in zip(self.nodes(), other.nodes()))
+        return all(node1 == node2
+                   for node1, node2 in zip(self.nodes(), other.nodes()))
 
 
 
