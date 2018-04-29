@@ -6,7 +6,6 @@ from logzero import logger
 import json
 
 from .equivdb import EquivalenceDB
-from .LRUCache import LRUCache
 from .objectdb import ObjectDB
 from .objectdb_compress import CompressedObjectDB
 from .objectqueue import ObjectQueue
@@ -77,14 +76,6 @@ class CombinatorialSpecificationSearcher(object):
         self.kwargs = function_kwargs
         self.kwargs['logger'] = logger_kwargs
         self.logger_kwargs = logger_kwargs
-
-
-        if not callable(is_empty_strategy):
-            raise ValueError(("CombinatorialSpecificationSearcher "
-                              "requires a strategy that tests if "
-                              "an object is the empty set."))
-        else:
-            self.is_empty_strategy = is_empty_strategy
 
         if objectqueue == ObjectQueue:
             self.objectqueue = ObjectQueue()
@@ -211,8 +202,11 @@ class CombinatorialSpecificationSearcher(object):
         """
         Will expand the object with given strategy.
 
-        If equivalent, then only allow equivalent strategies to be applied and
-        return objects found.
+        If equivalent, then only allow equivalent strategies to be applied. if
+        inferral then only allow inferral strategies to be applied and return
+        inferred object. These are treated the same as equivalent strategies,
+        but if an object is inferred CombSpecSearcher will not expand the
+        original object any more.
         """
         start = time.time()
         if inferral:
@@ -265,7 +259,7 @@ class CombinatorialSpecificationSearcher(object):
 
         if inferral:
             return time.time() - start, inferred_obj
-        # this return statements only purpose if for timing.
+        # this return statements only purpose is for timing.
         return time.time() - start
 
     def _add_equivalent_rule(self, start, end, explanation=None,
@@ -632,12 +626,9 @@ class CombinatorialSpecificationSearcher(object):
                         logger.info(status, extra=self.logger_kwargs)
                         status_start = time.time()
                 if self.expand_objects(1):
+                    # this function returns True if no more object to expand
                     expanding = False
                     break
-
-
-            # TODO: if the above functions does nothing, it returns True,
-            #       need to catch this in a better way.
             start = time.time()
             logger.debug("Searching for tree", extra=self.logger_kwargs)
             proof_tree = self.get_proof_tree()
@@ -659,8 +650,6 @@ class CombinatorialSpecificationSearcher(object):
                     logger.warn("Exceeded maximum time. Aborting auto search.",
                                 extra=self.logger_kwargs)
                     return
-
-
 
     def has_proof_tree(self):
         """Return True if a proof tree has been found, false otherwise."""
