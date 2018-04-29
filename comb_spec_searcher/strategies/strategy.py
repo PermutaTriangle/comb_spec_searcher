@@ -43,7 +43,3 @@ class Strategy(object):
         self.workable = [x for x in workable]
         self.inferable = [x for x in inferable]
         self.ignore_parent = ignore_parent
-
-    @property
-    def decomposition(self):
-        return self.back_maps is not None

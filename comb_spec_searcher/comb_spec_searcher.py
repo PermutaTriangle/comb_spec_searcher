@@ -230,13 +230,12 @@ class CombinatorialSpecificationSearcher(object):
             objects, formal_step = self._strategy_cleanup(strategy,
                                                           inferral=True)
             start += time.time()
-            if strategy.ignore_parent:
-                self.objectdb.set_expanding_children_only(obj)
+
             end_labels = [self.objectdb.get_label(o) for o in objects]
 
-            if strategy.decomposition:
+            if strategy.ignore_parent:
                 if all(self.objectdb.is_expandable(x) for x in end_labels):
-                    self.objectdb.set_workably_decomposed(label)
+                    self.objectdb.set_expanding_children_only(label)
 
             if not end_labels:
                 # all the objects are empty so the object itself must be empty!
@@ -249,7 +248,7 @@ class CombinatorialSpecificationSearcher(object):
             elif not self.forward_equivalence and len(end_labels) == 1:
                 # If we have an equivalent strategy
                 self._add_equivalent_rule(label, end_labels[0],
-                                          formal_step, True)
+                                          formal_step, not equivalent)
             else:
                 self._add_rule(label, end_labels,
                                strategy.back_maps, formal_step)
@@ -266,7 +265,8 @@ class CombinatorialSpecificationSearcher(object):
             explanation = "They are equivalent."
         self.equivdb.union(start, end, explanation)
         if not (self.is_expanded(end) or
-                self.objectdb.is_expanding_other_sym(end)):
+                self.objectdb.is_expanding_other_sym(end) or
+                not self.objectdb.is_expandable(end)):
             if working:
                 self.objectqueue.add_to_working(end)
             else:
@@ -322,10 +322,9 @@ class CombinatorialSpecificationSearcher(object):
 
             self.try_verify(ob)
 
-            if not strategy.decomposition:
-                if self.is_empty(ob):
-                    inferral_steps.append(inferral_step + "Object is empty.")
-                    continue
+            if infer and self.is_empty(ob):
+                inferral_steps.append(inferral_step + "Object is empty.")
+                continue
 
             if work:
                 self.objectdb.set_expandable(ob)
@@ -398,12 +397,13 @@ class CombinatorialSpecificationSearcher(object):
         It will apply the equivalence strategies as often as possible to
         find as many equivalent objects as possible.
         """
-        if (not self.objectdb.is_expandable(obj) or
-                self.objectdb.is_equivalent_expanded(obj) or
-                self.objectdb.is_expanding_other_sym(obj)):
+        label = self.objectdb.get_label(obj)
+        if (not self.objectdb.is_expandable(label) or
+                self.objectdb.is_equivalent_expanded(label) or
+                self.objectdb.is_expanding_other_sym(label) or
+                self.objectdb.is_expanding_children_only(label)):
             return
         total_time = 0
-        label = self.objectdb.get_label(obj)
         for strategy_generator in self.equivalence_strategy_generators:
             t = self._expand_object_with_strategy(obj,
                                                   strategy_generator,
@@ -429,8 +429,6 @@ class CombinatorialSpecificationSearcher(object):
                 continue
             elif self.objectdb.is_expanding_other_sym(label):
                 continue
-            elif self.objectdb.is_workably_decomposed(label):
-                continue
             elif self.objectdb.is_expanding_children_only(label):
                 continue
             queue_start -= time.time()
@@ -455,8 +453,6 @@ class CombinatorialSpecificationSearcher(object):
             elif not self.objectdb.is_expandable(label):
                 continue
             elif self.objectdb.is_expanding_other_sym(label):
-                continue
-            elif self.objectdb.is_workably_decomposed(label):
                 continue
             elif self.objectdb.is_expanding_children_only(label):
                 continue

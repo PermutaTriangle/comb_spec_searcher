@@ -56,7 +56,6 @@ class ObjectDB(object):
     otherwise.
     - Sets verified objects with explanation.
     """
-
     def __init__(self):
         """
         Initialise.
