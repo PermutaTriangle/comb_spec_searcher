@@ -265,16 +265,16 @@ class ProofTree(object):
                 print()
 
     def get_equations(self):
-        eqs = []
+        eqs = set()
         subs = {}
         root_func = self.root.get_function()
         root_object = self.root.eqv_path_objects[0]
         for node in self.nodes():
             if node.recursion:
                 continue
-            eqs.append(node.get_equation(substitutions=True,
-                                         root_func=root_func,
-                                         root_object=root_object))
+            eqs.add(node.get_equation(substitutions=True,
+                                      root_func=root_func,
+                                      root_object=root_object))
         return eqs
 
     def get_genf(self, verbose=False, verify=8):

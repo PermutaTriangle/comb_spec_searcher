@@ -58,6 +58,7 @@ class CombinatorialSpecificationSearcher(object):
                 raise ValueError(("To use symmetries need to give a"
                                   "list of symmetry functions."))
             self.symmetry = symmetry
+            function_kwargs['symmetry'] = True
         else:
             self.symmetry = []
 
@@ -72,7 +73,7 @@ class CombinatorialSpecificationSearcher(object):
         if strategy_pack is not None:
             if not isinstance(strategy_pack, StrategyPack):
                 raise TypeError(("Strategy pack given not "
-                                 "instance of strategy pack.")
+                                 "instance of strategy pack."))
             else:
                 self.equivalence_strategy_generators = strategy_pack.eq_strats
                 self.strategy_generators = strategy_pack.other_strats
@@ -141,7 +142,7 @@ class CombinatorialSpecificationSearcher(object):
             if strategy is not None:
                 if not isinstance(strategy, VerificationStrategy):
                     raise TypeError(("Attempting to verify with non "
-                                     "VerificationStrategy.")
+                                     "VerificationStrategy."))
                 formal_step = strategy.formal_step
                 self.objectdb.set_verified(obj, formal_step)
                 self.objectdb.set_strategy_verified(obj)
@@ -164,30 +165,25 @@ class CombinatorialSpecificationSearcher(object):
         self.verification_time += time.time() - start
         return False
 
-    def _symmetric_objects(self, obj, ordered=False, explanation=False):
+    def _symmetric_objects(self, obj, explanation=False):
         """Return all symmetries of an object.
 
         This function only works if symmetry strategies have been given to the
-        CombinatorialSpecificationSearcher. Sometimes, the order symmetries are
-        appied are important. Therefore, if order=True, this will return a list
-        with each symmetry applied (this functionality is needed for inferral).
+        CombinatorialSpecificationSearcher.
         """
-        if ordered:
-            return [sym(obj) for sym in self.symmetry]
-        else:
-            symmetric_objects = []
-            for sym in self.symmetry:
-                symmetric_object = sym(obj)
-                if symmetric_object != obj:
-                    if explanation:
-                        if all(x != symmetric_object
-                               for x, _ in symmetric_objects):
-                            symmetric_objects.append((symmetric_object,
-                                                      str(sym).split(' ')[1]))
-                    else:
-                        if all(x != symmetric_object
-                               for x in symmetric_objects):
-                            symmetric_object.append(symmetric_object)
+        symmetric_objects = []
+        for sym in self.symmetry:
+            symmetric_object = sym(obj)
+            if symmetric_object != obj:
+                if explanation:
+                    if all(x != symmetric_object
+                           for x, _ in symmetric_objects):
+                        symmetric_objects.append((symmetric_object,
+                                                  str(sym).split(' ')[1]))
+                else:
+                    if all(x != symmetric_object
+                           for x in symmetric_objects):
+                        symmetric_object.append(symmetric_object)
         return symmetric_objects
 
     def expand(self, label):
@@ -243,7 +239,7 @@ class CombinatorialSpecificationSearcher(object):
                                  "equivalent strategy."))
             if inferral and len(strategy.objects) != 1:
                 raise TypeError(("Attempting to infer with non "
-                                 "inferral strategy.")
+                                 "inferral strategy."))
             if inferral and obj == strategy.objects[0]:
                 continue
             start -= time.time()
@@ -269,7 +265,7 @@ class CombinatorialSpecificationSearcher(object):
             elif not self.forward_equivalence and len(end_labels) == 1:
                 # If we have an equivalent strategy
                 self._add_equivalent_rule(label, end_labels[0],
-                                          formal_step, equivalent)
+                                          formal_step, True)
             else:
                 self._add_rule(label, end_labels,
                                strategy.back_maps, formal_step)
@@ -332,13 +328,15 @@ class CombinatorialSpecificationSearcher(object):
         for ob, infer, work in zip(strategy.objects, strategy.inferable,
                                    strategy.workable):
             inferral_step = ""
-            if infer:
-                self._inferral_expand(ob)
-
-            self.try_verify(ob)
-
             if self.symmetry:
                 self._symmetry_expand(ob)
+
+            if infer:
+                if not (self.symmetry and
+                        self.objectdb.is_expanding_other_sym(ob)):
+                    self._inferral_expand(ob)
+
+            self.try_verify(ob)
 
             if not strategy.decomposition:
                 if self.is_empty(ob):
@@ -381,7 +379,7 @@ class CombinatorialSpecificationSearcher(object):
                                    formal_step)
         self.symmetry_time += time.time() - start
 
-    def _inferral_expand(self, obj):
+    def _inferral_expand(self, obj, inferral_strategies=None, skip=None):
         """
         Inferral expand object with given label and inferral strategies.
 
@@ -390,14 +388,21 @@ class CombinatorialSpecificationSearcher(object):
         """
         if self.objectdb.is_inferral_expanded(obj):
             return
+        if inferral_strategies is None:
+            inferral_strategies = self.inferral_strategies
         label = self.objectdb.get_label(obj)
-        for strategy_generator in self.inferral_strategies:
+        for i, strategy_generator in enumerate(inferral_strategies):
+            if strategy_generator == skip:
+                continue
             t, inf_obj = self._expand_object_with_strategy(obj,
                                     strategy_generator, label, inferral=True)
             self.inferral_time += t
             if obj != inf_obj:
                 self.objectdb.set_inferral_expanded(obj)
-                self._inferral_expand(inf_obj)
+                inferral_strategies = (inferral_strategies[i + 1:] +
+                                       inferral_strategies[0:i + 1])
+                self._inferral_expand(inf_obj, inferral_strategies,
+                                      skip=strategy_generator)
                 break
         self.objectdb.set_inferral_expanded(obj)
 
@@ -441,6 +446,8 @@ class CombinatorialSpecificationSearcher(object):
                 continue
             elif self.objectdb.is_workably_decomposed(label):
                 continue
+            elif self.objectdb.is_expanding_children_only(label):
+                continue
             queue_start -= time.time()
             self.expand(label)
             queue_start += time.time()
@@ -465,6 +472,8 @@ class CombinatorialSpecificationSearcher(object):
             elif self.objectdb.is_expanding_other_sym(label):
                 continue
             elif self.objectdb.is_workably_decomposed(label):
+                continue
+            elif self.objectdb.is_expanding_children_only(label):
                 continue
             count += 1
             queue_start -= time.time()
@@ -542,8 +551,8 @@ class CombinatorialSpecificationSearcher(object):
                                            str(self.inferral_time), infer_perc)
 
         if self.symmetry:
-            status += "Time spent symmetry expanding: \
-                       {} seconds, ~{}%\n".format(
+            status += ("Time spent symmetry expanding:"
+                       "{} seconds, ~{}%\n").format(
                                         str(self.symmetry_time), symme_perc)
 
         for i, exp_time in enumerate(self.expansion_times):
