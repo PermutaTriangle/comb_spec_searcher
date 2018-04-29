@@ -15,6 +15,11 @@ class CombinatorialClass(abc.ABC):
 
     @abc.abstractmethod
     def get_genf(self, *args, **kwargs):
+        """Return True if objects of length returns nothing for all lengths"""
+        return False
+
+    @abc.abstractmethod
+    def get_genf(self, *args, **kwargs):
         """Return the generating function for the combinatorial object"""
         return sympy.abc.x**0
 

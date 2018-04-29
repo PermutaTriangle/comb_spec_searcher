@@ -31,9 +31,8 @@ class CombinatorialSpecificationSearcher(object):
                  compress=False,
                  forward_equivalence=False,
                  objectqueue=ObjectQueue,
-                 is_empty_strategy=None,
                  function_kwargs=dict(),
-                 logger_kwargs=dict()):
+                 logger_kwargs={'processname': 'runner'}):
         """Initialise CombinatorialSpecificationSearcher."""
         if start_object is None:
             raise ValueError(("CombinatorialSpecificationSearcher"
@@ -76,6 +75,9 @@ class CombinatorialSpecificationSearcher(object):
                 self.iterative = strategy_pack.iterative
 
         self.kwargs = function_kwargs
+        self.kwargs['logger'] = logger_kwargs
+        self.logger_kwargs = logger_kwargs
+
 
         if not callable(is_empty_strategy):
             raise ValueError(("CombinatorialSpecificationSearcher "
@@ -83,8 +85,6 @@ class CombinatorialSpecificationSearcher(object):
                               "an object is the empty set."))
         else:
             self.is_empty_strategy = is_empty_strategy
-
-        self.post_expand_objects_functions = []
 
         if objectqueue == ObjectQueue:
             self.objectqueue = ObjectQueue()
@@ -110,7 +110,6 @@ class CombinatorialSpecificationSearcher(object):
         self.prepping_for_tree_search_time = 0
         self.queue_time = 0
         self._time_taken = 0
-        self.logger_kwargs = logger_kwargs
 
 
 
@@ -151,7 +150,7 @@ class CombinatorialSpecificationSearcher(object):
         if self.objectdb.is_empty(obj) is not None:
             self.verification_time += time.time() - start
             return self.objectdb.is_empty(obj)
-        if self.is_empty_strategy(obj, **self.kwargs):
+        if obj.is_empty():
             self._add_empty_rule(self.objectdb.get_label(obj))
             self.verification_time += time.time() - start
             return True
@@ -473,9 +472,6 @@ class CombinatorialSpecificationSearcher(object):
             queue_start -= time.time()
             self.expand(label)
             queue_start += time.time()
-        # TODO: Maybe you don't want timing to be affected by this
-        for function, args, kwargs in self.post_expand_objects_functions:
-            function(*args, **kwargs)
         self.queue_time += time.time() - queue_start
         self._time_taken += time.time() - start
 
