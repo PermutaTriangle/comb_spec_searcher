@@ -139,13 +139,15 @@ class CompressedObjectDB(object):
         try:
             return key.compress()
         except AttributeError:
-            raise AttributeError("The class {} needs a compress function.".format(self.combinatorial_object))
+            raise AttributeError(("The class {} needs a compress function"
+                                  ".").format(self.combinatorial_object))
 
     def _decompress(self, key):
         try:
             return self.combinatorial_object.decompress(key)
         except AttributeError:
-            raise AttributeError("The class {} needs a compress function.".format(self.combinatorial_object))
+            raise AttributeError(("The class {} needs a compress function"
+                                  ".").format(self.combinatorial_object))
 
     def get_object(self, key):
         """Return object of key."""

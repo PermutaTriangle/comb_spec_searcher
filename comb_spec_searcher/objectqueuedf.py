@@ -18,7 +18,8 @@ class ObjectQueueDF(object):
         if root is None:
             raise TypeError("Root must be given.")
         if equivalent_set is None:
-            raise TypeError("ObjectQueueDF requires a function that returns equivalent set.")
+            raise TypeError(("ObjectQueueDF requires a function"
+                             "that returns equivalent set."))
         self.equivalent_set = equivalent_set
         self.rules_dict = rules_dict
         self.root = root
@@ -34,20 +35,28 @@ class ObjectQueueDF(object):
         pass
 
     def do_level(self):
+        """
+        Iterate over all object at next depth.
+        """
         self.iter = self.do_level_iter(self.root, 0, self.levels_completed + 1)
         for t in self.iter:
             yield t
 
     def next(self):
+        """
+        Return next object to be expanded.
+        """
         if self.iter is None:
-            self.iter = self.do_level_iter(self.root, 0, self.levels_completed + 1)
+            self.iter = self.do_level_iter(self.root, 0,
+                                           self.levels_completed + 1)
             return self.root
         try:
             return next(self.iter)
         except StopIteration:
             print("Finished depth", self.levels_completed)
             self.levels_completed += 1
-            self.iter = self.do_level_iter(self.root, 0, self.levels_completed + 1)
+            self.iter = self.do_level_iter(self.root, 0,
+                                           self.levels_completed + 1)
             try:
                 return next(self.iter)
             except StopIteration:
@@ -56,11 +65,16 @@ class ObjectQueueDF(object):
 
 
     def do_level_iter(self, root, current_depth, max_depth):
+        """
+        An iterator for object at depth at most max depth for root object.
+        """
         if current_depth < max_depth:
             for eq_label in self.equivalent_set(root):
                 yield eq_label
                 rules = self.rules_dict[eq_label]
                 for rule in rules:
                     for child_label in rule:
-                        for label in self.do_level_iter(child_label, current_depth + 1, max_depth):
+                        for label in self.do_level_iter(child_label,
+                                                        current_depth + 1,
+                                                        max_depth):
                             yield label

@@ -1,5 +1,5 @@
 """
-Finds and returns a proof tree.
+Finds and returns a combinatorial specification, that we call a proof tree.
 """
 
 __all__ = ("prune", "proof_tree_generator_dfs", "proof_tree_generator_bfs")
@@ -16,20 +16,22 @@ class Node(object):
         return "".join(["(", str(self.label), *map(str, self.children), ")"])
 
 def prune(rules_dict):
-    """Prune all unverifiable nodes (recursively)
-    """
+    """Prune all nodes not in a combinatorial specification."""
     rdict = deepcopy(rules_dict)
-    changed = False
-    for k, rule_set in list(rdict.items()):
-        for rule in list(rule_set):
-            if any(x not in rdict for x in rule):
-                rule_set.remove(rule)
-                changed = True
-            if not rule_set:
-                del rdict[k]
-    return prune(rdict) if changed else rdict
+    changed = True
+    while changed:
+        changed = False
+        for k, rule_set in list(rdict.items()):
+            for rule in list(rule_set):
+                if any(x not in rdict for x in rule):
+                    rule_set.remove(rule)
+                    changed = True
+                if not rule_set:
+                    del rdict[k]
+    return rdict
 
 def iterative_prune(rules_dict, root=None):
+    """Prune all nodes not iteratively verifiable."""
     verified_labels = set()
     if root is not None:
         verified_labels.add(root)
@@ -53,6 +55,7 @@ def iterative_prune(rules_dict, root=None):
 ### DFS
 
 def proof_tree_dfs(rules_dict, root, seen = set()):
+    """Return random proof tree found by depth first search."""
     seen = seen.copy()
     if root in rules_dict:
         rule_set = rules_dict[root]
@@ -102,6 +105,7 @@ def iterative_proof_tree_bfs(rules_dict, root):
     return root_node
 
 def proof_tree_bfs(rules_dict, root):
+    """Return random tree found by breadth first search."""
     seen = set()
     root_node = Node(root)
     queue = deque([root_node])
