@@ -1,19 +1,22 @@
 """
 Finds and returns a combinatorial specification, that we call a proof tree.
 """
-
-__all__ = ("prune", "proof_tree_generator_dfs", "proof_tree_generator_bfs")
-
 from random import choice, shuffle
 from copy import deepcopy
 from collections import defaultdict, deque
 
+__all__ = ("prune", "proof_tree_generator_dfs", "proof_tree_generator_bfs")
+
+
 class Node(object):
-    def __init__(self, n, children = []):
+    """A node for a proof tree."""
+    def __init__(self, n, children=[]):
         self.label = n
         self.children = children
+
     def __str__(self):
         return "".join(["(", str(self.label), *map(str, self.children), ")"])
+
 
 def prune(rules_dict):
     """Prune all nodes not in a combinatorial specification."""
@@ -29,6 +32,7 @@ def prune(rules_dict):
                 if not rule_set:
                     del rdict[k]
     return rdict
+
 
 def iterative_prune(rules_dict, root=None):
     """Prune all nodes not iteratively verifiable."""
@@ -52,9 +56,8 @@ def iterative_prune(rules_dict, root=None):
             break
     return new_rules_dict
 
-### DFS
 
-def proof_tree_dfs(rules_dict, root, seen = set()):
+def proof_tree_dfs(rules_dict, root, seen=set()):
     """Return random proof tree found by depth first search."""
     seen = seen.copy()
     if root in rules_dict:
@@ -70,7 +73,8 @@ def proof_tree_dfs(rules_dict, root, seen = set()):
             root_node.children = trees
             return visited, root_node
 
-def proof_forest_dfs(rules_dict, roots, seen = set()):
+
+def proof_forest_dfs(rules_dict, roots, seen=set()):
     if not roots:
         return seen, []
     else:
@@ -78,6 +82,7 @@ def proof_forest_dfs(rules_dict, roots, seen = set()):
         seen1, tree = proof_tree_dfs(rules_dict, root, seen)
         seen2, trees = proof_forest_dfs(rules_dict, roots, seen1)
         return seen1.union(seen2), [tree] + trees
+
 
 def proof_tree_generator_dfs(rules_dict, root):
     """A generator for random proof trees using depth first search.
@@ -88,10 +93,9 @@ def proof_tree_generator_dfs(rules_dict, root):
         yield tree
 
 
-### BFS
-
 def iterative_proof_tree_bfs(rules_dict, root):
-    """Takes in a iterative_pruned rules_dict"""
+    """Takes in a iterative pruned rules_dict and returns iterative proof
+    tree."""
     root_node = Node(root)
     queue = deque([root_node])
     while queue:
@@ -103,6 +107,7 @@ def iterative_proof_tree_bfs(rules_dict, root):
                           if not child.label == root])
             v.children = children
     return root_node
+
 
 def proof_tree_bfs(rules_dict, root):
     """Return random tree found by breadth first search."""
@@ -119,6 +124,7 @@ def proof_tree_bfs(rules_dict, root):
             v.children = children
         seen.add(v.label)
     return seen, root_node
+
 
 def proof_tree_generator_bfs(rules_dict, root):
     """A generator for random proof trees using breadth first search.

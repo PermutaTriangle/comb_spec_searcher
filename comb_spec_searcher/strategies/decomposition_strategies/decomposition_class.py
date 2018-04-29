@@ -1,3 +1,4 @@
+"""A function for decomposition strategies."""
 from comb_spec_searcher.strategies import Strategy
 
 

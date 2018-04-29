@@ -51,7 +51,7 @@ class CombinatorialSpecificationSearcher(object):
         if symmetry:
             # A list of symmetry functions of objects.
             if (not isinstance(symmetry, list) or
-                any(not callable(f) for f in symmetry)):
+                    any(not callable(f) for f in symmetry)):
                 raise ValueError(("To use symmetries need to give a"
                                   "list of symmetry functions."))
             self.symmetry = symmetry
@@ -59,8 +59,8 @@ class CombinatorialSpecificationSearcher(object):
         else:
             self.symmetry = []
 
-        self.forward_equivalence = (strategy_pack.forward_equivalence
-                                    or forward_equivalence)
+        self.forward_equivalence = (strategy_pack.forward_equivalence or
+                                    forward_equivalence)
 
         if strategy_pack is not None:
             if not isinstance(strategy_pack, StrategyPack):
@@ -80,14 +80,14 @@ class CombinatorialSpecificationSearcher(object):
         if objectqueue == ObjectQueue:
             self.objectqueue = ObjectQueue()
         elif objectqueue == ObjectQueueDF:
-            self.objectqueue = ObjectQueueDF(rules_dict=self.ruledb.rules_dict,
-                                 root=self.start_label,
-                                 equivalent_set=self.equivdb.equivalent_set)
+            self.objectqueue = ObjectQueueDF(
+                                    rules_dict=self.ruledb.rules_dict,
+                                    root=self.start_label,
+                                    equivalent_set=self.equivdb.equivalent_set)
         else:
             # Default if it does not recognize queue class
             # Give it a reference to the searcher
             self.objectqueue = objectqueue(self)
-
 
         self.objectqueue.add_to_working(self.start_label)
 
@@ -101,8 +101,6 @@ class CombinatorialSpecificationSearcher(object):
         self.prepping_for_tree_search_time = 0
         self.queue_time = 0
         self._time_taken = 0
-
-
 
     def try_verify(self, obj, force=False):
         """
@@ -133,7 +131,6 @@ class CombinatorialSpecificationSearcher(object):
                 self.equivdb.update_verified(label)
                 break
         self.verification_time += time.time() - start
-
 
     def is_empty(self, obj):
         """Return True if a object contains no objects, False otherwise"""
@@ -268,8 +265,8 @@ class CombinatorialSpecificationSearcher(object):
         if explanation is None:
             explanation = "They are equivalent."
         self.equivdb.union(start, end, explanation)
-        if not (self.is_expanded(end)
-                or self.objectdb.is_expanding_other_sym(end)):
+        if not (self.is_expanded(end) or
+                self.objectdb.is_expanding_other_sym(end)):
             if working:
                 self.objectqueue.add_to_working(end)
             else:
@@ -284,8 +281,8 @@ class CombinatorialSpecificationSearcher(object):
                         explanation,
                         back_maps)
         for end_label in ends:
-            if (self.is_expanded(end_label)
-                or self.objectdb.is_expanding_other_sym(end_label)):
+            if (self.is_expanded(end_label) or
+                    self.objectdb.is_expanding_other_sym(end_label)):
                 continue
             self.objectqueue.add_to_next(end_label)
             obj = self.objectdb.get_object(end_label)
@@ -356,8 +353,8 @@ class CombinatorialSpecificationSearcher(object):
         """Add symmetries of object to the database."""
         start = time.time()
         if not self.objectdb.is_symmetry_expanded(obj):
-            for sym_o, formal_step in self._symmetric_objects(obj,
-                                                          explanation=True):
+            for sym_o, formal_step in self._symmetric_objects(
+                                                    obj, explanation=True):
                 self.objectdb.add(sym_o,
                                   expanding_other_sym=True,
                                   symmetry_expanded=True)
@@ -381,8 +378,9 @@ class CombinatorialSpecificationSearcher(object):
         for i, strategy_generator in enumerate(inferral_strategies):
             if strategy_generator == skip:
                 continue
-            t, inf_obj = self._expand_object_with_strategy(obj,
-                                    strategy_generator, label, inferral=True)
+            t, inf_obj = self._expand_object_with_strategy(
+                                                    obj, strategy_generator,
+                                                    label, inferral=True)
             self.inferral_time += t
             if obj != inf_obj:
                 self.objectdb.set_inferral_expanded(obj)
@@ -400,9 +398,9 @@ class CombinatorialSpecificationSearcher(object):
         It will apply the equivalence strategies as often as possible to
         find as many equivalent objects as possible.
         """
-        if (not self.objectdb.is_expandable(obj)
-                or self.objectdb.is_equivalent_expanded(obj)
-                    or self.objectdb.is_expanding_other_sym(obj)):
+        if (not self.objectdb.is_expandable(obj) or
+                self.objectdb.is_equivalent_expanded(obj) or
+                self.objectdb.is_expanding_other_sym(obj)):
             return
         total_time = 0
         label = self.objectdb.get_label(obj)
@@ -491,7 +489,6 @@ class CombinatorialSpecificationSearcher(object):
                                          self.objectqueue.curr_level.qsize())
         status += "The size of the next queue is {}\n".format(
                                          self.objectqueue.next_level.qsize())
-
 
         all_labels = self.objectdb.label_to_info.keys()
         status += "Total number of objects is {}\n".format(
@@ -632,7 +629,7 @@ class CombinatorialSpecificationSearcher(object):
             start = time.time()
             logger.debug("Searching for tree", extra=self.logger_kwargs)
             proof_tree = self.get_proof_tree()
-            #worst case, search every hour!
+            # worst case, search every hour
             max_search_time = min(cap*(time.time() - start), 3600)
             if proof_tree is not None:
                 if verbose:
@@ -682,7 +679,8 @@ class CombinatorialSpecificationSearcher(object):
         rules_dict[eqv_first] |= set((tuple(eqv_rest),))
 
     def equivalent_strategy_verified_label(self, label):
-        """Return equivalent strategy verified label if one exists, else None"""
+        """Return equivalent strategy verified label if one exists, else return
+        None"""
         for eqv_label in self.equivdb.equivalent_set(label):
             if self.objectdb.is_strategy_verified(eqv_label):
                 return eqv_label
@@ -716,10 +714,12 @@ class CombinatorialSpecificationSearcher(object):
         if self.equivdb[self.start_label] in rules_dict:
             self._has_proof_tree = True
             if self.iterative:
-                proof_tree = iterative_proof_tree_bfs(rules_dict,
+                proof_tree = iterative_proof_tree_bfs(
+                                        rules_dict,
                                         root=self.equivdb[self.start_label])
             else:
-                _, proof_tree = proof_tree_bfs(rules_dict,
+                _, proof_tree = proof_tree_bfs(
+                                        rules_dict,
                                         root=self.equivdb[self.start_label])
         else:
             proof_tree = None
@@ -727,7 +727,6 @@ class CombinatorialSpecificationSearcher(object):
         self.tree_search_time += time.time() - start
         self._time_taken += time.time() - start
         return proof_tree
-
 
     def get_proof_tree(self, count=False):
         """

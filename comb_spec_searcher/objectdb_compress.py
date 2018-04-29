@@ -7,9 +7,9 @@ expanded, found by symmetries etc. It gives each object a unique label.
 
 from .combinatorial_class import CombinatorialClass
 
+
 class Info(object):
     """Information about a object."""
-
     def __init__(self,
                  obj,
                  label,
@@ -31,7 +31,7 @@ class Info(object):
         self.expanded = expanded
         self.symmetry_expanded = symmetry_expanded
         self.equivalent_expanded = equivalent_expanded
-        self.expanding_children_only=expanding_children_only
+        self.expanding_children_only = expanding_children_only
         self.expanding_other_sym = expanding_other_sym
         self.expandable = expandable
         self.inferral_expanded = inferral_expanded
@@ -130,8 +130,8 @@ class CompressedObjectDB(object):
             if info is None:
                 raise KeyError("Key not in ObjectgDB.")
         else:
-            raise TypeError('CompressedObjectDB only accepts'\
-                            'CombinatorialClass and will decompress with'\
+            raise TypeError('CompressedObjectDB only accepts'
+                            'CombinatorialClass and will decompress with'
                             '{}.'.format(self.combinatorial_object))
         return info
 

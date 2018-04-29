@@ -78,7 +78,6 @@ class RuleDB(object):
                 if not self.rules_dict[start]:
                     self.rules_dict.pop(start)
 
-
     def __iter__(self):
         """Iterate through rules as the pairs (start, end)."""
         for start, ends in self.rules_dict.items():

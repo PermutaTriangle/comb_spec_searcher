@@ -194,7 +194,7 @@ class ProofTreeNode(object):
 
     def get_function(self):
         if self.sympy_function is None:
-            self.sympy_function = sympy.Function("F_"+
+            self.sympy_function = sympy.Function("F_" +
                                                  str(self.label))(sympy.abc.x)
         return self.sympy_function
 
@@ -217,7 +217,6 @@ class ProofTreeNode(object):
         else:
             raise NotImplementedError("Using an unimplemented constructor")
         return sympy.Eq(lhs, rhs)
-
 
 
 class InsaneTreeError(Exception):
@@ -402,7 +401,7 @@ class ProofTree(object):
         if not children:
             eqv_ver_label = css.equivalent_strategy_verified_label(in_label)
             if eqv_ver_label is not None:
-                #verified!
+                # verified!
                 eqv_path = css.equivdb.find_path(in_label, eqv_ver_label)
                 eqv_objs = [css.objectdb.get_object(l) for l in eqv_path]
                 eqv_explanations = [css.equivdb.get_explanation(x, y,
@@ -415,15 +414,17 @@ class ProofTree(object):
                                      eqv_explanations, strategy_verified=True,
                                      formal_step=formal_step)
             else:
-                #recurse! we reparse these at the end, so recursed labels etc
-                #are not interesting.
+                # recurse! we reparse these at the end, so recursed labels etc
+                # are not interesting.
                 return ProofTreeNode(label, [in_label],
-                                    [css.objectdb.get_object(in_label)],
-                                    formal_step="recurse",
-                                    recursion=True)
+                                     [css.objectdb.get_object(in_label)],
+                                     formal_step="recurse",
+                                     recursion=True)
         else:
-            start, ends = css.rule_from_equivence_rule(root.label,
-                                       tuple(c.label for c in root.children))
+            rule = css.rule_from_equivence_rule(root.label,
+                                                tuple(c.label
+                                                      for c in root.children))
+            start, ends = rule
             formal_step = css.ruledb.explanation(start, ends)
             back_maps = css.ruledb.get_back_maps(start, ends)
 
@@ -442,14 +443,14 @@ class ProofTree(object):
                         strat_children.append(sub_tree)
                         break
             if back_maps is not None:
-                #decomposition!
+                # decomposition!
                 return ProofTreeNode(label, eqv_path, eqv_objs,
                                      eqv_explanations, decomposition=True,
                                      back_maps=back_maps,
                                      formal_step=formal_step,
                                      children=strat_children)
             else:
-                #batch!
+                # batch!
                 if "Complement" in formal_step:
                     return ProofTreeNode(label, eqv_path, eqv_objs,
                                          eqv_explanations,
@@ -475,15 +476,12 @@ class ProofTree(object):
                    for node1, node2 in zip(self.nodes(), other.nodes()))
 
 
-
 def taylor_expand(genf, n=10):
-    from sympy import Poly, O
-    from sympy.abc import x
-    num,den = genf.as_numer_denom()
+    num, den = genf.as_numer_denom()
     num = num.expand()
     den = den.expand()
     genf = num/den
-    ser = Poly(genf.series(n=n+1).removeO(), x)
+    ser = sympy.Poly(genf.series(n=n+1).removeO(), sympy.abc.x)
     res = ser.all_coeffs()
     res = res[::-1] + [0]*(n+1-len(res))
     return res

@@ -121,8 +121,6 @@ class EquivalenceDB(object):
         path = self.find_path(obj, other_obj)
         formal_step = self.get_explanation(obj, other_obj, path)
 
-
-
     def find_path(self, obj, other_obj):
         """
         BFS for shortest path.

@@ -4,6 +4,7 @@ A queue of objects.
 from queue import Queue
 import sys
 
+
 class ObjectQueue(object):
     """
     The Queue determines the order that objects are expanded by the tilescope.

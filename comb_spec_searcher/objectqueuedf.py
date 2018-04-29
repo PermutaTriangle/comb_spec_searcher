@@ -4,6 +4,7 @@ A queue of objects.
 from queue import Queue
 import sys
 
+
 class ObjectQueueDF(object):
     """
     The Queue determines the order that objects are expanded by the tilescope.
@@ -62,7 +63,6 @@ class ObjectQueueDF(object):
             except StopIteration:
                 print("No more objects to expand!", file=sys.stderr)
                 return None
-
 
     def do_level_iter(self, root, current_depth, max_depth):
         """
