@@ -30,7 +30,6 @@ class CombinatorialSpecificationSearcher(object):
                  symmetry=False,
                  compress=False,
                  forward_equivalence=False,
-                 complement_verify=True,
                  objectqueue=ObjectQueue,
                  is_empty_strategy=None,
                  function_kwargs=dict(),
@@ -64,11 +63,6 @@ class CombinatorialSpecificationSearcher(object):
 
         self.forward_equivalence = (strategy_pack.forward_equivalence
                                     or forward_equivalence)
-        self.complement_verify = complement_verify
-
-        if complement_verify:
-            logger.warn("WARNING: COMPLEMENT VERIFY CAN LEAD TO TAUTOLOGIES!",
-                        extra=self.logger_kwargs)
 
         if strategy_pack is not None:
             if not isinstance(strategy_pack, StrategyPack):
@@ -676,34 +670,17 @@ class CombinatorialSpecificationSearcher(object):
         """Return True if a proof tree has been found, false otherwise."""
         return self._has_proof_tree
 
-    def tree_search_prep(self, complement=False):
+    def tree_search_prep(self):
         """
         Return rule dictionary ready for tree searcher.
 
-        Also adds complement verified rules when applicable. If empty preps to
-        search for empty proof trees.
+        Converts all rules to be in terms of equivalence database.
         """
         start_time = time.time()
         rules_dict = defaultdict(set)
 
-        rules_to_add = []
         for rule in self.ruledb:
-            if self.complement_verify:
-                complement_rule = self.complement_verified(rule)
-                if complement_rule is not None:
-                    rules_to_add.append((complement_rule, rule))
-                    self._add_rule_to_rules_dict(complement_rule, rules_dict)
-                else:
-                    self._add_rule_to_rules_dict(rule, rules_dict)
-            else:
-                self._add_rule_to_rules_dict(rule, rules_dict)
-
-        for rules in rules_to_add:
-            good_rule, old_rule = rules
-            start, ends = good_rule
-            self._add_rule(start, ends, explanation="Complement verified.")
-            self.ruledb.remove(*old_rule)
-
+            self._add_rule_to_rules_dict(rule, rules_dict)
 
         for label in self.objectdb.verified_labels():
             verified_label = self.equivdb[label]
@@ -718,18 +695,6 @@ class CombinatorialSpecificationSearcher(object):
         eqv_first = self.equivdb[first]
         eqv_rest = tuple(sorted(self.equivdb[x] for x in rest))
         rules_dict[eqv_first] |= set((tuple(eqv_rest),))
-
-    def complement_verified(self, rule):
-        """Return complement verified rule if exists due to rule, else None"""
-        first, rest = rule
-        if self.equivdb.is_verified(first):
-            unverified_labels = [l for l in rest
-                                 if not self.equivdb.is_verified(l)]
-            if len(unverified_labels) == 1:
-                complement_first = unverified_labels[0]
-                return (complement_first,
-                        (first, ) + tuple(l for l in rest
-                                          if l != complement_first))
 
     def equivalent_strategy_verified_label(self, label):
         """Return equivalent strategy verified label if one exists, else None"""
