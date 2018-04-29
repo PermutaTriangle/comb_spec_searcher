@@ -282,6 +282,8 @@ class ProofTree(object):
         is found. If not verify will return list of possible solutions."""
         # TODO: add substitutions, so as to solve with symbols first.
         eqs = self.get_equations()
+        root_object = self.root.eqv_path_objects[0]
+        root_func = self.root.get_function()
         if verbose:
             print("The system of", len(eqs), "equations:")
             for eq in eqs:

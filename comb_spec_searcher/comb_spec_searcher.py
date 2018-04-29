@@ -37,7 +37,8 @@ class CombinatorialSpecificationSearcher(object):
                  logger_kwargs=dict()):
         """Initialise CombinatorialSpecificationSearcher."""
         if start_object is None:
-            raise ValueError("CombinatorialSpecificationSearcher requires a start object.")
+            raise ValueError(("CombinatorialSpecificationSearcher"
+                              "requires a start object."))
 
         self.equivdb = EquivalenceDB()
         self.ruledb = RuleDB()
@@ -49,12 +50,13 @@ class CombinatorialSpecificationSearcher(object):
         self.objectdb.add(start_object, expandable=True)
         self.start_label = self.objectdb.get_label(start_object)
 
-        self._inferral_cache = LRUCache(100000, compress=compress, obj_type=type(start_object))
         self._has_proof_tree = False
         if symmetry:
             # A list of symmetry functions of objects.
-            if not isinstance(symmetry, list) or any(not callable(f) for f in symmetry):
-                raise ValueError("To use symmetries need to give a list of symmetry functions.")
+            if (not isinstance(symmetry, list) or
+                any(not callable(f) for f in symmetry)):
+                raise ValueError(("To use symmetries need to give a"
+                                  "list of symmetry functions."))
             self.symmetry = symmetry
         else:
             self.symmetry = []
@@ -64,11 +66,13 @@ class CombinatorialSpecificationSearcher(object):
         self.complement_verify = complement_verify
 
         if complement_verify:
-            logger.warn("WARNING: COMPLEMENT VERIFY CAN LEAD TO TAUTOLOGIES!", extra=self.logger_kwargs)
+            logger.warn("WARNING: COMPLEMENT VERIFY CAN LEAD TO TAUTOLOGIES!",
+                        extra=self.logger_kwargs)
 
         if strategy_pack is not None:
             if not isinstance(strategy_pack, StrategyPack):
-                raise TypeError("Strategy pack given not instance of strategy pack.")
+                raise TypeError(("Strategy pack given not "
+                                 "instance of strategy pack.")
             else:
                 self.equivalence_strategy_generators = strategy_pack.eq_strats
                 self.strategy_generators = strategy_pack.other_strats
@@ -79,7 +83,9 @@ class CombinatorialSpecificationSearcher(object):
         self.kwargs = function_kwargs
 
         if not callable(is_empty_strategy):
-            raise ValueError("CombinatorialSpecificationSearcher requires a strategy that tests if an object is the empty set.")
+            raise ValueError(("CombinatorialSpecificationSearcher "
+                              "requires a strategy that tests if "
+                              "an object is the empty set."))
         else:
             self.is_empty_strategy = is_empty_strategy
 
@@ -89,8 +95,8 @@ class CombinatorialSpecificationSearcher(object):
             self.objectqueue = ObjectQueue()
         elif objectqueue == ObjectQueueDF:
             self.objectqueue = ObjectQueueDF(rules_dict=self.ruledb.rules_dict,
-                                             root=self.start_label,
-                                             equivalent_set=self.equivdb.equivalent_set)
+                                 root=self.start_label,
+                                 equivalent_set=self.equivdb.equivalent_set)
         else:
             # Default if it does not recognize queue class
             # Give it a reference to the searcher
@@ -109,7 +115,6 @@ class CombinatorialSpecificationSearcher(object):
         self.prepping_for_tree_search_time = 0
         self.queue_time = 0
         self._time_taken = 0
-        self._cache_misses = 0  # this for status and should be updated if you use a cache
         self.logger_kwargs = logger_kwargs
 
 
@@ -135,7 +140,8 @@ class CombinatorialSpecificationSearcher(object):
             strategy = verification_strategy(obj, **self.kwargs)
             if strategy is not None:
                 if not isinstance(strategy, VerificationStrategy):
-                    raise TypeError("Attempting to verify with non VerificationStrategy.")
+                    raise TypeError(("Attempting to verify with non "
+                                     "VerificationStrategy.")
                 formal_step = strategy.formal_step
                 self.objectdb.set_verified(obj, formal_step)
                 self.objectdb.set_strategy_verified(obj)
@@ -158,46 +164,6 @@ class CombinatorialSpecificationSearcher(object):
         self.verification_time += time.time() - start
         return False
 
-    def _inferral(self, obj):
-        """Return fully inferred object, along with an explanation."""
-        origin = obj
-        start = time.time()
-        inferred_object = self._inferral_cache.get(obj)
-        if inferred_object is not None:
-            return inferred_object
-        explanation = ""
-        semi_inferred = [[obj, ""]]
-
-        for inferral_strategy in self.inferral_strategies:
-            strategy = inferral_strategy(obj, **self.kwargs)
-            if strategy is None:
-                continue
-            if not isinstance(strategy, InferralStrategy):
-                raise TypeError("Attempted to infer on a non InferralStrategy")
-            # TODO: Where should the inferral formal step go?
-            if obj != strategy.object:
-                for pair in semi_inferred:
-                    pair[1] = pair[1] + strategy.formal_step
-                obj = strategy.object
-                inferred_object = self._inferral_cache.get(obj)
-                if inferred_object is not None:
-                    explanation = explanation + inferred_object[1]
-                    for pair in semi_inferred:
-                        pair[1] = pair[1] + inferred_object[1]
-                    obj = inferred_object[0]
-                    break
-                semi_inferred.append([obj, ""])
-
-        for pair in semi_inferred:
-            self._inferral_cache.set(pair[0], (obj, pair[1]))
-
-        if not semi_inferred[0][1]:
-            # TODO: remove when sure it is good.
-            assert origin == obj
-
-        self.inferral_time += time.time() - start
-        return obj, semi_inferred[0][1]
-
     def _symmetric_objects(self, obj, ordered=False, explanation=False):
         """Return all symmetries of an object.
 
@@ -214,11 +180,13 @@ class CombinatorialSpecificationSearcher(object):
                 symmetric_object = sym(obj)
                 if symmetric_object != obj:
                     if explanation:
-                        if all(x != symmetric_object for x, _ in symmetric_objects):
+                        if all(x != symmetric_object
+                               for x, _ in symmetric_objects):
                             symmetric_objects.append((symmetric_object,
                                                       str(sym).split(' ')[1]))
                     else:
-                        if all(x != symmetric_object for x in symmetric_objects):
+                        if all(x != symmetric_object
+                               for x in symmetric_objects):
                             symmetric_object.append(symmetric_object)
         return symmetric_objects
 
@@ -249,7 +217,8 @@ class CombinatorialSpecificationSearcher(object):
             if not self.is_expanded(label):
                 self.objectqueue.add_to_curr(label)
 
-    def _expand_object_with_strategy(self, obj, strategy_generator, label, equivalent=False):
+    def _expand_object_with_strategy(self, obj, strategy_generator, label,
+                                     equivalent=False, inferral=False):
         """
         Will expand the object with given strategy.
 
@@ -257,16 +226,32 @@ class CombinatorialSpecificationSearcher(object):
         return objects found.
         """
         start = time.time()
-        if equivalent:
-            equivalent_objects = []
-        for strategy in strategy_generator(obj, **self.kwargs):
+        if inferral:
+            inferred_obj = obj
+            strat = strategy_generator(obj, **self.kwargs)
+            if strat is None:
+                strategy_generator = []
+            else:
+                strategy_generator = [strat]
+        else:
+            strategy_generator = strategy_generator(obj, **self.kwargs)
+        for strategy in strategy_generator:
             if not isinstance(strategy, Strategy):
                 raise TypeError("Attempting to add non strategy type.")
             if equivalent and len(strategy.objects) != 1:
-                raise TypeError("Attempting to combine non equivalent strategy.")
+                raise TypeError(("Attempting to combine non "
+                                 "equivalent strategy."))
+            if inferral and len(strategy.objects) != 1:
+                raise TypeError(("Attempting to infer with non "
+                                 "inferral strategy.")
+            if inferral and obj == strategy.objects[0]:
+                continue
             start -= time.time()
-            objects, formal_step = self._strategy_cleanup(strategy)
+            objects, formal_step = self._strategy_cleanup(strategy,
+                                                          inferral=True)
             start += time.time()
+            if strategy.ignore_parent:
+                self.objectdb.set_expanding_children_only(obj)
             end_labels = [self.objectdb.get_label(o) for o in objects]
 
             if strategy.decomposition:
@@ -277,22 +262,25 @@ class CombinatorialSpecificationSearcher(object):
                 # all the objects are empty so the object itself must be empty!
                 self._add_empty_rule(label, "batch empty")
                 break
+            elif inferral:
+                inferred_obj = objects[0]
+                self._add_equivalent_rule(label, end_labels[0],
+                                          formal_step, False)
             elif not self.forward_equivalence and len(end_labels) == 1:
                 # If we have an equivalent strategy
                 self._add_equivalent_rule(label, end_labels[0],
-                                          formal_step, not equivalent)
-                if equivalent:
-                    equivalent_objects.append(objects[0])
+                                          formal_step, equivalent)
             else:
                 self._add_rule(label, end_labels,
                                strategy.back_maps, formal_step)
 
+        if inferral:
+            return time.time() - start, inferred_obj
         # this return statements only purpose if for timing.
-        if equivalent:
-            return time.time() - start, equivalent_objects
         return time.time() - start
 
-    def _add_equivalent_rule(self, start, end, explanation=None, working=False):
+    def _add_equivalent_rule(self, start, end, explanation=None,
+                             working=False):
         """Add equivalent strategy to equivdb and equivalent object to queue"""
         if explanation is None:
             explanation = "They are equivalent."
@@ -328,7 +316,7 @@ class CombinatorialSpecificationSearcher(object):
         self.objectdb.set_strategy_verified(label)
         self.equivdb.update_verified(label)
 
-    def _strategy_cleanup(self, strategy):
+    def _strategy_cleanup(self, strategy, inferral=False):
         """
         Return cleaned strategy.
 
@@ -341,12 +329,11 @@ class CombinatorialSpecificationSearcher(object):
         """
         end_objects = []
         inferral_steps = []
-        for ob, work in zip(strategy.objects, strategy.workable):
+        for ob, infer, work in zip(strategy.objects, strategy.inferable,
+                                   strategy.workable):
             inferral_step = ""
-            if not strategy.decomposition:
-                ob, inferral_step = self._inferral(ob)
-            else:
-                inferral_step = ""
+            if infer:
+                self._inferral_expand(ob)
 
             self.try_verify(ob)
 
@@ -357,6 +344,7 @@ class CombinatorialSpecificationSearcher(object):
                 if self.is_empty(ob):
                     inferral_steps.append(inferral_step + "Object is empty.")
                     continue
+
             if work:
                 self.objectdb.set_expandable(ob)
                 self._equivalent_expand(ob)
@@ -372,7 +360,6 @@ class CombinatorialSpecificationSearcher(object):
 
         return end_objects, formal_step
 
-
     def is_expanded(self, label):
         """Return True if an object has been expanded by all strategies."""
         number_times_expanded = self.objectdb.number_times_expanded(label)
@@ -385,7 +372,7 @@ class CombinatorialSpecificationSearcher(object):
         start = time.time()
         if not self.objectdb.is_symmetry_expanded(obj):
             for sym_o, formal_step in self._symmetric_objects(obj,
-                                                              explanation=True):
+                                                          explanation=True):
                 self.objectdb.add(sym_o,
                                   expanding_other_sym=True,
                                   symmetry_expanded=True)
@@ -393,6 +380,26 @@ class CombinatorialSpecificationSearcher(object):
                                    self.objectdb.get_label(sym_o),
                                    formal_step)
         self.symmetry_time += time.time() - start
+
+    def _inferral_expand(self, obj):
+        """
+        Inferral expand object with given label and inferral strategies.
+
+        It will apply all inferral strategies to an object.
+        Return True if object is inferred.
+        """
+        if self.objectdb.is_inferral_expanded(obj):
+            return
+        label = self.objectdb.get_label(obj)
+        for strategy_generator in self.inferral_strategies:
+            t, inf_obj = self._expand_object_with_strategy(obj,
+                                    strategy_generator, label, inferral=True)
+            self.inferral_time += t
+            if obj != inf_obj:
+                self.objectdb.set_inferral_expanded(obj)
+                self._inferral_expand(inf_obj)
+                break
+        self.objectdb.set_inferral_expanded(obj)
 
     def _equivalent_expand(self, obj):
         """
@@ -407,14 +414,12 @@ class CombinatorialSpecificationSearcher(object):
             return
         total_time = 0
         label = self.objectdb.get_label(obj)
-        objects_to_expand = set()
         for strategy_generator in self.equivalence_strategy_generators:
-            t, eq_objs = self._expand_object_with_strategy(obj,
-                                                           strategy_generator,
-                                                           label,
-                                                           equivalent=True)
+            t = self._expand_object_with_strategy(obj,
+                                                  strategy_generator,
+                                                  label,
+                                                  equivalent=True)
             total_time += t
-            objects_to_expand.update(eq_objs)
 
         self.objectdb.set_equivalent_expanded(obj)
         self.equivalent_time += total_time
@@ -461,8 +466,6 @@ class CombinatorialSpecificationSearcher(object):
                 continue
             elif self.objectdb.is_workably_decomposed(label):
                 continue
-            if self.is_empty_strategy(self.objectdb.get_object(label)):
-                continue
             count += 1
             queue_start -= time.time()
             self.expand(label)
@@ -482,19 +485,24 @@ class CombinatorialSpecificationSearcher(object):
         - the times spent in each of the main functions
         """
         status = ""
-        status += "Currently on 'level' {}\n".format(str(self.objectqueue.levels_completed + 1))
-        status += "Time spent searching so far: {} seconds\n".format(self._time_taken)
+        status += "Currently on 'level' {}\n".format(
+                                    str(self.objectqueue.levels_completed + 1))
+        status += "Time spent searching so far: {} seconds\n".format(
+                                                            self._time_taken)
         for i, expanded in enumerate(self.expanded_objects):
-            status += "Number of objects expanded by Set {} is {}\n".format(str(i+1),   str(expanded))
-        status += "The size of the working queue is {}\n".format(self.objectqueue.working.qsize())
-        status += "The size of the current queue is {}\n".format(self.objectqueue.curr_level.qsize())
-        status += "The size of the next queue is {}\n".format(self.objectqueue.next_level.qsize())
-        status += "There were {} cache misses\n".format(str(self._cache_misses))
-
+            status += "Number of objects expanded by Set {} is {}\n".format(
+                                                    str(i+1), str(expanded))
+        status += "The size of the working queue is {}\n".format(
+                                            self.objectqueue.working.qsize())
+        status += "The size of the current queue is {}\n".format(
+                                         self.objectqueue.curr_level.qsize())
+        status += "The size of the next queue is {}\n".format(
+                                         self.objectqueue.next_level.qsize())
 
 
         all_labels = self.objectdb.label_to_info.keys()
-        status += "Total number of objects is {}\n".format(str(len(all_labels)))
+        status += "Total number of objects is {}\n".format(
+                                                        str(len(all_labels)))
         expandable = 0
         verified = 0
         strategy_verified = 0
@@ -511,10 +519,14 @@ class CombinatorialSpecificationSearcher(object):
                 empty += 1
             equivalent_sets.add(self.equivdb[label])
 
-        status += "Total number of equivalent sets is {}\n".format(str(len(equivalent_sets)))
-        status += "Total number of expandable objects is {}\n".format(str(expandable))
-        status += "Total number of verified objects is {}\n".format(str(verified))
-        status += "Total number of strategy verified objects is {}\n".format(str(strategy_verified))
+        status += "Total number of equivalent sets is {}\n".format(
+                                                    str(len(equivalent_sets)))
+        status += "Total number of expandable objects is {}\n".format(
+                                                              str(expandable))
+        status += "Total number of verified objects is {}\n".format(
+                                                                str(verified))
+        status += "Total number of strategy verified objects is {}\n".format(
+                                                       str(strategy_verified))
         status += "Total number of empty objects is {}\n".format(str(empty))
 
         equiv_perc = int(self.equivalent_time/self._time_taken * 100)
@@ -522,27 +534,37 @@ class CombinatorialSpecificationSearcher(object):
         infer_perc = int(self.inferral_time/self._time_taken * 100)
         symme_perc = int(self.symmetry_time/self._time_taken * 100)
 
-        status += "Time spent equivalent expanding: {} seconds, ~{}%\n".format(str(self.equivalent_time), equiv_perc)
-        status += "Time spent strategy verifying: {} seconds, ~{}%\n".format(str(self.verification_time), verif_perc)
-        status += "Time spent inferring: {} seconds, ~{}%\n".format(str(self.inferral_time), infer_perc)
+        status += "Time spent equivalent expanding: {} seconds, ~{}%\n".format(
+                                         str(self.equivalent_time), equiv_perc)
+        status += "Time spent strategy verifying: {} seconds, ~{}%\n".format(
+                                       str(self.verification_time), verif_perc)
+        status += "Time spent inferring: {} seconds, ~{}%\n".format(
+                                           str(self.inferral_time), infer_perc)
 
         if self.symmetry:
-            status += "Time spent symmetry expanding: {} seconds, ~{}%\n".format(str(self.symmetry_time), symme_perc)
+            status += "Time spent symmetry expanding: \
+                       {} seconds, ~{}%\n".format(
+                                        str(self.symmetry_time), symme_perc)
 
         for i, exp_time in enumerate(self.expansion_times):
             expand_perc = str(int(exp_time/self._time_taken * 100))
-            status += "Time spent expanding Set {}: {} seconds, ~{}%\n".format(str(i+1), str(exp_time), expand_perc)
+            status += "Time spent expanding Set {}: {} seconds, ~{}%\n".format(
+                                          str(i+1), str(exp_time), expand_perc)
 
         queue_perc = int(self.queue_time/self._time_taken * 100)
         prep_time = self.prepping_for_tree_search_time
         prpts_perc = int(prep_time/self._time_taken * 100)
         tsrch_perc = int(self.tree_search_time/self._time_taken * 100)
 
-        status += "Time spent queueing: {} seconds, ~{}%\n".format(str(self.queue_time), queue_perc)
-        status += "Time spent prepping for tree search: {} seconds, ~{}%\n".format(str(prep_time), prpts_perc)
-        status += "Time spent searching for tree: {} seconds, ~{}%\n".format(str(self.tree_search_time), tsrch_perc)
+        status += "Time spent queueing: {} seconds, ~{}%\n".format(
+                                            str(self.queue_time), queue_perc)
+        status += ("Time spent prepping for tree search: "
+                   "{} seconds, ~{}%\n").format(str(prep_time), prpts_perc)
+        status += "Time spent searching for tree: {} seconds, ~{}%\n".format(
+                                        str(self.tree_search_time), tsrch_perc)
 
-        total_perc = equiv_perc+verif_perc+infer_perc+symme_perc+queue_perc+prpts_perc+tsrch_perc
+        total_perc = (equiv_perc + verif_perc + infer_perc + symme_perc +
+                      queue_perc + prpts_perc + tsrch_perc)
         for i, exp_time in enumerate(self.expansion_times):
             total_perc += int(exp_time/self._time_taken * 100)
         status += "Total of ~{}% accounted for.\n".format(str(total_perc))
@@ -557,7 +579,8 @@ class CombinatorialSpecificationSearcher(object):
             output = output + ", " + str(strategy).split(' ')[1]
         return output
 
-    def auto_search(self, cap=100, verbose=False, status_update=None, max_time=None):
+    def auto_search(self, cap=100, verbose=False,
+                    status_update=None, max_time=None):
         """
         An automatic search function.
 
@@ -572,14 +595,20 @@ class CombinatorialSpecificationSearcher(object):
             if status_update:
                 status_start = time.time()
             start_string = ""
-            start_string += "Auto search started {}\n".format(time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()))
-            start_string += "Looking for {} combinatorial specification for:\n".format('iterative' if self.iterative else 'recursive')
-            start_string += self.objectdb.get_object(self.start_label).__repr__()
+            start_string += "Auto search started {}\n".format(
+                        time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()))
+            start_string += ("Looking for {} combinatorial specification"
+                             " for:\n").format(
+                                'iterative' if self.iterative else 'recursive')
+            start_string += self.objectdb.get_object(
+                                                self.start_label).__repr__()
             start_string += "\n"
             start_string += "The strategies being used are:\n"
-            equiv_strats = self._strategies_to_str(self.equivalence_strategy_generators)
+            equiv_strats = self._strategies_to_str(
+                                        self.equivalence_strategy_generators)
             infer_strats = self._strategies_to_str(self.inferral_strategies)
-            verif_strats = self._strategies_to_str(self.verification_strategies)
+            verif_strats = self._strategies_to_str(
+                                                self.verification_strategies)
             start_string += "Equivalent: {}\n".format(equiv_strats)
             start_string += "Inferral: {}\n".format(infer_strats)
             start_string += "Verification: {}\n".format(verif_strats)
@@ -613,11 +642,14 @@ class CombinatorialSpecificationSearcher(object):
             start = time.time()
             logger.debug("Searching for tree", extra=self.logger_kwargs)
             proof_tree = self.get_proof_tree()
-            max_search_time = min(cap*(time.time() - start), 3600) #worst case, search every hour!
+            #worst case, search every hour!
+            max_search_time = min(cap*(time.time() - start), 3600)
             if proof_tree is not None:
                 if verbose:
-                    found_string = "Proof tree found {}\n".format(time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()))
-                    found_string += "Time taken was {} seconds\n\n".format(self._time_taken)
+                    found_string = "Proof tree found {}\n".format(
+                        time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()))
+                    found_string += "Time taken was {} seconds\n\n".format(
+                                                              self._time_taken)
                     found_string += self.status()
                     found_string += json.dumps(proof_tree.to_jsonable())
                     logger.info(found_string, extra=self.logger_kwargs)
@@ -625,7 +657,8 @@ class CombinatorialSpecificationSearcher(object):
             if max_time is not None:
                 if self._time_taken > max_time:
                     self.status()
-                    logger.warn("Exceeded maximum time. Aborting auto search.", extra=self.logger_kwargs)
+                    logger.warn("Exceeded maximum time. Aborting auto search.",
+                                extra=self.logger_kwargs)
                     return
 
 
@@ -681,11 +714,13 @@ class CombinatorialSpecificationSearcher(object):
         """Return complement verified rule if exists due to rule, else None"""
         first, rest = rule
         if self.equivdb.is_verified(first):
-            unverified_labels = [l for l in rest if not self.equivdb.is_verified(l)]
+            unverified_labels = [l for l in rest
+                                 if not self.equivdb.is_verified(l)]
             if len(unverified_labels) == 1:
                 complement_first = unverified_labels[0]
                 return (complement_first,
-                        (first, ) + tuple(l for l in rest if l != complement_first))
+                        (first, ) + tuple(l for l in rest
+                                          if l != complement_first))
 
     def equivalent_strategy_verified_label(self, label):
         """Return equivalent strategy verified label if one exists, else None"""
@@ -698,7 +733,8 @@ class CombinatorialSpecificationSearcher(object):
             start, ends = rule
             if not self.equivdb.equivalent(start, eqv_start):
                 continue
-            if tuple(sorted(eqv_ends)) == tuple(sorted(self.equivdb[l] for l in ends)):
+            if tuple(sorted(eqv_ends)) == tuple(sorted(self.equivdb[l]
+                                                for l in ends)):
                 return start, ends
 
     def find_tree(self):
@@ -740,6 +776,7 @@ class CombinatorialSpecificationSearcher(object):
         """
         proof_tree_node = self.find_tree()
         if proof_tree_node is not None:
-            proof_tree = ProofTree.from_comb_spec_searcher(proof_tree_node, self)
+            proof_tree = ProofTree.from_comb_spec_searcher(proof_tree_node,
+                                                           self)
             assert proof_tree is not None
             return proof_tree

@@ -17,8 +17,10 @@ class Info(object):
                  symmetry_expanded=False,
                  equivalent_expanded=False,
                  decomposition_expanded=False,
+                 expanding_children_only=False,
                  expanding_other_sym=False,
                  expandable=False,
+                 inferral_expanded=False,
                  workably_decomposed=False,
                  verified=None,
                  empty=None,
@@ -29,8 +31,10 @@ class Info(object):
         self.expanded = expanded
         self.symmetry_expanded = symmetry_expanded
         self.equivalent_expanded = equivalent_expanded
+        self.expanding_children_only=expanding_children_only
         self.expanding_other_sym = expanding_other_sym
         self.expandable = expandable
+        self.inferral_expanded = inferral_expanded
         self.workably_decomposed = workably_decomposed
         self.verified = verified
         self.empty = empty
@@ -230,6 +234,14 @@ class CompressedObjectDB(object):
         """Update database that object was symmetry expanded."""
         self._get_info(key).symmetry_expanded = symmetry_expanded
 
+    def is_expanding_children_only(self, key):
+        """Return True if not expanding as expanding other children only."""
+        return self._get_info(key).expanding_children_only
+
+    def set_expanding_children_only(self, key, expanding_children_only=True):
+        """Update database if expanding childern_only."""
+        self._get_info(key).expanding_children_only = expanding_children_only
+
     def is_expanding_other_sym(self, key):
         """Return True if a symmetry of object is being expaned."""
         return self._get_info(key).expanding_other_sym
@@ -245,6 +257,14 @@ class CompressedObjectDB(object):
     def set_equivalent_expanded(self, key, equivalent_expanded=True):
         """Update database that object was equivalent expanded."""
         self._get_info(key).equivalent_expanded = equivalent_expanded
+
+    def is_inferral_expanded(self, key):
+        """Return True if object was inferral expanded."""
+        return self._get_info(key).inferral_expanded
+
+    def set_inferral_expanded(self, key, inferral_expanded=True):
+        """Update database that object was inferral expanded."""
+        self._get_info(key).inferral_expanded = inferral_expanded
 
     def is_workably_decomposed(self, key):
         """Return True if object was equivalent expanded."""
