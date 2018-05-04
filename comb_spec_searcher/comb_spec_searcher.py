@@ -3,7 +3,10 @@ import sys
 import time
 from collections import defaultdict
 from logzero import logger
+from functools import reduce
+from operator import add, mul
 import json
+import sympy
 
 from .equivdb import EquivalenceDB
 from .objectdb import ObjectDB
@@ -179,7 +182,6 @@ class CombinatorialSpecificationSearcher(object):
         self.queue_time += time.time() - start
         expanding = self.objectdb.number_times_expanded(label)
         strategies = self.strategy_generators[expanding]
-
         total_time = 0
         for strategy_generator in strategies:
             # function returns time it took.
@@ -250,8 +252,8 @@ class CombinatorialSpecificationSearcher(object):
                 self._add_equivalent_rule(label, end_labels[0],
                                           formal_step, not equivalent)
             else:
-                self._add_rule(label, end_labels,
-                               strategy.back_maps, formal_step)
+                constructor = strategy.constructor
+                self._add_rule(label, end_labels, formal_step, constructor)
 
         if inferral:
             return time.time() - start, inferred_obj
@@ -272,14 +274,17 @@ class CombinatorialSpecificationSearcher(object):
             else:
                 self.objectqueue.add_to_next(end)
 
-    def _add_rule(self, start, ends, back_maps=None, explanation=None):
+    def _add_rule(self, start, ends, explanation=None, constructor=None):
         """Add rule to the rule database and end labels to queue."""
         if explanation is None:
             explanation = "Some strategy."
+        if constructor is None:
+            logger.warn("Assuming constructor is disjoint.")
+            constructor = 'disjoint'
         self.ruledb.add(start,
                         ends,
                         explanation,
-                        back_maps)
+                        constructor)
         for end_label in ends:
             if (self.is_expanded(end_label) or
                     self.objectdb.is_expanding_other_sym(end_label)):
@@ -413,6 +418,62 @@ class CombinatorialSpecificationSearcher(object):
 
         self.objectdb.set_equivalent_expanded(obj)
         self.equivalent_time += total_time
+
+    def get_equations(self, **kwargs):
+        """
+        Returns a set of equations for all rules currently found.
+
+        If keyword substution=True is given, then will return the equations
+        with complex functions replaced by symbols and a dictionary of
+        substitutions.
+        """
+        if kwargs.get('substitutions'):
+            # dictionary from object to symbol, filled by the combinatorial
+            # class' get_genf function.
+            kwargs['symbols'] = {}
+            # dictionary from symbol to genf, filled by the combinatorial
+            # class' get_genf function.
+            kwargs['subs'] = {}
+
+        functions = {}
+        def get_function(label):
+            label = self.equivdb[label]
+            function = functions.get(label)
+            if function is None:
+                function = sympy.Function("F_" + str(label))(sympy.abc.x)
+                functions[label] = function
+            return function
+
+        equations = set()
+        for start, ends in self.ruledb:
+            start_object = self.objectdb.get_object(start)
+            end_objects = (self.objectdb.get_object(end) for end in ends)
+            start_function = get_function(start)
+            end_functions = (get_function(end) for end in ends)
+            constructor = self.ruledb.constructor(start, ends)
+            if constructor is 'disjoint':
+                equations.add(sympy.Eq(start_function,
+                                       reduce(add,
+                                              [f for f in end_functions], 0)))
+            elif constructor is 'cartesian':
+                equations.add(sympy.Eq(start_function,
+                                       reduce(mul,
+                                              [f for f in end_functions], 1)))
+            else:
+                raise NotImplementedError("Only handle cartesian and disjoint")
+
+        kwargs['root_func'] = get_function(self.start_label)
+        kwargs['root_object'] = self.objectdb.get_object(self.start_label)
+        for label in self.objectdb:
+            if self.objectdb.is_strategy_verified(label):
+                function = get_function(label)
+                object = self.objectdb.get_object(label)
+                gen_func = object.get_genf(**kwargs)
+                equations.add(sympy.Eq(function, gen_func))
+
+        if kwargs.get('substitutions'):
+            return equations, [sympy.Eq(lhs, rhs) for lhs, rhs in kwargs.get('subs').items()]
+        return equations
 
     def do_level(self):
         """Expand objects in current queue. Objects found added to next."""

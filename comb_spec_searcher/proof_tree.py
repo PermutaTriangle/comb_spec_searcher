@@ -17,26 +17,19 @@ from .tree_searcher import Node as tree_searcher_node
 class ProofTreeNode(object):
     def __init__(self, label, eqv_path_labels, eqv_path_objects,
                  eqv_explanations=[], children=[], strategy_verified=False,
-                 complement_verified=False, decomposition=False, fusion=False,
-                 disjoint_union=False, recursion=False, deflate=False,
-                 formal_step="", back_maps=None, forward_maps=None):
+                 decomposition=False, disjoint_union=False, recursion=False,
+                 formal_step=""):
         self.label = label
         self.eqv_path_labels = eqv_path_labels
         self.eqv_path_objects = eqv_path_objects
         self.eqv_explanations = eqv_explanations
-
         self.children = children
         self.strategy_verified = strategy_verified
-        self.complement_verified = complement_verified
         self.decomposition = decomposition
         self.disjoint_union = disjoint_union
-        self.fusion = fusion
-        self.deflate = deflate
         self.recursion = recursion
         # TODO: Add assertions for assumptions made about each type of strategy
         self.formal_step = formal_step
-        self.back_maps = back_maps
-        self.forward_maps = forward_maps
         self.sympy_function = None
 
     def to_jsonable(self):
@@ -48,27 +41,14 @@ class ProofTreeNode(object):
         output['eqv_explanations'] = [x for x in self.eqv_explanations]
         output['children'] = [child.to_jsonable() for child in self.children]
         output['strategy_verified'] = self.strategy_verified
-        output['complement_verified'] = self.complement_verified
         output['decomposition'] = self.decomposition
         output['disjoint_union'] = self.disjoint_union
         output['recursion'] = self.recursion
         output['formal_step'] = self.formal_step
-        if isinstance(self.back_maps, dict):
-            output['back_maps'] = [[(x, y) for x, y in bm.items()]
-                                   for bm in self.back_maps]
-        if self.forward_maps is not None:
-            output['forward_maps'] = [fm for fm in self.forward_maps]
         return output
 
     @classmethod
     def from_dict(cls, combclass, jsondict):
-        back_maps = jsondict.get('back_maps')
-        if back_maps is not None:
-            back_maps = [{tuple(x): tuple(y) for x, y in bm}
-                         for bm in back_maps]
-        forward_maps = jsondict.get('forward_maps')
-        if forward_maps is not None:
-            raise NotImplementedError('Fix forward maps in jsoning!!!')
         return cls(label=jsondict['label'],
                    eqv_path_labels=jsondict['eqv_path_labels'],
                    eqv_path_objects=[combclass.from_dict(x)
@@ -77,13 +57,10 @@ class ProofTreeNode(object):
                    children=[ProofTreeNode.from_dict(combclass, child)
                              for child in jsondict['children']],
                    strategy_verified=jsondict['strategy_verified'],
-                   complement_verified=jsondict['complement_verified'],
                    decomposition=jsondict['decomposition'],
                    disjoint_union=jsondict['disjoint_union'],
                    recursion=jsondict['recursion'],
-                   formal_step=jsondict['formal_step'],
-                   back_maps=back_maps,
-                   forward_maps=forward_maps)
+                   formal_step=jsondict['formal_step'])
 
     @classmethod
     def from_json(cls, combclass, jsonstr):
@@ -189,7 +166,6 @@ class ProofTreeNode(object):
                     self.disjoint_union == other.disjoint_union,
                     self.recursion == other.recursion,
                     self.formal_step == other.formal_step,
-                    self.back_maps == other.back_maps,
                     self.forward_maps == other.forward_maps])
 
     def get_function(self):
@@ -426,7 +402,7 @@ class ProofTree(object):
                                                       for c in root.children))
             start, ends = rule
             formal_step = css.ruledb.explanation(start, ends)
-            back_maps = css.ruledb.get_back_maps(start, ends)
+            constructor = css.ruledb.constructor(start, ends)
 
             eqv_path = css.equivdb.find_path(in_label, start)
             eqv_objs = [css.objectdb.get_object(l) for l in eqv_path]
@@ -442,34 +418,21 @@ class ProofTree(object):
                                                         child, css, next_label)
                         strat_children.append(sub_tree)
                         break
-            if back_maps is not None:
+            if constructor is 'cartesian':
                 # decomposition!
                 return ProofTreeNode(label, eqv_path, eqv_objs,
                                      eqv_explanations, decomposition=True,
-                                     back_maps=back_maps,
                                      formal_step=formal_step,
                                      children=strat_children)
-            else:
+            elif constructor is 'disjoint':
                 # batch!
-                if "Complement" in formal_step:
-                    return ProofTreeNode(label, eqv_path, eqv_objs,
-                                         eqv_explanations,
-                                         complement_verified=True,
-                                         formal_step=formal_step)
-                if "Fuse" in formal_step:
-                    return ProofTreeNode(label, eqv_path, eqv_objs,
-                                         eqv_explanations, fusion=True,
-                                         formal_step=formal_step,
-                                         children=strat_children)
-                if "deflate" in formal_step:
-                    return ProofTreeNode(label, eqv_path, eqv_objs,
-                                         eqv_explanations, deflate=True,
-                                         formal_step=formal_step,
-                                         children=strat_children)
                 return ProofTreeNode(label, eqv_path, eqv_objs,
                                      eqv_explanations, disjoint_union=True,
                                      formal_step=formal_step,
                                      children=strat_children)
+            else:
+                print(constructor)
+                raise NotImplementedError("Only handle cartesian and disjoint")
 
     def __eq__(self, other):
         return all(node1 == node2

@@ -12,7 +12,7 @@ from functools import partial
 
 class Strategy(object):
     def __init__(self, formal_step, objects, inferable, workable,
-                 ignore_parent=False, back_maps=None):
+                 ignore_parent=False, constructor='disjoint'):
         if not isinstance(formal_step, str):
             raise TypeError("Formal step not a string")
         if not isinstance(objects, Iterable):
@@ -30,14 +30,11 @@ class Strategy(object):
             raise TypeError("Workable should be an iterable of booleans")
         if any(not isinstance(x, bool) for x in inferable):
             raise TypeError("Inferable should be an iterable of booleans")
-        if back_maps is not None:
-            if any(not isinstance(bm, dict) and not isinstance(bm, partial)
-                   for bm in back_maps):
-                raise TypeError("One of the maps is not a dictionary")
-            self.back_maps = [part_map for part_map in back_maps]
-        else:
-            self.back_maps = None
+        if constructor not in ['disjoint', 'cartesian', 'equiv']:
+            raise ValueError(("Not valid constructor. Only accepts"
+                              " disjoint or cartesian."))
 
+        self.constructor = constructor
         self.formal_step = formal_step
         self.objects = [object for object in objects]
         self.workable = [x for x in workable]
