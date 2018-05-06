@@ -466,10 +466,18 @@ class CombinatorialSpecificationSearcher(object):
         kwargs['root_object'] = self.objectdb.get_object(self.start_label)
         for label in self.objectdb:
             if self.objectdb.is_strategy_verified(label):
-                function = get_function(label)
-                object = self.objectdb.get_object(label)
-                gen_func = object.get_genf(**kwargs)
-                equations.add(sympy.Eq(function, gen_func))
+                try:
+                    function = get_function(label)
+                    object = self.objectdb.get_object(label)
+                    gen_func = object.get_genf(**kwargs)
+                    equations.add(sympy.Eq(function, gen_func))
+                except Exception as e:
+                    print("Failed to find generating function for:")
+                    print(repr(object))
+                    print("Verified as:")
+                    print(self.objectdb.verification_reason(label))
+                    print("The error was:")
+                    print(e)
 
         if kwargs.get('substitutions'):
             return equations, [sympy.Eq(lhs, rhs) for lhs, rhs in kwargs.get('subs').items()]
