@@ -424,7 +424,7 @@ class ProofTree(object):
                                      eqv_explanations, decomposition=True,
                                      formal_step=formal_step,
                                      children=strat_children)
-            elif constructor is 'disjoint':
+            elif constructor is 'disjoint' or constructor is 'equiv':
                 # batch!
                 return ProofTreeNode(label, eqv_path, eqv_objs,
                                      eqv_explanations, disjoint_union=True,

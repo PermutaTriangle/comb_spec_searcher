@@ -104,6 +104,7 @@ class CombinatorialSpecificationSearcher(object):
         self.prepping_for_tree_search_time = 0
         self.queue_time = 0
         self._time_taken = 0
+        self.object_genf = {}
 
     def try_verify(self, obj, force=False):
         """
@@ -423,9 +424,12 @@ class CombinatorialSpecificationSearcher(object):
         """
         Returns a set of equations for all rules currently found.
 
-        If keyword substution=True is given, then will return the equations
+        If keyword substitutions=True is given, then will return the equations
         with complex functions replaced by symbols and a dictionary of
         substitutions.
+
+        If keyword fake_verify=label it will verify label and return equations
+        which are in a proof tree for the root assuming that label is verified.
         """
         if kwargs.get('substitutions'):
             # dictionary from object to symbol, filled by the combinatorial
@@ -444,33 +448,53 @@ class CombinatorialSpecificationSearcher(object):
                 functions[label] = function
             return function
 
+        if kwargs.get('fake_verify'):
+            rules_dict = self.tree_search_prep()
+            if kwargs.get('fake_verify'):
+                rules_dict[kwargs.get('fake_verify')].add(tuple())
+            rules_dict = prune(rules_dict)
+            verified_labels = set(rules_dict.keys())
+            if kwargs.get('fake_verify'):
+                if self.start_label not in verified_labels:
+                    return set()
+                strat_ver = set()
+
         equations = set()
+
         for start, ends in self.ruledb:
-            start_object = self.objectdb.get_object(start)
-            end_objects = (self.objectdb.get_object(end) for end in ends)
+            if kwargs.get('fake_verify'):
+                if (self.equivdb[start] not in verified_labels or
+                     any(self.equivdb[x] not in verified_labels
+                         for x in ends)):
+                    continue
+                strat_ver.add(start)
+                strat_ver.update(ends)
+
             start_function = get_function(start)
             end_functions = (get_function(end) for end in ends)
             constructor = self.ruledb.constructor(start, ends)
             if constructor is 'disjoint':
-                equations.add(sympy.Eq(start_function,
-                                       reduce(add,
-                                              [f for f in end_functions], 0)))
+                eq = sympy.Eq(start_function,
+                              reduce(add, [f for f in end_functions], 0))
             elif constructor is 'cartesian':
-                equations.add(sympy.Eq(start_function,
-                                       reduce(mul,
-                                              [f for f in end_functions], 1)))
+                eq = sympy.Eq(start_function,
+                              reduce(mul, [f for f in end_functions], 1))
             else:
                 raise NotImplementedError("Only handle cartesian and disjoint")
+            equations.add(eq)
 
         kwargs['root_func'] = get_function(self.start_label)
         kwargs['root_object'] = self.objectdb.get_object(self.start_label)
         for label in self.objectdb:
+            if kwargs.get('fake_verify') and label not in strat_ver:
+                continue
             if self.objectdb.is_strategy_verified(label):
                 try:
                     function = get_function(label)
                     object = self.objectdb.get_object(label)
-                    gen_func = object.get_genf(**kwargs)
-                    equations.add(sympy.Eq(function, gen_func))
+                    gen_func = self.get_object_genf(object, **kwargs)
+                    eq = sympy.Eq(function, gen_func)
+                    equations.add(eq)
                 except Exception as e:
                     print("Failed to find generating function for:")
                     print(repr(object))
@@ -482,6 +506,13 @@ class CombinatorialSpecificationSearcher(object):
         if kwargs.get('substitutions'):
             return equations, [sympy.Eq(lhs, rhs) for lhs, rhs in kwargs.get('subs').items()]
         return equations
+
+    def get_object_genf(self, obj, **kwargs):
+        genf = self.object_genf.get(obj)
+        if genf is None:
+            genf = obj.get_genf(**kwargs)
+            self.object_genf[obj] = genf
+        return genf
 
     def do_level(self):
         """Expand objects in current queue. Objects found added to next."""
