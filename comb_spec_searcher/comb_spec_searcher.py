@@ -270,7 +270,15 @@ class CombinatorialSpecificationSearcher(object):
         if explanation is None:
             explanation = "They are equivalent."
         if self.debug:
-            self._sanity_check_rule(start, [end], 'equiv')
+            try:
+                self._sanity_check_rule(start, [end], 'equiv')
+            except Exception as e:
+                error = ("Equivalent strategy did not work\n" +
+                         repr(self.objectdb.get_object(start)) + "\n" +
+                         "is not equivalent to" + "\n"
+                         repr(self.objectdb.get_object(end)) + "\n" +
+                         "formal step:" + explanation)
+                logger.warn(error)
         self.equivdb.union(start, end, explanation)
         if not (self.is_expanded(end) or
                 self.objectdb.is_expanding_other_sym(end) or
@@ -288,7 +296,15 @@ class CombinatorialSpecificationSearcher(object):
             logger.warn("Assuming constructor is disjoint.")
             constructor = 'disjoint'
         if self.debug:
-            self._sanity_check_rule(start, ends, constructor)
+            try:
+                self._sanity_check_rule(start, ends, constructor)
+            except Exception as e:
+                error = ("Expansion strategy did not work\n" +
+                         repr(self.objectdb.get_object(start)) + "\n" +
+                         "is equivalent to" + "\n"
+                         repr([self.objectdb.get_object(e) for e in ends]) +
+                         "\nformal step:" + explanation)
+                logger.warn(error)
         self.ruledb.add(start,
                         ends,
                         explanation,
@@ -541,7 +557,8 @@ class CombinatorialSpecificationSearcher(object):
                     print(e)
 
         if kwargs.get('substitutions'):
-            return equations, [sympy.Eq(lhs, rhs) for lhs, rhs in kwargs.get('subs').items()]
+            return equations, [sympy.Eq(lhs, rhs)
+                               for lhs, rhs in kwargs.get('subs').items()]
         return equations
 
     def get_object_genf(self, obj, **kwargs):
@@ -812,13 +829,13 @@ class CombinatorialSpecificationSearcher(object):
         rules_dict[eqv_first] |= set((tuple(eqv_rest),))
 
     def equivalent_strategy_verified_label(self, label):
-        """Return equivalent strategy verified label if one exists, else return
-        None"""
+        """Return equivalent strategy verified label if one exists."""
         for eqv_label in self.equivdb.equivalent_set(label):
             if self.objectdb.is_strategy_verified(eqv_label):
                 return eqv_label
 
     def rule_from_equivence_rule(self, eqv_start, eqv_ends):
+        """Return a rule that satisfies the equivalence rule."""
         for rule in self.ruledb:
             start, ends = rule
             if not self.equivdb.equivalent(start, eqv_start):
@@ -862,9 +879,7 @@ class CombinatorialSpecificationSearcher(object):
         return proof_tree
 
     def get_proof_tree(self, count=False):
-        """
-        Return proof tree if one exists.
-        """
+        """Return proof tree if one exists."""
         proof_tree_node = self.find_tree()
         if proof_tree_node is not None:
             proof_tree = ProofTree.from_comb_spec_searcher(proof_tree_node,
