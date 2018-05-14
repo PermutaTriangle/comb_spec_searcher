@@ -14,6 +14,7 @@ from .objectdb_compress import CompressedObjectDB
 from .objectqueue import ObjectQueue
 from .objectqueuedf import ObjectQueueDF
 from .proof_tree import ProofTree as ProofTree
+from permuta.misc.ordered_set_partitions import partitions_of_n_of_size_k
 from .ruledb import RuleDB
 from .strategies import (InferralStrategy, Strategy, StrategyPack,
                          VerificationStrategy)
@@ -34,6 +35,7 @@ class CombinatorialSpecificationSearcher(object):
                  forward_equivalence=False,
                  objectqueue=ObjectQueue,
                  function_kwargs=dict(),
+                 debug=True,
                  logger_kwargs={'processname': 'runner'}):
         """Initialise CombinatorialSpecificationSearcher."""
         if start_object is None:
@@ -76,6 +78,7 @@ class CombinatorialSpecificationSearcher(object):
                 self.verification_strategies = strategy_pack.ver_strats
                 self.iterative = strategy_pack.iterative
 
+        self.debug = debug
         self.kwargs = function_kwargs
         self.kwargs['logger'] = logger_kwargs
         self.logger_kwargs = logger_kwargs
@@ -266,6 +269,8 @@ class CombinatorialSpecificationSearcher(object):
         """Add equivalent strategy to equivdb and equivalent object to queue"""
         if explanation is None:
             explanation = "They are equivalent."
+        if self.debug:
+            self._sanity_check_rule(start, [end], 'equiv')
         self.equivdb.union(start, end, explanation)
         if not (self.is_expanded(end) or
                 self.objectdb.is_expanding_other_sym(end) or
@@ -282,6 +287,8 @@ class CombinatorialSpecificationSearcher(object):
         if constructor is None:
             logger.warn("Assuming constructor is disjoint.")
             constructor = 'disjoint'
+        if self.debug:
+            self._sanity_check_rule(start, ends, constructor)
         self.ruledb.add(start,
                         ends,
                         explanation,
@@ -301,6 +308,36 @@ class CombinatorialSpecificationSearcher(object):
         self.objectdb.set_verified(label, "Contains no avoiding objects.")
         self.objectdb.set_strategy_verified(label)
         self.equivdb.update_verified(label)
+
+    def _sanity_check_rule(self, start, ends, constructor, length=5):
+        """
+        Sanity check a rule that has been found up to the length given.
+        (default: length=5)
+        """
+        start_obj = self.objectdb.get_object(start)
+        end_objs = [self.objectdb.get_object(e) for e in ends]
+        start_count = [len(list(start_obj.objects_of_length(i)))
+                       for i in range(length)]
+        end_counts = [[len(list(e.objects_of_length(i)))
+                       for i in range(length)] for e in end_objs]
+
+        if constructor == 'equiv':
+            assert len(end_objs) == 1
+            assert start_count == end_counts[0]
+        elif constructor == 'disjoint':
+            assert start_count == [sum(c[i] for c in end_counts)
+                                 for i in range(length)]
+        elif constructor == 'cartesian':
+            for i in range(length):
+                total = 0
+                for part in partitions_of_n_of_size_k(i, len(end_counts)):
+                    subtotal = 1
+                    for end_count, partlen in zip(end_counts, part):
+                        if subtotal == 0:
+                            break
+                        subtotal *= end_count[partlen]
+                    total += subtotal
+                assert total == start_count[i]
 
     def _strategy_cleanup(self, strategy, inferral=False):
         """

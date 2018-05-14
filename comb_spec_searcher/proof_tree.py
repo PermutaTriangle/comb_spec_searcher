@@ -134,10 +134,6 @@ class ProofTreeNode(object):
                                               length,
                                               number_objs,
                                               total)
-        if self.fusion:
-            pass
-        if self.deflate:
-            pass
 
     def has_interleaving_decomposition(self):
         if self.back_maps is None:
