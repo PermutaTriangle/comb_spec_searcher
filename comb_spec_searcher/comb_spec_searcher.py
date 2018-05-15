@@ -275,7 +275,7 @@ class CombinatorialSpecificationSearcher(object):
             except Exception as e:
                 error = ("Equivalent strategy did not work\n" +
                          repr(self.objectdb.get_object(start)) + "\n" +
-                         "is not equivalent to" + "\n"
+                         "is not equivalent to" + "\n" +
                          repr(self.objectdb.get_object(end)) + "\n" +
                          "formal step:" + explanation)
                 logger.warn(error)
@@ -301,7 +301,7 @@ class CombinatorialSpecificationSearcher(object):
             except Exception as e:
                 error = ("Expansion strategy did not work\n" +
                          repr(self.objectdb.get_object(start)) + "\n" +
-                         "is equivalent to" + "\n"
+                         "is equivalent to" + "\n" + 
                          repr([self.objectdb.get_object(e) for e in ends]) +
                          "\nformal step:" + explanation)
                 logger.warn(error)

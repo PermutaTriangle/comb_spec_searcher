@@ -157,12 +157,10 @@ class ProofTreeNode(object):
                     self.eqv_explanations == other.eqv_explanations,
                     self.children == other.children,
                     self.strategy_verified == other.strategy_verified,
-                    self.complement_verified == other.complement_verified,
                     self.decomposition == other.decomposition,
                     self.disjoint_union == other.disjoint_union,
                     self.recursion == other.recursion,
-                    self.formal_step == other.formal_step,
-                    self.forward_maps == other.forward_maps])
+                    self.formal_step == other.formal_step])
 
     def get_function(self):
         if self.sympy_function is None:
