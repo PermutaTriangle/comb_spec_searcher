@@ -501,16 +501,6 @@ class CombinatorialSpecificationSearcher(object):
                 functions[label] = function
             return function
 
-        def taylor_expand(genf, n=10):
-            num, den = genf.as_numer_denom()
-            num = num.expand()
-            den = den.expand()
-            genf = num/den
-            ser = sympy.Poly(genf.series(n=n+1).removeO(), sympy.abc.x)
-            res = ser.all_coeffs()
-            res = res[::-1] + [0]*(n+1-len(res))
-            return res
-
         if kwargs.get('fake_verify'):
             rules_dict = self.tree_search_prep()
             if kwargs.get('fake_verify'):
@@ -557,14 +547,6 @@ class CombinatorialSpecificationSearcher(object):
                     object = self.objectdb.get_object(label)
                     gen_func = self.get_object_genf(object, **kwargs)
                     eq = sympy.Eq(function, gen_func)
-                    if not kwargs['root_func'] in eq.atoms(sympy.Function):
-                        count = [len(list(object.objects_of_length(i)))
-                                 for i in range(9)]
-                        if taylor_expand(sympy.sympify(gen_func), 8) != count:
-                            raise ValueError(("Incorrect generating function "
-                                              "in database.\n" + repr(object)))
-
-
                     equations.add(eq)
                 except Exception as e:
                     print("Failed to find generating function for:")
@@ -582,7 +564,22 @@ class CombinatorialSpecificationSearcher(object):
     def get_object_genf(self, obj, **kwargs):
         genf = self.object_genf.get(obj)
         if genf is None:
-            genf = obj.get_genf(**kwargs)
+            def taylor_expand(genf, n=10):
+                num, den = genf.as_numer_denom()
+                num = num.expand()
+                den = den.expand()
+                genf = num/den
+                ser = sympy.Poly(genf.series(n=n+1).removeO(), sympy.abc.x)
+                res = ser.all_coeffs()
+                res = res[::-1] + [0]*(n+1-len(res))
+                return res
+            genf = sympy.sympify(obj.get_genf(**kwargs))
+            if not kwargs['root_func'] in genf.atoms(sympy.Function):
+                count = [len(list(obj.objects_of_length(i)))
+                         for i in range(9)]
+                if taylor_expand(sympy.sympify(genf), 8) != count:
+                    raise ValueError(("Incorrect generating function "
+                                      "in database.\n" + repr(obj)))
             self.object_genf[obj] = genf
         return genf
 
