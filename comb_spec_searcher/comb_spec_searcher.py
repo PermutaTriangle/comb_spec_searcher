@@ -301,7 +301,7 @@ class CombinatorialSpecificationSearcher(object):
             except Exception as e:
                 error = ("Expansion strategy did not work\n" +
                          repr(self.objectdb.get_object(start)) + "\n" +
-                         "is equivalent to" + "\n" + 
+                         "is equivalent to" + "\n" +
                          repr([self.objectdb.get_object(e) for e in ends]) +
                          "\nformal step:" + explanation)
                 logger.warn(error)
@@ -501,6 +501,16 @@ class CombinatorialSpecificationSearcher(object):
                 functions[label] = function
             return function
 
+        def taylor_expand(genf, n=10):
+            num, den = genf.as_numer_denom()
+            num = num.expand()
+            den = den.expand()
+            genf = num/den
+            ser = sympy.Poly(genf.series(n=n+1).removeO(), sympy.abc.x)
+            res = ser.all_coeffs()
+            res = res[::-1] + [0]*(n+1-len(res))
+            return res
+
         if kwargs.get('fake_verify'):
             rules_dict = self.tree_search_prep()
             if kwargs.get('fake_verify'):
@@ -547,6 +557,14 @@ class CombinatorialSpecificationSearcher(object):
                     object = self.objectdb.get_object(label)
                     gen_func = self.get_object_genf(object, **kwargs)
                     eq = sympy.Eq(function, gen_func)
+                    if not kwargs['root_func'] in eq.atoms(sympy.Function):
+                        count = [len(list(object.objects_of_length(i)))
+                                 for i in range(9)]
+                        if taylor_expand(sympy.sympify(gen_func), 8) != count:
+                            raise ValueError(("Incorrect generating function "
+                                              "in database.\n" + repr(object)))
+
+
                     equations.add(eq)
                 except Exception as e:
                     print("Failed to find generating function for:")
