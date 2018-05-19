@@ -26,6 +26,22 @@ class RuleDB(object):
         self.explanations = {}
         self.constructors = {}
 
+    def to_dict(self):
+        return {
+            'rules_dict': dict(self.rules_dict),
+            'explanations': self.explanations,
+            'constructors': self.constructors,
+        }
+
+    @classmethod
+    def from_dict(cls, dict):
+        ruledb = RuleDB()
+        ruledb.rules_dict = defaultdict(set, dict['rules_dict'])
+        ruledb.explanations = dict['explanations']
+        ruledb.constructors = dict['constructors']
+        return ruledb
+
+
     def add(self, start, end, explanation, constructor):
         """
         Add a rule to the database.

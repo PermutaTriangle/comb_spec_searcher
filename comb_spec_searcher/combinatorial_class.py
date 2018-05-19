@@ -14,7 +14,7 @@ class CombinatorialClass(abc.ABC):
     """
 
     @abc.abstractmethod
-    def get_genf(self, *args, **kwargs):
+    def is_empty(self, *args, **kwargs):
         """Return True if objects of length returns nothing for all lengths"""
         return False
 
@@ -31,6 +31,17 @@ class CombinatorialClass(abc.ABC):
     @abc.abstractmethod
     def to_jsonable(self):
         """Return JSONable data structure of the object"""
+        return
+
+    @abc.abstractmethod
+    def compress(self):
+        """Return a compressed version of the object."""
+        return
+
+    @classmethod
+    @abc.abstractmethod
+    def decompress(cls, compressed):
+        """Return decompressed object from string by compress function."""
         return
 
     @abc.abstractmethod

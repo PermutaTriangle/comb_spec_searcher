@@ -336,7 +336,7 @@ class ProofTree(object):
             assert css.equivdb.equivalent(in_label, out_label)
 
             eqv_path = css.equivdb.find_path(in_label, out_label)
-            eqv_objs = [css.objectdb.get_object(l) for l in eqv_path]
+            eqv_objs = [css.classdb.get_class(l) for l in eqv_path]
             eqv_explanations = [css.equivdb.get_explanation(x, y,
                                                             one_step=True)
                                 for x, y in zip(eqv_path[:-1], eqv_path[1:])]
@@ -373,13 +373,13 @@ class ProofTree(object):
             if eqv_ver_label is not None:
                 # verified!
                 eqv_path = css.equivdb.find_path(in_label, eqv_ver_label)
-                eqv_objs = [css.objectdb.get_object(l) for l in eqv_path]
+                eqv_objs = [css.classdb.get_class(l) for l in eqv_path]
                 eqv_explanations = [css.equivdb.get_explanation(x, y,
                                                                 one_step=True)
                                     for x, y in zip(eqv_path[:-1],
                                                     eqv_path[1:])]
 
-                formal_step = css.objectdb.verification_reason(eqv_ver_label)
+                formal_step = css.classdb.verification_reason(eqv_ver_label)
                 return ProofTreeNode(label, eqv_path, eqv_objs,
                                      eqv_explanations, strategy_verified=True,
                                      formal_step=formal_step)
@@ -387,7 +387,7 @@ class ProofTree(object):
                 # recurse! we reparse these at the end, so recursed labels etc
                 # are not interesting.
                 return ProofTreeNode(label, [in_label],
-                                     [css.objectdb.get_object(in_label)],
+                                     [css.classdb.get_class(in_label)],
                                      formal_step="recurse",
                                      recursion=True)
         else:
@@ -399,7 +399,7 @@ class ProofTree(object):
             constructor = css.ruledb.constructor(start, ends)
 
             eqv_path = css.equivdb.find_path(in_label, start)
-            eqv_objs = [css.objectdb.get_object(l) for l in eqv_path]
+            eqv_objs = [css.classdb.get_class(l) for l in eqv_path]
             eqv_explanations = [css.equivdb.get_explanation(x, y,
                                                             one_step=True)
                                 for x, y in zip(eqv_path[:-1], eqv_path[1:])]

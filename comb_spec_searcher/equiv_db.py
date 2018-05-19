@@ -1,8 +1,8 @@
 """
-A database to keep track of equivalent objects.
+A database to keep track of equivalent combinatorial classes.
 
-This is done using a union find method. Also, explanations of how objects are
-equivalent are maintained.
+This is done using a union find method. Also, explanations of how combinatorial
+classes  are equivalent are maintained.
 
 Based on: https://www.ics.uci.edu/~eppstein/PADS/UnionFind.py
 """
@@ -31,16 +31,36 @@ class EquivalenceDB(object):
         self.explanations = {}
         self.verified_roots = set()
 
-    def __getitem__(self, obj):
-        """Find and return root object for the set containing object."""
-        root = self.parents.get(obj)
-        if root is None:
-            self.parents[obj] = obj
-            self.weights[obj] = 1
-            return obj
+    def to_dict(self):
+        """Return dictionary object of self."""
+        return {
+            'parents': self.parents,
+            'weights': self.weights,
+            'explanations': self.explanations,
+            'verified_roots': self.verified_roots,
+        }
 
-        # Find path of object leading to root.
-        path = [obj]
+    @classmethod
+    def from_dict(cls, dict):
+        """Return EquivalenceDB object for dictionary object."""
+        equivdb = cls()
+        equivdb.parents = dict['parents']
+        equivdb.weights = dict['weights']
+        equivdb.explanations = dict['explanations']
+        equivdb.verified_roots = dict['verified_roots']
+        return equivdb
+
+    def __getitem__(self, comb_class):
+        """Find and return root combinatorial class for the set containing
+        comb_class."""
+        root = self.parents.get(comb_class)
+        if root is None:
+            self.parents[comb_class] = comb_class
+            self.weights[comb_class] = 1
+            return comb_class
+
+        # Find path of combinatorial class leading to root.
+        path = [comb_class]
         while root != path[-1]:
             path.append(root)
             root = self.parents[root]
@@ -69,36 +89,38 @@ class EquivalenceDB(object):
         """Return True if t1 and t2 are equivalent, False otherwise."""
         return self[t1] == self[t2]
 
-    def update_verified(self, obj):
-        """Update database that objects euivalent to object are verified."""
-        if not self.is_verified(obj):
-            self.verified_roots.add(self[obj])
+    def update_verified(self, comb_class):
+        """Update database that combinatorial classes equivalent to comb_class
+        are verified."""
+        if not self.is_verified(comb_class):
+            self.verified_roots.add(self[comb_class])
 
-    def is_verified(self, obj):
-        """Return true if any equivalent object is verified."""
-        return self[obj] in self.verified_roots
+    def is_verified(self, comb_class):
+        """Return true if any equivalent combinatorial class is verified."""
+        return self[comb_class] in self.verified_roots
 
-    def equivalent_set(self, obj):
-        equivalent_objs = set()
+    def equivalent_set(self, comb_class):
+        equivalent_classes = set()
         for t in self.parents:
-            if self.equivalent(obj, t):
-                equivalent_objs.add(t)
-        return equivalent_objs
+            if self.equivalent(comb_class, t):
+                equivalent_classes.add(t)
+        return equivalent_classes
 
-    def get_explanation(self, obj, other_obj, one_step=False):
-        """Return how two objects are equivalent using explanations."""
-        if obj == other_obj:
+    def get_explanation(self, comb_class, other_comb_class, one_step=False):
+        """Return how two combinatorial classes are equivalent using
+        explanations."""
+        if comb_class == other_comb_class:
             return ""
 
         if one_step:
-            explanation = self.explanations.get((obj, other_obj))
+            explanation = self.explanations.get((comb_class, other_comb_class))
             if explanation is None:
-                explanation = self.explanations.get((other_obj, obj))
+                explanation = self.explanations.get((other_comb_class, comb_class))
                 assert explanation is not None
                 explanation = "The reverse of: " + explanation
             return explanation
 
-        path = self.find_path(obj, other_obj)
+        path = self.find_path(comb_class, other_comb_class)
         if path:
             explanation = "| "
             for i in range(len(path) - 1):
@@ -117,43 +139,43 @@ class EquivalenceDB(object):
             return explanation
         raise KeyError("They are not equivalent.")
 
-    def get_equiv_info(self, obj, other_obj):
-        path = self.find_path(obj, other_obj)
-        formal_step = self.get_explanation(obj, other_obj, path)
+    def get_equiv_info(self, comb_class, other_comb_class):
+        path = self.find_path(comb_class, other_comb_class)
+        formal_step = self.get_explanation(comb_class, other_comb_class, path)
 
-    def find_path(self, obj, other_obj):
+    def find_path(self, comb_class, other_comb_class):
         """
         BFS for shortest path.
 
         Used to find shortest explanation of why things are equivalent.
         """
-        if not self.equivalent(obj, other_obj):
-            raise KeyError("The objects given are not equivalent.")
-        if obj == other_obj:
-            return [obj]
-        equivalent_objs = {}
+        if not self.equivalent(comb_class, other_comb_class):
+            raise KeyError("The classes given are not equivalent.")
+        if comb_class == other_comb_class:
+            return [comb_class]
+        equivalent_comb_classes = {}
         reverse_map = {}
 
         for x in self.parents:
-            n = len(equivalent_objs)
-            if self.equivalent(obj, x):
-                equivalent_objs[x] = n
+            n = len(equivalent_comb_classes)
+            if self.equivalent(comb_class, x):
+                equivalent_comb_classes[x] = n
                 reverse_map[n] = x
 
-        adjacency_list = [[] for i in range(len(equivalent_objs))]
+        adjacency_list = [[] for i in range(len(equivalent_comb_classes))]
         for (t1, t2) in self.explanations:
-            if self.equivalent(t1, obj):
-                u = equivalent_objs[t1]
-                v = equivalent_objs[t2]
+            if self.equivalent(t1, comb_class):
+                u = equivalent_comb_classes[t1]
+                v = equivalent_comb_classes[t2]
                 adjacency_list[u].append(v)
                 adjacency_list[v].append(u)
 
         dequeue = deque()
 
-        start = equivalent_objs[obj]
-        end = equivalent_objs[other_obj]
+        start = equivalent_comb_classes[comb_class]
+        end = equivalent_comb_classes[other_comb_class]
 
-        n = len(equivalent_objs)
+        n = len(equivalent_comb_classes)
 
         dequeue.append(start)
         visited = [False for i in range(n)]
