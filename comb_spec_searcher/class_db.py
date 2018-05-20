@@ -47,19 +47,18 @@ class Info(object):
     def from_dict(cls, dict):
         """Return Info object from dictionary."""
         return cls(
-            comb_class = dict['comb_class'],
-            label = dict['label'],
-            expanded = dict.get('expanded', 0),
-            symmetry_expanded = dict.get('symmetry_expanded', False),
-            initial_expanded = dict.get('initial_expanded', False),
-            expanding_children_only = dict.get('expanding_children_only',
-                                                      False),
-            expanding_other_sym = dict.get('expanding_other_sym', False),
-            expandable = dict.get('expandable', False),
-            inferral_expanded = dict.get('inferral_expanded', False),
-            verified = dict.get('verified', None),
-            empty = dict.get('empty', None),
-            strategy_verified = dict.get('strategy_verified', False),
+            comb_class=dict['comb_class'],
+            label=dict['label'],
+            expanded=dict.get('expanded', 0),
+            symmetry_expanded=dict.get('symmetry_expanded', False),
+            initial_expanded=dict.get('initial_expanded', False),
+            expanding_children_only=dict.get('expanding_children_only', False),
+            expanding_other_sym=dict.get('expanding_other_sym', False),
+            expandable=dict.get('expandable', False),
+            inferral_expanded=dict.get('inferral_expanded', False),
+            verified=dict.get('verified', None),
+            empty=dict.get('empty', None),
+            strategy_verified=dict.get('strategy_verified', False),
         )
 
     def __eq__(self, other):
@@ -77,6 +76,7 @@ class Info(object):
             self.empty == self.empty and
             self.strategy_verified == self.strategy_verified
         )
+
 
 class ClassDB(object):
     """
@@ -99,8 +99,8 @@ class ClassDB(object):
         Initialise.
 
         Two dictionaries allow you to call database with either the
-        combinatorial class, or the unique label of the combinatorial class. The
-        key can therefore be either the label or the combinatorial class.
+        combinatorial class, or the unique label of the combinatorial class.
+        The key can therefore be either the label or the combinatorial class.
         """
         self.class_to_info = {}
         self.label_to_info = {}
@@ -190,6 +190,7 @@ class ClassDB(object):
         return info
 
     def _compress(self, key):
+        """Return compressed version of combinatorial class."""
         try:
             return key.compress()
         except AttributeError:
@@ -197,6 +198,7 @@ class ClassDB(object):
                                   ".").format(self.combinatorial_class))
 
     def _decompress(self, key):
+        """Return decompressed version of compressed combinatorial class."""
         try:
             return self.combinatorial_class.decompress(key)
         except AttributeError:

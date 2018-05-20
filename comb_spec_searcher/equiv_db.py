@@ -115,7 +115,8 @@ class EquivalenceDB(object):
         if one_step:
             explanation = self.explanations.get((comb_class, other_comb_class))
             if explanation is None:
-                explanation = self.explanations.get((other_comb_class, comb_class))
+                explanation = self.explanations.get((other_comb_class,
+                                                     comb_class))
                 assert explanation is not None
                 explanation = "The reverse of: " + explanation
             return explanation

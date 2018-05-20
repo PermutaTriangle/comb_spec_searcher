@@ -96,7 +96,7 @@ class CombinatorialSpecificationSearcher(object):
             'strategy_generators': [[(f.__module__, f.__name__) for f in l]
                                     for l in self.strategy_generators],
             'inferral_strategies': [(f.__module__, f.__name__)
-                                     for f in self.inferral_strategies],
+                                    for f in self.inferral_strategies],
             'verification_strategies': [(f.__module__, f.__name__)
                                         for f in self.verification_strategies],
             'iterative': self.iterative,
@@ -162,7 +162,7 @@ class CombinatorialSpecificationSearcher(object):
             logger.warn('function_kwargs could not be recovered')
 
         css = cls(combinatorial_class.decompress(dict['start_class']),
-                  strategy_pack,**kwargs)
+                  strategy_pack, **kwargs)
         css.classdb = ClassDB.from_dict(dict['classdb'],
                                         combinatorial_class)
         css.equivdb = EquivalenceDB.from_dict(dict['equivdb'])
@@ -312,7 +312,8 @@ class CombinatorialSpecificationSearcher(object):
                                        repr(comb_class))),
                             extra=self.logger_kwargs)
                 continue
-            labels = [self.classdb.get_label(ob) for ob in strategy.comb_classes]
+            labels = [self.classdb.get_label(ob)
+                      for ob in strategy.comb_classes]
             start -= time.time()
             end_labels, classes, formal_step = self._strategy_cleanup(strategy,
                                                                       labels)
@@ -422,7 +423,7 @@ class CombinatorialSpecificationSearcher(object):
             assert start_count == end_counts[0]
         elif constructor == 'disjoint':
             assert start_count == [sum(c[i] for c in end_counts)
-                                 for i in range(length)]
+                                   for i in range(length)]
         elif constructor == 'cartesian':
             for i in range(length):
                 total = 0
@@ -495,8 +496,8 @@ class CombinatorialSpecificationSearcher(object):
             for sym_o, formal_step in self._symmetric_classes(
                                                 comb_class, explanation=True):
                 self.classdb.add(sym_comb_class,
-                                  expanding_other_sym=True,
-                                  symmetry_expanded=True)
+                                 expanding_other_sym=True,
+                                 symmetry_expanded=True)
                 self.equivdb.union(self.classdb.get_label(comb_class),
                                    self.classdb.get_label(sym_comb_class),
                                    formal_step)
@@ -576,7 +577,9 @@ class CombinatorialSpecificationSearcher(object):
             kwargs['subs'] = {}
 
         functions = {}
+
         def get_function(label):
+            """Return sympy function with label."""
             label = self.equivdb[label]
             function = functions.get(label)
             if function is None:
@@ -600,8 +603,8 @@ class CombinatorialSpecificationSearcher(object):
         for start, ends in self.ruledb:
             if kwargs.get('fake_verify'):
                 if (self.equivdb[start] not in verified_labels or
-                     any(self.equivdb[x] not in verified_labels
-                         for x in ends)):
+                    any(self.equivdb[x] not in verified_labels
+                        for x in ends)):
                     continue
                 strat_ver.add(start)
                 strat_ver.update(ends)
@@ -791,9 +794,8 @@ class CombinatorialSpecificationSearcher(object):
 
         status += "Time spent queueing: ~{} seconds, ~{}%\n".format(
                                         int(self.queue_time), int(queue_perc))
-        status += ("Time spent prepping for tree search: "
-                   "~{} seconds, ~{}%\n").format(int(prep_time),
-                                                int(prpts_perc))
+        status += ("Time spent prepping for tree search: ~{} seconds, "
+                   "~{}%\n").format(int(prep_time), int(prpts_perc))
         status += "Time spent searching for tree: ~{} seconds, ~{}%\n".format(
                                 int(self.tree_search_time), int(tsrch_perc))
 

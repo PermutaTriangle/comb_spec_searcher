@@ -27,6 +27,7 @@ class RuleDB(object):
         self.constructors = {}
 
     def to_dict(self):
+        """Return dictionary object of self."""
         return {
             'rules_dict': dict(self.rules_dict),
             'explanations': self.explanations,
@@ -35,12 +36,12 @@ class RuleDB(object):
 
     @classmethod
     def from_dict(cls, dict):
+        """Return RuleDB object from dictionary."""
         ruledb = RuleDB()
         ruledb.rules_dict = defaultdict(set, dict['rules_dict'])
         ruledb.explanations = dict['explanations']
         ruledb.constructors = dict['constructors']
         return ruledb
-
 
     def add(self, start, end, explanation, constructor):
         """
@@ -72,8 +73,6 @@ class RuleDB(object):
             self.constructors[start][end] = constructor
         else:
             self.constructors[start] = {end: constructor}
-
-
 
     def remove(self, start, end):
         """Remove rule from database."""

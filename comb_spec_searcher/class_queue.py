@@ -10,14 +10,13 @@ class ClassQueue(object):
     """
     The Queue determines the order that classes are expanded.
     """
-    def __init__(self, **kwargs):
+    def __init__(self):
+        """Initialise a ClassQueue."""
         self.working = deque()
         self.curr_level = deque()
         self.next_level = deque()
         self.levels_completed = 0
         self.ignore = set()
-        self.logger_kwargs = kwargs.get('logger_kwargs',
-                                        {'processname': 'runner'})
 
     def to_dict(self):
         """Return dictionary object of self."""
@@ -41,12 +40,15 @@ class ClassQueue(object):
         return queue
 
     def add_to_working(self, comb_class):
+        """Add combinatorial class to working queue."""
         self.working.append(comb_class)
 
     def add_to_next(self, comb_class):
+        """Add combinatorial class to next queue."""
         self.next_level.append(comb_class)
 
     def add_to_curr(self, comb_class):
+        """Add combinatorial class to current queue."""
         self.curr_level.append(comb_class)
 
     def next(self):
