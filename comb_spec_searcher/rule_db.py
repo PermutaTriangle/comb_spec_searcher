@@ -42,12 +42,8 @@ class RuleDB(object):
         """Return RuleDB object from dictionary."""
         ruledb = RuleDB()
         ruledb.rules_dict = defaultdict(set, dict['rules_dict'])
-        print(dict['explanations'])
-        for x, d in dict['explanations']:
-            print(x, d)
         ruledb.explanations = {x: {tuple(y): z for y, z in d}
                                for x, d in dict['explanations']}
-        print(dict['constructors'])
         ruledb.constructors = {x: {tuple(y): z for y, z in d}
                                for x, d in dict['constructors']}
         return ruledb
