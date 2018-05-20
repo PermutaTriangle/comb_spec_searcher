@@ -168,7 +168,7 @@ class ProofTreeNode(object):
                                                  str(self.label))(sympy.abc.x)
         return self.sympy_function
 
-    def get_equation(self, root_func=None, root_object=None,
+    def get_equation(self, root_func=None, root_class=None,
                      substitutions=False):
         lhs = self.get_function()
         if self.disjoint_union:
@@ -183,7 +183,7 @@ class ProofTreeNode(object):
             rhs = lhs
         elif self.strategy_verified:
             rhs = self.eqv_path_objects[-1].get_genf(root_func=root_func,
-                                                     root_object=root_object)
+                                                     root_class=root_class)
         else:
             raise NotImplementedError("Using an unimplemented constructor")
         return sympy.Eq(lhs, rhs)
@@ -237,13 +237,13 @@ class ProofTree(object):
         eqs = set()
         subs = {}
         root_func = self.root.get_function()
-        root_object = self.root.eqv_path_objects[0]
+        root_class = self.root.eqv_path_objects[0]
         for node in self.nodes():
             if node.recursion:
                 continue
             eqs.add(node.get_equation(substitutions=True,
                                       root_func=root_func,
-                                      root_object=root_object))
+                                      root_class=root_class))
         return eqs
 
     def get_genf(self, verbose=False, verify=8):
@@ -251,7 +251,7 @@ class ProofTree(object):
         is found. If not verify will return list of possible solutions."""
         # TODO: add substitutions, so as to solve with symbols first.
         eqs = self.get_equations()
-        root_object = self.root.eqv_path_objects[0]
+        root_class = self.root.eqv_path_objects[0]
         root_func = self.root.get_function()
         if verbose:
             print("The system of", len(eqs), "equations:")
@@ -266,7 +266,7 @@ class ProofTree(object):
                 return solutions
             if verbose and verify:
                 print("Solved, verifying solutions.")
-            objcounts = [len(list(root_object.objects_of_length(i)))
+            objcounts = [len(list(root_class.objects_of_length(i)))
                          for i in range(verify + 1)]
             for solution in solutions:
                 genf = solution[root_func]

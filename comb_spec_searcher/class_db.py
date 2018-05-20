@@ -24,7 +24,7 @@ class Info(object):
         self.inferral_expanded = kwargs.get('inferral_expanded', False)
         self.verified = kwargs.get('verified', None)
         self.empty = kwargs.get('empty', None)
-        self.strategy_verified = kwargs.get('strategy_verified', False)
+        self.strategy_verified = kwargs.get('strategy_verified', None)
 
     def to_dict(self):
         """Return dictionary object of self that is JSON serializable."""
@@ -48,8 +48,8 @@ class Info(object):
         """Return Info object from dictionary."""
         return cls(
             comb_class=dict['comb_class'].encode("utf-8"),
-            label=dict['label'],
-            expanded=dict.get('expanded', 0),
+            label=int(dict['label']),
+            expanded=int(dict.get('expanded', 0)),
             symmetry_expanded=dict.get('symmetry_expanded', False),
             initial_expanded=dict.get('initial_expanded', False),
             expanding_children_only=dict.get('expanding_children_only', False),
@@ -62,6 +62,7 @@ class Info(object):
         )
 
     def __eq__(self, other):
+        """Equal if all parameters are equal."""
         return (
             self.comb_class == self.comb_class and
             self.label == self.label and
@@ -122,6 +123,11 @@ class ClassDB(object):
             info = self.label_to_info.get(key)
         return info is not None
 
+    def __eq__(self, other):
+        """Equal if all information stored is the same."""
+        return (self.class_to_info == other.class_to_info and
+                self.label_to_info == other.label_to_info)
+
     def to_dict(self):
         """Return dictionary object of self."""
         return {label: info.to_dict()
@@ -133,6 +139,7 @@ class ClassDB(object):
         classdb = cls(combinatorial_class)
         for label, info in dict.items():
             info = Info.from_dict(info)
+            label = info.label
             comb_class = info.comb_class
             classdb.label_to_info[label] = info
             classdb.class_to_info[comb_class] = info
@@ -281,7 +288,8 @@ class ClassDB(object):
                 yield x
 
     def is_strategy_verified(self, key):
-        """Return True if combinatorial class verified by a strategy."""
+        """Return True if combinatorial class verified by a strategy.
+        Returns None if never updated."""
         return self._get_info(key).strategy_verified
 
     def set_strategy_verified(self, key, strategy_verified=True):

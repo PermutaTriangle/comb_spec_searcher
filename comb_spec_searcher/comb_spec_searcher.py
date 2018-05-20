@@ -3,6 +3,8 @@ from collections import defaultdict
 from logzero import logger
 from functools import reduce
 from operator import add, mul
+import logging
+import logzero
 import json
 import sympy
 
@@ -15,7 +17,6 @@ from .rule_db import RuleDB
 from .strategies import (Strategy, StrategyPack, VerificationStrategy)
 from .tree_searcher import (proof_tree_bfs, prune, iterative_prune,
                             iterative_proof_tree_bfs)
-
 
 class CombinatorialSpecificationSearcher(object):
     """
@@ -40,7 +41,7 @@ class CombinatorialSpecificationSearcher(object):
                                  "instance of strategy pack."))
         self.debug = kwargs.get('debug', True)
         if not self.debug:
-            logger.setLevel('INFO')
+            logzero.loglevel(logging.INFO, True)
         self.kwargs = kwargs.get('function_kwargs', dict())
         self.logger_kwargs = kwargs.get('logger_kwargs',
                                         {'processname': 'runner'})
@@ -153,7 +154,7 @@ class CombinatorialSpecificationSearcher(object):
         }
 
         try:
-            kwargs['loggger_kwargs'] = dict['logger_kwargs']
+            kwargs['logger_kwargs'] = dict['logger_kwargs']
         except Exception:
             logger.warn('logger_kwargs could not be recovered')
         try:
@@ -192,6 +193,8 @@ class CombinatorialSpecificationSearcher(object):
                 return
         elif self.equivdb.is_verified(label):
             return
+        if self.classdb.is_strategy_verified(label) is not None:
+            return
         for ver_strategy in self.verification_strategies:
             start = time.time()
             strategy = ver_strategy(comb_class, **self.kwargs)
@@ -205,7 +208,8 @@ class CombinatorialSpecificationSearcher(object):
                 self.classdb.set_verified(label, formal_step)
                 self.classdb.set_strategy_verified(label)
                 self.equivdb.update_verified(label)
-                break
+                return
+        self.classdb.set_strategy_verified(label, False)
 
     def is_empty(self, comb_class, label):
         """Return True if a combinatorial class contains no objects, False
@@ -612,18 +616,20 @@ class CombinatorialSpecificationSearcher(object):
             start_function = get_function(start)
             end_functions = (get_function(end) for end in ends)
             constructor = self.ruledb.constructor(start, ends)
-            if constructor is 'disjoint':
+            if constructor == 'disjoint' or constructor == 'equiv':
                 eq = sympy.Eq(start_function,
                               reduce(add, [f for f in end_functions], 0))
-            elif constructor is 'cartesian':
+            elif constructor == 'cartesian':
                 eq = sympy.Eq(start_function,
                               reduce(mul, [f for f in end_functions], 1))
             else:
-                raise NotImplementedError("Only handle cartesian and disjoint")
+                raise NotImplementedError(("Only handle cartesian and "
+                                           "disjoint. Don't understand"
+                                           " {}.".format(constructor)))
             equations.add(eq)
 
         kwargs['root_func'] = get_function(self.start_label)
-        kwargs['root_comb_class'] = self.start_class
+        kwargs['root_class'] = self.start_class
         for label in self.classdb:
             if kwargs.get('fake_verify') and label not in strat_ver:
                 continue

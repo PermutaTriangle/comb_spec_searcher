@@ -26,6 +26,12 @@ class RuleDB(object):
         self.explanations = {}
         self.constructors = {}
 
+    def __eq__(self, other):
+        """Check if all stored information is the same."""
+        return (self.rules_dict == other.rules_dict and
+                self.explanations == other.explanations and
+                self.constructors == other.constructors)
+
     def to_dict(self):
         """Return dictionary object of self that is JSON serializable."""
         return {
@@ -41,7 +47,8 @@ class RuleDB(object):
     def from_dict(cls, dict):
         """Return RuleDB object from dictionary."""
         ruledb = RuleDB()
-        ruledb.rules_dict = defaultdict(set, dict['rules_dict'])
+        ruledb.rules_dict = defaultdict(set, {x: {tuple(y) for y in z}
+                                        for x, z in dict['rules_dict']})
         ruledb.explanations = {x: {tuple(y): z for y, z in d}
                                for x, d in dict['explanations']}
         ruledb.constructors = {x: {tuple(y): z for y, z in d}

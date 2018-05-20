@@ -31,6 +31,13 @@ class EquivalenceDB(object):
         self.explanations = {}
         self.verified_roots = set()
 
+    def __eq__(self, other):
+        """Check if all information stored is the same."""
+        return (self.parents == other.parents and
+                self.weights == other.weights and
+                self.explanations == other.explanations and
+                self.verified_roots == other.verified_roots)
+
     def to_dict(self):
         """Return dictionary object of self that is JSON serializable."""
         return {
@@ -45,8 +52,8 @@ class EquivalenceDB(object):
     def from_dict(cls, dict):
         """Return EquivalenceDB object for dictionary object."""
         equivdb = cls()
-        equivdb.parents = dict['parents']
-        equivdb.weights = dict['weights']
+        equivdb.parents = {int(x): y for x, y in dict['parents'].items()}
+        equivdb.weights = {int(x): y for x, y in dict['weights'].items()}
         equivdb.explanations = {tuple(x): y
                                 for x, y in dict['explanations']}
         equivdb.verified_roots = set(dict['verified_roots'])
