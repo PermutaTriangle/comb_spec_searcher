@@ -27,9 +27,9 @@ class Info(object):
         self.strategy_verified = kwargs.get('strategy_verified', False)
 
     def to_dict(self):
-        """Return dictionary object of self."""
+        """Return dictionary object of self that is JSON serializable."""
         return {
-            'comb_class': self.comb_class,
+            'comb_class': self.comb_class.decode("utf-8"),
             'label': self.label,
             'expanded': self.expanded,
             'symmetry_expanded': self.symmetry_expanded,
@@ -47,7 +47,7 @@ class Info(object):
     def from_dict(cls, dict):
         """Return Info object from dictionary."""
         return cls(
-            comb_class=dict['comb_class'],
+            comb_class=dict['comb_class'].encode("utf-8"),
             label=dict['label'],
             expanded=dict.get('expanded', 0),
             symmetry_expanded=dict.get('symmetry_expanded', False),

@@ -19,13 +19,13 @@ class ClassQueue(object):
         self.ignore = set()
 
     def to_dict(self):
-        """Return dictionary object of self."""
+        """Return dictionary object of self that is JSON serializable."""
         return {
             'working': list(self.working),
             'curr_level': list(self.curr_level),
             'next_level': list(self.next_level),
             'levels_completed': self.levels_completed,
-            'ignore': self.ignore,
+            'ignore': list(self.ignore),
         }
 
     @classmethod
@@ -36,7 +36,7 @@ class ClassQueue(object):
         queue.curr_level = deque(dict['curr_level'])
         queue.next_level = deque(dict['next_level'])
         queue.levels_completed = dict['levels_completed']
-        queue.ignore = dict['ignore']
+        queue.ignore = set(dict['ignore'])
         return queue
 
     def add_to_working(self, comb_class):

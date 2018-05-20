@@ -27,11 +27,14 @@ class RuleDB(object):
         self.constructors = {}
 
     def to_dict(self):
-        """Return dictionary object of self."""
+        """Return dictionary object of self that is JSON serializable."""
         return {
-            'rules_dict': dict(self.rules_dict),
-            'explanations': self.explanations,
-            'constructors': self.constructors,
+            'rules_dict': [[x, [list(z) for z in y]]
+                            for x, y in self.rules_dict.items()],
+            'explanations': [[x, [[list(y), z] for y, z in d.items()]]
+                              for x, d in self.explanations.items()],
+            'constructors': [[x, [[list(y), z] for y, z in d.items()]]
+                              for x, d in self.constructors.items()],
         }
 
     @classmethod
@@ -39,8 +42,14 @@ class RuleDB(object):
         """Return RuleDB object from dictionary."""
         ruledb = RuleDB()
         ruledb.rules_dict = defaultdict(set, dict['rules_dict'])
-        ruledb.explanations = dict['explanations']
-        ruledb.constructors = dict['constructors']
+        print(dict['explanations'])
+        for x, d in dict['explanations']:
+            print(x, d)
+        ruledb.explanations = {x: {tuple(y): z for y, z in d}
+                               for x, d in dict['explanations']}
+        print(dict['constructors'])
+        ruledb.constructors = {x: {tuple(y): z for y, z in d}
+                               for x, d in dict['constructors']}
         return ruledb
 
     def add(self, start, end, explanation, constructor):

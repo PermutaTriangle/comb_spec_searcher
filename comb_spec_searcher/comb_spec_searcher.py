@@ -87,7 +87,7 @@ class CombinatorialSpecificationSearcher(object):
 
     def to_dict(self):
         return {
-            'start_class': self.start_class.compress(),
+            'start_class': self.start_class.compress().decode("utf-8"),
             'debug': self.debug,
             'kwargs': self.kwargs,
             'logger_kwargs': self.logger_kwargs,
@@ -161,8 +161,8 @@ class CombinatorialSpecificationSearcher(object):
         except Exception:
             logger.warn('function_kwargs could not be recovered')
 
-        css = cls(combinatorial_class.decompress(dict['start_class']),
-                  strategy_pack, **kwargs)
+        c = combinatorial_class.decompress(dict['start_class'].encode("utf-8"))
+        css = cls(c, strategy_pack, **kwargs)
         css.classdb = ClassDB.from_dict(dict['classdb'],
                                         combinatorial_class)
         css.equivdb = EquivalenceDB.from_dict(dict['equivdb'])

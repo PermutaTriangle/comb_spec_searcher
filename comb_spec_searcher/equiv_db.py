@@ -32,12 +32,13 @@ class EquivalenceDB(object):
         self.verified_roots = set()
 
     def to_dict(self):
-        """Return dictionary object of self."""
+        """Return dictionary object of self that is JSON serializable."""
         return {
             'parents': self.parents,
             'weights': self.weights,
-            'explanations': self.explanations,
-            'verified_roots': self.verified_roots,
+            'explanations': [(list(x), y)
+                             for x, y in self.explanations.items()],
+            'verified_roots': list(self.verified_roots),
         }
 
     @classmethod
@@ -46,8 +47,9 @@ class EquivalenceDB(object):
         equivdb = cls()
         equivdb.parents = dict['parents']
         equivdb.weights = dict['weights']
-        equivdb.explanations = dict['explanations']
-        equivdb.verified_roots = dict['verified_roots']
+        equivdb.explanations = {tuple(x): y
+                                for x, y in dict['explanations']}
+        equivdb.verified_roots = set(dict['verified_roots'])
         return equivdb
 
     def __getitem__(self, comb_class):
