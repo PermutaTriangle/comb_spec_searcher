@@ -155,7 +155,7 @@ class CombinatorialSpecificationSearcher(object):
             expansion_strats=[[get_func(*mod_func_name)
                                for mod_func_name in l]
                               for l in dict['strategy_generators']],
-            name="recovered tilescope")
+            name="recovered strategy pack")
 
         kwargs = {
           'debug': dict['debug'],
@@ -744,7 +744,7 @@ class CombinatorialSpecificationSearcher(object):
 
     def status(self):
         """
-        Return a string of the current status of the tilescope.
+        Return a string of the current status of the CombSpecSearcher.
 
         It includes:
         - number of combinatorial classes, and information about verification
@@ -826,48 +826,58 @@ class CombinatorialSpecificationSearcher(object):
         status += "Total of ~{}% accounted for.\n".format(int(total_perc))
         return status
 
+    def run_information(self):
+        """Return string detailing what CombSpecSearcher is looking for."""
+        start_string = ("Looking for {} combinatorial specification"
+                        " for:\n").format(
+                            'iterative' if self.iterative else 'recursive')
+        start_string += self.classdb.get_class(
+                                            self.start_label).__repr__()
+        start_string += "\n"
+        start_string += "The strategies being used are:\n"
+        initial_strats = ", ".join(f.__name__
+                                   for f in self.initial_strategies)
+        infer_strats = ", ".join(f.__name__
+                                 for f in self.inferral_strategies)
+        verif_strats = ", ".join(f.__name__
+                                 for f in self.verification_strategies)
+        start_string += "Inferral: {}\n".format(infer_strats)
+        start_string += "Initial: {}\n".format(initial_strats)
+        start_string += "Verification: {}\n".format(verif_strats)
+        if self.forward_equivalence:
+            start_string += "Using forward equivalence only.\n"
+        if self.symmetries:
+            symme_strats = self._strategies_to_str(self.symmetries)
+            start_string += "Symmetries: {}\n".format(symme_strats)
+        for i, strategies in enumerate(self.strategy_generators):
+            strats = ", ".join(f.__name__ for f in strategies)
+            start_string += "Set {}: {}\n".format(str(i+1), strats)
+        return start_string
+
     def auto_search(self, perc=1, verbose=False,
                     status_update=None, max_time=None, save=False):
         """
         An automatic search function.
 
-        It will expand classes until perc*(tree search time) has passed and then
-        search for a tree.
+        It will expand classes until perc*(tree search time) has passed and
+        then search for a tree.
 
         If verbose=True, a status update is given when a tree is found and
         after status_update many seconds have passed. It will also print
         the proof tree, in json formats.
+
+        If save, it will print out a json string of CombSpecSearcher.
         """
+        if not 0 < perc <= 100:
+            logger.warn(("Percentage not between 0 and 100, so assuming 1%"
+                         " search percentage."), extra=self.logger_kwargs)
+            perc = 1
         if verbose:
             if status_update:
                 status_start = time.time()
-            start_string = ""
-            start_string += "Auto search started {}\n".format(
+            start_string = "Auto search started {}\n".format(
                         time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()))
-            start_string += ("Looking for {} combinatorial specification"
-                             " for:\n").format(
-                                'iterative' if self.iterative else 'recursive')
-            start_string += self.classdb.get_class(
-                                                self.start_label).__repr__()
-            start_string += "\n"
-            start_string += "The strategies being used are:\n"
-            initial_strats = ", ".join(f.__name__
-                                       for f in self.initial_strategies)
-            infer_strats = ", ".join(f.__name__
-                                     for f in self.inferral_strategies)
-            verif_strats = ", ".join(f.__name__
-                                     for f in self.verification_strategies)
-            start_string += "Inferral: {}\n".format(infer_strats)
-            start_string += "Initial: {}\n".format(initial_strats)
-            start_string += "Verification: {}\n".format(verif_strats)
-            if self.forward_equivalence:
-                start_string += "Using forward equivalence only.\n"
-            if self.symmetries:
-                symme_strats = self._strategies_to_str(self.symmetries)
-                start_string += "Symmetries: {}\n".format(symme_strats)
-            for i, strategies in enumerate(self.strategy_generators):
-                strats = ", ".join(f.__name__ for f in strategies)
-                start_string += "Set {}: {}\n".format(str(i+1), strats)
+            start_string += self.run_information()
             logger.info(start_string, extra=self.logger_kwargs)
 
         max_search_time = 0
@@ -883,27 +893,16 @@ class CombinatorialSpecificationSearcher(object):
                 if self.expand_classes(1):
                     # this function returns True if no more classes to expand
                     expanding = False
+                    logger.info("No more classes to expand.",
+                                extra=self.logger_kwargs)
                     break
             start = time.time()
-            logger.debug("Searching for tree", extra=self.logger_kwargs)
-            proof_tree = self.get_proof_tree()
+            proof_tree = self.get_proof_tree(verbose=verbose)
+            if proof_tree is not None:
+                return proof_tree
             # worst case, search every hour
-            if not 0 < perc <= 100:
-                logger.warn(("Percentage not between 0 and 100, so assuming 1%"
-                             " search percentage."), extra=self.logger_kwargs)
-                perc = 1
             multiplier = 100 // perc
             max_search_time = min(multiplier*(time.time() - start), 3600)
-            if proof_tree is not None:
-                if verbose:
-                    found_string = "Proof tree found {}\n".format(
-                        time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()))
-                    found_string += "Time taken was {} seconds\n\n".format(
-                                                              self._time_taken)
-                    found_string += self.status()
-                    found_string += json.dumps(proof_tree.to_jsonable())
-                    logger.info(found_string, extra=self.logger_kwargs)
-                return proof_tree
             if max_time is not None:
                 if self._time_taken > max_time:
                     if verbose:
@@ -996,11 +995,23 @@ class CombinatorialSpecificationSearcher(object):
         self._time_taken += time.time() - start
         return proof_tree
 
-    def get_proof_tree(self, count=False):
-        """Return proof tree if one exists."""
+    def get_proof_tree(self, count=False, verbose=False):
+        """
+        Return proof tree if one exists.
+
+        If verbose, print it out."""
+        logger.debug("Searching for tree", extra=self.logger_kwargs)
         proof_tree_node = self.find_tree()
         if proof_tree_node is not None:
             proof_tree = ProofTree.from_comb_spec_searcher(proof_tree_node,
                                                            self)
             assert proof_tree is not None
+            if proof_tree is not None and verbose:
+                found_string = "Proof tree found {}\n".format(
+                    time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()))
+                found_string += "Time taken was {} seconds\n\n".format(
+                                                          self._time_taken)
+                found_string += self.status()
+                found_string += json.dumps(proof_tree.to_jsonable())
+                logger.info(found_string, extra=self.logger_kwargs)
             return proof_tree
