@@ -1,7 +1,8 @@
 import time
+from base64 import b64decode, b64encode
 from collections import defaultdict
 from logzero import logger
-from functools import reduce
+from functools import partial, reduce
 from operator import add, mul
 import logging
 import logzero
@@ -39,7 +40,7 @@ class CombinatorialSpecificationSearcher(object):
             if not isinstance(strategy_pack, StrategyPack):
                 raise TypeError(("Strategy pack given not "
                                  "instance of strategy pack."))
-        self.debug = kwargs.get('debug', True)
+        self.debug = kwargs.get('debug', False)
         if not self.debug:
             logzero.loglevel(logging.INFO, True)
         self.kwargs = kwargs.get('function_kwargs', dict())
@@ -87,18 +88,27 @@ class CombinatorialSpecificationSearcher(object):
         self.class_genf = {}
 
     def to_dict(self):
+
+        def get_module_and_func_names(f):
+            if isinstance(f, partial):
+                f = f.func
+                logger.warn(("forgetting kwargs given to partial function "
+                             "using strategy " + f.__name__),
+                            extra=self.logger_kwargs)
+            return (f.__module__, f.__name__)
+
         return {
-            'start_class': self.start_class.compress().decode("utf-8"),
+            'start_class': b64encode(self.start_class.compress()).decode(),
             'debug': self.debug,
             'kwargs': self.kwargs,
             'logger_kwargs': self.logger_kwargs,
-            'initial_strategies': [(f.__module__, f.__name__)
+            'initial_strategies': [get_module_and_func_names(f)
                                    for f in self.initial_strategies],
-            'strategy_generators': [[(f.__module__, f.__name__) for f in l]
+            'strategy_generators': [[get_module_and_func_names(f) for f in l]
                                     for l in self.strategy_generators],
-            'inferral_strategies': [(f.__module__, f.__name__)
+            'inferral_strategies': [get_module_and_func_names(f)
                                     for f in self.inferral_strategies],
-            'verification_strategies': [(f.__module__, f.__name__)
+            'verification_strategies': [get_module_and_func_names(f)
                                         for f in self.verification_strategies],
             'iterative': self.iterative,
             'forward_equivalence': self.forward_equivalence,
@@ -161,8 +171,8 @@ class CombinatorialSpecificationSearcher(object):
             kwarg['function_kwargs'] = dict['function_kwargs']
         except Exception:
             logger.warn('function_kwargs could not be recovered')
-
-        c = combinatorial_class.decompress(dict['start_class'].encode("utf-8"))
+        b = b64decode(dict['start_class'].encode())
+        c = combinatorial_class.decompress(b)
         css = cls(c, strategy_pack, **kwargs)
         css.classdb = ClassDB.from_dict(dict['classdb'],
                                         combinatorial_class)
@@ -180,6 +190,16 @@ class CombinatorialSpecificationSearcher(object):
         css._time_taken = dict['_time_taken']
         return css
 
+    def update_status(self, strategy, time_taken):
+        """Update that it took 'time_taken' to expand a combinatorial class
+        with strategy 'func'"""
+        if isinstance(strategy, partial):
+            name = strategy.func.__name__
+        else:
+            name = strategy.__name__
+        self.strategy_times[name] += time_taken
+        self.strategy_expansions[name] += 1
+
     def try_verify(self, comb_class, label, force=False):
         """
         Try to verify the combinatorial class.
@@ -193,13 +213,12 @@ class CombinatorialSpecificationSearcher(object):
                 return
         elif self.equivdb.is_verified(label):
             return
-        if self.classdb.is_strategy_verified(label) is not None:
-            return
+        # if self.classdb.is_strategy_verified(label) is not None:
+        #     return
         for ver_strategy in self.verification_strategies:
             start = time.time()
             strategy = ver_strategy(comb_class, **self.kwargs)
-            self.strategy_times[ver_strategy.__name__] += time.time() - start
-            self.strategy_expansions[ver_strategy.__name__] += 1
+            self.update_status(ver_strategy, time.time() - start)
             if strategy is not None:
                 if not isinstance(strategy, VerificationStrategy):
                     raise TypeError(("Attempting to verify with non "
@@ -222,9 +241,7 @@ class CombinatorialSpecificationSearcher(object):
             else:
                 self.classdb.set_empty(label, empty=False)
                 assert not self.classdb.is_empty(label)
-            self.strategy_expansions[self.is_empty.__name__] += 1
-            self.strategy_times[self.is_empty.__name__] += (time.time() -
-                                                            start)
+            self.update_status(self.is_empty, time.time() - start)
         return self.classdb.is_empty(label)
 
     def _symmetric_classes(self, comb_class, explanation=False):
@@ -345,8 +362,7 @@ class CombinatorialSpecificationSearcher(object):
                 self._add_rule(label, end_labels, formal_step, constructor,
                                initial)
 
-        self.strategy_times[strategy_function.__name__] += time.time() - start
-        self.strategy_expansions[strategy_function.__name__] += 1
+        self.update_status(strategy_function, time.time() - start)
         if inferral:
             return inf_class, inf_label
 
@@ -810,12 +826,12 @@ class CombinatorialSpecificationSearcher(object):
         status += "Total of ~{}% accounted for.\n".format(int(total_perc))
         return status
 
-    def auto_search(self, cap=100, verbose=False,
-                    status_update=None, max_time=None):
+    def auto_search(self, perc=1, verbose=False,
+                    status_update=None, max_time=None, save=False):
         """
         An automatic search function.
 
-        It will expand classes until cap*(tree search time) has passed and then
+        It will expand classes until perc*(tree search time) has passed and then
         search for a tree.
 
         If verbose=True, a status update is given when a tree is found and
@@ -872,7 +888,12 @@ class CombinatorialSpecificationSearcher(object):
             logger.debug("Searching for tree", extra=self.logger_kwargs)
             proof_tree = self.get_proof_tree()
             # worst case, search every hour
-            max_search_time = min(cap*(time.time() - start), 3600)
+            if not 0 < perc <= 100:
+                logger.warn(("Percentage not between 0 and 100, so assuming 1%"
+                             " search percentage."), extra=self.logger_kwargs)
+                perc = 1
+            multiplier = 100 // perc
+            max_search_time = min(multiplier*(time.time() - start), 3600)
             if proof_tree is not None:
                 if verbose:
                     found_string = "Proof tree found {}\n".format(
@@ -885,7 +906,12 @@ class CombinatorialSpecificationSearcher(object):
                 return proof_tree
             if max_time is not None:
                 if self._time_taken > max_time:
-                    self.status()
+                    if verbose:
+                        logger.info(self.status(), extra=self.logger_kwargs)
+                    if save:
+                        string = "The universe: \n"
+                        string += json.dumps(self.to_dict())
+                        logger.info(string, extra=self.logger_kwargs)
                     logger.warn("Exceeded maximum time. Aborting auto search.",
                                 extra=self.logger_kwargs)
                     return

@@ -412,20 +412,20 @@ class ProofTree(object):
                                                         child, css, next_label)
                         strat_children.append(sub_tree)
                         break
-            if constructor is 'cartesian':
+            if constructor == 'cartesian':
                 # decomposition!
                 return ProofTreeNode(label, eqv_path, eqv_objs,
                                      eqv_explanations, decomposition=True,
                                      formal_step=formal_step,
                                      children=strat_children)
-            elif constructor is 'disjoint' or constructor is 'equiv':
+            elif constructor == 'disjoint' or constructor == 'equiv':
                 # batch!
                 return ProofTreeNode(label, eqv_path, eqv_objs,
                                      eqv_explanations, disjoint_union=True,
                                      formal_step=formal_step,
                                      children=strat_children)
             else:
-                print(constructor)
+                print(constructor, type(constructor))
                 raise NotImplementedError("Only handle cartesian and disjoint")
 
     def __eq__(self, other):

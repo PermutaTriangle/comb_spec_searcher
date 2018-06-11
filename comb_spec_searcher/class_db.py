@@ -5,6 +5,8 @@ Contains information about if combinatorial classes have been expanded, found
 by symmetries etc. It gives each combinatorial class a unique label.
 """
 
+from base64 import b64decode, b64encode
+from logzero import logger
 from .combinatorial_class import CombinatorialClass
 
 
@@ -28,8 +30,15 @@ class Info(object):
 
     def to_dict(self):
         """Return dictionary object of self that is JSON serializable."""
+        try:
+            b64encode(self.comb_class).decode()
+        except Exception as e:
+            logger.warn(("Lost information about tiling with encoding as:\n"
+                         "" + str(self.comb_class) + "\n" + str(e)))
+            print(self.comb_class)
+            return None
         return {
-            'comb_class': self.comb_class.decode("utf-8"),
+            'comb_class': b64encode(self.comb_class).decode(),
             'label': self.label,
             'expanded': self.expanded,
             'symmetry_expanded': self.symmetry_expanded,
@@ -47,7 +56,7 @@ class Info(object):
     def from_dict(cls, dict):
         """Return Info object from dictionary."""
         return cls(
-            comb_class=dict['comb_class'].encode("utf-8"),
+            comb_class=b64decode(dict['comb_class'].encode()),
             label=int(dict['label']),
             expanded=int(dict.get('expanded', 0)),
             symmetry_expanded=dict.get('symmetry_expanded', False),

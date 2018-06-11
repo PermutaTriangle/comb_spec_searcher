@@ -30,18 +30,25 @@ class CombinatorialClass(abc.ABC):
 
     @abc.abstractmethod
     def to_jsonable(self):
-        """Return JSONable data structure of the object"""
+        """Return JSONable data structure of the class"""
         return
 
     @abc.abstractmethod
     def compress(self):
-        """Return a compressed version of the object."""
+        """Return a compressed version of the class."""
         return
 
     @classmethod
     @abc.abstractmethod
     def decompress(cls, compressed):
-        """Return decompressed object from string by compress function."""
+        """Return decompressed class from string by compress function."""
+        return
+
+    @classmethod
+    @abc.abstractmethod
+    def from_string(cls, string):
+        """Return class from string. The string should be a simplified encoding
+        of combinatorial classes you wish to use the CombSpecSearcher on."""
         return
 
     @abc.abstractmethod
