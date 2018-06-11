@@ -36,11 +36,11 @@ class RuleDB(object):
         """Return dictionary object of self that is JSON serializable."""
         return {
             'rules_dict': [[x, [list(z) for z in y]]
-                            for x, y in self.rules_dict.items()],
+                           for x, y in self.rules_dict.items()],
             'explanations': [[x, [[list(y), z] for y, z in d.items()]]
-                              for x, d in self.explanations.items()],
+                             for x, d in self.explanations.items()],
             'constructors': [[x, [[list(y), z] for y, z in d.items()]]
-                              for x, d in self.constructors.items()],
+                             for x, d in self.constructors.items()],
         }
 
     @classmethod

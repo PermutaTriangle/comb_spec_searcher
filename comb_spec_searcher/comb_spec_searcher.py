@@ -19,6 +19,7 @@ from .strategies import (Strategy, StrategyPack, VerificationStrategy)
 from .tree_searcher import (proof_tree_bfs, prune, iterative_prune,
                             iterative_proof_tree_bfs)
 
+
 class CombinatorialSpecificationSearcher(object):
     """
     The CombinatorialSpecificationSearcher classs.
