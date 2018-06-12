@@ -18,6 +18,7 @@ from .rule_db import RuleDB
 from .strategies import (Strategy, StrategyPack, VerificationStrategy)
 from .tree_searcher import (proof_tree_bfs, prune, iterative_prune,
                             iterative_proof_tree_bfs)
+from .utils import get_func, get_func_name, get_module_and_func_names
 
 
 class CombinatorialSpecificationSearcher(object):
@@ -89,27 +90,23 @@ class CombinatorialSpecificationSearcher(object):
         self.class_genf = {}
 
     def to_dict(self):
-
-        def get_module_and_func_names(f):
-            if isinstance(f, partial):
-                f = f.func
-                logger.warn(("forgetting kwargs given to partial function "
-                             "using strategy " + f.__name__),
-                            extra=self.logger_kwargs)
-            return (f.__module__, f.__name__)
-
         return {
             'start_class': b64encode(self.start_class.compress()).decode(),
             'debug': self.debug,
             'kwargs': self.kwargs,
             'logger_kwargs': self.logger_kwargs,
-            'initial_strategies': [get_module_and_func_names(f)
+            'initial_strategies': [get_module_and_func_names(
+                                f, warn=True, logger_kwargs=self.logger_kwargs)
                                    for f in self.initial_strategies],
-            'strategy_generators': [[get_module_and_func_names(f) for f in l]
+            'strategy_generators': [[get_module_and_func_names(
+                                f, warn=True, logger_kwargs=self.logger_kwargs)
+                                     for f in l]
                                     for l in self.strategy_generators],
-            'inferral_strategies': [get_module_and_func_names(f)
+            'inferral_strategies': [get_module_and_func_names(
+                                f, warn=True, logger_kwargs=self.logger_kwargs)
                                     for f in self.inferral_strategies],
-            'verification_strategies': [get_module_and_func_names(f)
+            'verification_strategies': [get_module_and_func_names(
+                                f, warn=True, logger_kwargs=self.logger_kwargs)
                                         for f in self.verification_strategies],
             'iterative': self.iterative,
             'forward_equivalence': self.forward_equivalence,
@@ -131,20 +128,6 @@ class CombinatorialSpecificationSearcher(object):
 
     @classmethod
     def from_dict(cls, dict, combinatorial_class):
-        def get_func(module_name, func_name):
-            import importlib
-            try:
-                module = importlib.import_module(module_name)
-                try:
-                    func = getattr(module, func_name)
-                    assert callable(func)
-                    return func
-                except:
-                    logger.warn(("No function named " + func_name +
-                                 " in module " + module_name))
-            except Exception as e:
-                logger.warn("No module named " + module_name)
-
         from comb_spec_searcher.strategies.strategy_pack import StrategyPack
         strategy_pack = StrategyPack(
             initial_strats=[get_func(*mod_func_name)
@@ -194,10 +177,7 @@ class CombinatorialSpecificationSearcher(object):
     def update_status(self, strategy, time_taken):
         """Update that it took 'time_taken' to expand a combinatorial class
         with strategy 'func'"""
-        if isinstance(strategy, partial):
-            name = strategy.func.__name__
-        else:
-            name = strategy.__name__
+        name = get_func_name(strategy)
         self.strategy_times[name] += time_taken
         self.strategy_expansions[name] += 1
 
@@ -836,11 +816,11 @@ class CombinatorialSpecificationSearcher(object):
                                             self.start_label).__repr__()
         start_string += "\n"
         start_string += "The strategies being used are:\n"
-        initial_strats = ", ".join(f.__name__
+        initial_strats = ", ".join(get_func_name(f)
                                    for f in self.initial_strategies)
-        infer_strats = ", ".join(f.__name__
+        infer_strats = ", ".join(get_func_name(f)
                                  for f in self.inferral_strategies)
-        verif_strats = ", ".join(f.__name__
+        verif_strats = ", ".join(get_func_name(f)
                                  for f in self.verification_strategies)
         start_string += "Inferral: {}\n".format(infer_strats)
         start_string += "Initial: {}\n".format(initial_strats)
@@ -851,7 +831,7 @@ class CombinatorialSpecificationSearcher(object):
             symme_strats = self._strategies_to_str(self.symmetries)
             start_string += "Symmetries: {}\n".format(symme_strats)
         for i, strategies in enumerate(self.strategy_generators):
-            strats = ", ".join(f.__name__ for f in strategies)
+            strats = ", ".join(get_func_name(f) for f in strategies)
             start_string += "Set {}: {}\n".format(str(i+1), strats)
         return start_string
 

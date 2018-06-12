@@ -84,8 +84,6 @@ class ProofTreeNode(object):
     def sanity_check(self, length, of_length=None):
         if of_length is None:
             raise ValueError("of_length is undefined.")
-        if self.complement_verified:
-            return ("Don't use complement_verified, its dangerous.")
 
         number_objs = of_length(self.eqv_path_objects[0], length)
         for i, obj in enumerate(self.eqv_path_objects[1:]):
@@ -115,40 +113,24 @@ class ProofTreeNode(object):
                                           number_objs,
                                           total)
         if self.decomposition:
-            if not self.has_interleaving_decomposition():
-                child_objs = [child.eqv_path_objects[0]
-                              for child in self.children]
-                total = 0
-                for part in partitions_of_n_of_size_k(length, len(child_objs)):
-                    subtotal = 1
-                    for obj, partlen in zip(child_objs, part):
-                        if subtotal == 0:
-                            break
-                        subtotal *= of_length(obj, partlen)
-                    total += subtotal
-                if number_objs != total:
-                    return self._error_string(self.eqv_path_objects[0],
-                                              child_objs,
-                                              "Decomposition",
-                                              self.formal_step,
-                                              length,
-                                              number_objs,
-                                              total)
-
-    def has_interleaving_decomposition(self):
-        if self.back_maps is None:
-            return False
-        mixing = False
-        bmps1 = [{c[0] for c in dic.values()} for dic in self.back_maps]
-        bmps2 = [{c[1] for c in dic.values()} for dic in self.back_maps]
-        for i in range(len(self.back_maps)):
-            for j in range(len(self.back_maps)):
-                if i != j:
-                    if (bmps1[i] & bmps1[j]) or (bmps2[i] & bmps2[j]):
-                        mixing = True
-        if mixing:
-            return True
-        return False
+            child_objs = [child.eqv_path_objects[0]
+                          for child in self.children]
+            total = 0
+            for part in partitions_of_n_of_size_k(length, len(child_objs)):
+                subtotal = 1
+                for obj, partlen in zip(child_objs, part):
+                    if subtotal == 0:
+                        break
+                    subtotal *= of_length(obj, partlen)
+                total += subtotal
+            if number_objs != total:
+                return self._error_string(self.eqv_path_objects[0],
+                                          child_objs,
+                                          "Decomposition",
+                                          self.formal_step,
+                                          length,
+                                          number_objs,
+                                          total)
 
     def __eq__(self, other):
         return all([self.label == other.label,
