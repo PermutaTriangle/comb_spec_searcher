@@ -250,7 +250,6 @@ class ProofTree(object):
                 print("Solved, verifying solutions.")
             objcounts = [len(list(root_class.objects_of_length(i)))
                          for i in range(verify + 1)]
-            print(solutions)
             for solution in solutions:
                 genf = solution[root_func]
                 try:
