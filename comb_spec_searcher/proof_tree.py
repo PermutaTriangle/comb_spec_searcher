@@ -250,12 +250,13 @@ class ProofTree(object):
                 print("Solved, verifying solutions.")
             objcounts = [len(list(root_class.objects_of_length(i)))
                          for i in range(verify + 1)]
+            print(solutions)
             for solution in solutions:
                 genf = solution[root_func]
                 try:
                     expansion = taylor_expand(genf, verify)
-                except TypeError as e:
-                    print(e)
+                except Exception as e:
+                    # print(e)
                     continue
                 if objcounts == expansion:
                     return genf
