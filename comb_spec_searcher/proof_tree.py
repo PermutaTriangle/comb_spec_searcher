@@ -28,7 +28,6 @@ class ProofTreeNode(object):
         self.decomposition = decomposition
         self.disjoint_union = disjoint_union
         self.recursion = recursion
-        # TODO: Add assertions for assumptions made about each type of strategy
         self.formal_step = formal_step
         self.sympy_function = None
 
@@ -404,6 +403,11 @@ class ProofTree(object):
                 # batch!
                 return ProofTreeNode(label, eqv_path, eqv_objs,
                                      eqv_explanations, disjoint_union=True,
+                                     formal_step=formal_step,
+                                     children=strat_children)
+            elif constructor == 'other':
+                return ProofTreeNode(label, eqv_path, eqv_objs,
+                                     eqv_explanations,
                                      formal_step=formal_step,
                                      children=strat_children)
             else:

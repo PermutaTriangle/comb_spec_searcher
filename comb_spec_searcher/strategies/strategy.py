@@ -20,7 +20,6 @@ class Strategy(object):
         if not comb_classes:
             raise TypeError(("There are no combinatorial classes, a strategy"
                              " contains a list of combinatorial classes"))
-
         if not isinstance(workable, Iterable):
             raise TypeError("Workable should an iterable")
         if not comb_classes:
@@ -30,7 +29,7 @@ class Strategy(object):
             raise TypeError("Workable should be an iterable of booleans")
         if any(not isinstance(x, bool) for x in inferable):
             raise TypeError("Inferable should be an iterable of booleans")
-        if constructor not in ['disjoint', 'cartesian', 'equiv']:
+        if constructor not in ['disjoint', 'cartesian', 'equiv', 'other']:
             raise ValueError(("Not valid constructor. Only accepts"
                               " disjoint or cartesian."))
 
