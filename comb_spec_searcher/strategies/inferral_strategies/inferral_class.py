@@ -1,15 +1,8 @@
-"""A wrapper for inferral strategies."""
+"""A function for inferral strategies."""
+from comb_spec_searcher.strategies import Strategy
 
-class InferralStrategy(object):
-    """A wrapper for inferral strategies."""
 
-    def __init__(self, formal_step, obj):
-        """
-        Constructor for InferralStrategy.
-
-        Formal step is a string explaining how it was inferred to be object.
-        """
-        if not isinstance(formal_step, str):
-            raise TypeError("Formal step not a string")
-        self.formal_step = formal_step
-        self.object = obj
+def InferralStrategy(formal_step, comb_class):
+    """A function for inferral strategies."""
+    return Strategy(formal_step, [comb_class], [True], [True],
+                    ignore_parent=True, constructor='equiv')

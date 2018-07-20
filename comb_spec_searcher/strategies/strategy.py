@@ -11,34 +11,31 @@ from functools import partial
 
 
 class Strategy(object):
-    def __init__(self, formal_step, objects, workable, back_maps=None):
+    def __init__(self, formal_step, comb_classes, inferable, workable,
+                 ignore_parent=False, constructor='disjoint'):
         if not isinstance(formal_step, str):
             raise TypeError("Formal step not a string")
-        if not isinstance(objects, Iterable):
-            raise TypeError("The objects give are not iterable")
-        if not objects:
-            raise TypeError(("There are no objects, a strategy contains a list"
-                             " of objects"))
-
+        if not isinstance(comb_classes, Iterable):
+            raise TypeError("The combinatorial classes are not iterable")
+        if not comb_classes:
+            raise TypeError(("There are no combinatorial classes, a strategy"
+                             " contains a list of combinatorial classes"))
         if not isinstance(workable, Iterable):
             raise TypeError("Workable should an iterable")
-        if not objects:
-            raise TypeError(("There are no objects, a strategy contains a list"
-                             " of objects"))
+        if not comb_classes:
+            raise TypeError(("There are no combinatorial classes, a strategy"
+                             " contains a list of combinatorial classes"))
         if any(not isinstance(x, bool) for x in workable):
             raise TypeError("Workable should be an iterable of booleans")
-        if back_maps is not None:
-            if any(not isinstance(bm, dict) and not isinstance(bm, partial)
-                   for bm in back_maps):
-                raise TypeError("One of the maps is not a dictionary")
-            self.back_maps = [part_map for part_map in back_maps]
-        else:
-            self.back_maps = None
+        if any(not isinstance(x, bool) for x in inferable):
+            raise TypeError("Inferable should be an iterable of booleans")
+        if constructor not in ['disjoint', 'cartesian', 'equiv', 'other']:
+            raise ValueError(("Not valid constructor. Only accepts"
+                              " disjoint or cartesian."))
 
+        self.constructor = constructor
         self.formal_step = formal_step
-        self.objects = [object for object in objects]
+        self.comb_classes = [comb_class for comb_class in comb_classes]
         self.workable = [x for x in workable]
-
-    @property
-    def decomposition(self):
-        return self.back_maps is not None
+        self.inferable = [x for x in inferable]
+        self.ignore_parent = ignore_parent
