@@ -11,8 +11,8 @@ from functools import partial
 
 
 class Strategy(object):
-    def __init__(self, formal_step, comb_classes, inferable, workable,
-                 ignore_parent=False, constructor='disjoint'):
+    def __init__(self, formal_step, comb_classes, inferable, possibly_empty,
+                 workable, ignore_parent=False, constructor='disjoint'):
         if not isinstance(formal_step, str):
             raise TypeError("Formal step not a string")
         if not isinstance(comb_classes, Iterable):
@@ -36,6 +36,7 @@ class Strategy(object):
         self.constructor = constructor
         self.formal_step = formal_step
         self.comb_classes = [comb_class for comb_class in comb_classes]
-        self.workable = [x for x in workable]
         self.inferable = [x for x in inferable]
+        self.possibly_empty = [x for x in possibly_empty]
+        self.workable = [x for x in workable]
         self.ignore_parent = ignore_parent
