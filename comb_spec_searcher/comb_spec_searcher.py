@@ -152,7 +152,7 @@ class CombinatorialSpecificationSearcher(object):
         except Exception:
             logger.warn('logger_kwargs could not be recovered')
         try:
-            kwarg['function_kwargs'] = dict['function_kwargs']
+            kwargs['function_kwargs'] = dict['function_kwargs']
         except Exception:
             logger.warn('function_kwargs could not be recovered')
         b = b64decode(dict['start_class'].encode())
@@ -356,7 +356,7 @@ class CombinatorialSpecificationSearcher(object):
         if self.debug:
             try:
                 self._sanity_check_rule(start, [end], 'equiv')
-            except Exception as e:
+            except Exception:
                 error = ("Equivalent strategy did not work\n" +
                          repr(self.classdb.get_class(start)) + "\n" +
                          "is not equivalent to" + "\n" +
@@ -381,7 +381,7 @@ class CombinatorialSpecificationSearcher(object):
         if self.debug:
             try:
                 self._sanity_check_rule(start, ends, constructor)
-            except Exception as e:
+            except Exception:
                 error = ("Expansion strategy did not work\n" +
                          repr(self.classdb.get_class(start)) + "\n" +
                          "is equivalent to" + "\n" +
@@ -450,8 +450,10 @@ class CombinatorialSpecificationSearcher(object):
         end_labels = []
         end_classes = []
         inferral_steps = []
-        for comb_class, infer, work, label in zip(strategy.comb_classes,
+        for comb_class, infer, pos_empty, work, label in zip(
+                                                  strategy.comb_classes,
                                                   strategy.inferable,
+                                                  strategy.possibly_empty,
                                                   strategy.workable, labels):
             inferral_step = ""
             if self.symmetries:
@@ -462,9 +464,9 @@ class CombinatorialSpecificationSearcher(object):
 
             self.try_verify(comb_class, label)
 
-            # Only applying is_empty check to inferrable comb classes and
-            # non-equivalent strategies.
-            if infer and len(labels) > 1 and self.is_empty(comb_class, label):
+            # Only applying is_empty check to inferrable comb classes that are
+            # possibly empty.
+            if infer and pos_empty and self.is_empty(comb_class, label):
                 inferral_steps.append(inferral_step + "Class is empty.")
                 continue
 
@@ -496,7 +498,7 @@ class CombinatorialSpecificationSearcher(object):
         """Add symmetries of combinatorial class to the database."""
         start = time.time()
         if not self.classdb.is_symmetry_expanded(comb_class):
-            for sym_o, formal_step in self._symmetric_classes(
+            for sym_comb_class, formal_step in self._symmetric_classes(
                                                 comb_class, explanation=True):
                 self.classdb.add(sym_comb_class,
                                  expanding_other_sym=True,
@@ -830,7 +832,8 @@ class CombinatorialSpecificationSearcher(object):
         if self.forward_equivalence:
             start_string += "Using forward equivalence only.\n"
         if self.symmetries:
-            symme_strats = self._strategies_to_str(self.symmetries)
+            symme_strats = ", ".join(get_func_name(f) 
+                                     for f in self.symmetries)
             start_string += "Symmetries: {}\n".format(symme_strats)
         for i, strategies in enumerate(self.strategy_generators):
             strats = ", ".join(get_func_name(f) for f in strategies)
