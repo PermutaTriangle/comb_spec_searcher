@@ -462,7 +462,9 @@ class CombinatorialSpecificationSearcher(object):
 
             self.try_verify(comb_class, label)
 
-            if infer and self.is_empty(comb_class, label):
+            # Only applying is_empty check to inferrable comb classes and
+            # non-equivalent strategies.
+            if infer and len(labels) > 1 and self.is_empty(comb_class, label):
                 inferral_steps.append(inferral_step + "Class is empty.")
                 continue
 
