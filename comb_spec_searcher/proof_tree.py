@@ -227,7 +227,7 @@ class ProofTree(object):
                                       root_class=root_class))
         return eqs
 
-    def get_genf(self, verbose=False, verify=8):
+    def get_genf(self, verbose=False, verify=8, groebner=True):
         """Find generating function for proof tree. Return None if no solution
         is found. If not verify will return list of possible solutions."""
         # TODO: add substitutions, so as to solve with symbols first.
@@ -240,8 +240,22 @@ class ProofTree(object):
                 print(eq.lhs, "=", eq.rhs)
             print()
             print("Solving...")
-        solutions = sympy.solve(eqs, tuple([eq.lhs for eq in eqs]), dict=True,
-                                cubics=False, quartics=False, quintics=False)
+        if groebner:
+            all_funcs = set(x for eq in eqs for x in eq.atoms(sympy.Function))
+            all_funcs.remove(root_func)
+            basis = sympy.groebner(eqs, *all_funcs, root_func, wrt=[sympy.abc.x], order='grevlex')
+            solutions = []
+            for poly in basis.polys:
+                if poly.atoms(sympy.Function) == {root_func}:
+                    eq = poly.as_expr()
+                    print(eq)
+                    solutions.extend(sympy.solve(eq, root_func, dict=True,
+                                                 cubics=False, quartics=False,
+                                                 quintics=False))
+        else:
+            solutions = sympy.solve(eqs, tuple([eq.lhs for eq in eqs]),
+                                    dict=True, cubics=False, quartics=False,
+                                    quintics=False)
         if solutions:
             if not verify:
                 return solutions
