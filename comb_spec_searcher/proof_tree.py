@@ -278,9 +278,21 @@ class ProofTree(object):
         for node in self.nodes():
             count += len(node.eqv_path_objects)
         return count
+    
+    def objects(self, root=None):
+        for node in self.nodes():
+            for obj in node.eqv_path_objects:
+                yield obj
 
     def sanity_check(self, length=8, raiseerror=True):
         overall_error = ""
+        for obj in self.objects():
+            if obj.is_empty():
+                error = "Combinatorial class is empty!\n{}\n".format(repr(obj))
+                if raiseerror:
+                    raise InsaneTreeError(error)
+                else:
+                    overall_error += error
         for node in self.nodes():
             error = node.sanity_check(length, self._of_length)
             if error is not None:
