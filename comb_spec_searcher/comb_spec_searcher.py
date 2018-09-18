@@ -469,6 +469,9 @@ class CombinatorialSpecificationSearcher(object):
             if infer and pos_empty and self.is_empty(comb_class, label):
                 inferral_steps.append(inferral_step + "Class is empty.")
                 continue
+            
+            if not pos_empty:
+                self.classdb.set_empty(label, empty=False)
 
             if work:
                 self.classdb.set_expandable(label)
