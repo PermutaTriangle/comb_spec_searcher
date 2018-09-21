@@ -316,9 +316,23 @@ class CombinatorialSpecificationSearcher(object):
                 continue
             labels = [self.classdb.get_label(ob)
                       for ob in strategy.comb_classes]
+
+            if label in labels:
+                # This says comb_class = comb_class, so we skip it, but mark 
+                # every other class as empty.
+                for l in labels:
+                    if l != label:
+                        self.classdb.set_empty(l, empty=False)
+                if self.debug:
+                    for l, c in zip(labels, strategy.comb_classes):
+                        if l != label:
+                            assert c.is_empty()
+                continue
+           
             start -= time.time()
             end_labels, classes, formal_step = self._strategy_cleanup(strategy,
                                                                       labels)
+
             start += time.time()
 
             if strategy.ignore_parent:
@@ -329,26 +343,25 @@ class CombinatorialSpecificationSearcher(object):
                 # all the classes are empty so the class itself must be empty!
                 self._add_empty_rule(label, "batch empty")
                 break
-            elif inferral:
-                inf_class = classes[0]
-                inf_label = end_labels[0]
-                self._add_equivalent_rule(label, end_labels[0],
-                                          formal_step, inferral, initial)
-            elif not self.forward_equivalence and len(end_labels) == 1:
+            elif len(end_labels) == 1:
                 # If we have an equivalent rule
-                self._add_equivalent_rule(label, end_labels[0],
-                                          formal_step, inferral, initial)
+                self._add_equivalent_rule(label, end_labels[0], formal_step)
+                if inferral:
+                    inf_class = classes[0]
+                    inf_label = end_labels[0]
             else:
                 constructor = strategy.constructor
-                self._add_rule(label, end_labels, formal_step, constructor,
-                               initial)
+                self._add_rule(label, end_labels, formal_step, constructor)
+
+            for end_label in end_labels:
+                self._add_to_queue(end_label, initial, inferral)
 
         self.update_status(strategy_function, time.time() - start)
+        
         if inferral:
             return inf_class, inf_label
 
-    def _add_equivalent_rule(self, start, end, explanation,
-                             inferral, initial):
+    def _add_equivalent_rule(self, start, end, explanation):
         """Add equivalent strategy to equivdb and equivalent combinatorial
         class to queue"""
         if explanation is None:
@@ -363,14 +376,12 @@ class CombinatorialSpecificationSearcher(object):
                          repr(self.classdb.get_class(end)) + "\n" +
                          "formal step:" + explanation)
                 logger.warn(error, extra=self.logger_kwargs)
-        self.equivdb.union(start, end, explanation)
-        if inferral or not initial:
-            self.classqueue.add_to_working(end)
+        if self.forward_equivalence:
+            self._add_rule(start, [end], explanation, "disjoint")
         else:
-            self.classqueue.add_to_next(end)
+            self.equivdb.union(start, end, explanation)
 
-    def _add_rule(self, start, ends, explanation=None, constructor=None,
-                  initial=False):
+    def _add_rule(self, start, ends, explanation=None, constructor=None):
         """Add rule to the rule database and end labels to queue."""
         if explanation is None:
             explanation = "Some strategy."
@@ -392,11 +403,13 @@ class CombinatorialSpecificationSearcher(object):
                         ends,
                         explanation,
                         constructor)
-        for end_label in ends:
-            if initial:
-                self.classqueue.add_to_next(end_label)
-            else:
-                self.classqueue.add_to_working(end_label)
+
+    def _add_to_queue(self, label, initial=False, inferral=False):
+        """Add a label back onto the queue."""
+        if inferral or not initial:
+            self.classqueue.add_to_working(label)
+        else:
+            self.classqueue.add_to_next(label)
 
     def _add_empty_rule(self, label, explanation=None):
         """Mark label as empty. Treated as verified as can count empty set."""
