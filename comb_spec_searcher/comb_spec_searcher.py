@@ -317,15 +317,16 @@ class CombinatorialSpecificationSearcher(object):
             labels = [self.classdb.get_label(ob)
                       for ob in strategy.comb_classes]
 
-            if label in labels:
+            # if label in labels:
+            if any(self.equivdb[label] == self.equivdb[l] for l in labels):
                 # This says comb_class = comb_class, so we skip it, but mark 
                 # every other class as empty.
                 for l in labels:
-                    if l != label:
-                        self.classdb.set_empty(l, empty=False)
+                    if self.equivdb[label] != self.equivdb[l]:
+                        self.classdb.set_empty(l, empty=True)
                 if self.debug:
                     for l, c in zip(labels, strategy.comb_classes):
-                        if l != label:
+                        if self.equivdb[label] != self.equivdb[l]:
                             assert c.is_empty()
                 continue
            
