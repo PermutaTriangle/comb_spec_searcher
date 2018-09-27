@@ -23,7 +23,7 @@ from .tree_searcher import (proof_tree_bfs, prune, iterative_prune,
 from .utils import get_func, get_func_name, get_module_and_func_names
 
 def nice_mem(mem):
-    if (mem / 1024 / 1024 < 1):
+    if (mem / 1024 / 1024 / 1024 < 1):
         return str(round(mem/1024/1024))+" MB"
     else:
         return str(round(mem/1024/1024/1024, 3))+" GB"
