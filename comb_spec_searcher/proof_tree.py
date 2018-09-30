@@ -150,7 +150,7 @@ class ProofTreeNode(object):
         return self.sympy_function
 
     def get_equation(self, root_func=None, root_class=None,
-                     substitutions=False):
+                     substitutions=False, dummy_eq=False):
         lhs = self.get_function()
         if self.disjoint_union:
             rhs = reduce(add,
@@ -163,10 +163,17 @@ class ProofTreeNode(object):
         elif self.recursion:
             rhs = lhs
         elif self.strategy_verified:
-            rhs = self.eqv_path_objects[-1].get_genf(root_func=root_func,
-                                                     root_class=root_class)
+            try:
+                rhs = self.eqv_path_objects[-1].get_genf(root_func=root_func,
+                                                         root_class=root_class)
+            except ValueError as e:
+                if not dummy_eq:
+                    raise ValueError(e)
+                rhs = sympy.Function("DOITYOURSELF")(sympy.abc.x)
         else:
-            raise NotImplementedError("Using an unimplemented constructor")
+            if not dummy_eq:
+                raise NotImplementedError("Using an unimplemented constructor")
+            rhs = sympy.Function("DOITYOURSELF")(sympy.abc.x)
         return sympy.Eq(lhs, rhs)
 
 
@@ -214,9 +221,8 @@ class ProofTree(object):
                 print(o.__repr__())
                 print()
 
-    def get_equations(self):
+    def get_equations(self, dummy_eqs=False):
         eqs = set()
-        subs = {}
         root_func = self.root.get_function()
         root_class = self.root.eqv_path_objects[0]
         for node in self.nodes():
@@ -224,7 +230,8 @@ class ProofTree(object):
                 continue
             eqs.add(node.get_equation(substitutions=True,
                                       root_func=root_func,
-                                      root_class=root_class))
+                                      root_class=root_class,
+                                      dummy_eq=dummy_eqs))
         return eqs
 
     def get_genf(self, verbose=False, verify=8):
