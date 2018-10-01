@@ -8,7 +8,8 @@ import logging
 import logzero
 import json
 import sympy
-import os,psutil
+import os
+import psutil
 
 
 from .equiv_db import EquivalenceDB
@@ -22,11 +23,13 @@ from .tree_searcher import (proof_tree_bfs, prune, iterative_prune,
                             iterative_proof_tree_bfs)
 from .utils import get_func, get_func_name, get_module_and_func_names
 
+
 def nice_mem(mem):
     if (mem / 1024 / 1024 / 1024 < 1):
         return str(round(mem/1024/1024))+" MB"
     else:
         return str(round(mem/1024/1024/1024, 3))+" GB"
+
 
 class CombinatorialSpecificationSearcher(object):
     """
@@ -326,7 +329,7 @@ class CombinatorialSpecificationSearcher(object):
 
             # if label in labels:
             if any(self.equivdb[label] == self.equivdb[l] for l in labels):
-                # This says comb_class = comb_class, so we skip it, but mark 
+                # This says comb_class = comb_class, so we skip it, but mark
                 # every other class as empty.
                 for l in labels:
                     if self.equivdb[label] != self.equivdb[l]:
@@ -336,7 +339,7 @@ class CombinatorialSpecificationSearcher(object):
                         if self.equivdb[label] != self.equivdb[l]:
                             assert c.is_empty()
                 continue
-           
+
             start -= time.time()
             end_labels, classes, formal_step = self._strategy_cleanup(strategy,
                                                                       labels)
@@ -365,7 +368,7 @@ class CombinatorialSpecificationSearcher(object):
                 self._add_to_queue(end_label, initial, inferral)
 
         self.update_status(strategy_function, time.time() - start)
-        
+
         if inferral:
             return inf_class, inf_label
 
@@ -490,7 +493,7 @@ class CombinatorialSpecificationSearcher(object):
             if infer and pos_empty and self.is_empty(comb_class, label):
                 inferral_steps.append(inferral_step + "Class is empty.")
                 continue
-            
+
             if not pos_empty:
                 self.classdb.set_empty(label, empty=False)
 
@@ -751,8 +754,6 @@ class CombinatorialSpecificationSearcher(object):
         self.queue_time += time.time() - queue_start
         self._time_taken += time.time() - start
 
-    
-
     def status(self):
         """
         Return a string of the current status of the CombSpecSearcher.
@@ -768,7 +769,8 @@ class CombinatorialSpecificationSearcher(object):
                                                         int(self._time_taken))
 
         process = psutil.Process(os.getpid())
-        status += "Memory currently in use: {}\n".format(nice_mem(process.memory_info().rss))
+        status += "Memory currently in use: {}\n".format(
+                                        nice_mem(process.memory_info().rss))
         all_labels = self.classdb.label_to_info.keys()
         status += "Total number of combinatorial classes found is {}\n".format(
                                                         str(len(all_labels)))
@@ -810,10 +812,13 @@ class CombinatorialSpecificationSearcher(object):
             status += "Applied {} to {} combinatorial classes\n".format(
                                                         strategy, number)
 
-        symme_perc = 0 if self._time_taken == 0 else int(self.symmetry_time/self._time_taken * 100)
+        symme_perc = 0 if self._time_taken == 0 else \
+            int(self.symmetry_time/self._time_taken * 100)
         strat_perc = 0
+
         for strategy, total_time in self.strategy_times.items():
-            perc = 0 if self._time_taken == 0 else total_time/self._time_taken * 100
+            perc = 0 if self._time_taken == 0 else \
+                total_time/self._time_taken * 100
             strat_perc += perc
             status += "Time spent applying {}: {} seconds, ~{}%\n".format(
                                     strategy, int(total_time), int(perc))
@@ -821,12 +826,18 @@ class CombinatorialSpecificationSearcher(object):
         if self.symmetries:
             status += ("Time spent symmetry applying:"
                        "~{} seconds, ~{}%\n").format(
-                                    int(self.symmetry_time), int(symme_perc))
+                        int(self.symmetry_time), int(symme_perc))
 
-        queue_perc = 0 if self._time_taken == 0 else self.queue_time/self._time_taken * 100
+        queue_perc = 0 if self._time_taken == 0 else \
+            self.queue_time/self._time_taken * 100
+
         prep_time = self.prep_for_tree_search_time
-        prpts_perc = 0 if self._time_taken == 0 else prep_time/self._time_taken * 100
-        tsrch_perc = 0 if self._time_taken == 0 else self.tree_search_time/self._time_taken * 100
+
+        prpts_perc = 0 if self._time_taken == 0 else \
+            prep_time/self._time_taken * 100
+
+        tsrch_perc = 0 if self._time_taken == 0 else \
+            self.tree_search_time/self._time_taken * 100
 
         status += "Time spent queueing: ~{} seconds, ~{}%\n".format(
                                         int(self.queue_time), int(queue_perc))
@@ -861,7 +872,7 @@ class CombinatorialSpecificationSearcher(object):
         if self.forward_equivalence:
             start_string += "Using forward equivalence only.\n"
         if self.symmetries:
-            symme_strats = ", ".join(get_func_name(f) 
+            symme_strats = ", ".join(get_func_name(f)
                                      for f in self.symmetries)
             start_string += "Symmetries: {}\n".format(symme_strats)
         for i, strategies in enumerate(self.strategy_generators):
@@ -901,7 +912,7 @@ class CombinatorialSpecificationSearcher(object):
             start = time.time() + 0.00001
             while time.time() - start < max_search_time:
                 if status_update is not None and verbose:
-                    if time.time() - status_start > status_update:# or True:
+                    if time.time() - status_start > status_update:
                         status = self.status()
                         logger.info(status, extra=self.logger_kwargs)
                         status_start = time.time()

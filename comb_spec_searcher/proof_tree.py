@@ -285,7 +285,7 @@ class ProofTree(object):
         for node in self.nodes():
             count += len(node.eqv_path_objects)
         return count
-    
+
     def objects(self, root=None):
         for node in self.nodes():
             for obj in node.eqv_path_objects:
