@@ -844,6 +844,9 @@ class CombinatorialSpecificationSearcher(object):
         return status
 
     def get_mem(self):
+        """Return memory used by CombSpecSearcher - note this is actually the
+        memory usage of the process that the instance of CombSpecSearcher was
+        invoked."""
         mem = psutil.Process(os.getpid()).memory_info().rss
         if (mem / 1024**3 < 1):
             return str(round(mem / 1024**2))+" MiB"
