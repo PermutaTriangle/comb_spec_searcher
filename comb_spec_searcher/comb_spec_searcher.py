@@ -197,8 +197,6 @@ class CombinatorialSpecificationSearcher(object):
                 return
         elif self.equivdb.is_verified(label):
             return
-        # if self.classdb.is_strategy_verified(label) is not None:
-        #     return
         for ver_strategy in self.verification_strategies:
             start = time.time()
             strategy = ver_strategy(comb_class, **self.kwargs)
@@ -219,6 +217,8 @@ class CombinatorialSpecificationSearcher(object):
         otherwise."""
         start = time.time()
         if self.classdb.is_empty(label) is None:
+            print("I checked label {} if it is empty".format(label))
+            assert label != 52
             if comb_class.is_empty():
                 self._add_empty_rule(label)
                 assert self.classdb.is_empty(label)
@@ -262,29 +262,37 @@ class CombinatorialSpecificationSearcher(object):
         comb_class = self.classdb.get_class(label)
         self.queue_time += time.time() - start
 
-        if not self.classdb.is_inferral_expanded(label):
+        if (self.classdb.is_inferrable(label) and
+                not self.classdb.is_inferral_expanded(label)):
+            print("Infer")
+            print()
             logger.debug('Inferring label {}'.format(str(label)),
                          extra=self.logger_kwargs)
             self._inferral_expand(comb_class, label)
             self.classqueue.add_to_working(label)
-        elif not self.classdb.is_initial_expanded(label):
-            logger.debug('Initial expanding label {}'.format(str(label)))
-            self._initial_expand(comb_class, label)
-            self.classqueue.add_to_next(label)
-        else:
-            expanding = self.classdb.number_times_expanded(label)
-            logger.debug('Expanding label {}'.format(str(label)),
-                         extra=self.logger_kwargs)
-            strategies = self.strategy_generators[expanding]
-            for strategy_generator in strategies:
-                # function returns time it took.
-                self._expand_class_with_strategy(comb_class,
-                                                 strategy_generator, label)
+        elif self.classdb.is_expandable(label):
+            if not self.classdb.is_initial_expanded(label):
+                print("Initial")
+                print()
+                logger.debug('Initial expanding label {}'.format(str(label)))
+                self._initial_expand(comb_class, label)
+                self.classqueue.add_to_next(label)
+            else:
+                expanding = self.classdb.number_times_expanded(label)
+                print("Expansion {}".format(expanding))
+                print()
+                logger.debug('Expanding label {}'.format(str(label)),
+                            extra=self.logger_kwargs)
+                strategies = self.strategy_generators[expanding]
+                for strategy_generator in strategies:
+                    # function returns time it took.
+                    self._expand_class_with_strategy(comb_class,
+                                                    strategy_generator, label)
 
-            if not self.is_expanded(label):
-                self.classdb.increment_expanded(label)
                 if not self.is_expanded(label):
-                    self.classqueue.add_to_curr(label)
+                    self.classdb.increment_expanded(label)
+                    if not self.is_expanded(label):
+                        self.classqueue.add_to_curr(label)
 
     def _expand_class_with_strategy(self, comb_class, strategy_function,
                                     label, initial=False, inferral=False):
@@ -320,18 +328,29 @@ class CombinatorialSpecificationSearcher(object):
             labels = [self.classdb.get_label(ob)
                       for ob in strategy.comb_classes]
 
-            # if label in labels:
-            if any(self.equivdb[label] == self.equivdb[l] for l in labels):
-                # This says comb_class = comb_class, so we skip it, but mark
-                # every other class as empty.
+            if label in labels:
                 for l in labels:
-                    if self.equivdb[label] != self.equivdb[l]:
-                        self.classdb.set_empty(l, empty=True)
+                    if label != l:
+                        self._add_empty_rule(l)
+                    else:
+                        self.classqueue.add_to_working(l)
                 if self.debug:
                     for l, c in zip(labels, strategy.comb_classes):
-                        if self.equivdb[label] != self.equivdb[l]:
+                        if label != l:
                             assert c.is_empty()
                 continue
+
+            # if any(self.equivdb[label] == self.equivdb[l] for l in labels):
+            #     # This says comb_class = comb_class, so we skip it, but mark
+            #     # every other class as empty.
+            #     for l in labels:
+            #         if self.equivdb[label] != self.equivdb[l]:
+            #             self._add_empty_rule(l)
+            #     if self.debug:
+            #         for l, c in zip(labels, strategy.comb_classes):
+            #             if self.equivdb[label] != self.equivdb[l]:
+            #                 assert c.is_empty()
+            #     continue
 
             start -= time.time()
             end_labels, classes, formal_step = self._strategy_cleanup(strategy,
@@ -477,6 +496,10 @@ class CombinatorialSpecificationSearcher(object):
                 self._symmetry_expand(comb_class)
 
             if infer:
+                self.classdb.set_inferrable(label)
+            if work:
+                self.classdb.set_expandable(label)
+            if infer or work:
                 self.classqueue.add_to_working(label)
 
             self.try_verify(comb_class, label)
@@ -489,10 +512,6 @@ class CombinatorialSpecificationSearcher(object):
 
             if not pos_empty:
                 self.classdb.set_empty(label, empty=False)
-
-            if work:
-                self.classdb.set_expandable(label)
-                self.classqueue.add_to_working(label)
 
             end_classes.append(comb_class)
             end_labels.append(label)
@@ -726,6 +745,8 @@ class CombinatorialSpecificationSearcher(object):
         start = time.time()
         queue_start = time.time()
         count = 0
+        if self.classqueue.levels_completed > 10:
+            assert False, "screw this"
         while count < total:
             label = self.classqueue.next()
             if label is None:
@@ -742,6 +763,9 @@ class CombinatorialSpecificationSearcher(object):
                 continue
             count += 1
             queue_start -= time.time()
+            print("I'm expanding label {} whether you like it or not".format(label))
+            self.classdb.get_class(label).pretty_print()
+            print()
             self.expand(label)
             queue_start += time.time()
         self.queue_time += time.time() - queue_start

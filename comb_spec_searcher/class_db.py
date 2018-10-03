@@ -23,6 +23,7 @@ class Info(object):
                                                   False)
         self.expanding_other_sym = kwargs.get('expanding_other_sym', False)
         self.expandable = kwargs.get('expandable', False)
+        self.inferrable = kwargs.get('inferrable', False)
         self.inferral_expanded = kwargs.get('inferral_expanded', False)
         self.verified = kwargs.get('verified', None)
         self.empty = kwargs.get('empty', None)
@@ -158,18 +159,26 @@ class ClassDB(object):
             comb_class,
             symmetry_expanded=False,
             expanding_other_sym=False,
-            expandable=False):
+            expandable=False,
+            compressed=False):
         """
         Add a combinatorial class to the database.
 
         Can also set some information about the combinatorial class on adding.
         """
-        if not isinstance(comb_class, CombinatorialClass):
+        if not compressed and not isinstance(comb_class, CombinatorialClass):
             raise TypeError(("Trying to add something that isn't a"
                             "CombinatorialClass."))
-        compressed_class = self._compress(comb_class)
+        if not compressed:
+            compressed_class = self._compress(comb_class)
+        else:
+            compressed_class = comb_class
+            comb_class = self._decompress(compressed_class)
         if compressed_class not in self.class_to_info:
             label = len(self.class_to_info)
+            print("Adding {} to the database.".format(label))
+            comb_class.pretty_print()
+            print()
             info = Info(compressed_class,
                         label,
                         symmetry_expanded=symmetry_expanded,
@@ -185,16 +194,15 @@ class ClassDB(object):
             if symmetry_expanded:
                 self.set_symmetry_expanded(comb_class)
 
+
     def _get_info(self, key):
         """Return Info for given key."""
         if isinstance(key, CombinatorialClass):
             key = self._compress(key)
             info = self.class_to_info.get(key)
             if info is None:
-                label = len(self.class_to_info)
-                info = Info(key, len(self.class_to_info))
-                self.class_to_info[key] = info
-                self.label_to_info[label] = info
+                self.add(key, compressed=True)
+                info = self.class_to_info[key]
         elif isinstance(key, int):
             info = self.label_to_info.get(key)
             if info is None:
@@ -252,9 +260,19 @@ class ClassDB(object):
         return info.expandable
 
     def set_expandable(self, key, expandable=True):
-        """Update database about combinatorial class expandability."""
+        """Update database about combinatorial class inferrability."""
         info = self._get_info(key)
-        self.class_to_info[info.comb_class].expandable = expandable
+        info.expandable = expandable or info.expandable
+
+    def is_inferrable(self, key):
+        """Return True if inferrable, False otherwise."""
+        info = self._get_info(key)
+        return info.inferrable
+
+    def set_inferrable(self, key, inferrable=True):
+        """Update database about combinatorial class inferrability."""
+        info = self._get_info(key)
+        info.inferrable = inferrable or info.inferrable
 
     def is_verified(self, key):
         """
