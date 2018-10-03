@@ -24,13 +24,6 @@ from .tree_searcher import (proof_tree_bfs, prune, iterative_prune,
 from .utils import get_func, get_func_name, get_module_and_func_names
 
 
-def nice_mem(mem):
-    if (mem / 1024 / 1024 / 1024 < 1):
-        return str(round(mem/1024/1024))+" MB"
-    else:
-        return str(round(mem/1024/1024/1024, 3))+" GB"
-
-
 class CombinatorialSpecificationSearcher(object):
     """
     The CombinatorialSpecificationSearcher classs.
@@ -75,7 +68,7 @@ class CombinatorialSpecificationSearcher(object):
                     any(not callable(f) for f in self.symmetries)):
                 raise ValueError(("To use symmetries need to give a"
                                   "list of symmetry functions."))
-            self.kwargs['symmetry'] = True
+            # self.kwargs['symmetry'] = True
         else:
             self.symmetries = []
 
@@ -768,9 +761,8 @@ class CombinatorialSpecificationSearcher(object):
         status += "Time spent searching so far: ~{} seconds\n".format(
                                                         int(self._time_taken))
 
-        process = psutil.Process(os.getpid())
-        status += "Memory currently in use: {}\n".format(
-                                        nice_mem(process.memory_info().rss))
+        status += "Memory (alone and shared) currently in use: {}\n".format(
+                                                        self.get_mem())
         all_labels = self.classdb.label_to_info.keys()
         status += "Total number of combinatorial classes found is {}\n".format(
                                                         str(len(all_labels)))
@@ -850,6 +842,13 @@ class CombinatorialSpecificationSearcher(object):
                       queue_perc + prpts_perc + tsrch_perc)
         status += "Total of ~{}% accounted for.\n".format(int(total_perc))
         return status
+
+    def get_mem(self):
+        mem = psutil.Process(os.getpid()).memory_info().rss
+        if (mem / 1024**3 < 1):
+            return str(round(mem / 1024**2))+" MiB"
+        else:
+            return str(round(mem / 1024**3, 3))+" GiB"
 
     def run_information(self):
         """Return string detailing what CombSpecSearcher is looking for."""
