@@ -68,7 +68,7 @@ class CombinatorialSpecificationSearcher(object):
                     any(not callable(f) for f in self.symmetries)):
                 raise ValueError(("To use symmetries need to give a"
                                   "list of symmetry functions."))
-            # self.kwargs['symmetry'] = True
+            self.kwargs['symmetry'] = True
         else:
             self.symmetries = []
 
