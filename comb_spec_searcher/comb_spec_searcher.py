@@ -195,9 +195,10 @@ class CombinatorialSpecificationSearcher(object):
         if force:
             if self.classdb.is_strategy_verified(label):
                 return
-        if self.equivdb.is_verified(label):
+        elif self.equivdb.is_verified(label):
             return
-        if self.classdb.is_verified(label) is None:
+        print(self.classdb.is_strategy_verified(label))
+        if self.classdb.is_strategy_verified(label) is None:
             for ver_strategy in self.verification_strategies:
                 start = time.time()
                 strategy = ver_strategy(comb_class, **self.kwargs)
@@ -207,7 +208,7 @@ class CombinatorialSpecificationSearcher(object):
                         raise TypeError(("Attempting to verify with non "
                                         "VerificationStrategy."))
                     formal_step = strategy.formal_step
-                    self.classdb.set_verified(label, formal_step)
+                    self.classdb.set_verified(label, explanation=formal_step)
                     self.classdb.set_strategy_verified(label)
                     self.equivdb.update_verified(label)
                     return
@@ -283,12 +284,12 @@ class CombinatorialSpecificationSearcher(object):
                 print("Expansion {}".format(expanding))
                 print()
                 logger.debug('Expanding label {}'.format(str(label)),
-                            extra=self.logger_kwargs)
+                             extra=self.logger_kwargs)
                 strategies = self.strategy_generators[expanding]
                 for strategy_generator in strategies:
                     # function returns time it took.
                     self._expand_class_with_strategy(comb_class,
-                                                    strategy_generator, label)
+                                                     strategy_generator, label)
 
                 if not self.is_expanded(label):
                     self.classdb.increment_expanded(label)
@@ -440,7 +441,8 @@ class CombinatorialSpecificationSearcher(object):
         if self.classdb.is_empty(label):
             return
         self.classdb.set_empty(label)
-        self.classdb.set_verified(label, "Contains no avoiding objects.")
+        self.classdb.set_verified(label,
+                                  explanation="Contains no avoiding objects.")
         self.classdb.set_strategy_verified(label)
         self.equivdb.update_verified(label)
 
@@ -745,7 +747,8 @@ class CombinatorialSpecificationSearcher(object):
         start = time.time()
         queue_start = time.time()
         count = 0
-        if self.classqueue.levels_completed > 10:
+        if self.classqueue.levels_completed > 3:
+            print(self.status())
             assert False, "screw this"
         while count < total:
             label = self.classqueue.next()
