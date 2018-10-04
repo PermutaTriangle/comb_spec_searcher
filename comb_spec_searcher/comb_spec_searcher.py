@@ -195,22 +195,23 @@ class CombinatorialSpecificationSearcher(object):
         if force:
             if self.classdb.is_strategy_verified(label):
                 return
-        elif self.equivdb.is_verified(label):
+        if self.equivdb.is_verified(label):
             return
-        for ver_strategy in self.verification_strategies:
-            start = time.time()
-            strategy = ver_strategy(comb_class, **self.kwargs)
-            self.update_status(ver_strategy, time.time() - start)
-            if strategy is not None:
-                if not isinstance(strategy, VerificationStrategy):
-                    raise TypeError(("Attempting to verify with non "
-                                     "VerificationStrategy."))
-                formal_step = strategy.formal_step
-                self.classdb.set_verified(label, formal_step)
-                self.classdb.set_strategy_verified(label)
-                self.equivdb.update_verified(label)
-                return
-        self.classdb.set_strategy_verified(label, False)
+        if self.classdb.is_verified(label) is None:
+            for ver_strategy in self.verification_strategies:
+                start = time.time()
+                strategy = ver_strategy(comb_class, **self.kwargs)
+                self.update_status(ver_strategy, time.time() - start)
+                if strategy is not None:
+                    if not isinstance(strategy, VerificationStrategy):
+                        raise TypeError(("Attempting to verify with non "
+                                        "VerificationStrategy."))
+                    formal_step = strategy.formal_step
+                    self.classdb.set_verified(label, formal_step)
+                    self.classdb.set_strategy_verified(label)
+                    self.equivdb.update_verified(label)
+                    return
+            self.classdb.set_strategy_verified(label, False)
 
     def is_empty(self, comb_class, label):
         """Return True if a combinatorial class contains no objects, False
@@ -502,16 +503,15 @@ class CombinatorialSpecificationSearcher(object):
             if infer or work:
                 self.classqueue.add_to_working(label)
 
-            self.try_verify(comb_class, label)
-
             # Only applying is_empty check to inferrable comb classes that are
             # possibly empty.
             if infer and pos_empty and self.is_empty(comb_class, label):
                 inferral_steps.append(inferral_step + "Class is empty.")
                 continue
-
             if not pos_empty:
                 self.classdb.set_empty(label, empty=False)
+
+            self.try_verify(comb_class, label)
 
             end_classes.append(comb_class)
             end_labels.append(label)
