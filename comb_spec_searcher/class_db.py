@@ -23,8 +23,10 @@ class Info(object):
                                                   False)
         self.expanding_other_sym = kwargs.get('expanding_other_sym', False)
         self.expandable = kwargs.get('expandable', False)
+        self.inferrable = kwargs.get('inferrable', True)
         self.inferral_expanded = kwargs.get('inferral_expanded', False)
         self.verified = kwargs.get('verified', None)
+        self.verification_reason = kwargs.get('verification_reason', None)
         self.empty = kwargs.get('empty', None)
         self.strategy_verified = kwargs.get('strategy_verified', None)
 
@@ -35,7 +37,6 @@ class Info(object):
         except Exception as e:
             logger.warn(("Lost information about tiling with encoding as:\n"
                          "" + str(self.comb_class) + "\n" + str(e)))
-            print(self.comb_class)
             return None
         return {
             'comb_class': b64encode(self.comb_class).decode(),
@@ -158,16 +159,21 @@ class ClassDB(object):
             comb_class,
             symmetry_expanded=False,
             expanding_other_sym=False,
-            expandable=False):
+            expandable=False,
+            compressed=False):
         """
         Add a combinatorial class to the database.
 
         Can also set some information about the combinatorial class on adding.
         """
-        if not isinstance(comb_class, CombinatorialClass):
+        if not compressed and not isinstance(comb_class, CombinatorialClass):
             raise TypeError(("Trying to add something that isn't a"
                             "CombinatorialClass."))
-        compressed_class = self._compress(comb_class)
+        if not compressed:
+            compressed_class = self._compress(comb_class)
+        else:
+            compressed_class = comb_class
+            comb_class = self._decompress(compressed_class)
         if compressed_class not in self.class_to_info:
             label = len(self.class_to_info)
             info = Info(compressed_class,
@@ -191,10 +197,8 @@ class ClassDB(object):
             key = self._compress(key)
             info = self.class_to_info.get(key)
             if info is None:
-                label = len(self.class_to_info)
-                info = Info(key, len(self.class_to_info))
-                self.class_to_info[key] = info
-                self.label_to_info[label] = info
+                self.add(key, compressed=True)
+                info = self.class_to_info[key]
         elif isinstance(key, int):
             info = self.label_to_info.get(key)
             if info is None:
@@ -252,37 +256,53 @@ class ClassDB(object):
         return info.expandable
 
     def set_expandable(self, key, expandable=True):
-        """Update database about combinatorial class expandability."""
+        """Update database about combinatorial class inferrability."""
         info = self._get_info(key)
-        self.class_to_info[info.comb_class].expandable = expandable
+        info.expandable = expandable or bool(info.expandable)
+
+    def is_inferrable(self, key):
+        """Return True if inferrable, False otherwise."""
+        info = self._get_info(key)
+        return info.inferrable
+
+    def set_inferrable(self, key, inferrable=True):
+        """Update database about combinatorial class inferrability."""
+        info = self._get_info(key)
+        info.inferrable = inferrable and bool(info.inferrable)
 
     def is_verified(self, key):
         """
-        Return True if combinatorial class has been verified.
+        Return True if combinatorial class has been verified, and False if not
+        verified. Return None if status not set.
 
         Verification must have an explanation, i.e, from a strategy.
         """
-        return self._get_info(key).verified is not None
 
-    def set_verified(self, key, explanation):
+        return self._get_info(key).verified
+
+    def set_verified(self, key, verified=True, explanation=None):
         """
         Update database about combinatorial class being verified
 
         An explanation should be provided.
         """
-        self._get_info(key).verified = explanation
+        info = self._get_info(key)
+        info.verified = verified or bool(info.verified)
+        info.verification_reason = explanation
 
     def verification_reason(self, key):
         """Return explanation of verification, None if not verified."""
-        return self._get_info(key).verified
+        return self._get_info(key).verification_reason
 
     def is_empty(self, key):
-        """Return True if combinatorial class is empty set, False otherwise."""
+        """Return True if combinatorial class is empty set, False if not.
+        Return None if status not set."""
         return self._get_info(key).empty
 
     def set_empty(self, key, empty=True):
         """Update database about comb class being empty."""
-        self._get_info(key).empty = empty
+        info = self._get_info(key)
+        info.empty = (empty or bool(info.empty))
 
     def verified_labels(self):
         """Yield all the labels that are verified."""
@@ -303,7 +323,9 @@ class ClassDB(object):
 
     def set_strategy_verified(self, key, strategy_verified=True):
         """Update database combinatorial class is verified by a strategy."""
-        self._get_info(key).strategy_verified = strategy_verified
+        info = self._get_info(key)
+        info.strategy_verified = (strategy_verified or
+                                  bool(info.strategy_verified))
 
     def is_symmetry_expanded(self, key):
         """Return True if combinatorial class was expanded by symmetries."""
@@ -311,7 +333,9 @@ class ClassDB(object):
 
     def set_symmetry_expanded(self, key, symmetry_expanded=True):
         """Update database that combinatorial class was symmetry expanded."""
-        self._get_info(key).symmetry_expanded = symmetry_expanded
+        info = self._get_info(key)
+        info.symmetry_expanded = (symmetry_expanded or
+                                  bool(info.symmetry_expanded))
 
     def is_expanding_children_only(self, key):
         """Return True if not expanding as expanding other children only."""
@@ -319,7 +343,9 @@ class ClassDB(object):
 
     def set_expanding_children_only(self, key, expanding_children_only=True):
         """Update database if expanding childern_only."""
-        self._get_info(key).expanding_children_only = expanding_children_only
+        info = self._get_info(key)
+        info.expanding_children_only = (expanding_children_only or
+                                        bool(info.expanding_children_only))
 
     def is_expanding_other_sym(self, key):
         """Return True if symmetry of combinatorial class is being expaned."""
@@ -328,7 +354,9 @@ class ClassDB(object):
     def set_expanding_other_sym(self, key, expanding_other_sym=True):
         """Update database symmetry of combinatorial class is being
         expanded."""
-        self._get_info(key).expanding_other_sym = expanding_other_sym
+        info = self._get_info(key)
+        info.expanding_other_sym = (expanding_other_sym or
+                                    bool(info.expanding_other_sym))
 
     def is_initial_expanded(self, key):
         """Return True if combinatorial class was initial expanded."""
@@ -336,7 +364,9 @@ class ClassDB(object):
 
     def set_initial_expanded(self, key, initial_expanded=True):
         """Update database that combinatorial class was initial expanded."""
-        self._get_info(key).initial_expanded = initial_expanded
+        info = self._get_info(key)
+        info.initial_expanded = (initial_expanded or
+                                 bool(info.initial_expanded))
 
     def is_inferral_expanded(self, key):
         """Return True if combinatorial class was inferral expanded."""
@@ -344,4 +374,6 @@ class ClassDB(object):
 
     def set_inferral_expanded(self, key, inferral_expanded=True):
         """Update database that combinatorial class was inferral expanded."""
-        self._get_info(key).inferral_expanded = inferral_expanded
+        info = self._get_info(key)
+        info.inferral_expanded = (inferral_expanded or
+                                  bool(info.inferral_expanded))
