@@ -37,7 +37,6 @@ class Info(object):
         except Exception as e:
             logger.warn(("Lost information about tiling with encoding as:\n"
                          "" + str(self.comb_class) + "\n" + str(e)))
-            print(self.comb_class)
             return None
         return {
             'comb_class': b64encode(self.comb_class).decode(),
@@ -177,9 +176,6 @@ class ClassDB(object):
             comb_class = self._decompress(compressed_class)
         if compressed_class not in self.class_to_info:
             label = len(self.class_to_info)
-            print("Adding {} to the database.".format(label))
-            comb_class.pretty_print()
-            print()
             info = Info(compressed_class,
                         label,
                         symmetry_expanded=symmetry_expanded,
