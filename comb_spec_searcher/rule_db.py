@@ -131,3 +131,8 @@ class RuleDB(object):
                 end not in self.constructors[start]):
             raise KeyError("No such rule.")
         return self.constructors[start][end]
+
+    def contains(self, start, end):
+        """Return true if the rule start -> end is in the database."""
+        end = tuple(sorted(end))
+        return start in self.rules_dict and end in self.rules_dict[start]
