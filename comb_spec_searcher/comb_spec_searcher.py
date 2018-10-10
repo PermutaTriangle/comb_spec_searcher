@@ -31,7 +31,6 @@ class CombinatorialSpecificationSearcher(object):
     This is used to build up knowledge about a combinatorial_class with respect
     to the given strategies and search for a combinatorial specification.
     """
-
     def __init__(self, start_class, strategy_pack, **kwargs):
         """Initialise CombinatorialSpecificationSearcher."""
         if start_class is None:
@@ -369,6 +368,10 @@ class CombinatorialSpecificationSearcher(object):
         class to queue"""
         if explanation is None:
             explanation = "They are equivalent."
+        if start == end:
+            logger.warn(("Skipping adding equivalent rule with identical"
+                         " combinatorial classes."), extra=self.logger_kwargs)
+            return
         if self.debug:
             try:
                 self._sanity_check_rule(start, [end], 'equiv')
@@ -380,7 +383,19 @@ class CombinatorialSpecificationSearcher(object):
                          "formal step:" + explanation)
                 logger.warn(error, extra=self.logger_kwargs)
         if self.forward_equivalence:
-            self._add_rule(start, [end], explanation, "disjoint")
+            reverse_rule = end, (start,)
+            if self.ruledb.contains(*reverse_rule):
+                logger.warn(("Found two rules a -> b and b -> a so treating as"
+                             " a standard equivalence."),
+                            extra=self.logger_kwargs)
+                raise ValueError(("Same equivalent rule found forward and "
+                                  "backwards."))
+                # reverse_explanation = self.ruledb.explanation(*reverse_rule)
+                # self.ruledb.remove(*reverse_rule)
+                # self.equivdb.union(start, end, explanation)
+                # self.equivdb.union(end, start, reverse_explanation)
+            else:
+                self._add_rule(start, [end], explanation, "disjoint")
         else:
             self.equivdb.union(start, end, explanation)
 
