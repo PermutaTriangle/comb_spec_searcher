@@ -244,18 +244,22 @@ class ProofTree(object):
         if verbose:
             print("The system of", len(eqs), "equations:")
             for eq in eqs:
-                print(eq.lhs, "=", eq.rhs)
+                print(str(eq.lhs).replace("(x)", ""), "=",
+                      str(eq.rhs).replace("(x)", ""))
             print()
             print("Solving...")
         if groebner:
             all_funcs = set(x for eq in eqs for x in eq.atoms(sympy.Function))
             all_funcs.remove(root_func)
-            basis = sympy.groebner(eqs, *all_funcs, root_func, wrt=[sympy.abc.x], order='grevlex')
+            basis = sympy.groebner(eqs, *all_funcs, root_func,
+                                   wrt=[sympy.abc.x], order='grevlex')
             solutions = []
             for poly in basis.polys:
                 if poly.atoms(sympy.Function) == {root_func}:
                     eq = poly.as_expr()
-                    print(eq)
+                    if verbose:
+                        print("Possible min poly:")
+                        print(str(eq).replace("(x)", ""))
                     solutions.extend(sympy.solve(eq, root_func, dict=True,
                                                  cubics=False, quartics=False,
                                                  quintics=False))
@@ -263,6 +267,7 @@ class ProofTree(object):
             solutions = sympy.solve(eqs, tuple([eq.lhs for eq in eqs]),
                                     dict=True, cubics=False, quartics=False,
                                     quintics=False)
+
         if solutions:
             if not verify:
                 return solutions
