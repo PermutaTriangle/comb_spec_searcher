@@ -242,11 +242,16 @@ class ProofTree(object):
         root_class = self.root.eqv_path_objects[0]
         root_func = self.root.get_function()
         if verbose:
-            print("The system of", len(eqs), "equations:")
+            print("The system of", len(eqs), "equations")
+            print("root_func := ", str(root_func).replace("(x)", ""))
+            print("eqs := [")
             for eq in eqs:
-                print(str(eq.lhs).replace("(x)", ""), "=",
-                      str(eq.rhs).replace("(x)", ""))
-            print()
+                print("{} = {},".format(str(eq.lhs).replace("(x)", ""),
+                                        str(eq.rhs).replace("(x)", "")))
+            print("]:")
+            print("count := {}:".format(
+                                [len(list(root_class.objects_of_length(i)))
+                                 for i in range(6)]))
             print("Solving...")
         if groebner:
             all_funcs = set(x for eq in eqs for x in eq.atoms(sympy.Function))
