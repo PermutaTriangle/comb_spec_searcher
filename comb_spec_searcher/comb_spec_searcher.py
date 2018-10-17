@@ -317,8 +317,8 @@ class CombinatorialSpecificationSearcher(object):
                                        repr(comb_class))),
                             extra=self.logger_kwargs)
                 continue
-            labels = [self.classdb.get_label(ob)
-                      for ob in strategy.comb_classes]
+            labels = [self.classdb.get_label(comb_class)
+                      for comb_class in strategy.comb_classes]
 
             if any(self.equivdb[label] == self.equivdb[l] for l in labels):
                 # This says comb_class = comb_class, so we skip it, but mark
