@@ -222,6 +222,9 @@ class ProofTree(object):
                 print()
 
     def get_equations(self, dummy_eqs=False):
+        """Return the set of equations implied by the proof tree. If
+        dummy_eqs=True then it will give a 'F_DOITYOURSELF' variable for
+        equations that fail."""
         eqs = set()
         root_func = self.root.get_function()
         root_class = self.root.eqv_path_objects[0]
