@@ -59,22 +59,21 @@ class ClassQueue(object):
         return first combinatorial class. Return None if no combinatorial
         classes to expand.
         """
-        if self.working:
-            n = self.working.popleft()
-        elif self.curr_level:
-            n = self.curr_level.popleft()
-        else:
-            if not self.next_level:
-                return None
-            self.levels_completed += 1
-            self.curr_level = self.next_level
-            self.ignore = set()
-            self.next_level = deque()
-            n = self.next()
-        if n in self.ignore:
-            return self.next()
-        else:
-            return n
+        while True:
+            if self.working:
+                n = self.working.popleft()
+            elif self.curr_level:
+                n = self.curr_level.popleft()
+            else:
+                if not self.next_level:
+                    return None
+                self.levels_completed += 1
+                self.curr_level = self.next_level
+                self.ignore = set()
+                self.next_level = deque()
+                continue
+            if n not in self.ignore:
+                return n
 
     def do_level(self):
         """
