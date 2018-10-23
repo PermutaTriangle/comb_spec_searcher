@@ -150,7 +150,7 @@ class ProofTreeNode(object):
         return self.sympy_function
 
     def get_equation(self, root_func=None, root_class=None,
-                     substitutions=False, dummy_eq=False):
+                     substitutions=False, dummy_eq=False, min_poly=False):
         lhs = self.get_function()
         if self.disjoint_union:
             rhs = reduce(add,
@@ -163,9 +163,19 @@ class ProofTreeNode(object):
         elif self.recursion:
             rhs = lhs
         elif self.strategy_verified:
+            obj = self.eqv_path_objects[-1]
             try:
-                rhs = self.eqv_path_objects[-1].get_genf(root_func=root_func,
-                                                         root_class=root_class)
+                if min_poly:
+                    lhs = obj.get_min_poly(root_func=root_func,
+                                            root_class=root_class)
+                    print(obj)
+                    print(lhs)
+                    lhs = lhs.subs({root_func: self.get_function()})
+                    print(lhs)
+                    rhs = 0
+                else:
+                    rhs = obj.get_genf(root_func=root_func,
+                                        root_class=root_class)
             except ValueError as e:
                 if not dummy_eq:
                     raise ValueError(e)
@@ -221,7 +231,7 @@ class ProofTree(object):
                 print(o.__repr__())
                 print()
 
-    def get_equations(self, dummy_eqs=False):
+    def get_equations(self, dummy_eqs=False, min_poly=False):
         """Return the set of equations implied by the proof tree. If
         dummy_eqs=True then it will give a 'F_DOITYOURSELF' variable for
         equations that fail."""
@@ -234,7 +244,8 @@ class ProofTree(object):
             eqs.add(node.get_equation(substitutions=True,
                                       root_func=root_func,
                                       root_class=root_class,
-                                      dummy_eq=dummy_eqs))
+                                      dummy_eq=dummy_eqs,
+                                      min_poly=min_poly))
         return eqs
 
     def get_genf(self, verbose=False, verify=8, groebner=True):
@@ -295,6 +306,23 @@ class ProofTree(object):
         if solutions:
             raise RuntimeError(("Incorrect generating function\n" +
                                 str(solutions)))
+
+    def get_min_poly(self, verbose=True):
+        """Return the minimum polynomial of the generating function F that is
+        implied by the proof tree."""
+        eqs = self.get_equations(min_poly=True)
+        root_class = self.root.eqv_path_objects[0]
+        root_func = self.root.get_function()
+        for eq in eqs:
+            print(eq)
+        all_funcs = set(x for eq in eqs for x in eq.atoms(sympy.Function))
+        all_funcs.remove(root_func)
+        basis = sympy.groebner(eqs, *all_funcs, root_func,
+                                wrt=[sympy.abc.x], order='grevlex')
+        for poly in basis.polys:
+            if poly.atoms(sympy.Function) == {root_func}:
+                eq = poly.as_expr()
+                return eq
 
     def nodes(self, root=None):
         if root is None:
