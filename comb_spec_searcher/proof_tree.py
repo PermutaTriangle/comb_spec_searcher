@@ -326,16 +326,17 @@ class ProofTree(object):
         def check_poly(min_poly, initial):
             """Return True if this is a minimum polynomial for the generating
             function F of self."""
-            # verification = min_poly.subs({root_func: initial})
-            # print(verification)
-            return True
+            verification = min_poly.subs({root_func: initial}).expand()
+            verification = (verification +
+                            sympy.O(sympy.abc.x**verify)).removeO()
+            return verification == 0
 
-        # verify = 5
-        # if basis.polys:
-        #     initial = 0
-        #     for i in range(verify + 1):
-        #         coeff = len(list(root_class.objects_of_length(i)))
-        #         intial += coeff * sympy.abc.x ** i
+        verify = 5
+        if basis.polys:
+            initial = 0
+            for i in range(verify + 1):
+                coeff = len(list(root_class.objects_of_length(i)))
+                initial += coeff * sympy.abc.x ** i
 
         for poly in basis.polys:
             if poly.atoms(sympy.Function) == {root_func}:
