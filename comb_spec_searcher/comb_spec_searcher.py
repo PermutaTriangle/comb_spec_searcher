@@ -783,27 +783,35 @@ class CombinatorialSpecificationSearcher(object):
         strategy_verified = 0
         empty = 0
         equivalent_sets = set()
+        verified_equiv_sets = set()
         for label in all_labels:
             if self.classdb.is_expandable(label):
                 expandable += 1
             if self.equivdb.is_verified(label):
                 verified += 1
+                verified_equiv_sets.add(self.equivdb[label])
             if self.classdb.is_strategy_verified(label):
                 strategy_verified += 1
             if self.classdb.is_empty(label):
                 empty += 1
             equivalent_sets.add(self.equivdb[label])
 
-        status += "Total number of equivalent sets is {}\n".format(
-                                                    str(len(equivalent_sets)))
         status += ("Total number of expandable combinatorial classes is {}\n"
-                   "".format(str(expandable)))
+                   "".format(expandable))
         status += ("Total number of verified combinatorial classes is {}\n"
-                   "".format(str(verified)))
-        status += ("Total number of strategy verified combinatorial expand"
-                   " classes is {}\n".format(str(strategy_verified)))
+                   "".format(verified))
+        status += ("Total number of strategy verified combinatorial "
+                   "classes is {}\n".format(strategy_verified))
         status += ("Total number of empty combinatorial classes is {}\n"
-                   "".format(str(empty)))
+                   "".format(empty))
+
+        status += ("Total number of equivalent sets is {}\n"
+                   "".format(len(equivalent_sets)))
+        status += ("Total number of verified equivalent sets is {}\n"
+                   "".format(len(verified_equiv_sets)))
+
+        status += ("Total number of combinatorial rules is {}\n"
+                   "".format(len(list(self.ruledb))))
 
         status += "The size of the working queue is {}\n".format(
                                             len(self.classqueue.working))
