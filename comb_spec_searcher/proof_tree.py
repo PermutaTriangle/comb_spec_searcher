@@ -329,7 +329,7 @@ class ProofTree(object):
             verification = min_poly.subs({root_func: initial}).expand()
             verification = (verification +
                             sympy.O(sympy.abc.x**verify)).removeO()
-            return verification == 0
+            return bool(verification == 0)
 
         verify = 5
         if basis.polys:
