@@ -167,10 +167,12 @@ class ProofTreeNode(object):
             try:
                 if min_poly:
                     lhs = obj.get_min_poly(root_func=root_func,
-                                            root_class=root_class)
+                                           root_class=root_class)
                     print(obj)
+                    F = sympy.Function("F")(sympy.abc.x)
                     print(lhs)
-                    lhs = lhs.subs({root_func: self.get_function()})
+                    print(F)
+                    lhs = lhs.subs({F: self.get_function()})
                     print(lhs)
                     rhs = 0
                 else:
@@ -313,16 +315,35 @@ class ProofTree(object):
         eqs = self.get_equations(min_poly=True)
         root_class = self.root.eqv_path_objects[0]
         root_func = self.root.get_function()
-        for eq in eqs:
-            print(eq)
+        if verbose:
+            for eq in eqs:
+                print(eq)
         all_funcs = set(x for eq in eqs for x in eq.atoms(sympy.Function))
         all_funcs.remove(root_func)
         basis = sympy.groebner(eqs, *all_funcs, root_func,
                                 wrt=[sympy.abc.x], order='grevlex')
+
+        def check_poly(min_poly, initial):
+            """Return True if this is a minimum polynomial for the generating
+            function F of self."""
+            # verification = min_poly.subs({root_func: initial})
+            # print(verification)
+            return True
+
+        # verify = 5
+        # if basis.polys:
+        #     initial = 0
+        #     for i in range(verify + 1):
+        #         coeff = len(list(root_class.objects_of_length(i)))
+        #         intial += coeff * sympy.abc.x ** i
+
         for poly in basis.polys:
             if poly.atoms(sympy.Function) == {root_func}:
                 eq = poly.as_expr()
-                return eq
+                if check_poly(eq, initial):
+                    F = sympy.Function("F")(sympy.abc.x)
+                    return eq.subs({root_func: F})
+
 
     def nodes(self, root=None):
         if root is None:
