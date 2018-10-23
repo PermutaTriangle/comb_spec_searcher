@@ -173,7 +173,6 @@ class ClassDB(object):
             compressed_class = self._compress(comb_class)
         else:
             compressed_class = comb_class
-            comb_class = self._decompress(compressed_class)
         if compressed_class not in self.class_to_info:
             label = len(self.class_to_info)
             info = Info(compressed_class,
@@ -184,12 +183,13 @@ class ClassDB(object):
             self.class_to_info[compressed_class] = info
             self.label_to_info[label] = info
         else:
+            label = self.class_to_info[compressed_class].label
             if expandable:
-                self.set_expandable(comb_class)
+                self.set_expandable(label)
             if expanding_other_sym:
-                self.set_expanding_other_sym(comb_class)
+                self.set_expanding_other_sym(label)
             if symmetry_expanded:
-                self.set_symmetry_expanded(comb_class)
+                self.set_symmetry_expanded(label)
 
     def _get_info(self, key):
         """Return Info for given key."""
@@ -248,7 +248,7 @@ class ClassDB(object):
     def increment_expanded(self, key):
         """Increment counter for times combinatorial class was expanded."""
         info = self._get_info(key)
-        self.class_to_info[info.comb_class].expanded += 1
+        info.expanded += 1
 
     def is_expandable(self, key):
         """Return True if expandable, False otherwise."""
@@ -277,7 +277,6 @@ class ClassDB(object):
 
         Verification must have an explanation, i.e, from a strategy.
         """
-
         return self._get_info(key).verified
 
     def set_verified(self, key, verified=True, explanation=None):
