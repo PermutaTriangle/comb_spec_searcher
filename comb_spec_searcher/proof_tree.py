@@ -168,12 +168,10 @@ class ProofTreeNode(object):
                 if min_poly:
                     lhs = obj.get_min_poly(root_func=root_func,
                                            root_class=root_class)
-                    print(obj)
                     F = sympy.Function("F")(sympy.abc.x)
-                    print(lhs)
-                    print(F)
                     lhs = lhs.subs({F: self.get_function()})
-                    print(lhs)
+                    print("Got min poly for.\n{}".format(obj))
+                    print("The min poly was:\n{}\n".format(lhs))
                     rhs = 0
                 else:
                     rhs = obj.get_genf(root_func=root_func,
@@ -260,10 +258,9 @@ class ProofTree(object):
         if verbose:
             print("The system of", len(eqs), "equations")
             print("root_func := ", str(root_func).replace("(x)", ""))
-            print("eqs := [")
-            for eq in eqs:
-                print("{} = {},".format(str(eq.lhs).replace("(x)", ""),
-                                        str(eq.rhs).replace("(x)", "")))
+            print(",\n".join("{} = {}".format(str(eq.lhs).replace("(x)", ""),
+                                              str(eq.rhs).replace("(x)", ""))
+                             for eq in eqs))
             print("]:")
             print("count := {}:".format(
                                 [len(list(root_class.objects_of_length(i)))
@@ -276,6 +273,7 @@ class ProofTree(object):
                                    wrt=[sympy.abc.x], order='grevlex')
             solutions = []
             for poly in basis.polys:
+                print(poly)
                 if poly.atoms(sympy.Function) == {root_func}:
                     eq = poly.as_expr()
                     if verbose:
@@ -309,19 +307,28 @@ class ProofTree(object):
             raise RuntimeError(("Incorrect generating function\n" +
                                 str(solutions)))
 
-    def get_min_poly(self, verbose=True):
+    def get_min_poly(self, verbose=False):
         """Return the minimum polynomial of the generating function F that is
         implied by the proof tree."""
         eqs = self.get_equations(min_poly=True)
         root_class = self.root.eqv_path_objects[0]
         root_func = self.root.get_function()
         if verbose:
-            for eq in eqs:
-                print(eq)
+            print("The system of", len(eqs), "equations")
+            print("root_func := ", str(root_func).replace("(x)", ""))
+            print("eqs := [")
+            print(",\n".join("{} = {}".format(str(eq.lhs).replace("(x)", ""),
+                                              str(eq.rhs).replace("(x)", ""))
+                             for eq in eqs))
+            print("]:")
+            print("count := {}:".format(
+                                [len(list(root_class.objects_of_length(i)))
+                                 for i in range(6)]))
+            print("Computing Groebner basis with 'grevlex' order...")
         all_funcs = set(x for eq in eqs for x in eq.atoms(sympy.Function))
         all_funcs.remove(root_func)
         basis = sympy.groebner(eqs, *all_funcs, root_func,
-                                wrt=[sympy.abc.x], order='grevlex')
+                               wrt=[sympy.abc.x], order='grevlex')
 
         def check_poly(min_poly, initial):
             """Return True if this is a minimum polynomial for the generating
@@ -329,7 +336,7 @@ class ProofTree(object):
             verification = min_poly.subs({root_func: initial}).expand()
             verification = (verification +
                             sympy.O(sympy.abc.x**verify)).removeO()
-            return bool(verification == 0)
+            return verification == 0
 
         verify = 5
         if basis.polys:
@@ -339,11 +346,20 @@ class ProofTree(object):
                 initial += coeff * sympy.abc.x ** i
 
         for poly in basis.polys:
+            if verbose:
+                print("Trying the min poly:")
+                print(poly.as_expr())
+                print("with the atoms")
+                print(poly.atoms(sympy.Function))
+                print()
             if poly.atoms(sympy.Function) == {root_func}:
                 eq = poly.as_expr()
                 if check_poly(eq, initial):
                     F = sympy.Function("F")(sympy.abc.x)
                     return eq.subs({root_func: F})
+
+        raise RuntimeError(("Incorrect minimum polynomial\n" +
+                            str(basis)))
 
 
     def nodes(self, root=None):
