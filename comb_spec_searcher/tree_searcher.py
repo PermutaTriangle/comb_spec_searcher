@@ -84,13 +84,13 @@ def proof_forest_dfs(rules_dict, roots, seen=set()):
         return seen1.union(seen2), [tree] + trees
 
 
-def proof_tree_generator_dfs(rules_dict, root):
-    """A generator for random proof trees using depth first search.
-    N.B. The rules_dict is assumed to be pruned.
-    """
-    while root in rules_dict:
-        _, tree = proof_tree_dfs(rules_dict, root)
-        yield tree
+# def proof_tree_generator_dfs(rules_dict, root):
+#     """A generator for random proof trees using depth first search.
+#     N.B. The rules_dict is assumed to be pruned.
+#     """
+#     while root in rules_dict:
+#         _, tree = proof_tree_dfs(rules_dict, root)
+#         yield tree
 
 
 def iterative_proof_tree_bfs(rules_dict, root):
@@ -109,7 +109,11 @@ def iterative_proof_tree_bfs(rules_dict, root):
     return root_node
 
 
-def proof_tree_bfs(rules_dict, root):
+def iterative_proof_tree_generator_bfs(rules_dict, root):
+    pass
+
+
+def random_proof_tree(rules_dict, root):
     """Return random tree found by breadth first search."""
     seen = set()
     root_node = Node(root)
@@ -123,13 +127,64 @@ def proof_tree_bfs(rules_dict, root):
             queue.extend(children)
             v.children = children
         seen.add(v.label)
-    return seen, root_node
+    return root_node
 
-
+from itertools import product
 def proof_tree_generator_bfs(rules_dict, root):
-    """A generator for random proof trees using breadth first search.
+    """A generator for all proof trees using breadth first search.
     N.B. The rules_dict is assumed to be pruned.
     """
-    while root in rules_dict:
-        _, tree = proof_tree_bfs(rules_dict, root)
-        yield tree
+    def _bfs_helper(root_label, seen):
+        if root_label in seen:
+            yield Node(root_label)
+            return
+        next_seen = seen.union((root_label,))
+        for rule in rules_dict[root_label]:
+            for children in product(*[_bfs_helper(child_label, next_seen)
+                                      for child_label in rule]):
+                root_node = Node(root_label)
+                root_node.children = children
+                yield root_node
+
+    rules_dict = {start: tuple(sorted(ends))
+                  for start, ends in rules_dict.items()}
+    print(rules_dict)
+
+    if root in rules_dict:
+        yield from _bfs_helper(root, frozenset())
+
+
+def proof_tree_generator_dfs(rules_dict, root):
+    """A generator for all proof trees using depth first search.
+    N.B. The rules_dict is assumed to be pruned.
+    """
+    def _dfs_tree(root_label, seen):
+        if root_label in seen:
+            yield seen, Node(root_label)
+            return
+        seen = seen.union((root_label,))
+        for rule in rules_dict[root_label]:
+            if rule == ():
+                yield seen, Node(root_label)
+            else:
+                for new_seen, children in _dfs_forest(rule, seen):
+                    root_node = Node(root_label)
+                    root_node.children = children
+                    yield new_seen, root_node
+
+    def _dfs_forest(root_labels, seen):
+        if not root_labels:
+            yield seen, []
+        else:
+            root, roots = root_labels[0], root_labels[1:]
+            for seen1, tree in _dfs_tree(root, seen):
+                for seen2, trees in _dfs_forest(roots, seen1):
+                    yield seen1.union(seen2), [tree] + trees
+
+    rules_dict = {start: tuple(sorted(ends))
+                  for start, ends in rules_dict.items()}
+
+    if root in rules_dict:
+        for _, tree in _dfs_tree(root, frozenset()):
+            yield tree
+
