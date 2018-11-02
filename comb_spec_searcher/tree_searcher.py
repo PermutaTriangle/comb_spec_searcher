@@ -4,6 +4,7 @@ Finds and returns a combinatorial specification, that we call a proof tree.
 from random import choice, shuffle
 from copy import deepcopy
 from collections import defaultdict, deque
+from itertools import product
 
 __all__ = ("prune", "proof_tree_generator_dfs", "proof_tree_generator_bfs")
 
@@ -129,7 +130,7 @@ def random_proof_tree(rules_dict, root):
         seen.add(v.label)
     return root_node
 
-from itertools import product
+
 def proof_tree_generator_bfs(rules_dict, root):
     """A generator for all proof trees using breadth first search.
     N.B. The rules_dict is assumed to be pruned.
@@ -187,4 +188,51 @@ def proof_tree_generator_dfs(rules_dict, root):
     if root in rules_dict:
         for _, tree in _dfs_tree(root, frozenset()):
             yield tree
+
+
+def iterative_proof_tree_finder(rules_dict, root):
+    """Finds an iterative proof tree for root, if one exists.
+    """
+    trees = {}
+    def get_tree(start):
+        if start == root:
+            return Node(start)
+        elif start in trees:
+            return trees[start]
+        else:
+            raise KeyError("{} is not in trees".format(start))
+
+    def create_tree(start, end):
+        if start in trees:
+            return
+        root = Node(start)
+        children = [get_tree(i) for i in end]
+        root.children = children
+        trees[start] = root
+
+    verified_labels = set()
+    if root is not None:
+        verified_labels.add(root)
+    rdict = deepcopy(rules_dict)
+    new_rules_dict = defaultdict(set)
+    while True:
+        changed = False
+        for k, rule_set in list(rdict.items()):
+            for rule in list(rule_set):
+                if all(x in verified_labels for x in rule):
+                    changed = True
+                    verified_labels.add(k)
+                    new_rules_dict[k].add(rule)
+                    create_tree(k, rule)
+                    rdict[k].remove(rule)
+            if not rule_set:
+                del rdict[k]
+        if not changed:
+            break
+    if root in trees:
+        return trees[root]
+    else:
+        raise ValueError("{} has no tree in rules_dict".format(root))
+
+
 

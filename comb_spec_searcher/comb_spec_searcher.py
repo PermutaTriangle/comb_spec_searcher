@@ -20,8 +20,8 @@ from permuta.misc.ordered_set_partitions import partitions_of_n_of_size_k
 from .rule_db import RuleDB
 from .strategies import (Strategy, StrategyPack, VerificationStrategy)
 from .tree_searcher import (proof_tree_generator_bfs, proof_tree_generator_dfs,
-                            prune, iterative_prune,
-                            iterative_proof_tree_bfs, random_proof_tree)
+                            prune, iterative_prune, random_proof_tree,
+                            iterative_proof_tree_finder)
 from .utils import get_func, get_func_name, get_module_and_func_names
 
 
@@ -1031,7 +1031,7 @@ class CombinatorialSpecificationSearcher(object):
         if self.equivdb[self.start_label] in rules_dict:
             self._has_proof_tree = True
             if self.iterative:
-                proof_tree = iterative_proof_tree_bfs(
+                proof_tree = iterative_proof_tree_finder(
                                         rules_dict,
                                         root=self.equivdb[self.start_label])
             else:
@@ -1081,9 +1081,8 @@ class CombinatorialSpecificationSearcher(object):
 
         if self.equivdb[self.start_label] in rules_dict:
             if self.iterative:
-                proof_trees = iterative_proof_tree_bfs(
-                                        rules_dict,
-                                        root=root_label)
+                raise NotImplementedError("There is no method for yielding all"
+                                          " iterative proof trees.")
             else:
                 proof_trees = proof_tree_generator_dfs(
                                         rules_dict,
