@@ -880,8 +880,7 @@ class CombinatorialSpecificationSearcher(object):
         start_string = ("Looking for {} combinatorial specification"
                         " for:\n").format(
                             'iterative' if self.iterative else 'recursive')
-        start_string += self.classdb.get_class(
-                                            self.start_label).__repr__()
+        start_string += str(self.classdb.get_class(self.start_label))
         start_string += "\n"
         start_string += "The strategies being used are:\n"
         initial_strats = ", ".join(get_func_name(f)
