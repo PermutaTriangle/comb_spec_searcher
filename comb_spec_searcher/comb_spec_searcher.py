@@ -19,8 +19,9 @@ from .proof_tree import ProofTree as ProofTree
 from permuta.misc.ordered_set_partitions import partitions_of_n_of_size_k
 from .rule_db import RuleDB
 from .strategies import (Strategy, StrategyPack, VerificationStrategy)
-from .tree_searcher import (proof_tree_bfs, prune, iterative_prune,
-                            iterative_proof_tree_bfs)
+from .tree_searcher import (proof_tree_generator_bfs, proof_tree_generator_dfs,
+                            prune, iterative_prune, random_proof_tree,
+                            iterative_proof_tree_finder)
 from .utils import get_func, get_func_name, get_module_and_func_names
 
 
@@ -347,7 +348,8 @@ class CombinatorialSpecificationSearcher(object):
                 break
             elif len(end_labels) == 1:
                 # If we have an equivalent rule
-                self._add_equivalent_rule(label, end_labels[0], formal_step)
+                self._add_equivalent_rule(label, end_labels[0], formal_step,
+                                          strategy.constructor)
                 if inferral:
                     inf_class = classes[0]
                     inf_label = end_labels[0]
@@ -363,7 +365,7 @@ class CombinatorialSpecificationSearcher(object):
         if inferral:
             return inf_class, inf_label
 
-    def _add_equivalent_rule(self, start, end, explanation):
+    def _add_equivalent_rule(self, start, end, explanation, constructor):
         """Add equivalent strategy to equivdb and equivalent combinatorial
         class to queue"""
         if explanation is None:
@@ -395,7 +397,7 @@ class CombinatorialSpecificationSearcher(object):
                 # self.equivdb.union(start, end, explanation)
                 # self.equivdb.union(end, start, reverse_explanation)
             else:
-                self._add_rule(start, [end], explanation, "disjoint")
+                self._add_rule(start, [end], explanation, constructor)
         else:
             self.equivdb.union(start, end, explanation)
 
@@ -769,7 +771,7 @@ class CombinatorialSpecificationSearcher(object):
         """
         status = ""
         status += "Currently on 'level' {}\n".format(
-                                    str(self.classqueue.levels_completed + 1))
+                                        self.classqueue.levels_completed + 1)
         status += "Time spent searching so far: ~{} seconds\n".format(
                                                         int(self._time_taken))
 
@@ -878,8 +880,7 @@ class CombinatorialSpecificationSearcher(object):
         start_string = ("Looking for {} combinatorial specification"
                         " for:\n").format(
                             'iterative' if self.iterative else 'recursive')
-        start_string += self.classdb.get_class(
-                                            self.start_label).__repr__()
+        start_string += str(self.classdb.get_class(self.start_label))
         start_string += "\n"
         start_string += "The strategies being used are:\n"
         initial_strats = ", ".join(get_func_name(f)
@@ -1010,7 +1011,7 @@ class CombinatorialSpecificationSearcher(object):
                 return start, ends
 
     def find_tree(self):
-        """Search for a tree based on current data found."""
+        """Search for a random tree based on current data found."""
         start = time.time()
 
         rules_dict = self.tree_search_prep()
@@ -1021,7 +1022,7 @@ class CombinatorialSpecificationSearcher(object):
         else:
             rules_dict = prune(rules_dict)
 
-        # only verified labels in rules_dict, in particular, there is an proof
+        # only verified labels in rules_dict, in particular, there is a proof
         # tree if the start label is in the rules_dict
         for label in rules_dict.keys():
             self.equivdb.update_verified(label)
@@ -1029,11 +1030,11 @@ class CombinatorialSpecificationSearcher(object):
         if self.equivdb[self.start_label] in rules_dict:
             self._has_proof_tree = True
             if self.iterative:
-                proof_tree = iterative_proof_tree_bfs(
+                proof_tree = iterative_proof_tree_finder(
                                         rules_dict,
                                         root=self.equivdb[self.start_label])
             else:
-                _, proof_tree = proof_tree_bfs(
+                proof_tree = random_proof_tree(
                                         rules_dict,
                                         root=self.equivdb[self.start_label])
         else:
@@ -1043,9 +1044,9 @@ class CombinatorialSpecificationSearcher(object):
         self._time_taken += time.time() - start
         return proof_tree
 
-    def get_proof_tree(self, count=False, verbose=False):
+    def get_proof_tree(self, verbose=False):
         """
-        Return proof tree if one exists.
+        Return a random proof tree if one exists.
 
         If verbose, print it out."""
         logger.debug("Searching for tree", extra=self.logger_kwargs)
@@ -1063,3 +1064,75 @@ class CombinatorialSpecificationSearcher(object):
                 found_string += json.dumps(proof_tree.to_jsonable())
                 logger.info(found_string, extra=self.logger_kwargs)
             return proof_tree
+
+    def all_proof_trees(self, verbose=False):
+        """A generator that yields all proof trees in the universe."""
+        start = time.time()
+        root_label = self.equivdb[self.start_label]
+
+        rules_dict = self.tree_search_prep()
+        # Prune all unverified labels (recursively)
+        if self.iterative:
+            rules_dict = iterative_prune(rules_dict,
+                                         root=root_label)
+        else:
+            rules_dict = prune(rules_dict)
+
+        if self.equivdb[self.start_label] in rules_dict:
+            if self.iterative:
+                raise NotImplementedError("There is no method for yielding all"
+                                          " iterative proof trees.")
+            else:
+                proof_trees = proof_tree_generator_dfs(
+                                        rules_dict,
+                                        root=root_label)
+        else:
+            logger.info("There are no proof trees.")
+            return
+        for proof_tree_node in proof_trees:
+            yield ProofTree.from_comb_spec_searcher(proof_tree_node, self)
+
+    def find_smallest_proof_tree(self, verbose=False):
+        """Return a smallest proof tree in the universe. It uses exponential
+        search to find it."""
+        if self.iterative:
+            raise NotImplementedError("There is no method for finding "
+                                      " smallest iterative proof trees.")
+        start = time.time()
+        root_label = self.equivdb[self.start_label]
+
+        rules_dict = self.tree_search_prep()
+        rules_dict = prune(rules_dict)
+
+        if self.equivdb[self.start_label] in rules_dict:
+            bound = 1
+            # Determine an upper bound on the size of a smallest proof tree.
+            while True:
+                try:
+                    next(proof_tree_generator_dfs(rules_dict,
+                                                  root=root_label,
+                                                  maximum=bound))
+                    break
+                except StopIteration:
+                    bound *= 2
+            minimum = 1
+            maximum = bound
+            # Binary search to find a smallest proof tree.
+            while minimum < maximum:
+                middle = (minimum + maximum) // 2
+                try:
+                    tree = next(proof_tree_generator_dfs(rules_dict,
+                                                         root=root_label,
+                                                         maximum=middle))
+                    maximum = middle
+                except StopIteration:
+                    minimum = middle + 1
+        else:
+            logger.info("There are no proof trees.")
+
+        return ProofTree.from_comb_spec_searcher(tree, self)
+
+
+
+
+
