@@ -18,6 +18,10 @@ class Node(object):
     def __str__(self):
         return "".join(["(", str(self.label), *map(str, self.children), ")"])
 
+    def __len__(self):
+        """Return the number nodes in the proof tree."""
+        return 1 + sum(len(c) for c in self.children)
+
 
 def prune(rules_dict):
     """Prune all nodes not in a combinatorial specification."""
@@ -155,11 +159,13 @@ def proof_tree_generator_bfs(rules_dict, root):
         yield from _bfs_helper(root, frozenset())
 
 
-def proof_tree_generator_dfs(rules_dict, root):
+def proof_tree_generator_dfs(rules_dict, root, maximum=None):
     """A generator for all proof trees using depth first search.
     N.B. The rules_dict is assumed to be pruned.
     """
-    def _dfs_tree(root_label, seen):
+    def _dfs_tree(root_label, seen, maximum=None):
+        if maximum is not None and maximum <= 0:
+            return
         if root_label in seen:
             yield seen, Node(root_label)
             return
@@ -168,25 +174,31 @@ def proof_tree_generator_dfs(rules_dict, root):
             if rule == ():
                 yield seen, Node(root_label)
             else:
-                for new_seen, children in _dfs_forest(rule, seen):
+                for new_seen, children in _dfs_forest(rule, seen, maximum):
                     root_node = Node(root_label)
                     root_node.children = children
                     yield new_seen, root_node
 
-    def _dfs_forest(root_labels, seen):
+    def _dfs_forest(root_labels, seen, maximum=None):
+        if maximum is not None and maximum <= 0:
+            return
         if not root_labels:
             yield seen, []
         else:
             root, roots = root_labels[0], root_labels[1:]
-            for seen1, tree in _dfs_tree(root, seen):
-                for seen2, trees in _dfs_forest(roots, seen1):
-                    yield seen1.union(seen2), [tree] + trees
+            for seen1, tree in _dfs_tree(root, seen, maximum):
+                length = len(tree)
+                new_maximum = maximum - length if maximum is not None else None
+                for seen2, trees in _dfs_forest(roots, seen1, new_maximum):
+                    actual_length = length + sum(len(t) for t in trees)
+                    if actual_length < maximum:
+                        yield seen1.union(seen2), [tree] + trees
 
     rules_dict = {start: tuple(sorted(ends))
                   for start, ends in rules_dict.items()}
 
     if root in rules_dict:
-        for _, tree in _dfs_tree(root, frozenset()):
+        for _, tree in _dfs_tree(root, frozenset(), maximum):
             yield tree
 
 

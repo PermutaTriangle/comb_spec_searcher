@@ -1092,6 +1092,47 @@ class CombinatorialSpecificationSearcher(object):
         for proof_tree_node in proof_trees:
             yield ProofTree.from_comb_spec_searcher(proof_tree_node, self)
 
+    def find_smallest_proof_tree(self, verbose=False):
+        """Return a smallest proof tree in the universe. It uses exponential
+        search to find it."""
+        if self.iterative:
+            raise NotImplementedError("There is no method for finding "
+                                      " smallest iterative proof trees.")
+        start = time.time()
+        root_label = self.equivdb[self.start_label]
+
+        rules_dict = self.tree_search_prep()
+        rules_dict = prune(rules_dict)
+
+        if self.equivdb[self.start_label] in rules_dict:
+            bound = 1
+            # Determine an upper bound on the size of a smallest proof tree.
+            while True:
+                try:
+                    next(proof_tree_generator_dfs(rules_dict,
+                                                  root=root_label,
+                                                  maximum=bound))
+                    break
+                except StopIteration:
+                    bound *= 2
+            minimum = 1
+            maximum = bound
+            # Binary search to find a smallest proof tree.
+            while minimum < maximum:
+                middle = (minimum + maximum) // 2
+                try:
+                    tree = next(proof_tree_generator_dfs(rules_dict,
+                                                         root=root_label,
+                                                         maximum=middle))
+                    maximum = middle
+                except StopIteration:
+                    minimum = middle + 1
+        else:
+            logger.info("There are no proof trees.")
+
+        return ProofTree.from_comb_spec_searcher(tree, self)
+
+
 
 
 
