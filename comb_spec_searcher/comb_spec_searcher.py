@@ -45,6 +45,7 @@ class CombinatorialSpecificationSearcher(object):
             if not isinstance(strategy_pack, StrategyPack):
                 raise TypeError(("Strategy pack given not "
                                  "instance of strategy pack."))
+            self.strategy_pack = strategy_pack
         self.debug = kwargs.get('debug', False)
         if not self.debug:
             logzero.loglevel(logging.INFO, True)
@@ -877,34 +878,14 @@ class CombinatorialSpecificationSearcher(object):
 
     def run_information(self):
         """Return string detailing what CombSpecSearcher is looking for."""
-        start_string = ("Looking for {} combinatorial specification"
-                        " for:\n").format(
-                            'iterative' if self.iterative else 'recursive')
-        start_string += str(self.classdb.get_class(self.start_label))
-        start_string += "\n"
-        start_string += "The strategies being used are:\n"
-        initial_strats = ", ".join(get_func_name(f)
-                                   for f in self.initial_strategies)
-        infer_strats = ", ".join(get_func_name(f)
-                                 for f in self.inferral_strategies)
-        verif_strats = ", ".join(get_func_name(f)
-                                 for f in self.verification_strategies)
-        start_string += "Inferral: {}\n".format(infer_strats)
-        start_string += "Initial: {}\n".format(initial_strats)
-        start_string += "Verification: {}\n".format(verif_strats)
-        if self.forward_equivalence:
-            start_string += "Using forward equivalence only.\n"
-        if self.symmetries:
-            symme_strats = ", ".join(get_func_name(f)
-                                     for f in self.symmetries)
-            start_string += "Symmetries: {}\n".format(symme_strats)
-        for i, strategies in enumerate(self.strategy_generators):
-            strats = ", ".join(get_func_name(f) for f in strategies)
-            start_string += "Set {}: {}\n".format(str(i+1), strats)
+        start_string = ("Initialising CombSpecSearcher for the combinatorial"
+                        " class:\n{}\n".format(self.start_class))
+        start_string += str(self.strategy_pack)
         return start_string
 
     def auto_search(self, perc=1, verbose=False,
-                    status_update=None, max_time=None, save=False):
+                    status_update=None, max_time=None, save=False,
+                    smallest=True):
         """
         An automatic search function.
 
@@ -946,7 +927,10 @@ class CombinatorialSpecificationSearcher(object):
                                 extra=self.logger_kwargs)
                     break
             start = time.time()
-            proof_tree = self.get_proof_tree(verbose=verbose)
+            if smallest:
+                proof_tree = self.find_smallest_proof_tree()
+            else:
+                proof_tree = self.get_proof_tree(verbose=verbose)
             if proof_tree is not None:
                 return proof_tree
             # worst case, search every hour
@@ -1108,10 +1092,12 @@ class CombinatorialSpecificationSearcher(object):
             bound = 1
             # Determine an upper bound on the size of a smallest proof tree.
             while True:
+                logger.info("Looking for tree with max size {}".format(bound),
+                            extra=self.logger_kwargs)
                 try:
-                    next(proof_tree_generator_dfs(rules_dict,
-                                                  root=root_label,
-                                                  maximum=bound))
+                    tree = next(proof_tree_generator_dfs(rules_dict,
+                                                         root=root_label,
+                                                         maximum=bound))
                     break
                 except StopIteration:
                     bound *= 2
@@ -1120,6 +1106,8 @@ class CombinatorialSpecificationSearcher(object):
             # Binary search to find a smallest proof tree.
             while minimum < maximum:
                 middle = (minimum + maximum) // 2
+                logger.info("Looking for tree with max size {}".format(middle),
+                            extra=self.logger_kwargs)
                 try:
                     tree = next(proof_tree_generator_dfs(rules_dict,
                                                          root=root_label,
@@ -1127,10 +1115,10 @@ class CombinatorialSpecificationSearcher(object):
                     maximum = middle
                 except StopIteration:
                     minimum = middle + 1
+            return ProofTree.from_comb_spec_searcher(tree, self)
         else:
-            logger.info("There are no proof trees.")
-
-        return ProofTree.from_comb_spec_searcher(tree, self)
+            # logger.info("There are no proof trees.", extra=self.logger_kwargs)
+            return
 
 
 
