@@ -186,7 +186,8 @@ def proof_tree_generator_dfs(rules_dict, root, maximum=None):
             yield seen, []
         else:
             root, roots = root_labels[0], root_labels[1:]
-            for seen1, tree in _dfs_tree(root, seen, maximum):
+            for seen1, tree in _dfs_tree(root, seen,
+                                         maximum - len(root_labels) + 1):
                 length = len(tree)
                 new_maximum = maximum - length if maximum is not None else None
                 for seen2, trees in _dfs_forest(roots, seen1, new_maximum):
