@@ -885,7 +885,7 @@ class CombinatorialSpecificationSearcher(object):
 
     def auto_search(self, perc=1, verbose=False,
                     status_update=None, max_time=None, save=False,
-                    smallest=True):
+                    smallest=False):
         """
         An automatic search function.
 
@@ -930,8 +930,16 @@ class CombinatorialSpecificationSearcher(object):
             if smallest:
                 proof_tree = self.find_smallest_proof_tree()
             else:
-                proof_tree = self.get_proof_tree(verbose=verbose)
+                proof_tree = self.get_proof_tree()
             if proof_tree is not None:
+                if verbose:
+                    found_string = "Proof tree found {}\n".format(
+                    time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()))
+                    found_string += "Time taken was {} seconds\n\n".format(
+                                                            self._time_taken)
+                    found_string += self.status()
+                    found_string += json.dumps(proof_tree.to_jsonable())
+                    logger.info(found_string, extra=self.logger_kwargs)
                 return proof_tree
             # worst case, search every hour
             multiplier = 100 // perc
@@ -1028,7 +1036,7 @@ class CombinatorialSpecificationSearcher(object):
         self._time_taken += time.time() - start
         return proof_tree
 
-    def get_proof_tree(self, verbose=False):
+    def get_proof_tree(self):
         """
         Return a random proof tree if one exists.
 
@@ -1039,14 +1047,6 @@ class CombinatorialSpecificationSearcher(object):
             proof_tree = ProofTree.from_comb_spec_searcher(proof_tree_node,
                                                            self)
             assert proof_tree is not None
-            if proof_tree is not None and verbose:
-                found_string = "Proof tree found {}\n".format(
-                    time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()))
-                found_string += "Time taken was {} seconds\n\n".format(
-                                                          self._time_taken)
-                found_string += self.status()
-                found_string += json.dumps(proof_tree.to_jsonable())
-                logger.info(found_string, extra=self.logger_kwargs)
             return proof_tree
 
     def all_proof_trees(self, verbose=False):
@@ -1084,7 +1084,7 @@ class CombinatorialSpecificationSearcher(object):
                                       " smallest iterative proof trees.")
         start = time.time()
         root_label = self.equivdb[self.start_label]
-
+        logger.debug("Searching for tree", extra=self.logger_kwargs)
         rules_dict = self.tree_search_prep()
         rules_dict = prune(rules_dict)
 
