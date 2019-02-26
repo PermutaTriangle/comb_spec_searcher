@@ -170,8 +170,8 @@ class ProofTreeNode(object):
                                            root_class=root_class)
                     F = sympy.Function("F")(sympy.abc.x)
                     lhs = lhs.subs({F: self.get_function()})
-                    print("Got min poly for.\n{}".format(obj))
-                    print("The min poly was:\n{}\n".format(lhs))
+                    # print("Got min poly for.\n{}".format(obj))
+                    # print("The min poly was:\n{}\n".format(lhs))
                     rhs = 0
                 else:
                     rhs = obj.get_genf(root_func=root_func,
@@ -324,11 +324,21 @@ class ProofTree(object):
             print("count := {}:".format(
                                 [len(list(root_class.objects_of_length(i)))
                                  for i in range(6)]))
-            print("Computing Groebner basis with 'grevlex' order...")
+            print("Computing Groebner basis with 'grlex' order.")
         all_funcs = set(x for eq in eqs for x in eq.atoms(sympy.Function))
         all_funcs.remove(root_func)
+        build_order = sympy.polys.orderings.build_product_order
+
+        gens = list(all_funcs) + [root_func, sympy.abc.x]
+        assert all(hasattr(x, "__hash__") for x in gens)
+        order = build_order((("grevlex", *all_funcs),
+                             ("grevlex", root_func, sympy.abc.x)),
+                            list(all_funcs) + [root_func, sympy.abc.x])
         basis = sympy.groebner(eqs, *all_funcs, root_func,
-                               wrt=[sympy.abc.x], order='grevlex')
+                               wrt=[sympy.abc.x], order=order)
+        eqs = basis.polys
+        all_funcs = set(x for eq in eqs for x in eq.atoms(sympy.Function))
+        all_funcs.remove(root_func)
 
         def check_poly(min_poly, initial):
             """Return True if this is a minimum polynomial for the generating
