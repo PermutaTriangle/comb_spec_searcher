@@ -19,8 +19,9 @@ from .proof_tree import ProofTree as ProofTree
 from permuta.misc.ordered_set_partitions import partitions_of_n_of_size_k
 from .rule_db import RuleDB
 from .strategies import (Strategy, StrategyPack, VerificationStrategy)
-from .tree_searcher import (proof_tree_bfs, prune, iterative_prune,
-                            iterative_proof_tree_bfs)
+from .tree_searcher import (proof_tree_generator_bfs, proof_tree_generator_dfs,
+                            prune, iterative_prune, random_proof_tree,
+                            iterative_proof_tree_finder)
 from .utils import get_func, get_func_name, get_module_and_func_names
 
 
@@ -44,6 +45,7 @@ class CombinatorialSpecificationSearcher(object):
             if not isinstance(strategy_pack, StrategyPack):
                 raise TypeError(("Strategy pack given not "
                                  "instance of strategy pack."))
+            self.strategy_pack = strategy_pack
         self.debug = kwargs.get('debug', False)
         if not self.debug:
             logzero.loglevel(logging.INFO, True)
@@ -347,7 +349,8 @@ class CombinatorialSpecificationSearcher(object):
                 break
             elif len(end_labels) == 1:
                 # If we have an equivalent rule
-                self._add_equivalent_rule(label, end_labels[0], formal_step)
+                self._add_equivalent_rule(label, end_labels[0], formal_step,
+                                          strategy.constructor)
                 if inferral:
                     inf_class = classes[0]
                     inf_label = end_labels[0]
@@ -363,7 +366,7 @@ class CombinatorialSpecificationSearcher(object):
         if inferral:
             return inf_class, inf_label
 
-    def _add_equivalent_rule(self, start, end, explanation):
+    def _add_equivalent_rule(self, start, end, explanation, constructor):
         """Add equivalent strategy to equivdb and equivalent combinatorial
         class to queue"""
         if explanation is None:
@@ -395,7 +398,7 @@ class CombinatorialSpecificationSearcher(object):
                 # self.equivdb.union(start, end, explanation)
                 # self.equivdb.union(end, start, reverse_explanation)
             else:
-                self._add_rule(start, [end], explanation, "disjoint")
+                self._add_rule(start, [end], explanation, constructor)
         else:
             self.equivdb.union(start, end, explanation)
 
@@ -769,7 +772,7 @@ class CombinatorialSpecificationSearcher(object):
         """
         status = ""
         status += "Currently on 'level' {}\n".format(
-                                    str(self.classqueue.levels_completed + 1))
+                                        self.classqueue.levels_completed + 1)
         status += "Time spent searching so far: ~{} seconds\n".format(
                                                         int(self._time_taken))
 
@@ -783,27 +786,35 @@ class CombinatorialSpecificationSearcher(object):
         strategy_verified = 0
         empty = 0
         equivalent_sets = set()
+        verified_equiv_sets = set()
         for label in all_labels:
             if self.classdb.is_expandable(label):
                 expandable += 1
             if self.equivdb.is_verified(label):
                 verified += 1
+                verified_equiv_sets.add(self.equivdb[label])
             if self.classdb.is_strategy_verified(label):
                 strategy_verified += 1
             if self.classdb.is_empty(label):
                 empty += 1
             equivalent_sets.add(self.equivdb[label])
 
-        status += "Total number of equivalent sets is {}\n".format(
-                                                    str(len(equivalent_sets)))
         status += ("Total number of expandable combinatorial classes is {}\n"
-                   "".format(str(expandable)))
+                   "".format(expandable))
         status += ("Total number of verified combinatorial classes is {}\n"
-                   "".format(str(verified)))
-        status += ("Total number of strategy verified combinatorial expand"
-                   " classes is {}\n".format(str(strategy_verified)))
+                   "".format(verified))
+        status += ("Total number of strategy verified combinatorial "
+                   "classes is {}\n".format(strategy_verified))
         status += ("Total number of empty combinatorial classes is {}\n"
-                   "".format(str(empty)))
+                   "".format(empty))
+
+        status += ("Total number of equivalent sets is {}\n"
+                   "".format(len(equivalent_sets)))
+        status += ("Total number of verified equivalent sets is {}\n"
+                   "".format(len(verified_equiv_sets)))
+
+        status += ("Total number of combinatorial rules is {}\n"
+                   "".format(len(list(self.ruledb))))
 
         status += "The size of the working queue is {}\n".format(
                                             len(self.classqueue.working))
@@ -867,35 +878,14 @@ class CombinatorialSpecificationSearcher(object):
 
     def run_information(self):
         """Return string detailing what CombSpecSearcher is looking for."""
-        start_string = ("Looking for {} combinatorial specification"
-                        " for:\n").format(
-                            'iterative' if self.iterative else 'recursive')
-        start_string += self.classdb.get_class(
-                                            self.start_label).__repr__()
-        start_string += "\n"
-        start_string += "The strategies being used are:\n"
-        initial_strats = ", ".join(get_func_name(f)
-                                   for f in self.initial_strategies)
-        infer_strats = ", ".join(get_func_name(f)
-                                 for f in self.inferral_strategies)
-        verif_strats = ", ".join(get_func_name(f)
-                                 for f in self.verification_strategies)
-        start_string += "Inferral: {}\n".format(infer_strats)
-        start_string += "Initial: {}\n".format(initial_strats)
-        start_string += "Verification: {}\n".format(verif_strats)
-        if self.forward_equivalence:
-            start_string += "Using forward equivalence only.\n"
-        if self.symmetries:
-            symme_strats = ", ".join(get_func_name(f)
-                                     for f in self.symmetries)
-            start_string += "Symmetries: {}\n".format(symme_strats)
-        for i, strategies in enumerate(self.strategy_generators):
-            strats = ", ".join(get_func_name(f) for f in strategies)
-            start_string += "Set {}: {}\n".format(str(i+1), strats)
+        start_string = ("Initialising CombSpecSearcher for the combinatorial"
+                        " class:\n{}\n".format(self.start_class))
+        start_string += str(self.strategy_pack)
         return start_string
 
     def auto_search(self, perc=1, verbose=False,
-                    status_update=None, max_time=None, save=False):
+                    status_update=None, max_time=None, save=False,
+                    smallest=False):
         """
         An automatic search function.
 
@@ -937,8 +927,19 @@ class CombinatorialSpecificationSearcher(object):
                                 extra=self.logger_kwargs)
                     break
             start = time.time()
-            proof_tree = self.get_proof_tree(verbose=verbose)
+            if smallest:
+                proof_tree = self.find_smallest_proof_tree()
+            else:
+                proof_tree = self.get_proof_tree()
             if proof_tree is not None:
+                if verbose:
+                    found_string = "Proof tree found {}\n".format(
+                    time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()))
+                    found_string += "Time taken was {} seconds\n\n".format(
+                                                            self._time_taken)
+                    found_string += self.status()
+                    found_string += json.dumps(proof_tree.to_jsonable())
+                    logger.info(found_string, extra=self.logger_kwargs)
                 return proof_tree
             # worst case, search every hour
             multiplier = 100 // perc
@@ -1002,7 +1003,7 @@ class CombinatorialSpecificationSearcher(object):
                 return start, ends
 
     def find_tree(self):
-        """Search for a tree based on current data found."""
+        """Search for a random tree based on current data found."""
         start = time.time()
 
         rules_dict = self.tree_search_prep()
@@ -1013,7 +1014,7 @@ class CombinatorialSpecificationSearcher(object):
         else:
             rules_dict = prune(rules_dict)
 
-        # only verified labels in rules_dict, in particular, there is an proof
+        # only verified labels in rules_dict, in particular, there is a proof
         # tree if the start label is in the rules_dict
         for label in rules_dict.keys():
             self.equivdb.update_verified(label)
@@ -1021,11 +1022,11 @@ class CombinatorialSpecificationSearcher(object):
         if self.equivdb[self.start_label] in rules_dict:
             self._has_proof_tree = True
             if self.iterative:
-                proof_tree = iterative_proof_tree_bfs(
+                proof_tree = iterative_proof_tree_finder(
                                         rules_dict,
                                         root=self.equivdb[self.start_label])
             else:
-                _, proof_tree = proof_tree_bfs(
+                proof_tree = random_proof_tree(
                                         rules_dict,
                                         root=self.equivdb[self.start_label])
         else:
@@ -1035,9 +1036,9 @@ class CombinatorialSpecificationSearcher(object):
         self._time_taken += time.time() - start
         return proof_tree
 
-    def get_proof_tree(self, count=False, verbose=False):
+    def get_proof_tree(self):
         """
-        Return proof tree if one exists.
+        Return a random proof tree if one exists.
 
         If verbose, print it out."""
         logger.debug("Searching for tree", extra=self.logger_kwargs)
@@ -1046,12 +1047,80 @@ class CombinatorialSpecificationSearcher(object):
             proof_tree = ProofTree.from_comb_spec_searcher(proof_tree_node,
                                                            self)
             assert proof_tree is not None
-            if proof_tree is not None and verbose:
-                found_string = "Proof tree found {}\n".format(
-                    time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()))
-                found_string += "Time taken was {} seconds\n\n".format(
-                                                          self._time_taken)
-                found_string += self.status()
-                found_string += json.dumps(proof_tree.to_jsonable())
-                logger.info(found_string, extra=self.logger_kwargs)
             return proof_tree
+
+    def all_proof_trees(self, verbose=False):
+        """A generator that yields all proof trees in the universe."""
+        start = time.time()
+        root_label = self.equivdb[self.start_label]
+
+        rules_dict = self.tree_search_prep()
+        # Prune all unverified labels (recursively)
+        if self.iterative:
+            rules_dict = iterative_prune(rules_dict,
+                                         root=root_label)
+        else:
+            rules_dict = prune(rules_dict)
+
+        if self.equivdb[self.start_label] in rules_dict:
+            if self.iterative:
+                raise NotImplementedError("There is no method for yielding all"
+                                          " iterative proof trees.")
+            else:
+                proof_trees = proof_tree_generator_dfs(
+                                        rules_dict,
+                                        root=root_label)
+        else:
+            logger.info("There are no proof trees.")
+            return
+        for proof_tree_node in proof_trees:
+            yield ProofTree.from_comb_spec_searcher(proof_tree_node, self)
+
+    def find_smallest_proof_tree(self, verbose=False):
+        """Return a smallest proof tree in the universe. It uses exponential
+        search to find it."""
+        if self.iterative:
+            raise NotImplementedError("There is no method for finding "
+                                      " smallest iterative proof trees.")
+        start = time.time()
+        root_label = self.equivdb[self.start_label]
+        logger.debug("Searching for tree", extra=self.logger_kwargs)
+        rules_dict = self.tree_search_prep()
+        rules_dict = prune(rules_dict)
+
+        if self.equivdb[self.start_label] in rules_dict:
+            bound = 1
+            # Determine an upper bound on the size of a smallest proof tree.
+            while True:
+                logger.info("Looking for tree with max size {}".format(bound),
+                            extra=self.logger_kwargs)
+                try:
+                    tree = next(proof_tree_generator_dfs(rules_dict,
+                                                         root=root_label,
+                                                         maximum=bound))
+                    break
+                except StopIteration:
+                    bound *= 2
+            minimum = 1
+            maximum = bound
+            # Binary search to find a smallest proof tree.
+            while minimum < maximum:
+                middle = (minimum + maximum) // 2
+                logger.info("Looking for tree with max size {}".format(middle),
+                            extra=self.logger_kwargs)
+                try:
+                    tree = next(proof_tree_generator_dfs(rules_dict,
+                                                         root=root_label,
+                                                         maximum=middle))
+                    maximum = middle
+                except StopIteration:
+                    minimum = middle + 1
+            return ProofTree.from_comb_spec_searcher(tree, self)
+        else:
+            # logger.info("There are no proof trees.", extra=self.logger_kwargs)
+            return
+
+
+
+
+

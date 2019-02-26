@@ -508,13 +508,16 @@ class ProofTree(object):
                                 for x, y in zip(eqv_path[:-1], eqv_path[1:])]
 
             strat_children = []
-            for next_label in ends:
-                for child in root.children:
+            ends = list(ends)
+            for child in root.children:
+                for next_label in ends:
                     if css.equivdb.equivalent(next_label, child.label):
+                        ends.remove(next_label)
                         sub_tree = ProofTree.from_comb_spec_searcher_node(
                                                         child, css, next_label)
                         strat_children.append(sub_tree)
                         break
+
             if constructor == 'cartesian':
                 # decomposition!
                 return ProofTreeNode(label, eqv_path, eqv_objs,
