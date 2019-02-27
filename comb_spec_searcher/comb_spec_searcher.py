@@ -923,8 +923,9 @@ class CombinatorialSpecificationSearcher(object):
                 if self.expand_classes(1):
                     # this function returns True if no more classes to expand
                     expanding = False
-                    logger.info("No more classes to expand.",
-                                extra=self.logger_kwargs)
+                    if verbose:
+                        logger.info("No more classes to expand.",
+                                    extra=self.logger_kwargs)
                     break
             start = time.time()
             if smallest:
