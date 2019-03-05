@@ -682,7 +682,7 @@ class CombinatorialSpecificationSearcher(object):
                     error = ("Failed to find generating function for:\n" +
                              repr(comb_class) + "\nVerified as:\n" +
                              self.classdb.verification_reason(label) +
-                             "\nThe error was:\n" + e)
+                             "\nThe error was:\n" + str(e))
                     logger.warn(error, extra=self.logger_kwargs)
 
         if kwargs.get('substitutions'):
