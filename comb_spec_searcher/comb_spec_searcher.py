@@ -682,7 +682,7 @@ class CombinatorialSpecificationSearcher(object):
                     error = ("Failed to find generating function for:\n" +
                              repr(comb_class) + "\nVerified as:\n" +
                              self.classdb.verification_reason(label) +
-                             "\nThe error was:\n" + e)
+                             "\nThe error was:\n" + str(e))
                     logger.warn(error, extra=self.logger_kwargs)
 
         if kwargs.get('substitutions'):
@@ -923,8 +923,9 @@ class CombinatorialSpecificationSearcher(object):
                 if self.expand_classes(1):
                     # this function returns True if no more classes to expand
                     expanding = False
-                    logger.info("No more classes to expand.",
-                                extra=self.logger_kwargs)
+                    if verbose:
+                        logger.info("No more classes to expand.",
+                                    extra=self.logger_kwargs)
                     break
             start = time.time()
             if smallest:
@@ -934,7 +935,7 @@ class CombinatorialSpecificationSearcher(object):
             if proof_tree is not None:
                 if verbose:
                     found_string = "Proof tree found {}\n".format(
-                    time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()))
+                        time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()))
                     found_string += "Time taken was {} seconds\n\n".format(
                                                             self._time_taken)
                     found_string += self.status()
@@ -1117,10 +1118,5 @@ class CombinatorialSpecificationSearcher(object):
                     minimum = middle + 1
             return ProofTree.from_comb_spec_searcher(tree, self)
         else:
-            # logger.info("There are no proof trees.", extra=self.logger_kwargs)
+            logger.info("There are no proof trees.", extra=self.logger_kwargs)
             return
-
-
-
-
-

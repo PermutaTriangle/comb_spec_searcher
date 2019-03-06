@@ -12,6 +12,7 @@ from operator import add, mul
 from permuta.misc.ordered_set_partitions import partitions_of_n_of_size_k
 
 from .tree_searcher import Node as tree_searcher_node
+from .utils import check_poly, check_equation, get_solution, taylor_expand
 
 
 class ProofTreeNode(object):
@@ -143,29 +144,53 @@ class ProofTreeNode(object):
                     self.recursion == other.recursion,
                     self.formal_step == other.formal_step])
 
-    def get_function(self):
-        if self.sympy_function is None:
-            self.sympy_function = sympy.Function("F_" +
-                                                 str(self.label))(sympy.abc.x)
+    def get_function(self, min_poly=False):
+        if min_poly:
+            if (self.sympy_function is None or
+                    isinstance(self.sympy_function, sympy.Function)):
+                self.sympy_function = sympy.var("F_" + str(self.label))
+        else:
+            if (self.sympy_function is None or
+                    isinstance(self.sympy_function, sympy.Symbol)):
+                self.sympy_function = sympy.Function(
+                                        "F_" + str(self.label))(sympy.abc.x)
         return self.sympy_function
 
     def get_equation(self, root_func=None, root_class=None,
-                     substitutions=False, dummy_eq=False):
-        lhs = self.get_function()
+                     substitutions=False, dummy_eq=False, min_poly=False,
+                     verbose=False):
+        lhs = self.get_function(min_poly)
         if self.disjoint_union:
             rhs = reduce(add,
-                         [child.get_function() for child in self.children],
+                         [child.get_function(min_poly)
+                          for child in self.children],
                          0)
         elif self.decomposition:
             rhs = reduce(mul,
-                         [child.get_function() for child in self.children],
+                         [child.get_function(min_poly)
+                          for child in self.children],
                          1)
         elif self.recursion:
             rhs = lhs
         elif self.strategy_verified:
+            obj = self.eqv_path_objects[-1]
             try:
-                rhs = self.eqv_path_objects[-1].get_genf(root_func=root_func,
-                                                         root_class=root_class)
+                if min_poly:
+                    lhs = obj.get_min_poly(root_func=root_func,
+                                           root_class=root_class,
+                                           verbose=verbose)
+                    if min_poly:
+                        F = sympy.Symbol("F")
+                    else:
+                        F = sympy.Function("F")(sympy.abc.x)
+                    lhs = lhs.subs({F: self.get_function(min_poly)})
+                    # print("Found min poly for.\n{}".format(obj))
+                    # print("The min poly was:\n{}\n".format(lhs))
+                    rhs = 0
+                else:
+                    rhs = obj.get_genf(root_func=root_func,
+                                       root_class=root_class,
+                                       verbose=verbose)
             except ValueError as e:
                 if not dummy_eq:
                     raise ValueError(e)
@@ -221,9 +246,12 @@ class ProofTree(object):
                 print(o.__repr__())
                 print()
 
-    def get_equations(self, dummy_eqs=False):
+    def get_equations(self, dummy_eqs=False, min_poly=False, verbose=False):
+        """Return the set of equations implied by the proof tree. If
+        dummy_eqs=True then it will give a 'F_DOITYOURSELF' variable for
+        equations that fail."""
         eqs = set()
-        root_func = self.root.get_function()
+        root_func = self.root.get_function(min_poly)
         root_class = self.root.eqv_path_objects[0]
         for node in self.nodes():
             if node.recursion:
@@ -231,10 +259,12 @@ class ProofTree(object):
             eqs.add(node.get_equation(substitutions=True,
                                       root_func=root_func,
                                       root_class=root_class,
-                                      dummy_eq=dummy_eqs))
+                                      dummy_eq=dummy_eqs,
+                                      min_poly=min_poly,
+                                      verbose=verbose))
         return eqs
 
-    def get_genf(self, verbose=False, verify=8):
+    def get_genf(self, verbose=False, verify=8, groebner=True):
         """Find generating function for proof tree. Return None if no solution
         is found. If not verify will return list of possible solutions."""
         # TODO: add substitutions, so as to solve with symbols first.
@@ -242,13 +272,37 @@ class ProofTree(object):
         root_class = self.root.eqv_path_objects[0]
         root_func = self.root.get_function()
         if verbose:
-            print("The system of", len(eqs), "equations:")
-            for eq in eqs:
-                print(eq.lhs, "=", eq.rhs)
-            print()
+            print("The system of", len(eqs), "equations")
+            print("root_func := ", str(root_func).replace("(x)", ""))
+            print(",\n".join("{} = {}".format(str(eq.lhs).replace("(x)", ""),
+                                              str(eq.rhs).replace("(x)", ""))
+                             for eq in eqs))
+            print("]:")
+            print("count := {}:".format(
+                                [len(list(root_class.objects_of_length(i)))
+                                 for i in range(6)]))
             print("Solving...")
-        solutions = sympy.solve(eqs, tuple([eq.lhs for eq in eqs]), dict=True,
-                                cubics=False, quartics=False, quintics=False)
+        if groebner:
+            all_funcs = set(x for eq in eqs for x in eq.atoms(sympy.Function))
+            all_funcs.remove(root_func)
+            basis = sympy.groebner(eqs, *all_funcs, root_func,
+                                   wrt=[sympy.abc.x], order='grevlex')
+            solutions = []
+            for poly in basis.polys:
+                print(poly)
+                if poly.atoms(sympy.Function) == {root_func}:
+                    eq = poly.as_expr()
+                    if verbose:
+                        print("Possible min poly:")
+                        print(str(eq).replace("(x)", ""))
+                    solutions.extend(sympy.solve(eq, root_func, dict=True,
+                                                 cubics=False, quartics=False,
+                                                 quintics=False))
+        else:
+            solutions = sympy.solve(eqs, tuple([eq.lhs for eq in eqs]),
+                                    dict=True, cubics=False, quartics=False,
+                                    quintics=False)
+
         if solutions:
             if not verify:
                 return solutions
@@ -268,6 +322,65 @@ class ProofTree(object):
         if solutions:
             raise RuntimeError(("Incorrect generating function\n" +
                                 str(solutions)))
+
+    def get_min_poly(self, verbose=False, solve=False):
+        """Return the minimum polynomial of the generating function F that is
+        implied by the proof tree."""
+        eqs = self.get_equations(min_poly=True, verbose=verbose)
+        root_class = self.root.eqv_path_objects[0]
+        root_func = self.root.get_function(min_poly=True)
+        if verbose:
+            print("The system of", len(eqs), "equations")
+            print("root_func := ", str(root_func))
+            print("eqs := [")
+            print(",\n".join("{} = {}".format(str(eq.lhs), str(eq.rhs))
+                             for eq in eqs))
+            print("]:")
+            print("count := {}:".format(
+                                [len(list(root_class.objects_of_length(i)))
+                                 for i in range(6)]))
+            print("Computing Groebner basis with 'lex' order.")
+        all_funcs = set(x for eq in eqs for x in eq.atoms(sympy.Symbol))
+        all_funcs.remove(root_func)
+        all_funcs.remove(sympy.abc.x)
+
+        # build_order = sympy.polys.orderings.build_product_order
+        # gens = list(all_funcs) + [root_func, sympy.abc.x]
+        # assert all(hasattr(x, "__hash__") for x in gens)
+        # print(all_funcs)
+        # print(root_func)
+        # print(sympy.abc.x)
+        # print(list(all_funcs) + [root_func, sympy.abc.x])
+        # order = build_order((("grlex", *all_funcs),
+        #                      ("grlex", root_func, sympy.abc.x)),
+        #                     list(all_funcs) + [root_func, sympy.abc.x])
+
+        basis = sympy.groebner(eqs, *all_funcs, root_func,
+                               wrt=[sympy.abc.x], order='lex')
+        eqs = basis.polys
+
+        verify = 5
+        if basis.polys:
+            initial = [len(list(root_class.objects_of_length(i)))
+                       for i in range(verify + 1)]
+        for poly in basis.polys:
+            if verbose:
+                print("Trying the min poly:")
+                print(poly.as_expr())
+                print("with the atoms")
+                print(poly.atoms(sympy.Symbol))
+                print()
+            if poly.atoms(sympy.Symbol) == {root_func, sympy.abc.x}:
+                eq = poly.as_expr()
+                F = sympy.Symbol("F")
+                eq = eq.subs({root_func: F})
+                if check_poly(eq, initial) or check_equation(eq, initial):
+                    if solve:
+                        return eq, get_solution(eq, initial)
+                    else:
+                        return eq
+        raise RuntimeError(("Incorrect minimum polynomial\n" +
+                            str(basis)))
 
     def nodes(self, root=None):
         if root is None:
@@ -439,14 +552,3 @@ class ProofTree(object):
     def __eq__(self, other):
         return all(node1 == node2
                    for node1, node2 in zip(self.nodes(), other.nodes()))
-
-
-def taylor_expand(genf, n=10):
-    num, den = genf.as_numer_denom()
-    num = num.expand()
-    den = den.expand()
-    genf = num/den
-    ser = sympy.Poly(genf.series(n=n+1).removeO(), sympy.abc.x)
-    res = ser.all_coeffs()
-    res = res[::-1] + [0]*(n+1-len(res))
-    return res
