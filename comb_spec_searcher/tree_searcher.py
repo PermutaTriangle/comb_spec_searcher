@@ -207,6 +207,7 @@ def iterative_proof_tree_finder(rules_dict, root):
     """Finds an iterative proof tree for root, if one exists.
     """
     trees = {}
+
     def get_tree(start):
         if start == root:
             return Node(start)
@@ -246,6 +247,3 @@ def iterative_proof_tree_finder(rules_dict, root):
         return trees[root]
     else:
         raise ValueError("{} has no tree in rules_dict".format(root))
-
-
-

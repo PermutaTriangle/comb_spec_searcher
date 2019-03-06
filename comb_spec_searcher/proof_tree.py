@@ -152,8 +152,8 @@ class ProofTreeNode(object):
         else:
             if (self.sympy_function is None or
                     isinstance(self.sympy_function, sympy.Symbol)):
-                self.sympy_function = sympy.Function("F_" +
-                                                 str(self.label))(sympy.abc.x)
+                self.sympy_function = sympy.Function(
+                                        "F_" + str(self.label))(sympy.abc.x)
         return self.sympy_function
 
     def get_equation(self, root_func=None, root_class=None,
@@ -189,8 +189,8 @@ class ProofTreeNode(object):
                     rhs = 0
                 else:
                     rhs = obj.get_genf(root_func=root_func,
-                                        root_class=root_class,
-                                        verbose=verbose)
+                                       root_class=root_class,
+                                       verbose=verbose)
             except ValueError as e:
                 if not dummy_eq:
                     raise ValueError(e)
@@ -351,7 +351,8 @@ class ProofTree(object):
         # print(root_func)
         # print(sympy.abc.x)
         # print(list(all_funcs) + [root_func, sympy.abc.x])
-        # order = build_order((("grlex", *all_funcs), ("grlex", root_func, sympy.abc.x)),
+        # order = build_order((("grlex", *all_funcs),
+        #                      ("grlex", root_func, sympy.abc.x)),
         #                     list(all_funcs) + [root_func, sympy.abc.x])
 
         basis = sympy.groebner(eqs, *all_funcs, root_func,
@@ -380,7 +381,6 @@ class ProofTree(object):
                         return eq
         raise RuntimeError(("Incorrect minimum polynomial\n" +
                             str(basis)))
-
 
     def nodes(self, root=None):
         if root is None:

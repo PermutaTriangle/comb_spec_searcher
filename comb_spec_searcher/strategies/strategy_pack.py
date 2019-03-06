@@ -30,7 +30,7 @@ class StrategyPack(object):
 
     def __str__(self):
         string = ("Looking for {} combinatorial specification"
-                        " with the strategies:\n").format(
+                  " with the strategies:\n").format(
                         'iterative' if self.iterative else 'recursive')
         initial_strats = ", ".join(get_func_name(f)
                                    for f in self.initial_strats)

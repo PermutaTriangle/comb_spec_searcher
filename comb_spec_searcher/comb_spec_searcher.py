@@ -935,7 +935,7 @@ class CombinatorialSpecificationSearcher(object):
             if proof_tree is not None:
                 if verbose:
                     found_string = "Proof tree found {}\n".format(
-                    time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()))
+                        time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()))
                     found_string += "Time taken was {} seconds\n\n".format(
                                                             self._time_taken)
                     found_string += self.status()
@@ -1118,10 +1118,5 @@ class CombinatorialSpecificationSearcher(object):
                     minimum = middle + 1
             return ProofTree.from_comb_spec_searcher(tree, self)
         else:
-            # logger.info("There are no proof trees.", extra=self.logger_kwargs)
+            logger.info("There are no proof trees.", extra=self.logger_kwargs)
             return
-
-
-
-
-
