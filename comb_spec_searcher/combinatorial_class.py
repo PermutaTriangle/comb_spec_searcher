@@ -18,31 +18,40 @@ class CombinatorialClass(abc.ABC):
         """Return True if objects of length returns nothing for all lengths"""
         return False
 
-    @abc.abstractmethod
     def get_genf(self, *args, **kwargs):
         """Return the generating function for the combinatorial object"""
-        return sympy.abc.x**0
+        raise NotImplementedError
 
     @abc.abstractmethod
     def objects_of_length(self, length):
         """Returns an iterable of combinatorial objects of a given length"""
         return []
 
+    def is_epsilon(self):
+        """Returns True if the generating function equals 1"""
+        raise NotImplementedError
+
+    def is_atom(self):
+        """Returns True if the generating function equals x"""
+        raise NotImplementedError
+
+    def is_positive(self):
+        """Returns True if the constant term of the generating function is 0"""
+        raise NotImplementedError
+
     @abc.abstractmethod
     def to_jsonable(self):
         """Return JSONable data structure of the class"""
         return
 
-    @abc.abstractmethod
     def compress(self):
         """Return a compressed version of the class."""
-        return
+        return self # Should implement if you're having memory issues
 
     @classmethod
-    @abc.abstractmethod
     def decompress(cls, compressed):
         """Return decompressed class from string by compress function."""
-        return
+        return compressed
 
     @classmethod
     @abc.abstractmethod
