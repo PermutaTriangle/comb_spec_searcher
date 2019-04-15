@@ -1,5 +1,5 @@
 """A function for batch strategies."""
-from comb_spec_searcher.strategies import Strategy
+from ..strategy import Strategy
 
 
 def BatchStrategy(formal_step, comb_classes):

@@ -1,5 +1,5 @@
 """A function for inferral strategies."""
-from comb_spec_searcher.strategies import Strategy
+from ..strategy import Strategy
 
 
 def InferralStrategy(formal_step, comb_class):

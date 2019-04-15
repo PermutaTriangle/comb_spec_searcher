@@ -5,15 +5,16 @@ This can be used to get the generating function for the class.
 """
 import json
 import sys
-import sympy
 from functools import reduce
-from logzero import logger
 from operator import add, mul
+
+import sympy
+from logzero import logger
 
 from permuta.misc.ordered_set_partitions import partitions_of_n_of_size_k
 
 from .tree_searcher import Node as tree_searcher_node
-from .utils import (check_poly, check_equation, get_solution, maple_equations,
+from .utils import (check_equation, check_poly, get_solution, maple_equations,
                     taylor_expand)
 
 
@@ -288,8 +289,8 @@ class ProofTree(object):
         logger.info("Solving...", extra=self.logger_kwargs)
 
         solutions = sympy.solve(eqs, tuple([eq.lhs for eq in eqs]),
-                                    dict=True, cubics=False, quartics=False,
-                                    quintics=False)
+                                dict=True, cubics=False, quartics=False,
+                                quintics=False)
 
         if solutions:
             if not verify:

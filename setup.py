@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
 
 
 def read(fname):
@@ -18,7 +19,8 @@ setup(
     url="https://github.com/PermutaTriangle/comb_spec_searcher",
     project_urls={
         'Source': 'https://github.com/PermutaTriangle/comb_spec_searcher',
-        'Tracker': 'https://github.com/PermutaTriangle/comb_spec_searcher/issues'
+        'Tracker': ('https://github.com/PermutaTriangle/comb_spec_searcher'
+                    '/issues')
     },
     packages=find_packages(),
     long_description=read("README.md"),

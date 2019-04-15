@@ -1,10 +1,10 @@
 """
 Finds and returns a combinatorial specification, that we call a proof tree.
 """
-from random import choice, shuffle
-from copy import deepcopy
 from collections import defaultdict, deque
+from copy import deepcopy
 from itertools import product
+from random import choice, shuffle
 
 __all__ = ("prune", "proof_tree_generator_dfs", "proof_tree_generator_bfs")
 

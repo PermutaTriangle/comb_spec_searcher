@@ -1,4 +1,5 @@
 import abc
+
 import sympy.abc
 
 __all__ = ("CombinatorialClass")

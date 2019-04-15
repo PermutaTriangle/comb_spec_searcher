@@ -1,7 +1,7 @@
 from functools import partial
-from logzero import logger
 
 import sympy
+from logzero import logger
 
 
 def get_func_name(f, warn=False,

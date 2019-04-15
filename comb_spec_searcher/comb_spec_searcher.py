@@ -1,27 +1,28 @@
+import json
+import logging
+import os
 import time
 from base64 import b64decode, b64encode
 from collections import defaultdict
-from logzero import logger
 from functools import partial, reduce
 from operator import add, mul
-import logging
+
 import logzero
-import json
-import sympy
-import os
 import psutil
+import sympy
+from logzero import logger
 
+from permuta.misc.ordered_set_partitions import partitions_of_n_of_size_k
 
-from .equiv_db import EquivalenceDB
 from .class_db import ClassDB
 from .class_queue import ClassQueue
+from .equiv_db import EquivalenceDB
 from .proof_tree import ProofTree as ProofTree
-from permuta.misc.ordered_set_partitions import partitions_of_n_of_size_k
 from .rule_db import RuleDB
-from .strategies import (Strategy, StrategyPack, VerificationStrategy)
-from .tree_searcher import (proof_tree_generator_bfs, proof_tree_generator_dfs,
-                            prune, iterative_prune, random_proof_tree,
-                            iterative_proof_tree_finder)
+from .strategies import Strategy, StrategyPack, VerificationStrategy
+from .tree_searcher import (iterative_proof_tree_finder, iterative_prune,
+                            proof_tree_generator_bfs, proof_tree_generator_dfs,
+                            prune, random_proof_tree)
 from .utils import get_func, get_func_name, get_module_and_func_names
 
 

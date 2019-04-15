@@ -1,5 +1,5 @@
 """A function for decomposition strategies."""
-from comb_spec_searcher.strategies import Strategy
+from ..strategy import Strategy
 
 
 def DecompositionStrategy(formal_step, comb_classes,
