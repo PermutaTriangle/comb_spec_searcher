@@ -271,7 +271,8 @@ class CombinatorialSpecificationSearcher(object):
             self.classqueue.add_to_working(label)
         elif self.classdb.is_expandable(label):
             if not self.classdb.is_initial_expanded(label):
-                logger.debug('Initial expanding label {}'.format(str(label)))
+                logger.debug('Initial expanding label {}'.format(str(label)),
+                             extra=self.logger_kwargs)
                 self._initial_expand(comb_class, label)
                 self.classqueue.add_to_next(label)
             else:
@@ -314,14 +315,18 @@ class CombinatorialSpecificationSearcher(object):
                 raise TypeError(("Attempting to infer with non "
                                  "inferral strategy."))
             if inferral and comb_class == strategy.comb_classes[0]:
-                logger.warn(("The inferral strategy {} returned the same "
-                             "combinatorial class when applied to {}"
-                             "".format(str(strategy).split(' ')[1],
+                logger.debug(("The inferral strategy {} returned the same "
+                              "combinatorial class when applied to {}"
+                              "".format(str(strategy).split(' ')[1],
                                        repr(comb_class))),
-                            extra=self.logger_kwargs)
+                             extra=self.logger_kwargs)
                 continue
             labels = [self.classdb.get_label(comb_class)
                       for comb_class in strategy.comb_classes]
+            logger.debug(("Adding combinatorial rule {} -> {} with constructor"
+                          " '{}'".format(label, tuple(labels),
+                                         strategy.constructor)),
+                         extra=self.logger_kwargs)
 
             if any(self.equivdb[label] == self.equivdb[l] for l in labels):
                 # This says comb_class = comb_class, so we skip it, but mark
@@ -373,8 +378,8 @@ class CombinatorialSpecificationSearcher(object):
         if explanation is None:
             explanation = "They are equivalent."
         if start == end:
-            logger.warn(("Skipping adding equivalent rule with identical"
-                         " combinatorial classes."), extra=self.logger_kwargs)
+            logger.debug(("Skipping adding equivalent rule with identical"
+                          " combinatorial classes."), extra=self.logger_kwargs)
             return
         if self.debug:
             try:
@@ -385,12 +390,12 @@ class CombinatorialSpecificationSearcher(object):
                          "is not equivalent to" + "\n" +
                          repr(self.classdb.get_class(end)) + "\n" +
                          "formal step:" + explanation)
-                logger.warn(error, extra=self.logger_kwargs)
+                logger.debug(error, extra=self.logger_kwargs)
         if self.forward_equivalence:
             reverse_rule = end, (start,)
             if self.ruledb.contains(*reverse_rule):
-                logger.warn(("Found two rules a -> b and b -> a so treating as"
-                             " a standard equivalence."),
+                logger.debug(("Found two rules a -> b and b -> a so treating "
+                             "as a standard equivalence."),
                             extra=self.logger_kwargs)
                 raise ValueError(("Same equivalent rule found forward and "
                                   "backwards."))
@@ -408,8 +413,8 @@ class CombinatorialSpecificationSearcher(object):
         if explanation is None:
             explanation = "Some strategy."
         if constructor is None:
-            logger.warn("Assuming constructor is disjoint.",
-                        extra=self.logger_kwargs)
+            logger.debug("Assuming constructor is disjoint.",
+                         extra=self.logger_kwargs)
             constructor = 'disjoint'
         if self.debug:
             try:
@@ -420,7 +425,7 @@ class CombinatorialSpecificationSearcher(object):
                          "is equivalent to" + "\n" +
                          repr([self.classdb.get_class(e) for e in ends]) +
                          "\nformal step:" + explanation)
-                logger.warn(error, extra=self.logger_kwargs)
+                logger.debug(error, extra=self.logger_kwargs)
         self.ruledb.add(start,
                         ends,
                         explanation,

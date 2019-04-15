@@ -41,5 +41,4 @@ setup(
         'Topic :: Scientific/Engineering :: Mathematics',
     ],
     install_requires=read("requirements.txt").splitlines(),
-    long_description=read("README.md"),
 )
