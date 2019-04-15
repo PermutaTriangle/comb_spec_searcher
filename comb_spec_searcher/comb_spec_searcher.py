@@ -318,7 +318,7 @@ class CombinatorialSpecificationSearcher(object):
                 logger.debug(("The inferral strategy {} returned the same "
                               "combinatorial class when applied to {}"
                               "".format(str(strategy).split(' ')[1],
-                                       repr(comb_class))),
+                                        repr(comb_class))),
                              extra=self.logger_kwargs)
                 continue
             labels = [self.classdb.get_label(comb_class)
@@ -342,7 +342,6 @@ class CombinatorialSpecificationSearcher(object):
             start -= time.time()
             end_labels, classes, formal_step = self._strategy_cleanup(strategy,
                                                                       labels)
-
             start += time.time()
 
             if strategy.ignore_parent:
@@ -395,8 +394,8 @@ class CombinatorialSpecificationSearcher(object):
             reverse_rule = end, (start,)
             if self.ruledb.contains(*reverse_rule):
                 logger.debug(("Found two rules a -> b and b -> a so treating "
-                             "as a standard equivalence."),
-                            extra=self.logger_kwargs)
+                              "as a standard equivalence."),
+                             extra=self.logger_kwargs)
                 raise ValueError(("Same equivalent rule found forward and "
                                   "backwards."))
                 # reverse_explanation = self.ruledb.explanation(*reverse_rule)
@@ -510,6 +509,8 @@ class CombinatorialSpecificationSearcher(object):
             # Only applying is_empty check to inferrable comb classes that are
             # possibly empty.
             if infer and pos_empty and self.is_empty(comb_class, label):
+                logger.debug("Label {} is empty.".format(label),
+                             extra=self.logger_kwargs)
                 inferral_steps.append(inferral_step + "Class is empty.")
                 continue
             if not pos_empty:
