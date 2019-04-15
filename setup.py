@@ -20,13 +20,24 @@ setup(
         'Source': 'https://github.com/PermutaTriangle/comb_spec_searcher',
         'Tracker': 'https://github.com/PermutaTriangle/comb_spec_searcher/issues'
     },
-
-
-
-
-    maintainer="Christian Bean",
-    maintainer_email="christianbean@ru.is",
-    install_requires=read("requirements.txt").splitlines(),
     packages=find_packages(),
+    long_description=read("README.md"),
+    python_requires='>=3.5',
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Intended Audience :: Education',
+        'Intended Audience :: Science/Research',
+        'License :: OSI Approved :: BSD License',
+
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: Implementation:: PyPy',
+
+        'Topic :: Education',
+        'Topic :: Scientific/Engineering :: Mathematics',
+    ],
+    install_requires=read("requirements.txt").splitlines(),
     long_description=read("README.md"),
 )

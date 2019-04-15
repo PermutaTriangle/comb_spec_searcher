@@ -7,12 +7,14 @@ import json
 import sys
 import sympy
 from functools import reduce
+from logzero import logger
 from operator import add, mul
 
 from permuta.misc.ordered_set_partitions import partitions_of_n_of_size_k
 
 from .tree_searcher import Node as tree_searcher_node
-from .utils import check_poly, check_equation, get_solution, taylor_expand
+from .utils import (check_poly, check_equation, get_solution, maple_equations,
+                    taylor_expand)
 
 
 class ProofTreeNode(object):
@@ -31,6 +33,10 @@ class ProofTreeNode(object):
         self.recursion = recursion
         self.formal_step = formal_step
         self.sympy_function = None
+
+    @property
+    def logger_kwargs(self):
+        return {"processname": "proof_tree_node_{}".format(self.label)}
 
     def to_jsonable(self):
         output = dict()
@@ -157,8 +163,7 @@ class ProofTreeNode(object):
         return self.sympy_function
 
     def get_equation(self, root_func=None, root_class=None,
-                     substitutions=False, dummy_eq=False, min_poly=False,
-                     verbose=False):
+                     substitutions=False, dummy_eq=False, min_poly=False):
         lhs = self.get_function(min_poly)
         if self.disjoint_union:
             rhs = reduce(add,
@@ -177,34 +182,31 @@ class ProofTreeNode(object):
             try:
                 if min_poly:
                     lhs = obj.get_min_poly(root_func=root_func,
-                                           root_class=root_class,
-                                           verbose=verbose)
+                                           root_class=root_class)
                     if min_poly:
                         F = sympy.Symbol("F")
                     else:
                         F = sympy.Function("F")(sympy.abc.x)
                     lhs = lhs.subs({F: self.get_function(min_poly)})
-                    # print("Found min poly for.\n{}".format(obj))
-                    # print("The min poly was:\n{}\n".format(lhs))
                     rhs = 0
                 else:
                     rhs = obj.get_genf(root_func=root_func,
-                                       root_class=root_class,
-                                       verbose=verbose)
+                                       root_class=root_class)
             except ValueError as e:
                 if not dummy_eq:
                     raise ValueError(e)
-                if verbose:
-                    print(lhs)
-                    print(obj)
+                logger.info(("Unable to find equation for {}, adding dummy"
+                             "function. The comb class corresponding is\n{}"
+                             "".format(lhs, obj)),
+                            extra=self.logger_kwargs)
                 rhs = sympy.Function("DOITYOURSELF")(sympy.abc.x)
         else:
             if not dummy_eq:
                 raise NotImplementedError("Using an unimplemented constructor")
+            logger.info(("Unable to find equation for {}, adding dummy "
+                         "function.".format(lhs)),
+                        extra=self.logger_kwargs)
             rhs = sympy.Function("DOITYOURSELF")(sympy.abc.x)
-            if verbose:
-                print(lhs)
-                print(obj)
         return sympy.Eq(lhs, rhs)
 
 
@@ -218,6 +220,10 @@ class ProofTree(object):
             raise TypeError("Root must be a ProofTreeNode.")
         self.root = root
         self._of_length_cache = {}
+
+    @property
+    def logger_kwargs(self):
+        return {'processname': 'proof_tree'}
 
     def to_jsonable(self):
         return {'root': self.root.to_jsonable()}
@@ -245,14 +251,15 @@ class ProofTree(object):
         return number
 
     def print_equivalences(self):
+        """Return a string showing the equivalences."""
+        s = ""
         for node in self.nodes():
-            print("===============")
-            print(node.label)
+            s += "===============\n"
+            s += str(node.label) + "\n"
             for o in node.eqv_path_objects:
-                print(o.__repr__())
-                print()
+                s += str(o) + "\n"
 
-    def get_equations(self, dummy_eqs=False, min_poly=False, verbose=False):
+    def get_equations(self, dummy_eqs=False, min_poly=False):
         """Return the set of equations implied by the proof tree. If
         dummy_eqs=True then it will give a 'F_DOITYOURSELF' variable for
         equations that fail."""
@@ -266,28 +273,19 @@ class ProofTree(object):
                                       root_func=root_func,
                                       root_class=root_class,
                                       dummy_eq=dummy_eqs,
-                                      min_poly=min_poly,
-                                      verbose=verbose))
+                                      min_poly=min_poly))
         return eqs
 
-    def get_genf(self, verbose=False, verify=8):
+    def get_genf(self, verify=8):
         """Find generating function for proof tree. Return None if no solution
         is found. If not verify will return list of possible solutions."""
         # TODO: add substitutions, so as to solve with symbols first.
         eqs = self.get_equations()
         root_class = self.root.eqv_path_objects[0]
         root_func = self.root.get_function()
-        if verbose:
-            print("The system of", len(eqs), "equations")
-            print("root_func := ", str(root_func).replace("(x)", ""))
-            print(",\n".join("{} = {}".format(str(eq.lhs).replace("(x)", ""),
-                                              str(eq.rhs).replace("(x)", ""))
-                             for eq in eqs))
-            print("]:")
-            print("count := {}:".format(
-                                [len(list(root_class.objects_of_length(i)))
-                                 for i in range(6)]))
-            print("Solving...")
+        logger.info(maple_equations(root_func, root_class, eqs),
+                    extra=self.logger_kwargs)
+        logger.info("Solving...", extra=self.logger_kwargs)
 
         solutions = sympy.solve(eqs, tuple([eq.lhs for eq in eqs]),
                                     dict=True, cubics=False, quartics=False,
@@ -296,8 +294,8 @@ class ProofTree(object):
         if solutions:
             if not verify:
                 return solutions
-            if verbose and verify:
-                print("Solved, verifying solutions.")
+            logger.info("Solved, verifying solutions.",
+                        extra=self.logger_kwargs)
             objcounts = [len(list(root_class.objects_of_length(i)))
                          for i in range(verify + 1)]
             for solution in solutions:
@@ -305,7 +303,6 @@ class ProofTree(object):
                 try:
                     expansion = taylor_expand(genf, verify)
                 except Exception as e:
-                    # print(e)
                     continue
                 if objcounts == expansion:
                     return genf
@@ -313,37 +310,19 @@ class ProofTree(object):
             raise RuntimeError(("Incorrect generating function\n" +
                                 str(solutions)))
 
-    def get_min_poly(self, verbose=False, solve=False):
+    def get_min_poly(self, solve=False):
         """Return the minimum polynomial of the generating function F that is
         implied by the proof tree."""
-        eqs = self.get_equations(min_poly=True, verbose=verbose)
+        eqs = self.get_equations(min_poly=True)
         root_class = self.root.eqv_path_objects[0]
         root_func = self.root.get_function(min_poly=True)
-        if verbose:
-            print("The system of", len(eqs), "equations")
-            print("root_func := ", str(root_func))
-            print("eqs := [")
-            print(",\n".join("{} = {}".format(str(eq.lhs), str(eq.rhs))
-                             for eq in eqs))
-            print("]:")
-            print("count := {}:".format(
-                                [len(list(root_class.objects_of_length(i)))
-                                 for i in range(6)]))
-            print("Computing Groebner basis with 'lex' order.")
+        logger.info(maple_equations(root_func, root_class, eqs),
+                    extra=self.logger_kwargs)
+        logger.info("Computing Groebner basis with 'lex' order.",
+                    extra=self.logger_kwargs)
         all_funcs = set(x for eq in eqs for x in eq.atoms(sympy.Symbol))
         all_funcs.remove(root_func)
         all_funcs.remove(sympy.abc.x)
-
-        # build_order = sympy.polys.orderings.build_product_order
-        # gens = list(all_funcs) + [root_func, sympy.abc.x]
-        # assert all(hasattr(x, "__hash__") for x in gens)
-        # print(all_funcs)
-        # print(root_func)
-        # print(sympy.abc.x)
-        # print(list(all_funcs) + [root_func, sympy.abc.x])
-        # order = build_order((("grlex", *all_funcs),
-        #                      ("grlex", root_func, sympy.abc.x)),
-        #                     list(all_funcs) + [root_func, sympy.abc.x])
 
         basis = sympy.groebner(eqs, *all_funcs, root_func,
                                wrt=[sympy.abc.x], order='lex')
@@ -354,12 +333,9 @@ class ProofTree(object):
             initial = [len(list(root_class.objects_of_length(i)))
                        for i in range(verify + 1)]
         for poly in basis.polys:
-            if verbose:
-                print("Trying the min poly:")
-                print(poly.as_expr())
-                print("with the atoms")
-                print(poly.atoms(sympy.Symbol))
-                print()
+            logger.info(("Trying the min poly:\n{}\nwith the atoms\n{}\n"
+                         "".format(poly.as_expr(), poly.atoms(sympy.Symbol))),
+                        extra=self.logger_kwargs)
             if poly.atoms(sympy.Symbol) == {root_func, sympy.abc.x}:
                 eq = poly.as_expr()
                 F = sympy.Symbol("F")
@@ -536,7 +512,10 @@ class ProofTree(object):
                                      formal_step=formal_step,
                                      children=strat_children)
             else:
-                print(constructor, type(constructor))
+                logger.debug(("Unknown constructor '{}' of type '{}'. "
+                              "Use 'other' instead."
+                              "".format(constructor, type(constructor))),
+                             extra={"processname": "css_to_proof_tree"})
                 raise NotImplementedError("Only handle cartesian and disjoint")
 
     def __eq__(self, other):

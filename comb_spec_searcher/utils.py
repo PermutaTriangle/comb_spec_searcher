@@ -108,3 +108,15 @@ def taylor_expand(genf, n=10):
     res = ser.all_coeffs()
     res = res[::-1] + [0]*(n+1-len(res))
     return res
+
+
+def maple_equations(root_func, root_class, eqs):
+    s = "The system of {} equations\n".format(len(eqs))
+    s += "root_func := {}\n".format(str(root_func))
+    s += "eqs := [\n"
+    s += ",\n".join("{} = {}".format(str(eq.lhs), str(eq.rhs))
+                    for eq in eqs).replace("(x)", "")
+    s += "\n]:\n"
+    s += "count := {}:".format([len(list(root_class.objects_of_length(i)))
+                                for i in range(6)])
+    return s

@@ -883,39 +883,38 @@ class CombinatorialSpecificationSearcher(object):
         start_string += str(self.strategy_pack)
         return start_string
 
-    def auto_search(self, perc=1, verbose=False,
-                    status_update=None, max_time=None, save=False,
-                    smallest=False):
+    def auto_search(self, perc=1, status_update=None, max_time=None,
+                    save=False, smallest=False):
         """
         An automatic search function.
 
         It will expand classes until perc*(tree search time) has passed and
         then search for a tree.
 
-        If verbose=True, a status update is given when a tree is found and
-        after status_update many seconds have passed. It will also print
-        the proof tree, in json formats.
+        Information is logged to logger.info. A status update is given when a
+        tree is found and after status_update many seconds have passed.
+        It will also log the proof tree, in json format.
 
-        If save, it will print out a json string of CombSpecSearcher.
+        If save, it will log a json string of CombSpecSearcher to
+        logger.info.
         """
         if not 0 < perc <= 100:
             logger.warn(("Percentage not between 0 and 100, so assuming 1%"
                          " search percentage."), extra=self.logger_kwargs)
             perc = 1
-        if verbose:
-            if status_update:
-                status_start = time.time()
-            start_string = "Auto search started {}\n".format(
-                        time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()))
-            start_string += self.run_information()
-            logger.info(start_string, extra=self.logger_kwargs)
+        if status_update:
+            status_start = time.time()
+        start_string = "Auto search started {}\n".format(
+                    time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()))
+        start_string += self.run_information()
+        logger.info(start_string, extra=self.logger_kwargs)
 
         max_search_time = 0
         expanding = True
         while expanding:
             start = time.time() + 0.00001
             while time.time() - start < max_search_time:
-                if status_update is not None and verbose:
+                if status_update is not None:
                     if time.time() - status_start > status_update:
                         status = self.status()
                         logger.info(status, extra=self.logger_kwargs)
@@ -923,9 +922,8 @@ class CombinatorialSpecificationSearcher(object):
                 if self.expand_classes(1):
                     # this function returns True if no more classes to expand
                     expanding = False
-                    if verbose:
-                        logger.info("No more classes to expand.",
-                                    extra=self.logger_kwargs)
+                    logger.info("No more classes to expand.",
+                                extra=self.logger_kwargs)
                     break
             start = time.time()
             if smallest:
@@ -933,22 +931,20 @@ class CombinatorialSpecificationSearcher(object):
             else:
                 proof_tree = self.get_proof_tree()
             if proof_tree is not None:
-                if verbose:
-                    found_string = "Proof tree found {}\n".format(
+                found_string = "Proof tree found {}\n".format(
                         time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime()))
-                    found_string += "Time taken was {} seconds\n\n".format(
-                                                            self._time_taken)
-                    found_string += self.status()
-                    found_string += json.dumps(proof_tree.to_jsonable())
-                    logger.info(found_string, extra=self.logger_kwargs)
+                found_string += "Time taken was {} seconds\n\n".format(
+                                                        self._time_taken)
+                found_string += self.status()
+                found_string += json.dumps(proof_tree.to_jsonable())
+                logger.info(found_string, extra=self.logger_kwargs)
                 return proof_tree
             # worst case, search every hour
             multiplier = 100 // perc
             max_search_time = min(multiplier*(time.time() - start), 3600)
             if max_time is not None:
                 if self._time_taken > max_time:
-                    if verbose:
-                        logger.info(self.status(), extra=self.logger_kwargs)
+                    logger.info(self.status(), extra=self.logger_kwargs)
                     if save:
                         string = "The universe: \n"
                         string += json.dumps(self.to_dict())
@@ -1039,9 +1035,7 @@ class CombinatorialSpecificationSearcher(object):
 
     def get_proof_tree(self):
         """
-        Return a random proof tree if one exists.
-
-        If verbose, print it out."""
+        Return a random proof tree if one exists."""
         logger.debug("Searching for tree", extra=self.logger_kwargs)
         proof_tree_node = self.find_tree()
         if proof_tree_node is not None:
@@ -1050,7 +1044,7 @@ class CombinatorialSpecificationSearcher(object):
             assert proof_tree is not None
             return proof_tree
 
-    def all_proof_trees(self, verbose=False):
+    def all_proof_trees(self):
         """A generator that yields all proof trees in the universe."""
         start = time.time()
         root_label = self.equivdb[self.start_label]
@@ -1077,7 +1071,7 @@ class CombinatorialSpecificationSearcher(object):
         for proof_tree_node in proof_trees:
             yield ProofTree.from_comb_spec_searcher(proof_tree_node, self)
 
-    def find_smallest_proof_tree(self, verbose=False):
+    def find_smallest_proof_tree(self):
         """Return a smallest proof tree in the universe. It uses exponential
         search to find it."""
         if self.iterative:

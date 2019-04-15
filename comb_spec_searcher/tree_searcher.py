@@ -153,7 +153,6 @@ def proof_tree_generator_bfs(rules_dict, root):
 
     rules_dict = {start: tuple(sorted(ends))
                   for start, ends in rules_dict.items()}
-    print(rules_dict)
 
     if root in rules_dict:
         yield from _bfs_helper(root, frozenset())
