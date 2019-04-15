@@ -194,11 +194,17 @@ class ProofTreeNode(object):
             except ValueError as e:
                 if not dummy_eq:
                     raise ValueError(e)
+                if verbose:
+                    print(lhs)
+                    print(obj)
                 rhs = sympy.Function("DOITYOURSELF")(sympy.abc.x)
         else:
             if not dummy_eq:
                 raise NotImplementedError("Using an unimplemented constructor")
             rhs = sympy.Function("DOITYOURSELF")(sympy.abc.x)
+            if verbose:
+                print(lhs)
+                print(obj)
         return sympy.Eq(lhs, rhs)
 
 
@@ -264,7 +270,7 @@ class ProofTree(object):
                                       verbose=verbose))
         return eqs
 
-    def get_genf(self, verbose=False, verify=8, groebner=True):
+    def get_genf(self, verbose=False, verify=8):
         """Find generating function for proof tree. Return None if no solution
         is found. If not verify will return list of possible solutions."""
         # TODO: add substitutions, so as to solve with symbols first.
@@ -282,24 +288,8 @@ class ProofTree(object):
                                 [len(list(root_class.objects_of_length(i)))
                                  for i in range(6)]))
             print("Solving...")
-        if groebner:
-            all_funcs = set(x for eq in eqs for x in eq.atoms(sympy.Function))
-            all_funcs.remove(root_func)
-            basis = sympy.groebner(eqs, *all_funcs, root_func,
-                                   wrt=[sympy.abc.x], order='grevlex')
-            solutions = []
-            for poly in basis.polys:
-                print(poly)
-                if poly.atoms(sympy.Function) == {root_func}:
-                    eq = poly.as_expr()
-                    if verbose:
-                        print("Possible min poly:")
-                        print(str(eq).replace("(x)", ""))
-                    solutions.extend(sympy.solve(eq, root_func, dict=True,
-                                                 cubics=False, quartics=False,
-                                                 quintics=False))
-        else:
-            solutions = sympy.solve(eqs, tuple([eq.lhs for eq in eqs]),
+
+        solutions = sympy.solve(eqs, tuple([eq.lhs for eq in eqs]),
                                     dict=True, cubics=False, quartics=False,
                                     quintics=False)
 
