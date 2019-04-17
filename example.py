@@ -3,11 +3,13 @@ In this file an example of how to perform combinatorial exploration on words
 with respect to factor order is given.
 """
 from itertools import product
+
+from sympy import abc, var
+
 from comb_spec_searcher import (BatchRule, CombinatorialClass,
                                 CombinatorialSpecificationSearcher,
                                 DecompositionRule, StrategyPack,
                                 VerificationRule)
-from sympy import abc, var
 
 
 class AvoidingWithPrefix(CombinatorialClass):

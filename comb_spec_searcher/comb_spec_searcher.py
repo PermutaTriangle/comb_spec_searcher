@@ -2,11 +2,11 @@ import json
 import logging
 import os
 import time
+import warnings
 from base64 import b64decode, b64encode
 from collections import defaultdict
 from functools import partial, reduce
 from operator import add, mul
-import warnings
 
 import logzero
 import psutil
@@ -25,7 +25,6 @@ from .tree_searcher import (iterative_proof_tree_finder, iterative_prune,
                             proof_tree_generator_bfs, proof_tree_generator_dfs,
                             prune, random_proof_tree)
 from .utils import get_func, get_func_name, get_module_and_func_names
-
 
 warnings.simplefilter("once", Warning)
 

@@ -6,9 +6,9 @@ types supported for a rule a -> b_1, b_2, ..., b_k are
     - disjoint union: f(a) = f(b_1) + f(b_2) + ... + f(b_k)
     - cartesiian product: f(a) = f(b_1) * f(b_2) * ... * f(b_k)
 '''
+import warnings
 from collections import Iterable
 from functools import partial
-import warnings
 
 
 class Rule(object):
