@@ -20,37 +20,49 @@ class CombinatorialClass(abc.ABC):
         return False
 
     @abc.abstractmethod
-    def get_genf(self, *args, **kwargs):
-        """Return the generating function for the combinatorial object"""
-        return sympy.abc.x**0
+    def to_jsonable(self):
+        """Return JSONable data structure of the class (a dictionary)"""
+        pass
 
-    @abc.abstractmethod
+    def get_genf(self, *args, **kwargs):
+        """Return the generating function for the combinatorial class"""
+        raise NotImplementedError(("If you want to use the 'get_genf' function"
+                                   "for a proof tree then you must implement"
+                                   " 'get_genf' for verified combinatorial "
+                                   "classes."))
+
+    def get_min_poly(self, *args, **kwargs):
+        """Return the minimim polynomial for the combinatorial class
+        in terms of 'F'"""
+        raise NotImplementedError(("If you want to use the 'get_min_poly' "
+                                   "function for a proof tree then you must "
+                                   "implement 'get_genf' for verified "
+                                   "combinatorial classes."))
+
     def objects_of_length(self, length):
         """Returns an iterable of combinatorial objects of a given length"""
-        return []
+        raise NotImplementedError("This function needs to be added to your "
+                                  "combinatorial class in order to use the "
+                                  "debug settings and for initial conditions"
+                                  " for computing the generating function")
 
-    @abc.abstractmethod
-    def to_jsonable(self):
-        """Return JSONable data structure of the class"""
-        return
+    def from_dict(self):
+        """Return combinatorial class from the jsonable object."""
+        raise NotImplementedError("This function is need to reinstantiate a "
+                                  "combinatorial class.")
 
-    @abc.abstractmethod
     def compress(self):
-        """Return a compressed version of the class."""
-        return
+        """Return a compressed version of the class. If you are having memory
+        issues then implement this function and the decompress function such
+        that 'cls.decompress(self.compress()) == self'"""
+        return self
 
     @classmethod
-    @abc.abstractmethod
     def decompress(cls, compressed):
-        """Return decompressed class from string by compress function."""
-        return
-
-    @classmethod
-    @abc.abstractmethod
-    def from_string(cls, string):
-        """Return class from string. The string should be a simplified encoding
-        of combinatorial classes you wish to use the CombSpecSearcher on."""
-        return
+        """Return decompressed class from string by compress function. If you
+        are having memory issues then implement this function and the compress
+        function such that 'cls.decompress(self.compress()) == self'"""
+        return compressed
 
     @abc.abstractmethod
     def __init__(self):
@@ -62,15 +74,15 @@ class CombinatorialClass(abc.ABC):
 
     @abc.abstractmethod
     def __hash__(self):
-        return
+        pass
 
     @abc.abstractmethod
     def __repr__(self):
-        return
+        pass
 
     @abc.abstractmethod
     def __str__(self):
-        return
+        pass
 
     def _get_class_name(self):
         return type(self).__name__

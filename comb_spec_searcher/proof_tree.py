@@ -306,6 +306,7 @@ class ProofTree(object):
                 except Exception as e:
                     continue
                 if objcounts == expansion:
+                    logger.info("The generating function is {}".format(genf))
                     return genf
         if solutions:
             raise RuntimeError(("Incorrect generating function\n" +
@@ -334,16 +335,22 @@ class ProofTree(object):
             initial = [len(list(root_class.objects_of_length(i)))
                        for i in range(verify + 1)]
         for poly in basis.polys:
-            logger.info(("Trying the min poly:\n{}\nwith the atoms\n{}\n"
-                         "".format(poly.as_expr(), poly.atoms(sympy.Symbol))),
-                        extra=self.logger_kwargs)
+            logger.debug(("Trying the minimum poly:\n{}\nwith the atoms\n{}\n"
+                          "".format(poly.as_expr(), poly.atoms(sympy.Symbol))),
+                         extra=self.logger_kwargs)
             if poly.atoms(sympy.Symbol) == {root_func, sympy.abc.x}:
+                logger.info("Trying the min poly:\n{}".format(poly.as_expr()),
+                            extra=self.logger_kwargs)
                 eq = poly.as_expr()
                 F = sympy.Symbol("F")
                 eq = eq.subs({root_func: F})
                 if check_poly(eq, initial) or check_equation(eq, initial):
+                    logger.info(("The minimum polynomial is {}".format(eq)))
                     if solve:
-                        return eq, get_solution(eq, initial)
+                        sol = get_solution(eq, initial)
+                        logger.info(("The generating function is {}"
+                                     "".format(sol)), extra=self.logger_kwargs)
+                        return eq, sol
                     else:
                         return eq
         raise RuntimeError(("Incorrect minimum polynomial\n" +
