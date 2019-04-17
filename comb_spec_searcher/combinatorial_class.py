@@ -16,7 +16,7 @@ class CombinatorialClass(abc.ABC):
 
     @abc.abstractmethod
     def is_empty(self, *args, **kwargs):
-        """Return True if objects of length returns nothing for all lengths"""
+        """Return True if objects of length yield nothing for all lengths"""
         return False
 
     @abc.abstractmethod

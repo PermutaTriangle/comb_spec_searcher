@@ -27,7 +27,7 @@ class AvoidingWithPrefix(CombinatorialClass):
         """Return True if word consists of letters from the alphabet."""
         return isinstance(word, str) and all(l in self.alphabet for l in word)
 
-    # methods required by for combinatorial exploration
+    # methods required for combinatorial exploration
 
     def is_empty(self):
         """Return True if no word over the alphabet avoiding the patterns has
@@ -41,8 +41,6 @@ class AvoidingWithPrefix(CombinatorialClass):
                 "alphabet": tuple(sorted(self.alphabet)),
                 "just_prefix": int(self.just_prefix)}
 
-    # not required, but why would you no implement this when you implement
-    # 'to_jsonable'?
     @classmethod
     def from_dict(cls, data):
         """Create an instance of the class from the dictionary returned by the
