@@ -120,6 +120,8 @@ class AvoidingWithPrefix(CombinatorialClass):
                                                       repr(self.alphabet))
 
 
+# the strategies
+
 def expansion(avoiding_with_prefix, **kwargs):
     """Every word with prefix p is either just p or of the form pa for some a
     in the alphabet."""
@@ -156,6 +158,11 @@ def remove_front_of_prefix(avoiding_with_prefix, **kwargs):
     # safe will be the index of the prefix in which we can remove upto without
     # affecting the avoidance conditions
     safe = max(0, len(prefix) - max(len(p) for p in patterns) + 1)
+    for i in range(safe, len(prefix)):
+        end = prefix[i:]
+        if any(end == patt[:len(end)] for patt in patterns):
+            break
+        safe = i + 1
     if safe > 0:
         start_prefix = prefix[:safe]
         end_prefix = prefix[safe:]

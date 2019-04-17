@@ -57,7 +57,7 @@ def DecompositionRule(formal_step, comb_classes, ignore_parent=True):
     return Rule(formal_step, comb_classes,
                 [False for _ in comb_classes],
                 [False for _ in comb_classes],
-                [False for _ in comb_classes],
+                [True for _ in comb_classes],
                 ignore_parent=ignore_parent, constructor='cartesian')
 
 
