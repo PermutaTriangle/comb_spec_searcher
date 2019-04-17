@@ -37,7 +37,7 @@ class ProofTreeNode(object):
 
     @property
     def logger_kwargs(self):
-        return {"processname": "proof_tree_node_{}".format(self.label)}
+        return {"processname": "ProofTreeNode {}".format(self.label)}
 
     def to_jsonable(self):
         output = dict()
@@ -224,7 +224,7 @@ class ProofTree(object):
 
     @property
     def logger_kwargs(self):
-        return {'processname': 'proof_tree'}
+        return {'processname': 'ProofTree'}
 
     def to_jsonable(self):
         return {'root': self.root.to_jsonable()}

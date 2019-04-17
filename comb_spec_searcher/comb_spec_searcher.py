@@ -6,6 +6,7 @@ from base64 import b64decode, b64encode
 from collections import defaultdict
 from functools import partial, reduce
 from operator import add, mul
+import warnings
 
 import logzero
 import psutil
@@ -19,11 +20,14 @@ from .class_queue import ClassQueue
 from .equiv_db import EquivalenceDB
 from .proof_tree import ProofTree as ProofTree
 from .rule_db import RuleDB
-from .strategies import Strategy, StrategyPack, VerificationStrategy
+from .strategies import Rule, StrategyPack, VerificationRule
 from .tree_searcher import (iterative_proof_tree_finder, iterative_prune,
                             proof_tree_generator_bfs, proof_tree_generator_dfs,
                             prune, random_proof_tree)
 from .utils import get_func, get_func_name, get_module_and_func_names
+
+
+warnings.simplefilter("once", Warning)
 
 
 class CombinatorialSpecificationSearcher(object):
@@ -181,7 +185,7 @@ class CombinatorialSpecificationSearcher(object):
 
     def update_status(self, strategy, time_taken):
         """Update that it took 'time_taken' to expand a combinatorial class
-        with strategy 'func'"""
+        with strategy"""
         name = get_func_name(strategy)
         self.strategy_times[name] += time_taken
         self.strategy_expansions[name] += 1
@@ -202,13 +206,13 @@ class CombinatorialSpecificationSearcher(object):
         if self.classdb.is_strategy_verified(label) is None:
             for ver_strategy in self.verification_strategies:
                 start = time.time()
-                strategy = ver_strategy(comb_class, **self.kwargs)
+                rule = ver_strategy(comb_class, **self.kwargs)
                 self.update_status(ver_strategy, time.time() - start)
-                if strategy is not None:
-                    if not isinstance(strategy, VerificationStrategy):
+                if rule is not None:
+                    if not isinstance(rule, VerificationRule):
                         raise TypeError(("Attempting to verify with non "
-                                        "VerificationStrategy."))
-                    formal_step = strategy.formal_step
+                                         "VerificationRule."))
+                    formal_step = rule.formal_step
                     self.classdb.set_verified(label, explanation=formal_step)
                     self.classdb.set_strategy_verified(label)
                     self.equivdb.update_verified(label)
@@ -308,13 +312,13 @@ class CombinatorialSpecificationSearcher(object):
                 strategy_generator = [strat]
         else:
             strategy_generator = strategy_function(comb_class, **self.kwargs)
-        for strategy in strategy_generator:
-            if not isinstance(strategy, Strategy):
-                raise TypeError("Attempting to add non strategy type.")
-            if inferral and len(strategy.comb_classes) != 1:
+        for rule in strategy_generator:
+            if not isinstance(rule, Rule):
+                raise TypeError("Attempting to add non Rule type.")
+            if inferral and len(rule.comb_classes) != 1:
                 raise TypeError(("Attempting to infer with non "
                                  "inferral strategy."))
-            if inferral and comb_class == strategy.comb_classes[0]:
+            if inferral and comb_class == rule.comb_classes[0]:
                 logger.debug(("The inferral strategy {} returned the same "
                               "combinatorial class when applied to {}"
                               "".format(str(strategy).split(' ')[1],
@@ -322,10 +326,10 @@ class CombinatorialSpecificationSearcher(object):
                              extra=self.logger_kwargs)
                 continue
             labels = [self.classdb.get_label(comb_class)
-                      for comb_class in strategy.comb_classes]
+                      for comb_class in rule.comb_classes]
             logger.debug(("Adding combinatorial rule {} -> {} with constructor"
                           " '{}'".format(label, tuple(labels),
-                                         strategy.constructor)),
+                                         rule.constructor)),
                          extra=self.logger_kwargs)
 
             if any(self.equivdb[label] == self.equivdb[l] for l in labels):
@@ -335,16 +339,16 @@ class CombinatorialSpecificationSearcher(object):
                     if self.equivdb[label] != self.equivdb[l]:
                         self._add_empty_rule(l)
                 if self.debug:
-                    for l, c in zip(labels, strategy.comb_classes):
+                    for l, c in zip(labels, rule.comb_classes):
                         if self.equivdb[label] != self.equivdb[l]:
                             assert c.is_empty()
 
             start -= time.time()
-            end_labels, classes, formal_step = self._strategy_cleanup(strategy,
-                                                                      labels)
+            end_labels, classes, formal_step = self._rule_cleanup(rule,
+                                                                  labels)
             start += time.time()
 
-            if strategy.ignore_parent:
+            if rule.ignore_parent:
                 if all(self.classdb.is_expandable(x) for x in end_labels):
                     self.classdb.set_expanding_children_only(label)
 
@@ -355,12 +359,12 @@ class CombinatorialSpecificationSearcher(object):
             elif len(end_labels) == 1:
                 # If we have an equivalent rule
                 self._add_equivalent_rule(label, end_labels[0], formal_step,
-                                          strategy.constructor)
+                                          rule.constructor)
                 if inferral:
                     inf_class = classes[0]
                     inf_label = end_labels[0]
             else:
-                constructor = strategy.constructor
+                constructor = rule.constructor
                 self._add_rule(label, end_labels, formal_step, constructor)
 
             for end_label in end_labels:
@@ -372,7 +376,7 @@ class CombinatorialSpecificationSearcher(object):
             return inf_class, inf_label
 
     def _add_equivalent_rule(self, start, end, explanation, constructor):
-        """Add equivalent strategy to equivdb and equivalent combinatorial
+        """Add equivalent rule to equivdb and equivalent combinatorial
         class to queue"""
         if explanation is None:
             explanation = "They are equivalent."
@@ -384,7 +388,7 @@ class CombinatorialSpecificationSearcher(object):
             try:
                 self._sanity_check_rule(start, [end], 'equiv')
             except Exception:
-                error = ("Equivalent strategy did not work\n" +
+                error = ("Equivalent rule did not work\n" +
                          repr(self.classdb.get_class(start)) + "\n" +
                          "is not equivalent to" + "\n" +
                          repr(self.classdb.get_class(end)) + "\n" +
@@ -393,15 +397,8 @@ class CombinatorialSpecificationSearcher(object):
         if self.forward_equivalence:
             reverse_rule = end, (start,)
             if self.ruledb.contains(*reverse_rule):
-                logger.debug(("Found two rules a -> b and b -> a so treating "
-                              "as a standard equivalence."),
-                             extra=self.logger_kwargs)
                 raise ValueError(("Same equivalent rule found forward and "
                                   "backwards."))
-                # reverse_explanation = self.ruledb.explanation(*reverse_rule)
-                # self.ruledb.remove(*reverse_rule)
-                # self.equivdb.union(start, end, explanation)
-                # self.equivdb.union(end, start, reverse_explanation)
             else:
                 self._add_rule(start, [end], explanation, constructor)
         else:
@@ -410,7 +407,7 @@ class CombinatorialSpecificationSearcher(object):
     def _add_rule(self, start, ends, explanation=None, constructor=None):
         """Add rule to the rule database and end labels to queue."""
         if explanation is None:
-            explanation = "Some strategy."
+            explanation = "Some rule."
         if constructor is None:
             logger.debug("Assuming constructor is disjoint.",
                          extra=self.logger_kwargs)
@@ -419,7 +416,7 @@ class CombinatorialSpecificationSearcher(object):
             try:
                 self._sanity_check_rule(start, ends, constructor)
             except Exception:
-                error = ("Expansion strategy did not work\n" +
+                error = ("Expansion rule did not work\n" +
                          repr(self.classdb.get_class(start)) + "\n" +
                          "is equivalent to" + "\n" +
                          repr([self.classdb.get_class(e) for e in ends]) +
@@ -477,9 +474,9 @@ class CombinatorialSpecificationSearcher(object):
                     total += subtotal
                 assert total == start_count[i]
 
-    def _strategy_cleanup(self, strategy, labels):
+    def _rule_cleanup(self, rule, labels):
         """
-        Return cleaned strategy.
+        Return the cleaned rules labels, classes and updated formal step.
 
         - infer combinatorial classes
         - try to verify combinatorial classes
@@ -491,10 +488,10 @@ class CombinatorialSpecificationSearcher(object):
         end_classes = []
         inferral_steps = []
         for comb_class, infer, pos_empty, work, label in zip(
-                                                  strategy.comb_classes,
-                                                  strategy.inferable,
-                                                  strategy.possibly_empty,
-                                                  strategy.workable, labels):
+                                                        rule.comb_classes,
+                                                        rule.inferable,
+                                                        rule.possibly_empty,
+                                                        rule.workable, labels):
             inferral_step = ""
             if self.symmetries:
                 self._symmetry_expand(comb_class)
@@ -526,7 +523,7 @@ class CombinatorialSpecificationSearcher(object):
         for i, s in enumerate(inferral_steps):
             inferral_step = inferral_step + "[" + str(i) + ": " + s + "]"
         inferral_step = inferral_step + "~"
-        formal_step = strategy.formal_step + inferral_step
+        formal_step = rule.formal_step + inferral_step
 
         return end_labels, end_classes, formal_step
 
