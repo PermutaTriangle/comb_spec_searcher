@@ -47,10 +47,10 @@ class AvoidingWithPrefix(CombinatorialClass):
     def from_dict(cls, data):
         """Create an instance of the class from the dictionary returned by the
         'to_jsonable' method."""
-        return AvoidingWithPrefix(data['prefix'],
-                                  data['patterns'],
-                                  data['alphabet'],
-                                  bool(int(data['just_prefix'])))
+        return cls(data['prefix'],
+                   data['patterns'],
+                   data['alphabet'],
+                   bool(int(data['just_prefix'])))
 
     # methods for computing the generating function
 
