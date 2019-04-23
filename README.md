@@ -4,13 +4,13 @@ The `comb_spec_searcher` package contains code for combinatorial exploration.
 
 A (combinatorial) class is a set of objects with a notion of size such that
 there are finitely many objects of each size. One of the primary goals of
-enumerative combinatorics is to count how many objects each size there are in a
-class. One method for doing this is to find a (combinatorial) specification,
-which is a collection of (combinatorial) rules that describe how to build a
-class from other classes using well defined constructors. Such a specification
-can then be used to count the number of objects of each size.
+enumerative combinatorics is to count how many objects of each size there are
+in a class. One method for doing this is to find a (combinatorial)
+specification, which is a collection of (combinatorial) rules that describe how
+to build a class from other classes using well-defined constructors. Such a
+specification can then be used to count the number of objects of each size.
 
-Combinatorial exploration is a systematic application of strategies to create
+*Combinatorial exploration* is a systematic application of strategies to create
 rules about a class of interest, until a specification can be found. This
 package can be used to perform this process automatically.
 See the
@@ -19,9 +19,9 @@ and
 [Christian Bean's PhD thesis](https://skemman.is/handle/1946/31663)
 for more details.
 
-The remainder of this readme will be an example of how to use this package for
-performing combinatorial exploration on a specific class, namely words with
-with respect to avoiding consecutive patterns.
+The remainder of this README will be an example of how to use this package for
+performing combinatorial exploration on a specific class, namely words avoiding
+consecutive patterns.
 
 ## Avoiding consecutive patterns in words
 
@@ -44,9 +44,9 @@ we will count. Of course, these all form regular languages, but it will serve
 as a good example of how to use the `comb_spec_searcher` package.
 
 
-The first step is to create the classes that will be used to for discovering
-the underlying structure of the class of interest. In this case, considering
-the prefix of the words is what we need. We then create a new python `class`
+The first step is to create the classes that will be used for discovering the
+underlying structure of the class of interest. In this case, considering the
+prefix of the words is what we need. We then create a new python `class`
 representing this that inherits from `CombinatorialClass` which can be imported
 from `comb_spec_searcher`.
 
@@ -62,13 +62,14 @@ class AvoidingWithPrefix(CombinatorialClass):
         self.just_prefix = just_prefix # this will be needed later
 ```
 
-Inheriting from `CombinatorialClass` then requires you to implement a few
+Inheriting from `CombinatorialClass` requires you to implement a few
 functions for combinatorial exploration: `is_empty`, `to_jsonable`, `__eq__`,
 `__hash__`, `__repr__`, and `__str__`.
 
-We will start by implementing the dunder methods required. The `__eq__` is
-particularly important as the `CombinatorialSpecificationSearcher` will use
-this to recognise if it sees the same class twice.
+We will start by implementing the dunder methods (the ones with double
+underscores) required. The `__eq__` method is particularly important as the
+`CombinatorialSpecificationSearcher` will use it to recognise if the same class
+appears multiple times.
 
 ```python
     # The dunder methods required to perform combinatorial exploration
@@ -92,14 +93,14 @@ this to recognise if it sees the same class twice.
                           self.prefix if self.prefix else '""'))
 
     def __repr__(self):
-        return "AvoidindWithPrefix({}, {}, {}".format(repr(self.prefix),
+        return "AvoidingWithPrefix({}, {}, {}".format(repr(self.prefix),
                                                       repr(self.patterns),
                                                       repr(self.alphabet))
 ```
 
 Perhaps the most important function to be implemented is the `is_empty`
 function. This should return `True` if there are no objects of any length in
-the class, otherwise False. If this is not 100% accurate it may lead to
+the class, otherwise `False`. If it is not correctly implemented it may lead to
 tautological specifications. For example, in our case the class is empty if and
 only if the prefix contains a pattern to be avoided.
 
@@ -149,14 +150,14 @@ pack = StrategyPack(initial_strats=[],
 
 Strategies are functions that take as input a class `C` and produce rules about
 `C`. The types of strategies are as follows:
-    - `initial_strats`: yields rules for classes
-    - `inferral_strats`: returns a single equivalence rule
-    - `expansion_strats`: yields rules for classes
-    - `ver_strats`: returns a rule when a classes count is known
+ - `initial_strats`: yields rules for classes
+ - `inferral_strats`: returns a single equivalence rule
+ - `expansion_strats`: yields rules for classes
+ - `ver_strats`: returns a rule when the count of a class is known
 
 For example, every word over the alphabet `Σ` starting with prefix `p` is
-either `p` or has prefix `pa` for some `a` in `Σ`. This rule is splitting the
-original into disjoint subsets. We call a rule using disjoint union
+either just `p` or has prefix `pa` for some `a` in `Σ`. This rule is splitting the
+original into disjoint subsets. We call a rule using disjoint union a
 `BatchRule`. Although in this case there is a unique rule created by the
 strategy, strategies are assumed to create multiple rules, and as such should
 be implemented as generators.
@@ -183,7 +184,7 @@ def expansion(avoiding_with_prefix, **kwargs):
 ```
 
 The classes that we will verify are those that consist of just the prefix. To
-verify these we create a new strategy that returns a `VerificationStrategy`
+verify these we create a new strategy that returns a `VerificationRule`
 when this is the case.
 
 ```python
@@ -196,11 +197,11 @@ def only_prefix(avoiding_with_prefix, **kwargs):
                                  "".format(avoiding_with_prefix.prefix)))
 ```
 
-The final strategy we will need is one that peels of much as possible from the
+The final strategy we will need is one that peels off much as possible from the
 front of the prefix `p` such that the avoidance conditions are unaffected.
 This should then give a rule that is a cartesian product of the part that is
-peeled of together with the words whose prefix is that of the remainder of the
-original prefix. We call rule whose constructor is cartesian product a
+peeled off together with the words whose prefix is that of the remainder of the
+original prefix. We call rules whose constructor is cartesian product a
 `DecompositionRule`.
 
 ```python
@@ -266,7 +267,7 @@ searcher = CombinatorialSpecificationSearcher(start_class, pack)
 tree = searcher.auto_search()
 ```
 
-Now that we have a `ProofTree` i.e a specification, the obvious thing we want
+Now that we have a `ProofTree` i.e., a specification, the obvious thing we want
 to do is find the generating function for the class that counts the number of
 objects of each size. This can be done by using the `get_genf` or
 `get_min_poly` methods on `ProofTree`. To use these methods we will need to go
@@ -275,8 +276,8 @@ back and implement a few functions in our `CombinatorialClass`.
 When you verify a class, this tells the `ProofTree` class that it can get the
 generating function by calling the `get_genf` (and/or the `get_min_poly`)
 function on `CombinatorialClass`. In our case, we verified exactly when the
-class was only the prefix, say `p`. The generating function of this is then
-clearly `x**len(p)`. We add these methods to our class.
+class was only the prefix, say `p`. The generating function of this is clearly
+`x**len(p)`. We add these methods to our class.
 
 ```python
 from sympy.abc import x
@@ -335,11 +336,10 @@ With these in place if we then call the `get_min_poly` function with the flag
 tree.get_min_poly(solve=True)
 ```
 
-we will see that the minimum polynomial satisfied by the generating function
-`F` is
+we see that the minimum polynomial satisfied by the generating function `F` is
 `F*(x**6 + x**3 - x**2 + 2*x - 1) + x**7 + x**5 + x**4 + x**3 + x**2 + 1`
 and moreover
 `F = -(x**7 + x**5 + x**4 + x**3 + x**2 + 1)/(x**6 + x**3 - x**2 + 2*x - 1)`.
 
-You can use try this yourself using the file `example.py`, which can count any
+You can now try this yourself using the file `example.py`, which can count any
 set of words avoiding consecutive patterns.
