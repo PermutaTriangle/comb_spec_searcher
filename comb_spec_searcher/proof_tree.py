@@ -364,7 +364,8 @@ class ProofTree(object):
                 F = sympy.Symbol("F")
                 eq = eq.subs({root_func: F})
                 if check_poly(eq, initial) or check_equation(eq, initial):
-                    logger.info(("The minimum polynomial is {}".format(eq)))
+                    logger.info(("The minimum polynomial is {}".format(eq)),
+                                extra=self.logger_kwargs)
                     if solve:
                         sol = get_solution(eq, initial)
                         logger.info(("The generating function is {}"

@@ -887,7 +887,7 @@ class CombinatorialSpecificationSearcher(object):
         return start_string
 
     def auto_search(self, perc=1, status_update=None, max_time=None,
-                    save=False, smallest=False):
+                    save=False, smallest=False, genf=False):
         """
         An automatic search function.
 
@@ -941,6 +941,9 @@ class CombinatorialSpecificationSearcher(object):
                 found_string += self.status()
                 found_string += json.dumps(proof_tree.to_jsonable())
                 logger.info(found_string, extra=self.logger_kwargs)
+                if genf:
+                    min_poly, func = proof_tree.get_min_poly(solve=True)
+                    return proof_tree, min_poly, func
                 return proof_tree
             # worst case, search every hour
             multiplier = 100 // perc
