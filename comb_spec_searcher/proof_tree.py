@@ -194,10 +194,8 @@ class ProofTreeNode(object):
                 if min_poly:
                     lhs = comb_class.get_min_poly(root_func=root_func,
                                                   root_class=root_class)
-                    if min_poly:
-                        F = sympy.Symbol("F")
-                    else:
-                        F = sympy.Function("F")(sympy.abc.x)
+                    F = sympy.Symbol("F")
+                    print(self.formal_step)
                     lhs = lhs.subs({F: self.get_function(min_poly)})
                     rhs = 0
                 else:
