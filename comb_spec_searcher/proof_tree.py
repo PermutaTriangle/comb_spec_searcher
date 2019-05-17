@@ -448,14 +448,20 @@ class ProofTree(object):
             eqs.add(sympy.Eq(func, root_func))
         logger.info(maple_equations(func, comb_class, eqs),
                     extra=self.logger_kwargs)
-        logger.info("Computing Groebner basis with 'lex' order.",
+        logger.info("Computing Groebner basis with 'elimination' order.",
                     extra=self.logger_kwargs)
         all_funcs = set(x for eq in eqs for x in eq.atoms(sympy.Symbol))
         all_funcs.remove(func)
-        all_funcs.remove(sympy.abc.x)
+        if sympy.abc.x in all_funcs:
+            all_funcs.remove(sympy.abc.x)
 
-        basis = sympy.groebner(eqs, *all_funcs, func,
-                               wrt=[sympy.abc.x, func], order='lex')
+        elimination = sympy.polys.orderings.ProductOrder(
+                (sympy.polys.orderings.grevlex, lambda m: m[:-2]),
+                (sympy.polys.orderings.grevlex, lambda m: m[-2:])
+        )
+
+        basis = sympy.groebner(eqs, *all_funcs, sympy.abc.x, func,
+                               order=elimination)
         eqs = basis.polys
 
         verify = 5
@@ -467,14 +473,14 @@ class ProofTree(object):
                 root_initial = [len(list(root_class.objects_of_length(i)))
                                     for i in range(verify + 1)]
                 root_kwargs = {"root_func": root_func,
-                            "root_initial": root_initial}
+                               "root_initial": root_initial}
 
         F = sympy.Symbol("F")
         for poly in basis.polys:
             logger.debug(("Trying the minimum poly:\n{}\nwith the atoms\n{}\n"
                           "".format(poly.as_expr(), poly.atoms(sympy.Symbol))),
                          extra=self.logger_kwargs)
-            if poly.atoms(sympy.Symbol) == {func, sympy.abc.x}:
+            if poly.atoms(sympy.Symbol) <= {func, sympy.abc.x}:
                 logger.info("Trying the min poly:\n{}".format(poly.as_expr()),
                             extra=self.logger_kwargs)
                 eq = poly.as_expr()
@@ -489,7 +495,9 @@ class ProofTree(object):
                         return eq, sol
                     else:
                         return eq
-            elif poly.atoms(sympy.Symbol) == {func, root_func, sympy.abc.x}:
+            elif poly.atoms(sympy.Symbol) <= {func, root_func, sympy.abc.x}:
+                if first_call and sympy.abc.x not in poly.atoms(sympy.Symbol):
+                    continue
                 assert not solve
                 eq = poly.as_expr()
                 eq = eq.subs({func: F})
