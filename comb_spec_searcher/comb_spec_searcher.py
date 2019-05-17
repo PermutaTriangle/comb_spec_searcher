@@ -791,7 +791,11 @@ class CombinatorialSpecificationSearcher(object):
         equivalent_sets = set()
         verified_equiv_sets = set()
         for label in all_labels:
-            if self.classdb.is_expandable(label):
+            if (not self.is_expanded(label) and
+                not self.equivdb.is_verified(label) and
+                not self.classdb.is_expanding_children_only(label) and
+                self.classdb.is_expandable(label) and
+                    not self.classdb.is_expanding_other_sym(label)):
                 expandable += 1
             if self.equivdb.is_verified(label):
                 verified += 1

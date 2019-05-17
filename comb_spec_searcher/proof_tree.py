@@ -9,6 +9,7 @@ import warnings
 from functools import reduce
 from operator import add, mul
 
+import random
 import sympy
 from logzero import logger
 
@@ -35,6 +36,7 @@ class ProofTreeNode(object):
         self.recursion = recursion
         self.formal_step = formal_step
         self.sympy_function = None
+        self.terms = []
 
     @property
     def logger_kwargs(self):
@@ -95,6 +97,64 @@ class ProofTreeNode(object):
             error += "\n"
         error += "They produced {} many things\n\n".format(children_total)
         return error
+
+    def random_sample(self, length, tree=None):
+        def partitions(n, children_totals):
+            if n == 0 and not children_totals:
+                yield []
+                return
+            if len(children_totals) == 0 or n < 0:
+                return
+            start = children_totals[0]
+            if len(children_totals) == 1:
+                if start[n] != 0:
+                    yield [n]
+                return
+            for i in range(n + 1):
+                if start[i] == 0:
+                    continue
+                else:
+                    for part in partitions(n - i, children_totals[1:]):
+                        yield [i] + part
+        if self.disjoint_union:
+            total = self.terms[length]
+            if total == 0:
+                raise ValueError(("There is no object on node {} of length {}"
+                                  "".format(self.label, length)))
+            children_totals = [(child, child.terms[length])
+                               for child in self.children]
+            choice = random.randint(1, total)
+            sofar = 0
+            for child, child_total in children_totals:
+                sofar += child_total
+                if choice <= sofar:
+                    return child.random_sample(length, tree)
+            raise ValueError("You shouldn't be able to get here!")
+        elif self.decomposition:
+            total = self.terms[length]
+            choice = random.randint(1, total)
+            children_totals = [child.terms for child in self.children]
+            sofar = 0
+            for part in partitions(length, children_totals):
+                subtotal = 1
+                for i, terms in zip(part, children_totals):
+                    subtotal *= terms[i]
+                sofar += subtotal
+                if choice <= sofar:
+                    # TODO: make this not dyck path specific
+                    non_atom = [i for i, child in enumerate(self.children) if not child.strategy_verified]
+                    return  reduce(add, [('U',), self.children[non_atom[0]].random_sample(part[non_atom[0]], tree), ('D',), self.children[non_atom[1]].random_sample(part[non_atom[1]], tree)])
+            raise ValueError("You shouldn't be able to get here.")
+        elif self.strategy_verified:
+            return self.eqv_path_comb_classes[-1].random_sample(length)
+        else:
+            if self.recursion:
+                for node in tree.nodes():
+                    if node.label == self.label and not node.recursion:
+                        return node.random_sample(length, tree)
+            raise NotImplementedError(("Random sampler only implemented for "
+                                       "disjoint union and cartesian "
+                                       "product."))
 
     def sanity_check(self, length, of_length=None):
         if of_length is None:
@@ -174,7 +234,7 @@ class ProofTreeNode(object):
         return self.sympy_function
 
     def get_equation(self, root_func=None, root_class=None,
-                     substitutions=False, dummy_eq=False, min_poly=False):
+                     dummy_eq=False, min_poly=False, **kwargs):
         lhs = self.get_function(min_poly)
         if self.disjoint_union:
             rhs = reduce(add,
@@ -195,7 +255,6 @@ class ProofTreeNode(object):
                     lhs = comb_class.get_min_poly(root_func=root_func,
                                                   root_class=root_class)
                     F = sympy.Symbol("F")
-                    print(self.formal_step)
                     lhs = lhs.subs({F: self.get_function(min_poly)})
                     rhs = 0
                 else:
@@ -277,30 +336,41 @@ class ProofTree(object):
             for comb_class in node.eqv_path_comb_classes:
                 s += str(comb_class) + "\n"
 
-    def get_equations(self, dummy_eqs=False, min_poly=False):
+    def get_equations(self, dummy_eqs=False, min_poly=False, **kwargs):
         """Return the set of equations implied by the proof tree. If
         dummy_eqs=True then it will give a 'F_DOITYOURSELF' variable for
         equations that fail."""
         eqs = set()
-        root_func = self.root.get_function(min_poly)
-        root_class = self.root.eqv_path_comb_classes[0]
+        root_class = kwargs.get('root_class')
+        root_func = kwargs.get('root_func')
+        if root_class is None:
+            root_class = self.root.eqv_path_comb_classes[0]
+            kwargs['root_class'] = root_class
+        if root_func is None:
+            first_call = True
+            root_func = sympy.Symbol("F_root")
+            kwargs['root_func'] = root_func
+        else:
+            first_call = False
         for node in self.nodes():
             if node.recursion:
                 continue
-            eqs.add(node.get_equation(substitutions=True,
-                                      root_func=root_func,
-                                      root_class=root_class,
-                                      dummy_eq=dummy_eqs,
-                                      min_poly=min_poly))
+            eqs.add(node.get_equation(dummy_eq=dummy_eqs,
+                                      min_poly=min_poly,
+                                      **kwargs))
+        if first_call:
+            sympy.sympify("{} - {}".format(
+                            self.root.get_function(min_poly=True), root_func))
         return eqs
 
-    def get_genf(self, verify=8):
+    def get_genf(self, verify=8, only_root=True):
         """Find generating function for proof tree. Return None if no solution
         is found. If not verify will return list of possible solutions."""
         # TODO: add substitutions, so as to solve with symbols first.
         eqs = self.get_equations()
         root_class = self.root.eqv_path_comb_classes[0]
         root_func = self.root.get_function()
+        eqs = self.get_equations(root_class=root_class, root_func=root_func)
         logger.info(maple_equations(root_func, root_class, eqs),
                     extra=self.logger_kwargs)
         logger.info("Solving...", extra=self.logger_kwargs)
@@ -314,53 +384,101 @@ class ProofTree(object):
                 return solutions
             logger.info("Solved, verifying solutions.",
                         extra=self.logger_kwargs)
-            objcounts = [len(list(root_class.objects_of_length(i)))
-                         for i in range(verify + 1)]
-            for solution in solutions:
-                genf = solution[root_func]
-                try:
-                    expansion = taylor_expand(genf, verify)
-                except Exception as e:
-                    continue
-                if objcounts == expansion:
-                    logger.info("The generating function is {}".format(genf))
-                    return genf
+            if only_root:
+                objcounts = [len(list(root_class.objects_of_length(i)))
+                                for i in range(verify + 1)]
+                for solution in solutions:
+                    genf = solution[root_func]
+                    try:
+                        expansion = taylor_expand(genf, verify)
+                    except Exception as e:
+                        continue
+                    if objcounts == expansion:
+                        logger.info(("The generating function is {}"
+                                     "".format(genf)))
+                        return genf
+            else:
+                for solution in solutions:
+                    final_answer = {}
+                    for node in self.nodes():
+                        if node.label in final_answer:
+                            continue
+                        comb_class = node.eqv_path_comb_classes[0]
+                        func = node.get_function()
+                        objcounts = [len(list(comb_class.objects_of_length(i)))
+                                    for i in range(verify + 1)]
+                        genf = solution[func]
+                        try:
+                            expansion = taylor_expand(genf, verify)
+                        except Exception as e:
+                            continue
+                        if objcounts == expansion:
+                            logger.info(("The generating function for {} is {}"
+                                         "".format(func, genf)))
+                            final_answer[node.label] = genf
+                        else:
+                            break
+                    else:
+                        return final_answer
         if solutions:
             raise RuntimeError(("Incorrect generating function\n" +
                                 str(solutions)))
 
-    def get_min_poly(self, solve=False):
+    def get_min_poly(self, **kwargs):
         """Return the minimum polynomial of the generating function F that is
         implied by the proof tree."""
-        eqs = self.get_equations(min_poly=True)
-        root_class = self.root.eqv_path_comb_classes[0]
-        root_func = self.root.get_function(min_poly=True)
-        logger.info(maple_equations(root_func, root_class, eqs),
+        root_class = kwargs.get('root_class')
+        root_func = kwargs.get('root_func')
+        if root_class is None:
+            root_class = self.root.eqv_path_comb_classes[0]
+            kwargs['root_class'] = root_class
+        if root_func is None:
+            first_call = True
+            root_func = sympy.Symbol("F_root")
+            kwargs['root_func'] = root_func
+        else:
+            first_call = False
+        solve = kwargs.get('solve', False)
+
+        eqs = self.get_equations(min_poly=True, **kwargs)
+
+        func = self.root.get_function(min_poly=True)
+        comb_class = self.root.eqv_path_comb_classes[0]
+        if first_call:
+            eqs.add(sympy.Eq(func, root_func))
+        logger.info(maple_equations(func, comb_class, eqs),
                     extra=self.logger_kwargs)
         logger.info("Computing Groebner basis with 'lex' order.",
                     extra=self.logger_kwargs)
         all_funcs = set(x for eq in eqs for x in eq.atoms(sympy.Symbol))
-        all_funcs.remove(root_func)
+        all_funcs.remove(func)
         all_funcs.remove(sympy.abc.x)
 
-        basis = sympy.groebner(eqs, *all_funcs, root_func,
-                               wrt=[sympy.abc.x], order='lex')
+        basis = sympy.groebner(eqs, *all_funcs, func,
+                               wrt=[sympy.abc.x, func], order='lex')
         eqs = basis.polys
 
         verify = 5
         if basis.polys:
-            initial = [len(list(root_class.objects_of_length(i)))
+            comb_class = self.root.eqv_path_comb_classes[0]
+            initial = [len(list(comb_class.objects_of_length(i)))
                        for i in range(verify + 1)]
+            if not first_call:
+                root_initial = [len(list(root_class.objects_of_length(i)))
+                                    for i in range(verify + 1)]
+                root_kwargs = {"root_func": root_func,
+                            "root_initial": root_initial}
+
+        F = sympy.Symbol("F")
         for poly in basis.polys:
             logger.debug(("Trying the minimum poly:\n{}\nwith the atoms\n{}\n"
                           "".format(poly.as_expr(), poly.atoms(sympy.Symbol))),
                          extra=self.logger_kwargs)
-            if poly.atoms(sympy.Symbol) == {root_func, sympy.abc.x}:
+            if poly.atoms(sympy.Symbol) == {func, sympy.abc.x}:
                 logger.info("Trying the min poly:\n{}".format(poly.as_expr()),
                             extra=self.logger_kwargs)
                 eq = poly.as_expr()
-                F = sympy.Symbol("F")
-                eq = eq.subs({root_func: F})
+                eq = eq.subs({func: F})
                 if check_poly(eq, initial) or check_equation(eq, initial):
                     logger.info(("The minimum polynomial is {}".format(eq)),
                                 extra=self.logger_kwargs)
@@ -371,8 +489,29 @@ class ProofTree(object):
                         return eq, sol
                     else:
                         return eq
+            elif poly.atoms(sympy.Symbol) == {func, root_func, sympy.abc.x}:
+                assert not solve
+                eq = poly.as_expr()
+                eq = eq.subs({func: F})
+                if (check_poly(eq, initial, **root_kwargs) or
+                        check_equation(eq, initial, **root_kwargs)):
+                    logger.info(("The minimum polynomial is {}".format(eq)),
+                                extra=self.logger_kwargs)
+                    return eq
         raise RuntimeError(("Incorrect minimum polynomial\n" +
                             str(basis)))
+
+    def random_sample(self, length=100, solved=False):
+        if any(len(node.terms) < length + 1 for node in self.nodes()):
+            logger.info(("Computing terms"))
+            funcs = self.get_genf(only_root=False)
+            for node in self.nodes():
+                if len(node.terms) < length + 1:
+                    logger.info(("Taylor expanding function {} to length {}."
+                                 "".format(node.get_function(), length)))
+                    node.terms = taylor_expand(funcs[node.label], length)
+        logger.info("Walking through tree")
+        return self.root.random_sample(length, self)
 
     def nodes(self, root=None):
         if root is None:
