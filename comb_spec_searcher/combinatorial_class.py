@@ -51,6 +51,13 @@ class CombinatorialClass(abc.ABC):
         raise NotImplementedError("This function is need to reinstantiate a "
                                   "combinatorial class.")
 
+    def from_parts(self, *args, **kwargs):
+        """Return the object created from the parts given by a cartesian rule
+        applied on the comb_class. This is required for random sampling. The
+        formal step will be passed as the kwarg 'formal_step'."""
+        raise NotImplementedError("This function is needed to perform random"
+                                  " sampling.")
+
     def compress(self):
         """Return a compressed version of the class. If you are having memory
         issues then implement this function and the decompress function such

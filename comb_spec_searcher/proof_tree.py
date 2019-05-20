@@ -99,6 +99,7 @@ class ProofTreeNode(object):
         return error
 
     def random_sample(self, length, tree=None):
+        """Return a random object of the given length."""
         def partitions(n, children_totals):
             if n == 0 and not children_totals:
                 yield []
@@ -116,6 +117,7 @@ class ProofTreeNode(object):
                 else:
                     for part in partitions(n - i, children_totals[1:]):
                         yield [i] + part
+
         if self.disjoint_union:
             total = self.terms[length]
             if total == 0:
@@ -141,9 +143,12 @@ class ProofTreeNode(object):
                     subtotal *= terms[i]
                 sofar += subtotal
                 if choice <= sofar:
-                    # TODO: make this not dyck path specific
-                    non_atom = [i for i, child in enumerate(self.children) if not child.strategy_verified]
-                    return  reduce(add, [('U',), self.children[non_atom[0]].random_sample(part[non_atom[0]], tree), ('D',), self.children[non_atom[1]].random_sample(part[non_atom[1]], tree)])
+                    sub_objs = [(child.random_sample(i, tree),
+                                 child.eqv_path_comb_classes[0])
+                                for i, child in zip(part, self.children)]
+                    comb_class = self.eqv_path_comb_classes[-1]
+                    return comb_class.from_parts(*sub_objs,
+                                                 formal_step=self.formal_step)
             raise ValueError("You shouldn't be able to get here.")
         elif self.strategy_verified:
             return self.eqv_path_comb_classes[-1].random_sample(length)
@@ -386,7 +391,7 @@ class ProofTree(object):
                         extra=self.logger_kwargs)
             if only_root:
                 objcounts = [len(list(root_class.objects_of_length(i)))
-                                for i in range(verify + 1)]
+                             for i in range(verify + 1)]
                 for solution in solutions:
                     genf = solution[root_func]
                     try:
@@ -406,7 +411,7 @@ class ProofTree(object):
                         comb_class = node.eqv_path_comb_classes[0]
                         func = node.get_function()
                         objcounts = [len(list(comb_class.objects_of_length(i)))
-                                    for i in range(verify + 1)]
+                                     for i in range(verify + 1)]
                         genf = solution[func]
                         try:
                             expansion = taylor_expand(genf, verify)
@@ -471,7 +476,7 @@ class ProofTree(object):
                        for i in range(verify + 1)]
             if not first_call:
                 root_initial = [len(list(root_class.objects_of_length(i)))
-                                    for i in range(verify + 1)]
+                                for i in range(verify + 1)]
                 root_kwargs = {"root_func": root_func,
                                "root_initial": root_initial}
 
