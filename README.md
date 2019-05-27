@@ -2,6 +2,23 @@
 
 The `comb_spec_searcher` package contains code for combinatorial exploration.
 
+## Installing
+
+To install `comb_spec_searcher` on your system, run:
+
+```bash
+    pip install comb_spec_searcher
+```
+
+It is also possible to install Permuta in development mode to work on the
+source code, in which case you run the following after cloning the repository:
+
+```bash
+    ./setup.py develop
+```
+
+## Combinatorial exploration
+
 A (combinatorial) class is a set of objects with a notion of size such that
 there are finitely many objects of each size. One of the primary goals of
 enumerative combinatorics is to count how many objects of each size there are
