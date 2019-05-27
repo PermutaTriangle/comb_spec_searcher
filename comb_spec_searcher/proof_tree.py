@@ -126,12 +126,12 @@ class ProofTreeNode(object):
             children_totals = [(child, child.terms[length])
                                for child in self.children]
             choice = random.randint(1, total)
+            # TODO: consider if there is an equivalent path to follow
+            # TODO: Add functionality for bijection implied by rule
             sofar = 0
             for child, child_total in children_totals:
                 sofar += child_total
                 if choice <= sofar:
-                    #TODO: consider if there is an equivalent path to follow
-                    #TODO: Add functionality for bijection implied by rule
                     return child.random_sample(length, tree)
             raise ValueError("You shouldn't be able to get here!")
         elif self.decomposition:
