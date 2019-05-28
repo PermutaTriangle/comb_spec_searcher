@@ -10,8 +10,9 @@ To install `comb_spec_searcher` on your system, run:
     pip install comb_spec_searcher
 ```
 
-It is also possible to install Permuta in development mode to work on the
-source code, in which case you run the following after cloning the repository:
+It is also possible to install comb_spec_searcher in development mode to work on
+the source code, in which case you run the following after cloning the
+repository:
 
 ```bash
     ./setup.py develop
