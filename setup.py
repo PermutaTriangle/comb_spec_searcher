@@ -40,5 +40,10 @@ setup(
         'Topic :: Education',
         'Topic :: Scientific/Engineering :: Mathematics',
     ],
-    install_requires=read("requirements.txt").splitlines(),
+    install_requires=[
+        'permuta>=1.0.0',
+        'logzero>=1.5.0',
+        'sympy>=1.1.1',
+        'psutil>=5.4.7'
+    ]
 )
