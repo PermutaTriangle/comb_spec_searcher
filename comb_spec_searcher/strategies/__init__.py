@@ -1,7 +1,5 @@
-from .strategy import Strategy
+from .rule import (BatchRule, BatchStrategy, DecompositionRule,
+                   DecompositionStrategy, EquivalenceRule, EquivalenceStrategy,
+                   InferralRule, InferralStrategy, Rule, Strategy,
+                   VerificationRule, VerificationStrategy)
 from .strategy_pack import StrategyPack
-from .equivalence_strategies import *
-from .decomposition_strategies import *
-from .inferral_strategies import *
-from .verification_strategies import *
-from .batch_strategies import *

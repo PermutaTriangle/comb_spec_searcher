@@ -4,8 +4,7 @@ A database for rules.
 Use to keep track of all batch rules made by strategies. Each rule comes with
 an explanantion.
 """
-from collections import defaultdict
-from collections import Iterable
+from collections import Iterable, defaultdict
 
 
 class RuleDB(object):

@@ -1,9 +1,8 @@
 """
 A queue of labels.
 """
-from collections import deque
-
 import sys
+from collections import deque
 
 
 class ClassQueue(object):
