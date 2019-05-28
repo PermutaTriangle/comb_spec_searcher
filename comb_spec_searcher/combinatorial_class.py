@@ -10,13 +10,13 @@ class CombinatorialClass(abc.ABC):
     Base class for CombSpecSearcher combinatorial class
 
     This is a base combinatorial class that CombinatorialSpecificationSearcher
-    works with. Combintorial classes to be used with the searcher should
-    inherhit from this class.
+    works with. Combinatorial classes to be used with the searcher should
+    inherit from this class.
     """
 
     @abc.abstractmethod
     def is_empty(self, *args, **kwargs):
-        """Return True if objects of length yield nothing for all lengths"""
+        """Return True if there are no object of any lengths."""
         return False
 
     @abc.abstractmethod
@@ -32,7 +32,7 @@ class CombinatorialClass(abc.ABC):
                                    "classes."))
 
     def get_min_poly(self, *args, **kwargs):
-        """Return the minimim polynomial for the combinatorial class
+        """Return the minimum polynomial for the combinatorial class
         in terms of 'F'"""
         raise NotImplementedError(("If you want to use the 'get_min_poly' "
                                    "function for a proof tree then you must "
