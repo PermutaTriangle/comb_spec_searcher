@@ -23,7 +23,7 @@ setup(
                     '/issues')
     },
     packages=find_packages(),
-    long_description=read("README.md"),
+    long_description=read("README.rst"),
     python_requires='>=3.5',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
