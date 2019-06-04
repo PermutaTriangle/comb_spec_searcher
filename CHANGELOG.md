@@ -8,3 +8,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - This changelog file.
 
+## [0.1.1] - 2019-06-04
+### Fixed
+- Added missing equation for "F_root" case
