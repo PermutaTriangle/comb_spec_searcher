@@ -366,8 +366,8 @@ class ProofTree(object):
                                       min_poly=min_poly,
                                       **kwargs))
         if first_call:
-            sympy.sympify("{} - {}".format(
-                            self.root.get_function(min_poly=True), root_func))
+            eqs.add(sympy.Eq(self.root.get_function(min_poly=True),
+                             root_func))
         return eqs
 
     def get_genf(self, verify=8, only_root=True):
@@ -451,8 +451,6 @@ class ProofTree(object):
 
         func = self.root.get_function(min_poly=True)
         comb_class = self.root.eqv_path_comb_classes[0]
-        if first_call:
-            eqs.add(sympy.Eq(func, root_func))
         logger.info(maple_equations(func, comb_class, eqs),
                     extra=self.logger_kwargs)
         logger.info("Computing Groebner basis with 'elimination' order.",
