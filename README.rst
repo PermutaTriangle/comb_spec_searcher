@@ -1,5 +1,16 @@
 Combinatorial Specification Searcher
 ====================================
+.. image:: https://travis-ci.org/PermutaTriangle/comb_spec_searcher.svg?branch=master
+    :alt: Travis
+    :target: https://travis-ci.org/PermutaTriangle/comb_spec_searcher
+.. image:: https://img.shields.io/pypi/v/comb_spec_searcher.svg
+    :alt: PyPI
+    :target: https://pypi.python.org/pypi/comb_spec_searcher
+.. image:: https://img.shields.io/pypi/l/comb_spec_searcher.svg
+    :target: https://pypi.python.org/pypi/comb_spec_searcher
+.. image:: https://img.shields.io/pypi/pyversions/comb_spec_searcher.svg
+    :target: https://pypi.python.org/pypi/comb_spec_searcher
+
 .. image:: http://img.shields.io/badge/readme-tested-brightgreen.svg
     :alt: Travis
     :target: https://travis-ci.org/PermutaTriangle/comb_spec_searcher
