@@ -1,5 +1,8 @@
 Combinatorial Specification Searcher
 ====================================
+.. image:: http://img.shields.io/badge/readme-tested-brightgreen.svg
+    :alt: Travis
+    :target: https://travis-ci.org/PermutaTriangle/comb_spec_searcher
 
 The ``comb_spec_searcher`` package contains code for combinatorial
 exploration.
