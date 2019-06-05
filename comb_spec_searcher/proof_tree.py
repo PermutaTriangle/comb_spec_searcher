@@ -4,12 +4,12 @@ A proof tree class.
 This can be used to get the generating function for the class.
 """
 import json
+import random
 import sys
 import warnings
 from functools import reduce
 from operator import add, mul
 
-import random
 import sympy
 from logzero import logger
 

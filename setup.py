@@ -45,5 +45,13 @@ setup(
         'logzero>=1.5.0',
         'sympy>=1.1.1',
         'psutil>=5.4.7'
+    ],
+    setup_requires=['pytest-runner'],
+    tests_require=[
+        'pytest',
+        'pytest-isort',
+        'pytest-pep8',
+        'docutils-python3',
+        'pygments',
     ]
 )
