@@ -77,15 +77,15 @@ create a new python ``class`` representing this that inherits from
 
 .. code:: python
 
-   from comb_spec_searcher import CombinatorialClass
+   >>> from comb_spec_searcher import CombinatorialClass
 
 
-   class AvoidingWithPrefix(CombinatorialClass):
-       def __init__(self, prefix, patterns, alphabet, just_prefix=False):
-           self.alphabet = frozenset(alphabet)
-           self.prefix = prefix
-           self.patterns = frozenset(patterns)
-           self.just_prefix = just_prefix # this will be needed later
+   >>> class AvoidingWithPrefix(CombinatorialClass):
+   ...     def __init__(self, prefix, patterns, alphabet, just_prefix=False):
+   ...         self.alphabet = frozenset(alphabet)
+   ...         self.prefix = prefix
+   ...         self.patterns = frozenset(patterns)
+   ...         self.just_prefix = just_prefix # this will be needed later
 
 Inheriting from ``CombinatorialClass`` requires you to implement a few
 functions for combinatorial exploration: ``is_empty``, ``to_jsonable``,
@@ -98,30 +98,30 @@ if the same class appears multiple times.
 
 .. code:: python
 
-       # The dunder methods required to perform combinatorial exploration
-
-       def __eq__(self, other):
-           return (self.alphabet == other.alphabet and
-                   self.prefix == other.prefix and
-                   self.patterns == other.patterns and
-                   self.just_prefix == other.just_prefix)
-
-       def __hash__(self):
-           return hash(hash(self.prefix) + hash(self.patterns) +
-                       hash(self.alphabet) + hash(self.just_prefix))
-
-       def __str__(self):
-           if self.just_prefix:
-               return "The word {}".format(self.prefix)
-           return ("Words over {{{}}} avoiding {{{}}} with prefix {}"
-                   "".format(", ".join(l for l in self.alphabet),
-                             ", ".join(p for p in self.patterns),
-                             self.prefix if self.prefix else '""'))
-
-       def __repr__(self):
-           return "AvoidingWithPrefix({}, {}, {}".format(repr(self.prefix),
-                                                         repr(self.patterns),
-                                                         repr(self.alphabet))
+   ...     # The dunder methods required to perform combinatorial exploration
+   ...
+   ...     def __eq__(self, other):
+   ...         return (self.alphabet == other.alphabet and
+   ...                 self.prefix == other.prefix and
+   ...                 self.patterns == other.patterns and
+   ...                 self.just_prefix == other.just_prefix)
+   ...
+   ...     def __hash__(self):
+   ...         return hash(hash(self.prefix) + hash(self.patterns) +
+   ...                     hash(self.alphabet) + hash(self.just_prefix))
+   ...
+   ...     def __str__(self):
+   ...         if self.just_prefix:
+   ...             return "The word {}".format(self.prefix)
+   ...         return ("Words over {{{}}} avoiding {{{}}} with prefix {}"
+   ...                 "".format(", ".join(l for l in self.alphabet),
+   ...                           ", ".join(p for p in self.patterns),
+   ...                           self.prefix if self.prefix else '""'))
+   ...
+   ...     def __repr__(self):
+   ...         return "AvoidingWithPrefix({}, {}, {}".format(repr(self.prefix),
+   ...                                                       repr(self.patterns),
+   ...                                                       repr(self.alphabet))
 
 Perhaps the most important function to be implemented is the
 ``is_empty`` function. This should return ``True`` if there are no
@@ -132,8 +132,8 @@ contains a pattern to be avoided.
 
 .. code:: python
 
-       def is_empty(self):
-           return any(p in self.prefix for p in self.patterns)
+   ...     def is_empty(self):
+   ...         return any(p in self.prefix for p in self.patterns)
 
 The final function required is ``to_jsonable``. This is primarily for
 the output, and only necessary for saving the output. It should be in a
@@ -143,18 +143,18 @@ the ``from_dict`` function is written in such a way that for any class
 
 .. code:: python
 
-       def to_jsonable(self):
-           return {"prefix": self.prefix,
-                   "patterns": tuple(sorted(self.patterns)),
-                   "alphabet": tuple(sorted(self.alphabet)),
-                   "just_prefix": int(self.just_prefix)}
-
-       @classmethod
-       def from_dict(cls, data):
-           return cls(data['prefix'],
-                      data['patterns'],
-                      data['alphabet'],
-                      bool(int(data['just_prefix'])))
+   ...     def to_jsonable(self):
+   ...         return {"prefix": self.prefix,
+   ...                 "patterns": tuple(sorted(self.patterns)),
+   ...                 "alphabet": tuple(sorted(self.alphabet)),
+   ...                 "just_prefix": int(self.just_prefix)}
+   ...
+   ...     @classmethod
+   ...     def from_dict(cls, data):
+   ...         return cls(data['prefix'],
+   ...                    data['patterns'],
+   ...                    data['alphabet'],
+   ...                    bool(int(data['just_prefix'])))
 
 Our ``CombinatorialClass`` is now ready. What is left to do is create
 the strategies that the ``CombinatorialSpecificationSearcher`` will use
@@ -164,15 +164,13 @@ we will populate in the remainder of this example.
 
 .. code:: python
 
-   from comb_spec_searcher import StrategyPack
-
-
-   pack = StrategyPack(initial_strats=[],
-                       inferral_strats=[],
-                       expansion_strats=[],
-                       ver_strats=[],
-                       name=("Finding specification for words avoiding "
-                             "consecutive patterns."))
+   >>> from comb_spec_searcher import StrategyPack
+   >>> pack = StrategyPack(initial_strats=[],
+   ...                     inferral_strats=[],
+   ...                     expansion_strats=[],
+   ...                     ver_strats=[],
+   ...                     name=("Finding specification for words avoiding "
+   ...                           "consecutive patterns."))
 
 Strategies are functions that take as input a class ``C`` and produce
 rules about ``C``. The types of strategies are as follows: -
@@ -190,24 +188,24 @@ create multiple rules, and as such should be implemented as generators.
 
 .. code:: python
 
-   from comb_spec_searcher import BatchRule
+   >>> from comb_spec_searcher import BatchRule
 
 
-   def expansion(avoiding_with_prefix, **kwargs):
-       if avoiding_with_prefix.just_prefix:
-           return
-       alphabet, prefix, patterns = (avoiding_with_prefix.alphabet,
-                                     avoiding_with_prefix.prefix,
-                                     avoiding_with_prefix.patterns)
-       # either just p
-       comb_classes = [AvoidingWithPrefix(prefix, patterns, alphabet, True)]
-       for a in alphabet:
-           # or has prefix pa for some a in Σ.
-           ends_with_a = AvoidingWithPrefix(prefix + a, patterns, alphabet)
-           comb_classes.append(ends_with_a)
-       yield BatchRule(("The next letter in the prefix is one of {{{}}}"
-                        "".format(", ".join(l for l in alphabet))),
-                       comb_classes)
+   >>> def expansion(avoiding_with_prefix, **kwargs):
+   ...     if avoiding_with_prefix.just_prefix:
+   ...         return
+   ...     alphabet, prefix, patterns = (avoiding_with_prefix.alphabet,
+   ...                                   avoiding_with_prefix.prefix,
+   ...                                   avoiding_with_prefix.patterns)
+   ...     # either just p
+   ...     comb_classes = [AvoidingWithPrefix(prefix, patterns, alphabet, True)]
+   ...     for a in alphabet:
+   ...         # or has prefix pa for some a in Σ.
+   ...         ends_with_a = AvoidingWithPrefix(prefix + a, patterns, alphabet)
+   ...         comb_classes.append(ends_with_a)
+   ...     yield BatchRule(("The next letter in the prefix is one of {{{}}}"
+   ...                      "".format(", ".join(l for l in alphabet))),
+   ...                     comb_classes)
 
 The classes that we will verify are those that consist of just the
 prefix. To verify these we create a new strategy that returns a
@@ -215,13 +213,13 @@ prefix. To verify these we create a new strategy that returns a
 
 .. code:: python
 
-   from comb_spec_searcher import VerificationRule
+   >>> from comb_spec_searcher import VerificationRule
 
 
-   def only_prefix(avoiding_with_prefix, **kwargs):
-       if avoiding_with_prefix.just_prefix:
-           return VerificationRule(("The set contains only the word {}"
-                                    "".format(avoiding_with_prefix.prefix)))
+   >>> def only_prefix(avoiding_with_prefix, **kwargs):
+   ...     if avoiding_with_prefix.just_prefix:
+   ...         return VerificationRule(("The set contains only the word {}"
+   ...                                  "".format(avoiding_with_prefix.prefix)))
 
 The final strategy we will need is one that peels off much as possible
 from the front of the prefix ``p`` such that the avoidance conditions
@@ -232,45 +230,45 @@ constructor is cartesian product a ``DecompositionRule``.
 
 .. code:: python
 
-   from comb_spec_searcher import DecompositionRule
+   >>> from comb_spec_searcher import DecompositionRule
 
 
-   def remove_front_of_prefix(avoiding_with_prefix, **kwargs):
-       """If the k is the maximum length of a pattern to be avoided, then any
-       occurrence using indices further to the right of the prefix can use at
-       most the last k - 1 letters in the prefix."""
-       if avoiding_with_prefix.just_prefix:
-           return
-       prefix, patterns, alphabet = (avoiding_with_prefix.prefix,
-                                     avoiding_with_prefix.patterns,
-                                     avoiding_with_prefix.alphabet)
-       # safe will be the index of the prefix in which we can remove upto without
-       # affecting the avoidance conditions
-       safe = max(0, len(prefix) - max(len(p) for p in patterns) + 1)
-       for i in range(safe, len(prefix)):
-           end = prefix[i:]
-           if any(end == patt[:len(end)] for patt in patterns):
-               break
-           safe = i + 1
-       if safe > 0:
-           start_prefix = prefix[:safe]
-           end_prefix = prefix[safe:]
-           start = AvoidingWithPrefix(start_prefix, patterns, alphabet, True)
-           end = AvoidingWithPrefix(end_prefix, patterns, alphabet)
-           yield DecompositionRule("Remove up to index {} of prefix".format(safe),
-                                   [start, end])
+   >>> def remove_front_of_prefix(avoiding_with_prefix, **kwargs):
+   ...     """If the k is the maximum length of a pattern to be avoided, then any
+   ...     occurrence using indices further to the right of the prefix can use at
+   ...     most the last k - 1 letters in the prefix."""
+   ...     if avoiding_with_prefix.just_prefix:
+   ...         return
+   ...     prefix, patterns, alphabet = (avoiding_with_prefix.prefix,
+   ...                                   avoiding_with_prefix.patterns,
+   ...                                   avoiding_with_prefix.alphabet)
+   ...     # safe will be the index of the prefix in which we can remove upto without
+   ...     # affecting the avoidance conditions
+   ...     safe = max(0, len(prefix) - max(len(p) for p in patterns) + 1)
+   ...     for i in range(safe, len(prefix)):
+   ...         end = prefix[i:]
+   ...         if any(end == patt[:len(end)] for patt in patterns):
+   ...             break
+   ...         safe = i + 1
+   ...     if safe > 0:
+   ...         start_prefix = prefix[:safe]
+   ...         end_prefix = prefix[safe:]
+   ...         start = AvoidingWithPrefix(start_prefix, patterns, alphabet, True)
+   ...         end = AvoidingWithPrefix(end_prefix, patterns, alphabet)
+   ...         yield DecompositionRule("Remove up to index {} of prefix".format(safe),
+   ...                                 [start, end])
 
 With these three strategies we are now ready to perform combinatorial
 exploration using the following pack.
 
 .. code:: python
 
-   pack = StrategyPack(initial_strats=[remove_front_of_prefix],
-                       inferral_strats=[],
-                       expansion_strats=[[expansion]],
-                       ver_strats=[only_prefix],
-                       name=("Finding specification for words avoiding "
-                             "consecutive patterns."))
+   >>> pack = StrategyPack(initial_strats=[remove_front_of_prefix],
+   ...                     inferral_strats=[],
+   ...                     expansion_strats=[[expansion]],
+   ...                     ver_strats=[only_prefix],
+   ...                     name=("Finding specification for words avoiding "
+   ...                           "consecutive patterns."))
 
 First we need to create the combinatorial class we want to count. For
 example, consider the words over the alphabet ``{a, b}`` that avoid
@@ -279,10 +277,10 @@ function.
 
 .. code:: python
 
-   prefix = ''
-   patterns = ['ababa', 'babb']
-   alphabet = ['a', 'b']
-   start_class = AvoidingWithPrefix(prefix, patterns, alphabet)
+   >>> prefix = ''
+   >>> patterns = ['ababa', 'babb']
+   >>> alphabet = ['a', 'b']
+   >>> start_class = AvoidingWithPrefix(prefix, patterns, alphabet)
 
 We can then initialise our ``CombinatorialSpecificationSearcher``, and
 use the ``auto_search`` function which will return a ``ProofTree``
@@ -291,11 +289,11 @@ this case always will).
 
 .. code:: python
 
-   from comb_spec_searcher import CombinatorialSpecificationSearcher
+   >>> from comb_spec_searcher import CombinatorialSpecificationSearcher
 
 
-   searcher = CombinatorialSpecificationSearcher(start_class, pack)
-   tree = searcher.auto_search()
+   >>> searcher = CombinatorialSpecificationSearcher(start_class, pack)
+   >>> tree = searcher.auto_search()
 
 Now that we have a ``ProofTree`` i.e., a specification, the obvious
 thing we want to do is find the generating function for the class that
@@ -313,26 +311,25 @@ methods to our class.
 
 .. code:: python
 
-   from sympy.abc import x
+   >>> from sympy import abc, var
 
-   ###
-
-       def get_genf(self, **kwargs):
-           """Return the generating function when only a prefix."""
-           if self.just_prefix:
-               if self.is_empty():
-                   return 0
-               else:
-                   return abc.x**len(self.prefix)
-
-       def get_min_poly(self, *args, **kwargs):
-           """Return the minimum polynomial satisfied by the generating function
-           of the combinatorial class (in terms of F)."""
-           if self.just_prefix:
-               if self.is_empty():
-                   return 0
-               else:
-                   return var('F') - abc.x**len(self.prefix)
+   >>> def get_genf(self, **kwargs):
+   ...     """Return the generating function when only a prefix."""
+   ...     if self.just_prefix:
+   ...         if self.is_empty():
+   ...             return 0
+   ...         else:
+   ...             return abc.x**len(self.prefix)
+   >>> AvoidingWithPrefix.get_genf = get_genf
+   >>> def get_min_poly(self, *args, **kwargs):
+   ...     """Return the minimum polynomial satisfied by the generating function
+   ...     of the combinatorial class (in terms of F)."""
+   ...     if self.just_prefix:
+   ...         if self.is_empty():
+   ...             return 0
+   ...         else:
+   ...             return var('F') - abc.x**len(self.prefix)
+   >>> AvoidingWithPrefix.get_min_poly = get_min_poly
 
 Finally, in order to get initial terms, you will also need to implement
 the ``objects_of_length`` function which should yield all of the objects
@@ -340,33 +337,35 @@ of a given length in the class.
 
 .. code:: python
 
-   from itertools import product
+   >>> from itertools import product
 
-   ###
-
-       def objects_of_length(self, length):
-       """Yield the words of given length that start with prefix and avoid the
-       patterns. If just_prefix, then only yield that word."""
-           def possible_words():
-               """Yield all words of given length over the alphabet with prefix"""
-               for letters in product(self.alphabet,
-                                       repeat=length - len(self.prefix)):
-                   yield self.prefix + "".join(a for a in letters)
-
-           if self.just_prefix:
-               if length == len(self.prefix) and not self.is_empty():
-                   yield self.prefix
-               return
-           for word in possible_words():
-               if all(patt not in word for patt in self.patterns):
-                   yield word
+   >>> def objects_of_length(self, length):
+   ...     """Yield the words of given length that start with prefix and avoid the
+   ...     patterns. If just_prefix, then only yield that word."""
+   ...     def possible_words():
+   ...         """Yield all words of given length over the alphabet with prefix"""
+   ...         for letters in product(self.alphabet,
+   ...                                 repeat=length - len(self.prefix)):
+   ...             yield self.prefix + "".join(a for a in letters)
+   ...
+   ...     if self.just_prefix:
+   ...         if length == len(self.prefix) and not self.is_empty():
+   ...             yield self.prefix
+   ...         return
+   ...     for word in possible_words():
+   ...         if all(patt not in word for patt in self.patterns):
+   ...             yield word
+   >>> AvoidingWithPrefix.objects_of_length = objects_of_length
 
 With these in place if we then call the ``get_min_poly`` function with
 the flag ``solve=True``
 
 .. code:: python
 
-   tree.get_min_poly(solve=True)
+   >>> tree.get_min_poly()
+   F*x**6 + F*x**3 - F*x**2 + 2*F*x - F + x**7 + x**5 + x**4 + x**3 + x**2 + 1
+   >>> tree.get_genf()
+   -(x + 1)*(x**2 - x + 1)**2*(x**2 + x + 1)/(x**6 + x**3 - x**2 + 2*x - 1)
 
 we see that the minimum polynomial satisfied by the generating function
 ``F`` is

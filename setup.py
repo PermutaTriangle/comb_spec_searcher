@@ -51,5 +51,6 @@ setup(
         'pytest',
         'pytest-isort',
         'pytest-pep8',
+        'docutils',
     ]
 )
