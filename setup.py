@@ -51,6 +51,7 @@ setup(
         'pytest',
         'pytest-isort',
         'pytest-pep8',
-        'docutils',
+        'docutils-python3',
+        'pygments',
     ]
 )
