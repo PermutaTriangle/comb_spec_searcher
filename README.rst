@@ -3,6 +3,9 @@ Combinatorial Specification Searcher
 .. image:: https://travis-ci.org/PermutaTriangle/comb_spec_searcher.svg?branch=master
     :alt: Travis
     :target: https://travis-ci.org/PermutaTriangle/comb_spec_searcher
+.. image:: https://img.shields.io/coveralls/github/PermutaTriangle/comb_spec_searcher.svg
+    :alt: Coveralls
+    :target: https://coveralls.io/github/PermutaTriangle/comb_spec_searcher
 .. image:: https://img.shields.io/pypi/v/comb_spec_searcher.svg
     :alt: PyPI
     :target: https://pypi.python.org/pypi/comb_spec_searcher

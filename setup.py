@@ -49,6 +49,7 @@ setup(
     setup_requires=['pytest-runner'],
     tests_require=[
         'pytest',
+        'pytest-cov',
         'pytest-isort',
         'pytest-pep8',
         'docutils-python3',
