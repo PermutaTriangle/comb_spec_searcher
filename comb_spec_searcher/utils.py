@@ -128,3 +128,23 @@ def maple_equations(root_func, root_class, eqs):
     s += "count := {}:".format([len(list(root_class.objects_of_length(i)))
                                 for i in range(6)])
     return s
+
+
+def compositions(n,k):
+    # Credit to: https://pythonhosted.org/combalg-py/_modules/combalg/combalg.html
+    if n < 0:
+        raise ValueError("Can't make compositions of negative numbers")
+    t = n
+    h = 0
+    a = [0]*k
+    a[0] = n
+    yield list(a)
+    while a[k-1] != n:
+        if t != 1:
+            h = 0
+        t = a[h]
+        a[h] = 0
+        a[0] = t-1
+        a[h+1] += 1
+        h += 1
+        yield list(a)
