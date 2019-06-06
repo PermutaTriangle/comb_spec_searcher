@@ -6,7 +6,9 @@ by symmetries etc. It gives each combinatorial class a unique label.
 """
 
 from base64 import b64decode, b64encode
+
 from logzero import logger
+
 from .combinatorial_class import CombinatorialClass
 
 
