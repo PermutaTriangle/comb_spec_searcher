@@ -297,14 +297,19 @@ class ProofTreeNode(object):
             ans = sum(child.count_objects_of_length(n) for child in self.children)
         elif self.decomposition:
             atoms = 0 # Number of children that are just the atom
+            pos_children = set() # Indices of children that are positive (do not contain epsilon)
             children = [] # A list of children that are not atoms
             for child in self.children:
                 if child.eqv_path_comb_classes[-1].is_atom():
                     atoms += 1
                 else:
+                    if child.eqv_path_comb_classes[-1].is_positive():
+                        pos_children.add(len(children))
                     children.append(child)
 
             for comp in compositions(n-atoms, len(children)):
+                if any(c == 0 for i,c in enumerate(comp) if i in pos_children):
+                    continue
                 tmp = 1
                 for i, child in enumerate(children):
                     tmp *= child.count_objects_of_length(comp[i])
@@ -337,7 +342,7 @@ class ProofTreeNode(object):
         return ans
 
     def _ensure_terms(self, n):
-        if len(self.terms) <= n:
+        if len(self.terms) > n:
             return
         if self.genf is None:
             self.genf = self.eqv_path_comb_classes[-1].get_genf()
