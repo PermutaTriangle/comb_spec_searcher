@@ -287,6 +287,13 @@ class ProofTreeNode(object):
         return sympy.Eq(lhs, rhs)
 
     def count_objects_of_length(self, n):
+        '''
+            Calculates objects of lenght in each node according to the recurrence relation
+            implied by the proof tree. Only works for disjoint union, decomposition,
+            strategy verified and recursion.
+
+            Verified nodes are expected to have a known generating function.
+        '''
         if n < 0:
             return 0
         if len(self.terms) > n:
@@ -308,6 +315,7 @@ class ProofTreeNode(object):
                     children.append(child)
 
             for comp in compositions(n-atoms, len(children)):
+                # A composition is only valid if all positive children get more than 0 atoms.
                 if any(c == 0 for i,c in enumerate(comp) if i in pos_children):
                     continue
                 tmp = 1
@@ -322,7 +330,7 @@ class ProofTreeNode(object):
             elif self.eqv_path_comb_classes[-1].is_atom():
                 return 1 if n == 1 else 0
             else:
-                self._ensure_terms(n)
+                self._ensure_terms(n, expand_extra=50)
                 return self.terms[n]
         elif self.recursion:
             if self.recurse_node:
@@ -337,16 +345,20 @@ class ProofTreeNode(object):
                                        "cartesian product, recursion "
                                        "and strategy verified."))
         if len(self.terms) != n:
-            raise ValueError("Something went wrong...")
+            self.terms.extend([0]*(n-len(self.terms)))
         self.terms.append(ans)
         return ans
 
-    def _ensure_terms(self, n):
+    def _ensure_terms(self, n, expand_extra=0):
+        """
+            Ensures that self.terms contains the n-th term. If not it will
+            use the generating function to compute terms up to n+expand_extra.
+        """
         if len(self.terms) > n:
             return
         if self.genf is None:
             self.genf = self.eqv_path_comb_classes[-1].get_genf()
-        coeffs = taylor_expand(self.genf, n=n)
+        coeffs = taylor_expand(self.genf, n=n+expand_extra)
         self.terms.extend(coeffs[len(self.terms):])
 
     @property
@@ -369,6 +381,7 @@ class ProofTree(object):
             raise TypeError("Root must be a ProofTreeNode.")
         self.root = root
         self._of_length_cache = {}
+        self._fixed_recursion = False
 
     @property
     def logger_kwargs(self):
@@ -775,8 +788,11 @@ class ProofTree(object):
             if node.recursion:
                 node.recurse_node = label_to_node[node.label]
 
+        self._fixed_recursion = True
+
     def count_objects_of_length(self, n):
-        self._recursion_setup()
+        if not self._fixed_recursion:
+            self._recursion_setup()
         return self.root.count_objects_of_length(n)
 
     def __eq__(self, other):
