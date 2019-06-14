@@ -45,15 +45,26 @@ class CombinatorialClass(abc.ABC):
 
     def is_epsilon(self):
         """Returns True if the generating function equals 1"""
-        raise NotImplementedError
+        raise NotImplementedError("If you want to use the "
+                                  "'count_objects_of_length' function "
+                                  "for a proof tree then you must implement "
+                                  "'is_epsilon' for your combinatorial class.")
 
     def is_atom(self):
         """Returns True if the generating function equals x"""
-        raise NotImplementedError
+        raise NotImplementedError("If you want to use the "
+                                  "'count_objects_of_length' function "
+                                  "for a proof tree then you must implement "
+                                  "'is_epsilon', 'is_atom' and 'is_positive' "
+                                  "for your combinatorial class.")
 
     def is_positive(self):
         """Returns True if the constant term of the generating function is 0"""
-        raise NotImplementedError
+        raise NotImplementedError("If you want to use the "
+                                  "'count_objects_of_length' function "
+                                  "for a proof tree then you must implement "
+                                  "'is_epsilon', 'is_atom' and 'is_positive' "
+                                  "for your combinatorial class.")
 
 
     @classmethod
