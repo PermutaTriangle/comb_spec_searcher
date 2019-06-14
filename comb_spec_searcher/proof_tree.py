@@ -16,8 +16,8 @@ from logzero import logger
 from permuta.misc.ordered_set_partitions import partitions_of_n_of_size_k
 
 from .tree_searcher import Node as tree_searcher_node
-from .utils import (check_equation, check_poly, get_solution, maple_equations,
-                    taylor_expand, compositions)
+from .utils import (check_equation, check_poly, compositions, get_solution,
+                    maple_equations, taylor_expand)
 
 
 class ProofTreeNode(object):
@@ -288,9 +288,9 @@ class ProofTreeNode(object):
 
     def count_objects_of_length(self, n):
         '''
-            Calculates objects of lenght in each node according to the recurrence relation
-            implied by the proof tree. Only works for disjoint union, decomposition,
-            strategy verified and recursion.
+            Calculates objects of lenght in each node according to the
+            recurrence relation implied by the proof tree. Only works
+            for disjoint union, decomposition, strategy verified and recursion.
 
             Verified nodes are expected to have a known generating function.
         '''
@@ -301,11 +301,14 @@ class ProofTreeNode(object):
 
         ans = 0
         if self.disjoint_union:
-            ans = sum(child.count_objects_of_length(n) for child in self.children)
+            ans = sum(child.count_objects_of_length(n)
+                      for child in self.children)
         elif self.decomposition:
-            atoms = 0 # Number of children that are just the atom
-            pos_children = set() # Indices of children that are positive (do not contain epsilon)
-            children = [] # A list of children that are not atoms
+            # Number of children that are just the atom
+            atoms = 0
+            # Indices of children that are positive (do not contain epsilon)
+            pos_children = set()
+            children = []  # A list of children that are not atoms
             for child in self.children:
                 if child.eqv_path_comb_classes[-1].is_atom():
                     atoms += 1
@@ -315,8 +318,10 @@ class ProofTreeNode(object):
                     children.append(child)
 
             for comp in compositions(n-atoms, len(children)):
-                # A composition is only valid if all positive children get more than 0 atoms.
-                if any(c == 0 for i,c in enumerate(comp) if i in pos_children):
+                # A composition is only valid if all positive children
+                # get more than 0 atoms.
+                if any(c == 0 for i, c in enumerate(comp)
+                        if i in pos_children):
                     continue
                 tmp = 1
                 for i, child in enumerate(children):
@@ -336,9 +341,9 @@ class ProofTreeNode(object):
             if self.recurse_node:
                 return self.recurse_node.count_objects_of_length(n)
             else:
-                raise ValueError(("Recursing to a subtree that is not contained "
-                                  "in the subtree from the root object that "
-                                  "was called on."))
+                raise ValueError(("Recursing to a subtree that is not"
+                                  " contained in the subtree from the"
+                                  " root object that was called on."))
         else:
             raise NotImplementedError(("count_objects_of_length() is only "
                                        "defined for disjoint union, "

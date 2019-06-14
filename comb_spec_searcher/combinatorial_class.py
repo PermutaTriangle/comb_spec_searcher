@@ -66,7 +66,6 @@ class CombinatorialClass(abc.ABC):
                                   "'is_epsilon', 'is_atom' and 'is_positive' "
                                   "for your combinatorial class.")
 
-
     @classmethod
     @abc.abstractmethod
     def from_string(cls, string):
