@@ -66,16 +66,6 @@ class CombinatorialClass(abc.ABC):
                                   "'is_epsilon', 'is_atom' and 'is_positive' "
                                   "for your combinatorial class.")
 
-    @classmethod
-    @abc.abstractmethod
-    def from_string(cls, string):
-        """Return class from string. The string should be a simplified encoding
-        of combinatorial classes you wish to use the CombSpecSearcher on."""
-        raise NotImplementedError("This function needs to be added to your "
-                                  "combinatorial class in order to use the "
-                                  "debug settings and for initial conditions"
-                                  " for computing the generating function")
-
     def from_dict(self):
         """Return combinatorial class from the jsonable object."""
         raise NotImplementedError("This function is need to reinstantiate a "
