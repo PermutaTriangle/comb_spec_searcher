@@ -1,0 +1,25 @@
+dist: xenial
+sudo: false
+
+language: python
+python:
+- '3.5'
+- '3.6'
+- '3.7'
+- '3.7-dev'
+- '3.8-dev'
+- 'nightly'
+- 'pypy3.5'
+
+install:
+  - pip install --upgrade pip
+  - pip install coveralls==1.7.0
+
+script:
+- ./setup.py test
+
+after_success:
+  - coveralls
+
+notifications:
+  email: false
