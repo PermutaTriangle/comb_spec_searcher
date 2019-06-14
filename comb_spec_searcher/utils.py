@@ -134,6 +134,12 @@ def compositions(n,k):
     # Credit to: https://pythonhosted.org/combalg-py/_modules/combalg/combalg.html
     if n < 0:
         raise ValueError("Can't make compositions of negative numbers")
+    if k < 0:
+        raise ValueError("Can't make compositions into a negative number of parts")
+    if k > n or (n > k and k == 0):
+        raise ValueError("Can't make compositions of {} into {} parts".format(n,k))
+    if  k == 0:
+        return
     t = n
     h = 0
     a = [0]*k

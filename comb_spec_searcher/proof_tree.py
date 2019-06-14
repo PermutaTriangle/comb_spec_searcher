@@ -330,7 +330,7 @@ class ProofTreeNode(object):
             elif self.eqv_path_comb_classes[-1].is_atom():
                 return 1 if n == 1 else 0
             else:
-                self._ensure_terms(n, expand_extra=50)
+                self._ensure_terms(n)
                 return self.terms[n]
         elif self.recursion:
             if self.recurse_node:
@@ -349,7 +349,7 @@ class ProofTreeNode(object):
         self.terms.append(ans)
         return ans
 
-    def _ensure_terms(self, n, expand_extra=0):
+    def _ensure_terms(self, n, expand_extra=50):
         """
             Ensures that self.terms contains the n-th term. If not it will
             use the generating function to compute terms up to n+expand_extra.
