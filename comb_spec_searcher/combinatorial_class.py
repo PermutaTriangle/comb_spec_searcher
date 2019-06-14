@@ -41,7 +41,10 @@ class CombinatorialClass(abc.ABC):
 
     def objects_of_length(self, length):
         """Returns an iterable of combinatorial objects of a given length"""
-        return []
+        raise NotImplementedError("This function needs to be added to your "
+                                  "combinatorial class in order to use the "
+                                  "debug settings and for initial conditions"
+                                  " for computing the generating function")
 
     def is_epsilon(self):
         """Returns True if the generating function equals 1"""
