@@ -18,6 +18,10 @@ Combinatorial Specification Searcher
     :alt: Travis
     :target: https://travis-ci.org/PermutaTriangle/comb_spec_searcher
 
+.. image:: https://requires.io/github/PermutaTriangle/comb_spec_searcher/requirements.svg?branch=master
+     :target: https://requires.io/github/PermutaTriangle/comb_spec_searcher/requirements/?branch=master
+     :alt: Requirements Status
+
 The ``comb_spec_searcher`` package contains code for combinatorial
 exploration.
 
