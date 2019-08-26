@@ -5,11 +5,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.1.0] - 2019-04-15
 ### Fixed
 - Update the readme and test it
 - Added missing equation for "F_root" case
 
-## [0.0.1] - 2019-04-15
+## [0.1.0] - 2019-04-15
 ### Added
 - This changelog file.
 
