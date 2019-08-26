@@ -1,0 +1,34 @@
+dist: xenial
+sudo: false
+
+language: python
+python:
+- '3.5'
+- '3.6'
+- '3.7'
+- '3.7-dev'
+- '3.8-dev'
+- 'nightly'
+- 'pypy3.5'
+
+install:
+- pip install --upgrade pip
+- pip install coveralls==1.7.0
+
+script:
+- ./setup.py test
+
+after_success:
+- coveralls
+
+notifications:
+  email: false
+
+deploy:
+  provider: pypi
+  user: henningu
+  password:
+    secure: tX5N54vVZ0Kdy//VUy9dT31KZEplHKyxb7JN45sAHUDDurkUyG2eV1lIIOeoyNNceXQTIN9N6+aY4bVLipLjbmw021VWrkdVGxnaqq0ozIHiayvM1XRKkIQnOD/eRWA7HnN6SoYGDwQwsfTohUtsxlqwsIB2L7Q8hU1VhpjDyh1lNpkN4ufMYC8wG9MG8uohM1D8BuFfAPEZHVuX7QdvdBwb3117H3UiCv7OcXtv6n1xil9BMkm89vLfzCdV3r/TO5YTMhVTbNjnOu0FyB0IoNZB7spTqOE0XYlPMLAel8hs1zvY5sbMzjRqZETMykLJY325gFAk2ZTEJAtfmGlWXGaBoXhy8s0kvdYAZD0sTRmVRcjZd5YFyghxx0dfXE+fq6f/fwlmvr/bAmvtfBTgar8CgGFuE07PolQk7XOn1fiV9TQX+oJjqyySV3OdFIvc52ZyFqXvQRN8OY1AlIXxz0sLsOHGkDUqalqQjW0boSwBCy+DyKXoIaCIXuQVl+teT9bC9DEq5kNT6BiIOn/ABAvmmoMgggqCTDtjlGG6a2oB6Y+7F1yMDhAYddc7ZLOFvYu2A25/ldInLan3SsfPxIWllCg77BFS4LuGH9w/JjFqdu5wJR+F19jhWxicKxWnUaT58wwx51LpPY3okIG4ZEyjPhzED/2lIvn5+Eniq54=
+  skip_existing: true
+  on:
+    branch: master
