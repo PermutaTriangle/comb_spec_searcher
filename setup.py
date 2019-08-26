@@ -41,18 +41,17 @@ setup(
         'Topic :: Scientific/Engineering :: Mathematics',
     ],
     install_requires=[
-        'permuta>=1.0.0',
-        'logzero>=1.5.0',
-        'sympy>=1.1.1',
-        'psutil>=5.4.7'
+        'permuta==1.1.0',
+        'logzero==1.5.0',
+        'sympy==1.1.1',
+        'psutil==5.4.7'
     ],
-    setup_requires=['pytest-runner'],
+    setup_requires=['pytest-runner==5.1'],
     tests_require=[
-        'pytest',
-        'pytest-cov',
-        'pytest-isort',
-        'pytest-pep8',
-        'docutils-python3',
-        'pygments',
+        'pytest==5.1.1',
+        'pytest-cov==2.7.1',
+        'pytest-isort==0.3.1',
+        'pytest-pep8==1.0.6',
+        'docutils==0.14',
     ]
 )
