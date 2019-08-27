@@ -320,7 +320,7 @@ class CombinatorialSpecificationSearcher(object):
             if inferral and comb_class == rule.comb_classes[0]:
                 logger.debug(("The inferral strategy {} returned the same "
                               "combinatorial class when applied to {}"
-                              "".format(str(strategy).split(' ')[1],
+                              "".format(str(rule).split(' ')[1],
                                         repr(comb_class))),
                              extra=self.logger_kwargs)
                 continue

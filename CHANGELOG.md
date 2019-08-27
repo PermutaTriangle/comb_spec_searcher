@@ -10,11 +10,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   implied by the proof tree as long as the strategies used are only disjoint unions,
   decompositions, verification or recursion.
 
+## [0.2.1] - 2019-08-26
+### Fixed
+- Update sympy version to 1.4
+
+## [0.2.0] - 2019-08-26
 ### Fixed
 - Update the readme and test it
 - Added missing equation for "F_root" case
 
-## [0.0.1] - 2019-04-15
+## [0.1.0] - 2019-04-15
 ### Added
 - This changelog file.
 
