@@ -3,26 +3,37 @@ In this file an example of how to perform combinatorial exploration on words
 with respect to factor order is given.
 
 >>> alphabet = ['a', 'b']
->>> start_class = AvoidingWithPrefix("", ['b'], alphabet)
+>>> start_class = AvoidingWithPrefix('', ['b'], alphabet)
 >>> searcher = CombinatorialSpecificationSearcher(start_class, pack)
 >>> tree = searcher.auto_search(status_update=10)
 >>> [tree.count_objects_of_length(i) for i in range(10)]
 [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
->>> start_class = AvoidingWithPrefix("", ['ab'], alphabet)
+
+>>> start_class = AvoidingWithPrefix('', ['ab'], alphabet)
 >>> searcher = CombinatorialSpecificationSearcher(start_class, pack)
 >>> tree = searcher.auto_search(status_update=10)
 >>> [tree.count_objects_of_length(i) for i in range(10)]
 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
->>> start_class = AvoidingWithPrefix("", ['aa', 'bb'], alphabet)
+
+>>> start_class = AvoidingWithPrefix('', ['aa', 'bb'], alphabet)
 >>> searcher = CombinatorialSpecificationSearcher(start_class, pack)
 >>> tree = searcher.auto_search(status_update=10)
 >>> [tree.count_objects_of_length(i) for i in range(10)]
 [1, 2, 2, 2, 2, 2, 2, 2, 2, 2]
->>> start_class = AvoidingWithPrefix("", ['bb'], alphabet)
+
+>>> start_class = AvoidingWithPrefix('', ['bb'], alphabet)
 >>> searcher = CombinatorialSpecificationSearcher(start_class, pack)
 >>> tree = searcher.auto_search(status_update=10)
 >>> [tree.count_objects_of_length(i) for i in range(11)]
 [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144]
+
+>>> start_class = AvoidingWithPrefix('', ['ababa', 'babb'], alphabet)
+>>> searcher = CombinatorialSpecificationSearcher(start_class, pack)
+>>> tree = searcher.auto_search()
+>>> [tree.count_objects_of_length(i) for i in range(11)]
+[1, 2, 4, 8, 15, 27, 48, 87, 157, 283, 511]
+>>> tree.count_objects_of_length(15)
+9798
 """
 from itertools import product
 
