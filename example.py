@@ -1,6 +1,28 @@
 """
 In this file an example of how to perform combinatorial exploration on words
 with respect to factor order is given.
+
+>>> alphabet = ['a', 'b']
+>>> start_class = AvoidingWithPrefix("", ['b'], alphabet)
+>>> searcher = CombinatorialSpecificationSearcher(start_class, pack)
+>>> tree = searcher.auto_search(status_update=10)
+>>> [tree.count_objects_of_length(i) for i in range(10)]
+[1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+>>> start_class = AvoidingWithPrefix("", ['ab'], alphabet)
+>>> searcher = CombinatorialSpecificationSearcher(start_class, pack)
+>>> tree = searcher.auto_search(status_update=10)
+>>> [tree.count_objects_of_length(i) for i in range(10)]
+[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+>>> start_class = AvoidingWithPrefix("", ['aa', 'bb'], alphabet)
+>>> searcher = CombinatorialSpecificationSearcher(start_class, pack)
+>>> tree = searcher.auto_search(status_update=10)
+>>> [tree.count_objects_of_length(i) for i in range(10)]
+[1, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+>>> start_class = AvoidingWithPrefix("", ['bb'], alphabet)
+>>> searcher = CombinatorialSpecificationSearcher(start_class, pack)
+>>> tree = searcher.auto_search(status_update=10)
+>>> [tree.count_objects_of_length(i) for i in range(11)]
+[1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144]
 """
 from itertools import product
 
@@ -118,6 +140,17 @@ class AvoidingWithPrefix(CombinatorialClass):
         return "AvoidindWithPrefix({}, {}, {}".format(repr(self.prefix),
                                                       repr(self.patterns),
                                                       repr(self.alphabet))
+
+    # Method required to get the counts
+
+    def is_epsilon(self):
+        return self.prefix == '' and self.just_prefix
+
+    def is_atom(self):
+        return len(self.prefix) == 1 and self.just_prefix
+
+    def is_positive(self):
+        return len(self.prefix) > 0
 
 
 # the strategies
