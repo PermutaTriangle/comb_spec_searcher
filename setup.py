@@ -53,5 +53,6 @@ setup(
         'pytest-isort==0.3.1',
         'pytest-pep8==1.0.6',
         'docutils==0.15.2',
+        'Pygments==2.4.2'
     ]
 )
