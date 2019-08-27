@@ -133,21 +133,34 @@ def maple_equations(root_func, root_class, eqs):
 def compositions(n, k):
     # Credit to:
     # https://pythonhosted.org/combalg-py/_modules/combalg/combalg.html
-    if n < 0:
-        raise ValueError("Can't make compositions of negative numbers")
-    if k < 0:
-        raise ValueError("Can't make compositions into a negative "
-                         " number of parts")
-    if k > n or (n > k and k == 0):
-        raise ValueError("Can't make compositions of {} into "
-                         "{} parts".format(n, k))
-    if k == 0:
+    """
+    Iterator over all the composition of n into k parts.
+
+    Composition of are tuple of k integers that are greater of equals to 0 such
+    that the sum of the k integers is n.
+
+    >>> sorted(compositions(2,3))
+    [(0, 0, 2), (0, 1, 1), (0, 2, 0), (1, 0, 1), (1, 1, 0), (2, 0, 0)]
+    >>> sorted(compositions(2,2))
+    [(0, 2), (1, 1), (2, 0)]
+    >>> list(compositions(2, 1))
+    [(2,)]
+    >>> list(compositions(0, 1))
+    [(0,)]
+    >>> list(compositions(-1, 1))
+    []
+    >>> list(compositions(1, -1))
+    []
+    >>> list(compositions(1, -1))
+    []
+    """
+    if n < 0 or k < 0 or k == 0:
         return
     t = n
     h = 0
     a = [0]*k
     a[0] = n
-    yield list(a)
+    yield tuple(a)
     while a[k-1] != n:
         if t != 1:
             h = 0
@@ -156,4 +169,4 @@ def compositions(n, k):
         a[0] = t-1
         a[h+1] += 1
         h += 1
-        yield list(a)
+        yield tuple(a)
