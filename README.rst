@@ -411,8 +411,8 @@ we see that the minimum polynomial satisfied by the generating function
 and moreover
 ``F = -(x**7 + x**5 + x**4 + x**3 + x**2 + 1)/(x**6 + x**3 - x**2 + 2*x - 1)``.
 
-Moreover, we get directly get the counts of object by length with the method
-`get_objects_of_length`.
+Moreover, we can get directly the number of objects by length with the method
+`count_objects_of_length`.
 
 .. code:: python
 
