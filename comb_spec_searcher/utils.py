@@ -128,3 +128,45 @@ def maple_equations(root_func, root_class, eqs):
     s += "count := {}:".format([len(list(root_class.objects_of_length(i)))
                                 for i in range(6)])
     return s
+
+
+def compositions(n, k):
+    # Credit to:
+    # https://pythonhosted.org/combalg-py/_modules/combalg/combalg.html
+    """
+    Iterator over all the composition of n into k parts.
+
+    Composition of are tuple of k integers that are greater of equals to 0 such
+    that the sum of the k integers is n.
+
+    >>> sorted(compositions(2,3))
+    [(0, 0, 2), (0, 1, 1), (0, 2, 0), (1, 0, 1), (1, 1, 0), (2, 0, 0)]
+    >>> sorted(compositions(2,2))
+    [(0, 2), (1, 1), (2, 0)]
+    >>> list(compositions(2, 1))
+    [(2,)]
+    >>> list(compositions(0, 1))
+    [(0,)]
+    >>> list(compositions(-1, 1))
+    []
+    >>> list(compositions(1, -1))
+    []
+    >>> list(compositions(1, -1))
+    []
+    """
+    if n < 0 or k < 0 or k == 0:
+        return
+    t = n
+    h = 0
+    a = [0]*k
+    a[0] = n
+    yield tuple(a)
+    while a[k-1] != n:
+        if t != 1:
+            h = 0
+        t = a[h]
+        a[h] = 0
+        a[0] = t-1
+        a[h+1] += 1
+        h += 1
+        yield tuple(a)

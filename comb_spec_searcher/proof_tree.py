@@ -16,8 +16,8 @@ from logzero import logger
 from permuta.misc.ordered_set_partitions import partitions_of_n_of_size_k
 
 from .tree_searcher import Node as tree_searcher_node
-from .utils import (check_equation, check_poly, get_solution, maple_equations,
-                    taylor_expand)
+from .utils import (check_equation, check_poly, compositions, get_solution,
+                    maple_equations, taylor_expand)
 
 
 class ProofTreeNode(object):
@@ -37,6 +37,8 @@ class ProofTreeNode(object):
         self.formal_step = formal_step
         self.sympy_function = None
         self.terms = []
+        self.recurse_node = None
+        self.genf = None
 
     @property
     def logger_kwargs(self):
@@ -284,6 +286,86 @@ class ProofTreeNode(object):
             rhs = sympy.Function("DOITYOURSELF")(sympy.abc.x)
         return sympy.Eq(lhs, rhs)
 
+    def count_objects_of_length(self, n):
+        '''
+            Calculates objects of lenght in each node according to the
+            recurrence relation implied by the proof tree. Only works
+            for disjoint union, decomposition, strategy verified and recursion.
+
+            Verified nodes are expected to have a known generating function.
+        '''
+        if n < 0:
+            return 0
+        if len(self.terms) > n and self.terms[n] is not None:
+            return self.terms[n]
+
+        ans = 0
+        if self.disjoint_union:
+            ans = sum(child.count_objects_of_length(n)
+                      for child in self.children)
+        elif self.decomposition:
+            # Number of children that are just the atom
+            atoms = 0
+            # Indices of children that are positive (do not contain epsilon)
+            pos_children = set()
+            children = []  # A list of children that are not atoms
+            for child in self.children:
+                if child.eqv_path_comb_classes[-1].is_atom():
+                    atoms += 1
+                else:
+                    if child.eqv_path_comb_classes[-1].is_positive():
+                        pos_children.add(len(children))
+                    children.append(child)
+
+            for comp in compositions(n-atoms, len(children)):
+                # A composition is only valid if all positive children
+                # get more than 0 atoms.
+                if any(c == 0 for i, c in enumerate(comp)
+                        if i in pos_children):
+                    continue
+                tmp = 1
+                for i, child in enumerate(children):
+                    tmp *= child.count_objects_of_length(comp[i])
+                    if tmp == 0:
+                        break
+                ans += tmp
+        elif self.strategy_verified:
+            if self.eqv_path_comb_classes[-1].is_epsilon():
+                return 1 if n == 0 else 0
+            elif self.eqv_path_comb_classes[-1].is_atom():
+                return 1 if n == 1 else 0
+            else:
+                self._ensure_terms(n)
+                return self.terms[n]
+        elif self.recursion:
+            if self.recurse_node:
+                return self.recurse_node.count_objects_of_length(n)
+            else:
+                raise ValueError(("Recursing to a subtree that is not"
+                                  " contained in the subtree from the"
+                                  " root object that was called on."))
+        else:
+            raise NotImplementedError(("count_objects_of_length() is only "
+                                       "defined for disjoint union, "
+                                       "cartesian product, recursion "
+                                       "and strategy verified."))
+        if len(self.terms) <= n:
+            self.terms.extend([None]*(n-len(self.terms)+1))
+        self.terms[n] = ans
+        return ans
+
+    def _ensure_terms(self, n, expand_extra=50):
+        """
+            Ensures that self.terms contains the n-th term. If not it will
+            use the generating function to compute terms up to n+expand_extra.
+        """
+        if len(self.terms) > n:
+            return
+        if self.genf is None:
+            self.genf = self.eqv_path_comb_classes[-1].get_genf()
+        coeffs = taylor_expand(self.genf, n=n+expand_extra)
+        self.terms.extend(coeffs[len(self.terms):])
+
     @property
     def eqv_path_objects(self):
         """This is for reverse compatability."""
@@ -304,6 +386,7 @@ class ProofTree(object):
             raise TypeError("Root must be a ProofTreeNode.")
         self.root = root
         self._of_length_cache = {}
+        self._fixed_recursion = False
 
     @property
     def logger_kwargs(self):
@@ -696,6 +779,24 @@ class ProofTree(object):
                               "".format(constructor, type(constructor))),
                              extra={"processname": "css_to_proof_tree"})
                 raise NotImplementedError("Only handle cartesian and disjoint")
+
+    def _recursion_setup(self):
+        label_to_node = dict()
+
+        for node in self.nodes():
+            if not node.recursion:
+                label_to_node[node.label] = node
+
+        for node in self.nodes():
+            if node.recursion:
+                node.recurse_node = label_to_node[node.label]
+
+        self._fixed_recursion = True
+
+    def count_objects_of_length(self, n):
+        if not self._fixed_recursion:
+            self._recursion_setup()
+        return self.root.count_objects_of_length(n)
 
     def __eq__(self, other):
         return all(node1 == node2

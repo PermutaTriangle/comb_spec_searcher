@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- `ProofTree.count_objects_of_length()` implements the recurrence relation
+  implied by the proof tree as long as the strategies used are only disjoint unions,
+  decompositions, verification or recursion.
 
 ## [0.2.1] - 2019-08-26
 ### Fixed

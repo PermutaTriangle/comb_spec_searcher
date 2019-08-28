@@ -177,6 +177,23 @@ the ``from_dict`` function is written in such a way that for any class
    ...                    data['alphabet'],
    ...                    bool(int(data['just_prefix'])))
 
+We also add some methods that we will need to get the enumerations of the
+objects later.
+
+.. code:: python
+
+   ...     def is_epsilon(self):
+   ...         """ Returns True if the generating function is 1"""
+   ...         return self.prefix == "" and self.just_prefix
+   ...
+   ...     def is_atom(self):
+   ...         """ Returns True if the generating function is x"""
+   ...         return len(self.prefix) == 1 and self.just_prefix
+   ...
+   ...     def is_positive(self):
+   ...         """ Returns True if the constant term of the generating function is 0"""
+   ...         return len(self.prefix) > 0
+
 Our ``CombinatorialClass`` is now ready. What is left to do is create
 the strategies that the ``CombinatorialSpecificationSearcher`` will use
 for performing combinatorial exploration. This is given in the form of a
@@ -393,6 +410,14 @@ we see that the minimum polynomial satisfied by the generating function
 ``F*(x**6 + x**3 - x**2 + 2*x - 1) + x**7 + x**5 + x**4 + x**3 + x**2 + 1``
 and moreover
 ``F = -(x**7 + x**5 + x**4 + x**3 + x**2 + 1)/(x**6 + x**3 - x**2 + 2*x - 1)``.
+
+Moreover, we can get directly the number of objects by length with the method
+`count_objects_of_length`.
+
+.. code:: python
+
+   >>> [tree.count_objects_of_length(i) for i in range(11)]
+   [1, 2, 4, 8, 15, 27, 48, 87, 157, 283, 511]
 
 You can now try this yourself using the file ``example.py``, which can
 count any set of words avoiding consecutive patterns.
