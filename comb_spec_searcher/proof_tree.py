@@ -296,7 +296,7 @@ class ProofTreeNode(object):
         '''
         if n < 0:
             return 0
-        if len(self.terms) > n:
+        if len(self.terms) > n and self.terms[n] is not None:
             return self.terms[n]
 
         ans = 0
@@ -349,9 +349,9 @@ class ProofTreeNode(object):
                                        "defined for disjoint union, "
                                        "cartesian product, recursion "
                                        "and strategy verified."))
-        if len(self.terms) != n:
-            self.terms.extend([0]*(n-len(self.terms)))
-        self.terms.append(ans)
+        if len(self.terms) <= n:
+            self.terms.extend([None]*(n-len(self.terms)+1))
+        self.terms[n] = ans
         return ans
 
     def _ensure_terms(self, n, expand_extra=50):
