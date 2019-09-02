@@ -40,7 +40,7 @@ def get_func(module_name, func_name, warn=False,
             func = getattr(module, func_name)
             assert callable(func)
             return func
-        except:
+        except Exception:
             if warn:
                 logger.warn(("No function named " + func_name +
                             " in module " + module_name),

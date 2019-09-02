@@ -41,7 +41,6 @@ setup(
         'Topic :: Scientific/Engineering :: Mathematics',
     ],
     install_requires=[
-        'permuta==1.1.0',
         'logzero==1.5.0',
         'sympy==1.4',
         'psutil==5.6.3'
