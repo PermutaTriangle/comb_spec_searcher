@@ -13,7 +13,7 @@ import psutil
 import sympy
 from logzero import logger
 
-from permuta.misc.ordered_set_partitions import partitions_of_n_of_size_k
+from comb_spec_searcher.utils import compositions
 
 from .class_db import ClassDB
 from .class_queue import ClassQueue
@@ -464,7 +464,7 @@ class CombinatorialSpecificationSearcher(object):
         elif constructor == 'cartesian':
             for i in range(length):
                 total = 0
-                for part in partitions_of_n_of_size_k(i, len(end_counts)):
+                for part in compositions(i, len(end_counts)):
                     subtotal = 1
                     for end_count, partlen in zip(end_counts, part):
                         if subtotal == 0:

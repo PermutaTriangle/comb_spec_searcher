@@ -13,7 +13,7 @@ from operator import add, mul
 import sympy
 from logzero import logger
 
-from permuta.misc.ordered_set_partitions import partitions_of_n_of_size_k
+from comb_spec_searcher.utils import compositions
 
 from .tree_searcher import Node as tree_searcher_node
 from .utils import (check_equation, check_poly, compositions, get_solution,
@@ -201,8 +201,7 @@ class ProofTreeNode(object):
             child_comb_classes = [child.eqv_path_comb_classes[0]
                                   for child in self.children]
             total = 0
-            for part in partitions_of_n_of_size_k(length,
-                                                  len(child_comb_classes)):
+            for part in compositions(length, len(child_comb_classes)):
                 subtotal = 1
                 for comb_class, partlen in zip(child_comb_classes, part):
                     if subtotal == 0:
