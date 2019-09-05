@@ -27,6 +27,7 @@ from .tree_searcher import (iterative_proof_tree_finder, iterative_prune,
 from .utils import get_func, get_func_name, get_module_and_func_names
 
 
+from collections import Counter
 from itertools import combinations
 
 warnings.simplefilter("once", Warning)
@@ -995,14 +996,14 @@ class CombinatorialSpecificationSearcher(object):
         rules_dict = self.tree_search_prep(constructor)
         for original_start, ends in rules_dict.items():
             for end1, end2 in combinations(ends, 2):
-                s1, s2 = set(end1), set(end2)
+                s1, s2 = Counter(end1), Counter(end2)
                 if s1 & s2:
-                    diff1 = s1 - s2
-                    diff2 = s2 - s1
+                    diff1 = tuple((s1 - s2).elements())
+                    diff2 = tuple((s2 - s1).elements())
                     if len(diff1) == 1:
-                        start1 = diff1.pop()
+                        start1 = diff1[0]
                         if len(diff2) == 1:
-                            start2 = diff2.pop()
+                            start2 = diff2[0]
                             self._add_equivalent_rule(start1, start2,
                                                       "{} equation equivalence/magic - set difference - {}, {}, {}".format(constructor, original_start, s1, s2),
                                                       "equiv")
@@ -1020,7 +1021,7 @@ class CombinatorialSpecificationSearcher(object):
                                            constructor)
                     elif len(diff2) == 1:
                         if len(diff1) > 1:
-                            start2 = diff2.pop()
+                            start2 = diff2[0]
                             ends = tuple(sorted(diff1))
                             self._add_rule(start2, ends,
                                            "{} equation equivalence/magic - uneven set difference".format(constructor),
