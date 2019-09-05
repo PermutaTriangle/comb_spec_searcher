@@ -26,6 +26,9 @@ from .tree_searcher import (iterative_proof_tree_finder, iterative_prune,
                             prune, random_proof_tree)
 from .utils import get_func, get_func_name, get_module_and_func_names
 
+
+from itertools import combinations
+
 warnings.simplefilter("once", Warning)
 
 
@@ -967,7 +970,7 @@ class CombinatorialSpecificationSearcher(object):
         """Return True if a proof tree has been found, false otherwise."""
         return self._has_proof_tree
 
-    def tree_search_prep(self):
+    def tree_search_prep(self, constructor=None):
         """
         Return rule dictionary ready for tree searcher.
 
@@ -977,14 +980,68 @@ class CombinatorialSpecificationSearcher(object):
         rules_dict = defaultdict(set)
 
         for rule in self.ruledb:
-            self._add_rule_to_rules_dict(rule, rules_dict)
+            if constructor is None or self.ruledb.constructor(*rule) == constructor:
+                self._add_rule_to_rules_dict(rule, rules_dict)
 
-        for label in self.classdb.verified_labels():
-            verified_label = self.equivdb[label]
-            rules_dict[verified_label] |= set(((),))
+        if constructor is None:
+            for label in self.classdb.verified_labels():
+                verified_label = self.equivdb[label]
+                rules_dict[verified_label] |= set(((),))
 
         self.prep_for_tree_search_time += time.time() - start_time
         return rules_dict
+
+    def equation_equivalences(self, constructor):
+        rules_dict = self.tree_search_prep(constructor)
+        for original_start, ends in rules_dict.items():
+            for end1, end2 in combinations(ends, 2):
+                s1, s2 = set(end1), set(end2)
+                if s1 & s2:
+                    diff1 = s1 - s2
+                    diff2 = s2 - s1
+                    if len(diff1) == 1:
+                        start1 = diff1.pop()
+                        if len(diff2) == 1:
+                            start2 = diff2.pop()
+                            self._add_equivalent_rule(start1, start2,
+                                                      "{} equation equivalence/magic - set difference - {}, {}, {}".format(constructor, original_start, s1, s2),
+                                                      "equiv")
+                            # c1 = self.classdb.get_class(start1)
+                            # c2 = self.classdb.get_class(start2)
+                            # if not [len(list(c1.objects_of_length(i))) for i in range(6)] == [len(list(c2.objects_of_length(i))) for i in range(6)]:
+                            #     print(c1)
+                            #     print(c2)
+                            #     print((end1, start1), (end2, start2))
+                            #     assert False
+                        else:
+                            ends = tuple(sorted(diff2))
+                            self._add_rule(start1, ends,
+                                           "{} equation equivalence/magic - uneven set difference".format(constructor),
+                                           constructor)
+                    elif len(diff2) == 1:
+                        if len(diff1) > 1:
+                            start2 = diff2.pop()
+                            ends = tuple(sorted(diff1))
+                            self._add_rule(start2, ends,
+                                           "{} equation equivalence/magic - uneven set difference".format(constructor),
+                                           constructor)
+
+        rules = sorted([(end, start) for start, ends in rules_dict.items()
+                        for end in ends], key=lambda x: (x[1], x[0]))
+        for (end1, start1), (end2, start2) in zip(rules, rules[1:]):
+            if end1 == end2:
+                # c1 = self.classdb.get_class(start1)
+                # c2 = self.classdb.get_class(start2)
+                self._add_equivalent_rule(start1, start2,
+                                          "{} equation equivalence/magic - same children".format(constructor),
+                                          "equiv")
+                # if not [len(list(c1.objects_of_length(i))) for i in range(6)] == [len(list(c2.objects_of_length(i))) for i in range(6)]:
+                #     print(c1)
+                #     print(c2)
+                #     print((end1, start1), (end2, start2))
+                #     assert False
+
+
 
     def _add_rule_to_rules_dict(self, rule, rules_dict):
         """Add a rule to given dictionary."""
@@ -1012,6 +1069,9 @@ class CombinatorialSpecificationSearcher(object):
     def find_tree(self):
         """Search for a random tree based on current data found."""
         start = time.time()
+        self.equation_equivalences("cartesian")
+        self.equation_equivalences("disjoint")
+
 
         rules_dict = self.tree_search_prep()
         # Prune all unverified labels (recursively)
