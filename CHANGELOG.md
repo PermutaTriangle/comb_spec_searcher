@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.2.2] - 2019-09-06
+### Added
+- `ProofTree.count_objects_of_length()` implements the recurrence relation
+  implied by the proof tree as long as the strategies used are only disjoint unions,
+  decompositions, verification or recursion.
+
+### Removed
+- Remove the dependency on `permuta`.
+
 ## [0.2.1] - 2019-08-26
 ### Fixed
 - Update sympy version to 1.4

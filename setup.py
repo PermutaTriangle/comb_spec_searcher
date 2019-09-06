@@ -10,9 +10,9 @@ def read(fname):
 
 setup(
     name="comb_spec_searcher",
-    version="0.2.1",
+    version="0.2.2",
     author="Permuta Triangle",
-    author_email="christianbean@ru.is",
+    author_email="permutatriangle@gmail.com",
     description="A library for performing combinatorial exploration.",
     license="BSD-3",
     keywords="enumerative combinatorics combinatorial specification counting",
@@ -41,7 +41,6 @@ setup(
         'Topic :: Scientific/Engineering :: Mathematics',
     ],
     install_requires=[
-        'permuta==1.1.0',
         'logzero==1.5.0',
         'sympy==1.4',
         'psutil==5.6.3'
@@ -52,6 +51,8 @@ setup(
         'pytest-cov==2.7.1',
         'pytest-isort==0.3.1',
         'pytest-pep8==1.0.6',
+        'pytest-repeat==0.8.0',
         'docutils==0.15.2',
+        'Pygments==2.4.2'
     ]
 )
