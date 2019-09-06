@@ -937,8 +937,6 @@ class CombinatorialSpecificationSearcher(object):
                     logger.info("No more classes to expand.",
                                 extra=self.logger_kwargs)
                     break
-            self.equation_equivalences("cartesian")
-            self.equation_equivalences("disjoint")
             start = time.time()
             self.equation_equivalences("cartesian")
             self.equation_equivalences("disjoint")
