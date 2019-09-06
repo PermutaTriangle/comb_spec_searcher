@@ -925,6 +925,7 @@ class CombinatorialSpecificationSearcher(object):
         while expanding:
             start = time.time() + 0.00001
             while time.time() - start < max_search_time:
+            # for i in range(1):
                 if status_update is not None:
                     if time.time() - status_start > status_update:
                         status = self.status()
@@ -936,6 +937,12 @@ class CombinatorialSpecificationSearcher(object):
                     logger.info("No more classes to expand.",
                                 extra=self.logger_kwargs)
                     break
+            start = time.time()
+            self.equation_equivalences("cartesian")
+            self.equation_equivalences("disjoint")
+            print('-------------------------------------------------------')
+            print('This took this amount of time:' ,time.time()-start)
+            print('-------------------------------------------------------')
             start = time.time()
             if smallest:
                 proof_tree = self.find_smallest_proof_tree()
@@ -995,7 +1002,7 @@ class CombinatorialSpecificationSearcher(object):
     def equation_equivalences(self, constructor):
 
         def is_subset(end1, end2):
-            return all(count < end2[value] for value, count in end1.items())
+            return all(count <= end2[value] for value, count in end1.items())
 
         def all_rules(rules_dict):
             for start, ends in rules_dict.items():
@@ -1012,20 +1019,20 @@ class CombinatorialSpecificationSearcher(object):
                 diff2 = tuple((end2 - end1).elements())
                 if len(diff1) == 1:
                     if len(diff2) == 1:
-                        print((start1, end1), (start2, end2))
-                        print(diff1[0], diff2[0], "equivalent by same {} parent".format(constructor))
+                        # print((start1, end1), (start2, end2))
+                        # print(diff1[0], diff2[0], "equivalent by same {} parent".format(constructor))
                         self._add_equivalent_rule(diff1[0], diff2[0],
                                                   "equivalent by same {} parent".format(constructor),
                                                   "equiv")
                     else:
-                        print((start1, end1), (start2, end2))
-                        print(diff1[0], diff2, "rule by subset of other {} rule".format(constructor))
+                        # print((start1, end1), (start2, end2))
+                        # print(diff1[0], diff2, "rule by subset of other {} rule".format(constructor))
                         self._add_rule(diff1[0], diff2,
                                        "rule by subset of other {} rule".format(constructor),
                                        constructor)
                 elif len(diff2) == 1:
-                    print((start1, end1), (start2, end2))
-                    print(diff2[0], diff1, "rule by subset of other {} rule".format(constructor))
+                    # print((start1, end1), (start2, end2))
+                    # print(diff2[0], diff1, "rule by subset of other {} rule".format(constructor))
                     self._add_rule(diff2[0], diff1,
                                    "rule by subset of other {} rule".format(constructor),
                                    constructor)
@@ -1133,9 +1140,6 @@ class CombinatorialSpecificationSearcher(object):
     def find_tree(self):
         """Search for a random tree based on current data found."""
         start = time.time()
-        self.equation_equivalences("cartesian")
-        self.equation_equivalences("disjoint")
-
 
         rules_dict = self.tree_search_prep()
         # Prune all unverified labels (recursively)
