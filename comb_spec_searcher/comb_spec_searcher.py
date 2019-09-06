@@ -936,6 +936,8 @@ class CombinatorialSpecificationSearcher(object):
                     logger.info("No more classes to expand.",
                                 extra=self.logger_kwargs)
                     break
+            self.equation_equivalences("cartesian")
+            self.equation_equivalences("disjoint")
             start = time.time()
             if smallest:
                 proof_tree = self.find_smallest_proof_tree()
@@ -1049,11 +1051,10 @@ class CombinatorialSpecificationSearcher(object):
                                               "equiv")
                 else:
                     print((start1, end1), (start2, end2))
-                    print(new_lhs, new_rhs, "rhs of {} rule is a subser".format(constructor))
+                    print(new_lhs, new_rhs, "rhs of {} rule is a subset".format(constructor))
                     self._add_rule(new_lhs, new_rhs,
-                                   "rhs of {} rule is a subser".format(constructor),
+                                   "rhs of {} rule is a subset".format(constructor),
                                    constructor)
-
 
 
 
@@ -1133,9 +1134,6 @@ class CombinatorialSpecificationSearcher(object):
     def find_tree(self):
         """Search for a random tree based on current data found."""
         start = time.time()
-        self.equation_equivalences("cartesian")
-        self.equation_equivalences("disjoint")
-
 
         rules_dict = self.tree_search_prep()
         # Prune all unverified labels (recursively)
