@@ -993,54 +993,117 @@ class CombinatorialSpecificationSearcher(object):
         return rules_dict
 
     def equation_equivalences(self, constructor):
-        rules_dict = self.tree_search_prep(constructor)
-        for original_start, ends in rules_dict.items():
-            for end1, end2 in combinations(ends, 2):
-                s1, s2 = Counter(end1), Counter(end2)
-                if s1 & s2:
-                    diff1 = tuple((s1 - s2).elements())
-                    diff2 = tuple((s2 - s1).elements())
-                    if len(diff1) == 1:
-                        start1 = diff1[0]
-                        if len(diff2) == 1:
-                            start2 = diff2[0]
-                            self._add_equivalent_rule(start1, start2,
-                                                      "{} equation equivalence/magic - set difference - {}, {}, {}".format(constructor, original_start, s1, s2),
-                                                      "equiv")
-                            # c1 = self.classdb.get_class(start1)
-                            # c2 = self.classdb.get_class(start2)
-                            # if not [len(list(c1.objects_of_length(i))) for i in range(6)] == [len(list(c2.objects_of_length(i))) for i in range(6)]:
-                            #     print(c1)
-                            #     print(c2)
-                            #     print((end1, start1), (end2, start2))
-                            #     assert False
-                        else:
-                            ends = tuple(sorted(diff2))
-                            self._add_rule(start1, ends,
-                                           "{} equation equivalence/magic - uneven set difference".format(constructor),
-                                           constructor)
-                    elif len(diff2) == 1:
-                        if len(diff1) > 1:
-                            start2 = diff2[0]
-                            ends = tuple(sorted(diff1))
-                            self._add_rule(start2, ends,
-                                           "{} equation equivalence/magic - uneven set difference".format(constructor),
-                                           constructor)
 
-        rules = sorted([(end, start) for start, ends in rules_dict.items()
-                        for end in ends], key=lambda x: (x[1], x[0]))
-        for (end1, start1), (end2, start2) in zip(rules, rules[1:]):
-            if end1 == end2:
-                # c1 = self.classdb.get_class(start1)
-                # c2 = self.classdb.get_class(start2)
-                self._add_equivalent_rule(start1, start2,
-                                          "{} equation equivalence/magic - same children".format(constructor),
-                                          "equiv")
-                # if not [len(list(c1.objects_of_length(i))) for i in range(6)] == [len(list(c2.objects_of_length(i))) for i in range(6)]:
-                #     print(c1)
-                #     print(c2)
-                #     print((end1, start1), (end2, start2))
-                #     assert False
+        def is_subset(end1, end2):
+            return all(count < end2[value] for value, count in end1.items())
+
+        def all_rules(rules_dict):
+            for start, ends in rules_dict.items():
+                for end in ends:
+                    yield (start, end)
+
+        rules_dict = self.tree_search_prep(constructor)
+
+        for (start1, end1), (start2, end2) in combinations(all_rules(rules_dict), 2):
+            end1 = Counter(end1)
+            end2 = Counter(end2)
+            if start1 == start2:
+                diff1 = tuple((end1 - end2).elements())
+                diff2 = tuple((end2 - end1).elements())
+                if len(diff1) == 1:
+                    if len(diff2) == 1:
+                        print((start1, end1), (start2, end2))
+                        print(diff1[0], diff2[0], "equivalent by same {} parent".format(constructor))
+                        self._add_equivalent_rule(diff1[0], diff2[0],
+                                                  "equivalent by same {} parent".format(constructor),
+                                                  "equiv")
+                    else:
+                        print((start1, end1), (start2, end2))
+                        print(diff1[0], diff2, "rule by subset of other {} rule".format(constructor))
+                        self._add_rule(diff1[0], diff2,
+                                       "rule by subset of other {} rule".format(constructor),
+                                       constructor)
+                elif len(diff2) == 1:
+                    print((start1, end1), (start2, end2))
+                    print(diff2[0], diff1, "rule by subset of other {} rule".format(constructor))
+                    self._add_rule(diff2[0], diff1,
+                                   "rule by subset of other {} rule".format(constructor),
+                                   constructor)
+                # else:
+                #     print((start1, end1), (start2, end2))
+                #     print(diff1, diff2, "rule by subset of other {} rule".format(constructor))
+
+            new_lhs, new_rhs = None, None
+            if is_subset(end1, end2):
+                new_lhs = start2
+                new_rhs = tuple((end2 - end1).elements()) + (start1,)
+            elif is_subset(end2, end1):
+                new_lhs = start1
+                new_rhs = tuple((end1 - end2).elements()) + (start2,)
+            if new_lhs is not None:
+                if len(new_rhs) == 1:
+                    print((start1, end1), (start2, end2))
+                    print(new_lhs, new_rhs[0], "rhs of {} rule is a subset".format(constructor))
+                    self._add_equivalent_rule(new_lhs, new_rhs[0],
+                                              "rhs of {} rule is a subset".format(constructor),
+                                              "equiv")
+                else:
+                    print((start1, end1), (start2, end2))
+                    print(new_lhs, new_rhs, "rhs of {} rule is a subser".format(constructor))
+                    self._add_rule(new_lhs, new_rhs,
+                                   "rhs of {} rule is a subser".format(constructor),
+                                   constructor)
+
+
+
+
+        # for original_start, ends in rules_dict.items():
+        #     for end1, end2 in combinations(ends, 2):
+        #         s1, s2 = Counter(end1), Counter(end2)
+        #         if s1 & s2:
+        #             diff1 = tuple((s1 - s2).elements())
+        #             diff2 = tuple((s2 - s1).elements())
+        #             if len(diff1) == 1:
+        #                 start1 = diff1[0]
+        #                 if len(diff2) == 1:
+        #                     start2 = diff2[0]
+        #                     self._add_equivalent_rule(start1, start2,
+        #                                               "{} equation equivalence/magic - set difference - {}, {}, {}".format(constructor, original_start, s1, s2),
+        #                                               "equiv")
+        #                     # c1 = self.classdb.get_class(start1)
+        #                     # c2 = self.classdb.get_class(start2)
+        #                     # if not [len(list(c1.objects_of_length(i))) for i in range(6)] == [len(list(c2.objects_of_length(i))) for i in range(6)]:
+        #                     #     print(c1)
+        #                     #     print(c2)
+        #                     #     print((end1, start1), (end2, start2))
+        #                     #     assert False
+        #                 else:
+        #                     ends = tuple(sorted(diff2))
+        #                     self._add_rule(start1, ends,
+        #                                    "{} equation equivalence/magic - uneven set difference".format(constructor),
+        #                                    constructor)
+        #             elif len(diff2) == 1:
+        #                 if len(diff1) > 1:
+        #                     start2 = diff2[0]
+        #                     ends = tuple(sorted(diff1))
+        #                     self._add_rule(start2, ends,
+        #                                    "{} equation equivalence/magic - uneven set difference".format(constructor),
+        #                                    constructor)
+
+        # rules = sorted([(end, start) for start, ends in rules_dict.items()
+        #                 for end in ends], key=lambda x: (x[1], x[0]))
+        # for (end1, start1), (end2, start2) in zip(rules, rules[1:]):
+        #     if end1 == end2:
+        #         # c1 = self.classdb.get_class(start1)
+        #         # c2 = self.classdb.get_class(start2)
+        #         self._add_equivalent_rule(start1, start2,
+        #                                   "{} equation equivalence/magic - same children".format(constructor),
+        #                                   "equiv")
+        #         # if not [len(list(c1.objects_of_length(i))) for i in range(6)] == [len(list(c2.objects_of_length(i))) for i in range(6)]:
+        #         #     print(c1)
+        #         #     print(c2)
+        #         #     print((end1, start1), (end2, start2))
+        #         #     assert False
 
 
 
