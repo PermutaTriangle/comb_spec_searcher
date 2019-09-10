@@ -28,6 +28,39 @@ from .utils import get_func, get_func_name, get_module_and_func_names
 
 warnings.simplefilter("once", Warning)
 
+from .combinatorial_class import CombinatorialClass
+from itertools import combinations
+
+
+class RuleCombClass(CombinatorialClass):
+    def __init__(self, labels, constructor, css=None):
+        self.constructor = constructor
+        self.css = css
+        self.labels = tuple(labels)
+
+    def is_empty(self, *args, **kwargs):
+        """Return True if there are no object of any lengths."""
+        return False
+
+    def to_jsonable(self):
+        """Return JSONable data structure of the class (a dictionary)"""
+        return tuple(self.labels)
+
+    def __eq__(self, other):
+        return (self.labels == other.labels and
+                self.constructor == other.constructor)
+
+    def __hash__(self):
+        return hash(self.labels)
+
+    def __repr__(self):
+        return "RuleCombClass({}, {})".format(self.labels, self.constructor)
+
+    def __str__(self):
+        return "{} of {}".format(self.constructor, self.labels)
+
+    def _get_class_name(self):
+        return type(self).__name__
 
 class CombinatorialSpecificationSearcher(object):
     """
@@ -364,6 +397,17 @@ class CombinatorialSpecificationSearcher(object):
                     inf_label = end_labels[0]
             else:
                 constructor = rule.constructor
+                for i in range(2, len(end_labels)):
+                    for subset in combinations(end_labels, i):
+                        fake_class = RuleCombClass(subset, constructor, self)
+                        fake_label = self.classdb.get_label(fake_class)
+                        fake_end_labels = list(end_labels)
+                        for i in subset:
+                            fake_end_labels.remove(i)
+                        fake_end_labels.append(fake_label)
+                        print("Created: {}, with label {}".format(fake_class, fake_label))
+                        self._add_rule(label, fake_end_labels, formal_step + " with subset", constructor)
+                        self._add_rule(fake_label, tuple(subset), formal_step + " ( a subset )", constructor)
                 self._add_rule(label, end_labels, formal_step, constructor)
 
             for end_label in end_labels:
@@ -932,6 +976,8 @@ class CombinatorialSpecificationSearcher(object):
                     logger.info("No more classes to expand.",
                                 extra=self.logger_kwargs)
                     break
+            self.equation_equivalence('cartesian')
+            self.equation_equivalence('disjoint')
             start = time.time()
             if smallest:
                 proof_tree = self.find_smallest_proof_tree()
@@ -985,6 +1031,18 @@ class CombinatorialSpecificationSearcher(object):
 
         self.prep_for_tree_search_time += time.time() - start_time
         return rules_dict
+
+    def equation_equivalence(self, constructor):
+        rules_dict = defaultdict(set)
+        for start, end in self.ruledb:
+            if self.ruledb.constructor(start, end) == constructor:
+                rules_dict[tuple(sorted(self.equivdb[i] for i in end))].add(self.equivdb[start])
+        for starts in rules_dict.values():
+            if len(starts) > 1:
+                for s1, s2 in zip(list(starts), list(starts)[1:]):
+                    print("Created: equiv {} and {}".format(s1, s2))
+                    self._add_equivalent_rule(s1, s2, "special equivalence {}".format(constructor), constructor)
+
 
     def _add_rule_to_rules_dict(self, rule, rules_dict):
         """Add a rule to given dictionary."""
