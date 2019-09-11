@@ -1032,7 +1032,7 @@ class CombinatorialSpecificationSearcher(object):
         self.prep_for_tree_search_time += time.time() - start_time
         return rules_dict
 
-    def equation_equivalence(self, constructor):
+    def _equivalence_by_common_ends(self, constructor):
         rules_dict = defaultdict(set)
         for start, end in self.ruledb:
             if self.ruledb.constructor(start, end) == constructor:
@@ -1043,6 +1043,14 @@ class CombinatorialSpecificationSearcher(object):
                     print("Created: equiv {} and {}".format(s1, s2))
                     self._add_equivalent_rule(s1, s2, "special equivalence {}".format(constructor), constructor)
 
+    def _equivalence_by_common_starts(self, constructor):
+        rules_dict = defaultdict(set)
+        for start, end in self.ruledb:
+            if self.ruledb.constructor(start, end) == constructor:
+                rules_dict[self.equivdb[start]].add(tuple(sorted(self.equivdb[i] for i in end)))
+        for start, ends in rules_dict.items():
+            for end1, end2 in combinations(ends, 2):
+                pass
 
     def _add_rule_to_rules_dict(self, rule, rules_dict):
         """Add a rule to given dictionary."""
