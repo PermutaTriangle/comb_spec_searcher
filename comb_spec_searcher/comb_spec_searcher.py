@@ -29,6 +29,7 @@ from .utils import get_func, get_func_name, get_module_and_func_names
 warnings.simplefilter("once", Warning)
 
 from .combinatorial_class import CombinatorialClass
+from collections import Counter
 from itertools import combinations
 
 
@@ -397,17 +398,9 @@ class CombinatorialSpecificationSearcher(object):
                     inf_label = end_labels[0]
             else:
                 constructor = rule.constructor
-                for i in range(2, len(end_labels)):
-                    for subset in combinations(end_labels, i):
-                        fake_class = RuleCombClass(subset, constructor, self)
-                        fake_label = self.classdb.get_label(fake_class)
-                        fake_end_labels = list(end_labels)
-                        for i in subset:
-                            fake_end_labels.remove(i)
-                        fake_end_labels.append(fake_label)
-                        print("Created: {}, with label {}".format(fake_class, fake_label))
-                        self._add_rule(label, fake_end_labels, formal_step + " with subset", constructor)
-                        self._add_rule(fake_label, tuple(subset), formal_step + " ( a subset )", constructor)
+                start -= time.time()
+                self._subset_rules(label, end_labels, formal_step, constructor)
+                start += time.time()
                 self._add_rule(label, end_labels, formal_step, constructor)
 
             for end_label in end_labels:
@@ -976,8 +969,12 @@ class CombinatorialSpecificationSearcher(object):
                     logger.info("No more classes to expand.",
                                 extra=self.logger_kwargs)
                     break
-            self.equation_equivalence('cartesian')
-            self.equation_equivalence('disjoint')
+
+            print("Computing new rules!")
+            self._equivalence_by_common_starts('cartesian')
+            self._equivalence_by_common_ends('cartesian')
+            self._substitution_rules('cartesian')
+
             start = time.time()
             if smallest:
                 proof_tree = self.find_smallest_proof_tree()
@@ -1032,7 +1029,25 @@ class CombinatorialSpecificationSearcher(object):
         self.prep_for_tree_search_time += time.time() - start_time
         return rules_dict
 
+    def _subset_rules(self, start, ends, formal_step, constructor):
+        # print("="*100)
+        # print(start, ends, formal_step)
+        start_time = time.time()
+        for i in range(2, len(ends)):
+            for subset in combinations(ends, i):
+                fake_class = RuleCombClass(subset, constructor, self)
+                fake_label = self.classdb.get_label(fake_class)
+                fake_end_labels = list(ends)
+                for i in subset:
+                    fake_end_labels.remove(i)
+                fake_end_labels.append(fake_label)
+                # print("Created: {}, with label {}".format(fake_class, fake_label))
+                self._add_rule(start, fake_end_labels, formal_step + " with subset", constructor)
+                self._add_rule(fake_label, tuple(subset), formal_step + " ( a subset )", constructor)
+        self.update_status(self._subset_rules, time.time() - start_time)
+
     def _equivalence_by_common_ends(self, constructor):
+        start_time = time.time()
         rules_dict = defaultdict(set)
         for start, end in self.ruledb:
             if self.ruledb.constructor(start, end) == constructor:
@@ -1040,17 +1055,69 @@ class CombinatorialSpecificationSearcher(object):
         for starts in rules_dict.values():
             if len(starts) > 1:
                 for s1, s2 in zip(list(starts), list(starts)[1:]):
-                    print("Created: equiv {} and {}".format(s1, s2))
+                    # print("Created: equiv {} and {}".format(s1, s2))
                     self._add_equivalent_rule(s1, s2, "special equivalence {}".format(constructor), constructor)
+        self.update_status(self._equivalence_by_common_ends, time.time() - start_time)
 
     def _equivalence_by_common_starts(self, constructor):
+        start_time = time.time()
         rules_dict = defaultdict(set)
         for start, end in self.ruledb:
             if self.ruledb.constructor(start, end) == constructor:
                 rules_dict[self.equivdb[start]].add(tuple(sorted(self.equivdb[i] for i in end)))
         for start, ends in rules_dict.items():
             for end1, end2 in combinations(ends, 2):
-                pass
+                end1 = Counter(end1)
+                end2 = Counter(end2)
+                diff1 = tuple((end1 - end2).elements())
+                diff2 = tuple((end2 - end1).elements())
+                if len(diff1) == 1:
+                    if len(diff2) == 1:
+                        # print((start1, end1), (start2, end2))
+                        # print(diff1[0], diff2[0], "equivalent by same {} parent".format(constructor))
+                        self._add_equivalent_rule(diff1[0], diff2[0],
+                                                  "equivalent by same {} parent".format(constructor),
+                                                  "equiv")
+                    else:
+                        # print((start1, end1), (start2, end2))
+                        # print(diff1[0], diff2, "rule by subset of other {} rule".format(constructor))
+                        self._add_rule(diff1[0], diff2,
+                                       "rule by subset of other {} rule".format(constructor),
+                                       constructor)
+                elif len(diff2) == 1:
+                    # print((start1, end1), (start2, end2))
+                    # print(diff2[0], diff1, "rule by subset of other {} rule".format(constructor))
+                    self._add_rule(diff2[0], diff1,
+                                   "rule by subset of other {} rule".format(constructor),
+                                   constructor)
+                # else:
+                # TODO: take roots, thanks Emile.
+                #     print((start1, end1), (start2, end2))
+                #     print(diff1, diff2, "rule by subset of other {} rule".format(constructor))
+        self.update_status(self._equivalence_by_common_starts, time.time() - start_time)
+
+    def _substitution_rules(self, constructor):
+        start_time = time.time()
+        rules_dict_starts = defaultdict(set)
+        rules_dict_ends = defaultdict(set)
+        for start, end in self.ruledb:
+            if self.ruledb.constructor(start, end) == constructor:
+                s, e = self.equivdb[start], tuple(sorted(self.equivdb[i] for i in end))
+                rules_dict_ends[e].add(s)
+                rules_dict_starts[s].add(e)
+
+        for ends, starts in rules_dict_ends.items():
+            for end_label in set(ends):
+                new_ends = list(ends)
+                new_ends.remove(end_label)
+                new_ends = tuple(new_ends)
+                for eqv_ends in rules_dict_starts[end_label]:
+                    for start in starts:
+                        print("replacing {} with {}".format(end_label, eqv_ends))
+                        self._add_rule(start, new_ends + eqv_ends,
+                                       "replacing {} with {}".format(end_label, eqv_ends))
+        self.update_status(self._substitution_rules, time.time() - start_time)
+
 
     def _add_rule_to_rules_dict(self, rule, rules_dict):
         """Add a rule to given dictionary."""
