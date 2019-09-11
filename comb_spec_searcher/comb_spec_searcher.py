@@ -43,6 +43,26 @@ class RuleCombClass(CombinatorialClass):
         """Return True if there are no object of any lengths."""
         return False
 
+    def objects_of_length(self, length):
+        end_classes = [self.css.classdb.get_class(l) for l in self.labels]
+        end_counts = [[len(list(e.objects_of_length(i)))
+                       for i in range(length + 1)] for e in end_classes]
+
+        if self.constructor == 'disjoint':
+            for _ in range(sum(c[length] for c in end_counts)):
+                yield 1
+        elif self.constructor == 'cartesian':
+            total = 0
+            for part in compositions(length, len(end_counts)):
+                subtotal = 1
+                for end_count, partlen in zip(end_counts, part):
+                    if subtotal == 0:
+                        break
+                    subtotal *= end_count[partlen]
+                total += subtotal
+            for _ in range(total):
+                yield 1
+
     def to_jsonable(self):
         """Return JSONable data structure of the class (a dictionary)"""
         return tuple(self.labels)
@@ -399,7 +419,8 @@ class CombinatorialSpecificationSearcher(object):
             else:
                 constructor = rule.constructor
                 start -= time.time()
-                self._subset_rules(label, end_labels, formal_step, constructor)
+                if constructor == 'cartesian':
+                    self._subset_rules(label, end_labels, formal_step, constructor)
                 start += time.time()
                 self._add_rule(label, end_labels, formal_step, constructor)
 
@@ -445,9 +466,7 @@ class CombinatorialSpecificationSearcher(object):
         if explanation is None:
             explanation = "Some rule."
         if constructor is None:
-            logger.debug("Assuming constructor is disjoint.",
-                         extra=self.logger_kwargs)
-            constructor = 'disjoint'
+            raise ValueError("Must declare constructor for a rule.")
         if self.debug:
             try:
                 self._sanity_check_rule(start, ends, constructor)
@@ -971,9 +990,10 @@ class CombinatorialSpecificationSearcher(object):
                     break
 
             print("Computing new rules!")
-            self._equivalence_by_common_starts('cartesian')
-            self._equivalence_by_common_ends('cartesian')
-            self._substitution_rules('cartesian')
+            for _ in range(5):
+                self._equivalence_by_common_starts('cartesian')
+                self._equivalence_by_common_ends('cartesian')
+                self._substitution_rules('cartesian')
 
             start = time.time()
             if smallest:
@@ -1031,7 +1051,7 @@ class CombinatorialSpecificationSearcher(object):
 
     def _subset_rules(self, start, ends, formal_step, constructor):
         # print("="*100)
-        # print(start, ends, formal_step)
+        print(start, ends, formal_step)
         start_time = time.time()
         for i in range(2, len(ends)):
             for subset in combinations(ends, i):
@@ -1041,8 +1061,10 @@ class CombinatorialSpecificationSearcher(object):
                 for i in subset:
                     fake_end_labels.remove(i)
                 fake_end_labels.append(fake_label)
-                # print("Created: {}, with label {}".format(fake_class, fake_label))
+                print(subset)
+                print("Added: {} -> {}".format(start, tuple(sorted(fake_end_labels))))
                 self._add_rule(start, fake_end_labels, formal_step + " with subset", constructor)
+                print("Added: {} -> {}".format(fake_label, tuple(sorted(subset))))
                 self._add_rule(fake_label, tuple(subset), formal_step + " ( a subset )", constructor)
         self.update_status(self._subset_rules, time.time() - start_time)
 
@@ -1073,20 +1095,20 @@ class CombinatorialSpecificationSearcher(object):
                 diff2 = tuple((end2 - end1).elements())
                 if len(diff1) == 1:
                     if len(diff2) == 1:
-                        # print((start1, end1), (start2, end2))
-                        # print(diff1[0], diff2[0], "equivalent by same {} parent".format(constructor))
+                        print((start, end1), (start, end2))
+                        print(diff1[0], diff2[0], "equivalent by same {} parent".format(constructor))
                         self._add_equivalent_rule(diff1[0], diff2[0],
                                                   "equivalent by same {} parent".format(constructor),
                                                   "equiv")
                     else:
-                        # print((start1, end1), (start2, end2))
-                        # print(diff1[0], diff2, "rule by subset of other {} rule".format(constructor))
+                        print((start, end1), (start, end2))
+                        print(diff1[0], diff2, "rule by subset of other {} rule".format(constructor))
                         self._add_rule(diff1[0], diff2,
                                        "rule by subset of other {} rule".format(constructor),
                                        constructor)
                 elif len(diff2) == 1:
-                    # print((start1, end1), (start2, end2))
-                    # print(diff2[0], diff1, "rule by subset of other {} rule".format(constructor))
+                    print((start, end1), (start, end2))
+                    print(diff2[0], diff1, "rule by subset of other {} rule".format(constructor))
                     self._add_rule(diff2[0], diff1,
                                    "rule by subset of other {} rule".format(constructor),
                                    constructor)
@@ -1113,9 +1135,11 @@ class CombinatorialSpecificationSearcher(object):
                 new_ends = tuple(new_ends)
                 for eqv_ends in rules_dict_starts[end_label]:
                     for start in starts:
-                        print("replacing {} with {}".format(end_label, eqv_ends))
+                        print(start, ends, end_label, eqv_ends)
+                        print("creting rule {} -> {}".format(start, tuple(sorted(new_ends + eqv_ends))))
                         self._add_rule(start, new_ends + eqv_ends,
-                                       "replacing {} with {}".format(end_label, eqv_ends))
+                                       "replacing {} with {}".format(end_label, eqv_ends),
+                                       constructor)
         self.update_status(self._substitution_rules, time.time() - start_time)
 
 
@@ -1182,6 +1206,7 @@ class CombinatorialSpecificationSearcher(object):
         logger.debug("Searching for tree", extra=self.logger_kwargs)
         proof_tree_node = self.find_tree()
         if proof_tree_node is not None:
+            print(proof_tree_node)
             proof_tree = ProofTree.from_comb_spec_searcher(proof_tree_node,
                                                            self)
             assert proof_tree is not None

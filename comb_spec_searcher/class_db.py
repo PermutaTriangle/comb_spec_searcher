@@ -222,6 +222,8 @@ class ClassDB(object):
     def _decompress(self, key):
         """Return decompressed version of compressed combinatorial class."""
         try:
+            if isinstance(key, CombinatorialClass):
+                return key
             return self.combinatorial_class.decompress(key)
         except AttributeError:
             raise AttributeError(("The class {} needs a compress function"
