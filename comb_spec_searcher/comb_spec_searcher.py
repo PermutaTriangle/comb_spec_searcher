@@ -443,7 +443,8 @@ class CombinatorialSpecificationSearcher(object):
             return
         if self.debug:
             try:
-                self._sanity_check_rule(start, [end], 'equiv')
+                if not self.equivdb[start] == self.equivdb[end]:
+                    self._sanity_check_rule(start, [end], 'equiv')
             except Exception:
                 error = ("Equivalent rule did not work\n" +
                          repr(self.classdb.get_class(start)) + "\n" +
@@ -451,6 +452,7 @@ class CombinatorialSpecificationSearcher(object):
                          repr(self.classdb.get_class(end)) + "\n" +
                          "formal step:" + explanation)
                 logger.debug(error, extra=self.logger_kwargs)
+                assert False
         if self.forward_equivalence:
             reverse_rule = end, (start,)
             if self.ruledb.contains(*reverse_rule):
@@ -469,7 +471,8 @@ class CombinatorialSpecificationSearcher(object):
             raise ValueError("Must declare constructor for a rule.")
         if self.debug:
             try:
-                self._sanity_check_rule(start, ends, constructor)
+                if not self.ruledb.contains(start, tuple(sorted(ends))):
+                    self._sanity_check_rule(start, ends, constructor)
             except Exception:
                 error = ("Expansion rule did not work\n" +
                          repr(self.classdb.get_class(start)) + "\n" +
@@ -477,6 +480,7 @@ class CombinatorialSpecificationSearcher(object):
                          repr([self.classdb.get_class(e) for e in ends]) +
                          "\nformal step:" + explanation)
                 logger.debug(error, extra=self.logger_kwargs)
+                assert False
         self.ruledb.add(start,
                         ends,
                         explanation,
@@ -990,7 +994,7 @@ class CombinatorialSpecificationSearcher(object):
                     break
 
             print("Computing new rules!")
-            for _ in range(5):
+            for _ in range(1):
                 self._equivalence_by_common_starts('cartesian')
                 self._equivalence_by_common_ends('cartesian')
                 self._substitution_rules('cartesian')
@@ -1137,6 +1141,9 @@ class CombinatorialSpecificationSearcher(object):
                     for start in starts:
                         print(start, ends, end_label, eqv_ends)
                         print("creting rule {} -> {}".format(start, tuple(sorted(new_ends + eqv_ends))))
+                        self._subset_rules(start, new_ends + eqv_ends,
+                                       "replacing {} with {}".format(end_label, eqv_ends),
+                                       constructor)
                         self._add_rule(start, new_ends + eqv_ends,
                                        "replacing {} with {}".format(end_label, eqv_ends),
                                        constructor)

@@ -129,9 +129,9 @@ class ClassDB(object):
     def __contains__(self, key):
         """Check for containment."""
         if isinstance(key, CombinatorialClass):
-            self._compress(key)
+            key = self._compress(key)
             info = self.class_to_info.get(key)
-        if isinstance(key, int):
+        elif isinstance(key, int):
             info = self.label_to_info.get(key)
         return info is not None
 
