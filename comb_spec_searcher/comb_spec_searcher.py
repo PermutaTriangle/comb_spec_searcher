@@ -419,8 +419,8 @@ class CombinatorialSpecificationSearcher(object):
             else:
                 constructor = rule.constructor
                 start -= time.time()
-                if constructor == 'cartesian':
-                    self._subset_rules(label, end_labels, formal_step, constructor)
+                # if constructor == 'cartesian':
+                #     self._subset_rules(label, end_labels, formal_step, constructor)
                 start += time.time()
                 self._add_rule(label, end_labels, formal_step, constructor)
 
@@ -994,10 +994,14 @@ class CombinatorialSpecificationSearcher(object):
                     break
 
             print("Computing new rules!")
+            start = time.time()
             for _ in range(1):
                 self._equivalence_by_common_starts('cartesian')
                 self._equivalence_by_common_ends('cartesian')
                 self._substitution_rules('cartesian')
+                self.__subset_rules('cartesian')
+
+            self._time_taken += time.time() - start
 
             start = time.time()
             if smallest:
@@ -1054,6 +1058,7 @@ class CombinatorialSpecificationSearcher(object):
         return rules_dict
 
     def _subset_rules(self, start, ends, formal_step, constructor):
+        # TODO: collect by starts and by ends and take subsets of ends - do before searching for a tree, not on rule creation.
         # print("="*100)
         print(start, ends, formal_step)
         start_time = time.time()
@@ -1071,6 +1076,32 @@ class CombinatorialSpecificationSearcher(object):
                 print("Added: {} -> {}".format(fake_label, tuple(sorted(subset))))
                 self._add_rule(fake_label, tuple(subset), formal_step + " ( a subset )", constructor)
         self.update_status(self._subset_rules, time.time() - start_time)
+
+    def __subset_rules(self, constructor):
+        start_time = time.time()
+        rules_dict_starts = defaultdict(set)
+        rules_dict_ends = defaultdict(set)
+        for start, end in self.ruledb:
+            if self.ruledb.constructor(start, end) == constructor:
+                s, e = self.equivdb[start], tuple(sorted(self.equivdb[i] for i in end))
+                rules_dict_ends[e].add(s)
+                rules_dict_starts[s].add(e)
+        for end, starts in rules_dict_ends.items():
+            for i in range(2, len(end)):
+                for subset in combinations(end, i):
+                    subset = tuple(sorted(subset))
+                    fake_end_labels = list(end)
+                    for l in subset:
+                        fake_end_labels.remove(l)
+                    fake_end_labels = tuple(fake_end_labels)
+                    if subset in rules_dict_ends:
+                        for fake_label in rules_dict_ends[subset]:
+                            new_end_labels = fake_end_labels + (fake_label,)
+                            for start in starts:
+                                print("Added: {} -> {}".format(start, new_end_labels))
+                                self._add_rule(start, new_end_labels,
+                                            "Change {} -> {}".format(subset, fake_label), constructor)
+        self.update_status(self.__subset_rules, time.time() - start_time)
 
     def _equivalence_by_common_ends(self, constructor):
         start_time = time.time()
@@ -1141,9 +1172,9 @@ class CombinatorialSpecificationSearcher(object):
                     for start in starts:
                         print(start, ends, end_label, eqv_ends)
                         print("creting rule {} -> {}".format(start, tuple(sorted(new_ends + eqv_ends))))
-                        self._subset_rules(start, new_ends + eqv_ends,
-                                       "replacing {} with {}".format(end_label, eqv_ends),
-                                       constructor)
+                        # self._subset_rules(start, new_ends + eqv_ends,
+                        #                "replacing {} with {}".format(end_label, eqv_ends),
+                        #                constructor)
                         self._add_rule(start, new_ends + eqv_ends,
                                        "replacing {} with {}".format(end_label, eqv_ends),
                                        constructor)
