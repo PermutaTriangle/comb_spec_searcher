@@ -4,7 +4,7 @@ Wrappers for combinatorial rules.
 In the future, you should also declare the method needed for counting. The
 types supported for a rule a -> b_1, b_2, ..., b_k are
     - disjoint union: f(a) = f(b_1) + f(b_2) + ... + f(b_k)
-    - cartesiian product: f(a) = f(b_1) * f(b_2) * ... * f(b_k)
+    - cartesian product: f(a) = f(b_1) * f(b_2) * ... * f(b_k)
 '''
 import warnings
 from collections import Iterable
@@ -32,7 +32,7 @@ class Rule(object):
             raise TypeError("Inferable should be an iterable of booleans")
         if constructor not in ['disjoint', 'cartesian', 'equiv', 'other']:
             raise ValueError(("Not valid constructor. Only accepts"
-                              " disjoint or cartesian."))
+                              " disjoint, cartesian, equiv and other."))
 
         self.constructor = constructor
         self.formal_step = formal_step

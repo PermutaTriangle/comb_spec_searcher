@@ -10,9 +10,9 @@ def read(fname):
 
 setup(
     name="comb_spec_searcher",
-    version="0.2.1",
+    version="0.2.2",
     author="Permuta Triangle",
-    author_email="christianbean@ru.is",
+    author_email="permutatriangle@gmail.com",
     description="A library for performing combinatorial exploration.",
     license="BSD-3",
     keywords="enumerative combinatorics combinatorial specification counting",
