@@ -1003,6 +1003,8 @@ class CombinatorialSpecificationSearcher(object):
 
             self._time_taken += time.time() - start
 
+            # self._experimental_equivalence()
+
             start = time.time()
             if smallest:
                 proof_tree = self.find_smallest_proof_tree()
@@ -1034,6 +1036,27 @@ class CombinatorialSpecificationSearcher(object):
                                 extra=self.logger_kwargs)
                     return
 
+    counts = {}
+
+    def _experimental_equivalence(self):
+        N = 6
+        for l1, l2 in combinations(set(self.equivdb.parents.values()), 2):
+            t1 = self.classdb.get_class(l1)
+            t2 = self.classdb.get_class(l2)
+            if l1 not in self.counts:
+                self.counts[l1] = tuple(len(list(t1.gridded_perms_of_length(i))) for i in range(N))
+            if l2 not in self.counts:
+                self.counts[l2] = tuple(len(list(t2.gridded_perms_of_length(i))) for i in range(N))
+            if self.counts[l1] == self.counts[l2]:
+                print("Making equivalent")
+                print(t1)
+                print()
+                print(t2)
+                print("="*10)
+                self._add_equivalent_rule(l1, l2, "Experiment", "equiv")
+
+
+
     def has_proof_tree(self):
         """Return True if a proof tree has been found, false otherwise."""
         return self._has_proof_tree
@@ -1060,7 +1083,7 @@ class CombinatorialSpecificationSearcher(object):
     def _subset_rules(self, start, ends, formal_step, constructor):
         # TODO: collect by starts and by ends and take subsets of ends - do before searching for a tree, not on rule creation.
         # print("="*100)
-        print(start, ends, formal_step)
+        # print(start, ends, formal_step)
         start_time = time.time()
         for i in range(2, len(ends)):
             for subset in combinations(ends, i):
@@ -1070,10 +1093,10 @@ class CombinatorialSpecificationSearcher(object):
                 for i in subset:
                     fake_end_labels.remove(i)
                 fake_end_labels.append(fake_label)
-                print(subset)
-                print("Added: {} -> {}".format(start, tuple(sorted(fake_end_labels))))
+                # print(subset)
+                # print("Added: {} -> {}".format(start, tuple(sorted(fake_end_labels))))
                 self._add_rule(start, fake_end_labels, formal_step + " with subset", constructor)
-                print("Added: {} -> {}".format(fake_label, tuple(sorted(subset))))
+                # print("Added: {} -> {}".format(fake_label, tuple(sorted(subset))))
                 self._add_rule(fake_label, tuple(subset), formal_step + " ( a subset )", constructor)
         self.update_status(self._subset_rules, time.time() - start_time)
 
@@ -1098,7 +1121,7 @@ class CombinatorialSpecificationSearcher(object):
                         for fake_label in rules_dict_ends[subset]:
                             new_end_labels = fake_end_labels + (fake_label,)
                             for start in starts:
-                                print("Added: {} -> {}".format(start, new_end_labels))
+                                # print("Added: {} -> {}".format(start, new_end_labels))
                                 self._add_rule(start, new_end_labels,
                                             "Change {} -> {}".format(subset, fake_label), constructor)
         self.update_status(self.__subset_rules, time.time() - start_time)
@@ -1130,20 +1153,20 @@ class CombinatorialSpecificationSearcher(object):
                 diff2 = tuple((end2 - end1).elements())
                 if len(diff1) == 1:
                     if len(diff2) == 1:
-                        print((start, end1), (start, end2))
-                        print(diff1[0], diff2[0], "equivalent by same {} parent".format(constructor))
+                        # print((start, end1), (start, end2))
+                        # print(diff1[0], diff2[0], "equivalent by same {} parent".format(constructor))
                         self._add_equivalent_rule(diff1[0], diff2[0],
                                                   "equivalent by same {} parent".format(constructor),
                                                   "equiv")
                     else:
-                        print((start, end1), (start, end2))
-                        print(diff1[0], diff2, "rule by subset of other {} rule".format(constructor))
+                        # print((start, end1), (start, end2))
+                        # print(diff1[0], diff2, "rule by subset of other {} rule".format(constructor))
                         self._add_rule(diff1[0], diff2,
                                        "rule by subset of other {} rule".format(constructor),
                                        constructor)
                 elif len(diff2) == 1:
-                    print((start, end1), (start, end2))
-                    print(diff2[0], diff1, "rule by subset of other {} rule".format(constructor))
+                    # print((start, end1), (start, end2))
+                    # print(diff2[0], diff1, "rule by subset of other {} rule".format(constructor))
                     self._add_rule(diff2[0], diff1,
                                    "rule by subset of other {} rule".format(constructor),
                                    constructor)
@@ -1170,8 +1193,8 @@ class CombinatorialSpecificationSearcher(object):
                 new_ends = tuple(new_ends)
                 for eqv_ends in rules_dict_starts[end_label]:
                     for start in starts:
-                        print(start, ends, end_label, eqv_ends)
-                        print("creting rule {} -> {}".format(start, tuple(sorted(new_ends + eqv_ends))))
+                        # print(start, ends, end_label, eqv_ends)
+                        # print("creting rule {} -> {}".format(start, tuple(sorted(new_ends + eqv_ends))))
                         # self._subset_rules(start, new_ends + eqv_ends,
                         #                "replacing {} with {}".format(end_label, eqv_ends),
                         #                constructor)
