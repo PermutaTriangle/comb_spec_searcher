@@ -43,7 +43,7 @@ setup(
     install_requires=[
         'logzero==1.5.0',
         'sympy==1.4',
-        'psutil==5.6.4'
+        'psutil==5.6.5'
     ],
     setup_requires=['pytest-runner==5.2'],
     tests_require=[
