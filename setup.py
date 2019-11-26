@@ -43,11 +43,11 @@ setup(
     install_requires=[
         'logzero==1.5.0',
         'sympy==1.4',
-        'psutil==5.6.3'
+        'psutil==5.6.7'
     ],
-    setup_requires=['pytest-runner==5.1'],
+    setup_requires=['pytest-runner==5.2'],
     tests_require=[
-        'pytest==5.2.2',
+        'pytest==5.3.0',
         'pytest-cov==2.8.1',
         'pytest-isort==0.3.1',
         'pytest-pep8==1.0.6',
