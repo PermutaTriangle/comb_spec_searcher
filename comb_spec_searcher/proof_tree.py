@@ -269,15 +269,9 @@ class ProofTreeNode(object):
 
     def get_function(self, min_poly=False):
         if min_poly:
-            if (self.sympy_function is None or
-                    isinstance(self.sympy_function, sympy.Function)):
-                self.sympy_function = sympy.var("F_" + str(self.label))
+            return sympy.var("F_" + str(self.label))
         else:
-            if (self.sympy_function is None or
-                    isinstance(self.sympy_function, sympy.Symbol)):
-                self.sympy_function = sympy.Function(
-                                        "F_" + str(self.label))(sympy.abc.x)
-        return self.sympy_function
+            return sympy.Function("F_" + str(self.label))(sympy.abc.x)
 
     def get_equation(self, root_func=None, root_class=None,
                      dummy_eq=False, min_poly=False, **kwargs):
