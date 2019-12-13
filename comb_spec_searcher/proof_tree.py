@@ -599,12 +599,9 @@ class ProofTree(object):
     def random_sample(self, length=100, solved=False):
         if any(len(node.terms) < length + 1 for node in self.nodes()):
             logger.info(("Computing terms"))
-            funcs = self.get_genf(only_root=False)
+            self._recursion_setup()
             for node in self.nodes():
-                if len(node.terms) < length + 1:
-                    logger.info(("Taylor expanding function {} to length {}."
-                                 "".format(node.get_function(), length)))
-                    node.terms = taylor_expand(funcs[node.label], length)
+                node.terms = [node.count_objects_of_length(i) for i in range(length + 1)]
         logger.info("Walking through tree")
         return self.root.random_sample(length, self)
 
