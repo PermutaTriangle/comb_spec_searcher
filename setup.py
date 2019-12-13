@@ -42,7 +42,7 @@ setup(
     ],
     install_requires=[
         'logzero==1.5.0',
-        'sympy==1.4',
+        'sympy==1.5',
         'psutil==5.6.7'
     ],
     setup_requires=['pytest-runner==5.2'],
@@ -53,6 +53,6 @@ setup(
         'pytest-pep8==1.0.6',
         'pytest-repeat==0.8.0',
         'docutils==0.15.2',
-        'Pygments==2.5.0'
+        'Pygments==2.5.2'
     ]
 )
