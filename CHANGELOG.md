@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `ProofTree.generate_objects_of_length()` implements an algorithm for
   generating the objects of a given length by utilising the structure implied
   by a proof tree.
+- `ProofTreeNode.is_atom()` and `ProofTreeNode.is_epsilon()` methods for
+  checking if a node represents an atom or epsilon.
 ### Changed
 - Use polynomial algorithm for generating terms in random sampling code.
 

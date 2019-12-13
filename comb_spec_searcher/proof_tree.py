@@ -102,26 +102,8 @@ class ProofTreeNode(object):
         error += "They produced {} many things\n\n".format(children_total)
         return error
 
-    def random_sample(self, length, tree=None):
+    def random_sample(self, length):
         """Return a random object of the given length."""
-        def partitions(n, children_totals):
-            if n == 0 and not children_totals:
-                yield []
-                return
-            if len(children_totals) == 0 or n < 0:
-                return
-            start = children_totals[0]
-            if len(children_totals) == 1:
-                if start[n] != 0:
-                    yield [n]
-                return
-            for i in range(n + 1):
-                if start[i] == 0:
-                    continue
-                else:
-                    for part in partitions(n - i, children_totals[1:]):
-                        yield [i] + part
-
         if self.disjoint_union:
             total = self.terms[length]
             if total == 0:
@@ -136,22 +118,27 @@ class ProofTreeNode(object):
             for child, child_total in children_totals:
                 sofar += child_total
                 if choice <= sofar:
-                    return child.random_sample(length, tree)
+                    return child.random_sample(length)
             raise ValueError("You shouldn't be able to get here!")
         elif self.decomposition:
+            non_atom_children = [child for child in self.children
+                                 if not child.is_atom()]
+            number_of_atoms = len(self.children) - len(non_atom_children)
             total = self.terms[length]
             choice = random.randint(1, total)
-            children_totals = [child.terms for child in self.children]
             sofar = 0
-            for part in partitions(length, children_totals):
+            for comp in compositions(length - number_of_atoms,
+                                     len(non_atom_children)):
                 subtotal = 1
-                for i, terms in zip(part, children_totals):
-                    subtotal *= terms[i]
+                for i, child in zip(comp, non_atom_children):
+                    subtotal *= child.terms[i]
                 sofar += subtotal
                 if choice <= sofar:
-                    sub_objs = [(child.random_sample(i, tree),
+                    comp = list(reversed(comp))
+                    sub_objs = [(child.random_sample((1 if child.is_atom() else
+                                                      comp.pop())),
                                  child.eqv_path_comb_classes[0])
-                                for i, child in zip(part, self.children)]
+                                for child in self.children]
                     comb_class = self.eqv_path_comb_classes[-1]
                     return comb_class.from_parts(*sub_objs,
                                                  formal_step=self.formal_step)
@@ -160,9 +147,7 @@ class ProofTreeNode(object):
             return self.eqv_path_comb_classes[-1].random_sample(length)
         else:
             if self.recursion:
-                for node in tree.nodes():
-                    if node.label == self.label and not node.recursion:
-                        return node.random_sample(length, tree)
+                return self.recurse_node.random_sample(length)
             raise NotImplementedError(("Random sampler only implemented for "
                                        "disjoint union and cartesian "
                                        "product."))
@@ -362,7 +347,7 @@ class ProofTreeNode(object):
             pos_children = set()
             children = []  # A list of children that are not atoms
             for child in self.children:
-                if child.eqv_path_comb_classes[-1].is_atom():
+                if child.is_atom():
                     atoms += 1
                 else:
                     if child.eqv_path_comb_classes[-1].is_positive():
@@ -382,9 +367,9 @@ class ProofTreeNode(object):
                         break
                 ans += tmp
         elif self.strategy_verified:
-            if self.eqv_path_comb_classes[-1].is_epsilon():
+            if self.is_epsilon():
                 return 1 if n == 0 else 0
-            elif self.eqv_path_comb_classes[-1].is_atom():
+            elif self.is_atom():
                 return 1 if n == 1 else 0
             else:
                 self._ensure_terms(n)
@@ -417,6 +402,14 @@ class ProofTreeNode(object):
             self.genf = self.eqv_path_comb_classes[-1].get_genf()
         coeffs = taylor_expand(self.genf, n=n+expand_extra)
         self.terms.extend(coeffs[len(self.terms):])
+
+    def is_atom(self):
+        return any(comb_class.is_atom()
+                   for comb_class in self.eqv_path_comb_classes)
+
+    def is_epsilon(self):
+        return any(comb_class.is_epsilon()
+                   for comb_class in self.eqv_path_comb_classes)
 
     @property
     def eqv_path_objects(self):
@@ -649,7 +642,7 @@ class ProofTree(object):
         raise RuntimeError(("Incorrect minimum polynomial\n" +
                             str(basis)))
 
-    def random_sample(self, length=100, solved=False):
+    def random_sample(self, length=100):
         if any(len(node.terms) < length + 1 for node in self.nodes()):
             logger.info(("Computing terms"))
             self._recursion_setup()
@@ -657,7 +650,7 @@ class ProofTree(object):
                 node.terms = [node.count_objects_of_length(i)
                               for i in range(length + 1)]
         logger.info("Walking through tree")
-        return self.root.random_sample(length, self)
+        return self.root.random_sample(length)
 
     def nodes(self, root=None):
         if root is None:
