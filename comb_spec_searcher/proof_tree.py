@@ -8,6 +8,7 @@ import random
 import sys
 import warnings
 from functools import reduce
+from itertools import product
 from operator import add, mul
 
 import sympy
@@ -164,6 +165,61 @@ class ProofTreeNode(object):
             raise NotImplementedError(("Random sampler only implemented for "
                                        "disjoint union and cartesian "
                                        "product."))
+
+    def generate_objects_of_length(self, n):
+        """Yield objects of given length."""
+        # TODO: handle equivalence path nodes (somewhat assume length 1)
+        def partitions(n, children_totals):
+            if n == 0 and not children_totals:
+                yield []
+                return
+            if len(children_totals) == 0 or n < 0:
+                return
+            start = children_totals[0]
+            if len(children_totals) == 1:
+                if start[n] != 0:
+                    yield [n]
+                return
+            for i in range(n + 1):
+                if start[i] == 0:
+                    continue
+                else:
+                    for part in partitions(n - i, children_totals[1:]):
+                        yield [i] + part
+
+        if self.disjoint_union:
+            for child in self.children:
+                yield from child.generate_objects_of_length(n)
+        elif self.decomposition:
+            comb_class = self.eqv_path_comb_classes[-1]
+            child_comb_classes = [child.eqv_path_comb_classes[0]
+                                  for child in self.children]
+            number_atoms = sum(1 for child in child_comb_classes
+                               if child.is_atom())
+            for comp in compositions(n - number_atoms,
+                                     len(self.children) - number_atoms):
+                i, actual_comp = 0, []
+                for child in child_comb_classes:
+                    if child.is_atom():
+                        actual_comp.append(1)
+                    else:
+                        actual_comp.append(comp[i])
+                        i += 1
+                for child_objs in product(*[child.generate_objects_of_length(i)
+                                            for child, i in zip(self.children,
+                                                                actual_comp)]):
+                    yield comb_class.from_parts(
+                                *[(x, y) for x, y in zip(child_objs,
+                                                         child_comb_classes)])
+        elif self.strategy_verified:
+            yield from self.eqv_path_comb_classes[-1].objects_of_length(n)
+        else:
+            if self.recursion:
+                yield from self.recurse_node.generate_objects_of_length(n)
+            else:
+                raise NotImplementedError(("Object generator only implemented "
+                                           "for disjoint union and cartesian "
+                                           "product."))
 
     def sanity_check(self, length, of_length=None):
         if of_length is None:
@@ -794,6 +850,10 @@ class ProofTree(object):
         if not self._fixed_recursion:
             self._recursion_setup()
         return self.root.count_objects_of_length(n)
+
+    def generate_objects_of_length(self, n):
+        self._recursion_setup()
+        yield from self.root.generate_objects_of_length(n)
 
     def __eq__(self, other):
         return all(node1 == node2
