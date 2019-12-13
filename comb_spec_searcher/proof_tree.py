@@ -40,6 +40,7 @@ class ProofTreeNode(object):
         self.terms = []
         self.recurse_node = None
         self.genf = None
+        self.objects_of_length = dict()
 
     @property
     def logger_kwargs(self):
@@ -168,28 +169,17 @@ class ProofTreeNode(object):
 
     def generate_objects_of_length(self, n):
         """Yield objects of given length."""
+        if n in self.objects_of_length:
+            yield from self.objects_of_length[n]
+            return
+        else:
+            res = []
         # TODO: handle equivalence path nodes (somewhat assume length 1)
-        def partitions(n, children_totals):
-            if n == 0 and not children_totals:
-                yield []
-                return
-            if len(children_totals) == 0 or n < 0:
-                return
-            start = children_totals[0]
-            if len(children_totals) == 1:
-                if start[n] != 0:
-                    yield [n]
-                return
-            for i in range(n + 1):
-                if start[i] == 0:
-                    continue
-                else:
-                    for part in partitions(n - i, children_totals[1:]):
-                        yield [i] + part
-
         if self.disjoint_union:
             for child in self.children:
-                yield from child.generate_objects_of_length(n)
+                for path in child.generate_objects_of_length(n):
+                    yield path
+                    res.append(path)
         elif self.decomposition:
             comb_class = self.eqv_path_comb_classes[-1]
             child_comb_classes = [child.eqv_path_comb_classes[0]
@@ -208,18 +198,25 @@ class ProofTreeNode(object):
                 for child_objs in product(*[child.generate_objects_of_length(i)
                                             for child, i in zip(self.children,
                                                                 actual_comp)]):
-                    yield comb_class.from_parts(
-                                *[(x, y) for x, y in zip(child_objs,
-                                                         child_comb_classes)])
+                    parts = [(x, y)
+                             for x, y in zip(child_objs, child_comb_classes)]
+                    path = comb_class.from_parts(*parts)
+                    yield path
+                    res.append(path)
         elif self.strategy_verified:
-            yield from self.eqv_path_comb_classes[-1].objects_of_length(n)
+            for path in self.eqv_path_comb_classes[-1].objects_of_length(n):
+                yield path
+                res.append(path)
         else:
             if self.recursion:
-                yield from self.recurse_node.generate_objects_of_length(n)
+                for path in self.recurse_node.generate_objects_of_length(n):
+                    yield path
+                    res.append(path)
             else:
                 raise NotImplementedError(("Object generator only implemented "
                                            "for disjoint union and cartesian "
                                            "product."))
+        self.objects_of_length[n] = res
 
     def sanity_check(self, length, of_length=None):
         if of_length is None:
