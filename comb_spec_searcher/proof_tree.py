@@ -601,7 +601,8 @@ class ProofTree(object):
             logger.info(("Computing terms"))
             self._recursion_setup()
             for node in self.nodes():
-                node.terms = [node.count_objects_of_length(i) for i in range(length + 1)]
+                node.terms = [node.count_objects_of_length(i)
+                              for i in range(length + 1)]
         logger.info("Walking through tree")
         return self.root.random_sample(length, self)
 
