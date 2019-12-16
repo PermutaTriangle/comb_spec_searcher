@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.3.0] - 2019-12-16
 ### Added
 - `ProofTree.generate_objects_of_length()` implements an algorithm for
   generating the objects of a given length by utilising the structure implied
