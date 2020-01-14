@@ -319,7 +319,7 @@ class ProofTreeNode(object):
 
     def count_objects_of_length(self, n):
         '''
-            Calculates objects of lenght in each node according to the
+            Calculates objects of length in each node according to the
             recurrence relation implied by the proof tree. Only works
             for disjoint union, decomposition, strategy verified and recursion.
 
@@ -372,7 +372,7 @@ class ProofTreeNode(object):
             if self.recurse_node:
                 return self.recurse_node.count_objects_of_length(n)
             else:
-                raise ValueError(("Recursing to a subtree that is not"
+                raise ValueError(("Recurring to a subtree that is not"
                                   " contained in the subtree from the"
                                   " root object that was called on."))
         else:
@@ -407,7 +407,7 @@ class ProofTreeNode(object):
 
     @property
     def eqv_path_objects(self):
-        """This is for reverse compatability."""
+        """This is for reverse compatibility."""
         warnings.warn(("The 'eqv_path_objects' label is deprecated. You "
                        "should change this to 'eqv_path_comb_classes"
                        " in the future."),
