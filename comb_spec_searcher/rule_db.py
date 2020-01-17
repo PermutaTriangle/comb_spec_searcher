@@ -2,7 +2,7 @@
 A database for rules.
 
 Use to keep track of all batch rules made by strategies. Each rule comes with
-an explanantion.
+an explanation.
 """
 from collections import defaultdict
 from collections.abc import Iterable

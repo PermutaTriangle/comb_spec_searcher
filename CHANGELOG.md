@@ -6,11 +6,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.3.0] - 2019-12-16
+### Added
+- `ProofTree.generate_objects_of_length()` implements an algorithm for
+  generating the objects of a given length by utilising the structure implied
+  by a proof tree.
+- `ProofTreeNode.is_atom()` and `ProofTreeNode.is_epsilon()` methods for
+  checking if a node represents an atom or epsilon.
+### Changed
+- Use polynomial algorithm for generating terms in random sampling code.
+
 ## [0.2.2] - 2019-09-06
 ### Added
 - `ProofTree.count_objects_of_length()` implements the recurrence relation
-  implied by the proof tree as long as the strategies used are only disjoint unions,
-  decompositions, verification or recursion.
+  implied by the proof tree as long as the strategies used are only disjoint
+  unions, decompositions, verification or recursion.
 
 ### Removed
 - Remove the dependency on `permuta`.

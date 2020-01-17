@@ -162,7 +162,7 @@ class CombinatorialSpecificationSearcher(object):
         try:
             kwargs['function_kwargs'] = dict['function_kwargs']
         except Exception:
-            logger.warn('function_kwargs could not be recovered')
+            logger.warning('function_kwargs could not be recovered')
         b = b64decode(dict['start_class'].encode())
         c = combinatorial_class.decompress(b)
         css = cls(c, strategy_pack, **kwargs)
