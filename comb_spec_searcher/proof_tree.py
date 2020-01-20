@@ -372,7 +372,7 @@ class ProofTreeNode(object):
             if self.recurse_node:
                 return self.recurse_node.count_objects_of_length(n)
             else:
-                raise ValueError(("Recurring to a subtree that is not"
+                raise ValueError(("Recursing to a subtree that is not"
                                   " contained in the subtree from the"
                                   " root object that was called on."))
         else:
