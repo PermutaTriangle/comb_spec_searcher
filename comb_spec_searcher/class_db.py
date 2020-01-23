@@ -49,8 +49,10 @@ class Info(object):
             'expanding_children_only': self.expanding_children_only,
             'expanding_other_sym': self.expanding_other_sym,
             'expandable': self.expandable,
+            'inferrable': self.inferrable,
             'inferral_expanded': self.inferral_expanded,
             'verified': self.verified,
+            'verification_reason': self.verification_reason,
             'empty': self.empty,
             'strategy_verified': self.strategy_verified,
         }
@@ -67,8 +69,10 @@ class Info(object):
             expanding_children_only=dict.get('expanding_children_only', False),
             expanding_other_sym=dict.get('expanding_other_sym', False),
             expandable=dict.get('expandable', False),
+            inferrable=dict.get('inferrable', True),
             inferral_expanded=dict.get('inferral_expanded', False),
             verified=dict.get('verified', None),
+            verification_reason=dict.get('verification_reason', None),
             empty=dict.get('empty', None),
             strategy_verified=dict.get('strategy_verified', False),
         )
