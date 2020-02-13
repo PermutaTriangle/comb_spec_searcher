@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Fix the dict method of Info so that it saves all the attributes.
 
+### Changed
+- If `forward_equivalence` is `False`, then if the constructor is one of
+  `equiv`, `disjoint`, or `disjoint` the rule will be treated with forward
+  equivalence.
+
 ## [0.3.0] - 2019-12-16
 ### Added
 - `ProofTree.generate_objects_of_length()` implements an algorithm for
