@@ -9,9 +9,11 @@ from random import choice, shuffle
 __all__ = ("prune", "proof_tree_generator_dfs", "proof_tree_generator_bfs")
 
 
-class Node(object):
+class Node():
     """A node for a proof tree."""
-    def __init__(self, n, children=[]):
+    def __init__(self, n, children=None):
+        if children is None:
+            children = []
         self.label = n
         self.children = children
 
@@ -62,8 +64,10 @@ def iterative_prune(rules_dict, root=None):
     return new_rules_dict
 
 
-def proof_tree_dfs(rules_dict, root, seen=set()):
+def proof_tree_dfs(rules_dict, root, seen=None):
     """Return random proof tree found by depth first search."""
+    if seen is None:
+        seen = set()
     seen = seen.copy()
     if root in rules_dict:
         rule_set = rules_dict[root]
@@ -71,22 +75,22 @@ def proof_tree_dfs(rules_dict, root, seen=set()):
         if root in seen or () in rule_set:
             seen.add(root)
             return seen, root_node
-        else:
-            seen.add(root)
-            rule = choice(list(rule_set))
-            visited, trees = proof_forest_dfs(rules_dict, rule, seen)
-            root_node.children = trees
-            return visited, root_node
+        seen.add(root)
+        rule = choice(list(rule_set))
+        visited, trees = proof_forest_dfs(rules_dict, rule, seen)
+        root_node.children = trees
+        return visited, root_node
 
 
-def proof_forest_dfs(rules_dict, roots, seen=set()):
+def proof_forest_dfs(rules_dict, roots, seen=None):
+    if seen is None:
+        seen = set()
     if not roots:
         return seen, []
-    else:
-        root, roots = roots[0], roots[1:]
-        seen1, tree = proof_tree_dfs(rules_dict, root, seen)
-        seen2, trees = proof_forest_dfs(rules_dict, roots, seen1)
-        return seen1.union(seen2), [tree] + trees
+    root, roots = roots[0], roots[1:]
+    seen1, tree = proof_tree_dfs(rules_dict, root, seen)
+    seen2, trees = proof_forest_dfs(rules_dict, roots, seen1)
+    return seen1.union(seen2), [tree] + trees
 
 
 # def proof_tree_generator_dfs(rules_dict, root):
@@ -210,10 +214,9 @@ def iterative_proof_tree_finder(rules_dict, root):
     def get_tree(start):
         if start == root:
             return Node(start)
-        elif start in trees:
+        if start in trees:
             return trees[start]
-        else:
-            raise KeyError("{} is not in trees".format(start))
+        raise KeyError("{} is not in trees".format(start))
 
     def create_tree(start, end):
         if start in trees:
@@ -244,5 +247,4 @@ def iterative_proof_tree_finder(rules_dict, root):
             break
     if root in trees:
         return trees[root]
-    else:
-        raise ValueError("{} has no tree in rules_dict".format(root))
+    raise ValueError("{} has no tree in rules_dict".format(root))

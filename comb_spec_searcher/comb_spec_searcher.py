@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import json
 import logging
 import os
@@ -5,7 +6,7 @@ import time
 import warnings
 from base64 import b64decode, b64encode
 from collections import defaultdict
-from functools import partial, reduce
+from functools import reduce
 from operator import add, mul
 
 import logzero
@@ -18,24 +19,24 @@ from comb_spec_searcher.utils import compositions
 from .class_db import ClassDB
 from .class_queue import ClassQueue
 from .equiv_db import EquivalenceDB
-from .proof_tree import ProofTree as ProofTree
+from .proof_tree import ProofTree
 from .rule_db import RuleDB
 from .strategies import Rule, StrategyPack, VerificationRule
 from .tree_searcher import (iterative_proof_tree_finder, iterative_prune,
-                            proof_tree_generator_bfs, proof_tree_generator_dfs,
-                            prune, random_proof_tree)
+                            proof_tree_generator_dfs, prune, random_proof_tree)
 from .utils import get_func, get_func_name, get_module_and_func_names
 
 warnings.simplefilter("once", Warning)
 
 
-class CombinatorialSpecificationSearcher(object):
+class CombinatorialSpecificationSearcher():
     """
     The CombinatorialSpecificationSearcher classs.
 
     This is used to build up knowledge about a combinatorial_class with respect
     to the given strategies and search for a combinatorial specification.
     """
+    # pylint: disable=too-many-instance-attributes
     def __init__(self, start_class, strategy_pack, **kwargs):
         """Initialise CombinatorialSpecificationSearcher."""
         if start_class is None:
@@ -45,11 +46,10 @@ class CombinatorialSpecificationSearcher(object):
         if strategy_pack is None:
             raise ValueError(("CombinatorialSpecificationSearcher"
                               "requires a strategy pack."))
-        else:
-            if not isinstance(strategy_pack, StrategyPack):
-                raise TypeError(("Strategy pack given not "
-                                 "instance of strategy pack."))
-            self.strategy_pack = strategy_pack
+        if not isinstance(strategy_pack, StrategyPack):
+            raise TypeError(("Strategy pack given not "
+                             "instance of strategy pack."))
+        self.strategy_pack = strategy_pack
         self.debug = kwargs.get('debug', False)
         if not self.debug:
             logzero.loglevel(logging.INFO, True)
@@ -135,51 +135,50 @@ class CombinatorialSpecificationSearcher(object):
         }
 
     @classmethod
-    def from_dict(cls, dict, combinatorial_class):
-        from comb_spec_searcher.strategies.strategy_pack import StrategyPack
+    def from_dict(cls, dict_, combinatorial_class):
         strategy_pack = StrategyPack(
             initial_strats=[get_func(*mod_func_name)
-                            for mod_func_name in dict['initial_strategies']],
+                            for mod_func_name in dict_['initial_strategies']],
             ver_strats=[get_func(*mod_func_name)
-                        for mod_func_name in dict['verification_strategies']],
+                        for mod_func_name in dict_['verification_strategies']],
             inferral_strats=[get_func(*mod_func_name)
-                             for mod_func_name in dict['inferral_strategies']],
+                             for mod_func_name in dict_['inferral_strategies']],
             expansion_strats=[[get_func(*mod_func_name)
                                for mod_func_name in l]
-                              for l in dict['strategy_generators']],
+                              for l in dict_['strategy_generators']],
             name="recovered strategy pack")
 
         kwargs = {
-          'debug': dict['debug'],
-          'iterative': dict['iterative'],
-          'forward_equivalence': dict['forward_equivalence'],
+          'debug': dict_['debug'],
+          'iterative': dict_['iterative'],
+          'forward_equivalence': dict_['forward_equivalence'],
         }
 
         try:
-            kwargs['logger_kwargs'] = dict['logger_kwargs']
-        except Exception:
-            logger.warn('logger_kwargs could not be recovered')
+            kwargs['logger_kwargs'] = dict_['logger_kwargs']
+        except KeyError:
+            logger.warning('logger_kwargs could not be recovered')
         try:
-            kwargs['function_kwargs'] = dict['function_kwargs']
-        except Exception:
+            kwargs['function_kwargs'] = dict_['function_kwargs']
+        except KeyError:
             logger.warning('function_kwargs could not be recovered')
-        b = b64decode(dict['start_class'].encode())
+        b = b64decode(dict_['start_class'].encode())
         c = combinatorial_class.decompress(b)
         css = cls(c, strategy_pack, **kwargs)
-        css.classdb = ClassDB.from_dict(dict['classdb'],
+        css.classdb = ClassDB.from_dict(dict_['classdb'],
                                         combinatorial_class)
-        css.equivdb = EquivalenceDB.from_dict(dict['equivdb'])
-        css.classqueue = ClassQueue.from_dict(dict['classqueue'])
-        css.ruledb = RuleDB.from_dict(dict['ruledb'])
-        css.start_label = dict['start_label']
-        css._has_proof_tree = dict['_has_proof_tree']
-        css.strategy_times = defaultdict(int, dict['strategy_times'])
-        css.strategy_expansions = defaultdict(int, dict['strategy_expansions'])
-        css.symmetry_time = dict['symmetry_time']
-        css.tree_search_time = dict['tree_search_time']
-        css.prep_for_tree_search_time = dict['prep_for_tree_search_time']
-        css.queue_time = dict['queue_time']
-        css._time_taken = dict['_time_taken']
+        css.equivdb = EquivalenceDB.from_dict(dict_['equivdb'])
+        css.classqueue = ClassQueue.from_dict(dict_['classqueue'])
+        css.ruledb = RuleDB.from_dict(dict_['ruledb'])
+        css.start_label = dict_['start_label']
+        css._has_proof_tree = dict_['_has_proof_tree']
+        css.strategy_times = defaultdict(int, dict_['strategy_times'])
+        css.strategy_expansions = defaultdict(int, dict_['strategy_expansions'])
+        css.symmetry_time = dict_['symmetry_time']
+        css.tree_search_time = dict_['tree_search_time']
+        css.prep_for_tree_search_time = dict_['prep_for_tree_search_time']
+        css.queue_time = dict_['queue_time']
+        css._time_taken = dict_['_time_taken']
         return css
 
     def update_status(self, strategy, time_taken):
@@ -268,19 +267,18 @@ class CombinatorialSpecificationSearcher(object):
 
         if (self.classdb.is_inferrable(label) and
                 not self.classdb.is_inferral_expanded(label)):
-            logger.debug('Inferring label {}'.format(str(label)),
-                         extra=self.logger_kwargs)
+            logger.debug('Inferring label %s', label, extra=self.logger_kwargs)
             self._inferral_expand(comb_class, label)
             self.classqueue.add_to_working(label)
         elif self.classdb.is_expandable(label):
             if not self.classdb.is_initial_expanded(label):
-                logger.debug('Initial expanding label {}'.format(str(label)),
+                logger.debug('Initial expanding label %s', label,
                              extra=self.logger_kwargs)
                 self._initial_expand(comb_class, label)
                 self.classqueue.add_to_next(label)
             else:
                 expanding = self.classdb.number_times_expanded(label)
-                logger.debug('Expanding label {}'.format(str(label)),
+                logger.debug('Expanding label %s', label,
                              extra=self.logger_kwargs)
                 strategies = self.strategy_generators[expanding]
                 for strategy_generator in strategies:
@@ -318,17 +316,15 @@ class CombinatorialSpecificationSearcher(object):
                 raise TypeError(("Attempting to infer with non "
                                  "inferral strategy."))
             if inferral and comb_class == rule.comb_classes[0]:
-                logger.debug(("The inferral strategy {} returned the same "
-                              "combinatorial class when applied to {}"
-                              "".format(str(rule).split(' ')[1],
-                                        repr(comb_class))),
+                logger.debug("The inferral strategy %s returned the same "
+                             "combinatorial class when applied to %r",
+                             str(rule).split(' ')[1], comb_class,
                              extra=self.logger_kwargs)
                 continue
             labels = [self.classdb.get_label(comb_class)
                       for comb_class in rule.comb_classes]
-            logger.debug(("Adding combinatorial rule {} -> {} with constructor"
-                          " '{}'".format(label, tuple(labels),
-                                         rule.constructor)),
+            logger.debug("Adding combinatorial rule %s -> %s with constructor"
+                          " '%s'", label, tuple(labels), rule.constructor,
                          extra=self.logger_kwargs)
 
             if any(self.equivdb[label] == self.equivdb[l] for l in labels):
@@ -355,7 +351,7 @@ class CombinatorialSpecificationSearcher(object):
                 # all the classes are empty so the class itself must be empty!
                 self._add_empty_rule(label, "batch empty")
                 break
-            elif len(end_labels) == 1:
+            if len(end_labels) == 1:
                 # If we have an equivalent rule
                 self._add_equivalent_rule(label, end_labels[0], formal_step,
                                           rule.constructor)
@@ -386,7 +382,7 @@ class CombinatorialSpecificationSearcher(object):
         if self.debug:
             try:
                 self._sanity_check_rule(start, [end], 'equiv')
-            except Exception:
+            except AssertionError:
                 error = ("Equivalent rule did not work\n" +
                          repr(self.classdb.get_class(start)) + "\n" +
                          "is not equivalent to" + "\n" +
@@ -399,8 +395,7 @@ class CombinatorialSpecificationSearcher(object):
             if self.ruledb.contains(*reverse_rule):
                 raise ValueError(("Same equivalent rule found forward and "
                                   "backwards."))
-            else:
-                self._add_rule(start, [end], explanation, constructor)
+            self._add_rule(start, [end], explanation, constructor)
         else:
             self.equivdb.union(start, end, explanation)
 
@@ -415,7 +410,7 @@ class CombinatorialSpecificationSearcher(object):
         if self.debug:
             try:
                 self._sanity_check_rule(start, ends, constructor)
-            except Exception:
+            except AssertionError:
                 error = ("Expansion rule did not work\n" +
                          repr(self.classdb.get_class(start)) + "\n" +
                          "is equivalent to" + "\n" +
@@ -506,7 +501,7 @@ class CombinatorialSpecificationSearcher(object):
             # Only applying is_empty check to inferrable comb classes that are
             # possibly empty.
             if infer and pos_empty and self.is_empty(comb_class, label):
-                logger.debug("Label {} is empty.".format(label),
+                logger.debug("Label %s is empty.", label,
                              extra=self.logger_kwargs)
                 inferral_steps.append(inferral_step + "Class is empty.")
                 continue
@@ -629,6 +624,7 @@ class CombinatorialSpecificationSearcher(object):
             label = self.equivdb[label]
             function = functions.get(label)
             if function is None:
+                # pylint: disable=not-callable
                 function = sympy.Function("F_" + str(label))(sympy.abc.x)
                 functions[label] = function
             return function
@@ -658,12 +654,12 @@ class CombinatorialSpecificationSearcher(object):
             start_function = get_function(start)
             end_functions = (get_function(end) for end in ends)
             constructor = self.ruledb.constructor(start, ends)
-            if constructor == 'disjoint' or constructor == 'equiv':
+            if constructor in ('disjoint', 'equiv'):
                 eq = sympy.Eq(start_function,
-                              reduce(add, [f for f in end_functions], 0))
+                              reduce(add, end_functions, 0))
             elif constructor == 'cartesian':
                 eq = sympy.Eq(start_function,
-                              reduce(mul, [f for f in end_functions], 1))
+                              reduce(mul, end_functions, 1))
             else:
                 raise NotImplementedError(("Only handle cartesian and "
                                            "disjoint. Don't understand"
@@ -687,7 +683,7 @@ class CombinatorialSpecificationSearcher(object):
                              repr(comb_class) + "\nVerified as:\n" +
                              self.classdb.verification_reason(label) +
                              "\nThe error was:\n" + str(e))
-                    logger.warn(error, extra=self.logger_kwargs)
+                    logger.warning(error, extra=self.logger_kwargs)
 
         if kwargs.get('substitutions'):
             return equations, [sympy.Eq(lhs, rhs)
@@ -724,15 +720,11 @@ class CombinatorialSpecificationSearcher(object):
         for label in self.classqueue.do_level():
             if label is None:
                 return True
-            if self.is_expanded(label):
-                continue
-            elif self.equivdb.is_verified(label):
-                continue
-            elif self.classdb.is_expanding_children_only(label):
-                continue
-            elif not self.classdb.is_expandable(label):
-                continue
-            elif self.classdb.is_expanding_other_sym(label):
+            if (self.is_expanded(label) or
+                    self.equivdb.is_verified(label) or
+                    self.classdb.is_expanding_children_only(label) or
+                    not self.classdb.is_expandable(label) or
+                    self.classdb.is_expanding_other_sym(label)):
                 continue
             queue_start -= time.time()
             self.expand(label)
@@ -749,15 +741,11 @@ class CombinatorialSpecificationSearcher(object):
             label = self.classqueue.next()
             if label is None:
                 return True
-            if self.is_expanded(label):
-                continue
-            elif self.equivdb.is_verified(label):
-                continue
-            elif self.classdb.is_expanding_children_only(label):
-                continue
-            elif not self.classdb.is_expandable(label):
-                continue
-            elif self.classdb.is_expanding_other_sym(label):
+            if (self.is_expanded(label) or
+                    self.equivdb.is_verified(label) or
+                    self.classdb.is_expanding_children_only(label) or
+                    not self.classdb.is_expandable(label) or
+                    self.classdb.is_expanding_other_sym(label)):
                 continue
             count += 1
             queue_start -= time.time()
@@ -774,6 +762,7 @@ class CombinatorialSpecificationSearcher(object):
         - number of combinatorial classes, and information about verification
         - the times spent in each of the main functions
         """
+        # pylint: disable=too-many-locals
         status = ""
         status += "Currently on 'level' {}\n".format(
                                         self.classqueue.levels_completed + 1)
@@ -874,15 +863,15 @@ class CombinatorialSpecificationSearcher(object):
         status += "Total of ~{}% accounted for.\n".format(int(total_perc))
         return status
 
-    def get_mem(self):
+    @staticmethod
+    def get_mem():
         """Return memory used by CombSpecSearcher - note this is actually the
         memory usage of the process that the instance of CombSpecSearcher was
         invoked."""
         mem = psutil.Process(os.getpid()).memory_info().rss
-        if (mem / 1024**3 < 1):
+        if mem / 1024**3 < 1:
             return str(round(mem / 1024**2))+" MiB"
-        else:
-            return str(round(mem / 1024**3, 3))+" GiB"
+        return str(round(mem / 1024**3, 3))+" GiB"
 
     def run_information(self):
         """Return string detailing what CombSpecSearcher is looking for."""
@@ -907,7 +896,7 @@ class CombinatorialSpecificationSearcher(object):
         logger.info.
         """
         if not 0 < perc <= 100:
-            logger.warn(("Percentage not between 0 and 100, so assuming 1%"
+            logger.warning(("Percentage not between 0 and 100, so assuming 1%"
                          " search percentage."), extra=self.logger_kwargs)
             perc = 1
         if status_update:
@@ -960,8 +949,9 @@ class CombinatorialSpecificationSearcher(object):
                         string = "The universe: \n"
                         string += json.dumps(self.to_dict())
                         logger.info(string, extra=self.logger_kwargs)
-                    logger.warn("Exceeded maximum time. Aborting auto search.",
-                                extra=self.logger_kwargs)
+                    logger.warning("Exceeded maximum time. "
+                                   "Aborting auto search.",
+                                   extra=self.logger_kwargs)
                     return
 
     def has_proof_tree(self):
@@ -1072,10 +1062,9 @@ class CombinatorialSpecificationSearcher(object):
             if self.iterative:
                 raise NotImplementedError("There is no method for yielding all"
                                           " iterative proof trees.")
-            else:
-                proof_trees = proof_tree_generator_dfs(
-                                        rules_dict,
-                                        root=root_label)
+            proof_trees = proof_tree_generator_dfs(
+                                    rules_dict,
+                                    root=root_label)
         else:
             logger.info("There are no proof trees.")
             return
@@ -1094,34 +1083,33 @@ class CombinatorialSpecificationSearcher(object):
         rules_dict = self.tree_search_prep()
         rules_dict = prune(rules_dict)
 
-        if self.equivdb[self.start_label] in rules_dict:
-            bound = 1
-            # Determine an upper bound on the size of a smallest proof tree.
-            while True:
-                logger.info("Looking for tree with max size {}".format(bound),
-                            extra=self.logger_kwargs)
-                try:
-                    tree = next(proof_tree_generator_dfs(rules_dict,
-                                                         root=root_label,
-                                                         maximum=bound))
-                    break
-                except StopIteration:
-                    bound *= 2
-            minimum = 1
-            maximum = bound
-            # Binary search to find a smallest proof tree.
-            while minimum < maximum:
-                middle = (minimum + maximum) // 2
-                logger.info("Looking for tree with max size {}".format(middle),
-                            extra=self.logger_kwargs)
-                try:
-                    tree = next(proof_tree_generator_dfs(rules_dict,
-                                                         root=root_label,
-                                                         maximum=middle))
-                    maximum = middle
-                except StopIteration:
-                    minimum = middle + 1
-            return ProofTree.from_comb_spec_searcher(tree, self)
-        else:
+        if not self.equivdb[self.start_label] in rules_dict:
             logger.info("There are no proof trees.", extra=self.logger_kwargs)
             return
+        bound = 1
+        # Determine an upper bound on the size of a smallest proof tree.
+        while True:
+            logger.info("Looking for tree with max size %s", bound,
+                        extra=self.logger_kwargs)
+            try:
+                tree = next(proof_tree_generator_dfs(rules_dict,
+                                                     root=root_label,
+                                                     maximum=bound))
+                break
+            except StopIteration:
+                bound *= 2
+        minimum = 1
+        maximum = bound
+        # Binary search to find a smallest proof tree.
+        while minimum < maximum:
+            middle = (minimum + maximum) // 2
+            logger.info("Looking for tree with max size %s", middle,
+                        extra=self.logger_kwargs)
+            try:
+                tree = next(proof_tree_generator_dfs(rules_dict,
+                                                     root=root_label,
+                                                     maximum=middle))
+                maximum = middle
+            except StopIteration:
+                minimum = middle + 1
+        return ProofTree.from_comb_spec_searcher(tree, self)

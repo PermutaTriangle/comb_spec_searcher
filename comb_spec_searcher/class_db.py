@@ -12,8 +12,9 @@ from logzero import logger
 from .combinatorial_class import CombinatorialClass
 
 
-class Info(object):
+class Info():
     """Information about a combinatorial class."""
+    # pylint: disable=too-many-instance-attributes
     def __init__(self, comb_class, label, **kwargs):
         """Initialise information."""
         self.comb_class = comb_class
@@ -37,8 +38,8 @@ class Info(object):
         try:
             b64encode(self.comb_class).decode()
         except Exception as e:
-            logger.warn(("Lost information about tiling with encoding as:\n"
-                         "" + str(self.comb_class) + "\n" + str(e)))
+            logger.warning("Lost information about combinatorial class with "
+                           "encoding as:\n%s\n%s", self.comb_class, e)
             return None
         return {
             'comb_class': b64encode(self.comb_class).decode(),
@@ -58,23 +59,23 @@ class Info(object):
         }
 
     @classmethod
-    def from_dict(cls, dict):
+    def from_dict(cls, dict_):
         """Return Info object from dictionary."""
         return cls(
-            comb_class=b64decode(dict['comb_class'].encode()),
-            label=int(dict['label']),
-            expanded=int(dict.get('expanded', 0)),
-            symmetry_expanded=dict.get('symmetry_expanded', False),
-            initial_expanded=dict.get('initial_expanded', False),
-            expanding_children_only=dict.get('expanding_children_only', False),
-            expanding_other_sym=dict.get('expanding_other_sym', False),
-            expandable=dict.get('expandable', False),
-            inferrable=dict.get('inferrable', True),
-            inferral_expanded=dict.get('inferral_expanded', False),
-            verified=dict.get('verified', None),
-            verification_reason=dict.get('verification_reason', None),
-            empty=dict.get('empty', None),
-            strategy_verified=dict.get('strategy_verified', False),
+            comb_class=b64decode(dict_['comb_class'].encode()),
+            label=int(dict_['label']),
+            expanded=int(dict_.get('expanded', 0)),
+            symmetry_expanded=dict_.get('symmetry_expanded', False),
+            initial_expanded=dict_.get('initial_expanded', False),
+            expanding_children_only=dict_.get('expanding_children_only', False),
+            expanding_other_sym=dict_.get('expanding_other_sym', False),
+            expandable=dict_.get('expandable', False),
+            inferrable=dict_.get('inferrable', True),
+            inferral_expanded=dict_.get('inferral_expanded', False),
+            verified=dict_.get('verified', None),
+            verification_reason=dict_.get('verification_reason', None),
+            empty=dict_.get('empty', None),
+            strategy_verified=dict_.get('strategy_verified', False),
         )
 
     def __eq__(self, other):
@@ -95,7 +96,7 @@ class Info(object):
         )
 
 
-class ClassDB(object):
+class ClassDB():
     """
     A database for combinatorial classes.
 
@@ -127,7 +128,7 @@ class ClassDB(object):
 
     def __iter__(self):
         """Iterator of labels."""
-        for key in self.label_to_info.keys():
+        for key in self.label_to_info:
             yield key
 
     def __contains__(self, key):
@@ -150,11 +151,11 @@ class ClassDB(object):
                 for label, info in self.label_to_info.items()}
 
     @classmethod
-    def from_dict(cls, dict, combinatorial_class):
+    def from_dict(cls, dict_, combinatorial_class):
         """Return ClassDB for dictionary object."""
         classdb = cls(combinatorial_class)
-        for label, info in dict.items():
-            info = Info.from_dict(info)
+        for label, info in dict_.items():
+            info = Info.from_dict_(info)
             label = info.label
             comb_class = info.comb_class
             classdb.label_to_info[label] = info

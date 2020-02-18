@@ -8,7 +8,7 @@ from collections import defaultdict
 from collections.abc import Iterable
 
 
-class RuleDB(object):
+class RuleDB():
     """A database for rules found."""
 
     def __init__(self):
@@ -44,15 +44,15 @@ class RuleDB(object):
         }
 
     @classmethod
-    def from_dict(cls, dict):
+    def from_dict(cls, dict_):
         """Return RuleDB object from dictionary."""
         ruledb = RuleDB()
         ruledb.rules_dict = defaultdict(set, {x: {tuple(y) for y in z}
-                                        for x, z in dict['rules_dict']})
+                                        for x, z in dict_['rules_dict']})
         ruledb.explanations = {x: {tuple(y): z for y, z in d}
-                               for x, d in dict['explanations']}
+                               for x, d in dict_['explanations']}
         ruledb.constructors = {x: {tuple(y): z for y, z in d}
-                               for x, d in dict['constructors']}
+                               for x, d in dict_['constructors']}
         return ruledb
 
     def add(self, start, end, explanation, constructor):

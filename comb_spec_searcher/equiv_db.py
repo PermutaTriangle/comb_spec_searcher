@@ -10,7 +10,7 @@ Based on: https://www.ics.uci.edu/~eppstein/PADS/UnionFind.py
 from collections import deque
 
 
-class EquivalenceDB(object):
+class EquivalenceDB():
     """
     A database for equivalences. Supports four methods.
 
@@ -49,14 +49,14 @@ class EquivalenceDB(object):
         }
 
     @classmethod
-    def from_dict(cls, dict):
+    def from_dict(cls, dict_):
         """Return EquivalenceDB object for dictionary object."""
         equivdb = cls()
-        equivdb.parents = {int(x): y for x, y in dict['parents'].items()}
-        equivdb.weights = {int(x): y for x, y in dict['weights'].items()}
+        equivdb.parents = {int(x): y for x, y in dict_['parents'].items()}
+        equivdb.weights = {int(x): y for x, y in dict_['weights'].items()}
         equivdb.explanations = {tuple(x): y
-                                for x, y in dict['explanations']}
-        equivdb.verified_roots = set(dict['verified_roots'])
+                                for x, y in dict_['explanations']}
+        equivdb.verified_roots = set(dict_['verified_roots'])
         return equivdb
 
     def __getitem__(self, comb_class):
