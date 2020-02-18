@@ -681,6 +681,7 @@ class ProofTree():
 
     @classmethod
     def from_comb_spec_searcher(cls, root, css):
+        # pylint: disable=protected-access
         if not isinstance(root, tree_searcher_node):
             raise TypeError("Requires a tree searcher node, treated as root.")
         proof_tree = ProofTree(ProofTree.from_comb_spec_searcher_node(root,

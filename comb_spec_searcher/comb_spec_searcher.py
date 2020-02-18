@@ -136,6 +136,7 @@ class CombinatorialSpecificationSearcher():
 
     @classmethod
     def from_dict(cls, dict_, combinatorial_class):
+        # pylint: disable=protected-access
         strategy_pack = StrategyPack(
             initial_strats=[get_func(*mod_func_name)
                             for mod_func_name in dict_['initial_strategies']],
@@ -303,10 +304,7 @@ class CombinatorialSpecificationSearcher():
             strat = strategy_function(comb_class, **self.kwargs)
             inf_class = None
             inf_label = None
-            if strat is None:
-                strategy_generator = []
-            else:
-                strategy_generator = [strat]
+            strategy_generator = [] if strat is None else [strat]
         else:
             strategy_generator = strategy_function(comb_class, **self.kwargs)
         for rule in strategy_generator:
@@ -324,7 +322,7 @@ class CombinatorialSpecificationSearcher():
             labels = [self.classdb.get_label(comb_class)
                       for comb_class in rule.comb_classes]
             logger.debug("Adding combinatorial rule %s -> %s with constructor"
-                          " '%s'", label, tuple(labels), rule.constructor,
+                         " '%s'", label, tuple(labels), rule.constructor,
                          extra=self.logger_kwargs)
 
             if any(self.equivdb[label] == self.equivdb[l] for l in labels):
@@ -679,11 +677,11 @@ class CombinatorialSpecificationSearcher():
                     eq = sympy.Eq(function, gen_func)
                     equations.add(eq)
                 except Exception as e:
-                    error = ("Failed to find generating function for:\n" +
-                             repr(comb_class) + "\nVerified as:\n" +
-                             self.classdb.verification_reason(label) +
-                             "\nThe error was:\n" + str(e))
-                    logger.warning(error, extra=self.logger_kwargs)
+                    logger.warning(
+                        "Failed to find generating function for:\n%r\n"
+                        "Verified as:\n%s\nThe error was:\n%s", comb_class,
+                        self.classdb.verification_reason(label), e,
+                        extra=self.logger_kwargs)
 
         if kwargs.get('substitutions'):
             return equations, [sympy.Eq(lhs, rhs)
