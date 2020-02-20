@@ -393,7 +393,8 @@ class CombinatorialSpecificationSearcher(object):
                          repr(self.classdb.get_class(end)) + "\n" +
                          "formal step:" + explanation)
                 logger.debug(error, extra=self.logger_kwargs)
-        if self.forward_equivalence:
+        if (self.forward_equivalence or
+                constructor not in ('equiv', 'disjoint', 'cartesian')):
             reverse_rule = end, (start,)
             if self.ruledb.contains(*reverse_rule):
                 raise ValueError(("Same equivalent rule found forward and "
