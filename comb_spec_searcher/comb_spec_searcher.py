@@ -1045,7 +1045,6 @@ class CombinatorialSpecificationSearcher():
 
     def all_proof_trees(self):
         """A generator that yields all proof trees in the universe."""
-        start = time.time()
         root_label = self.equivdb[self.start_label]
 
         rules_dict = self.tree_search_prep()
@@ -1075,7 +1074,6 @@ class CombinatorialSpecificationSearcher():
         if self.iterative:
             raise NotImplementedError("There is no method for finding "
                                       " smallest iterative proof trees.")
-        start = time.time()
         root_label = self.equivdb[self.start_label]
         logger.debug("Searching for tree", extra=self.logger_kwargs)
         rules_dict = self.tree_search_prep()

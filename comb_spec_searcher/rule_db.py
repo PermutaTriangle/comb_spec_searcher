@@ -73,8 +73,6 @@ class RuleDB():
             raise TypeError("A rule requires a string for an explanation.")
         if not isinstance(constructor, str):
             raise TypeError("A rule requires a string for a constructor.")
-            if constructor not in ['cartesian', 'disjoint']:
-                raise ValueError("Only handles cartesian and disjoint.")
         end = tuple(sorted(end))
         self.rules_dict[start] |= set((end,))
         if start in self.explanations:

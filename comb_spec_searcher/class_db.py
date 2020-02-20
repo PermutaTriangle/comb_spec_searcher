@@ -36,27 +36,26 @@ class Info():
     def to_dict(self):
         """Return dictionary object of self that is JSON serializable."""
         try:
-            b64encode(self.comb_class).decode()
-        except Exception as e:
+            return {
+                'comb_class': b64encode(self.comb_class).decode(),
+                'label': self.label,
+                'expanded': self.expanded,
+                'symmetry_expanded': self.symmetry_expanded,
+                'initial_expanded': self.initial_expanded,
+                'expanding_children_only': self.expanding_children_only,
+                'expanding_other_sym': self.expanding_other_sym,
+                'expandable': self.expandable,
+                'inferrable': self.inferrable,
+                'inferral_expanded': self.inferral_expanded,
+                'verified': self.verified,
+                'verification_reason': self.verification_reason,
+                'empty': self.empty,
+                'strategy_verified': self.strategy_verified,
+            }
+        except TypeError as e:
             logger.warning("Lost information about combinatorial class with "
                            "encoding as:\n%s\n%s", self.comb_class, e)
             return None
-        return {
-            'comb_class': b64encode(self.comb_class).decode(),
-            'label': self.label,
-            'expanded': self.expanded,
-            'symmetry_expanded': self.symmetry_expanded,
-            'initial_expanded': self.initial_expanded,
-            'expanding_children_only': self.expanding_children_only,
-            'expanding_other_sym': self.expanding_other_sym,
-            'expandable': self.expandable,
-            'inferrable': self.inferrable,
-            'inferral_expanded': self.inferral_expanded,
-            'verified': self.verified,
-            'verification_reason': self.verification_reason,
-            'empty': self.empty,
-            'strategy_verified': self.strategy_verified,
-        }
 
     @classmethod
     def from_dict(cls, dict_):
