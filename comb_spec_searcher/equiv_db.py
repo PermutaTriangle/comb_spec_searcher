@@ -122,8 +122,7 @@ class EquivalenceDB(object):
             return ""
         explanation = self.explanations.get((comb_class, other_comb_class))
         if explanation is None:
-            explanation = self.explanations.get((other_comb_class,
-                                                    comb_class))
+            explanation = self.explanations.get((other_comb_class, comb_class))
             if explanation is None:
                 raise KeyError(("They are not dircectly equivalent. Try "
                                 "eqv_path_with_explanation method."))
