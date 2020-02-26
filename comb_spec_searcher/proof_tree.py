@@ -713,7 +713,8 @@ class ProofTree(object):
                     break
             assert css.equivdb.equivalent(in_label, out_label)
 
-            eqv_path, explanations = css.equivdb.eqv_path_with_explanation()
+            eqv_path, explanations = css.equivdb.eqv_path_with_explanation(
+                                                        in_label, out_label)
             comb_classes = [css.classdb.get_class(l) for l in eqv_path]
 
             root.eqv_path_labels = eqv_path
@@ -747,7 +748,8 @@ class ProofTree(object):
             eqv_ver_label = css.equivalent_strategy_verified_label(in_label)
             if eqv_ver_label is not None:
                 # verified!
-                path, explanations = css.equivdb.eqv_path_with_explanation()
+                path, explanations = css.equivdb.eqv_path_with_explanation(
+                                                    in_label, eqv_ver_label)
                 comb_classes = [css.classdb.get_class(l) for l in path]
 
                 formal_step = css.classdb.verification_reason(eqv_ver_label)
@@ -769,7 +771,8 @@ class ProofTree(object):
             formal_step = css.ruledb.explanation(start, ends)
             constructor = css.ruledb.constructor(start, ends)
 
-            eqv_path, explanations = css.equivdb.eqv_path_with_explanation()
+            eqv_path, explanations = css.equivdb.eqv_path_with_explanation(
+                                                            in_label, start)
             eqv_comb_classes = [css.classdb.get_class(l) for l in eqv_path]
 
             strat_children = []
