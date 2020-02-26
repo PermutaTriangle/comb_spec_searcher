@@ -713,15 +713,12 @@ class ProofTree(object):
                     break
             assert css.equivdb.equivalent(in_label, out_label)
 
-            eqv_path = css.equivdb.find_path(in_label, out_label)
-            eqv_comb_classes = [css.classdb.get_class(l) for l in eqv_path]
-            eqv_explanations = [css.equivdb.get_explanation(x, y,
-                                                            one_step=True)
-                                for x, y in zip(eqv_path[:-1], eqv_path[1:])]
+            eqv_path, explanations = css.equivdb.eqv_path_with_explanation()
+            comb_classes = [css.classdb.get_class(l) for l in eqv_path]
 
             root.eqv_path_labels = eqv_path
-            root.eqv_path_comb_classes = eqv_comb_classes
-            root.eqv_explanations = eqv_explanations
+            root.eqv_path_comb_classes = comb_classes
+            root.eqv_explanations = explanations
 
         for child in root.children:
             self._recursion_fixer(css, child, in_labels)
@@ -750,16 +747,12 @@ class ProofTree(object):
             eqv_ver_label = css.equivalent_strategy_verified_label(in_label)
             if eqv_ver_label is not None:
                 # verified!
-                eqv_path = css.equivdb.find_path(in_label, eqv_ver_label)
-                eqv_comb_classes = [css.classdb.get_class(l) for l in eqv_path]
-                eqv_explanations = [css.equivdb.get_explanation(x, y,
-                                                                one_step=True)
-                                    for x, y in zip(eqv_path[:-1],
-                                                    eqv_path[1:])]
+                path, explanations = css.equivdb.eqv_path_with_explanation()
+                comb_classes = [css.classdb.get_class(l) for l in path]
 
                 formal_step = css.classdb.verification_reason(eqv_ver_label)
-                return ProofTreeNode(label, eqv_path, eqv_comb_classes,
-                                     eqv_explanations, strategy_verified=True,
+                return ProofTreeNode(label, path, comb_classes, explanations,
+                                     strategy_verified=True,
                                      formal_step=formal_step)
             else:
                 # recurse! we reparse these at the end, so recursed labels etc
@@ -776,11 +769,8 @@ class ProofTree(object):
             formal_step = css.ruledb.explanation(start, ends)
             constructor = css.ruledb.constructor(start, ends)
 
-            eqv_path = css.equivdb.find_path(in_label, start)
+            eqv_path, explanations = css.equivdb.eqv_path_with_explanation()
             eqv_comb_classes = [css.classdb.get_class(l) for l in eqv_path]
-            eqv_explanations = [css.equivdb.get_explanation(x, y,
-                                                            one_step=True)
-                                for x, y in zip(eqv_path[:-1], eqv_path[1:])]
 
             strat_children = []
             ends = list(ends)
@@ -796,18 +786,18 @@ class ProofTree(object):
             if constructor == 'cartesian':
                 # decomposition!
                 return ProofTreeNode(label, eqv_path, eqv_comb_classes,
-                                     eqv_explanations, decomposition=True,
+                                     explanations, decomposition=True,
                                      formal_step=formal_step,
                                      children=strat_children)
             elif constructor == 'disjoint' or constructor == 'equiv':
                 # batch!
                 return ProofTreeNode(label, eqv_path, eqv_comb_classes,
-                                     eqv_explanations, disjoint_union=True,
+                                     explanations, disjoint_union=True,
                                      formal_step=formal_step,
                                      children=strat_children)
             elif constructor == 'other':
                 return ProofTreeNode(label, eqv_path, eqv_comb_classes,
-                                     eqv_explanations,
+                                     explanations,
                                      formal_step=formal_step,
                                      children=strat_children)
             else:
