@@ -676,7 +676,7 @@ class CombinatorialSpecificationSearcher():
                     gen_func = self.get_class_genf(comb_class, **kwargs)
                     eq = sympy.Eq(function, gen_func)
                     equations.add(eq)
-                except Exception as e:
+                except Exception as e:  # pylint: disable=broad-except
                     logger.warning(
                         "Failed to find generating function for:\n%r\n"
                         "Verified as:\n%s\nThe error was:\n%s", comb_class,

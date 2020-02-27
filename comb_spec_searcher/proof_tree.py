@@ -13,9 +13,11 @@ from operator import add, mul
 import sympy
 from logzero import logger
 
-from .tree_searcher import Node as tree_searcher_node
-from .utils import (check_equation, check_poly, compositions, get_solution,
-                    maple_equations, taylor_expand)
+from comb_spec_searcher.exception import InsaneTreeError, TaylorExpansionError
+from comb_spec_searcher.tree_searcher import Node as tree_searcher_node
+from comb_spec_searcher.utils import (check_equation, check_poly, compositions,
+                                      get_solution, maple_equations,
+                                      taylor_expand)
 
 
 class ProofTreeNode():
@@ -409,10 +411,6 @@ class ProofTreeNode():
         return self.eqv_path_comb_classes
 
 
-class InsaneTreeError(Exception):
-    pass
-
-
 class ProofTree():
     def __init__(self, root):
         if not isinstance(root, ProofTreeNode):
@@ -514,7 +512,7 @@ class ProofTree():
                     genf = solution[root_func]
                     try:
                         expansion = taylor_expand(genf, verify)
-                    except Exception:
+                    except TaylorExpansionError:
                         continue
                     if objcounts == expansion:
                         logger.info("The generating function is %s", genf)
@@ -532,7 +530,7 @@ class ProofTree():
                         genf = solution[func]
                         try:
                             expansion = taylor_expand(genf, verify)
-                        except Exception:
+                        except TaylorExpansionError:
                             continue
                         if objcounts == expansion:
                             logger.info("The generating function for %s is %s",

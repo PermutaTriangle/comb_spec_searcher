@@ -4,6 +4,8 @@ from functools import partial
 import sympy
 from logzero import logger
 
+from comb_spec_searcher.exception import TaylorExpansionError
+
 
 def get_func_name(f, warn=False, logger_kwargs=None):
     """Return a string that is the name of the function f."""
@@ -88,7 +90,7 @@ def check_equation(equation, initial, root_initial=None, root_func=None):
         genf = solution[F]
         try:
             expansion = taylor_expand(genf, len(initial) - 1)
-        except Exception:
+        except TaylorExpansionError:
             continue
         if initial == expansion:
             return True
@@ -105,20 +107,23 @@ def get_solution(equation, initial):
         genf = solution[F]
         try:
             expansion = taylor_expand(genf, len(initial) - 1)
-        except Exception:
+        except TaylorExpansionError:
             continue
         if initial == expansion:
             return genf
 
 
 def taylor_expand(genf, n=10):
-    num, den = genf.as_numer_denom()
-    num = num.expand()
-    den = den.expand()
-    genf = num/den
-    ser = sympy.Poly(genf.series(n=n+1).removeO(), sympy.abc.x)
-    res = ser.all_coeffs()
-    res = res[::-1] + [0]*(n+1-len(res))
+    try:
+        num, den = genf.as_numer_denom()
+        num = num.expand()
+        den = den.expand()
+        genf = num/den
+        ser = sympy.Poly(genf.series(n=n+1).removeO(), sympy.abc.x)
+        res = ser.all_coeffs()
+        res = res[::-1] + [0]*(n+1-len(res))
+    except Exception:
+        raise TaylorExpansionError
     return res
 
 
