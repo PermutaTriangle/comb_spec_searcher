@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   using a strategy pack. This can be used to expand strategy verified
   combinatorial classes, to give a single tree.
 
+### Changed
+- The `CombinatorialSpecification.auto_seach()` only uses keyword arguments.
+
 ## [0.4.0] - 2020-02-20
 ### Fixed
 - Fix the dict method of Info so that it saves all the attributes.
