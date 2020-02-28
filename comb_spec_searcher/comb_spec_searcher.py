@@ -884,15 +884,27 @@ class CombinatorialSpecificationSearcher():
         """
         An automatic search function.
 
-        It will expand classes until perc*(tree search time) has passed and
-        then search for a tree.
+        Classes will be expanded until a proof tree is found. A tree will be
+        searched for approximately 1% of the search time. This can be set using
+        the 'perc' keyword, as some percentage between 0 and 100.
 
-        Information is logged to logger.info. A status update is given when a
-        tree is found and after status_update many seconds have passed.
-        It will also log the proof tree, in json format.
+        The search will continue, unless a proof tree is found. You can set the
+        keyword 'max_time' to stop the search after 'max_time' many seconds.
 
-        If save, it will log a json string of CombSpecSearcher to
-        logger.info.
+        Information is logged to logger.info. It will also log the proof tree,
+        in json format. For periodic status_updates, set the keyword flag
+        'status_update', an update will be given every status_update seconds.
+
+        If 'save' is set to 'True' as a keyword argument, a json string of
+        CombSpecSearcher will be logged to logger.info if 'max_time' is passed.
+
+        If a proof tree is found, and 'genf' is set to 'True' as a keyword
+        argument, then if a proof tree is found, the searcher will call the
+        'ProofTree.get_min_poly()' method, returning this output alongside the
+        proof tree.
+
+        If 'smallest' is set to 'True' then the searcher will return a proof
+        tree that is as small as possible.
         """
         perc = kwargs.get('perc', 1)
         if not 0 < perc <= 100:
