@@ -724,8 +724,9 @@ class ProofTree():
         passed to the 'auto_search' method.
         """
         from .comb_spec_searcher import CombinatorialSpecificationSearcher
+        Searcher = kwargs.get('css', CombinatorialSpecificationSearcher)
         root_class = self.root.eqv_path_comb_classes[0]
-        css = CombinatorialSpecificationSearcher(root_class, pack, **kwargs)
+        css = Searcher(root_class, pack, **kwargs)
         # Remove the root class from the queue
         css.classqueue.next()
         def get_label(comb_class):
