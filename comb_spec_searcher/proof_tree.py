@@ -728,7 +728,7 @@ class ProofTree():
         css = CombinatorialSpecificationSearcher(
                             root_class, pack, function_kwargs=function_kwargs)
         # Remove the root class from the queue
-        css.classqueue.next()z
+        css.classqueue.next()
         def get_label(comb_class):
             css.classdb.add(comb_class, expandable=True)
             label = css.classdb.get_label(comb_class)
