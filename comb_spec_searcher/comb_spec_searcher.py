@@ -8,6 +8,7 @@ from base64 import b64decode, b64encode
 from collections import defaultdict
 from functools import reduce
 from operator import add, mul
+from typing import TYPE_CHECKING, Any, Dict
 
 import logzero
 import psutil
@@ -26,29 +27,24 @@ from .tree_searcher import (iterative_proof_tree_finder, iterative_prune,
                             proof_tree_generator_dfs, prune, random_proof_tree)
 from .utils import get_func, get_func_name, get_module_and_func_names
 
+if TYPE_CHECKING:
+    from comb_spec_searcher import CombinatorialClass
+
 warnings.simplefilter("once", Warning)
 
 
 class CombinatorialSpecificationSearcher():
     """
-    The CombinatorialSpecificationSearcher classs.
+    The CombinatorialSpecificationSearcher class.
 
     This is used to build up knowledge about a combinatorial_class with respect
     to the given strategies and search for a combinatorial specification.
     """
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, start_class, strategy_pack, **kwargs):
+    def __init__(self, start_class: 'CombinatorialClass',
+                 strategy_pack: StrategyPack, **kwargs):
         """Initialise CombinatorialSpecificationSearcher."""
-        if start_class is None:
-            raise ValueError(("CombinatorialSpecificationSearcher"
-                              "requires a start class."))
         self.start_class = start_class
-        if strategy_pack is None:
-            raise ValueError(("CombinatorialSpecificationSearcher"
-                              "requires a strategy pack."))
-        if not isinstance(strategy_pack, StrategyPack):
-            raise TypeError(("Strategy pack given not "
-                             "instance of strategy pack."))
         self.strategy_pack = strategy_pack
         self.debug = kwargs.get('debug', False)
         if not self.debug:
@@ -57,25 +53,7 @@ class CombinatorialSpecificationSearcher():
         self.logger_kwargs = kwargs.get('logger_kwargs',
                                         {'processname': 'runner'})
         self.kwargs['logger'] = self.logger_kwargs
-
-        self.initial_strategies = strategy_pack.initial_strats
-        self.strategy_generators = strategy_pack.expansion_strats
-        self.inferral_strategies = strategy_pack.inferral_strats
-        self.verification_strategies = strategy_pack.ver_strats
-        self.iterative = (strategy_pack.iterative or
-                          kwargs.get('iterative', False))
-        self.forward_equivalence = (strategy_pack.forward_equivalence or
-                                    kwargs.get('forward_equivalence', False))
-        self.symmetries = kwargs.get('symmetries', strategy_pack.symmetries)
-        if self.symmetries:
-            # A list of symmetry functions of classes.
-            if (not isinstance(self.symmetries, list) or
-                    any(not callable(f) for f in self.symmetries)):
-                raise ValueError(("To use symmetries need to give a"
-                                  "list of symmetry functions."))
-            self.kwargs['symmetry'] = True
-        else:
-            self.symmetries = []
+        self.kwargs['symmetry'] = bool(strategy_pack.symmetries)
 
         self.classdb = ClassDB(type(start_class))
         self.equivdb = EquivalenceDB()
@@ -88,14 +66,49 @@ class CombinatorialSpecificationSearcher():
 
         self._has_proof_tree = False
 
-        self.strategy_times = defaultdict(int)
-        self.strategy_expansions = defaultdict(int)
+        self.strategy_times = defaultdict(float)  # type: Dict[str, float]
+        self.strategy_expansions = defaultdict(float)  # type: Dict[str, float]
         self.symmetry_time = 0
         self.tree_search_time = 0
         self.prep_for_tree_search_time = 0
         self.queue_time = 0
         self._time_taken = 0
-        self.class_genf = {}
+        self.class_genf = {}  # type: Dict[CombinatorialClass, Any]
+
+    @property
+    def initial_strategies(self):
+        """The initial strategies from the strategy pack."""
+        return self.strategy_pack.initial_strats
+
+    @property
+    def strategy_generators(self):
+        """The expansion strategies from the strategy pack."""
+        return self.strategy_pack.expansion_strats
+
+    @property
+    def inferral_strategies(self):
+        """The inferral strategies from the strategy pack."""
+        return self.strategy_pack.inferral_strats
+
+    @property
+    def verification_strategies(self):
+        """The verification strategies from the strategy pack."""
+        return self.strategy_pack.ver_strats
+
+    @property
+    def iterative(self):
+        """The iterative parameter from the strategy pack."""
+        return self.strategy_pack.iterative
+
+    @property
+    def forward_equivalence(self):
+        """The forward equivalence option from the strategy pack."""
+        return self.strategy_pack.forward_equivalence
+
+    @property
+    def symmetries(self):
+        """The symmetries functions for the strategy pack."""
+        return self.strategy_pack.symmetries
 
     def to_dict(self):
         return {
