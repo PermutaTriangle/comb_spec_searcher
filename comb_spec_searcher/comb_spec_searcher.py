@@ -53,6 +53,8 @@ class CombinatorialSpecificationSearcher():
         self.debug = kwargs.get('debug', False)
         if not self.debug:
             logzero.loglevel(logging.INFO, True)
+        else:
+            logzero.loglevel(logging.DEBUG, True)
         self.kwargs = kwargs.get('function_kwargs', dict())
         self.logger_kwargs = kwargs.get('logger_kwargs',
                                         {'processname': 'runner'})
@@ -878,8 +880,7 @@ class CombinatorialSpecificationSearcher():
         start_string += str(self.strategy_pack)
         return start_string
 
-    def auto_search(self, perc=1, status_update=None, max_time=None,
-                    save=False, smallest=False, genf=False):
+    def auto_search(self, **kwargs):
         """
         An automatic search function.
 
@@ -893,10 +894,13 @@ class CombinatorialSpecificationSearcher():
         If save, it will log a json string of CombSpecSearcher to
         logger.info.
         """
+        perc = kwargs.get('perc', 1)
         if not 0 < perc <= 100:
             logger.warning(("Percentage not between 0 and 100, so assuming 1%"
-                         " search percentage."), extra=self.logger_kwargs)
-            perc = 1
+                            " search percentage."), extra=self.logger_kwargs)
+        status_update = kwargs.get('status_update', None)
+        max_time = kwargs.get('max_time', None)
+        smallest = kwargs.get('smallest', False)
         if status_update:
             status_start = time.time()
         start_string = "Auto search started {}\n".format(
@@ -933,7 +937,7 @@ class CombinatorialSpecificationSearcher():
                 found_string += self.status()
                 found_string += json.dumps(proof_tree.to_jsonable())
                 logger.info(found_string, extra=self.logger_kwargs)
-                if genf:
+                if kwargs.get('genf', False):
                     min_poly, func = proof_tree.get_min_poly(solve=True)
                     return proof_tree, min_poly, func
                 return proof_tree
@@ -943,7 +947,7 @@ class CombinatorialSpecificationSearcher():
             if max_time is not None:
                 if self._time_taken > max_time:
                     logger.info(self.status(), extra=self.logger_kwargs)
-                    if save:
+                    if kwargs.get('save', False):
                         string = "The universe: \n"
                         string += json.dumps(self.to_dict())
                         logger.info(string, extra=self.logger_kwargs)

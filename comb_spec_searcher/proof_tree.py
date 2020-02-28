@@ -712,7 +712,7 @@ class ProofTree():
         for child in root.children:
             self._recursion_fixer(css, child, in_labels)
 
-    def expand_tree(self, pack, function_kwargs=dict(), **kwargs):
+    def expand_tree(self, pack, **kwargs):
         """
         Return a ProofTree that comes from expanding the strategy verified
         combinatorial classes using the StrategyPack 'pack'.
@@ -725,8 +725,7 @@ class ProofTree():
         """
         from .comb_spec_searcher import CombinatorialSpecificationSearcher
         root_class = self.root.eqv_path_comb_classes[0]
-        css = CombinatorialSpecificationSearcher(
-                            root_class, pack, function_kwargs=function_kwargs)
+        css = CombinatorialSpecificationSearcher(root_class, pack, **kwargs)
         # Remove the root class from the queue
         css.classqueue.next()
         def get_label(comb_class):
