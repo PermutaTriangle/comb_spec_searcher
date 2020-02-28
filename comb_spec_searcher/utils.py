@@ -1,54 +1,60 @@
+import importlib
 from functools import partial
 
 import sympy
 from logzero import logger
 
+from comb_spec_searcher.exception import TaylorExpansionError
 
-def get_func_name(f, warn=False,
-                  logger_kwargs={'processname': 'utils'}):
+
+def get_func_name(f, warn=False, logger_kwargs=None):
     """Return a string that is the name of the function f."""
     if not callable(f):
         raise TypeError("Function given is not callable.")
     if isinstance(f, partial):
         f = f.func
         if warn:
-            logger.warn(("forgetting kwargs given to partial function "
-                         "using strategy" + f.__name__),
-                        extra=logger_kwargs)
+            if logger_kwargs is None:
+                logger_kwargs = {'processname': 'utils'}
+            logger.warning("forgetting kwargs given to partial function "
+                           "using strategy %s", f.__name__, extra=logger_kwargs)
     return f.__name__
 
 
-def get_module_and_func_names(f, warn=False,
-                              logger_kwargs={'processname': 'utils'}):
+def get_module_and_func_names(f, warn=False, logger_kwargs=None):
     """Return the module and name of a function f."""
     if isinstance(f, partial):
         f = f.func
         if warn:
-            logger.warn(("forgetting kwargs given to partial function "
-                         "using strategy" + f.__name__),
-                        extra=logger_kwargs)
+            if logger_kwargs is None:
+                logger_kwargs = {'processname': 'utils'}
+            logger.warning("forgetting kwargs given to partial function "
+                           "using strategy %s", f.__name__,
+                           extra=logger_kwargs)
     return (f.__module__, f.__name__)
 
 
-def get_func(module_name, func_name, warn=False,
-             logger_kwargs={'processname': 'utils'}):
+def get_func(module_name, func_name, warn=False, logger_kwargs=None):
     """Return the function with given module and function names."""
-    import importlib
+    if logger_kwargs is None:
+        logger_kwargs = {'processname': 'utils'}
     try:
         module = importlib.import_module(module_name)
-        try:
-            func = getattr(module, func_name)
-            assert callable(func)
-            return func
-        except Exception:
-            if warn:
-                logger.warn(("No function named " + func_name +
-                            " in module " + module_name),
-                            extra=logger_kwargs)
-    except Exception as e:
+        func = getattr(module, func_name)
+        assert callable(func)
+        return func
+    except ModuleNotFoundError:
         if warn:
-            logger.warn("No module named " + module_name,
-                        extra=logger_kwargs)
+            logger.warning("No module named %s", module_name,
+                           extra=logger_kwargs)
+    except AttributeError:
+        if warn:
+            logger.warning("No function named %s in module %s.", func_name,
+                           module_name, extra=logger_kwargs)
+    except AssertionError:
+        if warn:
+            logger.warning("%s is in module %s is not callable.", func_name,
+                           module_name, extra=logger_kwargs)
 
 
 def check_poly(min_poly, initial, root_initial=None, root_func=None):
@@ -84,7 +90,7 @@ def check_equation(equation, initial, root_initial=None, root_func=None):
         genf = solution[F]
         try:
             expansion = taylor_expand(genf, len(initial) - 1)
-        except Exception:
+        except TaylorExpansionError:
             continue
         if initial == expansion:
             return True
@@ -101,20 +107,23 @@ def get_solution(equation, initial):
         genf = solution[F]
         try:
             expansion = taylor_expand(genf, len(initial) - 1)
-        except Exception as e:
+        except TaylorExpansionError:
             continue
         if initial == expansion:
             return genf
 
 
 def taylor_expand(genf, n=10):
-    num, den = genf.as_numer_denom()
-    num = num.expand()
-    den = den.expand()
-    genf = num/den
-    ser = sympy.Poly(genf.series(n=n+1).removeO(), sympy.abc.x)
-    res = ser.all_coeffs()
-    res = res[::-1] + [0]*(n+1-len(res))
+    try:
+        num, den = genf.as_numer_denom()
+        num = num.expand()
+        den = den.expand()
+        genf = num/den
+        ser = sympy.Poly(genf.series(n=n+1).removeO(), sympy.abc.x)
+        res = ser.all_coeffs()
+        res = res[::-1] + [0]*(n+1-len(res))
+    except Exception:
+        raise TaylorExpansionError
     return res
 
 

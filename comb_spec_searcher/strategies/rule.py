@@ -8,10 +8,9 @@ types supported for a rule a -> b_1, b_2, ..., b_k are
 '''
 import warnings
 from collections.abc import Iterable
-from functools import partial
 
 
-class Rule(object):
+class Rule():
     def __init__(self, formal_step, comb_classes, inferable, possibly_empty,
                  workable, ignore_parent=False, constructor='disjoint'):
         if not isinstance(formal_step, str):
@@ -36,10 +35,10 @@ class Rule(object):
 
         self.constructor = constructor
         self.formal_step = formal_step
-        self.comb_classes = [comb_class for comb_class in comb_classes]
-        self.inferable = [x for x in inferable]
-        self.possibly_empty = [x for x in possibly_empty]
-        self.workable = [x for x in workable]
+        self.comb_classes = list(comb_classes)
+        self.inferable = list(inferable)
+        self.possibly_empty = list(possibly_empty)
+        self.workable = list(workable)
         self.ignore_parent = ignore_parent
 
 
@@ -73,7 +72,7 @@ def InferralRule(formal_step, comb_class):
                 [True], ignore_parent=True, constructor='equiv')
 
 
-class VerificationRule(object):
+class VerificationRule():
     """A wrapper for verification rules."""
     def __init__(self, formal_step):
         """

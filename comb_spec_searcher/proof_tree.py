@@ -5,7 +5,6 @@ This can be used to get the generating function for the class.
 """
 import json
 import random
-import sys
 import warnings
 from functools import reduce
 from itertools import product
@@ -14,23 +13,27 @@ from operator import add, mul
 import sympy
 from logzero import logger
 
-from comb_spec_searcher.utils import compositions
+from comb_spec_searcher.exception import InsaneTreeError, TaylorExpansionError
+from comb_spec_searcher.tree_searcher import Node as tree_searcher_node
+from comb_spec_searcher.utils import (check_equation, check_poly, compositions,
+                                      get_solution, maple_equations,
+                                      taylor_expand)
 
-from .tree_searcher import Node as tree_searcher_node
-from .utils import (check_equation, check_poly, compositions, get_solution,
-                    maple_equations, taylor_expand)
 
-
-class ProofTreeNode(object):
+class ProofTreeNode():
+    # pylint: disable=too-many-instance-attributes
     def __init__(self, label, eqv_path_labels, eqv_path_comb_classes,
-                 eqv_explanations=[], children=[], strategy_verified=False,
+                 eqv_explanations=None, children=None, strategy_verified=False,
                  decomposition=False, disjoint_union=False, recursion=False,
                  formal_step=""):
         self.label = label
         self.eqv_path_labels = eqv_path_labels
         self.eqv_path_comb_classes = eqv_path_comb_classes
-        self.eqv_explanations = eqv_explanations
-        self.children = children
+        if eqv_explanations is not None:
+            self.eqv_explanations = eqv_explanations
+        else:
+            self.eqv_explanations = []
+        self.children = children if children is not None else []
         self.strategy_verified = strategy_verified
         self.decomposition = decomposition
         self.disjoint_union = disjoint_union
@@ -49,10 +52,10 @@ class ProofTreeNode(object):
     def to_jsonable(self):
         output = dict()
         output['label'] = self.label
-        output['eqv_path_labels'] = [x for x in self.eqv_path_labels]
+        output['eqv_path_labels'] = list(self.eqv_path_labels)
         output['eqv_path_comb_classes'] = [x.to_jsonable()
                                            for x in self.eqv_path_comb_classes]
-        output['eqv_explanations'] = [x for x in self.eqv_explanations]
+        output['eqv_explanations'] = list(self.eqv_explanations)
         output['children'] = [child.to_jsonable() for child in self.children]
         output['strategy_verified'] = self.strategy_verified
         output['decomposition'] = self.decomposition
@@ -88,7 +91,8 @@ class ProofTreeNode(object):
         jsondict = json.loads(jsonstr)
         return cls.from_dict(combclass, jsondict)
 
-    def _error_string(self, parent, children, strat_type, formal_step,
+    @staticmethod
+    def _error_string(parent, children, strat_type, formal_step,
                       length, parent_total, children_total):
         error = "Insane " + strat_type + " Strategy Found!\n"
         error += formal_step + "\n"
@@ -120,7 +124,7 @@ class ProofTreeNode(object):
                 if choice <= sofar:
                     return child.random_sample(length)
             raise ValueError("You shouldn't be able to get here!")
-        elif self.decomposition:
+        if self.decomposition:
             non_atom_children = [child for child in self.children
                                  if not child.is_atom()]
             number_of_atoms = len(self.children) - len(non_atom_children)
@@ -143,22 +147,20 @@ class ProofTreeNode(object):
                     return comb_class.from_parts(*sub_objs,
                                                  formal_step=self.formal_step)
             raise ValueError("You shouldn't be able to get here.")
-        elif self.strategy_verified:
+        if self.strategy_verified:
             return self.eqv_path_comb_classes[-1].random_sample(length)
-        else:
-            if self.recursion:
-                return self.recurse_node.random_sample(length)
-            raise NotImplementedError(("Random sampler only implemented for "
-                                       "disjoint union and cartesian "
-                                       "product."))
+        if self.recursion:
+            return self.recurse_node.random_sample(length)
+        raise NotImplementedError(("Random sampler only implemented for "
+                                   "disjoint union and cartesian "
+                                   "product."))
 
     def generate_objects_of_length(self, n):
         """Yield objects of given length."""
         if n in self.objects_of_length:
             yield from self.objects_of_length[n]
             return
-        else:
-            res = []
+        res = []
         # TODO: handle equivalence path nodes (somewhat assume length 1)
         if self.disjoint_union:
             for child in self.children:
@@ -183,8 +185,7 @@ class ProofTreeNode(object):
                 for child_objs in product(*[child.generate_objects_of_length(i)
                                             for child, i in zip(self.children,
                                                                 actual_comp)]):
-                    parts = [(x, y)
-                             for x, y in zip(child_objs, child_comb_classes)]
+                    parts = list(zip(child_objs, child_comb_classes))
                     path = comb_class.from_parts(*parts)
                     yield path
                     res.append(path)
@@ -212,8 +213,8 @@ class ProofTreeNode(object):
             eqv_number = of_length(comb_class, length)
             if number_objs != eqv_number:
                 formal_step = ""
-                for i in range(i+1):
-                    formal_step += self.eqv_explanations[i]
+                for j in range(i+1):
+                    formal_step += self.eqv_explanations[j]
                 return self._error_string(self.eqv_path_comb_classes[0],
                                           [comb_class],
                                           "Equivalent",
@@ -270,8 +271,7 @@ class ProofTreeNode(object):
     def get_function(self, min_poly=False):
         if min_poly:
             return sympy.var("F_" + str(self.label))
-        else:
-            return sympy.Function("F_" + str(self.label))(sympy.abc.x)
+        return sympy.Function("F_" + str(self.label))(sympy.abc.x)
 
     def get_equation(self, root_func=None, root_class=None,
                      dummy_eq=False, min_poly=False, **kwargs):
@@ -303,28 +303,26 @@ class ProofTreeNode(object):
             except ValueError as e:
                 if not dummy_eq:
                     raise ValueError(e)
-                logger.info(("Unable to find equation for {}, adding dummy"
-                             "function. The comb class corresponding is\n{}"
-                             "".format(lhs, comb_class)),
-                            extra=self.logger_kwargs)
+                logger.info("Unable to find equation for %s, adding dummy"
+                            "function. The comb class corresponding is\n%s",
+                            lhs, comb_class, extra=self.logger_kwargs)
                 rhs = sympy.Function("DOITYOURSELF")(sympy.abc.x)
         else:
             if not dummy_eq:
                 raise NotImplementedError("Using an unimplemented constructor")
-            logger.info(("Unable to find equation for {}, adding dummy "
-                         "function.".format(lhs)),
-                        extra=self.logger_kwargs)
+            logger.info("Unable to find equation for %s, adding dummy "
+                        "function.", lhs, extra=self.logger_kwargs)
             rhs = sympy.Function("DOITYOURSELF")(sympy.abc.x)
         return sympy.Eq(lhs, rhs)
 
     def count_objects_of_length(self, n):
-        '''
+        """
             Calculates objects of length in each node according to the
             recurrence relation implied by the proof tree. Only works
             for disjoint union, decomposition, strategy verified and recursion.
 
             Verified nodes are expected to have a known generating function.
-        '''
+        """
         if n < 0:
             return 0
         if len(self.terms) > n and self.terms[n] is not None:
@@ -363,18 +361,16 @@ class ProofTreeNode(object):
         elif self.strategy_verified:
             if self.is_epsilon():
                 return 1 if n == 0 else 0
-            elif self.is_atom():
+            if self.is_atom():
                 return 1 if n == 1 else 0
-            else:
-                self._ensure_terms(n)
-                return self.terms[n]
+            self._ensure_terms(n)
+            return self.terms[n]
         elif self.recursion:
-            if self.recurse_node:
-                return self.recurse_node.count_objects_of_length(n)
-            else:
+            if not self.recurse_node:
                 raise ValueError(("Recursing to a subtree that is not"
                                   " contained in the subtree from the"
                                   " root object that was called on."))
+            return self.recurse_node.count_objects_of_length(n)
         else:
             raise NotImplementedError(("count_objects_of_length() is only "
                                        "defined for disjoint union, "
@@ -415,11 +411,7 @@ class ProofTreeNode(object):
         return self.eqv_path_comb_classes
 
 
-class InsaneTreeError(Exception):
-    pass
-
-
-class ProofTree(object):
+class ProofTree():
     def __init__(self, root):
         if not isinstance(root, ProofTreeNode):
             raise TypeError("Root must be a ProofTreeNode.")
@@ -520,11 +512,10 @@ class ProofTree(object):
                     genf = solution[root_func]
                     try:
                         expansion = taylor_expand(genf, verify)
-                    except Exception as e:
+                    except TaylorExpansionError:
                         continue
                     if objcounts == expansion:
-                        logger.info(("The generating function is {}"
-                                     "".format(genf)))
+                        logger.info("The generating function is %s", genf)
                         return genf
             else:
                 for solution in solutions:
@@ -539,11 +530,11 @@ class ProofTree(object):
                         genf = solution[func]
                         try:
                             expansion = taylor_expand(genf, verify)
-                        except Exception as e:
+                        except TaylorExpansionError:
                             continue
                         if objcounts == expansion:
-                            logger.info(("The generating function for {} is {}"
-                                         "".format(func, genf)))
+                            logger.info("The generating function for %s is %s",
+                                        func, genf)
                             final_answer[node.label] = genf
                         else:
                             break
@@ -556,6 +547,7 @@ class ProofTree(object):
     def get_min_poly(self, **kwargs):
         """Return the minimum polynomial of the generating function F that is
         implied by the proof tree."""
+        # pylint: disable=too-many-statements
         root_class = kwargs.get('root_class')
         root_func = kwargs.get('root_func')
         if root_class is None:
@@ -604,24 +596,23 @@ class ProofTree(object):
 
         F = sympy.Symbol("F")
         for poly in basis.polys:
-            logger.debug(("Trying the minimum poly:\n{}\nwith the atoms\n{}\n"
-                          "".format(poly.as_expr(), poly.atoms(sympy.Symbol))),
+            logger.debug("Trying the minimum poly:\n%s\nwith the atoms\n%s\n",
+                         poly.as_expr(), poly.atoms(sympy.Symbol),
                          extra=self.logger_kwargs)
             if poly.atoms(sympy.Symbol) <= {func, sympy.abc.x}:
-                logger.info("Trying the min poly:\n{}".format(poly.as_expr()),
+                logger.info("Trying the min poly:\n%s", poly.as_expr(),
                             extra=self.logger_kwargs)
                 eq = poly.as_expr()
                 eq = eq.subs({func: F})
                 if check_poly(eq, initial) or check_equation(eq, initial):
-                    logger.info(("The minimum polynomial is {}".format(eq)),
+                    logger.info("The minimum polynomial is %s", eq,
                                 extra=self.logger_kwargs)
                     if solve:
                         sol = get_solution(eq, initial)
-                        logger.info(("The generating function is {}"
-                                     "".format(sol)), extra=self.logger_kwargs)
+                        logger.info("The generating function is %s", sol,
+                                    extra=self.logger_kwargs)
                         return eq, sol
-                    else:
-                        return eq
+                    return eq
             elif poly.atoms(sympy.Symbol) <= {func, root_func, sympy.abc.x}:
                 if first_call and sympy.abc.x not in poly.atoms(sympy.Symbol):
                     continue
@@ -630,11 +621,10 @@ class ProofTree(object):
                 eq = eq.subs({func: F})
                 if (check_poly(eq, initial, **root_kwargs) or
                         check_equation(eq, initial, **root_kwargs)):
-                    logger.info(("The minimum polynomial is {}".format(eq)),
+                    logger.info("The minimum polynomial is %s", eq,
                                 extra=self.logger_kwargs)
                     return eq
-        raise RuntimeError(("Incorrect minimum polynomial\n" +
-                            str(basis)))
+        raise RuntimeError("Incorrect minimum polynomial\n{}".format(basis))
 
     def random_sample(self, length=100):
         if any(len(node.terms) < length + 1 for node in self.nodes()):
@@ -676,22 +666,20 @@ class ProofTree(object):
                          "".format(repr(comb_class)))
                 if raiseerror:
                     raise InsaneTreeError(error)
-                else:
-                    overall_error += error
+                overall_error += error
         for node in self.nodes():
             error = node.sanity_check(length, self._of_length)
             if error is not None:
                 if raiseerror:
                     raise InsaneTreeError(error)
-                else:
-                    overall_error += error
+                overall_error += error
         if overall_error:
             return False, overall_error
-        else:
-            return True, "Sanity checked, all good at length {}".format(length)
+        return True, "Sanity checked, all good at length {}".format(length)
 
     @classmethod
     def from_comb_spec_searcher(cls, root, css):
+        # pylint: disable=protected-access
         if not isinstance(root, tree_searcher_node):
             raise TypeError("Requires a tree searcher node, treated as root.")
         proof_tree = ProofTree(ProofTree.from_comb_spec_searcher_node(root,
@@ -742,9 +730,8 @@ class ProofTree(object):
             in_label = root.label
         else:
             assert css.equivdb.equivalent(root.label, in_label)
-        children = root.children
 
-        if not children:
+        if not root.children:
             eqv_ver_label = css.equivalent_strategy_verified_label(in_label)
             if eqv_ver_label is not None:
                 # verified!
@@ -756,59 +743,56 @@ class ProofTree(object):
                 return ProofTreeNode(label, path, comb_classes, explanations,
                                      strategy_verified=True,
                                      formal_step=formal_step)
-            else:
-                # recurse! we reparse these at the end, so recursed labels etc
-                # are not interesting.
-                return ProofTreeNode(label, [in_label],
-                                     [css.classdb.get_class(in_label)],
-                                     formal_step="recurse",
-                                     recursion=True)
-        else:
-            rule = css.rule_from_equivence_rule(root.label,
-                                                tuple(c.label
-                                                      for c in root.children))
-            start, ends = rule
-            formal_step = css.ruledb.explanation(start, ends)
-            constructor = css.ruledb.constructor(start, ends)
+            # recurse! we reparse these at the end, so recursed labels etc
+            # are not interesting.
+            return ProofTreeNode(label, [in_label],
+                                 [css.classdb.get_class(in_label)],
+                                 formal_step="recurse",
+                                 recursion=True)
+        rule = css.rule_from_equivence_rule(root.label,
+                                            tuple(c.label
+                                                  for c in root.children))
+        start, ends = rule
+        formal_step = css.ruledb.explanation(start, ends)
+        constructor = css.ruledb.constructor(start, ends)
 
-            eqv_path, explanations = css.equivdb.eqv_path_with_explanation(
-                                                            in_label, start)
-            eqv_comb_classes = [css.classdb.get_class(l) for l in eqv_path]
+        eqv_path, explanations = css.equivdb.eqv_path_with_explanation(
+            in_label, start)
+        eqv_comb_classes = [css.classdb.get_class(l) for l in eqv_path]
 
-            strat_children = []
-            ends = list(ends)
-            for child in root.children:
-                for next_label in ends:
-                    if css.equivdb.equivalent(next_label, child.label):
-                        ends.remove(next_label)
-                        sub_tree = ProofTree.from_comb_spec_searcher_node(
-                                                        child, css, next_label)
-                        strat_children.append(sub_tree)
-                        break
+        strat_children = []
+        ends = list(ends)
+        for child in root.children:
+            for next_label in ends:
+                if css.equivdb.equivalent(next_label, child.label):
+                    ends.remove(next_label)
+                    sub_tree = ProofTree.from_comb_spec_searcher_node(
+                                                    child, css, next_label)
+                    strat_children.append(sub_tree)
+                    break
 
-            if constructor == 'cartesian':
-                # decomposition!
-                return ProofTreeNode(label, eqv_path, eqv_comb_classes,
-                                     explanations, decomposition=True,
-                                     formal_step=formal_step,
-                                     children=strat_children)
-            elif constructor == 'disjoint' or constructor == 'equiv':
-                # batch!
-                return ProofTreeNode(label, eqv_path, eqv_comb_classes,
-                                     explanations, disjoint_union=True,
-                                     formal_step=formal_step,
-                                     children=strat_children)
-            elif constructor == 'other':
-                return ProofTreeNode(label, eqv_path, eqv_comb_classes,
-                                     explanations,
-                                     formal_step=formal_step,
-                                     children=strat_children)
-            else:
-                logger.debug(("Unknown constructor '{}' of type '{}'. "
-                              "Use 'other' instead."
-                              "".format(constructor, type(constructor))),
-                             extra={"processname": "css_to_proof_tree"})
-                raise NotImplementedError("Only handle cartesian and disjoint")
+        if constructor == 'cartesian':
+            # decomposition!
+            return ProofTreeNode(label, eqv_path, eqv_comb_classes,
+                                 explanations, decomposition=True,
+                                 formal_step=formal_step,
+                                 children=strat_children)
+        if constructor in ('disjoint', 'equiv'):
+            # batch!
+            return ProofTreeNode(label, eqv_path, eqv_comb_classes,
+                                 explanations, disjoint_union=True,
+                                 formal_step=formal_step,
+                                 children=strat_children)
+        if constructor == 'other':
+            return ProofTreeNode(label, eqv_path, eqv_comb_classes,
+                                 explanations,
+                                 formal_step=formal_step,
+                                 children=strat_children)
+        logger.debug("Unknown constructor '%s' of type '%s'. "
+                     "Use 'other' instead.", constructor,
+                     type(constructor),
+                     extra={"processname": "css_to_proof_tree"})
+        raise NotImplementedError("Only handle cartesian and disjoint")
 
     def _recursion_setup(self):
         label_to_node = dict()
