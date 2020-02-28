@@ -723,6 +723,7 @@ class ProofTree():
         queue. All classes are assumed to be expandable. The '**kwargs' are
         passed to the 'auto_search' method.
         """
+        # pylint: disable=import-outside-of-top-level
         from .comb_spec_searcher import CombinatorialSpecificationSearcher
         Searcher = kwargs.get('css', CombinatorialSpecificationSearcher)
         root_class = self.root.eqv_path_comb_classes[0]
@@ -735,6 +736,7 @@ class ProofTree():
             css.try_verify(comb_class, label)
             return label
         for node in self.nodes():
+            # pylint: disable=protected-access
             # Add the equivalence implied by the nodes equivalent classes.
             for (idx, c1), c2 in zip(enumerate(
                                             node.eqv_path_comb_classes[:-1]),
