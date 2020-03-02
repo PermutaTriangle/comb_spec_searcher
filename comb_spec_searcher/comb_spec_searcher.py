@@ -910,6 +910,7 @@ class CombinatorialSpecificationSearcher():
         if not 0 < perc <= 100:
             logger.warning(("Percentage not between 0 and 100, so assuming 1%"
                             " search percentage."), extra=self.logger_kwargs)
+            perc = 1
         status_update = kwargs.get('status_update', None)
         max_time = kwargs.get('max_time', None)
         smallest = kwargs.get('smallest', False)
