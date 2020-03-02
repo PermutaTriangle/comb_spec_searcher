@@ -154,7 +154,7 @@ class ClassDB():
         """Return ClassDB for dictionary object."""
         classdb = cls(combinatorial_class)
         for label, info in dict_.items():
-            info = Info.from_dict_(info)
+            info = Info.from_dict(info)
             label = info.label
             comb_class = info.comb_class
             classdb.label_to_info[label] = info
