@@ -128,7 +128,7 @@ def taylor_expand(genf, n=10):
 
 
 def maple_equations(root_func, root_class, eqs):
-    s = "The system of {} equations\n".format(len(eqs))
+    s = "# The system of {} equations\n".format(len(eqs))
     s += "root_func := {}:\n".format(str(root_func)).replace("(x)", "")
     s += "eqs := [\n"
     s += ",\n".join("{} = {}".format(str(eq.lhs), str(eq.rhs))
