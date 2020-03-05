@@ -715,13 +715,14 @@ class ProofTree():
     def expand_tree(self, pack, **kwargs):
         """
         Return a ProofTree that comes from expanding the strategy verified
-        combinatorial classes using the StrategyPack 'pack'.
+        combinatorial classes using the StrategyPack 'pack'. If no tree is
+        found return None.
 
         The function relies on CombinatorialSpecificationSearcher and its
         method 'auto_search'. It first created a universe with rules from
         'self', and then adds strategy_verified objects to the front of the
         queue. All classes are assumed to be expandable. The '**kwargs' are
-        passed to the 'auto_search' method.
+        passed to the 'auto_search' method and the searcher init method.
         """
         # pylint: disable=import-outside-toplevel
         from .comb_spec_searcher import CombinatorialSpecificationSearcher
