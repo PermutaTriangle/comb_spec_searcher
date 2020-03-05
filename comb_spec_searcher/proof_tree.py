@@ -712,6 +712,54 @@ class ProofTree():
         for child in root.children:
             self._recursion_fixer(css, child, in_labels)
 
+    def expand_tree(self, pack, **kwargs):
+        """
+        Return a ProofTree that comes from expanding the strategy verified
+        combinatorial classes using the StrategyPack 'pack'. If no tree is
+        found return None.
+
+        The function relies on CombinatorialSpecificationSearcher and its
+        method 'auto_search'. It first created a universe with rules from
+        'self', and then adds strategy_verified objects to the front of the
+        queue. All classes are assumed to be expandable. The '**kwargs' are
+        passed to the 'auto_search' method and the searcher init method.
+        """
+        # pylint: disable=import-outside-toplevel
+        from .comb_spec_searcher import CombinatorialSpecificationSearcher
+        Searcher = kwargs.get('css', CombinatorialSpecificationSearcher)
+        root_class = self.root.eqv_path_comb_classes[0]
+        css = Searcher(root_class, pack, **kwargs)
+        # Remove the root class from the queue
+        css.classqueue.next()
+        def get_label(comb_class):
+            css.classdb.add(comb_class, expandable=True)
+            label = css.classdb.get_label(comb_class)
+            css.try_verify(comb_class, label)
+            return label
+        for node in self.nodes():
+            # pylint: disable=protected-access
+            # Add the equivalence implied by the nodes equivalent classes.
+            for (idx, c1), c2 in zip(enumerate(
+                                            node.eqv_path_comb_classes[:-1]),
+                                     node.eqv_path_comb_classes[1:]):
+                l1, l2 = get_label(c1), get_label(c2)
+                explanation = node.eqv_explanations[idx]
+                css._add_equivalent_rule(l1, l2, explanation, 'equiv')
+            if node.children:
+                # Add the rule implied by the node to its children.
+                constructor = ('disjoint' if node.disjoint_union
+                               else 'cartesian' if node.decomposition
+                               else 'other')
+                explanation = node.formal_step
+                parent = get_label(node.eqv_path_comb_classes[-1])
+                children = [get_label(child.eqv_path_comb_classes[0])
+                            for child in node.children]
+                css._add_rule(parent, children, explanation, constructor)
+            elif node.strategy_verified:
+                ver_label = get_label(node.eqv_path_comb_classes[-1])
+                css._add_to_queue(ver_label)
+        return css.auto_search(**kwargs)
+
     def non_recursive_in_labels(self, root=None):
         if root is None:
             root = self.root

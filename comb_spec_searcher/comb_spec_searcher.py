@@ -49,6 +49,8 @@ class CombinatorialSpecificationSearcher():
         self.debug = kwargs.get('debug', False)
         if not self.debug:
             logzero.loglevel(logging.INFO, True)
+        else:
+            logzero.loglevel(logging.DEBUG, True)
         self.kwargs = kwargs.get('function_kwargs', dict())
         self.logger_kwargs = kwargs.get('logger_kwargs',
                                         {'processname': 'runner'})
@@ -891,25 +893,40 @@ class CombinatorialSpecificationSearcher():
         start_string += str(self.strategy_pack)
         return start_string
 
-    def auto_search(self, perc=1, status_update=None, max_time=None,
-                    save=False, smallest=False, genf=False):
+    def auto_search(self, **kwargs):
         """
         An automatic search function.
 
-        It will expand classes until perc*(tree search time) has passed and
-        then search for a tree.
+        Classes will be expanded until a proof tree is found. A tree will be
+        searched for approximately 1% of the search time. This can be set using
+        the 'perc' keyword, as some percentage between 0 and 100.
 
-        Information is logged to logger.info. A status update is given when a
-        tree is found and after status_update many seconds have passed.
-        It will also log the proof tree, in json format.
+        The search will continue, unless a proof tree is found. You can set the
+        keyword 'max_time' to stop the search after 'max_time' many seconds.
 
-        If save, it will log a json string of CombSpecSearcher to
-        logger.info.
+        Information is logged to logger.info. It will also log the proof tree,
+        in json format. For periodic status_updates, set the keyword flag
+        'status_update', an update will be given every status_update seconds.
+
+        If 'save' is set to 'True' as a keyword argument, a json string of
+        CombSpecSearcher will be logged to logger.info if 'max_time' is passed.
+
+        If a proof tree is found, and 'genf' is set to 'True' as a keyword
+        argument, then if a proof tree is found, the searcher will call the
+        'ProofTree.get_min_poly()' method, returning this output alongside the
+        proof tree.
+
+        If 'smallest' is set to 'True' then the searcher will return a proof
+        tree that is as small as possible.
         """
+        perc = kwargs.get('perc', 1)
         if not 0 < perc <= 100:
             logger.warning(("Percentage not between 0 and 100, so assuming 1%"
-                         " search percentage."), extra=self.logger_kwargs)
+                            " search percentage."), extra=self.logger_kwargs)
             perc = 1
+        status_update = kwargs.get('status_update', None)
+        max_time = kwargs.get('max_time', None)
+        smallest = kwargs.get('smallest', False)
         if status_update:
             status_start = time.time()
         start_string = "Auto search started {}\n".format(
@@ -946,7 +963,7 @@ class CombinatorialSpecificationSearcher():
                 found_string += self.status()
                 found_string += json.dumps(proof_tree.to_jsonable())
                 logger.info(found_string, extra=self.logger_kwargs)
-                if genf:
+                if kwargs.get('genf', False):
                     min_poly, func = proof_tree.get_min_poly(solve=True)
                     return proof_tree, min_poly, func
                 return proof_tree
@@ -956,7 +973,7 @@ class CombinatorialSpecificationSearcher():
             if max_time is not None:
                 if self._time_taken > max_time:
                     logger.info(self.status(), extra=self.logger_kwargs)
-                    if save:
+                    if kwargs.get('save', False):
                         string = "The universe: \n"
                         string += json.dumps(self.to_dict())
                         logger.info(string, extra=self.logger_kwargs)
