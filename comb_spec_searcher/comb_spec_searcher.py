@@ -69,7 +69,7 @@ class CombinatorialSpecificationSearcher():
         self._has_proof_tree = False
 
         self.strategy_times = defaultdict(float)  # type: Dict[str, float]
-        self.strategy_expansions = defaultdict(float)  # type: Dict[str, float]
+        self.strategy_expansions = defaultdict(int)  # type: Dict[str, int]
         self.symmetry_time = 0
         self.tree_search_time = 0
         self.prep_for_tree_search_time = 0
