@@ -42,17 +42,17 @@ setup(
     ],
     install_requires=[
         'logzero==1.5.0',
-        'sympy==1.4',
-        'psutil==5.6.3'
+        'sympy==1.5.1',
+        'psutil==5.7.0'
     ],
-    setup_requires=['pytest-runner==5.1'],
+    setup_requires=['pytest-runner==5.2'],
     tests_require=[
-        'pytest==5.2.2',
+        'pytest==5.3.5',
         'pytest-cov==2.8.1',
         'pytest-isort==0.3.1',
         'pytest-pep8==1.0.6',
         'pytest-repeat==0.8.0',
-        'docutils==0.15.2',
-        'Pygments==2.4.2'
+        'docutils==0.16',
+        'Pygments==2.6.1'
     ]
 )
