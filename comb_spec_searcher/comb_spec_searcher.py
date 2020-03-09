@@ -539,9 +539,9 @@ class CombinatorialSpecificationSearcher():
         """Return True if a combinatorial class has been expanded by all
         strategies."""
         number_times_expanded = self.classdb.number_times_expanded(label)
-        if number_times_expanded >= len(self.strategy_generators):
-            return True
-        return False
+        return (number_times_expanded >= len(self.strategy_generators) and
+                self.classdb.is_inferral_expanded(label) and
+                self.classdb.is_initial_expanded(label))
 
     def _symmetry_expand(self, comb_class):
         """Add symmetries of combinatorial class to the database."""
