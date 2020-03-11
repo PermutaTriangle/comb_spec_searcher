@@ -1110,7 +1110,7 @@ class CombinatorialSpecificationSearcher():
         rules_dict = prune(rules_dict)
 
         if not self.equivdb[self.start_label] in rules_dict:
-            logger.info("There are no proof trees.", extra=self.logger_kwargs)
+            logger.debug("There are no proof trees.", extra=self.logger_kwargs)
             return
         bound = 1
         # Determine an upper bound on the size of a smallest proof tree.
