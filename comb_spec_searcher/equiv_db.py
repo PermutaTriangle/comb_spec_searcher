@@ -10,7 +10,7 @@ Based on: https://www.ics.uci.edu/~eppstein/PADS/UnionFind.py
 from collections import deque
 
 
-class EquivalenceDB(object):
+class EquivalenceDB():
     """
     A database for equivalences. Supports four methods.
 
@@ -49,14 +49,14 @@ class EquivalenceDB(object):
         }
 
     @classmethod
-    def from_dict(cls, dict):
+    def from_dict(cls, dict_):
         """Return EquivalenceDB object for dictionary object."""
         equivdb = cls()
-        equivdb.parents = {int(x): y for x, y in dict['parents'].items()}
-        equivdb.weights = {int(x): y for x, y in dict['weights'].items()}
+        equivdb.parents = {int(x): y for x, y in dict_['parents'].items()}
+        equivdb.weights = {int(x): y for x, y in dict_['weights'].items()}
         equivdb.explanations = {tuple(x): y
-                                for x, y in dict['explanations']}
-        equivdb.verified_roots = set(dict['verified_roots'])
+                                for x, y in dict_['explanations']}
+        equivdb.verified_roots = set(dict_['verified_roots'])
         return equivdb
 
     def __getitem__(self, comb_class):
@@ -115,43 +115,19 @@ class EquivalenceDB(object):
                 equivalent_classes.add(t)
         return equivalent_classes
 
-    def get_explanation(self, comb_class, other_comb_class, one_step=False):
+    def get_explanation(self, comb_class, other_comb_class):
         """Return how two combinatorial classes are equivalent using
         explanations."""
         if comb_class == other_comb_class:
             return ""
-
-        if one_step:
-            explanation = self.explanations.get((comb_class, other_comb_class))
+        explanation = self.explanations.get((comb_class, other_comb_class))
+        if explanation is None:
+            explanation = self.explanations.get((other_comb_class, comb_class))
             if explanation is None:
-                explanation = self.explanations.get((other_comb_class,
-                                                     comb_class))
-                assert explanation is not None
-                explanation = "The reverse of: " + explanation
-            return explanation
-
-        path = self.find_path(comb_class, other_comb_class)
-        if path:
-            explanation = "| "
-            for i in range(len(path) - 1):
-                for j in range(i+1, len(path)):
-                    t1 = path[i]
-                    t2 = path[j]
-                    key = (t1, t2)
-                    if key in self.explanations:
-                        new_explanation = self.explanations[key]
-                        explanation = explanation + new_explanation + ". | "
-                    key = (self[t2], self[t1])
-                    if key in self.explanations:
-                        new_explanation = self.explanations[key]
-                        new_explanation = "The reverse of: " + new_explanation
-                        explanation = explanation + new_explanation + ". | "
-            return explanation
-        raise KeyError("They are not equivalent.")
-
-    def get_equiv_info(self, comb_class, other_comb_class):
-        path = self.find_path(comb_class, other_comb_class)
-        formal_step = self.get_explanation(comb_class, other_comb_class, path)
+                raise KeyError(("They are not dircectly equivalent. Try "
+                                "eqv_path_with_explanation method."))
+            explanation = "The reverse of: " + explanation
+        return explanation
 
     def find_path(self, comb_class, other_comb_class):
         """
@@ -210,3 +186,9 @@ class EquivalenceDB(object):
             end = neighbour[end]
 
         return path[::-1]
+
+    def eqv_path_with_explanation(self, in_label, out_label, css=None):
+        eqv_path = self.find_path(in_label, out_label)
+        eqv_explanations = [self.get_explanation(x, y)
+                            for x, y in zip(eqv_path[:-1], eqv_path[1:])]
+        return eqv_path, eqv_explanations

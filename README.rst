@@ -382,6 +382,8 @@ of a given length in the class.
    ...     patterns. If just_prefix, then only yield that word."""
    ...     def possible_words():
    ...         """Yield all words of given length over the alphabet with prefix"""
+   ...         if len(self.prefix) > length:
+   ...            return
    ...         for letters in product(self.alphabet,
    ...                                 repeat=length - len(self.prefix)):
    ...             yield self.prefix + "".join(a for a in letters)

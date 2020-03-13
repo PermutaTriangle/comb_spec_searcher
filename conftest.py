@@ -1,5 +1,6 @@
 from docutils.core import publish_doctree
 
+
 def is_python_block(node):
     return (node.tagname == 'literal_block'
             and 'code' in node.attributes['classes']

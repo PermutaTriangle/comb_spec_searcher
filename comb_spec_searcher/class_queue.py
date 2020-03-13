@@ -1,11 +1,10 @@
 """
 A queue of labels.
 """
-import sys
 from collections import deque
 
 
-class ClassQueue(object):
+class ClassQueue():
     """
     The Queue determines the order that classes are expanded.
     """
@@ -28,14 +27,14 @@ class ClassQueue(object):
         }
 
     @classmethod
-    def from_dict(cls, dict):
+    def from_dict(cls, dict_):
         """Return ClassQueue from dictionary object."""
         queue = cls()
-        queue.working = deque(dict['working'])
-        queue.curr_level = deque(dict['curr_level'])
-        queue.next_level = deque(dict['next_level'])
-        queue.levels_completed = dict['levels_completed']
-        queue.ignore = set(dict['ignore'])
+        queue.working = deque(dict_['working'])
+        queue.curr_level = deque(dict_['curr_level'])
+        queue.next_level = deque(dict_['next_level'])
+        queue.levels_completed = dict_['levels_completed']
+        queue.ignore = set(dict_['ignore'])
         return queue
 
     def add_to_working(self, comb_class):
