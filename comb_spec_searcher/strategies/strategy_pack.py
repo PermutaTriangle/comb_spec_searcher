@@ -4,19 +4,19 @@ Base class for strategy packs.
 from ..utils import get_func_name
 
 
-class StrategyPack(object):
+class StrategyPack():
     def __init__(self, initial_strats, inferral_strats, expansion_strats,
                  ver_strats, name, **kwargs):
         if initial_strats is None:
             raise TypeError(("Strategy pack requires a (possibly empty) list "
                              "of equivalence strategies."))
-        elif ver_strats is None:
+        if ver_strats is None:
             raise TypeError(("Strategy pack requires a (possibly empty) list "
                              "of verification strategies."))
-        elif inferral_strats is None:
+        if inferral_strats is None:
             raise TypeError(("Strategy pack requires a (possibly empty) list "
                              "of inferral strategies."))
-        elif expansion_strats is None:
+        if expansion_strats is None:
             raise TypeError(("Strategy pack requires a (possibly empty) list "
                              "of lists of other strategies."))
         self.name = name

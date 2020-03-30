@@ -10,7 +10,7 @@ def read(fname):
 
 setup(
     name="comb_spec_searcher",
-    version="0.4.0",
+    version="0.5.0",
     author="Permuta Triangle",
     author_email="permutatriangle@gmail.com",
     description="A library for performing combinatorial exploration.",
@@ -45,14 +45,4 @@ setup(
         'sympy==1.5.1',
         'psutil==5.7.0'
     ],
-    setup_requires=['pytest-runner==5.2'],
-    tests_require=[
-        'pytest==5.3.5',
-        'pytest-cov==2.8.1',
-        'pytest-isort==0.3.1',
-        'pytest-pep8==1.0.6',
-        'pytest-repeat==0.8.0',
-        'docutils==0.16',
-        'Pygments==2.5.2'
-    ]
 )

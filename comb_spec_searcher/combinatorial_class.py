@@ -1,7 +1,5 @@
 import abc
 
-import sympy.abc
-
 __all__ = ("CombinatorialClass")
 
 
@@ -22,7 +20,6 @@ class CombinatorialClass(abc.ABC):
     @abc.abstractmethod
     def to_jsonable(self):
         """Return JSONable data structure of the class (a dictionary)"""
-        pass
 
     def get_genf(self, *args, **kwargs):
         """Return the generating function for the combinatorial class"""

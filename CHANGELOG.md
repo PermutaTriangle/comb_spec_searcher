@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.5.0] - 2020-03-27
+### Added
+- `ProofTree.expand_tree()` is a method the can be used to expand a proof tree
+  using a strategy pack. This can be used to expand strategy verified
+  combinatorial classes, to give a single tree.
+
+### Changed
+- The `CombinatorialSpecification.auto_seach()` only uses keyword arguments.
+
+### Fixed
+- Fix the `is_expanded` function to check for inferral and initial expansion
+
 ## [0.4.0] - 2020-02-20
 ### Fixed
 - Fix the dict method of Info so that it saves all the attributes.
