@@ -133,8 +133,8 @@ class ClassDB():
     def __contains__(self, key):
         """Check for containment."""
         if isinstance(key, CombinatorialClass):
-            self._compress(key)
-            info = self.class_to_info.get(key)
+            comb_class = self._compress(key)
+            info = self.class_to_info.get(comb_class)
         if isinstance(key, int):
             info = self.label_to_info.get(key)
         return info is not None
