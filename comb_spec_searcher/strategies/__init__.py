@@ -1,5 +1,5 @@
 from .constructor import CartesianProduct, Constructor, DisjointUnion, Empty, Point
-from .rule import (
+from .old_rule import (
     BatchRule,
     BatchStrategy,
     DecompositionRule,
@@ -13,4 +13,5 @@ from .rule import (
     VerificationRule,
     VerificationStrategy,
 )
+from .rule import Rule
 from .strategy_pack import StrategyPack

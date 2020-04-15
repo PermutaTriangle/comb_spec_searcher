@@ -22,9 +22,7 @@ class Constructor(abc.ABC):
 
     @abc.abstractmethod
     def get_recurrence(
-        self,
-        subrecs: Callable[[Any], int],
-        **lhs_parameters: Any
+        self, subrecs: Callable[[Any], int], **lhs_parameters: Any
     ) -> int:
         pass
 

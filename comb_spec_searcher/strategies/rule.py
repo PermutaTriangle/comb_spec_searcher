@@ -4,7 +4,7 @@ from .constructor import Constructor
 import abc
 
 
-__all__ = ("Rule")
+__all__ = "Rule"
 
 
 class Rule(abc.ABC):
@@ -21,7 +21,8 @@ class Rule(abc.ABC):
     TODO:  Many methods from the Strategy should be moved to here, e.g. formal step.
     TODO:  Will need to add flags such as workable, etc.
     """
-    def __call__(self, comb_class: CombinatorialClass) -> 'SpecificRule':
+
+    def __call__(self, comb_class: CombinatorialClass) -> "SpecificRule":
         return SpecificRule(self, comb_class)
 
     def ignore_parent(self) -> bool:
@@ -41,9 +42,7 @@ class Rule(abc.ABC):
         """This is the 'decomposition function'."""
 
     @abc.abstractmethod
-    def constructor(
-        self, comb_class: CombinatorialClass
-    ) -> Constructor:
+    def constructor(self, comb_class: CombinatorialClass) -> Constructor:
         """This is where the details of the 'reliance profile' and 'counting' functions are hidden."""
 
     # TODO: what follows should be optional, for additional features!
@@ -53,7 +52,9 @@ class Rule(abc.ABC):
 
     @abc.abstractmethod
     def backward_map(
-        self, comb_class: CombinatorialClass, *objs: Tuple[Tuple[CombinatorialObject, CombinatorialClass], ...]
+        self,
+        comb_class: CombinatorialClass,
+        *objs: Tuple[Tuple[CombinatorialObject, CombinatorialClass], ...]
     ) -> CombinatorialObject:
         """This method will enable us to generate objects, and sample. """
 
@@ -71,8 +72,10 @@ class SpecificRule:
         self.count_cache = {}
         self.subrecs = None
 
-    def set_subrecs(self, get_subrule: Callable[[CombinatorialClass], 'SpecificRule']):
-        self.subrecs = tuple(get_subrule(child).count_objects_of_size for child in self.children())
+    def set_subrecs(self, get_subrule: Callable[[CombinatorialClass], "SpecificRule"]):
+        self.subrecs = tuple(
+            get_subrule(child).count_objects_of_size for child in self.children()
+        )
 
     def children(self) -> Tuple[CombinatorialClass, ...]:
         return self.rule.children(self.comb_class)
