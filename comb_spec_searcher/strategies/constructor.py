@@ -13,9 +13,6 @@ import abc
 __all__ = ["Constructor", "Cartesian", "DisjointUnion", "Empty", "Point"]
 
 
-# TODO: remove the get_subrule quirk from the constructor class
-
-
 class Constructor(abc.ABC):
     """The constructor is akin to the 'counting function' in the comb exp paper."""
 
@@ -27,7 +24,6 @@ class Constructor(abc.ABC):
     def get_recurrence(
         self,
         subrecs: Callable[[Any], int],
-        get_subrule: Callable,
         **lhs_parameters: Any
     ) -> int:
         pass
@@ -51,7 +47,7 @@ class CartesianProduct(Constructor):
     def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
         return Eq(lhs_func, reduce(mul, rhs_funcs, 1))
 
-    def get_recurrence(self, subrecs: Callable[[Any], int], get_subrule, n: int) -> int:
+    def get_recurrence(self, subrecs: Callable[[Any], int], n: int) -> int:
         atoms = len(self.index_of_atoms)
         subrecs = [rec for i, rec in enumerate(subrecs) if i not in self.index_of_atoms]
         res = 0
@@ -64,7 +60,7 @@ class CartesianProduct(Constructor):
                 continue
             tmp = 1
             for i, rec in enumerate(subrecs):
-                tmp *= rec(get_subrule, n=comp[i])
+                tmp *= rec(n=comp[i])
                 if tmp == 0:
                     break
             res += tmp
@@ -76,16 +72,16 @@ class DisjointUnion(Constructor):
         return Eq(lhs_func, reduce(add, rhs_funcs, 0))
 
     def get_recurrence(
-        self, subrecs: Callable[[Any], int], get_subrule, **lhs_parameters: Any
+        self, subrecs: Callable[[Any], int], **lhs_parameters: Any
     ) -> int:
-        return sum(rec(get_subrule, **lhs_parameters) for rec in subrecs)
+        return sum(rec(**lhs_parameters) for rec in subrecs)
 
 
 class Empty(Constructor):
     def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
         return Eq(lhs_func, 1)
 
-    def get_recurrence(self, subrecs: Callable[[Any], int], get_subrule, n: int) -> Any:
+    def get_recurrence(self, subrecs: Callable[[Any], int], n: int) -> Any:
         if n == 0:
             return 1
         return 0
@@ -95,7 +91,7 @@ class Point(Constructor):
     def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
         return Eq(lhs_func, sympy.abc.x)
 
-    def get_recurrence(self, subrecs: Callable[[Any], int], get_subrule, n: int) -> Any:
+    def get_recurrence(self, subrecs: Callable[[Any], int], n: int) -> Any:
         if n == 1:
             return 1
         return 0
