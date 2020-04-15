@@ -1,8 +1,23 @@
 from .comb_spec_searcher import CombinatorialSpecificationSearcher
 from .combinatorial_class import CombinatorialClass, CombinatorialObject
 from .proof_tree import ProofTree
-from .strategies import (BatchRule, BatchStrategy, DecompositionRule,
-                         DecompositionStrategy, EquivalenceRule,
-                         EquivalenceStrategy, InferralRule, InferralStrategy,
-                         Rule, Strategy, StrategyPack, VerificationRule,
-                         VerificationStrategy)
+from .strategies import (
+    BatchRule,
+    BatchStrategy,
+    CartesianProduct,
+    Constructor,
+    DecompositionRule,
+    DecompositionStrategy,
+    DisjointUnion,
+    Empty,
+    EquivalenceRule,
+    EquivalenceStrategy,
+    InferralRule,
+    InferralStrategy,
+    Rule,
+    Point,
+    Strategy,
+    StrategyPack,
+    VerificationRule,
+    VerificationStrategy,
+)
