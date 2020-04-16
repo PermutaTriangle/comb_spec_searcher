@@ -17,9 +17,6 @@ class Rule(abc.ABC):
     implement sampling, object generation and future projects we've not
     thought of yet. It will also allow us to port over the code from Unnar's
     thesis in a more user-friendly manner.
-
-    TODO:  Many methods from the Strategy should be moved to here, e.g. formal step.
-    TODO:  Will need to add flags such as workable, etc.
     """
 
     def __call__(self, comb_class: CombinatorialClass) -> "SpecificRule":
@@ -45,7 +42,9 @@ class Rule(abc.ABC):
     def constructor(self, comb_class: CombinatorialClass) -> Constructor:
         """This is where the details of the 'reliance profile' and 'counting' functions are hidden."""
 
-    # TODO: what follows should be optional, for additional features!
+    @abc.abstractmethod
+    def formal_step(self) -> str:
+        pass
 
     # The maps that follow are the show the underlying bijections, and need to
     # be implemented for every strategy individually.
@@ -72,6 +71,18 @@ class SpecificRule:
         self.count_cache = {}
         self.subrecs = None
 
+    def ignore_parent(self) -> bool:
+        return self.rule.ignore_parent()
+
+    def inferable(self) -> bool:
+        return self.rule.inferable()
+
+    def possibly_empty(self) -> bool:
+        return self.rule.possibly_empty()
+
+    def workable(self) -> bool:
+        return self.rule.workable()
+
     def set_subrecs(self, get_subrule: Callable[[CombinatorialClass], "SpecificRule"]):
         self.subrecs = tuple(
             get_subrule(child).count_objects_of_size for child in self.children()
@@ -82,6 +93,9 @@ class SpecificRule:
 
     def constructor(self) -> Constructor:
         return self.rule.constructor(self.comb_class)
+
+    def formal_step(self) -> str:
+        return self.rule.formal_step()
 
     def backward_map(
         self, *objs: Tuple[Tuple[CombinatorialObject, CombinatorialClass], ...]
