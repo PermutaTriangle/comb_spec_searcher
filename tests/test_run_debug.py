@@ -1,6 +1,5 @@
-from example import AvoidingWithPrefix, pack
-
 from comb_spec_searcher import CombinatorialSpecificationSearcher
+from example import AvoidingWithPrefix, pack
 
 
 def test_run_with_debug():

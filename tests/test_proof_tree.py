@@ -1,9 +1,9 @@
 import pytest
 import sympy
-from example import AvoidingWithPrefix, pack
 
 from comb_spec_searcher import CombinatorialSpecificationSearcher
 from comb_spec_searcher.utils import taylor_expand
+from example import AvoidingWithPrefix, pack
 
 
 @pytest.fixture
