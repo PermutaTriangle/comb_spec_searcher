@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Iterable, Iterator, Tuple
+from typing import Callable, Dict, Iterable, Iterator, Optional, Tuple
 from .combinatorial_class import CombinatorialClass, CombinatorialObject
 from .constructor import Constructor
 import abc
@@ -39,8 +39,14 @@ class Rule(abc.ABC):
         """This is the 'decomposition function'."""
 
     @abc.abstractmethod
-    def constructor(self, comb_class: CombinatorialClass) -> Constructor:
+    def constructor(
+        self,
+        comb_class: CombinatorialClass,
+        children: Optional[Tuple[CombinatorialClass, ...]] = None,
+    ) -> Constructor:
         """This is where the details of the 'reliance profile' and 'counting' functions are hidden."""
+        if children is None:
+            children = self.children(comb_class)
 
     @abc.abstractmethod
     def formal_step(self) -> str:
@@ -51,15 +57,25 @@ class Rule(abc.ABC):
 
     @abc.abstractmethod
     def backward_map(
-        self, comb_class: CombinatorialClass, objs: Tuple[CombinatorialObject, ...]
+        self,
+        comb_class: CombinatorialClass,
+        objs: Tuple[CombinatorialObject, ...],
+        children: Optional[Tuple[CombinatorialObject, ...]] = None,
     ) -> CombinatorialObject:
         """This method will enable us to generate objects, and sample. """
+        if children is None:
+            children = self.children(comb_class)
 
     @abc.abstractmethod
     def forward_map(
-        self, comb_class: CombinatorialClass, obj: CombinatorialObject
-    ) -> Tuple[Tuple[CombinatorialObject, CombinatorialClass], ...]:
+        self,
+        comb_class: CombinatorialClass,
+        obj: CombinatorialObject,
+        children: Optional[Tuple[CombinatorialObject, ...]] = None,
+    ) -> Tuple[CombinatorialObject, ...]:
         """This function will enable us to have a quick membership test."""
+        if children is None:
+            children = self.children(comb_class)
 
 
 class SpecificRule:
@@ -90,10 +106,12 @@ class SpecificRule:
         )
 
     def children(self) -> Tuple[CombinatorialClass, ...]:
-        return self.rule.children(self.comb_class)
+        if not hasattr(self, "_children"):
+            self._children = self.rule.children(self.comb_class)
+        return self._children
 
     def constructor(self) -> Constructor:
-        return self.rule.constructor(self.comb_class)
+        return self.rule.constructor(self.comb_class, self.children())
 
     def formal_step(self) -> str:
         return self.rule.formal_step()
@@ -101,12 +119,12 @@ class SpecificRule:
     def backward_map(
         self, objs: Tuple[CombinatorialObject, ...]
     ) -> CombinatorialObject:
-        return self.rule.backward_map(self.comb_class, objs)
+        return self.rule.backward_map(self.comb_class, objs, self.children())
 
     def forward_map(
         self, obj: CombinatorialObject
     ) -> Tuple[Tuple[CombinatorialObject, CombinatorialClass], ...]:
-        return self.rule.forward_map(self.comb_class, obj)
+        return self.rule.forward_map(self.comb_class, obj, self.children())
 
     def count_objects_of_size(self, **parameters):
         key = tuple(parameters.items())
