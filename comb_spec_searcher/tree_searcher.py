@@ -9,8 +9,9 @@ from random import choice, shuffle
 __all__ = ("prune", "proof_tree_generator_dfs", "proof_tree_generator_bfs")
 
 
-class Node():
+class Node:
     """A node for a proof tree."""
+
     def __init__(self, n, children=None):
         if children is None:
             children = []
@@ -112,8 +113,7 @@ def iterative_proof_tree_bfs(rules_dict, root):
         rule = sorted(rules_dict[v.label])[0]
         if not rule == ():
             children = [Node(i) for i in rule]
-            queue.extend([child for child in children
-                          if not child.label == root])
+            queue.extend([child for child in children if not child.label == root])
             v.children = children
     return root_node
 
@@ -143,20 +143,21 @@ def proof_tree_generator_bfs(rules_dict, root):
     """A generator for all proof trees using breadth first search.
     N.B. The rules_dict is assumed to be pruned.
     """
+
     def _bfs_helper(root_label, seen):
         if root_label in seen:
             yield Node(root_label)
             return
         next_seen = seen.union((root_label,))
         for rule in rules_dict[root_label]:
-            for children in product(*[_bfs_helper(child_label, next_seen)
-                                      for child_label in rule]):
+            for children in product(
+                *[_bfs_helper(child_label, next_seen) for child_label in rule]
+            ):
                 root_node = Node(root_label)
                 root_node.children = children
                 yield root_node
 
-    rules_dict = {start: tuple(sorted(ends))
-                  for start, ends in rules_dict.items()}
+    rules_dict = {start: tuple(sorted(ends)) for start, ends in rules_dict.items()}
 
     if root in rules_dict:
         yield from _bfs_helper(root, frozenset())
@@ -166,6 +167,7 @@ def proof_tree_generator_dfs(rules_dict, root, maximum=None):
     """A generator for all proof trees using depth first search.
     N.B. The rules_dict is assumed to be pruned.
     """
+
     def _dfs_tree(root_label, seen, maximum=None):
         if maximum is not None and maximum <= 0:
             return
@@ -189,8 +191,7 @@ def proof_tree_generator_dfs(rules_dict, root, maximum=None):
             yield seen, []
         else:
             root, roots = root_labels[0], root_labels[1:]
-            for seen1, tree in _dfs_tree(root, seen,
-                                         maximum - len(root_labels) + 1):
+            for seen1, tree in _dfs_tree(root, seen, maximum - len(root_labels) + 1):
                 length = len(tree)
                 new_maximum = maximum - length if maximum is not None else None
                 for seen2, trees in _dfs_forest(roots, seen1, new_maximum):
@@ -198,8 +199,7 @@ def proof_tree_generator_dfs(rules_dict, root, maximum=None):
                     if actual_length < maximum:
                         yield seen1.union(seen2), [tree] + trees
 
-    rules_dict = {start: tuple(sorted(ends))
-                  for start, ends in rules_dict.items()}
+    rules_dict = {start: tuple(sorted(ends)) for start, ends in rules_dict.items()}
 
     if root in rules_dict:
         for _, tree in _dfs_tree(root, frozenset(), maximum):
