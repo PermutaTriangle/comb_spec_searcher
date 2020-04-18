@@ -18,10 +18,10 @@ class Rule(abc.ABC):
     thought of yet. It will also allow us to port over the code from Unnar's
     thesis in a more user-friendly manner.
     """
-
     def __call__(self, comb_class: CombinatorialClass) -> "SpecificRule":
         return SpecificRule(self, comb_class)
 
+    # TODO: property or not?
     def ignore_parent(self) -> bool:
         return True
 
@@ -51,9 +51,6 @@ class Rule(abc.ABC):
     @abc.abstractmethod
     def formal_step(self) -> str:
         pass
-
-    # The maps that follow are the show the underlying bijections, and need to
-    # be implemented for every strategy individually.
 
     @abc.abstractmethod
     def backward_map(

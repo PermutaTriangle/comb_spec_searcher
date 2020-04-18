@@ -1,3 +1,4 @@
+from .abstract_strategy import Strategy
 from .rule import (
     BatchRule,
     BatchStrategy,
@@ -8,7 +9,6 @@ from .rule import (
     InferralRule,
     InferralStrategy,
     Rule,
-    Strategy,
     VerificationRule,
     VerificationStrategy,
 )
