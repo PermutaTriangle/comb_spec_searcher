@@ -1,6 +1,6 @@
 import abc
 
-__all__ = ("CombinatorialClass")
+__all__ = "CombinatorialClass"
 
 
 class CombinatorialClass(abc.ABC):
@@ -23,60 +23,78 @@ class CombinatorialClass(abc.ABC):
 
     def get_genf(self, *args, **kwargs):
         """Return the generating function for the combinatorial class"""
-        raise NotImplementedError(("If you want to use the 'get_genf' function"
-                                   "for a proof tree then you must implement"
-                                   " 'get_genf' for verified combinatorial "
-                                   "classes."))
+        raise NotImplementedError(
+            (
+                "If you want to use the 'get_genf' function"
+                "for a proof tree then you must implement"
+                " 'get_genf' for verified combinatorial "
+                "classes."
+            )
+        )
 
     def get_min_poly(self, *args, **kwargs):
         """Return the minimum polynomial for the combinatorial class
         in terms of 'F'"""
-        raise NotImplementedError(("If you want to use the 'get_min_poly' "
-                                   "function for a proof tree then you must "
-                                   "implement 'get_genf' for verified "
-                                   "combinatorial classes."))
+        raise NotImplementedError(
+            (
+                "If you want to use the 'get_min_poly' "
+                "function for a proof tree then you must "
+                "implement 'get_genf' for verified "
+                "combinatorial classes."
+            )
+        )
 
     def objects_of_length(self, length):
         """Returns an iterable of combinatorial objects of a given length"""
-        raise NotImplementedError("This function needs to be added to your "
-                                  "combinatorial class in order to use the "
-                                  "debug settings and for initial conditions"
-                                  " for computing the generating function")
+        raise NotImplementedError(
+            "This function needs to be added to your "
+            "combinatorial class in order to use the "
+            "debug settings and for initial conditions"
+            " for computing the generating function"
+        )
 
     def is_epsilon(self):
         """Returns True if the generating function equals 1"""
-        raise NotImplementedError("If you want to use the "
-                                  "'count_objects_of_length' function "
-                                  "for a proof tree then you must implement "
-                                  "'is_epsilon' for your combinatorial class.")
+        raise NotImplementedError(
+            "If you want to use the "
+            "'count_objects_of_length' function "
+            "for a proof tree then you must implement "
+            "'is_epsilon' for your combinatorial class."
+        )
 
     def is_atom(self):
         """Returns True if the generating function equals x"""
-        raise NotImplementedError("If you want to use the "
-                                  "'count_objects_of_length' function "
-                                  "for a proof tree then you must implement "
-                                  "'is_epsilon', 'is_atom' and 'is_positive' "
-                                  "for your combinatorial class.")
+        raise NotImplementedError(
+            "If you want to use the "
+            "'count_objects_of_length' function "
+            "for a proof tree then you must implement "
+            "'is_epsilon', 'is_atom' and 'is_positive' "
+            "for your combinatorial class."
+        )
 
     def is_positive(self):
         """Returns True if the constant term of the generating function is 0"""
-        raise NotImplementedError("If you want to use the "
-                                  "'count_objects_of_length' function "
-                                  "for a proof tree then you must implement "
-                                  "'is_epsilon', 'is_atom' and 'is_positive' "
-                                  "for your combinatorial class.")
+        raise NotImplementedError(
+            "If you want to use the "
+            "'count_objects_of_length' function "
+            "for a proof tree then you must implement "
+            "'is_epsilon', 'is_atom' and 'is_positive' "
+            "for your combinatorial class."
+        )
 
     def from_dict(self):
         """Return combinatorial class from the jsonable object."""
-        raise NotImplementedError("This function is need to reinstantiate a "
-                                  "combinatorial class.")
+        raise NotImplementedError(
+            "This function is need to reinstantiate a " "combinatorial class."
+        )
 
     def from_parts(self, *args, **kwargs):
         """Return the object created from the parts given by a cartesian rule
         applied on the comb_class. This is required for random sampling. The
         formal step will be passed as the kwarg 'formal_step'."""
-        raise NotImplementedError("This function is needed to perform random"
-                                  " sampling.")
+        raise NotImplementedError(
+            "This function is needed to perform random" " sampling."
+        )
 
     def compress(self):
         """Return a compressed version of the class. If you are having memory

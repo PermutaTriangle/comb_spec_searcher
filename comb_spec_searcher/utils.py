@@ -15,9 +15,12 @@ def get_func_name(f, warn=False, logger_kwargs=None):
         f = f.func
         if warn:
             if logger_kwargs is None:
-                logger_kwargs = {'processname': 'utils'}
-            logger.warning("forgetting kwargs given to partial function "
-                           "using strategy %s", f.__name__, extra=logger_kwargs)
+                logger_kwargs = {"processname": "utils"}
+            logger.warning(
+                "forgetting kwargs given to partial function " "using strategy %s",
+                f.__name__,
+                extra=logger_kwargs,
+            )
     return f.__name__
 
 
@@ -27,17 +30,19 @@ def get_module_and_func_names(f, warn=False, logger_kwargs=None):
         f = f.func
         if warn:
             if logger_kwargs is None:
-                logger_kwargs = {'processname': 'utils'}
-            logger.warning("forgetting kwargs given to partial function "
-                           "using strategy %s", f.__name__,
-                           extra=logger_kwargs)
+                logger_kwargs = {"processname": "utils"}
+            logger.warning(
+                "forgetting kwargs given to partial function " "using strategy %s",
+                f.__name__,
+                extra=logger_kwargs,
+            )
     return (f.__module__, f.__name__)
 
 
 def get_func(module_name, func_name, warn=False, logger_kwargs=None):
     """Return the function with given module and function names."""
     if logger_kwargs is None:
-        logger_kwargs = {'processname': 'utils'}
+        logger_kwargs = {"processname": "utils"}
     try:
         module = importlib.import_module(module_name)
         func = getattr(module, func_name)
@@ -45,16 +50,23 @@ def get_func(module_name, func_name, warn=False, logger_kwargs=None):
         return func
     except ModuleNotFoundError:
         if warn:
-            logger.warning("No module named %s", module_name,
-                           extra=logger_kwargs)
+            logger.warning("No module named %s", module_name, extra=logger_kwargs)
     except AttributeError:
         if warn:
-            logger.warning("No function named %s in module %s.", func_name,
-                           module_name, extra=logger_kwargs)
+            logger.warning(
+                "No function named %s in module %s.",
+                func_name,
+                module_name,
+                extra=logger_kwargs,
+            )
     except AssertionError:
         if warn:
-            logger.warning("%s is in module %s is not callable.", func_name,
-                           module_name, extra=logger_kwargs)
+            logger.warning(
+                "%s is in module %s is not callable.",
+                func_name,
+                module_name,
+                extra=logger_kwargs,
+            )
 
 
 def check_poly(min_poly, initial, root_initial=None, root_func=None):
@@ -65,18 +77,17 @@ def check_poly(min_poly, initial, root_initial=None, root_func=None):
     x = sympy.abc.x
     init_poly = 0
     for i, coeff in enumerate(initial):
-        init_poly += coeff * x**i
+        init_poly += coeff * x ** i
     if root_initial is not None:
         root_poly = 0
         for i, coeff in enumerate(root_initial):
-            root_poly += coeff * x**i
+            root_poly += coeff * x ** i
     verification = min_poly.subs({F: init_poly})
     if root_initial is not None:
         verification = verification.subs({root_func: root_poly})
     verification = verification.expand()
     verification = verification.series(x, n=len(initial)).removeO()
-    verification = (verification +
-                    sympy.O(sympy.abc.x**(len(initial) - 1))).removeO()
+    verification = (verification + sympy.O(sympy.abc.x ** (len(initial) - 1))).removeO()
     return verification == 0
 
 
@@ -84,8 +95,9 @@ def check_equation(equation, initial, root_initial=None, root_func=None):
     """Return True if an equation in terms of the generating function F and x
     is satisfied."""
     F = sympy.Symbol("F")
-    solutions = sympy.solve(equation, F, dict=True,
-                            cubics=False, quartics=False, quintics=False)
+    solutions = sympy.solve(
+        equation, F, dict=True, cubics=False, quartics=False, quintics=False
+    )
     for solution in solutions:
         genf = solution[F]
         try:
@@ -101,8 +113,9 @@ def get_solution(equation, initial):
     """Return solution of equation in F and x with the given initial
     conditions."""
     F = sympy.Symbol("F")
-    solutions = sympy.solve(equation, F, dict=True,
-                            cubics=False, quartics=False, quintics=False)
+    solutions = sympy.solve(
+        equation, F, dict=True, cubics=False, quartics=False, quintics=False
+    )
     for solution in solutions:
         genf = solution[F]
         try:
@@ -118,10 +131,10 @@ def taylor_expand(genf, n=10):
         num, den = genf.as_numer_denom()
         num = num.expand()
         den = den.expand()
-        genf = num/den
-        ser = sympy.Poly(genf.series(n=n+1).removeO(), sympy.abc.x)
+        genf = num / den
+        ser = sympy.Poly(genf.series(n=n + 1).removeO(), sympy.abc.x)
         res = ser.all_coeffs()
-        res = res[::-1] + [0]*(n+1-len(res))
+        res = res[::-1] + [0] * (n + 1 - len(res))
     except Exception:
         raise TaylorExpansionError
     return res
@@ -131,11 +144,13 @@ def maple_equations(root_func, root_class, eqs):
     s = "# The system of {} equations\n".format(len(eqs))
     s += "root_func := {}:\n".format(str(root_func)).replace("(x)", "")
     s += "eqs := [\n"
-    s += ",\n".join("{} = {}".format(str(eq.lhs), str(eq.rhs))
-                    for eq in eqs).replace("(x)", "")
+    s += ",\n".join("{} = {}".format(str(eq.lhs), str(eq.rhs)) for eq in eqs).replace(
+        "(x)", ""
+    )
     s += "\n]:\n"
-    s += "count := {}:".format([len(list(root_class.objects_of_length(i)))
-                                for i in range(6)])
+    s += "count := {}:".format(
+        [len(list(root_class.objects_of_length(i))) for i in range(6)]
+    )
     return s
 
 
@@ -167,15 +182,15 @@ def compositions(n, k):
         return
     t = n
     h = 0
-    a = [0]*k
+    a = [0] * k
     a[0] = n
     yield tuple(a)
-    while a[k-1] != n:
+    while a[k - 1] != n:
         if t != 1:
             h = 0
         t = a[h]
         a[h] = 0
-        a[0] = t-1
-        a[h+1] += 1
+        a[0] = t - 1
+        a[h + 1] += 1
         h += 1
         yield tuple(a)
