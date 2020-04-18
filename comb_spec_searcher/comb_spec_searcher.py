@@ -22,7 +22,8 @@ from .class_queue import ClassQueue
 from .equiv_db import EquivalenceDB
 from .proof_tree import ProofTree
 from .rule_db import RuleDB
-from .strategies import Rule, StrategyPack, VerificationRule
+from .strategies import StrategyPack
+from .strategies.rule import Rule
 from .tree_searcher import (
     iterative_proof_tree_finder,
     iterative_prune,

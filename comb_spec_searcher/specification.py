@@ -1,13 +1,14 @@
 from typing import Iterable, Iterator
 from .combinatorial_class import CombinatorialClass, CombinatorialObject
-from .rule import Rule, SpecificRule
+from .strategies import Strategy
+from .strategies.rule import Rule
 
 from sympy import Eq, Function
 import sympy
 
 
 class Specification:
-    def __init__(self, root: CombinatorialClass, rules: Iterable[Rule]):
+    def __init__(self, root: CombinatorialClass, rules: Iterable[Strategy]):
         self.root = root
         self.rules_dict = {}
         self.rules_dict = {comb_class: rule(comb_class) for comb_class, rule in rules}
@@ -16,7 +17,7 @@ class Specification:
             rule.set_subrecs(self.get_rule)
         self.labels = {}
 
-    def get_rule(self, comb_class: CombinatorialClass) -> SpecificRule:
+    def get_rule(self, comb_class: CombinatorialClass) -> Rule:
         return self.rules_dict[comb_class]
 
     @property

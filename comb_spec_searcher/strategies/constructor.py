@@ -5,16 +5,16 @@ from typing import Any, Callable, Iterable, Iterator, Tuple
 
 from sympy import Eq, Function
 
-from .combinatorial_class import CombinatorialClass, CombinatorialObject
-from .utils import compositions
+from ..combinatorial_class import CombinatorialClass, CombinatorialObject
 
 import abc
 
 
-__all__ = ["Constructor", "Cartesian", "DisjointUnion", "Empty", "Point"]
+__all__ = ("Constructor", "CartesianProduct", "DisjointUnion")
 
 
 RelianceProfile = Tuple[Tuple[int, ...], ...]
+
 
 class Constructor(abc.ABC):
     """The constructor is akin to the 'counting function' in the comb exp paper."""
@@ -42,13 +42,17 @@ class Constructor(abc.ABC):
 
 class CartesianProduct(Constructor):
     def __init__(self, children: Iterable[CombinatorialClass]):
-        number_of_positive = sum(1 for comb_class in children if comb_class.is_positive())
+        number_of_positive = sum(
+            1 for comb_class in children if comb_class.is_positive()
+        )
         self._reliance_profile_functions = tuple(
             (lambda n: tuple(range(1, min(2, n - number_of_positive + 2))))
-            if child.is_atom() else (lambda n: tuple(range(1, n - number_of_positive + 2)))
-            if child.is_positive() else (lambda n: tuple(range(0, n - number_of_positive + 1)))
-            for child in children)
-
+            if child.is_atom()
+            else (lambda n: tuple(range(1, n - number_of_positive + 2)))
+            if child.is_positive()
+            else (lambda n: tuple(range(0, n - number_of_positive + 1)))
+            for child in children
+        )
 
     def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
         return Eq(lhs_func, reduce(mul, rhs_funcs, 1))
@@ -62,6 +66,7 @@ class CartesianProduct(Constructor):
         reliance_profile = self.reliance_profile(n)
         if all(reliance_profile):
             minmax = tuple((min(p), max(p)) for p in reliance_profile)
+
             def _helper(n, minmax):
                 if len(minmax) == 1:
                     minval, maxval = minmax[0]
@@ -76,6 +81,7 @@ class CartesianProduct(Constructor):
                 for val in range(minval, maxval + 1):
                     for comp in _helper(n - val, minmax[1:]):
                         yield (val,) + comp
+
             yield from _helper(n, minmax)
 
     def get_recurrence(self, subrecs: Tuple[Callable[[Any], int]], n: int) -> int:
@@ -94,17 +100,12 @@ class CartesianProduct(Constructor):
     ) -> Iterator[Tuple[CombinatorialObject, ...]]:
         for comp in self._valid_compositions(n):
             yield from map(
-                tuple,
-                product(
-                    *tuple(
-                        subgen(n=i) for i, subgen in zip(comp, subgens)
-                    )
-                ),
+                tuple, product(*tuple(subgen(n=i) for i, subgen in zip(comp, subgens))),
             )
 
 
 class DisjointUnion(Constructor):
-    def __init__(self, children: CombinatorialClass):
+    def __init__(self, children: Tuple[CombinatorialClass, ...]):
         self.number_of_children = len(children)
 
     def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
