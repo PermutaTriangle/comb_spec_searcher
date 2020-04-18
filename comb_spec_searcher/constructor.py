@@ -59,12 +59,28 @@ class CartesianProduct(Constructor):
 
     def _valid_compositions(self, n: int):
         # TODO: be smarter!
-        return [comp for comp in product(*self.reliance_profile(n)) if sum(comp) == n]
+        reliance_profile = self.reliance_profile(n)
+        if all(reliance_profile):
+            minmax = tuple((min(p), max(p)) for p in reliance_profile)
+            def _helper(n, minmax):
+                if len(minmax) == 1:
+                    minval, maxval = minmax[0]
+                    if minval <= n <= maxval:
+                        yield (n,)
+                    return
+                still_to_come = sum(x for x, _ in minmax[1:])
+                max_available = sum(y for _, y in minmax[1:])
+                minval, maxval = minmax[0]
+                minval = max(minval, n - max_available)
+                maxval = min(maxval, n - still_to_come)
+                for val in range(minval, maxval + 1):
+                    for comp in _helper(n - val, minmax[1:]):
+                        yield (val,) + comp
+            yield from _helper(n, minmax)
 
     def get_recurrence(self, subrecs: Tuple[Callable[[Any], int]], n: int) -> int:
         res = 0
         for comp in self._valid_compositions(n):
-            print(comp)
             tmp = 1
             for i, rec in enumerate(subrecs):
                 tmp *= rec(n=comp[i])
@@ -74,14 +90,14 @@ class CartesianProduct(Constructor):
         return res
 
     def get_sub_objects(
-        self, subgens: Callable[[int], CombinatorialObject], size: int
+        self, subgens: Callable[[int], CombinatorialObject], n: int
     ) -> Iterator[Tuple[CombinatorialObject, ...]]:
-        for comp in self._valid_compositions(size):
+        for comp in self._valid_compositions(n):
             yield from map(
                 tuple,
                 product(
                     *tuple(
-                        subgen(i) for i, subgen in zip(comp, subgens)
+                        subgen(n=i) for i, subgen in zip(comp, subgens)
                     )
                 ),
             )
@@ -104,7 +120,7 @@ class DisjointUnion(Constructor):
         return sum(rec(**lhs_parameters) for rec in subrecs)
 
     def get_sub_objects(
-        self, subgens: Callable[[int], CombinatorialObject], size: int
+        self, subgens: Callable[[int], CombinatorialObject], n: int
     ) -> Iterator[Tuple[CombinatorialObject, ...]]:
-        for gp in chain.from_iterable(subgen(size) for subgen in subgens):
+        for gp in chain.from_iterable(subgen(n=n) for subgen in subgens):
             yield (gp,)

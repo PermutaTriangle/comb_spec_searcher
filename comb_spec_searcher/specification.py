@@ -46,5 +46,5 @@ class Specification:
         return self.root_rule.count_objects_of_size(n=size)
 
     def generate_objects_of_size(self, size: int) -> Iterator[CombinatorialObject]:
-        for obj in self.root_rule.generate_objects_of_size(size):
+        for obj in self.root_rule.generate_objects_of_size(n=size):
             yield obj

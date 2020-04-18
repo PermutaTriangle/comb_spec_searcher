@@ -80,6 +80,7 @@ class SpecificRule:
         self.comb_class = comb_class
         self.rule = rule
         self.count_cache = {}
+        self.obj_cache = {}
         self.subrecs = None
 
     def ignore_parent(self) -> bool:
@@ -133,7 +134,16 @@ class SpecificRule:
         return res
 
     def generate_objects_of_size(
-        self, size: int
+        self, **parameters
     ) -> Iterator[Tuple[Tuple[CombinatorialObject, CombinatorialClass], ...]]:
-        for subobjs in self.constructor().get_sub_objects(self.subgenerators, size):
-            yield self.backward_map(subobjs)
+        key = tuple(parameters.items())
+        res = self.obj_cache.get(key)
+        if res is not None:
+            yield from res
+            return
+        res = []
+        for subobjs in self.constructor().get_sub_objects(self.subgenerators, **parameters):
+            obj = self.backward_map(subobjs)
+            yield obj
+            res.append(obj)
+        self.obj_cache[key] = tuple(res)
