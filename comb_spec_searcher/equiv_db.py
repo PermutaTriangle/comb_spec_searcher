@@ -10,7 +10,7 @@ Based on: https://www.ics.uci.edu/~eppstein/PADS/UnionFind.py
 from collections import deque
 
 
-class EquivalenceDB():
+class EquivalenceDB:
     """
     A database for equivalences. Supports four methods.
 
@@ -33,30 +33,30 @@ class EquivalenceDB():
 
     def __eq__(self, other):
         """Check if all information stored is the same."""
-        return (self.parents == other.parents and
-                self.weights == other.weights and
-                self.explanations == other.explanations and
-                self.verified_roots == other.verified_roots)
+        return (
+            self.parents == other.parents
+            and self.weights == other.weights
+            and self.explanations == other.explanations
+            and self.verified_roots == other.verified_roots
+        )
 
     def to_dict(self):
         """Return dictionary object of self that is JSON serializable."""
         return {
-            'parents': self.parents,
-            'weights': self.weights,
-            'explanations': [(list(x), y)
-                             for x, y in self.explanations.items()],
-            'verified_roots': list(self.verified_roots),
+            "parents": self.parents,
+            "weights": self.weights,
+            "explanations": [(list(x), y) for x, y in self.explanations.items()],
+            "verified_roots": list(self.verified_roots),
         }
 
     @classmethod
     def from_dict(cls, dict_):
         """Return EquivalenceDB object for dictionary object."""
         equivdb = cls()
-        equivdb.parents = {int(x): y for x, y in dict_['parents'].items()}
-        equivdb.weights = {int(x): y for x, y in dict_['weights'].items()}
-        equivdb.explanations = {tuple(x): y
-                                for x, y in dict_['explanations']}
-        equivdb.verified_roots = set(dict_['verified_roots'])
+        equivdb.parents = {int(x): y for x, y in dict_["parents"].items()}
+        equivdb.weights = {int(x): y for x, y in dict_["weights"].items()}
+        equivdb.explanations = {tuple(x): y for x, y in dict_["explanations"]}
+        equivdb.verified_roots = set(dict_["verified_roots"])
         return equivdb
 
     def __getitem__(self, comb_class):
@@ -124,8 +124,12 @@ class EquivalenceDB():
         if explanation is None:
             explanation = self.explanations.get((other_comb_class, comb_class))
             if explanation is None:
-                raise KeyError(("They are not dircectly equivalent. Try "
-                                "eqv_path_with_explanation method."))
+                raise KeyError(
+                    (
+                        "They are not dircectly equivalent. Try "
+                        "eqv_path_with_explanation method."
+                    )
+                )
             explanation = "The reverse of: " + explanation
         return explanation
 
@@ -189,6 +193,7 @@ class EquivalenceDB():
 
     def eqv_path_with_explanation(self, in_label, out_label, css=None):
         eqv_path = self.find_path(in_label, out_label)
-        eqv_explanations = [self.get_explanation(x, y)
-                            for x, y in zip(eqv_path[:-1], eqv_path[1:])]
+        eqv_explanations = [
+            self.get_explanation(x, y) for x, y in zip(eqv_path[:-1], eqv_path[1:])
+        ]
         return eqv_path, eqv_explanations

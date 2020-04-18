@@ -4,10 +4,11 @@ A queue of labels.
 from collections import deque
 
 
-class ClassQueue():
+class ClassQueue:
     """
     The Queue determines the order that classes are expanded.
     """
+
     def __init__(self):
         """Initialise a ClassQueue."""
         self.working = deque()
@@ -19,22 +20,22 @@ class ClassQueue():
     def to_dict(self):
         """Return dictionary object of self that is JSON serializable."""
         return {
-            'working': list(self.working),
-            'curr_level': list(self.curr_level),
-            'next_level': list(self.next_level),
-            'levels_completed': self.levels_completed,
-            'ignore': list(self.ignore),
+            "working": list(self.working),
+            "curr_level": list(self.curr_level),
+            "next_level": list(self.next_level),
+            "levels_completed": self.levels_completed,
+            "ignore": list(self.ignore),
         }
 
     @classmethod
     def from_dict(cls, dict_):
         """Return ClassQueue from dictionary object."""
         queue = cls()
-        queue.working = deque(dict_['working'])
-        queue.curr_level = deque(dict_['curr_level'])
-        queue.next_level = deque(dict_['next_level'])
-        queue.levels_completed = dict_['levels_completed']
-        queue.ignore = set(dict_['ignore'])
+        queue.working = deque(dict_["working"])
+        queue.curr_level = deque(dict_["curr_level"])
+        queue.next_level = deque(dict_["next_level"])
+        queue.levels_completed = dict_["levels_completed"]
+        queue.ignore = set(dict_["ignore"])
         return queue
 
     def add_to_working(self, comb_class):
