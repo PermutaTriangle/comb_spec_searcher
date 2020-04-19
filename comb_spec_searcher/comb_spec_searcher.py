@@ -65,8 +65,7 @@ class CombinatorialSpecificationSearcher:
         self.kwargs["symmetry"] = bool(strategy_pack.symmetries)
 
         self.classdb = ClassDB(type(start_class))
-        self.equivdb = EquivalenceDB()
-        self.classqueue = ClassQueue()
+        self.classqueue = DefaultQueue(strategy_pack)
         self.ruledb = RuleDB()
 
         self.classdb.add(start_class, expandable=True)
@@ -85,21 +84,6 @@ class CombinatorialSpecificationSearcher:
         self.class_genf = {}  # type: Dict[CombinatorialClass, Any]
 
     @property
-    def initial_strategies(self):
-        """The initial strategies from the strategy pack."""
-        return self.strategy_pack.initial_strats
-
-    @property
-    def strategy_generators(self):
-        """The expansion strategies from the strategy pack."""
-        return self.strategy_pack.expansion_strats
-
-    @property
-    def inferral_strategies(self):
-        """The inferral strategies from the strategy pack."""
-        return self.strategy_pack.inferral_strats
-
-    @property
     def verification_strategies(self):
         """The verification strategies from the strategy pack."""
         return self.strategy_pack.ver_strats
@@ -108,11 +92,6 @@ class CombinatorialSpecificationSearcher:
     def iterative(self):
         """The iterative parameter from the strategy pack."""
         return self.strategy_pack.iterative
-
-    @property
-    def forward_equivalence(self):
-        """The forward equivalence option from the strategy pack."""
-        return self.strategy_pack.forward_equivalence
 
     @property
     def symmetries(self):

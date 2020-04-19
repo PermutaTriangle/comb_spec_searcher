@@ -2,7 +2,7 @@
 A queue of labels.
 """
 from collections import deque
-from typing import Callable, Iterator, List, Tuple, TYPE_CHECKING
+from typing import Iterator, List, Tuple, TYPE_CHECKING
 import abc
 
 
@@ -16,29 +16,9 @@ class CSSQueue(abc.ABC):
     """
 
     def __init__(self, pack: "StrategyPack"):
-        self.strategy_pack = pack
-
-    @property
-    def initial_strategies(self) -> List["StrategyGenerator"]:
-        """The initial strategies from the strategy pack."""
-        return self.strategy_pack.initial_strats
-
-    @property
-    def expansion_strats(self) -> List["StrategyGenerator"]:
-        """The expansion strategies from the strategy pack."""
-        return self.strategy_pack.expansion_strats
-
-    @property
-    def inferral_strategies(self) -> List["StrategyGenerator"]:
-        """The inferral strategies from the strategy pack."""
-        return self.strategy_pack.inferral_strats
-
-    @property
-    def symmetries(
-        self,
-    ) -> List[Callable[["CombinatorialClass"], "CombinatorialClass"]]:
-        """The symmetries functions for the strategy pack."""
-        return self.strategy_pack.symmetries
+        self.inferral_strategies = pack.inferral_strats
+        self.initial_strategies = pack.initial_strats
+        self.expansion_strats = pack.expansion_strats
 
     @abc.abstractmethod
     def add(self, label) -> None:

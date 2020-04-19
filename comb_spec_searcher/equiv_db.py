@@ -28,7 +28,6 @@ class EquivalenceDB:
         """Create a new empty equivalent database."""
         self.parents = {}
         self.weights = {}
-        self.explanations = {}
         self.verified_roots = set()
 
     def __eq__(self, other):
@@ -36,7 +35,6 @@ class EquivalenceDB:
         return (
             self.parents == other.parents
             and self.weights == other.weights
-            and self.explanations == other.explanations
             and self.verified_roots == other.verified_roots
         )
 
@@ -45,7 +43,6 @@ class EquivalenceDB:
         return {
             "parents": self.parents,
             "weights": self.weights,
-            "explanations": [(list(x), y) for x, y in self.explanations.items()],
             "verified_roots": list(self.verified_roots),
         }
 
@@ -55,7 +52,6 @@ class EquivalenceDB:
         equivdb = cls()
         equivdb.parents = {int(x): y for x, y in dict_["parents"].items()}
         equivdb.weights = {int(x): y for x, y in dict_["weights"].items()}
-        equivdb.explanations = {tuple(x): y for x, y in dict_["explanations"]}
         equivdb.verified_roots = set(dict_["verified_roots"])
         return equivdb
 
@@ -79,7 +75,7 @@ class EquivalenceDB:
             self.parents[ancestor] = root
         return root
 
-    def union(self, t1, t2, explanation):
+    def union(self, t1, t2):
         """Find sets containing t1 and t2 and merge them."""
         verified = self.is_verified(t1) or self.is_verified(t2)
         roots = [self[t1], self[t2]]
@@ -88,9 +84,6 @@ class EquivalenceDB:
             if r != heaviest:
                 self.weights[heaviest] += self.weights[r]
                 self.parents[r] = heaviest
-        self.explanations[(t1, t2)] = explanation
-        if (t2, t1) not in self.explanations:
-            self.explanations[(t2, t1)] = "Reverse of: " + explanation
         if verified:
             self.update_verified(t1)
 
@@ -109,29 +102,12 @@ class EquivalenceDB:
         return self[comb_class] in self.verified_roots
 
     def equivalent_set(self, comb_class):
+        """Return all of the classes equivalent to comb_class."""
         equivalent_classes = set()
         for t in self.parents:
             if self.equivalent(comb_class, t):
                 equivalent_classes.add(t)
         return equivalent_classes
-
-    def get_explanation(self, comb_class, other_comb_class):
-        """Return how two combinatorial classes are equivalent using
-        explanations."""
-        if comb_class == other_comb_class:
-            return ""
-        explanation = self.explanations.get((comb_class, other_comb_class))
-        if explanation is None:
-            explanation = self.explanations.get((other_comb_class, comb_class))
-            if explanation is None:
-                raise KeyError(
-                    (
-                        "They are not dircectly equivalent. Try "
-                        "eqv_path_with_explanation method."
-                    )
-                )
-            explanation = "The reverse of: " + explanation
-        return explanation
 
     def find_path(self, comb_class, other_comb_class):
         """
@@ -170,7 +146,7 @@ class EquivalenceDB:
         dequeue.append(start)
         visited = [False for i in range(n)]
         neighbour = [None for i in range(n)]
-        while len(dequeue) > 0:
+        while dequeue:
             u = dequeue.popleft()
             if u == end:
                 break
@@ -190,10 +166,3 @@ class EquivalenceDB:
             end = neighbour[end]
 
         return path[::-1]
-
-    def eqv_path_with_explanation(self, in_label, out_label, css=None):
-        eqv_path = self.find_path(in_label, out_label)
-        eqv_explanations = [
-            self.get_explanation(x, y) for x, y in zip(eqv_path[:-1], eqv_path[1:])
-        ]
-        return eqv_path, eqv_explanations

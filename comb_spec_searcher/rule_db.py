@@ -1,11 +1,11 @@
 """
 A database for rules.
-
-Use to keep track of all batch rules made by strategies. Each rule comes with
-an explanation.
 """
 from collections import defaultdict
-from collections.abc import Iterable
+from typing import Any, Dict, Set, Tuple
+from .equiv_db import EquivalenceDB
+from .strategies.constructor import DisjointUnion
+from .strategies.rule import Rule
 
 
 class RuleDB:
@@ -23,100 +23,75 @@ class RuleDB:
         dictionary. Calling works the same way as explanations.
         """
         self.rules_dict = defaultdict(set)
-        self.explanations = {}
-        self.constructors = {}
+        self.rule_to_strategy = {}
+        self.equivdb = EquivalenceDB()
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Check if all stored information is the same."""
         return (
             self.rules_dict == other.rules_dict
-            and self.explanations == other.explanations
-            and self.constructors == other.constructors
+            and self.rule_to_strategy == other.rule_to_strategy
         )
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         """Return dictionary object of self that is JSON serializable."""
         return {
             "rules_dict": [
                 [x, [list(z) for z in y]] for x, y in self.rules_dict.items()
             ],
-            "explanations": [
-                [x, [[list(y), z] for y, z in d.items()]]
-                for x, d in self.explanations.items()
-            ],
-            "constructors": [
-                [x, [[list(y), z] for y, z in d.items()]]
-                for x, d in self.constructors.items()
+            "rule_to_strategy": [
+                [x, strat.to_dict()] for x, strat in self.rule_to_strategy.items()
             ],
         }
 
     @classmethod
-    def from_dict(cls, dict_):
+    def from_dict(cls, d: Dict[str, Any]):
         """Return RuleDB object from dictionary."""
         ruledb = RuleDB()
         ruledb.rules_dict = defaultdict(
-            set, {x: {tuple(y) for y in z} for x, z in dict_["rules_dict"]}
+            set, {x: {tuple(y) for y in z} for x, z in d["rules_dict"]}
         )
-        ruledb.explanations = {
-            x: {tuple(y): z for y, z in d} for x, d in dict_["explanations"]
-        }
-        ruledb.constructors = {
-            x: {tuple(y): z for y, z in d} for x, d in dict_["constructors"]
+        ruledb.rule_to_strategy = {
+            x: strat.from_dict() for x, strat in d["rule_to_strategy"]
         }
         return ruledb
 
-    def add(self, start, end, explanation, constructor):
+    def add(self, start: int, ends: Tuple[int, ...], rule: Rule):
         """
         Add a rule to the database.
 
         - start is a single integer.
-        - end is a tuple of integers.
-        - explanation is a string which describes the rule (formal step).
+        - ends is a tuple of integers.
+        - rule is a Rule that creates start -> ends.
         """
-        if not isinstance(start, int):
-            raise TypeError("Rule is integer and an iterable of integers.")
-        if not isinstance(end, Iterable):
-            raise TypeError("Rule is integer and an iterable of integers.")
-        if any(not isinstance(x, int) for x in end):
-            raise TypeError("Rule is integer and an iterable of integers.")
-        if not isinstance(explanation, str):
-            raise TypeError("A rule requires a string for an explanation.")
-        if not isinstance(constructor, str):
-            raise TypeError("A rule requires a string for a constructor.")
-        end = tuple(sorted(end))
-        self.rules_dict[start] |= set((end,))
-        if start in self.explanations:
-            self.explanations[start][end] = explanation
-        else:
-            self.explanations[start] = {end: explanation}
-        if start in self.constructors:
-            self.constructors[start][end] = constructor
-        else:
-            self.constructors[start] = {end: constructor}
+        ends = tuple(sorted(ends))
+        self.rules_dict[start].add(tuple(sorted(ends)))
+        self.rule_to_strategy[(start, ends)] = Rule.strategy
+        if not ends:  # size 0, so verification rule
+            self.set_verified(start)
+        elif len(ends) == 1 and isinstance(Rule.constructor, DisjointUnion):
+            self.set_equivalent(start, ends[0])
 
-    def remove(self, start, end):
-        """Remove rule from database."""
-        if not isinstance(start, int):
-            raise TypeError("Rule is integer and an iterable of integers.")
-        if not isinstance(end, Iterable):
-            raise TypeError("Rule is integer and an iterable of integers.")
-        if any(not isinstance(x, int) for x in end):
-            raise TypeError("Rule is integer and an iterable of integers.")
-        if start in self.explanations:
-            if end in self.explanations[start]:
-                self.explanations[start].pop(end)
-                if not self.explanations[start]:
-                    self.explanations.pop(start)
-        if start in self.constructors:
-            if end in self.constructors[start]:
-                self.constructors[start].pop(end)
-                if not self.constructors[start]:
-                    self.constructors.pop(start)
-        if start in self.rules_dict:
-            if end in self.rules_dict[start]:
-                self.rules_dict[start].remove(end)
-                if not self.rules_dict[start]:
-                    self.rules_dict.pop(start)
+    def is_verified(self, label):
+        """Return True if label has been verified."""
+        return self.equivdb.is_verified(label)
+
+    def set_verified(self, label):
+        """Mark label as verified."""
+        self.equivdb.set_verified(label)
+
+    def set_equivalent(self, label, other):
+        """Mark label and other as equivalent."""
+        self.equivdb.union(label, other)
+
+    def rules_up_to_equivalence(self) -> Dict[int, Set[Tuple[int, ...]]]:
+        """Return a defaultdict containing all rules up to the equivalence."""
+        rules_dict = defaultdict(set)
+        for start, ends in self.rules_dict.items():
+            rules_dict[self.equivdb[start]].add(
+                tuple(sorted(self.equivdb[e] for e in ends))
+            )
+        return rules_dict
 
     def __iter__(self):
         """Iterate through rules as the pairs (start, end)."""
@@ -124,21 +99,7 @@ class RuleDB:
             for end in ends:
                 yield start, end
 
-    def explanation(self, start, end):
-        """Return the explanation of the rule start -> end."""
-        end = tuple(sorted(end))
-        if start not in self.explanations or end not in self.explanations[start]:
-            raise KeyError("No such rule.")
-        return self.explanations[start][end]
-
-    def constructor(self, start, end):
-        """Return the constructor of the rule start -> end."""
-        end = tuple(sorted(end))
-        if start not in self.constructors or end not in self.constructors[start]:
-            raise KeyError("No such rule.")
-        return self.constructors[start][end]
-
-    def contains(self, start, end):
-        """Return true if the rule start -> end is in the database."""
-        end = tuple(sorted(end))
-        return start in self.rules_dict and end in self.rules_dict[start]
+    def contains(self, start, ends):
+        """Return true if the rule start -> ends is in the database."""
+        ends = tuple(sorted(ends))
+        return start in self.rules_dict and ends in self.rules_dict[start]
