@@ -80,6 +80,10 @@ class RuleDB:
         """Mark label as verified."""
         self.equivdb.set_verified(label)
 
+    def are_equivalent(self, label, other):
+        """Return true if label and other are equivalent."""
+        return self.equivdb.equivalent(label, other)
+
     def set_equivalent(self, label, other):
         """Mark label and other as equivalent."""
         self.equivdb.union(label, other)

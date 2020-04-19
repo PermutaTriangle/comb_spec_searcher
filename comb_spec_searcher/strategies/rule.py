@@ -22,15 +22,19 @@ class Rule:
         self.subrecs = None
         self._children = children
 
+    @property
     def ignore_parent(self) -> bool:
         return self.strategy.ignore_parent()
 
+    @property
     def inferable(self) -> bool:
         return self.strategy.inferable()
 
+    @property
     def possibly_empty(self) -> bool:
         return self.strategy.possibly_empty()
 
+    @property
     def workable(self) -> bool:
         return self.strategy.workable()
 
@@ -42,14 +46,17 @@ class Rule:
             get_subrule(child).generate_objects_of_size for child in self.children()
         )
 
+    @property
     def children(self) -> Tuple[CombinatorialClass, ...]:
         if self._children is None:
             self._children = self.strategy.decomposition_function(self.comb_class)
         return self._children
 
+    @property
     def constructor(self) -> Constructor:
         return self.strategy.constructor(self.comb_class, self.children())
 
+    @property
     def formal_step(self) -> str:
         return self.strategy.formal_step()
 

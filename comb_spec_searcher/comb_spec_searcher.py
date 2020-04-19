@@ -68,7 +68,7 @@ class CombinatorialSpecificationSearcher:
         self.classqueue = DefaultQueue(strategy_pack)
         self.ruledb = RuleDB()
 
-        self.classdb.add(start_class, expandable=True)
+        self.classdb.add(start_class)
         self.start_label = self.classdb.get_label(start_class)
         self.classqueue.add_to_working(self.start_label)
 
@@ -135,7 +135,6 @@ class CombinatorialSpecificationSearcher:
             "forward_equivalence": self.forward_equivalence,
             "symmetries": self.symmetries,
             "classdb": self.classdb.to_dict(),
-            "equivdb": self.equivdb.to_dict(),
             "classqueue": self.classqueue.to_dict(),
             "ruledb": self.ruledb.to_dict(),
             "start_label": self.start_label,
@@ -190,7 +189,6 @@ class CombinatorialSpecificationSearcher:
         c = combinatorial_class.decompress(b)
         css = cls(c, strategy_pack, **kwargs)
         css.classdb = ClassDB.from_dict(dict_["classdb"], combinatorial_class)
-        css.equivdb = EquivalenceDB.from_dict(dict_["equivdb"])
         css.classqueue = DefaultQueue.from_dict(dict_["classqueue"])
         css.ruledb = RuleDB.from_dict(dict_["ruledb"])
         css.start_label = dict_["start_label"]
@@ -229,13 +227,8 @@ class CombinatorialSpecificationSearcher:
                 start = time.time()
                 rule = ver_strategy(comb_class, **self.kwargs)
                 self.update_status(ver_strategy, time.time() - start)
-                if rule is not None:
-                    if not isinstance(rule, VerificationRule):
-                        raise TypeError(
-                            ("Attempting to verify with non " "VerificationRule.")
-                        )
-                    formal_step = rule.formal_step
-                    self.classdb.set_verified(label, explanation=formal_step)
+                if rule is not None and rule.children == tuple():
+                    self.ruledb.add(label, tuple(), rule)
                     self.classdb.set_strategy_verified(label)
                     self.equivdb.update_verified(label)
                     return
@@ -245,15 +238,9 @@ class CombinatorialSpecificationSearcher:
         """Return True if a combinatorial class contains no objects, False
         otherwise."""
         start = time.time()
-        if self.classdb.is_empty(label) is None:
-            if comb_class.is_empty():
-                self._add_empty_rule(label)
-                assert self.classdb.is_empty(label)
-            else:
-                self.classdb.set_empty(label, empty=False)
-                assert not self.classdb.is_empty(label)
-            self.update_status(self.is_empty, time.time() - start)
-        return self.classdb.is_empty(label)
+        empty = self.classdb.is_empty(comb_class, label)
+        self.update_status(self.is_empty, time.time() - start)
+        return empty
 
     def _symmetric_classes(self, comb_class, explanation=False):
         """Return all symmetries of a combinatorial class.
@@ -275,69 +262,46 @@ class CombinatorialSpecificationSearcher:
                         symmetric_class.append(symmetric_class)
         return symmetric_classes
 
-    def expand(self, label):
+    def _expand(self, label, strategies, inferral: bool):
         """
-        Will expand the combinatorial class with given label.
-
-        The first time function called with label, it will expand with the
-        inferral strategies. The second time with the initial strategies.  The
-        third time the first set of other strategies, fourth time the second
-        set etc.
+        Will expand the combinatorial class with given label using the given
+        strategies.
         """
         start = time.time()
         comb_class = self.classdb.get_class(label)
         self.queue_time += time.time() - start
-
-        if self.classdb.is_inferrable(label) and not self.classdb.is_inferral_expanded(
-            label
-        ):
-            logger.debug("Inferring label %s", label, extra=self.logger_kwargs)
-            self._inferral_expand(comb_class, label)
-            self.classqueue.add_to_working(label)
-        elif self.classdb.is_expandable(label):
-            if not self.classdb.is_initial_expanded(label):
-                logger.debug(
-                    "Initial expanding label %s", label, extra=self.logger_kwargs
-                )
-                self._initial_expand(comb_class, label)
-                self.classqueue.add_to_next(label)
-            else:
-                expanding = self.classdb.number_times_expanded(label)
-                logger.debug("Expanding label %s", label, extra=self.logger_kwargs)
-                strategies = self.strategy_generators[expanding]
-                for strategy_generator in strategies:
-                    # function returns time it took.
-                    self._expand_class_with_strategy(
-                        comb_class, strategy_generator, label
-                    )
-
-                if not self.is_expanded(label):
-                    self.classdb.increment_expanded(label)
-                    if not self.is_expanded(label):
-                        self.classqueue.add_to_curr(label)
+        if inferral:
+            self._inferral_expand(comb_class, label, strategies)
+        else:
+            for strategy_generator in strategies:
+                self._expand_class_with_strategy(comb_class, label, strategy_generator)
 
     def _expand_class_with_strategy(
-        self, comb_class, strategy_function, label, initial=False, inferral=False
+        self, comb_class, strategy_generator, label=None, initial=False, inferral=False
     ):
         """
         Will expand the class with given strategy. Return time taken.
 
         If 'inferral' will return time also return inferred class and label.
         """
+        if label is None:
+            self.classdb.get_label(comb_class)
         start = time.time()
+        strategy_generator = strategy_generator(comb_class, **self.kwargs)
+        if isinstance(strategy_generator, Rule):
+            strategy_generator = (
+                [] if strategy_generator.children is None else [strategy_generator]
+            )
         if inferral:
-            strat = strategy_function(comb_class, **self.kwargs)
             inf_class = None
             inf_label = None
-            strategy_generator = [] if strat is None else [strat]
-        else:
-            strategy_generator = strategy_function(comb_class, **self.kwargs)
+
         for rule in strategy_generator:
             if not isinstance(rule, Rule):
                 raise TypeError("Attempting to add non Rule type.")
-            if inferral and len(rule.comb_classes) != 1:
+            if inferral and len(rule.children) != 1:
                 raise TypeError(("Attempting to infer with non " "inferral strategy."))
-            if inferral and comb_class == rule.comb_classes[0]:
+            if inferral and comb_class == rule.children[0]:
                 logger.debug(
                     "The inferral strategy %s returned the same "
                     "combinatorial class when applied to %r",
@@ -353,127 +317,41 @@ class CombinatorialSpecificationSearcher:
                 "Adding combinatorial rule %s -> %s with constructor" " '%s'",
                 label,
                 tuple(labels),
-                rule.constructor,
+                rule.constructor(),
                 extra=self.logger_kwargs,
             )
 
-            if any(self.equivdb[label] == self.equivdb[l] for l in labels):
+            if any(self.ruledb.are_equivalent(label, l) for l in labels):
                 # This says comb_class = comb_class, so we skip it, but mark
                 # every other class as empty.
                 for l in labels:
-                    if self.equivdb[label] != self.equivdb[l]:
+                    if not self.ruledb.are_equivalent(label, l):
                         self._add_empty_rule(l)
                 if self.debug:
-                    for l, c in zip(labels, rule.comb_classes):
-                        if self.equivdb[label] != self.equivdb[l]:
+                    for l, c in zip(labels, rule.children):
+                        if not self.ruledb.are_equivalent(label, l):
                             assert c.is_empty()
 
             start -= time.time()
-            end_labels, classes, formal_step = self._rule_cleanup(rule, labels)
+            end_labels, classes = self._rule_cleanup(rule, labels)
             start += time.time()
 
             if rule.ignore_parent:
-                if all(self.classdb.is_expandable(x) for x in end_labels):
-                    self.classdb.set_expanding_children_only(label)
+                self.classqueue.set_stop_yielding(label)
 
             if not end_labels:
                 # all the classes are empty so the class itself must be empty!
                 self._add_empty_rule(label, "batch empty")
                 break
-            if len(end_labels) == 1:
-                # If we have an equivalent rule
-                self._add_equivalent_rule(
-                    label, end_labels[0], formal_step, rule.constructor
-                )
-                if inferral:
-                    inf_class = classes[0]
-                    inf_label = end_labels[0]
-            else:
-                constructor = rule.constructor
-                self._add_rule(label, end_labels, formal_step, constructor)
+            self.ruledb.add(label, end_labels, rule)
 
             for end_label in end_labels:
-                self._add_to_queue(end_label, initial, inferral)
+                self.classqueue.add(end_label)
 
-        self.update_status(strategy_function, time.time() - start)
+        self.update_status(strategy_generator, time.time() - start)
 
         if inferral:
             return inf_class, inf_label
-
-    def _add_equivalent_rule(self, start, end, explanation, constructor):
-        """Add equivalent rule to equivdb and equivalent combinatorial
-        class to queue"""
-        if explanation is None:
-            explanation = "They are equivalent."
-        if start == end:
-            logger.debug(
-                (
-                    "Skipping adding equivalent rule with identical"
-                    " combinatorial classes."
-                ),
-                extra=self.logger_kwargs,
-            )
-            return
-        if self.debug:
-            try:
-                self._sanity_check_rule(start, [end], "equiv")
-            except AssertionError:
-                error = (
-                    "Equivalent rule did not work\n"
-                    + repr(self.classdb.get_class(start))
-                    + "\n"
-                    + "is not equivalent to"
-                    + "\n"
-                    + repr(self.classdb.get_class(end))
-                    + "\n"
-                    + "formal step:"
-                    + explanation
-                )
-                logger.debug(error, extra=self.logger_kwargs)
-        if self.forward_equivalence or constructor not in (
-            "equiv",
-            "disjoint",
-            "cartesian",
-        ):
-            reverse_rule = end, (start,)
-            if self.ruledb.contains(*reverse_rule):
-                raise ValueError(
-                    ("Same equivalent rule found forward and " "backwards.")
-                )
-            self._add_rule(start, [end], explanation, constructor)
-        else:
-            self.equivdb.union(start, end, explanation)
-
-    def _add_rule(self, start, ends, explanation=None, constructor=None):
-        """Add rule to the rule database and end labels to queue."""
-        if explanation is None:
-            explanation = "Some rule."
-        if constructor is None:
-            logger.debug("Assuming constructor is disjoint.", extra=self.logger_kwargs)
-            constructor = "disjoint"
-        if self.debug:
-            try:
-                self._sanity_check_rule(start, ends, constructor)
-            except AssertionError:
-                error = (
-                    "Expansion rule did not work\n"
-                    + repr(self.classdb.get_class(start))
-                    + "\n"
-                    + "is equivalent to"
-                    + "\n"
-                    + repr([self.classdb.get_class(e) for e in ends])
-                    + "\nformal step:"
-                    + explanation
-                )
-                logger.debug(error, extra=self.logger_kwargs)
-        self.ruledb.add(start, ends, explanation, constructor)
-
-    def _add_to_queue(self, label, initial=False, inferral=False):
-        """Add a label back onto the queue."""
-        if inferral or not initial:
-            self.classqueue.add_to_working(label)
-        else:
-            self.classqueue.add_to_next(label)
 
     def _add_empty_rule(self, label, explanation=None):
         """Mark label as empty. Treated as verified as can count empty set."""
@@ -516,7 +394,7 @@ class CombinatorialSpecificationSearcher:
                     total += subtotal
                 assert total == start_count[i]
 
-    def _rule_cleanup(self, rule, labels):
+    def _rule_cleanup(self, rule: Rule, labels: Tuple[int, ...]):
         """
         Return the cleaned rules labels, classes and updated formal step.
 
@@ -529,31 +407,27 @@ class CombinatorialSpecificationSearcher:
         end_labels = []
         end_classes = []
         inferral_steps = []
-        for comb_class, infer, pos_empty, work, label in zip(
-            rule.comb_classes,
-            rule.inferable,
-            rule.possibly_empty,
-            rule.workable,
-            labels,
-        ):
+        for comb_class, label in zip(rule.children, labels,):
             inferral_step = ""
             if self.symmetries:
                 self._symmetry_expand(comb_class)
 
-            if infer:
-                self.classdb.set_inferrable(label)
-            if work:
-                self.classdb.set_expandable(label)
-            if infer or work:
-                self.classqueue.add_to_working(label)
+            if rule.workable:
+                self.classqueue.set_workable(label)
+            if rule.inferrable or rule.workable:
+                self.classqueue.add(label)
 
             # Only applying is_empty check to inferrable comb classes that are
             # possibly empty.
-            if infer and pos_empty and self.is_empty(comb_class, label):
+            if (
+                rule.inferrable
+                and rule.possibly_empty
+                and self.is_empty(comb_class, label)
+            ):
                 logger.debug("Label %s is empty.", label, extra=self.logger_kwargs)
                 inferral_steps.append(inferral_step + "Class is empty.")
                 continue
-            if not pos_empty:
+            if not possibly_empty:
                 self.classdb.set_empty(label, empty=False)
 
             self.try_verify(comb_class, label)
@@ -569,16 +443,6 @@ class CombinatorialSpecificationSearcher:
         formal_step = rule.formal_step + inferral_step
 
         return end_labels, end_classes, formal_step
-
-    def is_expanded(self, label):
-        """Return True if a combinatorial class has been expanded by all
-        strategies."""
-        number_times_expanded = self.classdb.number_times_expanded(label)
-        return (
-            number_times_expanded >= len(self.strategy_generators)
-            and self.classdb.is_inferral_expanded(label)
-            and self.classdb.is_initial_expanded(label)
-        )
 
     def _symmetry_expand(self, comb_class):
         """Add symmetries of combinatorial class to the database."""
@@ -597,9 +461,7 @@ class CombinatorialSpecificationSearcher:
                 )
         self.symmetry_time += time.time() - start
 
-    def _inferral_expand(
-        self, comb_class, label, inferral_strategies=None, skip=None, start_index=None
-    ):
+    def _inferral_expand(self, comb_class, label, inferral_strategies, skip=None):
         """
         Inferral expand combinatorial class with given label and inferral
         strategies.
@@ -609,18 +471,14 @@ class CombinatorialSpecificationSearcher:
         """
         if self.debug:
             assert comb_class == self.classdb.get_class(label)
-        if self.classdb.is_inferral_expanded(label):
-            return
-        if inferral_strategies is None:
-            inferral_strategies = self.inferral_strategies
         for i, strategy_generator in enumerate(inferral_strategies):
             if strategy_generator == skip:
                 continue
             inf_class, inf_label = self._expand_class_with_strategy(
-                comb_class, strategy_generator, label, inferral=True
+                comb_class, label, strategy_generator, inferral=True
             )
             if inf_class is not None:
-                self.classdb.set_inferral_expanded(label)
+                self.classqueue.set_not_inferrable(label)
                 inferral_strategies = (
                     inferral_strategies[i + 1 :] + inferral_strategies[0 : i + 1]
                 )
@@ -628,31 +486,7 @@ class CombinatorialSpecificationSearcher:
                     inf_class, inf_label, inferral_strategies, skip=strategy_generator
                 )
                 break
-        self.classdb.set_inferral_expanded(label)
-
-    def _initial_expand(self, comb_class, label):
-        """
-        Expand comb_class with given label using initial strategies.
-
-        It will apply all of the initial strategies.
-        """
-        if self.debug:
-            if comb_class != self.classdb.get_class(label):
-                raise ValueError("comb_class and label should match")
-        for strategy_generator in self.initial_strategies:
-            if (
-                not self.classdb.is_expandable(label)
-                or self.classdb.is_initial_expanded(label)
-                or self.classdb.is_expanding_other_sym(label)
-                or self.classdb.is_expanding_children_only(label)
-            ):
-                break
-            self._expand_class_with_strategy(
-                comb_class, strategy_generator, label, initial=True
-            )
-
-        self.classdb.set_initial_expanded(label)
-        self.classqueue.ignore.add(label)
+        self.classqueue.set_not_inferrable(label)
 
     def get_equations(self, **kwargs):
         """
@@ -785,19 +619,9 @@ class CombinatorialSpecificationSearcher:
         found added to next."""
         start = time.time()
         queue_start = time.time()
-        for label in self.classqueue.do_level():
-            if label is None:
-                return True
-            if (
-                self.is_expanded(label)
-                or self.equivdb.is_verified(label)
-                or self.classdb.is_expanding_children_only(label)
-                or not self.classdb.is_expandable(label)
-                or self.classdb.is_expanding_other_sym(label)
-            ):
-                continue
+        for label, strategies, inferral in self.classqueue.do_level():
             queue_start -= time.time()
-            self.expand(label)
+            self._expand(label, strategies, inferral)
             queue_start += time.time()
         self.queue_time += time.time() - queue_start
         self._time_taken += time.time() - start
@@ -805,25 +629,12 @@ class CombinatorialSpecificationSearcher:
     def expand_classes(self, total):
         """Will send 'total' many classes to the expand function."""
         start = time.time()
-        queue_start = time.time()
         count = 0
         while count < total:
+            queue_start = time.time()
             label = self.classqueue.next()
-            if label is None:
-                return True
-            if (
-                self.is_expanded(label)
-                or self.equivdb.is_verified(label)
-                or self.classdb.is_expanding_children_only(label)
-                or not self.classdb.is_expandable(label)
-                or self.classdb.is_expanding_other_sym(label)
-            ):
-                continue
+            self.queue_time += time.time() - queue_start
             count += 1
-            queue_start -= time.time()
-            self.expand(label)
-            queue_start += time.time()
-        self.queue_time += time.time() - queue_start
         self._time_taken += time.time() - start
 
     def status(self):

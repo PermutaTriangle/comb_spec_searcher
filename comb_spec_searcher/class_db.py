@@ -19,6 +19,7 @@ class Info:
         """Initialise information."""
         self.comb_class = comb_class
         self.label = label
+        self.strategy_verified = kwargs.get("strategy_verified", None)
         self.symmetry_expanded = kwargs.get("symmetry_expanded", False)
         self.empty = kwargs.get("empty", None)
 
@@ -28,6 +29,7 @@ class Info:
             return {
                 "comb_class": b64encode(self.comb_class).decode(),
                 "label": self.label,
+                "strategy_verified": self.strategy_verified,
                 "symmetry_expanded": self.symmetry_expanded,
                 "empty": self.empty,
             }
@@ -47,6 +49,7 @@ class Info:
             comb_class=b64decode(dict_["comb_class"].encode()),
             label=int(dict_["label"]),
             symmetry_expanded=dict_.get("symmetry_expanded", False),
+            strategy_verified=dict_.get("strategy_verified", None),
             empty=dict_.get("empty", None),
         )
 
@@ -57,6 +60,7 @@ class Info:
             and self.label == self.label
             and self.symmetry_expanded == other.symmetry_expanded
             and self.empty == self.empty
+            and self.strategy_verified == self.strategy_verified
         )
 
 
@@ -204,22 +208,36 @@ class ClassDB:
         info = self._get_info(key)
         return info.label
 
-    def is_empty(self, comb_class):
+    def is_empty(self, comb_class, label=None):
         """Return True if combinatorial class is empty set, False if not.
         Return None if status not set."""
-        info = self._get_info(comb_class)
+        if label is None:
+            info = self._get_info(comb_class)
+            label = info.label
+        else:
+            info = self._get_info(label)
         empty = info.empty
         if empty is None:
             if not isinstance(comb_class, CombinatorialClass):
                 comb_class = self.get_class(comb_class)
             empty = comb_class.is_empty()
-            self.set_empty(info.label)
+            self.set_empty(label)
         return empty
 
     def set_empty(self, key, empty=True):
         """Update database about comb class being empty."""
         info = self._get_info(key)
         info.empty = empty or bool(info.empty)
+
+    def is_strategy_verified(self, key):
+        """Return True if combinatorial class verified by a strategy.
+        Returns None if never updated."""
+        return self._get_info(key).strategy_verified
+
+    def set_strategy_verified(self, key, strategy_verified=True):
+        """Update database combinatorial class is verified by a strategy."""
+        info = self._get_info(key)
+        info.strategy_verified = strategy_verified or bool(info.strategy_verified)
 
     def is_symmetry_expanded(self, key):
         """Return True if combinatorial class was expanded by symmetries."""

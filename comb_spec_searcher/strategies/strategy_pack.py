@@ -14,9 +14,9 @@ class StrategyPack:
     def __init__(
         self,
         initial_strats: List[StrategyGenerator],
-        inferral_strats: List[StrategyGenerator],
+        inferral_strats: List[Strategy],
         expansion_strats: List[List[StrategyGenerator]],
-        ver_strats: List[StrategyGenerator],
+        ver_strats: List[Strategy],
         name: str,
         **kwargs
     ):

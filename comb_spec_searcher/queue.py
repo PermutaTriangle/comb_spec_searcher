@@ -29,6 +29,10 @@ class CSSQueue(abc.ABC):
         """You should avoid yielding label with an inferral strategy in future."""
 
     @abc.abstractmethod
+    def set_workable(self, label) -> None:
+        """Only yield classes that are set to workable."""
+
+    @abc.abstractmethod
     def set_verified(self, label) -> None:
         """Label was verified, how should the queue react?"""
 
@@ -77,6 +81,7 @@ class DefaultQueue(CSSQueue):
         self.initial_expandable = set()
         self.inferral_expandable = set()
         self.expansion_expanded = [set() for _ in range(len(self.strategy_generators))]
+        self.workable = set()  # only yield workable elements
         self.ignore = set()  # never try expand
         self.inferral_ignore = set()  # never try inferral expand
         self.levels_completed = 0
@@ -90,6 +95,9 @@ class DefaultQueue(CSSQueue):
 
     def set_verified(self, label) -> None:
         self.set_stop_yielding(label)
+
+    def set_workable(self, label) -> None:
+        self.workable.add(label)
 
     def set_not_inferrable(self, label: int) -> None:
         if label not in self.ignore():
@@ -106,18 +114,31 @@ class DefaultQueue(CSSQueue):
         for s in self.expansion_expanded:
             s.remove(label)
         self.inferral_ignore.remove(label)
+        self.workable.remove(label)
 
     def can_do_inferral(self, label: int) -> bool:
         """Return true if inferral strategies can be applied."""
-        return label not in self.ignore and label not in self.inferral_ignore
+        return (
+            label not in self.ignore
+            and label not in self.inferral_ignore
+            and label in self.workable
+        )
 
     def can_do_initial(self, label: int) -> bool:
         """Return true if initial strategies can be applied."""
-        return label not in self.ignore and label not in self.initial_expanded
+        return (
+            label not in self.ignore
+            and label not in self.initial_expanded
+            and label in self.workable
+        )
 
     def can_do_expansion(self, label: int, idx: int) -> bool:
         """Return true if expansion strategies can be applied."""
-        return label not in self.ignore and label not in self.expansion_strats[idx]
+        return (
+            label not in self.ignore
+            and label not in self.expansion_strats[idx]
+            and label in self.workable
+        )
 
     def __iter__(self) -> Iterator[Tuple[int, List["StrategyGenerator"], bool]]:
         """
