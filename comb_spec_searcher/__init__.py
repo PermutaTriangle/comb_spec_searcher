@@ -12,4 +12,4 @@ from .strategies import (
     StrategyGenerator,
     StrategyPack,
 )
-from .queue import CSSQueue
+from .class_queue import CSSQueue

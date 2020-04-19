@@ -8,7 +8,7 @@ from base64 import b64decode, b64encode
 from collections import defaultdict
 from functools import reduce
 from operator import add, mul
-from typing import TYPE_CHECKING, Any, Dict
+from typing import Any, Dict, Tuple, TYPE_CHECKING
 
 import logzero
 import psutil
@@ -18,9 +18,8 @@ from logzero import logger
 from comb_spec_searcher.utils import compositions
 
 from .class_db import ClassDB
-from .queue import DefaultQueue
+from .class_queue import DefaultQueue
 from .equiv_db import EquivalenceDB
-from .proof_tree import ProofTree
 from .rule_db import RuleDB
 from .strategies import StrategyPack
 from .strategies.rule import Rule
