@@ -18,7 +18,7 @@ from logzero import logger
 from comb_spec_searcher.utils import compositions
 
 from .class_db import ClassDB
-from .class_queue import ClassQueue
+from .queue import DefaultQueue
 from .equiv_db import EquivalenceDB
 from .proof_tree import ProofTree
 from .rule_db import RuleDB
