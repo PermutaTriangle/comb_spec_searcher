@@ -191,7 +191,7 @@ class CombinatorialSpecificationSearcher:
         css = cls(c, strategy_pack, **kwargs)
         css.classdb = ClassDB.from_dict(dict_["classdb"], combinatorial_class)
         css.equivdb = EquivalenceDB.from_dict(dict_["equivdb"])
-        css.classqueue = ClassQueue.from_dict(dict_["classqueue"])
+        css.classqueue = DefaultQueue.from_dict(dict_["classqueue"])
         css.ruledb = RuleDB.from_dict(dict_["ruledb"])
         css.start_label = dict_["start_label"]
         css._has_proof_tree = dict_["_has_proof_tree"]

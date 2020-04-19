@@ -88,6 +88,9 @@ class DefaultQueue(CSSQueue):
         elif label not in self.ignore:
             self.next_level.append(label)
 
+    def set_verified(self, label) -> None:
+        self.set_stop_yielding(label)
+
     def set_not_inferrable(self, label: int) -> None:
         if label not in self.ignore():
             self.ignore_inferral.add(label)
@@ -168,3 +171,6 @@ class DefaultQueue(CSSQueue):
                 yield next(self)
             except StopIteration:
                 return
+
+    def status(self) -> str:
+        return "IMPLEMENT QUEUE STATUS"
