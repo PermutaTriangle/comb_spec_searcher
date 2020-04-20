@@ -65,12 +65,13 @@ class RuleDB:
         - rule is a Rule that creates start -> ends.
         """
         ends = tuple(sorted(ends))
-        self.rules_dict[start].add(tuple(sorted(ends)))
-        self.rule_to_strategy[(start, ends)] = rule.strategy
         if not ends:  # size 0, so verification rule
             self.set_verified(start)
-        elif len(ends) == 1 and isinstance(Rule.constructor, DisjointUnion):
+        if len(ends) == 1 and rule.constructor.is_equivalence():
             self.set_equivalent(start, ends[0])
+        else:
+            self.rules_dict[start].add(ends)
+        self.rule_to_strategy[(start, ends)] = rule.strategy
 
     def is_verified(self, label):
         """Return True if label has been verified."""
@@ -91,7 +92,7 @@ class RuleDB:
     def rules_up_to_equivalence(self) -> Dict[int, Set[Tuple[int, ...]]]:
         """Return a defaultdict containing all rules up to the equivalence."""
         rules_dict = defaultdict(set)
-        for start, ends in self.rules_dict.items():
+        for start, ends in self:
             rules_dict[self.equivdb[start]].add(
                 tuple(sorted(self.equivdb[e] for e in ends))
             )

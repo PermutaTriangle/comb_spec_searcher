@@ -283,10 +283,6 @@ class CombinatorialSpecificationSearcher:
 
         If 'inferral' will return time also return inferred class and label.
         """
-        print("EXPANDING:")
-        for x in (comb_class, strategy_generator, label, initial, inferral):
-            print(x)
-        print("=" * 10)
         if label is None:
             self.classdb.get_label(comb_class)
         start = time.time()
@@ -303,7 +299,6 @@ class CombinatorialSpecificationSearcher:
         if inferral:
             inf_class = None
             inf_label = None
-        print("RULES:")
         for strategy in strategies:
             if isinstance(strategy, Strategy):
                 rule = strategy(comb_class)
@@ -324,7 +319,6 @@ class CombinatorialSpecificationSearcher:
                     extra=self.logger_kwargs,
                 )
                 continue
-            print(rule.formal_step)
             labels = [
                 self.classdb.get_label(comb_class) for comb_class in rule.children
             ]
