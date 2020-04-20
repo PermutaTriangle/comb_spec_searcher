@@ -66,7 +66,7 @@ class RuleDB:
         """
         ends = tuple(sorted(ends))
         self.rules_dict[start].add(tuple(sorted(ends)))
-        self.rule_to_strategy[(start, ends)] = Rule.strategy
+        self.rule_to_strategy[(start, ends)] = rule.strategy
         if not ends:  # size 0, so verification rule
             self.set_verified(start)
         elif len(ends) == 1 and isinstance(Rule.constructor, DisjointUnion):

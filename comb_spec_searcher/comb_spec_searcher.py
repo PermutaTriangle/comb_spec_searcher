@@ -21,7 +21,7 @@ from .class_db import ClassDB
 from .class_queue import DefaultQueue
 from .equiv_db import EquivalenceDB
 from .rule_db import RuleDB
-from .strategies import StrategyPack
+from .strategies import Strategy, StrategyGenerator, StrategyPack
 from .strategies.rule import Rule
 from .tree_searcher import (
     iterative_proof_tree_finder,
@@ -69,7 +69,8 @@ class CombinatorialSpecificationSearcher:
 
         self.classdb.add(start_class)
         self.start_label = self.classdb.get_label(start_class)
-        self.classqueue.add_to_working(self.start_label)
+        self.classqueue.add(self.start_label)
+        self.classqueue.set_workable(self.start_label)
 
         self._has_proof_tree = False
 
@@ -219,7 +220,7 @@ class CombinatorialSpecificationSearcher:
         if force:
             if self.classdb.is_strategy_verified(label):
                 return
-        elif self.equivdb.is_verified(label):
+        elif self.ruledb.is_verified(label):
             return
         if self.classdb.is_strategy_verified(label) is None:
             for ver_strategy in self.verification_strategies:
@@ -229,7 +230,6 @@ class CombinatorialSpecificationSearcher:
                 if rule is not None and rule.children == tuple():
                     self.ruledb.add(label, tuple(), rule)
                     self.classdb.set_strategy_verified(label)
-                    self.equivdb.update_verified(label)
                     return
             self.classdb.set_strategy_verified(label, False)
 
@@ -273,7 +273,7 @@ class CombinatorialSpecificationSearcher:
             self._inferral_expand(comb_class, label, strategies)
         else:
             for strategy_generator in strategies:
-                self._expand_class_with_strategy(comb_class, label, strategy_generator)
+                self._expand_class_with_strategy(comb_class, strategy_generator, label)
 
     def _expand_class_with_strategy(
         self, comb_class, strategy_generator, label=None, initial=False, inferral=False
@@ -283,21 +283,36 @@ class CombinatorialSpecificationSearcher:
 
         If 'inferral' will return time also return inferred class and label.
         """
+        print("EXPANDING:")
+        for x in (comb_class, strategy_generator, label, initial, inferral):
+            print(x)
+        print("=" * 10)
         if label is None:
             self.classdb.get_label(comb_class)
         start = time.time()
-        strategy_generator = strategy_generator(comb_class, **self.kwargs)
-        if isinstance(strategy_generator, Rule):
-            strategy_generator = (
-                [] if strategy_generator.children is None else [strategy_generator]
+        if isinstance(strategy_generator, Strategy):
+            strategies = [strategy_generator(comb_class, **self.kwargs)]
+        elif isinstance(strategy_generator, StrategyGenerator):
+            strategies = strategy_generator(comb_class, **self.kwargs)
+        else:
+            raise TypeError(
+                "The strategy is not a Strategy or StrategyGenerator:\n{}".format(
+                    strategy_generator
+                )
             )
         if inferral:
             inf_class = None
             inf_label = None
-
-        for rule in strategy_generator:
-            if not isinstance(rule, Rule):
-                raise TypeError("Attempting to add non Rule type.")
+        print("RULES:")
+        for strategy in strategies:
+            if isinstance(strategy, Strategy):
+                rule = strategy(comb_class)
+            elif isinstance(strategy, Rule):
+                rule = strategy
+            else:
+                raise TypeError(
+                    "Attempting to add non Rule type. A Strategy Generator's __call__ method should yield Strategy or Strategy(comb_class, children) object."
+                )
             if inferral and len(rule.children) != 1:
                 raise TypeError(("Attempting to infer with non " "inferral strategy."))
             if inferral and comb_class == rule.children[0]:
@@ -309,14 +324,15 @@ class CombinatorialSpecificationSearcher:
                     extra=self.logger_kwargs,
                 )
                 continue
+            print(rule.formal_step)
             labels = [
-                self.classdb.get_label(comb_class) for comb_class in rule.comb_classes
+                self.classdb.get_label(comb_class) for comb_class in rule.children
             ]
             logger.debug(
                 "Adding combinatorial rule %s -> %s with constructor" " '%s'",
                 label,
                 tuple(labels),
-                rule.constructor(),
+                rule.constructor,
                 extra=self.logger_kwargs,
             )
 
@@ -332,7 +348,7 @@ class CombinatorialSpecificationSearcher:
                             assert c.is_empty()
 
             start -= time.time()
-            end_labels, classes = self._rule_cleanup(rule, labels)
+            end_labels = self._rule_cleanup(rule, labels)
             start += time.time()
 
             if rule.ignore_parent:
@@ -395,53 +411,36 @@ class CombinatorialSpecificationSearcher:
 
     def _rule_cleanup(self, rule: Rule, labels: Tuple[int, ...]):
         """
-        Return the cleaned rules labels, classes and updated formal step.
+        Return the cleaned rules labels.
 
-        - infer combinatorial classes
         - try to verify combinatorial classes
         - set workability of combinatorial classes
         - remove empty combinatorial classes
         - symmetry expand combinatorial classes
+        - add class to classqueue
         """
         end_labels = []
-        end_classes = []
-        inferral_steps = []
-        for comb_class, label in zip(rule.children, labels,):
-            inferral_step = ""
+        for comb_class, label in zip(rule.children, labels):
             if self.symmetries:
                 self._symmetry_expand(comb_class)
-
             if rule.workable:
                 self.classqueue.set_workable(label)
             if rule.inferrable or rule.workable:
                 self.classqueue.add(label)
 
-            # Only applying is_empty check to inferrable comb classes that are
+            # Only applying is_empty check to comb classes that are
             # possibly empty.
-            if (
-                rule.inferrable
-                and rule.possibly_empty
-                and self.is_empty(comb_class, label)
-            ):
+            if rule.possibly_empty and self.is_empty(comb_class, label):
                 logger.debug("Label %s is empty.", label, extra=self.logger_kwargs)
-                inferral_steps.append(inferral_step + "Class is empty.")
                 continue
-            if not possibly_empty:
+            elif not rule.possibly_empty:
                 self.classdb.set_empty(label, empty=False)
 
             self.try_verify(comb_class, label)
 
-            end_classes.append(comb_class)
             end_labels.append(label)
-            inferral_steps.append(inferral_step)
 
-        inferral_step = "~"
-        for i, s in enumerate(inferral_steps):
-            inferral_step = inferral_step + "[" + str(i) + ": " + s + "]"
-        inferral_step = inferral_step + "~"
-        formal_step = rule.formal_step + inferral_step
-
-        return end_labels, end_classes, formal_step
+        return end_labels
 
     def _symmetry_expand(self, comb_class):
         """Add symmetries of combinatorial class to the database."""
@@ -474,7 +473,7 @@ class CombinatorialSpecificationSearcher:
             if strategy_generator == skip:
                 continue
             inf_class, inf_label = self._expand_class_with_strategy(
-                comb_class, label, strategy_generator, inferral=True
+                comb_class, strategy_generator, label, inferral=True
             )
             if inf_class is not None:
                 self.classqueue.set_not_inferrable(label)
@@ -498,6 +497,7 @@ class CombinatorialSpecificationSearcher:
         If keyword fake_verify=label it will verify label and return equations
         which are in a proof tree for the root assuming that label is verified.
         """
+        raise NotImplementedError("not brought forward yet")
         if kwargs.get("substitutions"):
             # dictionary from comb_class to symbol, filled by the combinatorial
             # class' get_genf function.
@@ -626,12 +626,17 @@ class CombinatorialSpecificationSearcher:
         self._time_taken += time.time() - start
 
     def expand_classes(self, total):
-        """Will send 'total' many classes to the expand function."""
+        """Will send 'total' many classes to the expand function.
+        Returns True if no more classes to expand. """
         start = time.time()
         count = 0
         while count < total:
             queue_start = time.time()
-            label = self.classqueue.next()
+            try:
+                label, strategies, inferral = next(self.classqueue)
+            except StopIteration:
+                return True
+            self._expand(label, strategies, inferral)
             self.queue_time += time.time() - queue_start
             count += 1
         self._time_taken += time.time() - start
@@ -894,15 +899,7 @@ class CombinatorialSpecificationSearcher:
         Converts all rules to be in terms of equivalence database.
         """
         start_time = time.time()
-        rules_dict = defaultdict(set)
-
-        for rule in self.ruledb:
-            self._add_rule_to_rules_dict(rule, rules_dict)
-
-        for label in self.classdb.verified_labels():
-            verified_label = self.equivdb[label]
-            rules_dict[verified_label] |= set(((),))
-
+        rules_dict = self.ruledb.rules_up_to_equivalence()
         self.prep_for_tree_search_time += time.time() - start_time
         return rules_dict
 
@@ -933,6 +930,7 @@ class CombinatorialSpecificationSearcher:
         start = time.time()
 
         rules_dict = self.tree_search_prep()
+
         # Prune all unverified labels (recursively)
         if self.iterative:
             rules_dict = iterative_prune(
@@ -946,7 +944,7 @@ class CombinatorialSpecificationSearcher:
         for label in rules_dict.keys():
             self.equivdb.update_verified(label)
 
-        if self.equivdb[self.start_label] in rules_dict:
+        if self.ruledb.equivdb[self.start_label] in rules_dict:
             self._has_proof_tree = True
             if self.iterative:
                 proof_tree = iterative_proof_tree_finder(

@@ -1,3 +1,4 @@
+from .rule import Rule
 from .strategy import (
     CartesianProduct,
     CartesianProductStrategy,

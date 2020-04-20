@@ -24,26 +24,26 @@ class Rule:
 
     @property
     def ignore_parent(self) -> bool:
-        return self.strategy.ignore_parent()
+        return self.strategy.ignore_parent
 
     @property
-    def inferable(self) -> bool:
-        return self.strategy.inferable()
+    def inferrable(self) -> bool:
+        return self.strategy.inferrable
 
     @property
     def possibly_empty(self) -> bool:
-        return self.strategy.possibly_empty()
+        return self.strategy.possibly_empty
 
     @property
     def workable(self) -> bool:
-        return self.strategy.workable()
+        return self.strategy.workable
 
     def set_subrecs(self, get_subrule: Callable[[CombinatorialClass], "SpecificRule"]):
         self.subrecs = tuple(
-            get_subrule(child).count_objects_of_size for child in self.children()
+            get_subrule(child).count_objects_of_size for child in self.children
         )
         self.subgenerators = tuple(
-            get_subrule(child).generate_objects_of_size for child in self.children()
+            get_subrule(child).generate_objects_of_size for child in self.children
         )
 
     @property
@@ -54,7 +54,7 @@ class Rule:
 
     @property
     def constructor(self) -> Constructor:
-        return self.strategy.constructor(self.comb_class, self.children())
+        return self.strategy.constructor(self.comb_class, self.children)
 
     @property
     def formal_step(self) -> str:
@@ -63,12 +63,12 @@ class Rule:
     def backward_map(
         self, objs: Tuple[CombinatorialObject, ...]
     ) -> CombinatorialObject:
-        return self.strategy.backward_map(self.comb_class, objs, self.children())
+        return self.strategy.backward_map(self.comb_class, objs, self.children)
 
     def forward_map(
         self, obj: CombinatorialObject
     ) -> Tuple[Tuple[CombinatorialObject, CombinatorialClass], ...]:
-        return self.strategy.forward_map(self.comb_class, obj, self.children())
+        return self.strategy.forward_map(self.comb_class, obj, self.children)
 
     def count_objects_of_size(self, **parameters):
         key = tuple(parameters.items())

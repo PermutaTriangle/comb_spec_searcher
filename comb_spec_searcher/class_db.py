@@ -1,8 +1,10 @@
 """
-A database for combinatorial class found.
+A database for combinatorial class found. It gives each combinatorial class
+a unique label. Each combinatorial class object is compressed, and decompressed
+using the CombinatorialClass methods.
 
-Contains information about if combinatorial classes have been expanded, found
-by symmetries etc. It gives each combinatorial class a unique label.
+Contains information about if combinatorial classes have been strategy
+verified, found by symmetries and if is_empty has been checked.
 """
 
 from base64 import b64decode, b64encode
@@ -221,13 +223,13 @@ class ClassDB:
             if not isinstance(comb_class, CombinatorialClass):
                 comb_class = self.get_class(comb_class)
             empty = comb_class.is_empty()
-            self.set_empty(label)
+            self.set_empty(label, empty)
         return empty
 
     def set_empty(self, key, empty=True):
         """Update database about comb class being empty."""
         info = self._get_info(key)
-        info.empty = empty or bool(info.empty)
+        info.empty = empty
 
     def is_strategy_verified(self, key):
         """Return True if combinatorial class verified by a strategy.

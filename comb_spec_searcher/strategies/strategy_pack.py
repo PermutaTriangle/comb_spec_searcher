@@ -63,7 +63,6 @@ class StrategyPack:
         s += "    ],\n"
         s += "    name={!r},\n".format(self.name)
         s += "    symmetries={!r},\n".format(self.symmetries)
-        s += "    forward_equivalence={!r},\n".format(self.forward_equivalence)
         s += "    iterative={!r},\n".format(self.iterative)
         s += ")"
         return s
@@ -78,8 +77,6 @@ class StrategyPack:
         string += "Inferral: {}\n".format(infer_strats)
         string += "Initial: {}\n".format(initial_strats)
         string += "Verification: {}\n".format(verif_strats)
-        if self.forward_equivalence:
-            string += "Using forward equivalence only.\n"
         if self.symmetries:
             symme_strats = ", ".join(get_func_name(f) for f in self.symmetries)
             string += "Symmetries: {}\n".format(symme_strats)

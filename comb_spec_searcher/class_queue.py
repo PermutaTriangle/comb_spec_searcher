@@ -64,6 +64,18 @@ class CSSQueue(abc.ABC):
         strategies will be applied cyclically until no change.
         """
 
+    @property
+    def iterator(self):
+        if not hasattr(self, "_iterator"):
+            self._iterator = self.__iter__()
+        return self._iterator
+
+    def __next__(self):
+        try:
+            return next(self.iterator)
+        except StopIteration:
+            raise StopIteration("No more classes to expand.")
+
 
 class DefaultQueue(CSSQueue):
     """
@@ -71,6 +83,7 @@ class DefaultQueue(CSSQueue):
     """
 
     def __init__(self, pack: "StrategyPack"):
+        super().__init__(pack)
         self.working = deque()  # add to this queue for inferral and initial strategies
         self.next_level = (
             deque()
@@ -79,13 +92,13 @@ class DefaultQueue(CSSQueue):
             deque()
         )  # add back to curr level if not expanded by all expansion strats
         self.initial_expandable = set()
-        self.inferral_expandable = set()
-        self.expansion_expanded = [set() for _ in range(len(self.strategy_generators))]
+        self.inferral_expanded = set()
+        self.initial_expanded = set()
+        self.expansion_expanded = [set() for _ in range(len(self.expansion_strats))]
         self.workable = set()  # only yield workable elements
         self.ignore = set()  # never try expand
         self.inferral_ignore = set()  # never try inferral expand
         self.levels_completed = 0
-        super().__init__(pack)
 
     def add(self, label: int) -> None:
         if self.can_do_inferral(label) or self.can_do_initial(label):
@@ -100,8 +113,8 @@ class DefaultQueue(CSSQueue):
         self.workable.add(label)
 
     def set_not_inferrable(self, label: int) -> None:
-        if label not in self.ignore():
-            self.ignore_inferral.add(label)
+        if label not in self.ignore:
+            self.inferral_ignore.add(label)
 
     def set_stop_yielding(self, label: int) -> None:
         self._add_to_ignore(label)
@@ -109,12 +122,13 @@ class DefaultQueue(CSSQueue):
     def _add_to_ignore(self, label: int) -> None:
         self.ignore.add(label)
         # can remove it elsewhere to keep sets "small"
-        self.initial_expandable.remove(label)
-        self.inferral_expandable.remove(label)
+        self.initial_expandable.discard(label)
+        self.inferral_ignore.discard(label)
+        self.inferral_expanded.discard(label)
+        self.initial_expanded.discard(label)
         for s in self.expansion_expanded:
-            s.remove(label)
-        self.inferral_ignore.remove(label)
-        self.workable.remove(label)
+            s.discard(label)
+        self.workable.discard(label)
 
     def can_do_inferral(self, label: int) -> bool:
         """Return true if inferral strategies can be applied."""
@@ -136,7 +150,7 @@ class DefaultQueue(CSSQueue):
         """Return true if expansion strategies can be applied."""
         return (
             label not in self.ignore
-            and label not in self.expansion_strats[idx]
+            and label not in self.expansion_expanded[idx]
             and label in self.workable
         )
 
@@ -162,10 +176,12 @@ class DefaultQueue(CSSQueue):
 
             elif self.curr_level:
                 label = self.curr_level.popleft()
-                for idx, strats in self.expansion_strats:
+                for idx, strats in enumerate(self.expansion_strats):
+                    print(label, idx)
                     if self.can_do_expansion(label, idx):
+                        print("yielding")
                         yield label, strats, False
-                        self.expansion_strats[idx].add(label)
+                        self.expansion_expanded[idx].add(label)
                         self.curr_level.append(label)
                         break
                 else:

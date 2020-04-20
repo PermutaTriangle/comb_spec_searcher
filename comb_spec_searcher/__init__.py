@@ -8,6 +8,7 @@ from .strategies import (
     CartesianProductStrategy,
     DisjointUnion,
     DisjointUnionStrategy,
+    Rule,
     Strategy,
     StrategyGenerator,
     StrategyPack,

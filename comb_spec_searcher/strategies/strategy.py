@@ -25,12 +25,12 @@ class Strategy(abc.ABC):
     def __init__(
         self,
         ignore_parent: bool = False,
-        inferable: bool = True,
+        inferrable: bool = True,
         possibly_empty: bool = True,
         workable: bool = True,
     ):
         self._ignore_parent = ignore_parent
-        self._inferable = inferable
+        self._inferrable = inferrable
         self._possibly_empty = possibly_empty
         self._workable = workable
 
@@ -46,8 +46,8 @@ class Strategy(abc.ABC):
         return self._ignore_parent
 
     @property
-    def inferable(self) -> bool:
-        return self._inferable
+    def inferrable(self) -> bool:
+        return self._inferrable
 
     @property
     def possibly_empty(self) -> bool:
@@ -104,7 +104,7 @@ class CartesianProductStrategy(Strategy):
     def __init__(self, **kwargs):
         super().__init__(
             ignore_parent=kwargs.get("ignore_parent", True),
-            inferable=kwargs.get("inferable", False),
+            inferrable=kwargs.get("inferrable", False),
             possibly_empty=kwargs.get("possibly_empty", False),
             workable=kwargs.get("workable", True),
         )
@@ -123,8 +123,8 @@ class DisjointUnionStrategy(Strategy):
     def __init__(self, **kwargs):
         super().__init__(
             ignore_parent=kwargs.get("ignore_parent", False),
-            inferable=kwargs.get("inferable", True),
-            possible_empty=kwargs.get("possibly_empty", True),
+            inferrable=kwargs.get("inferrable", True),
+            possibly_empty=kwargs.get("possibly_empty", True),
             workable=kwargs.get("workable", True),
         )
 
