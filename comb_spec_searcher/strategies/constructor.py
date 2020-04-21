@@ -20,8 +20,7 @@ class Constructor(abc.ABC):
 
     @abc.abstractmethod
     def is_equivalence(self):
-        """Return true if the constructor is the same as "=". This should only
-        happen if there is 1 child."""
+        """Return true if the constructor is the same as "=" when there is only one child."""
 
     @abc.abstractmethod
     def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
@@ -62,7 +61,7 @@ class CartesianProduct(Constructor):
         )
 
     def is_equivalence(self):
-        return len(self._reliance_profile_functions) == 1
+        return True
 
     def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
         return Eq(lhs_func, reduce(mul, rhs_funcs, 1))
@@ -119,7 +118,7 @@ class DisjointUnion(Constructor):
         self.number_of_children = len(children)
 
     def is_equivalence(self):
-        return self.number_of_children == 1
+        return True
 
     def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
         return Eq(lhs_func, reduce(add, rhs_funcs, 0))

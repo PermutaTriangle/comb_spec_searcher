@@ -22,38 +22,31 @@ class RuleDB:
         - Some strategies require back maps, these are stored in the back maps
         dictionary. Calling works the same way as explanations.
         """
-        self.rules_dict = defaultdict(set)
         self.rule_to_strategy = {}
         self.equivdb = EquivalenceDB()
 
     def __eq__(self, other) -> bool:
         """Check if all stored information is the same."""
-        return (
-            self.rules_dict == other.rules_dict
-            and self.rule_to_strategy == other.rule_to_strategy
-        )
+        return self.rule_to_strategy == other.rule_to_strategy
 
     def to_dict(self) -> Dict[str, Any]:
         """Return dictionary object of self that is JSON serializable."""
         return {
-            "rules_dict": [
-                [x, [list(z) for z in y]] for x, y in self.rules_dict.items()
-            ],
             "rule_to_strategy": [
                 [x, strat.to_dict()] for x, strat in self.rule_to_strategy.items()
             ],
+            "equivdb": self.equivdb.to_dict(),
         }
 
     @classmethod
     def from_dict(cls, d: Dict[str, Any]):
         """Return RuleDB object from dictionary."""
         ruledb = RuleDB()
-        ruledb.rules_dict = defaultdict(
-            set, {x: {tuple(y) for y in z} for x, z in d["rules_dict"]}
-        )
         ruledb.rule_to_strategy = {
-            x: strat.from_dict() for x, strat in d["rule_to_strategy"]
+            tuple(x[0], tuple(x[1])): strat.from_dict()
+            for x, strat in d["rule_to_strategy"]
         }
+        ruledb.equivdb = d["equivdb"].from_dict()
         return ruledb
 
     def add(self, start: int, ends: Tuple[int, ...], rule: Rule):
@@ -69,8 +62,6 @@ class RuleDB:
             self.set_verified(start)
         if len(ends) == 1 and rule.constructor.is_equivalence():
             self.set_equivalent(start, ends[0])
-        else:
-            self.rules_dict[start].add(ends)
         self.rule_to_strategy[(start, ends)] = rule.strategy
 
     def is_verified(self, label):
@@ -100,11 +91,11 @@ class RuleDB:
 
     def __iter__(self):
         """Iterate through rules as the pairs (start, end)."""
-        for start, ends in self.rules_dict.items():
-            for end in ends:
-                yield start, end
+        for start, ends in self.rule_to_strategy.keys():
+            if len(ends) != 1 or not self.are_equivalent(start, ends[0]):
+                yield start, ends
 
     def contains(self, start, ends):
         """Return true if the rule start -> ends is in the database."""
         ends = tuple(sorted(ends))
-        return start in self.rules_dict and ends in self.rules_dict[start]
+        return (start, ends) in self.rule_to_strategy

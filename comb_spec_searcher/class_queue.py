@@ -177,9 +177,7 @@ class DefaultQueue(CSSQueue):
             elif self.curr_level:
                 label = self.curr_level.popleft()
                 for idx, strats in enumerate(self.expansion_strats):
-                    print(label, idx)
                     if self.can_do_expansion(label, idx):
-                        print("yielding")
                         yield label, strats, False
                         self.expansion_expanded[idx].add(label)
                         self.curr_level.append(label)
