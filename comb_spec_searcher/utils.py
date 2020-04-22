@@ -1,7 +1,7 @@
 import importlib
 import zlib
 from functools import partial
-from typing import Dict, MutableMapping, TypeVar, Hashable, Iterator
+from typing import Dict, Hashable, Iterator, MutableMapping, TypeVar
 
 import sympy
 from logzero import logger
@@ -13,27 +13,36 @@ KT = TypeVar("KT", bound=Hashable)
 
 class CompressedStringDict(MutableMapping[KT, str]):
     """
-    A memory efficient dictionnary to store string.
-
-    It acts has a normal dictionnary but compress the string for storage and decompress
-    them every time they are retrieved.
+    A compressed dictionary that get compressed and decompressed every time we
+    access it.
     """
 
     def __init__(self, *args, **kwargs) -> None:
-        self.store = dict()  # type: Dict[KT, bytes]
-        self.update(dict(*args, **kwargs))
+        self.store = dict(*args, **kwargs)
+
+    def __repr__(self) -> str:
+        return self.store.__repr__()
+
+    @property
+    def store(self) -> Dict[KT, str]:
+        return eval(zlib.decompress(self._store).decode())  # type: ignore
+
+    @store.setter
+    def store(self, dict_: Dict[KT, str]) -> None:
+        self._store = zlib.compress(repr(dict_).encode(), 9)
 
     def __getitem__(self, key: KT) -> str:
-        compressed_str = self.store[key]
-        uncompressed_str = zlib.decompress(compressed_str).decode()
-        return uncompressed_str
+        return self.store[key]
 
     def __setitem__(self, key: KT, value: str) -> None:
-        compressed_str = zlib.compress(value.encode(), 9)
-        self.store[key] = compressed_str
+        store = self.store
+        store[key] = value
+        self.store = store
 
     def __delitem__(self, key: KT) -> None:
-        del self.store[key]
+        store = self.store
+        del store[key]
+        self.store = store
 
     def __iter__(self) -> Iterator[KT]:
         return iter(self.store)
