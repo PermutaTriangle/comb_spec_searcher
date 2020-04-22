@@ -56,15 +56,14 @@ class RuleDB:
     def from_dict(cls, dict_):
         """Return RuleDB object from dictionary."""
         ruledb = RuleDB()
-        ruledb.rules_dict = defaultdict(
-            set, {x: {tuple(y) for y in z} for x, z in dict_["rules_dict"]}
-        )
-        ruledb.explanations = {
-            x: {tuple(y): z for y, z in d} for x, d in dict_["explanations"]
-        }
-        ruledb.constructors = {
-            x: {tuple(y): z for y, z in d} for x, d in dict_["constructors"]
-        }
+        for start, ends in dict_["rules_dict"]:
+            ruledb.rules_dict[start].update(map(tuple, ends))
+        for x, d in dict_["explanations"]:
+            for y, z in d:
+                ruledb.explanations[x][tuple(y)] = z
+        for x, d in dict_["constructors"]:
+            for y, z in d:
+                ruledb.constructors[x][tuple(y)] = z
         return ruledb
 
     def add(self, start, end, explanation, constructor):

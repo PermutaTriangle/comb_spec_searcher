@@ -55,9 +55,9 @@ class EquivalenceDB:
     def from_dict(cls, dict_):
         """Return EquivalenceDB object for dictionary object."""
         equivdb = cls()
-        equivdb.parents = {int(x): y for x, y in dict_["parents"].items()}
-        equivdb.weights = {int(x): y for x, y in dict_["weights"].items()}
-        equivdb.explanations = {tuple(x): y for x, y in dict_["explanations"]}
+        equivdb.parents.update({int(x): y for x, y in dict_["parents"].items()})
+        equivdb.weights.update({int(x): y for x, y in dict_["weights"].items()})
+        equivdb.explanations.update({tuple(x): y for x, y in dict_["explanations"]})
         equivdb.verified_roots = set(dict_["verified_roots"])
         return equivdb
 
