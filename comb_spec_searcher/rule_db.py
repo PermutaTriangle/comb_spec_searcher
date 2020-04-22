@@ -7,6 +7,8 @@ an explanation.
 from collections import defaultdict
 from collections.abc import Iterable
 
+from comb_spec_searcher.utils import CompressedStringDict
+
 
 class RuleDB:
     """A database for rules found."""
@@ -23,8 +25,8 @@ class RuleDB:
         dictionary. Calling works the same way as explanations.
         """
         self.rules_dict = defaultdict(set)
-        self.explanations = {}
-        self.constructors = {}
+        self.explanations = defaultdict(CompressedStringDict)
+        self.constructors = defaultdict(CompressedStringDict)
 
     def __eq__(self, other):
         """Check if all stored information is the same."""
@@ -85,14 +87,8 @@ class RuleDB:
             raise TypeError("A rule requires a string for a constructor.")
         end = tuple(sorted(end))
         self.rules_dict[start] |= set((end,))
-        if start in self.explanations:
-            self.explanations[start][end] = explanation
-        else:
-            self.explanations[start] = {end: explanation}
-        if start in self.constructors:
-            self.constructors[start][end] = constructor
-        else:
-            self.constructors[start] = {end: constructor}
+        self.explanations[start][end] = explanation
+        self.constructors[start][end] = constructor
 
     def remove(self, start, end):
         """Remove rule from database."""

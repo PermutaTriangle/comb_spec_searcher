@@ -6,6 +6,8 @@ by symmetries etc. It gives each combinatorial class a unique label.
 """
 
 from base64 import b64decode, b64encode
+import zlib
+from typing import Optional
 
 from logzero import logger
 
@@ -32,6 +34,19 @@ class Info:
         self.verification_reason = kwargs.get("verification_reason", None)
         self.empty = kwargs.get("empty", None)
         self.strategy_verified = kwargs.get("strategy_verified", None)
+
+    @property
+    def verification_reason(self) -> Optional[str]:
+        if self._verification_reason is None:
+            return None
+        return zlib.decompress(self._verification_reason).decode()
+
+    @verification_reason.setter
+    def verification_reason(self, reason: Optional[str]):
+        if reason is None:
+            self._verification_reason = None
+        else:
+            self._verification_reason = zlib.compress(reason.encode(), 9)
 
     def to_dict(self):
         """Return dictionary object of self that is JSON serializable."""

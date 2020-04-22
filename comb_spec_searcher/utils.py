@@ -1,10 +1,45 @@
 import importlib
+import zlib
 from functools import partial
+from typing import Dict, MutableMapping, TypeVar, Hashable, Iterator
 
 import sympy
 from logzero import logger
 
 from comb_spec_searcher.exception import TaylorExpansionError
+
+KT = TypeVar("KT", bound=Hashable)
+
+
+class CompressedStringDict(MutableMapping[KT, str]):
+    """
+    A memory efficient dictionnary to store string.
+
+    It acts has a normal dictionnary but compress the string for storage and decompress
+    them every time they are retrieved.
+    """
+
+    def __init__(self, *args, **kwargs) -> None:
+        self.store = dict()  # type: Dict[KT, bytes]
+        self.update(dict(*args, **kwargs))
+
+    def __getitem__(self, key: KT) -> str:
+        compressed_str = self.store[key]
+        uncompressed_str = zlib.decompress(compressed_str).decode()
+        return uncompressed_str
+
+    def __setitem__(self, key: KT, value: str) -> None:
+        compressed_str = zlib.compress(value.encode(), 9)
+        self.store[key] = compressed_str
+
+    def __delitem__(self, key: KT) -> None:
+        del self.store[key]
+
+    def __iter__(self) -> Iterator[KT]:
+        return iter(self.store)
+
+    def __len__(self) -> int:
+        return len(self.store)
 
 
 def get_func_name(f, warn=False, logger_kwargs=None):
