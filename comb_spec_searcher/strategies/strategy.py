@@ -71,7 +71,7 @@ class Strategy(abc.ABC):
     ) -> Constructor:
         """This is where the details of the 'reliance profile' and 'counting' functions are hidden."""
         if children is None:
-            children = self.children(comb_class)
+            children = self.decomposition_function(comb_class)
 
     @abc.abstractmethod
     def formal_step(self) -> str:
@@ -86,7 +86,7 @@ class Strategy(abc.ABC):
     ) -> CombinatorialObject:
         """This method will enable us to generate objects, and sample. """
         if children is None:
-            children = self.children(comb_class)
+            children = self.decomposition_function(comb_class)
 
     @abc.abstractmethod
     def forward_map(
@@ -97,7 +97,7 @@ class Strategy(abc.ABC):
     ) -> Tuple[CombinatorialObject, ...]:
         """This function will enable us to have a quick membership test."""
         if children is None:
-            children = self.children(comb_class)
+            children = self.decomposition_function(comb_class)
 
 
 class CartesianProductStrategy(Strategy):

@@ -306,7 +306,9 @@ class CombinatorialSpecificationSearcher:
                 rule = strategy
             else:
                 raise TypeError(
-                    "Attempting to add non Rule type. A Strategy Generator's __call__ method should yield Strategy or Strategy(comb_class, children) object."
+                    "Attempting to add non Rule type. A Strategy Generator's"
+                    " __call__ method should yield Strategy or "
+                    "Strategy(comb_class, children) object."
                 )
             if inferral and len(rule.children) != 1:
                 raise TypeError(("Attempting to infer with non " "inferral strategy."))
@@ -336,10 +338,10 @@ class CombinatorialSpecificationSearcher:
                 for l in labels:
                     if not self.ruledb.are_equivalent(label, l):
                         self._add_empty_rule(l)
-                if self.debug:
-                    for l, c in zip(labels, rule.children):
-                        if not self.ruledb.are_equivalent(label, l):
-                            assert c.is_empty()
+                # if self.debug:
+                for l, c in zip(labels, rule.children):
+                    if not self.ruledb.are_equivalent(label, l):
+                        assert c.is_empty()
 
             start -= time.time()
             end_labels = self._rule_cleanup(rule, labels)
@@ -350,7 +352,8 @@ class CombinatorialSpecificationSearcher:
 
             if not end_labels:
                 # all the classes are empty so the class itself must be empty!
-                self._add_empty_rule(label, "batch empty")
+                self._add_empty_rule(label)
+                assert False
                 break
             self.ruledb.add(label, end_labels, rule)
 
@@ -362,14 +365,9 @@ class CombinatorialSpecificationSearcher:
         if inferral:
             return inf_class, inf_label
 
-    def _add_empty_rule(self, label, explanation=None):
+    def _add_empty_rule(self, label):
         """Mark label as empty. Treated as verified as can count empty set."""
-        if self.classdb.is_empty(label):
-            return
-        self.classdb.set_empty(label)
-        self.classdb.set_verified(label, explanation="Contains no avoiding objects.")
-        self.classdb.set_strategy_verified(label)
-        self.equivdb.update_verified(label)
+        self.classdb.set_empty(label, empty=True)
 
     def _sanity_check_rule(self, start, ends, constructor, length=5):
         """
@@ -416,17 +414,18 @@ class CombinatorialSpecificationSearcher:
         end_labels = []
         for comb_class, label in zip(rule.children, labels):
             if self.symmetries:
-                self._symmetry_expand(comb_class)
+                self._symmetry_expand(
+                    comb_class
+                )  # TODO: mark symmetries as empty where appropriate
+            # Only applying is_empty check to comb classes that are
+            # possibly empty.
+            if rule.possibly_empty and self.is_empty(comb_class, label):
+                logger.info("Label %s is empty.", label, extra=self.logger_kwargs)
+                continue
             if rule.workable:
                 self.classqueue.set_workable(label)
             if rule.inferrable or rule.workable:
                 self.classqueue.add(label)
-
-            # Only applying is_empty check to comb classes that are
-            # possibly empty.
-            if rule.possibly_empty and self.is_empty(comb_class, label):
-                logger.debug("Label %s is empty.", label, extra=self.logger_kwargs)
-                continue
             elif not rule.possibly_empty:
                 self.classdb.set_empty(label, empty=False)
 

@@ -110,7 +110,8 @@ class DefaultQueue(CSSQueue):
         self.set_stop_yielding(label)
 
     def set_workable(self, label) -> None:
-        self.workable.add(label)
+        if label not in self.ignore:
+            self.workable.add(label)
 
     def set_not_inferrable(self, label: int) -> None:
         if label not in self.ignore:
@@ -169,10 +170,10 @@ class DefaultQueue(CSSQueue):
                 if self.can_do_inferral(label):
                     yield label, self.inferral_strategies, True
                     self.inferral_expanded.add(label)
-
-                elif self.can_do_initial(label):
+                if self.can_do_initial(label):
                     yield label, self.initial_strategies, False
                     self.initial_expanded.add(label)
+                self.next_level.append(label)
 
             elif self.curr_level:
                 label = self.curr_level.popleft()
@@ -186,6 +187,7 @@ class DefaultQueue(CSSQueue):
                     # finished applying all strategies to this label, ignore from now on
                     self._add_to_ignore(label)
             else:
+                input("CHANGING LEVEL")
                 if not self.next_level:
                     return None
                 self.levels_completed += 1
