@@ -38,7 +38,10 @@ class Strategy(abc.ABC):
         self,
         comb_class: CombinatorialClass,
         children: Tuple[CombinatorialClass, ...] = None,
+        **kwargs
     ) -> "SpecificRule":
+        if children is None:
+            children = self.decomposition_function(comb_class)
         return Rule(self, comb_class, children=children)
 
     @property
@@ -61,6 +64,10 @@ class Strategy(abc.ABC):
     def decomposition_function(
         self, comb_class: CombinatorialClass
     ) -> Tuple[CombinatorialClass, ...]:
+        """
+        Return the children of the strategy for the given comb_class. It
+        should return None if it does not apply.
+        """
         pass
 
     @abc.abstractmethod
@@ -69,7 +76,10 @@ class Strategy(abc.ABC):
         comb_class: CombinatorialClass,
         children: Optional[Tuple[CombinatorialClass, ...]] = None,
     ) -> Constructor:
-        """This is where the details of the 'reliance profile' and 'counting' functions are hidden."""
+        """
+        This is where the details of the 'reliance profile' and 'counting'
+        functions are hidden.
+        """
         if children is None:
             children = self.decomposition_function(comb_class)
 

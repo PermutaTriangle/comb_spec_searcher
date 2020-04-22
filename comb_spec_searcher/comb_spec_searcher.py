@@ -285,6 +285,12 @@ class CombinatorialSpecificationSearcher:
         """
         if label is None:
             self.classdb.get_label(comb_class)
+        print("=" * 20)
+        print(comb_class)
+        print(strategy_generator)
+        print(label)
+        print(initial)
+        print(inferral)
         start = time.time()
         if isinstance(strategy_generator, Strategy):
             strategies = [strategy_generator(comb_class, **self.kwargs)]
@@ -299,6 +305,7 @@ class CombinatorialSpecificationSearcher:
         if inferral:
             inf_class = None
             inf_label = None
+        print("RULES")
         for strategy in strategies:
             if isinstance(strategy, Strategy):
                 rule = strategy(comb_class)
@@ -310,6 +317,9 @@ class CombinatorialSpecificationSearcher:
                     " __call__ method should yield Strategy or "
                     "Strategy(comb_class, children) object."
                 )
+            if rule.children is None:
+                continue  # this means the strategy does not apply
+            print(rule.formal_step)
             if inferral and len(rule.children) != 1:
                 raise TypeError(("Attempting to infer with non " "inferral strategy."))
             if inferral and comb_class == rule.children[0]:
@@ -324,6 +334,7 @@ class CombinatorialSpecificationSearcher:
             labels = [
                 self.classdb.get_label(comb_class) for comb_class in rule.children
             ]
+            print(label, labels, [self.ruledb.are_equivalent(label, l) for l in labels])
             logger.debug(
                 "Adding combinatorial rule %s -> %s with constructor" " '%s'",
                 label,
@@ -341,6 +352,9 @@ class CombinatorialSpecificationSearcher:
                 # if self.debug:
                 for l, c in zip(labels, rule.children):
                     if not self.ruledb.are_equivalent(label, l):
+                        if not c.is_empty():
+                            for ch in rule.children:
+                                print(ch)
                         assert c.is_empty()
 
             start -= time.time()
@@ -352,6 +366,10 @@ class CombinatorialSpecificationSearcher:
 
             if not end_labels:
                 # all the classes are empty so the class itself must be empty!
+                print(rule.formal_step)
+                for child in rule.children:
+                    print(child)
+                print(self.is_empty(comb_class, label))
                 self._add_empty_rule(label)
                 assert False
                 break
