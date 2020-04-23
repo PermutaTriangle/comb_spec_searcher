@@ -12,6 +12,8 @@ __all__ = ("CombinatorialSpecification",)
 
 class CombinatorialSpecification:
     def __init__(self, root: CombinatorialClass, rules: Iterable[Strategy]):
+        # TODO: Think more about equivalence, its going to come back to bite you soon!
+        # you really want to store the paths needed
         self.root = root
         self.rules_dict = {}
         self.rules_dict = {comb_class: rule(comb_class) for comb_class, rule in rules}

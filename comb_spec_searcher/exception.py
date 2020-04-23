@@ -10,5 +10,9 @@ class ObjectMappingError(Exception):
     pass
 
 
+class SpecificationNotFound(Exception):
+    pass
+
+
 class TaylorExpansionError(Exception):
     pass

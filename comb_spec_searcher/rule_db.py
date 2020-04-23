@@ -4,8 +4,17 @@ A database for rules.
 from collections import defaultdict
 from typing import Any, Dict, Set, Tuple
 from .equiv_db import EquivalenceDB
+from .exception import SpecificationNotFound
 from .strategies.constructor import DisjointUnion
 from .strategies.rule import Rule
+from .tree_searcher import (
+    iterative_proof_tree_finder,
+    iterative_prune,
+    Node,
+    proof_tree_generator_dfs,
+    prune,
+    random_proof_tree,
+)
 
 
 class RuleDB:
@@ -22,6 +31,7 @@ class RuleDB:
         - Some strategies require back maps, these are stored in the back maps
         dictionary. Calling works the same way as explanations.
         """
+        # the values are needed for finding the specification in post-processing
         self.rule_to_strategy = {}
         self.equivdb = EquivalenceDB()
 
@@ -99,3 +109,138 @@ class RuleDB:
         """Return true if the rule start -> ends is in the database."""
         ends = tuple(sorted(ends))
         return (start, ends) in self.rule_to_strategy
+
+    ################################################################
+    # Below are methods for finding a combinatorial specification. #
+    ################################################################
+
+    def has_proof_tree(self, label):
+        """Return True if a proof tree has been found, false otherwise."""
+        return self.is_verified(label)
+
+    def rule_from_equivalence_rule(self, eqv_start, eqv_ends):
+        """Return a rule that satisfies the equivalence rule."""
+        eqv_ends = tuple(sorted(eqv_ends))
+        for rule in self:
+            start, ends = rule
+            if self.are_equivalent(start, eqv_start) and eqv_ends == tuple(
+                sorted(self.equivdb[l] for l in ends)
+            ):
+                return start, ends
+
+    def find_proof_tree(self, label: int, iterative: bool = False):
+        """Search for a proof tree based on current data found."""
+        rules_dict = self.rules_up_to_equivalence()
+        # Prune all unverified labels (recursively)
+        if iterative:
+            rules_dict = iterative_prune(rules_dict, root=label)
+        else:
+            rules_dict = prune(rules_dict)
+
+        # only verified labels in rules_dict, in particular, there is a
+        # specification if a label is in the rules_dict
+        for l in rules_dict.keys():
+            self.set_verified(l)
+
+        if self.equivdb[label] in rules_dict:
+            if iterative:
+                proof_tree = iterative_proof_tree_finder(
+                    rules_dict, root=self.equivdb[label]
+                )
+            else:
+                proof_tree = random_proof_tree(rules_dict, root=self.equivdb[label])
+        else:
+            raise SpecificationNotFound("No specification for label {}".format(label))
+        return proof_tree
+
+    def get_specification_rules(self, label: int, iterative: bool = False):
+        """
+        Return a list of pairs (label, rule) which form a specification.
+        The specification returned is random, so two calls to the function
+        may result in a a different output.
+        """
+        proof_tree_node = self.find_proof_tree(label=label, iterative=iterative)
+        return self._get_specification_rules(label, proof_tree_node)
+
+    def _get_specification_rules(self, label: int, proof_tree_node: Node):
+        all_labels = proof_tree_node.labels()
+        res = []
+        # We will need to add equivalence rules from each internal label to its
+        # equivalent label as a start.
+        internal_labels = set()
+        start_equivalences = {}
+        internal_labels.add(label)
+        for node in proof_tree_node.nodes():
+            start = node.label
+            ends = tuple(child.label for child in node.children)
+            if ends or start not in all_labels:
+                # we have a strategy, possibly a verification strategy.
+                start, ends = self.rule_from_equivalence_rule(start, ends)
+                rule = start, self.rule_to_strategy[(start, ends)]
+                res.append(rule)
+                start_equivalences[self.equivdb[start]] = start
+                internal_labels.update(ends)
+            else:
+                internal_labels.add(start)
+        for label in internal_labels:
+            path = self.equivdb.find_path(
+                label, start_equivalences[self.equivdb[label]]
+            )
+            for a, b in zip(path[:-1], path[1:]):
+                rule = a, self.rule_to_strategy[a, (b,)]
+                res.append(rule)
+
+        return res
+
+    def all_specifications(self, label, iterative: bool = False):
+        """
+        A generator that yields all specifications in the universe for
+        the given label.
+        """
+        rules_dict = self.tree_search_prep()
+        # Prune all unverified labels (recursively)
+        if iterative:
+            rules_dict = iterative_prune(rules_dict, root=self.equivdb[label])
+        else:
+            rules_dict = prune(rules_dict)
+
+        if self.equivdb[self.start_label] in rules_dict:
+            if self.iterative:
+                raise NotImplementedError(
+                    "There is no method for yielding all iterative proof trees."
+                )
+            proof_trees = proof_tree_generator_dfs(rules_dict, root=self.equivdb[label])
+        for proof_tree_node in proof_trees:
+            yield self._get_specification_rules(label, proof_tree_node)
+
+    def get_smallest_specification(self, label: int, iterative: bool = False):
+        """
+        Return the smallest specification in the universe for label. It uses
+        exponential search to find it.
+        This doesn't consider the length of the equivalence paths.
+        """
+        if iterative:
+            raise NotImplementedError(
+                "There is no method for finding smallest iterative proof trees."
+            )
+        rules_dict = self.rules_up_to_equivalence()
+        rules_dict = prune(rules_dict)
+
+        if not self.equivdb[label] in rules_dict:
+            raise SpecificationNotFound("No specification for label {}".format(label))
+        tree = random_proof_tree(rules_dict, root=self.equivdb[label])
+        minimum = 1
+        maximum = len(tree)
+        # Binary search to find a smallest proof tree.
+        while minimum < maximum:
+            middle = (minimum + maximum) // 2
+            try:
+                tree = next(
+                    proof_tree_generator_dfs(
+                        rules_dict, root=self.equivdb[label], maximum=middle
+                    )
+                )
+                maximum = min(middle, len(tree))
+            except StopIteration:
+                minimum = middle + 1
+        return self._get_specification_rules(label, tree)

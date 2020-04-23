@@ -19,7 +19,9 @@ from comb_spec_searcher.utils import compositions
 
 from .class_db import ClassDB
 from .class_queue import DefaultQueue
+from .exception import SpecificationNotFound
 from .rule_db import RuleDB
+from .specification import CombinatorialSpecification
 from .strategies import Strategy, StrategyGenerator, StrategyPack
 from .strategies.rule import Rule, VerificationRule
 from .tree_searcher import (
@@ -433,7 +435,7 @@ class CombinatorialSpecificationSearcher:
             # Only applying is_empty check to comb classes that are
             # possibly empty.
             if rule.possibly_empty and self.is_empty(comb_class, label):
-                logger.info("Label %s is empty.", label, extra=self.logger_kwargs)
+                logger.debug("Label %s is empty.", label, extra=self.logger_kwargs)
                 continue
             if rule.workable:
                 self.classqueue.set_workable(label)
@@ -505,120 +507,6 @@ class CombinatorialSpecificationSearcher:
         which are in a proof tree for the root assuming that label is verified.
         """
         raise NotImplementedError("not brought forward yet")
-        if kwargs.get("substitutions"):
-            # dictionary from comb_class to symbol, filled by the combinatorial
-            # class' get_genf function.
-            kwargs["symbols"] = {}
-            # dictionary from symbol to genf, filled by the combinatorial
-            # class' get_genf function.
-            kwargs["subs"] = {}
-
-        functions = {}
-
-        def get_function(label):
-            """Return sympy function with label."""
-            label = self.equivdb[label]
-            function = functions.get(label)
-            if function is None:
-                # pylint: disable=not-callable
-                function = sympy.Function("F_" + str(label))(sympy.abc.x)
-                functions[label] = function
-            return function
-
-        if kwargs.get("fake_verify"):
-            rules_dict = self.tree_search_prep()
-            if kwargs.get("fake_verify"):
-                rules_dict[kwargs.get("fake_verify")].add(tuple())
-            rules_dict = prune(rules_dict)
-            verified_labels = set(rules_dict.keys())
-            if kwargs.get("fake_verify"):
-                if self.start_label not in verified_labels:
-                    return set()
-                strat_ver = set()
-
-        equations = set()
-
-        for start, ends in self.ruledb:
-            if kwargs.get("fake_verify"):
-                if self.equivdb[start] not in verified_labels or any(
-                    self.equivdb[x] not in verified_labels for x in ends
-                ):
-                    continue
-                strat_ver.add(start)
-                strat_ver.update(ends)
-
-            start_function = get_function(start)
-            end_functions = (get_function(end) for end in ends)
-            constructor = self.ruledb.constructor(start, ends)
-            if constructor in ("disjoint", "equiv"):
-                eq = sympy.Eq(start_function, reduce(add, end_functions, 0))
-            elif constructor == "cartesian":
-                eq = sympy.Eq(start_function, reduce(mul, end_functions, 1))
-            else:
-                raise NotImplementedError(
-                    (
-                        "Only handle cartesian and "
-                        "disjoint. Don't understand"
-                        " {}.".format(constructor)
-                    )
-                )
-            equations.add(eq)
-
-        kwargs["root_func"] = get_function(self.start_label)
-        kwargs["root_class"] = self.start_class
-        for label in self.classdb:
-            if kwargs.get("fake_verify") and label not in strat_ver:
-                continue
-            if self.classdb.is_strategy_verified(label):
-                try:
-                    function = get_function(label)
-                    comb_class = self.classdb.get_class(label)
-                    gen_func = self.get_class_genf(comb_class, **kwargs)
-                    eq = sympy.Eq(function, gen_func)
-                    equations.add(eq)
-                except Exception as e:  # pylint: disable=broad-except
-                    logger.warning(
-                        "Failed to find generating function for:\n%r\n"
-                        "Verified as:\n%s\nThe error was:\n%s",
-                        comb_class,
-                        self.classdb.verification_reason(label),
-                        e,
-                        extra=self.logger_kwargs,
-                    )
-
-        if kwargs.get("substitutions"):
-            return (
-                equations,
-                [sympy.Eq(lhs, rhs) for lhs, rhs in kwargs.get("subs").items()],
-            )
-        return equations
-
-    def get_class_genf(self, comb_class, **kwargs):
-        genf = self.class_genf.get(comb_class)
-        if genf is None:
-
-            def taylor_expand(genf, n=10):
-                num, den = genf.as_numer_denom()
-                num = num.expand()
-                den = den.expand()
-                genf = num / den
-                ser = sympy.Poly(genf.series(n=n + 1).removeO(), sympy.abc.x)
-                res = ser.all_coeffs()
-                res = res[::-1] + [0] * (n + 1 - len(res))
-                return res
-
-            genf = sympy.sympify(comb_class.get_genf(**kwargs))
-            if not kwargs["root_func"] in genf.atoms(sympy.Function):
-                count = [len(list(comb_class.objects_of_length(i))) for i in range(9)]
-                if taylor_expand(sympy.sympify(genf), 8) != count:
-                    raise ValueError(
-                        (
-                            "Incorrect generating function "
-                            "in database.\n" + repr(comb_class)
-                        )
-                    )
-            self.class_genf[comb_class] = genf
-        return genf
 
     def do_level(self):
         """Expand combinatorial classes in current queue. Combintorial classes
@@ -862,23 +750,21 @@ class CombinatorialSpecificationSearcher:
                     expanding = False
                     logger.info("No more classes to expand.", extra=self.logger_kwargs)
                     break
-            start = time.time()
-            if smallest:
-                proof_tree = self.find_smallest_proof_tree()
-            else:
-                proof_tree = self.get_proof_tree()
-            if proof_tree is not None:
-                found_string = "Proof tree found {}\n".format(
+
+            specification = self.get_specification(smallest=smallest)
+
+            if specification is not None:
+                found_string = "Specification found {}\n".format(
                     time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime())
                 )
                 found_string += "Time taken was {} seconds\n\n".format(self._time_taken)
-                found_string += self.status()
-                found_string += json.dumps(proof_tree.to_jsonable())
+                # found_string += self.status()
+                # found_string += json.dumps(specification.to_jsonable())
                 logger.info(found_string, extra=self.logger_kwargs)
-                if kwargs.get("genf", False):
-                    min_poly, func = proof_tree.get_min_poly(solve=True)
-                    return proof_tree, min_poly, func
-                return proof_tree
+                # if kwargs.get("genf", False):
+                #     min_poly, func = specification.get_min_poly(solve=True)
+                #     return specification, min_poly, func
+                return specification
             # worst case, search every hour
             multiplier = 100 // perc
             max_search_time = min(multiplier * (time.time() - start), 3600)
@@ -895,157 +781,19 @@ class CombinatorialSpecificationSearcher:
                     )
                     return
 
-    # TODO: the functions below should be moved to the RuleDB
-
-    def has_proof_tree(self):
-        """Return True if a proof tree has been found, false otherwise."""
-        return self._has_proof_tree
-
-    def tree_search_prep(self):
-        """
-        Return rule dictionary ready for tree searcher.
-
-        Converts all rules to be in terms of equivalence database.
-        """
-        start_time = time.time()
-        rules_dict = self.ruledb.rules_up_to_equivalence()
-        self.prep_for_tree_search_time += time.time() - start_time
-        return rules_dict
-
-    def _add_rule_to_rules_dict(self, rule, rules_dict):
-        """Add a rule to given dictionary."""
-        first, rest = rule
-        eqv_first = self.equivdb[first]
-        eqv_rest = tuple(sorted(self.equivdb[x] for x in rest))
-        rules_dict[eqv_first] |= set((tuple(eqv_rest),))
-
-    def equivalent_strategy_verified_label(self, label):
-        """Return equivalent strategy verified label if one exists."""
-        for eqv_label in self.equivdb.equivalent_set(label):
-            if self.classdb.is_strategy_verified(eqv_label):
-                return eqv_label
-
-    def rule_from_equivence_rule(self, eqv_start, eqv_ends):
-        """Return a rule that satisfies the equivalence rule."""
-        for rule in self.ruledb:
-            start, ends = rule
-            if not self.equivdb.equivalent(start, eqv_start):
-                continue
-            if tuple(sorted(eqv_ends)) == tuple(sorted(self.equivdb[l] for l in ends)):
-                return start, ends
-
-    def find_tree(self):
-        """Search for a random tree based on current data found."""
-        start = time.time()
-
-        rules_dict = self.tree_search_prep()
-
-        # Prune all unverified labels (recursively)
-        if self.iterative:
-            rules_dict = iterative_prune(
-                rules_dict, root=self.equivdb[self.start_label]
-            )
-        else:
-            rules_dict = prune(rules_dict)
-
-        # only verified labels in rules_dict, in particular, there is a proof
-        # tree if the start label is in the rules_dict
-        for label in rules_dict.keys():
-            self.equivdb.update_verified(label)
-
-        if self.ruledb.equivdb[self.start_label] in rules_dict:
-            self._has_proof_tree = True
-            if self.iterative:
-                proof_tree = iterative_proof_tree_finder(
-                    rules_dict, root=self.equivdb[self.start_label]
-                )
+    def get_specification(self, smallest: bool = False):
+        try:
+            if smallest:
+                assert not self.iterative
+                rules = self.ruledb.get_smallest_specification(self.start_label)
             else:
-                proof_tree = random_proof_tree(
-                    rules_dict, root=self.equivdb[self.start_label]
+                rules = self.ruledb.get_specification_rules(
+                    self.start_label, iterative=self.iterative
                 )
-        else:
-            proof_tree = None
-
-        self.tree_search_time += time.time() - start
-        self._time_taken += time.time() - start
-        return proof_tree
-
-    def get_proof_tree(self):
-        """
-        Return a random proof tree if one exists."""
-        logger.debug("Searching for tree", extra=self.logger_kwargs)
-        proof_tree_node = self.find_tree()
-        if proof_tree_node is not None:
-            proof_tree = ProofTree.from_comb_spec_searcher(proof_tree_node, self)
-            assert proof_tree is not None
-            return proof_tree
-
-    def all_proof_trees(self):
-        """A generator that yields all proof trees in the universe."""
-        root_label = self.equivdb[self.start_label]
-
-        rules_dict = self.tree_search_prep()
-        # Prune all unverified labels (recursively)
-        if self.iterative:
-            rules_dict = iterative_prune(rules_dict, root=root_label)
-        else:
-            rules_dict = prune(rules_dict)
-
-        if self.equivdb[self.start_label] in rules_dict:
-            if self.iterative:
-                raise NotImplementedError(
-                    "There is no method for yielding all" " iterative proof trees."
-                )
-            proof_trees = proof_tree_generator_dfs(rules_dict, root=root_label)
-        else:
-            logger.info("There are no proof trees.")
-            return
-        for proof_tree_node in proof_trees:
-            yield ProofTree.from_comb_spec_searcher(proof_tree_node, self)
-
-    def find_smallest_proof_tree(self):
-        """Return a smallest proof tree in the universe. It uses exponential
-        search to find it."""
-        if self.iterative:
-            raise NotImplementedError(
-                "There is no method for finding " " smallest iterative proof trees."
-            )
-        root_label = self.equivdb[self.start_label]
-        logger.debug("Searching for tree", extra=self.logger_kwargs)
-        rules_dict = self.tree_search_prep()
-        rules_dict = prune(rules_dict)
-
-        if not self.equivdb[self.start_label] in rules_dict:
-            logger.debug("There are no proof trees.", extra=self.logger_kwargs)
-            return
-        bound = 1
-        # Determine an upper bound on the size of a smallest proof tree.
-        while True:
-            logger.info(
-                "Looking for tree with max size %s", bound, extra=self.logger_kwargs
-            )
-            try:
-                tree = next(
-                    proof_tree_generator_dfs(rules_dict, root=root_label, maximum=bound)
-                )
-                break
-            except StopIteration:
-                bound *= 2
-        minimum = 1
-        maximum = bound
-        # Binary search to find a smallest proof tree.
-        while minimum < maximum:
-            middle = (minimum + maximum) // 2
-            logger.info(
-                "Looking for tree with max size %s", middle, extra=self.logger_kwargs
-            )
-            try:
-                tree = next(
-                    proof_tree_generator_dfs(
-                        rules_dict, root=root_label, maximum=middle
-                    )
-                )
-                maximum = middle
-            except StopIteration:
-                minimum = middle + 1
-        return ProofTree.from_comb_spec_searcher(tree, self)
+        except SpecificationNotFound:
+            return None
+        start_class = self.classdb.get_class(self.start_label)
+        return CombinatorialSpecification(
+            start_class,
+            [(self.classdb.get_class(label), rule) for label, rule in rules],
+        )

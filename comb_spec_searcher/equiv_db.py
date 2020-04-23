@@ -29,6 +29,7 @@ class EquivalenceDB:
         self.parents = {}
         self.weights = {}
         self.verified_roots = set()
+        self.vertices = set()  # needed for finding the paths at post-processing
 
     def __eq__(self, other):
         """Check if all information stored is the same."""
@@ -36,6 +37,7 @@ class EquivalenceDB:
             self.parents == other.parents
             and self.weights == other.weights
             and self.verified_roots == other.verified_roots
+            and self.vertices == other.vertices
         )
 
     def to_dict(self):
@@ -44,6 +46,7 @@ class EquivalenceDB:
             "parents": self.parents,
             "weights": self.weights,
             "verified_roots": list(self.verified_roots),
+            "vertices": list(list(x) for x in self.vertices),
         }
 
     @classmethod
@@ -53,6 +56,7 @@ class EquivalenceDB:
         equivdb.parents = {int(x): y for x, y in dict_["parents"].items()}
         equivdb.weights = {int(x): y for x, y in dict_["weights"].items()}
         equivdb.verified_roots = set(dict_["verified_roots"])
+        equivdb.vertices = {frozenset(x) for x in dict_["vertices"]}
         return equivdb
 
     def __getitem__(self, comb_class):
@@ -77,6 +81,7 @@ class EquivalenceDB:
 
     def union(self, t1, t2):
         """Find sets containing t1 and t2 and merge them."""
+        self.vertices.add(frozenset((t1, t2)))
         verified = self.is_verified(t1) or self.is_verified(t2)
         roots = [self[t1], self[t2]]
         heaviest = max([(self.weights[r], r) for r in roots])[1]
@@ -129,7 +134,7 @@ class EquivalenceDB:
                 reverse_map[n] = x
 
         adjacency_list = [[] for i in range(len(equivalent_comb_classes))]
-        for (t1, t2) in self.explanations:
+        for (t1, t2) in self.vertices:
             if self.equivalent(t1, comb_class):
                 u = equivalent_comb_classes[t1]
                 v = equivalent_comb_classes[t2]

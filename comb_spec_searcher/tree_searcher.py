@@ -3,7 +3,7 @@ Finds and returns a combinatorial specification, that we call a proof tree.
 """
 from collections import defaultdict, deque
 from copy import deepcopy
-from itertools import product
+from itertools import chain, product
 from random import choice, shuffle
 
 __all__ = ("prune", "proof_tree_generator_dfs", "proof_tree_generator_bfs")
@@ -17,6 +17,16 @@ class Node:
             children = []
         self.label = n
         self.children = children
+
+    def labels(self):
+        if not self.children:
+            return frozenset([self.label])
+        return frozenset(chain.from_iterable(node.children for node in self.children))
+
+    def nodes(self):
+        yield self
+        for node in self.children:
+            yield from node.nodes()
 
     def __str__(self):
         return "".join(["(", str(self.label), *map(str, self.children), ")"])
