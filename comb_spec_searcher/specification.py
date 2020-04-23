@@ -1,7 +1,8 @@
+from itertools import chain
 from typing import Iterable, Iterator
 from .combinatorial_class import CombinatorialClass, CombinatorialObject
 from .strategies import Strategy
-from .strategies import Rule
+from .strategies import EmptyStrategy, Rule
 
 from sympy import Eq, Function
 import sympy
@@ -17,12 +18,15 @@ class CombinatorialSpecification:
         self.root = root
         self.rules_dict = {}
         self.rules_dict = {comb_class: rule(comb_class) for comb_class, rule in rules}
-        for rule in self.rules_dict.values():
-            print(rule.formal_step)
+        for rule in list(
+            self.rules_dict.values()
+        ):  # list as we lazily assign empty rules
             rule.set_subrecs(self.get_rule)
         self.labels = {}
 
     def get_rule(self, comb_class: CombinatorialClass) -> Rule:
+        if comb_class.is_empty():
+            self.rules_dict[comb_class] = EmptyStrategy()(comb_class)
         return self.rules_dict[comb_class]
 
     @property
@@ -44,7 +48,7 @@ class CombinatorialSpecification:
         for comb_class, rule in self.rules_dict.items():
             lhs_func = self.get_function(comb_class)
             rhs_funcs = [self.get_function(comb_class) for comb_class in rule.children]
-            yield rule.constructor.get_equation(lhs_func, rhs_funcs)
+            yield rule.get_equation(lhs_func, rhs_funcs)
 
     def count_objects_of_size(self, size: int) -> int:
         return self.root_rule.count_objects_of_size(n=size)
@@ -52,3 +56,14 @@ class CombinatorialSpecification:
     def generate_objects_of_size(self, size: int) -> Iterator[CombinatorialObject]:
         for obj in self.root_rule.generate_objects_of_size(n=size):
             yield obj
+
+    def __str__(self):
+        res = "A combinatorial specification with {} rules.\n\n".format(
+            len(self.rules_dict)
+        )
+        res += "\n\n".join(str(r) for r in self.rules_dict.values())
+        # TODO: don't print equations...
+        res += "\n\nEquations:"
+        for eq in self.get_equations():
+            res += "\n{} = {}".format(eq.lhs, eq.rhs)
+        return res

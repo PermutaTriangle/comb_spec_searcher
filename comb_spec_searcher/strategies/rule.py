@@ -1,8 +1,9 @@
 from typing import Callable, Iterator, Optional, Tuple, TYPE_CHECKING
+from sympy import Eq, Function
 from .constructor import Constructor
 from ..combinatorial_class import CombinatorialClass, CombinatorialObject
 
-__all__ = ("Rule", "VerificationRule")
+__all__ = ("EmptyRule", "Rule", "VerificationRule")
 
 if TYPE_CHECKING:
     from .strategy import Strategy
@@ -79,6 +80,9 @@ class Rule:
             self.count_cache[key] = res
         return res
 
+    def get_equation(self, lhs_func, rhs_funcs):
+        return self.constructor.get_equation(lhs_func, rhs_funcs)
+
     def generate_objects_of_size(
         self, **parameters
     ) -> Iterator[Tuple[Tuple[CombinatorialObject, CombinatorialClass], ...]]:
@@ -96,6 +100,47 @@ class Rule:
             res.append(obj)
         self.obj_cache[key] = tuple(res)
 
+    def __str__(self):
+        def frontpad(res, height):
+            n = max(len(s) for s in res)
+            for _ in range(height - len(res)):
+                res.append(" " * n)
+
+        def backpad(res):
+            n = max(len(s) for s in res)
+            for i, s in enumerate(res):
+                res[i] = s + " " * (n - len(s))
+
+        def join(res, new):
+            backpad(new)
+            backpad(res)
+            frontpad(res, len(new))
+            for i, s in enumerate(new):
+                res[i] += s
+
+        res = str(self.comb_class).split("\n")
+        backpad(res)
+        children = [str(child).split("\n") for child in self.children]
+        if children:
+            symbol_height = 1
+            eq_symbol = (
+                ["     " for i in range(symbol_height)]
+                + ["  {}  ".format(self.constructor.get_eq_symbol())]
+                + ["     " for i in range(symbol_height)]
+            )
+            join(res, eq_symbol)
+            join(res, children[0])
+            if len(children) > 1:
+                op_symbol = (
+                    ["     " for i in range(symbol_height)]
+                    + ["  {}  ".format(self.constructor.get_op_symbol())]
+                    + ["     " for i in range(symbol_height)]
+                )
+                for child in children[1:]:
+                    join(res, op_symbol)
+                    join(res, child)
+        return "Explanation: {}\n".format(self.formal_step) + "\n".join(x for x in res)
+
 
 class VerificationRule(Rule):
     def count_objects_of_size(self, **parameters):
@@ -105,6 +150,9 @@ class VerificationRule(Rule):
             res = self.strategy.count_objects_of_size(self.comb_class, **parameters)
             self.count_cache[key] = res
         return res
+
+    def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...],) -> Eq:
+        return self.strategy.get_equation(self.comb_class, lhs_func, rhs_funcs)
 
     def generate_objects_of_size(self, **parameters):
         key = tuple(parameters.items())

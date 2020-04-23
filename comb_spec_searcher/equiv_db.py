@@ -90,7 +90,7 @@ class EquivalenceDB:
                 self.weights[heaviest] += self.weights[r]
                 self.parents[r] = heaviest
         if verified:
-            self.update_verified(t1)
+            self.set_verified(t1)
 
     def equivalent(self, t1, t2):
         """Return True if t1 and t2 are equivalent, False otherwise."""

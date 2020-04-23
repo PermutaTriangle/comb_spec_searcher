@@ -2,7 +2,8 @@ import abc
 from importlib import import_module
 from typing import Iterator, Optional, Tuple, TYPE_CHECKING, Union
 
-from .constructor import Atom, CartesianProduct, Constructor, DisjointUnion
+from sympy import Eq, Function
+from .constructor import Atom, CartesianProduct, Constructor, DisjointUnion, Empty
 from .rule import Rule, VerificationRule
 from ..combinatorial_class import CombinatorialClass, CombinatorialObject
 from ..exception import InvalidOperationError, ObjectMappingError
@@ -260,6 +261,13 @@ class VerificationStrategy(Strategy):
             return tuple()
         return None
 
+    def constructor(
+        self,
+        comb_class: CombinatorialClass,
+        children: Optional[Tuple[CombinatorialClass, ...]] = None,
+    ) -> Constructor:
+        raise InvalidOperationError("No constructor on a verification strategy")
+
     def backward_map(
         self,
         comb_class: CombinatorialClass,
@@ -280,11 +288,43 @@ class VerificationStrategy(Strategy):
     def count_objects_of_size(self, comb_class: CombinatorialClass, **parameters):
         """Verification strategies must contain a method to count the objects."""
 
+    def get_equation(
+        self,
+        comb_class: CombinatorialClass,
+        lhs_func: Function,
+        rhs_funcs: Tuple[Function, ...],
+    ) -> Eq:
+        return Eq(lhs_func, self.get_genf(comb_class))
+
     @abc.abstractmethod
     def generate_objects_of_size(
         self, comb_class: CombinatorialClass, **parameters
     ) -> Iterator[CombinatorialObject]:
         """Verification strategies must contain a method to generate the objects."""
+
+
+class EmptyStrategy(VerificationStrategy):
+    def count_objects_of_size(self, comb_class: CombinatorialClass, **parameters):
+        """Verification strategies must contain a method to count the objects."""
+        return 0
+
+    def get_genf(self, comb_class: CombinatorialClass, **kwargs):
+        return 0
+
+    def generate_objects_of_size(
+        self, comb_class: CombinatorialClass, **parameters
+    ) -> Iterator[CombinatorialObject]:
+        """Verification strategies must contain a method to generate the objects."""
+        return tuple()
+
+    def verified(self, comb_class: CombinatorialClass):
+        return comb_class.is_empty()
+
+    def formal_step(self):
+        return "is empty"
+
+    def pack(self):
+        raise InvalidOperationError("No pack for the empty strategy.")
 
 
 STRATEGY_OUTPUT = Union[Optional[Strategy], Iterator[Strategy]]

@@ -10,7 +10,7 @@ import sympy
 from ..combinatorial_class import CombinatorialClass, CombinatorialObject
 
 
-__all__ = ("Constructor", "CartesianProduct", "DisjointUnion")
+__all__ = ("Constructor", "CartesianProduct", "DisjointUnion", "Empty")
 
 
 RelianceProfile = Tuple[Tuple[int, ...], ...]
@@ -21,28 +21,50 @@ class Constructor(abc.ABC):
 
     @abc.abstractmethod
     def is_equivalence(self):
-        """Return true if the constructor is the same as "=" when there is only one child."""
+        """
+        Return true if the constructor is the same as "=" when there is only
+        one child.
+        """
 
     @abc.abstractmethod
     def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
-        """Return the sympy.Eq in the form lhs_func = f(rhs_funcs).
-        TODO: remove lhs_func dependency"""
+        """
+        Return the sympy.Eq in the form lhs_func = f(rhs_funcs).
+        """
 
     @abc.abstractmethod
     def reliance_profile(self, **parameters: int) -> RelianceProfile:
-        """Return the reliance profile. That is for the parameters given,
-        which parameters of each individual subclass are required."""
+        """
+        Return the reliance profile. That is for the parameters given,
+        which parameters of each individual subclass are required.
+        """
 
     @abc.abstractmethod
     def get_recurrence(self, subrecs: Callable[[Any], int], **parameters: int) -> int:
-        """Return the count for the given parameters, assuming the children are
-        counted by the subrecs given."""
+        """
+        Return the count for the given parameters, assuming the children are
+        counted by the subrecs given.
+        """
 
     @abc.abstractmethod
     def get_sub_objects(
         self, subgens: Callable[[int], CombinatorialObject], **parameters: int
     ) -> Iterator[Tuple[CombinatorialObject, ...]]:
         """Return the subobjs/image of the bijection implied by the constructor."""
+
+    def get_eq_symbol(self) -> str:
+        """
+        Return a choice for '=' in the pretty print a '=' b '+' c of rules.
+        Your choice should be a single charachter.
+        """
+        return "="
+
+    def get_op_symbol(self) -> str:
+        """
+        Return a choice for '+' in the pretty print a '=' b '+' c of rules.
+        Your choice should be a single charachter.
+        """
+        return "+"
 
 
 class Atom(Constructor):
@@ -138,6 +160,12 @@ class CartesianProduct(Constructor):
                 tuple, product(*tuple(subgen(n=i) for i, subgen in zip(comp, subgens))),
             )
 
+    def get_eq_symbol(self) -> str:
+        return "="
+
+    def get_eq_symbol(self) -> str:
+        return "x"
+
 
 class DisjointUnion(Constructor):
     def __init__(self, children: Tuple[CombinatorialClass, ...]):
@@ -166,3 +194,32 @@ class DisjointUnion(Constructor):
                 yield tuple(None for _ in range(i)) + (gp,) + tuple(
                     None for _ in range(len(subgens) - i - 1)
                 )
+
+    def get_eq_symbol(self) -> str:
+        return "="
+
+    def get_op_symbol(self) -> str:
+        return "+"
+
+
+class Empty(Constructor):
+    def is_equivalence(self):
+        return False
+
+    def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
+        return Eq(lhs_func, 0)
+
+    def reliance_profile(self, n: int) -> RelianceProfile:
+        # TODO: implement in multiple variables
+        return tuple()
+
+    def get_recurrence(
+        self, subrecs: Callable[[Any], int], **lhs_parameters: Any
+    ) -> int:
+        return 0
+
+    def get_sub_objects(
+        self, subgens: Callable[[int], CombinatorialObject], n: int
+    ) -> Iterator[Tuple[CombinatorialObject, ...]]:
+        if 0:
+            yield 1
