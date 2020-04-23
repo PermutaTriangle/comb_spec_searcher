@@ -8,6 +8,7 @@ by symmetries etc. It gives each combinatorial class a unique label.
 from base64 import b64decode, b64encode
 import zlib
 from typing import Optional
+from tqdm import tqdm
 
 from logzero import logger
 
@@ -80,7 +81,7 @@ class Info:
     def from_dict(cls, dict_):
         """Return Info object from dictionary."""
         return cls(
-            comb_class=b64decode(dict_["comb_class"].encode()),
+            comb_class=zlib.compress(b64decode(dict_["comb_class"].encode()), 9),
             label=int(dict_["label"]),
             expanded=int(dict_.get("expanded", 0)),
             symmetry_expanded=dict_.get("symmetry_expanded", False),

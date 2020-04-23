@@ -9,6 +9,7 @@ Based on: https://www.ics.uci.edu/~eppstein/PADS/UnionFind.py
 
 from collections import deque
 
+
 from comb_spec_searcher.utils import CompressedStringDict
 
 
@@ -30,7 +31,7 @@ class EquivalenceDB:
         """Create a new empty equivalent database."""
         self.parents = {}
         self.weights = {}
-        self.explanations = CompressedStringDict()
+        self.explanations = {}
         self.verified_roots = set()
 
     def __eq__(self, other):

@@ -25,8 +25,8 @@ class RuleDB:
         dictionary. Calling works the same way as explanations.
         """
         self.rules_dict = defaultdict(set)
-        self.explanations = defaultdict(CompressedStringDict)
-        self.constructors = defaultdict(CompressedStringDict)
+        self.explanations = {}
+        self.constructors = {}
 
     def __eq__(self, other):
         """Check if all stored information is the same."""
@@ -59,11 +59,15 @@ class RuleDB:
         for start, ends in dict_["rules_dict"]:
             ruledb.rules_dict[start].update(map(tuple, ends))
         for x, d in dict_["explanations"]:
-            for y, z in d:
-                ruledb.explanations[x][tuple(y)] = z
+            new_dict = {tuple(y): z for y, z in d}
+            ruledb.explanations[x] = CompressedStringDict(new_dict)
+            # for y, z in d:
+            # ruledb.explanations[x][tuple(y)] = z
         for x, d in dict_["constructors"]:
-            for y, z in d:
-                ruledb.constructors[x][tuple(y)] = z
+            new_dict = {tuple(y): z for y, z in d}
+            ruledb.constructors[x] = CompressedStringDict(new_dict)
+            # for y, z in d:
+            # ruledb.constructors[x][tuple(y)] = z
         return ruledb
 
     def add(self, start, end, explanation, constructor):
