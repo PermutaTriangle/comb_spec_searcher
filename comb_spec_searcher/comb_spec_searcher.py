@@ -21,7 +21,7 @@ from .class_db import ClassDB
 from .class_queue import DefaultQueue
 from .rule_db import RuleDB
 from .strategies import Strategy, StrategyGenerator, StrategyPack
-from .strategies.rule import Rule
+from .strategies.rule import Rule, VerificationRule
 from .tree_searcher import (
     iterative_proof_tree_finder,
     iterative_prune,
@@ -366,14 +366,8 @@ class CombinatorialSpecificationSearcher:
                 self.classqueue.set_stop_yielding(label)
 
             if not end_labels:
-                # all the classes are empty so the class itself must be empty!
-                print(rule.formal_step)
-                for child in rule.children:
-                    print(child)
-                print(self.is_empty(comb_class, label))
-                self._add_empty_rule(label)
-                assert False
-                break
+                # this must be a verification strategy!
+                assert isinstance(rule, VerificationRule), rule.formal_step
             self.ruledb.add(label, end_labels, rule)
 
             for end_label in end_labels:

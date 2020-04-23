@@ -91,7 +91,7 @@ class EquivalenceDB:
         """Return True if t1 and t2 are equivalent, False otherwise."""
         return self[t1] == self[t2]
 
-    def update_verified(self, comb_class):
+    def set_verified(self, comb_class):
         """Update database that combinatorial classes equivalent to comb_class
         are verified."""
         if not self.is_verified(comb_class):
