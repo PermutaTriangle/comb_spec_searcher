@@ -58,10 +58,15 @@ class CombinatorialSpecification:
             yield obj
 
     def __str__(self):
-        res = "A combinatorial specification with {} rules.\n\n".format(
+        res = "A combinatorial specification with {} rules.".format(
             len(self.rules_dict)
         )
-        res += "\n\n".join(str(r) for r in self.rules_dict.values())
+        for c, r in self.rules_dict.items():
+            start_label = self.get_label(c)
+            end_labels = tuple(self.get_label(c) for c in r.children)
+            res += "\n\n"
+            res += "{} -> {}\n".format(start_label, end_labels)
+            res += str(r)
         # TODO: don't print equations...
         res += "\n\nEquations:"
         for eq in self.get_equations():
