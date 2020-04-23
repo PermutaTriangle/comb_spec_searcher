@@ -1,8 +1,9 @@
 from .comb_spec_searcher import CombinatorialSpecificationSearcher
 from .combinatorial_class import CombinatorialClass, CombinatorialObject
 from .proof_tree import ProofTree
-from .specification import Specification
+from .specification import CombinatorialSpecification
 from .strategies import (
+    Atom,
     Constructor,
     CartesianProduct,
     CartesianProductStrategy,
@@ -12,5 +13,6 @@ from .strategies import (
     Strategy,
     StrategyGenerator,
     StrategyPack,
+    VerificationStrategy,
 )
 from .class_queue import CSSQueue

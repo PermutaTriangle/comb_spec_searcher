@@ -75,7 +75,7 @@ class Rule:
         res = self.count_cache.get(key)
         if res is None:
             assert self.set_subrecs is not None
-            res = self.constructor().get_recurrence(self.subrecs, **parameters)
+            res = self.constructor.get_recurrence(self.subrecs, **parameters)
             self.count_cache[key] = res
         return res
 
@@ -88,10 +88,34 @@ class Rule:
             yield from res
             return
         res = []
-        for subobjs in self.constructor().get_sub_objects(
+        for subobjs in self.constructor.get_sub_objects(
             self.subgenerators, **parameters
         ):
             obj = self.backward_map(subobjs)
+            yield obj
+            res.append(obj)
+        self.obj_cache[key] = tuple(res)
+
+
+class VerificationRule(Rule):
+    def count_objects_of_size(self, **parameters):
+        key = tuple(parameters.items())
+        res = self.count_cache.get(key)
+        if res is None:
+            res = self.strategy.count_objects_of_size(self.comb_class, **parameters)
+            self.count_cache[key] = res
+        return res
+
+    def generate_objects_of_size(self, **parameters):
+        key = tuple(parameters.items())
+        res = self.obj_cache.get(key)
+        if res is not None:
+            yield from res
+            return
+        res = []
+        for obj in self.strategy.generate_objects_of_size(
+            self.comb_class, **parameters
+        ):
             yield obj
             res.append(obj)
         self.obj_cache[key] = tuple(res)

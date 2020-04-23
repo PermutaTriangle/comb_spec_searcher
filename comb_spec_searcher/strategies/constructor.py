@@ -5,6 +5,7 @@ from typing import Any, Callable, Iterable, Iterator, Tuple
 import abc
 
 from sympy import Eq, Function
+import sympy
 
 from ..combinatorial_class import CombinatorialClass, CombinatorialObject
 
@@ -33,17 +34,42 @@ class Constructor(abc.ABC):
         which parameters of each individual subclass are required."""
 
     @abc.abstractmethod
-    def get_recurrence(
-        self, subrecs: Callable[[Any], int], **lhs_parameters: int
-    ) -> int:
+    def get_recurrence(self, subrecs: Callable[[Any], int], **parameters: int) -> int:
         """Return the count for the given parameters, assuming the children are
         counted by the subrecs given."""
 
     @abc.abstractmethod
     def get_sub_objects(
-        self, subgens: Callable[[int], CombinatorialObject], size: int
+        self, subgens: Callable[[int], CombinatorialObject], **parameters: int
     ) -> Iterator[Tuple[CombinatorialObject, ...]]:
         """Return the subobjs/image of the bijection implied by the constructor."""
+
+
+class Atom(Constructor):
+    def __init__(self, **parameters):
+        self.parameters = dict(**parameters)
+
+    def is_equivalence(self):
+        self.size = 1
+
+    def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
+        # TODO: implement in multiple variable
+        return Eq(lhs_func, sympy.abc.x ** self.parameters["n"])
+
+    def get_recurrence(self, subrecs: Callable[[Any], int], **parameters: int) -> int:
+        if parameters == self.parameters:
+            return 1
+        return 0
+
+    def get_sub_objects(
+        self, subgens: Callable[[int], CombinatorialObject], **parameters: int
+    ) -> Iterator[Tuple[CombinatorialObject, ...]]:
+        if parameters == self.parameters:
+            yield tuple()
+        return
+
+    def reliance_profile(self, **parameters) -> RelianceProfile:
+        return tuple()
 
 
 class CartesianProduct(Constructor):

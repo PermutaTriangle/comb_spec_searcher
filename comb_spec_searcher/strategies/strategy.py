@@ -1,10 +1,17 @@
 import abc
 from importlib import import_module
-from typing import Iterator, Optional, Tuple, Union
+from typing import Iterator, Optional, Tuple, TYPE_CHECKING, Union
 
-from .constructor import CartesianProduct, Constructor, DisjointUnion
-from .rule import Rule
+from .constructor import Atom, CartesianProduct, Constructor, DisjointUnion
+from .rule import Rule, VerificationRule
 from ..combinatorial_class import CombinatorialClass, CombinatorialObject
+from ..exception import InvalidOperationError
+
+if TYPE_CHECKING:
+    from comb_spec_searcher import (
+        CombinatorialSpecification,
+        StrategyPack,
+    )
 
 
 __all__ = ("Strategy", "StrategyGenerator")
@@ -146,6 +153,114 @@ class DisjointUnionStrategy(Strategy):
         if children is None:
             children = self.decomposition_function(comb_class)
         return DisjointUnion(children)
+
+
+class VerificationStrategy(Strategy):
+    """
+    General representation of a strategy to enumerate combinatorial classes.
+    """
+
+    def __init__(self, ignore_parent: bool = True):
+        super().__init__(ignore_parent=ignore_parent)
+
+    def __call__(
+        self,
+        comb_class: CombinatorialClass,
+        children: Tuple[CombinatorialClass, ...] = None,
+        **kwargs
+    ) -> "SpecificRule":
+        if children is None:
+            children = self.decomposition_function(comb_class)
+        return VerificationRule(self, comb_class)
+
+    @abc.abstractproperty
+    def pack(self, comb_class: CombinatorialClass) -> "StrategyPack":
+        """
+        Returns a StrategyPack that finds a proof tree for the comb_class in
+        which the verification strategies used are "simpler".
+
+        The pack is assumed to produce a finite universe.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def verified(self, comb_class: CombinatorialClass) -> bool:
+        """
+        Returns True if enumeration strategy works for the combinatorial class.
+        """
+        raise NotImplementedError
+
+    def get_specification(
+        self, comb_class: CombinatorialClass, **kwargs
+    ) -> "CombinatorialSpecification":
+        """
+        Returns a combinatorial specification for the combinatorial class.
+        Raises an `InvalidOperationError` if no specification can be found,
+        e.g. if it is not verified.
+
+        All the kwargs are past to the `auto_search` method of the
+        CombinaotorialSpecificationSearcher instance that searches for the
+        specification.
+        """
+        if not self.verified(comb_class):
+            raise InvalidOperationError("The combinatorial class is not verified")
+        from ..comb_spec_searcher import CombinatorialSpecificationSearcher
+
+        searcher = CombinatorialSpecificationSearcher(comb_class, self.pack(comb_class))
+        specification = searcher.auto_search(**kwargs)
+        if specification is None:
+            raise InvalidOperationError("Cannot find a specification")
+        return specification
+
+    def get_genf(self, comb_class: CombinatorialClass, **kwargs):
+        """
+        Returns the generating function for the combinatorial class.
+
+        All the kwargs are passed to `self.get_tree`.
+
+        Raises an InvalidOperationError if the combinatorial class is not verified.
+        """
+        if not self.verified(comb_class):
+            raise InvalidOperationError("The combinatorial class is not verified")
+        return self.get_specification(comb_class, **kwargs).get_genf()
+
+    def decomposition_function(self, comb_class: CombinatorialClass) -> tuple:
+        """
+        A combinatorial class C is marked as verified by returning a rule
+        C -> (). This ensures that C is in a combinatorial specification as it
+        appears exactly once on the left hand side.
+
+        The function returns None if the verification strategy doesn't apply.
+        """
+        if self.verified(comb_class):
+            return tuple()
+        return None
+
+    def backward_map(
+        self,
+        comb_class: CombinatorialClass,
+        objs: Tuple[CombinatorialObject, ...],
+        children: Optional[Tuple[CombinatorialObject, ...]] = None,
+    ) -> CombinatorialObject:
+        raise InvalidOperationError("No backward map on a verification strategy")
+
+    def forward_map(
+        self,
+        comb_class: CombinatorialClass,
+        obj: CombinatorialObject,
+        children: Optional[Tuple[CombinatorialObject, ...]] = None,
+    ) -> Tuple[CombinatorialObject, ...]:
+        raise InvalidOperationError("No backward map on a verification strategy")
+
+    @abc.abstractmethod
+    def count_objects_of_size(self, comb_class: CombinatorialClass, **parameters):
+        """Verification strategies must contain a method to count the objects."""
+
+    @abc.abstractmethod
+    def generate_objects_of_size(
+        self, comb_class: CombinatorialClass, **parameters
+    ) -> Iterator[CombinatorialObject]:
+        """Verification strategies must contain a method to generate the objects."""
 
 
 STRATEGY_OUTPUT = Union[Optional[Strategy], Iterator[Strategy]]

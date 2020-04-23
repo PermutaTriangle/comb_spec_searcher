@@ -19,7 +19,6 @@ from comb_spec_searcher.utils import compositions
 
 from .class_db import ClassDB
 from .class_queue import DefaultQueue
-from .equiv_db import EquivalenceDB
 from .rule_db import RuleDB
 from .strategies import Strategy, StrategyGenerator, StrategyPack
 from .strategies.rule import Rule
@@ -208,6 +207,8 @@ class CombinatorialSpecificationSearcher:
         name = get_func_name(strategy)
         self.strategy_times[name] += time_taken
         self.strategy_expansions[name] += 1
+
+    # this should be moved to the RuleDB
 
     def try_verify(self, comb_class, label, force=False):
         """
@@ -454,7 +455,8 @@ class CombinatorialSpecificationSearcher:
         return end_labels
 
     def _symmetry_expand(self, comb_class):
-        """Add symmetries of combinatorial class to the database."""
+        """Add symmetries of combinatorial class to the database.
+        # TODO: Move to the classdb"""
         start = time.time()
         if not self.classdb.is_symmetry_expanded(comb_class):
             for sym_comb_class, formal_step in self._symmetric_classes(
@@ -898,6 +900,8 @@ class CombinatorialSpecificationSearcher:
                         extra=self.logger_kwargs,
                     )
                     return
+
+    # TODO: the functions below should be moved to the RuleDB
 
     def has_proof_tree(self):
         """Return True if a proof tree has been found, false otherwise."""
