@@ -1,5 +1,5 @@
 from .constructor import Atom, CartesianProduct, Constructor, DisjointUnion
-from .rule import Rule
+from .rule import Rule, VerificationRule
 from .strategy import (
     CartesianProductStrategy,
     DisjointUnionStrategy,

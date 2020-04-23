@@ -13,9 +13,9 @@ from operator import add, mul
 import sympy
 from logzero import logger
 
-from comb_spec_searcher.exception import InsaneTreeError, TaylorExpansionError
-from comb_spec_searcher.tree_searcher import Node as tree_searcher_node
-from comb_spec_searcher.utils import (
+from .exception import InsaneTreeError, TaylorExpansionError
+from .tree_searcher import Node as tree_searcher_node
+from .utils import (
     check_equation,
     check_poly,
     compositions,
@@ -23,6 +23,9 @@ from comb_spec_searcher.utils import (
     maple_equations,
     taylor_expand,
 )
+
+
+__all__ = ("ProofTree",)
 
 
 class ProofTreeNode:

@@ -161,5 +161,8 @@ class DisjointUnion(Constructor):
     def get_sub_objects(
         self, subgens: Callable[[int], CombinatorialObject], n: int
     ) -> Iterator[Tuple[CombinatorialObject, ...]]:
-        for gp in chain.from_iterable(subgen(n=n) for subgen in subgens):
-            yield (gp,)
+        for i, subgen in enumerate(subgens):
+            for gp in subgen(n=n):
+                yield tuple(None for _ in range(i)) + (gp,) + tuple(
+                    None for _ in range(len(subgens) - i - 1)
+                )

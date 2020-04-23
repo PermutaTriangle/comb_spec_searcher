@@ -5,7 +5,7 @@ from typing import Iterator, Optional, Tuple, TYPE_CHECKING, Union
 from .constructor import Atom, CartesianProduct, Constructor, DisjointUnion
 from .rule import Rule, VerificationRule
 from ..combinatorial_class import CombinatorialClass, CombinatorialObject
-from ..exception import InvalidOperationError
+from ..exception import InvalidOperationError, ObjectMappingError
 
 if TYPE_CHECKING:
     from comb_spec_searcher import (
@@ -153,6 +153,30 @@ class DisjointUnionStrategy(Strategy):
         if children is None:
             children = self.decomposition_function(comb_class)
         return DisjointUnion(children)
+
+    @staticmethod
+    def backward_map_index(objs: Tuple[CombinatorialObject, ...],) -> int:
+        for idx, obj in enumerate(objs):
+            if isinstance(obj, CombinatorialObject):
+                return idx
+        raise ObjectMappingError(
+            "For a disjoint union strategy, an object O is mapped to the tuple"
+            "with entries being None, except at the index of the child which "
+            "contains O, where it should be O."
+        )
+
+    @abc.abstractmethod
+    def backward_map(
+        self,
+        comb_class: CombinatorialClass,
+        objs: Tuple[CombinatorialObject, ...],
+        children: Optional[Tuple[CombinatorialObject, ...]] = None,
+    ) -> CombinatorialObject:
+        """This method will enable us to generate objects, and sample.
+        If it is a direct bijection, the below implementation will work!"""
+        if children is None:
+            children = self.decomposition_function(comb_class)
+        return objs[DisjointUnionStrategy.backward_map_index(objs)]
 
 
 class VerificationStrategy(Strategy):

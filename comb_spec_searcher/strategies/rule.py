@@ -2,7 +2,7 @@ from typing import Callable, Iterator, Optional, Tuple, TYPE_CHECKING
 from .constructor import Constructor
 from ..combinatorial_class import CombinatorialClass, CombinatorialObject
 
-__all__ = "Rule"
+__all__ = ("Rule", "VerificationRule")
 
 if TYPE_CHECKING:
     from .strategy import Strategy

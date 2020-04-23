@@ -1,10 +1,13 @@
 from typing import Iterable, Iterator
 from .combinatorial_class import CombinatorialClass, CombinatorialObject
 from .strategies import Strategy
-from .strategies.rule import Rule
+from .strategies import Rule
 
 from sympy import Eq, Function
 import sympy
+
+
+__all__ = ("CombinatorialSpecification",)
 
 
 class CombinatorialSpecification:
