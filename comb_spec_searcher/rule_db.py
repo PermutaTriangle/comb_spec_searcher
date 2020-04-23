@@ -25,8 +25,8 @@ class RuleDB:
         dictionary. Calling works the same way as explanations.
         """
         self.rules_dict = defaultdict(set)
-        self.explanations = {}
-        self.constructors = {}
+        self.explanations = defaultdict(CompressedStringDict)
+        self.constructors = defaultdict(CompressedStringDict)
 
     def __eq__(self, other):
         """Check if all stored information is the same."""
