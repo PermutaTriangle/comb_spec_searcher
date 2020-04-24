@@ -163,7 +163,7 @@ class CartesianProduct(Constructor):
     def get_eq_symbol(self) -> str:
         return "="
 
-    def get_eq_symbol(self) -> str:
+    def get_op_symbol(self) -> str:
         return "x"
 
 
