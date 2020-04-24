@@ -68,10 +68,8 @@ class CombinatorialSpecificationSearcher:
         self.classqueue = DefaultQueue(strategy_pack)
         self.ruledb = RuleDB()
 
-        self.classdb.add(start_class)
         self.start_label = self.classdb.get_label(start_class)
         self.classqueue.add(self.start_label)
-        self.classqueue.set_workable(self.start_label)
 
         self._has_proof_tree = False
 
@@ -290,10 +288,7 @@ class CombinatorialSpecificationSearcher:
             self.classdb.get_label(comb_class)
         print("=" * 20)
         print(comb_class)
-        print(strategy_generator)
-        print(label)
-        print(initial)
-        print(inferral)
+        print(label, strategy_generator)
         start = time.time()
         if isinstance(strategy_generator, Strategy):
             strategies = [strategy_generator(comb_class, **self.kwargs)]
@@ -322,7 +317,6 @@ class CombinatorialSpecificationSearcher:
                 )
             if rule.children is None:
                 continue  # this means the strategy does not apply
-            print(rule.formal_step)
             if inferral and len(rule.children) != 1:
                 raise TypeError(("Attempting to infer with non " "inferral strategy."))
             if inferral and comb_class == rule.children[0]:
@@ -337,7 +331,7 @@ class CombinatorialSpecificationSearcher:
             labels = [
                 self.classdb.get_label(comb_class) for comb_class in rule.children
             ]
-            print(label, labels, [self.ruledb.are_equivalent(label, l) for l in labels])
+            print(rule.formal_step, label, labels)
             logger.debug(
                 "Adding combinatorial rule %s -> %s with constructor" " '%s'",
                 label,
@@ -371,9 +365,6 @@ class CombinatorialSpecificationSearcher:
                 # this must be a verification strategy!
                 assert isinstance(rule, VerificationRule), rule.formal_step
             self.ruledb.add(label, end_labels, rule)
-
-            for end_label in end_labels:
-                self.classqueue.add(end_label)
 
         self.update_status(strategy_generator, time.time() - start)
 
@@ -438,10 +429,10 @@ class CombinatorialSpecificationSearcher:
                 logger.debug("Label %s is empty.", label, extra=self.logger_kwargs)
                 continue
             if rule.workable:
-                self.classqueue.set_workable(label)
-            if rule.inferrable or rule.workable:
                 self.classqueue.add(label)
-            elif not rule.possibly_empty:
+            if not rule.inferrable:
+                self.classqueue.set_not_inferrable(label)
+            if not rule.possibly_empty:
                 self.classdb.set_empty(label, empty=False)
 
             self.try_verify(comb_class, label)
@@ -751,6 +742,7 @@ class CombinatorialSpecificationSearcher:
                     logger.info("No more classes to expand.", extra=self.logger_kwargs)
                     break
 
+            start = time.time()
             specification = self.get_specification(smallest=smallest)
 
             if specification is not None:

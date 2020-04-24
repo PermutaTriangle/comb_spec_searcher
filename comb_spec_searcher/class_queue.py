@@ -29,10 +29,6 @@ class CSSQueue(abc.ABC):
         """You should avoid yielding label with an inferral strategy in future."""
 
     @abc.abstractmethod
-    def set_workable(self, label) -> None:
-        """Only yield classes that are set to workable."""
-
-    @abc.abstractmethod
     def set_verified(self, label) -> None:
         """Label was verified, how should the queue react?"""
 
@@ -91,11 +87,9 @@ class DefaultQueue(CSSQueue):
         self.curr_level = (
             deque()
         )  # add back to curr level if not expanded by all expansion strats
-        self.initial_expandable = set()
         self.inferral_expanded = set()
         self.initial_expanded = set()
         self.expansion_expanded = [set() for _ in range(len(self.expansion_strats))]
-        self.workable = set()  # only yield workable elements
         self.ignore = set()  # never try expand
         self.inferral_ignore = set()  # never try inferral expand
         self.levels_completed = 0
@@ -109,13 +103,8 @@ class DefaultQueue(CSSQueue):
     def set_verified(self, label) -> None:
         self.set_stop_yielding(label)
 
-    def set_workable(self, label) -> None:
-        if label not in self.ignore:
-            self.workable.add(label)
-
     def set_not_inferrable(self, label: int) -> None:
-        if label not in self.ignore:
-            self.inferral_ignore.add(label)
+        self.inferral_expanded.add(label)
 
     def set_stop_yielding(self, label: int) -> None:
         self._add_to_ignore(label)
@@ -123,37 +112,23 @@ class DefaultQueue(CSSQueue):
     def _add_to_ignore(self, label: int) -> None:
         self.ignore.add(label)
         # can remove it elsewhere to keep sets "small"
-        self.initial_expandable.discard(label)
         self.inferral_ignore.discard(label)
         self.inferral_expanded.discard(label)
         self.initial_expanded.discard(label)
         for s in self.expansion_expanded:
             s.discard(label)
-        self.workable.discard(label)
 
     def can_do_inferral(self, label: int) -> bool:
         """Return true if inferral strategies can be applied."""
-        return (
-            label not in self.ignore
-            and label not in self.inferral_ignore
-            and label in self.workable
-        )
+        return label not in self.ignore and label not in self.inferral_ignore
 
     def can_do_initial(self, label: int) -> bool:
         """Return true if initial strategies can be applied."""
-        return (
-            label not in self.ignore
-            and label not in self.initial_expanded
-            and label in self.workable
-        )
+        return label not in self.ignore and label not in self.initial_expanded
 
     def can_do_expansion(self, label: int, idx: int) -> bool:
         """Return true if expansion strategies can be applied."""
-        return (
-            label not in self.ignore
-            and label not in self.expansion_expanded[idx]
-            and label in self.workable
-        )
+        return label not in self.ignore and label not in self.expansion_expanded[idx]
 
     def __iter__(self) -> Iterator[Tuple[int, List["StrategyGenerator"], bool]]:
         """
@@ -166,7 +141,6 @@ class DefaultQueue(CSSQueue):
         while True:
             if self.working:
                 label = self.working.popleft()
-
                 if self.can_do_inferral(label):
                     yield label, self.inferral_strategies, True
                     self.inferral_expanded.add(label)
@@ -187,12 +161,12 @@ class DefaultQueue(CSSQueue):
                     # finished applying all strategies to this label, ignore from now on
                     self._add_to_ignore(label)
             else:
-                input("CHANGING LEVEL")
+                input("Finished level {}".format(self.levels_completed))
                 if not self.next_level:
                     return None
                 self.levels_completed += 1
                 self.curr_level = self.next_level
-                self.ignore = set()
+                # self.ignore = set()
                 self.next_level = deque()
                 continue
 

@@ -120,12 +120,13 @@ class RuleDB:
 
     def rule_from_equivalence_rule(self, eqv_start, eqv_ends):
         """Return a rule that satisfies the equivalence rule."""
-        eqv_ends = tuple(sorted(eqv_ends))
+        eqv_start = self.equivdb[eqv_start]
+        eqv_ends = tuple(sorted(self.equivdb[l] for l in eqv_ends))
         for rule in self:
             start, ends = rule
-            if self.are_equivalent(start, eqv_start) and eqv_ends == tuple(
-                sorted(self.equivdb[l] for l in ends)
-            ):
+            temp_start = self.equivdb[start]
+            temp_ends = tuple(sorted(self.equivdb[l] for l in ends))
+            if eqv_start == temp_start and eqv_ends == temp_ends:
                 return start, ends
 
     def find_proof_tree(self, label: int, iterative: bool = False):
@@ -163,33 +164,32 @@ class RuleDB:
         return self._get_specification_rules(label, proof_tree_node)
 
     def _get_specification_rules(self, label: int, proof_tree_node: Node):
-        all_labels = proof_tree_node.labels()
         res = []
         # We will need to add equivalence rules from each internal label to its
         # equivalent label as a start.
-        internal_labels = set()
-        start_equivalences = {}
-        internal_labels.add(label)
+        children = dict()
+        internal_nodes = set([label])
         for node in proof_tree_node.nodes():
-            start = node.label
-            ends = tuple(child.label for child in node.children)
-            if ends or start not in all_labels:
-                # we have a strategy, possibly a verification strategy.
-                start, ends = self.rule_from_equivalence_rule(start, ends)
-                rule = start, self.rule_to_strategy[(start, ends)]
-                res.append(rule)
-                start_equivalences[self.equivdb[start]] = start
-                internal_labels.update(ends)
-            else:
-                internal_labels.add(start)
-        for label in internal_labels:
-            path = self.equivdb.find_path(
-                label, start_equivalences[self.equivdb[label]]
+            eqv_start, eqv_ends = (
+                node.label,
+                tuple(child.label for child in node.children),
             )
-            for a, b in zip(path[:-1], path[1:]):
-                rule = a, self.rule_to_strategy[a, (b,)]
-                res.append(rule)
-
+            rule = self.rule_from_equivalence_rule(eqv_start, eqv_ends)
+            if rule is not None:
+                start, ends = rule
+                children[start] = ends
+                internal_nodes.update(ends)
+        res = []
+        for start, ends in children.items():
+            for label in internal_nodes:
+                if self.are_equivalent(start, label):
+                    path = self.equivdb.find_path(label, start)
+                    for a, b in zip(path[:-1], path[1:]):
+                        # TODO: if key error return ReversedRule
+                        rule = self.rule_to_strategy[(a, (b,))]
+                        res.append((a, rule))
+            rule = self.rule_to_strategy[(start, ends)]
+            res.append((start, rule))
         return res
 
     def all_specifications(self, label, iterative: bool = False):
