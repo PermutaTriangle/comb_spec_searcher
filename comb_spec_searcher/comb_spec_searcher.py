@@ -68,9 +68,6 @@ class CombinatorialSpecificationSearcher:
         self.classqueue = DefaultQueue(strategy_pack)
         self.ruledb = RuleDB()
 
-        self.start_label = self.classdb.get_label(start_class)
-        self.classqueue.add(self.start_label)
-
         self._has_proof_tree = False
 
         self.strategy_times = defaultdict(float)  # type: Dict[str, float]
@@ -81,6 +78,13 @@ class CombinatorialSpecificationSearcher:
         self.queue_time = 0
         self._time_taken = 0
         self.class_genf = {}  # type: Dict[CombinatorialClass, Any]
+
+        # initialise the run with start_class
+        self.start_label = self.classdb.get_label(start_class)
+        self.classqueue.add(self.start_label)
+        self.tried_to_verify = set()
+        self.symmetry_expanded = set()
+        self.try_verify(self.start_class, start_class)
 
     @property
     def verification_strategies(self):
@@ -97,110 +101,6 @@ class CombinatorialSpecificationSearcher:
         """The symmetries functions for the strategy pack."""
         return self.strategy_pack.symmetries
 
-    def to_dict(self):
-        return {
-            "start_class": b64encode(self.start_class.compress()).decode(),
-            "debug": self.debug,
-            "kwargs": self.kwargs,
-            "logger_kwargs": self.logger_kwargs,
-            "initial_strategies": [
-                get_module_and_func_names(
-                    f, warn=True, logger_kwargs=self.logger_kwargs
-                )
-                for f in self.initial_strategies
-            ],
-            "strategy_generators": [
-                [
-                    get_module_and_func_names(
-                        f, warn=True, logger_kwargs=self.logger_kwargs
-                    )
-                    for f in l
-                ]
-                for l in self.strategy_generators
-            ],
-            "inferral_strategies": [
-                get_module_and_func_names(
-                    f, warn=True, logger_kwargs=self.logger_kwargs
-                )
-                for f in self.inferral_strategies
-            ],
-            "verification_strategies": [
-                get_module_and_func_names(
-                    f, warn=True, logger_kwargs=self.logger_kwargs
-                )
-                for f in self.verification_strategies
-            ],
-            "iterative": self.iterative,
-            "forward_equivalence": self.forward_equivalence,
-            "symmetries": self.symmetries,
-            "classdb": self.classdb.to_dict(),
-            "classqueue": self.classqueue.to_dict(),
-            "ruledb": self.ruledb.to_dict(),
-            "start_label": self.start_label,
-            "_has_proof_tree": self._has_proof_tree,
-            "strategy_times": dict(self.strategy_times),
-            "strategy_expansions": dict(self.strategy_expansions),
-            "symmetry_time": self.symmetry_time,
-            "tree_search_time": self.tree_search_time,
-            "prep_for_tree_search_time": self.prep_for_tree_search_time,
-            "queue_time": self.queue_time,
-            "_time_taken": self._time_taken,
-        }
-
-    @classmethod
-    def from_dict(cls, dict_, combinatorial_class):
-        # pylint: disable=protected-access
-        strategy_pack = StrategyPack(
-            initial_strats=[
-                get_func(*mod_func_name)
-                for mod_func_name in dict_["initial_strategies"]
-            ],
-            ver_strats=[
-                get_func(*mod_func_name)
-                for mod_func_name in dict_["verification_strategies"]
-            ],
-            inferral_strats=[
-                get_func(*mod_func_name)
-                for mod_func_name in dict_["inferral_strategies"]
-            ],
-            expansion_strats=[
-                [get_func(*mod_func_name) for mod_func_name in l]
-                for l in dict_["strategy_generators"]
-            ],
-            name="recovered strategy pack",
-        )
-
-        kwargs = {
-            "debug": dict_["debug"],
-            "iterative": dict_["iterative"],
-            "forward_equivalence": dict_["forward_equivalence"],
-        }
-
-        try:
-            kwargs["logger_kwargs"] = dict_["logger_kwargs"]
-        except KeyError:
-            logger.warning("logger_kwargs could not be recovered")
-        try:
-            kwargs["function_kwargs"] = dict_["function_kwargs"]
-        except KeyError:
-            logger.warning("function_kwargs could not be recovered")
-        b = b64decode(dict_["start_class"].encode())
-        c = combinatorial_class.decompress(b)
-        css = cls(c, strategy_pack, **kwargs)
-        css.classdb = ClassDB.from_dict(dict_["classdb"], combinatorial_class)
-        css.classqueue = DefaultQueue.from_dict(dict_["classqueue"])
-        css.ruledb = RuleDB.from_dict(dict_["ruledb"])
-        css.start_label = dict_["start_label"]
-        css._has_proof_tree = dict_["_has_proof_tree"]
-        css.strategy_times = defaultdict(int, dict_["strategy_times"])
-        css.strategy_expansions = defaultdict(int, dict_["strategy_expansions"])
-        css.symmetry_time = dict_["symmetry_time"]
-        css.tree_search_time = dict_["tree_search_time"]
-        css.prep_for_tree_search_time = dict_["prep_for_tree_search_time"]
-        css.queue_time = dict_["queue_time"]
-        css._time_taken = dict_["_time_taken"]
-        return css
-
     def update_status(self, strategy, time_taken):
         """Update that it took 'time_taken' to expand a combinatorial class
         with strategy"""
@@ -210,29 +110,14 @@ class CombinatorialSpecificationSearcher:
 
     # this should be moved to the RuleDB
 
-    def try_verify(self, comb_class, label, force=False):
+    def try_verify(self, comb_class, label):
         """
         Try to verify the combinatorial class.
-
-        It will only try to verify combinatorial classes who have no equivalent
-        combinatorial classes already verified. If force=True, it will try to
-        verify combinatorial class if it is not already strategy verified.
         """
-        if force:
-            if self.classdb.is_strategy_verified(label):
-                return
-        elif self.ruledb.is_verified(label):
-            return
-        if self.classdb.is_strategy_verified(label) is None:
-            for ver_strategy in self.verification_strategies:
-                start = time.time()
-                rule = ver_strategy(comb_class, **self.kwargs)
-                self.update_status(ver_strategy, time.time() - start)
-                if rule is not None and rule.children == tuple():
-                    self.ruledb.add(label, tuple(), rule)
-                    self.classdb.set_strategy_verified(label)
-                    return
-            self.classdb.set_strategy_verified(label, False)
+        if label not in self.tried_to_verify:
+            for strategy in self.verification_strategies:
+                self._expand_class_with_strategy(comb_class, strategy, label)
+            self.tried_to_verify.add(label)
 
     def is_empty(self, comb_class, label):
         """Return True if a combinatorial class contains no objects, False
@@ -241,26 +126,6 @@ class CombinatorialSpecificationSearcher:
         empty = self.classdb.is_empty(comb_class, label)
         self.update_status(self.is_empty, time.time() - start)
         return empty
-
-    def _symmetric_classes(self, comb_class, explanation=False):
-        """Return all symmetries of a combinatorial class.
-
-        This function only works if symmetry strategies have been given to the
-        CombinatorialSpecificationSearcher.
-        """
-        symmetric_classes = []
-        for sym in self.symmetries:
-            symmetric_class = sym(comb_class)
-            if symmetric_class != comb_class:
-                if explanation:
-                    if all(x != symmetric_class for x, _ in symmetric_classes):
-                        symmetric_classes.append(
-                            (symmetric_class, str(sym).split(" ")[1])
-                        )
-                else:
-                    if all(x != symmetric_class for x in symmetric_classes):
-                        symmetric_class.append(symmetric_class)
-        return symmetric_classes
 
     def _expand(self, label, strategies, inferral: bool):
         """
@@ -286,9 +151,9 @@ class CombinatorialSpecificationSearcher:
         """
         if label is None:
             self.classdb.get_label(comb_class)
-        print("=" * 20)
-        print(comb_class)
-        print(label, strategy_generator)
+        # print("=" * 20)
+        # print(comb_class)
+        # print(label, strategy_generator)
         start = time.time()
         if isinstance(strategy_generator, Strategy):
             strategies = [strategy_generator(comb_class, **self.kwargs)]
@@ -303,7 +168,7 @@ class CombinatorialSpecificationSearcher:
         if inferral:
             inf_class = None
             inf_label = None
-        print("RULES")
+        # print("RULES")
         for strategy in strategies:
             if isinstance(strategy, Strategy):
                 rule = strategy(comb_class)
@@ -315,6 +180,7 @@ class CombinatorialSpecificationSearcher:
                     " __call__ method should yield Strategy or "
                     "Strategy(comb_class, children) object."
                 )
+            # print(rule)
             if rule.children is None:
                 continue  # this means the strategy does not apply
             if inferral and len(rule.children) != 1:
@@ -331,12 +197,12 @@ class CombinatorialSpecificationSearcher:
             labels = [
                 self.classdb.get_label(comb_class) for comb_class in rule.children
             ]
-            print(rule.formal_step, label, labels)
+            # print(rule.formal_step, label, labels)
             logger.debug(
                 "Adding combinatorial rule %s -> %s with constructor" " '%s'",
                 label,
                 tuple(labels),
-                rule.constructor,
+                rule.constructor if labels else "verified",
                 extra=self.logger_kwargs,
             )
 
@@ -349,9 +215,22 @@ class CombinatorialSpecificationSearcher:
                 # if self.debug:
                 for l, c in zip(labels, rule.children):
                     if not self.ruledb.are_equivalent(label, l):
-                        if not c.is_empty():
-                            for ch in rule.children:
-                                print(ch)
+                        # print(
+                        #     [
+                        #         len(list(comb_class.objects_of_length(i)))
+                        #         for i in range(6)
+                        #     ]
+                        # )
+                        # if not c.is_empty():
+                        # print(l)
+                        # for ch in rule.children:
+                        #     print(ch)
+                        #     print(
+                        #         [
+                        #             len(list(ch.objects_of_length(i)))
+                        #             for i in range(6)
+                        #         ]
+                        #     )
                         assert c.is_empty()
 
             start -= time.time()
@@ -421,7 +300,7 @@ class CombinatorialSpecificationSearcher:
         for comb_class, label in zip(rule.children, labels):
             if self.symmetries:
                 self._symmetry_expand(
-                    comb_class
+                    comb_class, label
                 )  # TODO: mark symmetries as empty where appropriate
             # Only applying is_empty check to comb classes that are
             # possibly empty.
@@ -441,23 +320,21 @@ class CombinatorialSpecificationSearcher:
 
         return end_labels
 
-    def _symmetry_expand(self, comb_class):
-        """Add symmetries of combinatorial class to the database.
-        # TODO: Move to the classdb"""
-        start = time.time()
-        if not self.classdb.is_symmetry_expanded(comb_class):
-            for sym_comb_class, formal_step in self._symmetric_classes(
-                comb_class, explanation=True
-            ):
-                self.classdb.add(
-                    sym_comb_class, expanding_other_sym=True, symmetry_expanded=True
-                )
-                self.equivdb.union(
-                    self.classdb.get_label(comb_class),
-                    self.classdb.get_label(sym_comb_class),
-                    formal_step,
-                )
-        self.symmetry_time += time.time() - start
+    def _symmetry_expand(self, comb_class, label):
+        """Add symmetries of combinatorial class to the database."""
+        if label not in self.symmetry_expanded:
+            self.symmetry_expanded.add(label)
+            for strategy_generator in self.symmetries:
+                if isinstance(strategy_generator, Strategy):
+                    strategies = [strategy_generator(comb_class, **self.kwargs)]
+                elif isinstance(strategy_generator, StrategyGenerator):
+                    strategies = strategy_generator(comb_class, **self.kwargs)
+                for strategy in strategies:
+                    rule = strategy(comb_class)
+                    sym_label = self.classdb.get_label(rule.children[0])
+                    self.ruledb.add(label, (sym_label,), rule)
+                    self.classqueue.set_stop_yielding(sym_label)
+                    self.symmetry_expanded.add(sym_label)
 
     def _inferral_expand(self, comb_class, label, inferral_strategies, skip=None):
         """
@@ -547,55 +424,12 @@ class CombinatorialSpecificationSearcher:
         status += "Memory (alone and shared) currently in use: {}\n".format(
             self.get_mem()
         )
-        all_labels = self.classdb.label_to_info.keys()
         status += "Total number of combinatorial classes found is {}\n".format(
-            str(len(all_labels))
-        )
-        expandable = 0
-        verified = 0
-        strategy_verified = 0
-        empty = 0
-        equivalent_sets = set()
-        verified_equiv_sets = set()
-        for label in all_labels:
-            if (
-                not self.is_expanded(label)
-                and not self.equivdb.is_verified(label)
-                and not self.classdb.is_expanding_children_only(label)
-                and self.classdb.is_expandable(label)
-                and not self.classdb.is_expanding_other_sym(label)
-            ):
-                expandable += 1
-            if self.equivdb.is_verified(label):
-                verified += 1
-                verified_equiv_sets.add(self.equivdb[label])
-            if self.classdb.is_strategy_verified(label):
-                strategy_verified += 1
-            if self.classdb.is_empty(label):
-                empty += 1
-            equivalent_sets.add(self.equivdb[label])
-
-        status += "Total number of expandable combinatorial classes is {}\n" "".format(
-            expandable
-        )
-        status += "Total number of verified combinatorial classes is {}\n" "".format(
-            verified
-        )
-        status += (
-            "Total number of strategy verified combinatorial "
-            "classes is {}\n".format(strategy_verified)
-        )
-        status += "Total number of empty combinatorial classes is {}\n" "".format(empty)
-
-        status += "Total number of equivalent sets is {}\n" "".format(
-            len(equivalent_sets)
-        )
-        status += "Total number of verified equivalent sets is {}\n" "".format(
-            len(verified_equiv_sets)
+            len(self.classdb.label_to_info)
         )
 
         status += "Total number of combinatorial rules is {}\n" "".format(
-            len(list(self.ruledb))
+            len(self.ruledb.rule_to_strategy)
         )
 
         status += "The size of the working queue is {}\n".format(

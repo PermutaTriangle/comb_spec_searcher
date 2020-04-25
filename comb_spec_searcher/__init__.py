@@ -15,6 +15,8 @@ from .strategies import (
     Strategy,
     StrategyGenerator,
     StrategyPack,
+    SymmetryStrategy,
+    VerificationRule,
     VerificationStrategy,
 )
 from .class_queue import CSSQueue

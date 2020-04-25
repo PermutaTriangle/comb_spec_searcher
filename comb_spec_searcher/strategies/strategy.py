@@ -15,7 +15,14 @@ if TYPE_CHECKING:
     )
 
 
-__all__ = ("Strategy", "StrategyGenerator")
+__all__ = (
+    "CartesianProductStrategy",
+    "DisjointUnionStrategy",
+    "Strategy",
+    "StrategyGenerator",
+    "SymmetryStrategy",
+    "VerificationStrategy",
+)
 
 
 class Strategy(abc.ABC):
@@ -117,14 +124,28 @@ class Strategy(abc.ABC):
         if children is None:
             children = self.decomposition_function(comb_class)
 
+    @abc.abstractmethod
+    def __str__(self) -> str:
+        """Return the name of the strategy."""
+
+    @abc.abstractmethod
+    def __repr__(self) -> str:
+        pass
+
 
 class CartesianProductStrategy(Strategy):
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        ignore_parent: bool = True,
+        inferrable: bool = False,
+        possibly_empty: bool = False,
+        workable: bool = True,
+    ):
         super().__init__(
-            ignore_parent=kwargs.get("ignore_parent", True),
-            inferrable=kwargs.get("inferrable", False),
-            possibly_empty=kwargs.get("possibly_empty", False),
-            workable=kwargs.get("workable", True),
+            ignore_parent=ignore_parent,
+            inferrable=inferrable,
+            possibly_empty=possibly_empty,
+            workable=workable,
         )
 
     def constructor(
@@ -138,12 +159,18 @@ class CartesianProductStrategy(Strategy):
 
 
 class DisjointUnionStrategy(Strategy):
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        ignore_parent: bool = False,
+        inferrable: bool = True,
+        possibly_empty: bool = True,
+        workable: bool = True,
+    ):
         super().__init__(
-            ignore_parent=kwargs.get("ignore_parent", False),
-            inferrable=kwargs.get("inferrable", True),
-            possibly_empty=kwargs.get("possibly_empty", True),
-            workable=kwargs.get("workable", True),
+            ignore_parent=ignore_parent,
+            inferrable=inferrable,
+            possibly_empty=possibly_empty,
+            workable=workable,
         )
 
     def constructor(
@@ -180,13 +207,42 @@ class DisjointUnionStrategy(Strategy):
         return objs[DisjointUnionStrategy.backward_map_index(objs)]
 
 
+class SymmetryStrategy(DisjointUnionStrategy):
+    """General representation for a symmetry strategy."""
+
+    def __init__(
+        self,
+        ignore_parent: bool = False,
+        inferrable: bool = False,
+        possibly_empty: bool = False,
+        workable: bool = False,
+    ):
+        super().__init__(
+            ignore_parent=ignore_parent,
+            inferrable=inferrable,
+            possibly_empty=possibly_empty,
+            workable=workable,
+        )
+
+
 class VerificationStrategy(Strategy):
     """
     General representation of a strategy to enumerate combinatorial classes.
     """
 
-    def __init__(self, ignore_parent: bool = True):
-        super().__init__(ignore_parent=ignore_parent)
+    def __init__(
+        self,
+        ignore_parent: bool = True,
+        inferrable: bool = True,
+        possibly_empty: bool = True,
+        workable: bool = True,
+    ):
+        super().__init__(
+            ignore_parent=ignore_parent,
+            inferrable=inferrable,
+            possibly_empty=possibly_empty,
+            workable=workable,
+        )
 
     def __call__(
         self,
@@ -216,38 +272,31 @@ class VerificationStrategy(Strategy):
         raise NotImplementedError
 
     def get_specification(
-        self, comb_class: CombinatorialClass, **kwargs
+        self, comb_class: CombinatorialClass
     ) -> "CombinatorialSpecification":
         """
         Returns a combinatorial specification for the combinatorial class.
         Raises an `InvalidOperationError` if no specification can be found,
         e.g. if it is not verified.
-
-        All the kwargs are past to the `auto_search` method of the
-        CombinaotorialSpecificationSearcher instance that searches for the
-        specification.
         """
         if not self.verified(comb_class):
             raise InvalidOperationError("The combinatorial class is not verified")
         from ..comb_spec_searcher import CombinatorialSpecificationSearcher
 
         searcher = CombinatorialSpecificationSearcher(comb_class, self.pack(comb_class))
-        specification = searcher.auto_search(**kwargs)
+        specification = searcher.auto_search()
         if specification is None:
             raise InvalidOperationError("Cannot find a specification")
         return specification
 
-    def get_genf(self, comb_class: CombinatorialClass, **kwargs):
+    def get_genf(self, comb_class: CombinatorialClass):
         """
         Returns the generating function for the combinatorial class.
-
-        All the kwargs are passed to `self.get_tree`.
-
         Raises an InvalidOperationError if the combinatorial class is not verified.
         """
         if not self.verified(comb_class):
             raise InvalidOperationError("The combinatorial class is not verified")
-        return self.get_specification(comb_class, **kwargs).get_genf()
+        return self.get_specification(comb_class).get_genf()
 
     def decomposition_function(self, comb_class: CombinatorialClass) -> tuple:
         """
@@ -284,9 +333,14 @@ class VerificationStrategy(Strategy):
     ) -> Tuple[CombinatorialObject, ...]:
         raise InvalidOperationError("No backward map on a verification strategy")
 
-    @abc.abstractmethod
     def count_objects_of_size(self, comb_class: CombinatorialClass, **parameters):
-        """Verification strategies must contain a method to count the objects."""
+        """
+        A  method to count the objects.
+        Raises an InvalidOperationError if the combinatorial class is not verified.
+        """
+        if not self.verified(comb_class):
+            raise InvalidOperationError("The combinatorial class is not verified")
+        return self.get_specification(comb_class)
 
     def get_equation(
         self,
@@ -296,11 +350,16 @@ class VerificationStrategy(Strategy):
     ) -> Eq:
         return Eq(lhs_func, self.get_genf(comb_class))
 
-    @abc.abstractmethod
     def generate_objects_of_size(
         self, comb_class: CombinatorialClass, **parameters
     ) -> Iterator[CombinatorialObject]:
-        """Verification strategies must contain a method to generate the objects."""
+        """
+        A method to generate the objects.
+        Raises an InvalidOperationError if the combinatorial class is not verified.
+        """
+        if not self.verified(comb_class):
+            raise InvalidOperationError("The combinatorial class is not verified")
+        return self.get_specification(comb_class).generate_objects_of_size(**parameters)
 
 
 class EmptyStrategy(VerificationStrategy):
@@ -308,7 +367,7 @@ class EmptyStrategy(VerificationStrategy):
         """Verification strategies must contain a method to count the objects."""
         return 0
 
-    def get_genf(self, comb_class: CombinatorialClass, **kwargs):
+    def get_genf(self, comb_class: CombinatorialClass):
         return 0
 
     def generate_objects_of_size(
@@ -332,7 +391,7 @@ STRATEGY_OUTPUT = Union[Optional[Strategy], Iterator[Strategy]]
 
 class StrategyGenerator(abc.ABC):
     @abc.abstractmethod
-    def __call__(self, comb_class: CombinatorialClass, **kwargs) -> STRATEGY_OUTPUT:
+    def __call__(self, comb_class: CombinatorialClass) -> STRATEGY_OUTPUT:
         """Returns the results of the strategy on a comb_class. This shou"""
 
     @abc.abstractmethod

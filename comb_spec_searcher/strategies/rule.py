@@ -120,8 +120,8 @@ class Rule:
 
         res = str(self.comb_class).split("\n")
         backpad(res)
-        children = [str(child).split("\n") for child in self.children]
-        if children:
+        if self.children:
+            children = [str(child).split("\n") for child in self.children]
             symbol_height = 1
             eq_symbol = (
                 ["     " for i in range(symbol_height)]

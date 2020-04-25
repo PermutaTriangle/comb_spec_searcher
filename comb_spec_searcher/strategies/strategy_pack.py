@@ -78,7 +78,7 @@ class StrategyPack:
         string += "Initial: {}\n".format(initial_strats)
         string += "Verification: {}\n".format(verif_strats)
         if self.symmetries:
-            symme_strats = ", ".join(get_func_name(f) for f in self.symmetries)
+            symme_strats = ", ".join(map(str, self.symmetries))
             string += "Symmetries: {}\n".format(symme_strats)
         for i, strategies in enumerate(self.expansion_strats):
             strats = ", ".join(map(str, strategies))

@@ -3,8 +3,8 @@ A database for combinatorial class found. It gives each combinatorial class
 a unique label. Each combinatorial class object is compressed, and decompressed
 using the CombinatorialClass methods.
 
-Contains information about if combinatorial classes have been strategy
-verified, found by symmetries and if is_empty has been checked.
+Contains information about if combinatorial classes have been found by
+symmetries and if is_empty has been checked.
 """
 
 from base64 import b64decode, b64encode
@@ -21,39 +21,8 @@ class Info:
         """Initialise information."""
         self.comb_class = comb_class
         self.label = label
-        self.strategy_verified = kwargs.get("strategy_verified", None)
         self.symmetry_expanded = kwargs.get("symmetry_expanded", False)
         self.empty = kwargs.get("empty", None)
-
-    def to_dict(self):
-        """Return dictionary object of self that is JSON serializable."""
-        try:
-            return {
-                "comb_class": b64encode(self.comb_class).decode(),
-                "label": self.label,
-                "strategy_verified": self.strategy_verified,
-                "symmetry_expanded": self.symmetry_expanded,
-                "empty": self.empty,
-            }
-        except TypeError as e:
-            logger.warning(
-                "Lost information about combinatorial class with "
-                "encoding as:\n%s\n%s",
-                self.comb_class,
-                e,
-            )
-            return None
-
-    @classmethod
-    def from_dict(cls, dict_):
-        """Return Info object from dictionary."""
-        return cls(
-            comb_class=b64decode(dict_["comb_class"].encode()),
-            label=int(dict_["label"]),
-            symmetry_expanded=dict_.get("symmetry_expanded", False),
-            strategy_verified=dict_.get("strategy_verified", None),
-            empty=dict_.get("empty", None),
-        )
 
     def __eq__(self, other):
         """Equal if all parameters are equal."""
@@ -62,7 +31,6 @@ class Info:
             and self.label == self.label
             and self.symmetry_expanded == other.symmetry_expanded
             and self.empty == self.empty
-            and self.strategy_verified == self.strategy_verified
         )
 
 
@@ -230,16 +198,6 @@ class ClassDB:
         """Update database about comb class being empty."""
         info = self._get_info(key)
         info.empty = empty
-
-    def is_strategy_verified(self, key):
-        """Return True if combinatorial class verified by a strategy.
-        Returns None if never updated."""
-        return self._get_info(key).strategy_verified
-
-    def set_strategy_verified(self, key, strategy_verified=True):
-        """Update database combinatorial class is verified by a strategy."""
-        info = self._get_info(key)
-        info.strategy_verified = strategy_verified or bool(info.strategy_verified)
 
     def is_symmetry_expanded(self, key):
         """Return True if combinatorial class was expanded by symmetries."""

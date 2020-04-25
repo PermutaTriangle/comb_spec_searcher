@@ -143,18 +143,29 @@ class DefaultQueue(CSSQueue):
                 label = self.working.popleft()
                 if self.can_do_inferral(label):
                     yield label, self.inferral_strategies, True
-                    self.inferral_expanded.add(label)
-                if self.can_do_initial(label):
-                    yield label, self.initial_strategies, False
-                    self.initial_expanded.add(label)
+                    if label not in self.ignore:
+                        self.inferral_expanded.add(label)
+                for strat in self.initial_strategies:
+                    if self.can_do_initial(label):
+                        yield label, [strat], False
+                    else:
+                        break
+                else:
+                    if label not in self.ignore:
+                        self.initial_expanded.add(label)
                 self.next_level.append(label)
 
             elif self.curr_level:
                 label = self.curr_level.popleft()
                 for idx, strats in enumerate(self.expansion_strats):
                     if self.can_do_expansion(label, idx):
-                        yield label, strats, False
-                        self.expansion_expanded[idx].add(label)
+                        for strat in strats:
+                            if self.can_do_expansion(label, idx):
+                                yield label, [strat], False
+                            else:
+                                break
+                        else:
+                            self.expansion_expanded[idx].add(label)
                         self.curr_level.append(label)
                         break
                 else:
