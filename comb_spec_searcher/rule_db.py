@@ -180,17 +180,23 @@ class RuleDB:
                 children[start] = ends
                 internal_nodes.update(ends)
         res = []
+        eqv_paths = []
         for start, ends in children.items():
             for label in internal_nodes:
                 if self.are_equivalent(start, label):
                     path = self.equivdb.find_path(label, start)
                     for a, b in zip(path[:-1], path[1:]):
-                        # TODO: if key error return ReversedRule
-                        rule = self.rule_to_strategy[(a, (b,))]
-                        res.append((a, rule))
+                        try:
+                            rule = self.rule_to_strategy[(a, (b,))]
+                            res.append((a, rule))
+                        except KeyError:
+                            rule = self.rule_to_strategy[(b, (a,))]
+                            res.append((b, rule))
+                    if len(path) > 1:
+                        eqv_paths.append(path)
             rule = self.rule_to_strategy[(start, ends)]
             res.append((start, rule))
-        return res
+        return res, eqv_paths
 
     def all_specifications(self, label, iterative: bool = False):
         """

@@ -11,6 +11,8 @@ from .strategies import (
     DisjointUnionStrategy,
     Empty,
     EmptyStrategy,
+    EquivalencePathRule,
+    ReverseRule,
     Rule,
     Strategy,
     StrategyGenerator,

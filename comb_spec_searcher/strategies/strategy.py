@@ -54,10 +54,21 @@ class Strategy(abc.ABC):
         comb_class: CombinatorialClass,
         children: Tuple[CombinatorialClass, ...] = None,
         **kwargs
-    ) -> "SpecificRule":
+    ) -> "Rule":
         if children is None:
             children = self.decomposition_function(comb_class)
         return Rule(self, comb_class, children=children)
+
+    def to_revese_rule(
+        self,
+        comb_class: CombinatorialClass,
+        children: Tuple[CombinatorialClass, ...] = None,
+        **kwargs
+    ) -> "Rule":
+        if children is None:
+            children = self.decomposition_function(comb_class)
+        rule = Rule(self, comb_class, children=children)
+        return rule.to_revese_rule(rule)
 
     @property
     def ignore_parent(self) -> bool:
@@ -249,7 +260,7 @@ class VerificationStrategy(Strategy):
         comb_class: CombinatorialClass,
         children: Tuple[CombinatorialClass, ...] = None,
         **kwargs
-    ) -> "SpecificRule":
+    ) -> "Rule":
         if children is None:
             children = self.decomposition_function(comb_class)
         return VerificationRule(self, comb_class)

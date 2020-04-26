@@ -611,15 +611,21 @@ class CombinatorialSpecificationSearcher:
         try:
             if smallest:
                 assert not self.iterative
-                rules = self.ruledb.get_smallest_specification(self.start_label)
+                rules, eqv_paths = self.ruledb.get_smallest_specification(
+                    self.start_label
+                )
             else:
-                rules = self.ruledb.get_specification_rules(
+                rules, eqv_paths = self.ruledb.get_specification_rules(
                     self.start_label, iterative=self.iterative
                 )
         except SpecificationNotFound:
             return None
         start_class = self.classdb.get_class(self.start_label)
+        eqv_paths = tuple(
+            tuple(self.classdb.get_class(l) for l in path) for path in eqv_paths
+        )
         return CombinatorialSpecification(
             start_class,
             [(self.classdb.get_class(label), rule) for label, rule in rules],
+            eqv_paths,
         )

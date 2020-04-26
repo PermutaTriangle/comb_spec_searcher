@@ -66,6 +66,9 @@ class Rule:
     ) -> CombinatorialObject:
         return self.strategy.backward_map(self.comb_class, objs, self.children)
 
+    def to_reverse_rule(self) -> "ReverseRule":
+        return ReverseRule(self)
+
     def forward_map(
         self, obj: CombinatorialObject
     ) -> Tuple[Tuple[CombinatorialObject, CombinatorialClass], ...]:
@@ -140,6 +143,97 @@ class Rule:
                     join(res, op_symbol)
                     join(res, child)
         return "Explanation: {}\n".format(self.formal_step) + "\n".join(x for x in res)
+
+
+class EquivalencePathRule(Rule):
+    def __init__(self, rules):
+        assert all(
+            len(rule.children) == 1 and rule.constructor.is_equivalence()
+            for rule in rules
+        )
+        super().__init__(rules[0].strategy, rules[0].comb_class, rules[-1].children)
+        self.rules = rules
+
+    @property
+    def constructor(self) -> Constructor:
+        return self.strategy.constructor(self.comb_class, self.children)
+
+    @property
+    def formal_step(self) -> str:
+        return ", then ".join(rule.formal_step for rule in self.rules)
+
+    def backward_map(
+        self, objs: Tuple[CombinatorialObject, ...]
+    ) -> CombinatorialObject:
+        res = objs
+        for rule in reversed(self.rules):
+            res = (rule.strategy.backward_map(rule.comb_class, res, rule.children),)
+        return res[0]
+
+    def forward_map(
+        self, obj: CombinatorialObject
+    ) -> Tuple[Tuple[CombinatorialObject, CombinatorialClass], ...]:
+        res = obj
+        for rule in reversed(self.rules):
+            res = rule.strategy.backward_map(rule.comb_class, res, rule.children)[0]
+        return res
+
+    def __str__(self):
+        def frontpad(res, height):
+            n = max(len(s) for s in res)
+            for _ in range(height - len(res)):
+                res.append(" " * n)
+
+        def backpad(res):
+            n = max(len(s) for s in res)
+            for i, s in enumerate(res):
+                res[i] = s + " " * (n - len(s))
+
+        def join(res, new):
+            backpad(new)
+            backpad(res)
+            frontpad(res, len(new))
+            for i, s in enumerate(new):
+                res[i] += s
+
+        res = str(self.comb_class).split("\n")
+        backpad(res)
+        comb_classes = [str(rule.comb_class).split("\n") for rule in self.rules[1:]]
+        symbol_height = 1
+        eq_symbol = (
+            ["     " for i in range(symbol_height)]
+            + ["  {}  ".format("=")]
+            + ["     " for i in range(symbol_height)]
+        )
+        for comb_class in comb_classes:
+            join(res, eq_symbol)
+            join(res, comb_class)
+        return "Explanation: {}\n".format(self.formal_step) + "\n".join(x for x in res)
+
+
+class ReverseRule(Rule):
+    def __init__(self, rule):
+        assert (
+            len(rule.children) == 1
+        ), "reversing a rule only works for equivalence rules"
+        super().__init__(rule.strategy, rule.children[0], rule.comb_class)
+        self._children = (rule.comb_class,)
+
+    @property
+    def constructor(self) -> Constructor:
+        return self.strategy.constructor(self.comb_class, self.children)
+
+    @property
+    def formal_step(self) -> str:
+        return "reverse of '{}'".format(self.strategy.formal_step())
+
+    def backward_map(
+        self, objs: Tuple[CombinatorialObject, ...]
+    ) -> CombinatorialObject:
+        return self.strategy.forward_map(self.children[0], objs[0], self.comb_class)
+
+    def forward_map(self, obj: CombinatorialObject) -> Tuple[CombinatorialObject, ...]:
+        return self.strategy.backward_map(self.children[0], (obj,), self.comb_class)
 
 
 class VerificationRule(Rule):

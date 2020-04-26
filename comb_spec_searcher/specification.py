@@ -2,7 +2,7 @@ from itertools import chain
 from typing import Iterable, Iterator
 from .combinatorial_class import CombinatorialClass, CombinatorialObject
 from .strategies import Strategy
-from .strategies import EmptyStrategy, Rule
+from .strategies import EmptyStrategy, EquivalencePathRule, Rule
 
 from sympy import Eq, Function
 import sympy
@@ -12,12 +12,35 @@ __all__ = ("CombinatorialSpecification",)
 
 
 class CombinatorialSpecification:
-    def __init__(self, root: CombinatorialClass, rules: Iterable[Strategy]):
+    def __init__(
+        self,
+        root: CombinatorialClass,
+        strategies: Iterable[Strategy],
+        equivalence_paths: Iterable[Iterable[CombinatorialClass]],
+    ):
         # TODO: Think more about equivalence, its going to come back to bite you soon!
         # you really want to store the paths needed
         self.root = root
+        equivalence_stratgies = {}
         self.rules_dict = {}
-        self.rules_dict = {comb_class: rule(comb_class) for comb_class, rule in rules}
+        for comb_class, strategy in strategies:
+            rule = strategy(comb_class)
+            if len(rule.children) == 1 and rule.constructor.is_equivalence():
+                equivalence_stratgies[(comb_class, rule.children[0])] = rule
+            else:
+                self.rules_dict[comb_class] = strategy(comb_class)
+        for eqv_path in equivalence_paths:
+            if len(eqv_path) > 1:
+                start = eqv_path[0]
+                rules = []
+                for a, b in zip(eqv_path[:-1], eqv_path[1:]):
+                    try:
+                        rule = equivalence_stratgies[(a, b)]
+                    except KeyError:
+                        rule = equivalence_stratgies[(b, a)].to_reverse_rule()
+                    rules.append(rule)
+                self.rules_dict[start] = EquivalencePathRule(rules)
+
         for rule in list(
             self.rules_dict.values()
         ):  # list as we lazily assign empty rules
@@ -70,5 +93,7 @@ class CombinatorialSpecification:
         # TODO: don't print equations...
         res += "\n\nEquations:"
         for eq in self.get_equations():
+            if eq == True:
+                continue
             res += "\n{} = {}".format(eq.lhs, eq.rhs)
         return res
