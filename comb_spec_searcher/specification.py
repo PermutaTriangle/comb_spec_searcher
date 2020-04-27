@@ -68,10 +68,8 @@ class CombinatorialSpecification:
         return Function("F_{}".format(self.get_label(comb_class)))(sympy.abc.x)
 
     def get_equations(self) -> Iterator[Eq]:
-        for comb_class, rule in self.rules_dict.items():
-            lhs_func = self.get_function(comb_class)
-            rhs_funcs = [self.get_function(comb_class) for comb_class in rule.children]
-            yield rule.get_equation(lhs_func, rhs_funcs)
+        for rule in self.rules_dict.values():
+            yield rule.get_equation(self.get_function)
 
     def count_objects_of_size(self, size: int) -> int:
         return self.root_rule.count_objects_of_size(n=size)

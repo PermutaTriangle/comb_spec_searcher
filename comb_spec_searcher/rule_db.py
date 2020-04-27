@@ -39,26 +39,6 @@ class RuleDB:
         """Check if all stored information is the same."""
         return self.rule_to_strategy == other.rule_to_strategy
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Return dictionary object of self that is JSON serializable."""
-        return {
-            "rule_to_strategy": [
-                [x, strat.to_dict()] for x, strat in self.rule_to_strategy.items()
-            ],
-            "equivdb": self.equivdb.to_dict(),
-        }
-
-    @classmethod
-    def from_dict(cls, d: Dict[str, Any]):
-        """Return RuleDB object from dictionary."""
-        ruledb = RuleDB()
-        ruledb.rule_to_strategy = {
-            tuple(x[0], tuple(x[1])): strat.from_dict()
-            for x, strat in d["rule_to_strategy"]
-        }
-        ruledb.equivdb = d["equivdb"].from_dict()
-        return ruledb
-
     def add(self, start: int, ends: Tuple[int, ...], rule: Rule):
         """
         Add a rule to the database.
@@ -98,6 +78,10 @@ class RuleDB:
                 tuple(sorted(self.equivdb[e] for e in ends))
             )
         return rules_dict
+
+    def all_rules(self):
+        for start, ends in self:
+            yield start, ends, self.rule_to_strategy[(start, ends)]
 
     def __iter__(self):
         """Iterate through rules as the pairs (start, end)."""

@@ -368,15 +368,26 @@ class CombinatorialSpecificationSearcher:
     def get_equations(self, **kwargs):
         """
         Returns a set of equations for all rules currently found.
-
-        If keyword substitutions=True is given, then will return the equations
-        with complex functions replaced by symbols and a dictionary of
-        substitutions.
-
-        If keyword fake_verify=label it will verify label and return equations
-        which are in a proof tree for the root assuming that label is verified.
         """
-        raise NotImplementedError("not brought forward yet")
+        x = sympy.abc.x
+
+        def get_function(comb_class):
+            label = self.classdb.get_label(comb_class)
+            eqv_label = self.ruledb.equivdb[label]
+            return sympy.Function("F_{}".format(eqv_label))(x)
+
+        eqs = set()
+        for start, ends, strategy in self.ruledb.all_rules():
+            parent = self.classdb.get_class(start)
+            children = [self.classdb.get_class(l) for l in ends]
+            rule = strategy(parent, children)
+            try:
+                eq = rule.get_equation(get_function)
+            except NotImplementedError:
+                # TODO: expand verification rules
+                continue
+            eqs.add(eq)
+        return eqs
 
     def do_level(self):
         """Expand combinatorial classes in current queue. Combintorial classes
@@ -531,14 +542,6 @@ class CombinatorialSpecificationSearcher:
         in json format. For periodic status_updates, set the keyword flag
         'status_update', an update will be given every status_update seconds.
 
-        If 'save' is set to 'True' as a keyword argument, a json string of
-        CombSpecSearcher will be logged to logger.info if 'max_time' is passed.
-
-        If a proof tree is found, and 'genf' is set to 'True' as a keyword
-        argument, then if a proof tree is found, the searcher will call the
-        'ProofTree.get_min_poly()' method, returning this output alongside the
-        proof tree.
-
         If 'smallest' is set to 'True' then the searcher will return a proof
         tree that is as small as possible.
         """
@@ -590,9 +593,6 @@ class CombinatorialSpecificationSearcher:
                 # found_string += self.status()
                 # found_string += json.dumps(specification.to_jsonable())
                 logger.info(found_string, extra=self.logger_kwargs)
-                # if kwargs.get("genf", False):
-                #     min_poly, func = specification.get_min_poly(solve=True)
-                #     return specification, min_poly, func
                 return specification
             # worst case, search every hour
             multiplier = 100 // perc
@@ -600,10 +600,6 @@ class CombinatorialSpecificationSearcher:
             if max_time is not None:
                 if self._time_taken > max_time:
                     logger.info(self.status(), extra=self.logger_kwargs)
-                    if kwargs.get("save", False):
-                        string = "The universe: \n"
-                        string += json.dumps(self.to_dict())
-                        logger.info(string, extra=self.logger_kwargs)
                     logger.warning(
                         "Exceeded maximum time. " "Aborting auto search.",
                         extra=self.logger_kwargs,

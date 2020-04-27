@@ -83,7 +83,11 @@ class Rule:
             self.count_cache[key] = res
         return res
 
-    def get_equation(self, lhs_func, rhs_funcs):
+    def get_equation(
+        self, get_function: Callable[[CombinatorialClass], Function]
+    ) -> Eq:
+        lhs_func = get_function(self.comb_class)
+        rhs_funcs = [get_function(comb_class) for comb_class in self.children]
         return self.constructor.get_equation(lhs_func, rhs_funcs)
 
     def generate_objects_of_size(
@@ -244,8 +248,11 @@ class VerificationRule(Rule):
             self.count_cache[key] = res
         return res
 
-    def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...],) -> Eq:
-        return self.strategy.get_equation(self.comb_class, lhs_func, rhs_funcs)
+    def get_equation(
+        self, get_function: Callable[[CombinatorialClass], Function]
+    ) -> Eq:
+        lhs_func = get_function(self.comb_class)
+        return self.strategy.get_equation(self.comb_class, lhs_func)
 
     def generate_objects_of_size(self, **parameters):
         key = tuple(parameters.items())

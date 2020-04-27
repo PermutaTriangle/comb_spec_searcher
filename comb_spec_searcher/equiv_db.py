@@ -40,25 +40,6 @@ class EquivalenceDB:
             and self.vertices == other.vertices
         )
 
-    def to_dict(self):
-        """Return dictionary object of self that is JSON serializable."""
-        return {
-            "parents": self.parents,
-            "weights": self.weights,
-            "verified_roots": list(self.verified_roots),
-            "vertices": list(list(x) for x in self.vertices),
-        }
-
-    @classmethod
-    def from_dict(cls, dict_):
-        """Return EquivalenceDB object for dictionary object."""
-        equivdb = cls()
-        equivdb.parents = {int(x): y for x, y in dict_["parents"].items()}
-        equivdb.weights = {int(x): y for x, y in dict_["weights"].items()}
-        equivdb.verified_roots = set(dict_["verified_roots"])
-        equivdb.vertices = {frozenset(x) for x in dict_["vertices"]}
-        return equivdb
-
     def __getitem__(self, comb_class):
         """Find and return root combinatorial class for the set containing
         comb_class."""

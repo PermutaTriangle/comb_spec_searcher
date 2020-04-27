@@ -353,12 +353,7 @@ class VerificationStrategy(Strategy):
             raise InvalidOperationError("The combinatorial class is not verified")
         return self.get_specification(comb_class)
 
-    def get_equation(
-        self,
-        comb_class: CombinatorialClass,
-        lhs_func: Function,
-        rhs_funcs: Tuple[Function, ...],
-    ) -> Eq:
+    def get_equation(self, comb_class: CombinatorialClass, lhs_func: Function,) -> Eq:
         return Eq(lhs_func, self.get_genf(comb_class))
 
     def generate_objects_of_size(
