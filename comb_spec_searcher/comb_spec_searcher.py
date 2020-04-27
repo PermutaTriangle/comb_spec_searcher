@@ -116,6 +116,8 @@ class CombinatorialSpecificationSearcher:
         """
         if label not in self.tried_to_verify:
             for strategy in self.verification_strategies:
+                if self.ruledb.is_verified(label):
+                    break
                 self._expand_class_with_strategy(comb_class, strategy, label)
             self.tried_to_verify.add(label)
 
@@ -399,7 +401,8 @@ class CombinatorialSpecificationSearcher:
                 label, strategies, inferral = next(self.classqueue)
             except StopIteration:
                 return True
-            self._expand(label, strategies, inferral)
+            if not self.ruledb.is_verified(label):
+                self._expand(label, strategies, inferral)
             self.queue_time += time.time() - queue_start
             count += 1
         self._time_taken += time.time() - start
