@@ -94,6 +94,14 @@ class RuleDB:
         ends = tuple(sorted(ends))
         return (start, ends) in self.rule_to_strategy
 
+    def status(self) -> str:
+        status = "RuleDB status:\n"
+        status += "\tTotal number of combinatorial rules is {}\n" "".format(
+            len(self.rule_to_strategy)
+        )
+        # TODO: strategy verified, verified, equivalence sets?
+        return status
+
     ################################################################
     # Below are methods for finding a combinatorial specification. #
     ################################################################

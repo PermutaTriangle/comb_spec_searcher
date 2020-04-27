@@ -5,6 +5,45 @@ import sympy
 from logzero import logger
 
 from comb_spec_searcher.exception import TaylorExpansionError
+import time
+
+
+class cssmethodtimer:
+    """This is a decorator for counting and timing function calls."""
+
+    def __init__(self, explanation: str):
+        self.explanation = explanation
+
+    def __call__(self, func):
+        def inner(css: "CombinatorialSpecificationSearcher", *args, **kwargs):
+            start = time.time()
+            res = func(css, *args, **kwargs)
+            css.func_times[self.explanation] += time.time() - start
+            css.func_calls[self.explanation] += 1
+            return res
+
+        return inner
+
+
+class cssiteratortimer:
+    """This is a decorator for counting and timing function calls."""
+
+    def __init__(self, explanation: str):
+        self.explanation = explanation
+
+    def __call__(self, func):
+        def inner(css: "CombinatorialSpecificationSearcher", *args, **kwargs):
+            key = self.explanation
+            if self.explanation == "_expand_class_with_strategy":
+                key = args[1]
+            css.func_calls[key] += 1
+            start = time.time()
+            for res in func(css, *args, **kwargs):
+                css.func_times[key] += time.time() - start
+                yield res
+                start = time.time()
+
+        return inner
 
 
 def get_func_name(f, warn=False, logger_kwargs=None):

@@ -48,7 +48,7 @@ class CSSQueue(abc.ABC):
         """Return a string that indicates that current status of the queue."""
 
     @abc.abstractmethod
-    def __iter__(self) -> Iterator[Tuple[int, List["StrategyGenerator"], bool]]:
+    def _iter_helper(self) -> Iterator[Tuple[int, List["StrategyGenerator"], bool]]:
         """
         Yield the combinatorial classes in queue.
         It should yield triples (label, strategies, inferral)
@@ -63,8 +63,11 @@ class CSSQueue(abc.ABC):
     @property
     def iterator(self):
         if not hasattr(self, "_iterator"):
-            self._iterator = self.__iter__()
+            self._iterator = self._iter_helper()
         return self._iterator
+
+    def __iter__(self):
+        yield from self.iterator
 
     def __next__(self):
         try:
@@ -93,6 +96,7 @@ class DefaultQueue(CSSQueue):
         self.ignore = set()  # never try expand
         self.inferral_ignore = set()  # never try inferral expand
         self.levels_completed = 0
+        self._iterator = iter(self._iter_helper())
 
     def add(self, label: int) -> None:
         if self.can_do_inferral(label) or self.can_do_initial(label):
@@ -130,7 +134,7 @@ class DefaultQueue(CSSQueue):
         """Return true if expansion strategies can be applied."""
         return label not in self.ignore and label not in self.expansion_expanded[idx]
 
-    def __iter__(self) -> Iterator[Tuple[int, List["StrategyGenerator"], bool]]:
+    def _iter_helper(self) -> Iterator[Tuple[int, List["StrategyGenerator"], bool]]:
         """
         Yield the next combinatorial class in current queue.
 
@@ -172,7 +176,7 @@ class DefaultQueue(CSSQueue):
                     # finished applying all strategies to this label, ignore from now on
                     self._add_to_ignore(label)
             else:
-                input("Finished level {}".format(self.levels_completed))
+                # input("Finished level {}".format(self.levels_completed))
                 if not self.next_level:
                     return None
                 self.levels_completed += 1
@@ -195,4 +199,9 @@ class DefaultQueue(CSSQueue):
                 return
 
     def status(self) -> str:
-        return "IMPLEMENT QUEUE STATUS"
+        status = "Queue status:\n"
+        status += "\tCurrently on 'level' {}\n".format(self.levels_completed + 1)
+        status += "\tThe size of the working queue is {}\n".format(len(self.working))
+        status += "\tThe size of the current queue is {}\n".format(len(self.curr_level))
+        status += "\tThe size of the next queue is {}".format(len(self.next_level))
+        return status

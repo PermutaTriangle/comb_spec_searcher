@@ -4,14 +4,15 @@ a unique label. Each combinatorial class object is compressed, and decompressed
 using the CombinatorialClass methods.
 
 Contains information about if combinatorial classes have been found by
-symmetries and if is_empty has been checked.
+if is_empty has been checked.
 """
 
 from base64 import b64decode, b64encode
-
+from collections import defaultdict
 from logzero import logger
 
 from .combinatorial_class import CombinatorialClass
+from .utils import cssmethodtimer
 
 
 class Info:
@@ -21,7 +22,6 @@ class Info:
         """Initialise information."""
         self.comb_class = comb_class
         self.label = label
-        self.symmetry_expanded = kwargs.get("symmetry_expanded", False)
         self.empty = kwargs.get("empty", None)
 
     def __eq__(self, other):
@@ -29,7 +29,6 @@ class Info:
         return (
             self.comb_class == self.comb_class
             and self.label == self.label
-            and self.symmetry_expanded == other.symmetry_expanded
             and self.empty == self.empty
         )
 
@@ -62,6 +61,8 @@ class ClassDB:
         if combinatorial_class is None:
             raise TypeError("Need to declare type of combinatorial class.")
         self.combinatorial_class = combinatorial_class
+        self.func_calls = defaultdict(int)
+        self.func_times = defaultdict(float)
 
     def __iter__(self):
         """Iterator of labels."""
@@ -101,7 +102,7 @@ class ClassDB:
         return classdb
 
     def add(
-        self, comb_class, symmetry_expanded=False, compressed=False,
+        self, comb_class, compressed=False,
     ):
         """
         Add a combinatorial class to the database.
@@ -118,13 +119,11 @@ class ClassDB:
             compressed_class = comb_class
         if compressed_class not in self.class_to_info:
             label = len(self.class_to_info)
-            info = Info(compressed_class, label, symmetry_expanded=symmetry_expanded,)
+            info = Info(compressed_class, label)
             self.class_to_info[compressed_class] = info
             self.label_to_info[label] = info
         else:
             label = self.class_to_info[compressed_class].label
-            if symmetry_expanded:
-                self.set_symmetry_expanded(label)
 
     def _get_info(self, key):
         """Return Info for given key."""
@@ -146,6 +145,7 @@ class ClassDB:
             )
         return info
 
+    @cssmethodtimer("compress")
     def _compress(self, key):
         """Return compressed version of combinatorial class."""
         try:
@@ -157,6 +157,7 @@ class ClassDB:
                 )
             )
 
+    @cssmethodtimer("decompress")
     def _decompress(self, key):
         """Return decompressed version of compressed combinatorial class."""
         try:
@@ -168,11 +169,13 @@ class ClassDB:
                 )
             )
 
+    @cssmethodtimer("get class")
     def get_class(self, key):
         """Return combinatorial class of key."""
         info = self._get_info(key)
         return self._decompress(info.comb_class)
 
+    @cssmethodtimer("get label")
     def get_label(self, key):
         """Return label of key."""
         info = self._get_info(key)
@@ -199,11 +202,17 @@ class ClassDB:
         info = self._get_info(key)
         info.empty = empty
 
-    def is_symmetry_expanded(self, key):
-        """Return True if combinatorial class was expanded by symmetries."""
-        return self._get_info(key).symmetry_expanded
-
-    def set_symmetry_expanded(self, key, symmetry_expanded=True):
-        """Update database that combinatorial class was symmetry expanded."""
-        info = self._get_info(key)
-        info.symmetry_expanded = symmetry_expanded or bool(info.symmetry_expanded)
+    def status(self) -> str:
+        status = "ClassDB status:\n"
+        status += "\tTotal number of combinatorial classes found is {}\n".format(
+            len(self.label_to_info)
+        )
+        for explanation in self.func_calls:
+            count = self.func_calls[explanation]
+            time_spent = self.func_times[explanation]
+            status += "\tApplied {} {} times. Time spent is {} seconds.\n".format(
+                explanation, count, round(time_spent, 2)
+            )
+        # TODO: empty classes?
+        status = status[:-2]
+        return status

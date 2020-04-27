@@ -103,7 +103,6 @@ class CombinatorialSpecification:
             for rule in self.rules_dict.values()
             if isinstance(rule, EquivalencePathRule)
         }
-        print(eqv_paths)
         for c, r in self.rules_dict.items():
             if isinstance(r, EquivalencePathRule):
                 continue
@@ -126,7 +125,8 @@ class CombinatorialSpecification:
     def equations_string(self):
         res = ""
         for eq in sorted(
-            self.get_equations(), key=lambda eq: str(eq.lhs).split("_")[1]
+            self.get_equations(),
+            key=lambda eq: int(str(eq.lhs).split("_")[1].split("(")[0]),
         ):
             res += "\n{} = {}".format(eq.lhs, eq.rhs)
         return res
