@@ -273,14 +273,15 @@ class VerificationStrategy(Strategy):
 
         The pack is assumed to produce a finite universe.
         """
-        raise NotImplementedError
+        raise InvalidOperationError(
+            "can't find specification for {}".format(self.__str__)
+        )
 
     @abc.abstractmethod
     def verified(self, comb_class: CombinatorialClass) -> bool:
         """
         Returns True if enumeration strategy works for the combinatorial class.
         """
-        raise NotImplementedError
 
     def get_specification(
         self, comb_class: CombinatorialClass

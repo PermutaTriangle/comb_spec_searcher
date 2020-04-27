@@ -4,6 +4,7 @@ from .combinatorial_class import CombinatorialClass, CombinatorialObject
 from .strategies import Strategy
 from .strategies import EmptyStrategy, EquivalencePathRule, Rule
 
+from logzero import logger
 from sympy import Eq, Function
 import sympy
 
@@ -69,7 +70,21 @@ class CombinatorialSpecification:
 
     def get_equations(self) -> Iterator[Eq]:
         for rule in self.rules_dict.values():
-            yield rule.get_equation(self.get_function)
+            try:
+                eq = rule.get_equation(self.get_function)
+                if eq != True:
+                    yield eq
+            except NotImplementedError:
+                logger.info(
+                    "can't find generating function label {}."
+                    " The comb class is:\n{}".format(
+                        self.get_label(rule.comb_class), rule.comb_class
+                    )
+                )
+                yield Eq(
+                    self.get_function(rule.comb_class),
+                    sympy.Function("NOTIMPLEMENTED")(sympy.abc.x),
+                )
 
     def count_objects_of_size(self, size: int) -> int:
         return self.root_rule.count_objects_of_size(n=size)
@@ -83,16 +98,35 @@ class CombinatorialSpecification:
             len(self.rules_dict)
         )
         # TODO: print the equivalence rules as they appear, rather than all at the end.
+        eqv_paths = {
+            rule.comb_class: rule
+            for rule in self.rules_dict.values()
+            if isinstance(rule, EquivalencePathRule)
+        }
+        print(eqv_paths)
         for c, r in self.rules_dict.items():
+            if isinstance(r, EquivalencePathRule):
+                continue
             start_label = self.get_label(c)
             end_labels = tuple(self.get_label(c) for c in r.children)
             res += "\n\n"
             res += "{} -> {}\n".format(start_label, end_labels)
             res += str(r)
-        # TODO: don't print equations...
-        res += "\n\nEquations:"
-        for eq in self.get_equations():
-            if eq == True:
-                continue
+            for child in r.children:
+                if child in eqv_paths:
+                    eqv_rule = eqv_paths.pop(child)
+                    child_label = self.get_label(eqv_rule.comb_class)
+                    child_eqv_label = self.get_label(eqv_rule.children[0])
+                    res += "\n\n"
+                    res += "{} = {}\n".format(child_label, child_eqv_label)
+                    res += str(eqv_rule)
+        assert not eqv_paths
+        return res
+
+    def equations_string(self):
+        res = ""
+        for eq in sorted(
+            self.get_equations(), key=lambda eq: str(eq.lhs).split("_")[1]
+        ):
             res += "\n{} = {}".format(eq.lhs, eq.rhs)
         return res

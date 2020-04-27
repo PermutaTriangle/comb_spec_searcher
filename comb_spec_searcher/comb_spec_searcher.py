@@ -19,7 +19,7 @@ from comb_spec_searcher.utils import compositions
 
 from .class_db import ClassDB
 from .class_queue import DefaultQueue
-from .exception import SpecificationNotFound
+from .exception import InvalidOperationError, SpecificationNotFound
 from .rule_db import RuleDB
 from .specification import CombinatorialSpecification
 from .strategies import Strategy, StrategyGenerator, StrategyPack
@@ -609,7 +609,8 @@ class CombinatorialSpecificationSearcher:
     def get_specification(self, smallest: bool = False):
         try:
             if smallest:
-                assert not self.iterative
+                if self.iterative:
+                    raise InvalidOperationError("can't use iterative and smallest")
                 rules, eqv_paths = self.ruledb.get_smallest_specification(
                     self.start_label
                 )
