@@ -167,7 +167,7 @@ class EquivalencePathRule(Rule):
     ) -> CombinatorialObject:
         res = objs
         for rule in reversed(self.rules):
-            res = (rule.strategy.backward_map(rule.comb_class, res, rule.children),)
+            res = (rule.backward_map(res),)
         return res[0]
 
     def forward_map(
@@ -175,7 +175,7 @@ class EquivalencePathRule(Rule):
     ) -> Tuple[Tuple[CombinatorialObject, CombinatorialClass], ...]:
         res = obj
         for rule in reversed(self.rules):
-            res = rule.strategy.backward_map(rule.comb_class, res, rule.children)[0]
+            res = rule.backward_map(res)[0]
         return res
 
     def __str__(self):
@@ -198,7 +198,7 @@ class EquivalencePathRule(Rule):
 
         res = str(self.comb_class).split("\n")
         backpad(res)
-        comb_classes = [str(rule.comb_class).split("\n") for rule in self.rules[1:]]
+        comb_classes = [str(rule.children[0]).split("\n") for rule in self.rules]
         symbol_height = 1
         eq_symbol = (
             ["     " for i in range(symbol_height)]
@@ -216,8 +216,7 @@ class ReverseRule(Rule):
         assert (
             len(rule.children) == 1
         ), "reversing a rule only works for equivalence rules"
-        super().__init__(rule.strategy, rule.children[0], rule.comb_class)
-        self._children = (rule.comb_class,)
+        super().__init__(rule.strategy, rule.children[0], (rule.comb_class,))
 
     @property
     def constructor(self) -> Constructor:
@@ -230,10 +229,10 @@ class ReverseRule(Rule):
     def backward_map(
         self, objs: Tuple[CombinatorialObject, ...]
     ) -> CombinatorialObject:
-        return self.strategy.forward_map(self.children[0], objs[0], self.comb_class)
+        return self.strategy.forward_map(self.children[0], objs[0], (self.comb_class,))
 
     def forward_map(self, obj: CombinatorialObject) -> Tuple[CombinatorialObject, ...]:
-        return self.strategy.backward_map(self.children[0], (obj,), self.comb_class)
+        return self.strategy.backward_map(self.children[0], (obj,), (self.comb_class,))
 
 
 class VerificationRule(Rule):

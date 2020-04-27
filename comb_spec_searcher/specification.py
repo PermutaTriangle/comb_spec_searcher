@@ -84,6 +84,7 @@ class CombinatorialSpecification:
         res = "A combinatorial specification with {} rules.".format(
             len(self.rules_dict)
         )
+        # TODO: print the equivalence rules as they appear, rather than all at the end.
         for c, r in self.rules_dict.items():
             start_label = self.get_label(c)
             end_labels = tuple(self.get_label(c) for c in r.children)
