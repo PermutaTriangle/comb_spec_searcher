@@ -187,9 +187,15 @@ class ClassDB:
         if empty is None:
             if not isinstance(comb_class, CombinatorialClass):
                 comb_class = self.get_class(comb_class)
-            empty = comb_class.is_empty()
+            empty = self._is_empty(comb_class)
             self.set_empty(label, empty)
         return empty
+
+    @cssmethodtimer("is empty")
+    def _is_empty(self, comb_class):
+        if not isinstance(comb_class, CombinatorialClass):
+            comb_class = self.get_class(comb_class)
+        return comb_class.is_empty()
 
     def set_empty(self, key, empty=True):
         """Update database about comb class being empty."""
