@@ -63,7 +63,7 @@ class CombinatorialSpecificationSearcher:
 
         # initialise the run with start_class
         self.start_label = self.classdb.get_label(start_class)
-        self.classqueue.add(self.start_label)
+        self._add_to_queue(self.start_label)
         self.tried_to_verify = set()
         self.symmetry_expanded = set()
         self.try_verify(start_class, self.start_label)
@@ -210,9 +210,9 @@ class CombinatorialSpecificationSearcher:
                 )
                 continue
             if rule.workable:
-                self.classqueue.add(child_label)
+                self._add_to_queue(child_label)
             if not rule.inferrable:
-                self.classqueue.set_not_inferrable(child_label)
+                self._not_inferrable(child_label)
             if not rule.possibly_empty:
                 self.classdb.set_empty(child_label, empty=False)
 
@@ -221,7 +221,7 @@ class CombinatorialSpecificationSearcher:
             cleaned_end_labels.append(child_label)
 
         if rule.ignore_parent:
-            self.classqueue.set_stop_yielding(start_label)
+            self._stop_yielding(start_label)
 
         if not cleaned_end_labels:
             # this must be a verification strategy!
@@ -241,7 +241,7 @@ class CombinatorialSpecificationSearcher:
             ):
                 sym_label = end_labels[0]
                 self.ruledb.add(start_label, (sym_label,), rule)
-                self.classqueue.set_stop_yielding(sym_label)
+                self._stop_yielding(sym_label)
                 sym_labels.add(sym_label)
         self.symmetry_expanded.update(sym_labels)
 
@@ -264,7 +264,7 @@ class CombinatorialSpecificationSearcher:
                 inf_class = rule.children[0]
                 inf_label = end_labels[0]
                 self._add_rule(start_label, end_labels, rule)
-                self.classqueue.set_not_inferrable(start_label)
+                self._not_inferrable(start_label)
                 inferral_strategies = (
                     inferral_strategies[i + 1 :] + inferral_strategies[0 : i + 1]
                 )
@@ -272,7 +272,7 @@ class CombinatorialSpecificationSearcher:
                     inf_class, inf_label, inferral_strategies, skip=strategy_generator
                 )
                 break
-        self.classqueue.set_not_inferrable(label)
+        self._not_inferrable(label)
 
     def get_equations(self, **kwargs):
         """
@@ -309,12 +309,28 @@ class CombinatorialSpecificationSearcher:
     def do_level(self):
         """Expand combinatorial classes in current queue. Combintorial classes
         found added to next."""
-        for label, strategies, inferral in self.classqueue.do_level():
+        for label, strategies, inferral in self._do_level_labels():
             self._expand(label, strategies, inferral)
 
     @cssiteratortimer("queue")
     def _labels_to_expand(self):
         yield from self.classqueue
+
+    @cssmethodtimer("queue")
+    def _add_to_queue(self, label):
+        self.classqueue.add(label)
+
+    @cssmethodtimer("queue")
+    def _not_inferrable(self, label):
+        self.classqueue.set_not_inferrable(label)
+
+    @cssmethodtimer("queue")
+    def _stop_yielding(self, label):
+        self.classqueue.set_stop_yielding(label)
+
+    @cssiteratortimer("queue")
+    def _do_level_labels(self):
+        yield from self.classqueue.do_level()
 
     @cssmethodtimer("status")
     def status(self):
