@@ -1,7 +1,7 @@
 """
 A queue of labels.
 """
-from collections import deque
+from collections import Counter, deque
 from typing import Iterator, List, Tuple, TYPE_CHECKING
 import abc
 
@@ -85,7 +85,7 @@ class DefaultQueue(CSSQueue):
         super().__init__(pack)
         self.working = deque()  # add to this queue for inferral and initial strategies
         self.next_level = (
-            deque()
+            Counter()
         )  # after initial, add to this one for expansion strats on the next level
         self.curr_level = (
             deque()
@@ -95,14 +95,18 @@ class DefaultQueue(CSSQueue):
         self.expansion_expanded = [set() for _ in range(len(self.expansion_strats))]
         self.ignore = set()  # never try expand
         self.inferral_ignore = set()  # never try inferral expand
-        self.levels_completed = 0
+        self.queue_sizes = []
         self._iterator = iter(self._iter_helper())
+
+    @property
+    def levels_completed(self):
+        return len(self.queue_sizes)
 
     def add(self, label: int) -> None:
         if self.can_do_inferral(label) or self.can_do_initial(label):
             self.working.append(label)
         elif label not in self.ignore:
-            self.next_level.append(label)
+            self.next_level.add(label)
 
     def set_verified(self, label) -> None:
         self.set_stop_yielding(label)
@@ -121,6 +125,7 @@ class DefaultQueue(CSSQueue):
         self.initial_expanded.discard(label)
         for s in self.expansion_expanded:
             s.discard(label)
+        self.next_level.pop(label, None)
 
     def can_do_inferral(self, label: int) -> bool:
         """Return true if inferral strategies can be applied."""
@@ -142,6 +147,7 @@ class DefaultQueue(CSSQueue):
         return first combinatorial class. Return None if no combinatorial
         classes to expand.
         """
+        self.queue_sizes.append(len(self.curr_level))
         while True:
             if self.working:
                 label = self.working.popleft()
@@ -157,7 +163,7 @@ class DefaultQueue(CSSQueue):
                 else:
                     if label not in self.ignore:
                         self.initial_expanded.add(label)
-                self.next_level.append(label)
+                self.next_level.update((label,))
 
             elif self.curr_level:
                 label = self.curr_level.popleft()
@@ -170,7 +176,10 @@ class DefaultQueue(CSSQueue):
                                 break
                         else:
                             self.expansion_expanded[idx].add(label)
-                        self.curr_level.append(label)
+                        if idx + 1 < len(self.expansion_strats) and (
+                            self.can_do_expansion(label, idx + 1)
+                        ):
+                            self.curr_level.append(label)
                         break
                 else:
                     # finished applying all strategies to this label, ignore from now on
@@ -179,10 +188,13 @@ class DefaultQueue(CSSQueue):
                 # input("Finished level {}".format(self.levels_completed))
                 if not self.next_level:
                     return None
-                self.levels_completed += 1
-                self.curr_level = self.next_level
-                # self.ignore = set()
-                self.next_level = deque()
+                self.curr_level = deque(
+                    label
+                    for label, _ in sorted(self.next_level.items(), key=lambda x: -x[1])
+                    if self.expansion_strats and self.can_do_expansion(label, 0)
+                )
+                self.queue_sizes.append(len(self.curr_level))
+                self.next_level = Counter()
                 continue
 
     def do_level(self) -> Iterator[Tuple[int, List["StrategyGenerator"], bool]]:
@@ -200,8 +212,14 @@ class DefaultQueue(CSSQueue):
 
     def status(self) -> str:
         status = "Queue status:\n"
-        status += "\tCurrently on 'level' {}\n".format(self.levels_completed + 1)
+        status += "\tCurrently on 'level' {}\n".format(self.levels_completed)
         status += "\tThe size of the working queue is {}\n".format(len(self.working))
         status += "\tThe size of the current queue is {}\n".format(len(self.curr_level))
-        status += "\tThe size of the next queue is {}".format(len(self.next_level))
+        status += "\tThe size of the next queue is {}\n".format(len(self.next_level))
+        status += "\tThe number of times added to the next queue is {}\n".format(
+            sum(self.next_level.values())
+        )
+        status += "\tThe size of the current queues at each level: {}".format(
+            ", ".join(str(i) for i in self.queue_sizes)
+        )
         return status
