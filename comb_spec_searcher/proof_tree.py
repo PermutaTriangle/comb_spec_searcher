@@ -14,6 +14,9 @@ import sympy
 from logzero import logger
 
 from .exception import InsaneTreeError, TaylorExpansionError
+from .specification import CombinatorialSpecification
+from .strategies.constructor import CartesianProduct, DisjointUnion
+from .strategies.rule import EquivalencePathRule, Rule, VerificationRule
 from .tree_searcher import Node as tree_searcher_node
 from .utils import (
     check_equation,
@@ -773,41 +776,6 @@ class ProofTree:
             return False, overall_error
         return True, "Sanity checked, all good at length {}".format(length)
 
-    @classmethod
-    def from_comb_spec_searcher(cls, root, css):
-        # pylint: disable=protected-access
-        if not isinstance(root, tree_searcher_node):
-            raise TypeError("Requires a tree searcher node, treated as root.")
-        proof_tree = ProofTree(ProofTree.from_comb_spec_searcher_node(root, css))
-        proof_tree._recursion_fixer(css)
-        return proof_tree
-
-    def _recursion_fixer(self, css, root=None, in_labels=None):
-        if root is None:
-            root = self.root
-        if in_labels is None:
-            in_labels = list(self.non_recursive_in_labels())
-        if root.recursion:
-            in_label = root.eqv_path_labels[0]
-            out_label = in_label
-            for eqv_label in in_labels:
-                if css.equivdb.equivalent(in_label, eqv_label):
-                    out_label = eqv_label
-                    break
-            assert css.equivdb.equivalent(in_label, out_label)
-
-            eqv_path, explanations = css.equivdb.eqv_path_with_explanation(
-                in_label, out_label
-            )
-            comb_classes = [css.classdb.get_class(l) for l in eqv_path]
-
-            root.eqv_path_labels = eqv_path
-            root.eqv_path_comb_classes = comb_classes
-            root.eqv_explanations = explanations
-
-        for child in root.children:
-            self._recursion_fixer(css, child, in_labels)
-
     def expand_tree(self, pack, **kwargs):
         """
         Return a ProofTree that comes from expanding the strategy verified
@@ -865,113 +833,6 @@ class ProofTree:
                 css._add_to_queue(ver_label)
         return css.auto_search(**kwargs)
 
-    def non_recursive_in_labels(self, root=None):
-        if root is None:
-            root = self.root
-        if not root.recursion:
-            yield root.eqv_path_labels[0]
-        for child in root.children:
-            for x in self.non_recursive_in_labels(child):
-                yield x
-
-    @classmethod
-    def from_comb_spec_searcher_node(cls, root, css, in_label=None):
-        if not isinstance(root, tree_searcher_node):
-            raise TypeError("Requires a tree searcher node, treated as root.")
-        label = root.label
-        if in_label is None:
-            in_label = root.label
-        else:
-            assert css.equivdb.equivalent(root.label, in_label)
-
-        if not root.children:
-            eqv_ver_label = css.equivalent_strategy_verified_label(in_label)
-            if eqv_ver_label is not None:
-                # verified!
-                path, explanations = css.equivdb.eqv_path_with_explanation(
-                    in_label, eqv_ver_label
-                )
-                comb_classes = [css.classdb.get_class(l) for l in path]
-
-                formal_step = css.classdb.verification_reason(eqv_ver_label)
-                return ProofTreeNode(
-                    label,
-                    path,
-                    comb_classes,
-                    explanations,
-                    strategy_verified=True,
-                    formal_step=formal_step,
-                )
-            # recurse! we reparse these at the end, so recursed labels etc
-            # are not interesting.
-            return ProofTreeNode(
-                label,
-                [in_label],
-                [css.classdb.get_class(in_label)],
-                formal_step="recurse",
-                recursion=True,
-            )
-        rule = css.rule_from_equivence_rule(
-            root.label, tuple(c.label for c in root.children)
-        )
-        start, ends = rule
-        formal_step = css.ruledb.explanation(start, ends)
-        constructor = css.ruledb.constructor(start, ends)
-
-        eqv_path, explanations = css.equivdb.eqv_path_with_explanation(in_label, start)
-        eqv_comb_classes = [css.classdb.get_class(l) for l in eqv_path]
-
-        strat_children = []
-        ends = list(ends)
-        for child in root.children:
-            for next_label in ends:
-                if css.equivdb.equivalent(next_label, child.label):
-                    ends.remove(next_label)
-                    sub_tree = ProofTree.from_comb_spec_searcher_node(
-                        child, css, next_label
-                    )
-                    strat_children.append(sub_tree)
-                    break
-
-        if constructor == "cartesian":
-            # decomposition!
-            return ProofTreeNode(
-                label,
-                eqv_path,
-                eqv_comb_classes,
-                explanations,
-                decomposition=True,
-                formal_step=formal_step,
-                children=strat_children,
-            )
-        if constructor in ("disjoint", "equiv"):
-            # batch!
-            return ProofTreeNode(
-                label,
-                eqv_path,
-                eqv_comb_classes,
-                explanations,
-                disjoint_union=True,
-                formal_step=formal_step,
-                children=strat_children,
-            )
-        if constructor == "other":
-            return ProofTreeNode(
-                label,
-                eqv_path,
-                eqv_comb_classes,
-                explanations,
-                formal_step=formal_step,
-                children=strat_children,
-            )
-        logger.debug(
-            "Unknown constructor '%s' of type '%s'. " "Use 'other' instead.",
-            constructor,
-            type(constructor),
-            extra={"processname": "css_to_proof_tree"},
-        )
-        raise NotImplementedError("Only handle cartesian and disjoint")
-
     def _recursion_setup(self):
         label_to_node = dict()
 
@@ -996,3 +857,95 @@ class ProofTree:
 
     def __eq__(self, other):
         return all(node1 == node2 for node1, node2 in zip(self.nodes(), other.nodes()))
+
+    @classmethod
+    def from_specification(cls, spec: CombinatorialSpecification):
+        nodes = dict()
+        eqv_paths = dict()
+        all_classes = set()
+        # find equivalence paths and setup nodes without equivalence and children
+        for rule in spec.rules_dict.values():
+            if isinstance(rule, EquivalencePathRule):
+                eqv_path_labels = []
+                eqv_path_comb_classes = []
+                eqv_explanations = []
+                for comb_class, eqv_rule in rule.eqv_path_rules():
+                    eqv_path_labels.append(spec.get_label(comb_class))
+                    eqv_path_comb_classes.append(comb_class)
+                    eqv_explanations.append(eqv_rule.formal_step)
+                eqv_path_comb_classes.append(rule.children[0])
+                eqv_paths[rule.comb_class] = (
+                    eqv_path_labels,
+                    eqv_path_comb_classes,
+                    eqv_explanations,
+                )
+            elif isinstance(rule, VerificationRule):
+                nodes[rule.comb_class] = ProofTreeNode(
+                    label=spec.get_label(rule.comb_class),
+                    eqv_path_labels=[spec.get_label(rule.comb_class)],
+                    eqv_path_comb_classes=[rule.comb_class],
+                    eqv_explanations=[],
+                    children=[],
+                    strategy_verified=True,
+                    formal_step=rule.formal_step,
+                )
+            else:
+                nodes[rule.comb_class] = ProofTreeNode(
+                    label=spec.get_label(rule.comb_class),
+                    eqv_path_labels=[spec.get_label(rule.comb_class)],
+                    eqv_path_comb_classes=[rule.comb_class],
+                    eqv_explanations=[],
+                    children=list(rule.children),
+                    decomposition=isinstance(rule.constructor, CartesianProduct),
+                    disjoint_union=isinstance(rule.constructor, DisjointUnion),
+                    strategy_verified=False,
+                    formal_step=rule.formal_step,
+                )
+
+        # fix equiv paths and children
+        for node in list(nodes.values()):
+            if node.children:
+                new_children = []
+                for child in node.children:
+                    if child in eqv_paths:
+                        (
+                            eqv_path_labels,
+                            eqv_path_comb_classes,
+                            eqv_explanations,
+                        ) = eqv_paths[child]
+                        eqv_node = nodes[eqv_path_comb_classes[-1]]
+                        eqv_node.eqv_path_labels = eqv_path_labels
+                        eqv_node.eqv_path_comb_classes = eqv_path_comb_classes
+                        eqv_node.eqv_explanations = eqv_explanations
+                        new_children.append(nodes[eqv_path_comb_classes[-1]])
+                    else:
+                        new_children.append(nodes[child])
+                node.children = new_children
+
+        seen = set()
+        queue = [spec.root]
+        copy_nodes = {**nodes}
+        while copy_nodes and queue:
+            curr = queue.pop()
+            seen.add(curr)
+            node = copy_nodes.pop(curr, None)
+            if node is not None:
+                node = nodes[curr]
+                for i, child in enumerate(node.children):
+                    if any(c in seen for c in child.eqv_path_comb_classes):
+                        print(child.eqv_path_comb_classes[0])
+                        print("recurse node!")
+                        node.children[i] = ProofTreeNode(
+                            label=child.label,
+                            eqv_path_labels=child.eqv_path_labels,
+                            eqv_path_comb_classes=child.eqv_path_comb_classes,
+                            eqv_explanations=child.eqv_explanations,
+                            children=[],
+                            strategy_verified=False,
+                            recursion=True,
+                            formal_step="recurse",
+                        )
+                    else:
+                        queue.append(child.eqv_path_comb_classes[-1])
+
+        return ProofTree(nodes[spec.root])
