@@ -107,6 +107,13 @@ class Rule:
             res.append(obj)
         self.obj_cache[key] = tuple(res)
 
+    def __eq__(self, other):
+        return (
+            type(self) == type(other)
+            and self.comb_class == other.comb_class
+            and self.strategy == other.strategy
+        )
+
     def __str__(self):
         def frontpad(res, height):
             n = max(len(s) for s in res)
@@ -166,6 +173,14 @@ class EquivalencePathRule(Rule):
     def formal_step(self) -> str:
         return ", then ".join(rule.formal_step for rule in self.rules)
 
+    def eqv_path_rules(self):
+        eqv_path_rules = []
+        curr = self.comb_class
+        for rule in self.rules:
+            eqv_path_rules.append((curr, rule))
+            curr = rule.children[0]
+        return eqv_path_rules
+
     def backward_map(
         self, objs: Tuple[CombinatorialObject, ...]
     ) -> CombinatorialObject:
@@ -181,6 +196,11 @@ class EquivalencePathRule(Rule):
         for rule in reversed(self.rules):
             res = rule.backward_map(res)[0]
         return res
+
+    def __eq__(self, other):
+        return super().__eq__(other) and [r.strategy for r in self.rules] == [
+            r.strategy for r in other.rules
+        ]
 
     def __str__(self):
         def frontpad(res, height):

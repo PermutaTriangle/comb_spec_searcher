@@ -1,21 +1,14 @@
-# pylint: disable=too-many-lines
-import json
 import logging
 import os
 import time
 import warnings
-from base64 import b64decode, b64encode
 from collections import defaultdict
-from functools import reduce
-from operator import add, mul
-from typing import Any, Dict, Tuple, TYPE_CHECKING
+from typing import Tuple, TYPE_CHECKING
 
 import logzero
 import psutil
 import sympy
 from logzero import logger
-
-from comb_spec_searcher.utils import compositions
 
 from .class_db import ClassDB
 from .class_queue import DefaultQueue
@@ -24,19 +17,9 @@ from .rule_db import RuleDB
 from .specification import CombinatorialSpecification
 from .strategies import Strategy, StrategyGenerator, StrategyPack
 from .strategies.rule import Rule, VerificationRule
-from .tree_searcher import (
-    iterative_proof_tree_finder,
-    iterative_prune,
-    proof_tree_generator_dfs,
-    prune,
-    random_proof_tree,
-)
 from .utils import (
     cssmethodtimer,
     cssiteratortimer,
-    get_func,
-    get_func_name,
-    get_module_and_func_names,
 )
 
 if TYPE_CHECKING:

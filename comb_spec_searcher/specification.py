@@ -2,7 +2,7 @@ from itertools import chain
 from typing import Iterable, Iterator
 from .combinatorial_class import CombinatorialClass, CombinatorialObject
 from .strategies import Strategy
-from .strategies import EmptyStrategy, EquivalencePathRule, Rule
+from .strategies import EmptyStrategy, EquivalencePathRule, ReverseRule, Rule
 
 from logzero import logger
 from sympy import Eq, Function
@@ -93,11 +93,13 @@ class CombinatorialSpecification:
         for obj in self.root_rule.generate_objects_of_size(n=size):
             yield obj
 
+    def __eq__(self, other):
+        return self.root == other.root and self.rules_dict == other.rules_dict
+
     def __str__(self):
         res = "A combinatorial specification with {} rules.".format(
             len(self.rules_dict)
         )
-        # TODO: print the equivalence rules as they appear, rather than all at the end.
         eqv_paths = {
             rule.comb_class: rule
             for rule in self.rules_dict.values()
@@ -130,3 +132,46 @@ class CombinatorialSpecification:
         ):
             res += "\n{} = {}".format(eq.lhs, eq.rhs)
         return res
+
+    # JSON methods
+
+    def to_jsonable(self):
+        rules = [
+            rule
+            for rule in self.rules_dict.values()
+            if not isinstance(rule, EquivalencePathRule)
+        ]
+        eqv_paths = []
+        for rule in self.rules_dict.values():
+            if isinstance(rule, EquivalencePathRule):
+                eqv_path = []
+                for c, r in rule.eqv_path_rules():
+                    rules.append(r)
+                    eqv_path.append(c.to_jsonable())
+                eqv_path.append(rule.children[0].to_jsonable())
+                eqv_paths.append(eqv_path)
+        strategies = [
+            (rule.children[0].to_jsonable(), rule.strategy.to_jsonable())
+            if isinstance(rule, ReverseRule)
+            else (rule.comb_class.to_jsonable(), rule.strategy.to_jsonable())
+            for rule in rules
+        ]
+        return {
+            "root": self.root.to_jsonable(),
+            "strategies": strategies,
+            "eqv_paths": eqv_paths,
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict, comb_class: type):
+        return cls(
+            root=comb_class.from_dict(d["root"]),
+            strategies=[
+                (comb_class.from_dict(class_dict), Strategy.from_dict(strat_dict))
+                for class_dict, strat_dict in d["strategies"]
+            ],
+            equivalence_paths=[
+                [comb_class.from_dict(class_dict) for class_dict in eqv_path]
+                for eqv_path in d["eqv_paths"]
+            ],
+        )

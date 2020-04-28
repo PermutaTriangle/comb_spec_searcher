@@ -35,7 +35,7 @@ class cssiteratortimer:
         def inner(css: "CombinatorialSpecificationSearcher", *args, **kwargs):
             key = self.explanation
             if self.explanation == "_expand_class_with_strategy":
-                key = args[1]
+                key = str(args[1])
             css.func_calls[key] += 1
             start = time.time()
             for res in func(css, *args, **kwargs):
