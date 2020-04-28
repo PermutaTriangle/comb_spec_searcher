@@ -18,15 +18,16 @@ class StrategyPack:
         expansion_strats: List[List[StrategyGenerator]],
         ver_strats: List[Strategy],
         name: str,
-        **kwargs
+        symmetries: List[StrategyGenerator] = [],
+        iterative: bool = False,
     ):
         self.name = name
         self.initial_strats = initial_strats
         self.inferral_strats = inferral_strats
         self.ver_strats = ver_strats
         self.expansion_strats = expansion_strats
-        self.symmetries = kwargs.get("symmetries", [])
-        self.iterative = kwargs.get("iterative", False)
+        self.symmetries = symmetries
+        self.iterative = iterative
 
     def __contains__(self, strategy: Strategy) -> bool:
         """
@@ -112,28 +113,37 @@ class StrategyPack:
                 [s.to_jsonable() for s in strat_list]
                 for strat_list in self.expansion_strats
             ],
-            "symmetries": self.symmetries,
+            "symmetries": [s.to_jsonable() for s in self.symmetries],
             "iterative": self.iterative,
         }
 
     @classmethod
     def from_dict(cls, d: dict) -> "StrategyPack":
-        name = d.pop("name")
+        name = d["name"]
         initial_strats = [
-            Strategy.from_dict(strat_dict) for strat_dict in d.pop("initial_strats")
+            Strategy.from_dict(strat_dict) for strat_dict in d["initial_strats"]
         ]
         inferral_strats = [
-            Strategy.from_dict(strat_dict) for strat_dict in d.pop("inferral_strats")
+            Strategy.from_dict(strat_dict) for strat_dict in d["inferral_strats"]
         ]
-        ver_strats = [
-            Strategy.from_dict(strat_dict) for strat_dict in d.pop("ver_strats")
-        ]
+        ver_strats = [Strategy.from_dict(strat_dict) for strat_dict in d["ver_strats"]]
         expansion_strats = [
             [Strategy.from_dict(strat_dict) for strat_dict in strat_list]
-            for strat_list in d.pop("expansion_strats")
+            for strat_list in d["expansion_strats"]
         ]
+        symmetries = (
+            [Strategy.from_dict(strat_dict) for strat_dict in d["symmetries"]]
+            if "symmetries" in d
+            else []
+        )
         return cls(
-            initial_strats, inferral_strats, expansion_strats, ver_strats, name, **d
+            initial_strats,
+            inferral_strats,
+            expansion_strats,
+            ver_strats,
+            name,
+            symmetries=symmetries,
+            iterative=d.get("iterative", False),
         )
 
     # Method to add power to a pack

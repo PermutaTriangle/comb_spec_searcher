@@ -30,11 +30,6 @@ class Strategy(abc.ABC):
     The Strategy method is essentially following the mantra of 'strategy' from the
     combinatorial explanation paper.
     (https://permutatriangle.github.io/papers/2019-02-27-combex.html)
-
-    Having it as a class will give us more flexibility making it easier to
-    implement sampling, object generation and future projects we've not
-    thought of yet. It will also allow us to port over the code from Unnar's
-    thesis in a more user-friendly manner.
     """
 
     def __init__(
@@ -135,6 +130,9 @@ class Strategy(abc.ABC):
         if children is None:
             children = self.decomposition_function(comb_class)
 
+    def __eq__(self, other: object) -> bool:
+        return self.__class__ == other.__class__ and self.__dict__ == other.__dict__
+
     @abc.abstractmethod
     def __str__(self) -> str:
         """Return the name of the strategy."""
@@ -142,6 +140,31 @@ class Strategy(abc.ABC):
     @abc.abstractmethod
     def __repr__(self) -> str:
         pass
+
+    def to_jsonable(self) -> dict:
+        """Return a dictionary form of the strategy."""
+        c = self.__class__
+        return {
+            "class_module": c.__module__,
+            "strategy_class": c.__name__,
+            "ignore_parent": self._ignore_parent,
+            "inferrable": self._inferrable,
+            "possibly_empty": self._possibly_empty,
+            "workable": self._workable,
+        }
+
+    @classmethod
+    @abc.abstractmethod
+    def from_dict(cls, d: dict) -> "Strategy":
+        """Return the strategy from the json representation."""
+        module = import_module(d["class_module"])
+        StratClass = getattr(
+            module, d["strategy_class"]
+        )  # type: Type[Strategy] # noqa: E501
+        assert issubclass(
+            StratClass, (Strategy, StrategyGenerator)
+        ), "Not a valid strategy"
+        return StratClass.from_dict(d)  # type: ignore
 
 
 class CartesianProductStrategy(Strategy):
@@ -435,9 +458,11 @@ class StrategyGenerator(abc.ABC):
     @abc.abstractmethod
     def from_dict(cls, d: dict) -> "Strategy":
         """Return the strategy from the json representation."""
-        module = import_module(d.pop("class_module"))
+        module = import_module(d["class_module"])
         StratClass = getattr(
-            module, d.pop("strategy_class")
-        )  # type: Type[Strategy] # noqa: E501
-        assert issubclass(StratClass, Strategy), "Not a valid strategy"
+            module, d["strategy_class"]
+        )  # type: Type[StrategyGenerator] # noqa: E501
+        assert issubclass(
+            StratClass, (Strategy, StrategyGenerator)
+        ), "Not a valid strategy generator"
         return StratClass.from_dict(d)  # type: ignore

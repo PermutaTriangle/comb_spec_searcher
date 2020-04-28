@@ -97,7 +97,7 @@ class CombinatorialClass(abc.ABC):
     def from_dict(cls, dictionary: dict) -> "CombinatorialClass":
         """Return combinatorial class from the jsonable object."""
         raise NotImplementedError(
-            "This function is need to reinstantiate a " "combinatorial class."
+            "This function is need to reinstantiate a combinatorial class."
         )
 
     def from_parts(self, *args, **kwargs) -> CombinatorialObject:

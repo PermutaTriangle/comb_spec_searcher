@@ -58,7 +58,6 @@ class CombinatorialSpecificationSearcher:
         self, start_class: "CombinatorialClass", strategy_pack: StrategyPack, **kwargs
     ):
         """Initialise CombinatorialSpecificationSearcher."""
-        self.start_class = start_class
         self.strategy_pack = strategy_pack
         self.debug = kwargs.get("debug", False)
         if not self.debug:
@@ -77,14 +76,15 @@ class CombinatorialSpecificationSearcher:
         self.classdb = ClassDB(type(start_class))
         self.classqueue = DefaultQueue(strategy_pack)
         self.ruledb = RuleDB()
-        self.class_genf = {}  # type: Dict[CombinatorialClass, Any]
 
         # initialise the run with start_class
         self.start_label = self.classdb.get_label(start_class)
         self.classqueue.add(self.start_label)
         self.tried_to_verify = set()
         self.symmetry_expanded = set()
-        self.try_verify(self.start_class, start_class)
+        self.try_verify(start_class, self.start_label)
+        if self.symmetries:
+            self._symmetry_expand(start_class, self.start_label)
 
     @property
     def verification_strategies(self):
@@ -378,7 +378,7 @@ class CombinatorialSpecificationSearcher:
         """Return string detailing what CombSpecSearcher is looking for."""
         start_string = (
             "Initialising CombSpecSearcher for the combinatorial"
-            " class:\n{}\n".format(self.start_class)
+            " class:\n{}\n".format(self.classdb.get_class(self.start_label))
         )
         start_string += str(self.strategy_pack)
         return start_string
