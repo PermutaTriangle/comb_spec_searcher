@@ -1,3 +1,4 @@
+from importlib import import_module
 from typing import Any, Iterator
 
 import abc
@@ -28,9 +29,25 @@ class CombinatorialClass(abc.ABC):
         """Return True if there are no object of any lengths."""
         return False
 
-    @abc.abstractmethod
-    def to_jsonable(self):
-        """Return JSONable data structure of the class (a dictionary)"""
+    @abc.abstractclassmethod
+    def from_dict(cls, d: dict) -> "CombinatorialClass":
+        """Return the combinatorial class from the json dict representation."""
+        module = import_module(d["class_module"])
+        StratClass = getattr(
+            module, d["comb_class"]
+        )  # type: Type[Strategy] # noqa: E501
+        assert issubclass(
+            StratClass, CombinatorialClass
+        ), "Not a valid CombinatorialClass"
+        return StratClass.from_dict(d)  # type: ignore
+
+    def to_jsonable(self) -> dict:
+        """Return a dictionary form of the combinatorial class."""
+        c = self.__class__
+        return {
+            "class_module": c.__module__,
+            "comb_class": c.__name__,
+        }
 
     def get_genf(self, *args, **kwargs):
         """Return the generating function for the combinatorial class"""
@@ -91,13 +108,6 @@ class CombinatorialClass(abc.ABC):
             "for a proof tree then you must implement "
             "'is_epsilon', 'is_atom' and 'is_positive' "
             "for your combinatorial class."
-        )
-
-    @classmethod
-    def from_dict(cls, dictionary: dict) -> "CombinatorialClass":
-        """Return combinatorial class from the jsonable object."""
-        raise NotImplementedError(
-            "This function is need to reinstantiate a combinatorial class."
         )
 
     def from_parts(self, *args, **kwargs) -> CombinatorialObject:

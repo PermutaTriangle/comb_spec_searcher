@@ -163,15 +163,18 @@ class CombinatorialSpecification:
         }
 
     @classmethod
-    def from_dict(cls, d: dict, comb_class: type):
+    def from_dict(cls, d: dict):
         return cls(
-            root=comb_class.from_dict(d["root"]),
+            root=CombinatorialClass.from_dict(d["root"]),
             strategies=[
-                (comb_class.from_dict(class_dict), Strategy.from_dict(strat_dict))
+                (
+                    CombinatorialClass.from_dict(class_dict),
+                    Strategy.from_dict(strat_dict),
+                )
                 for class_dict, strat_dict in d["strategies"]
             ],
             equivalence_paths=[
-                [comb_class.from_dict(class_dict) for class_dict in eqv_path]
+                [CombinatorialClass.from_dict(class_dict) for class_dict in eqv_path]
                 for eqv_path in d["eqv_paths"]
             ],
         )
