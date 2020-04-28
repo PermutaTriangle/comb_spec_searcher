@@ -118,18 +118,19 @@ class CombinatorialClass(abc.ABC):
             "This function is needed to perform random" " sampling."
         )
 
-    def compress(self) -> Any:
-        """Return a compressed version of the class. If you are having memory
-        issues then implement this function and the decompress function such
-        that 'cls.decompress(self.compress()) == self'"""
-        return self
+    def to_bytes(self) -> bytes:
+        """Return a compressed version of the class in the form of a 'bytes'
+        object. If you are having memory issues then implement this function
+        and the from_bytes function such that
+        'cls.from_bytes(self.to_bytes()) == self'"""
+        raise NotImplementedError
 
-    @classmethod
-    def decompress(cls, compressed: Any) -> "CombinatorialClass":
-        """Return decompressed class from string by compress function. If you
-        are having memory issues then implement this function and the compress
-        function such that 'cls.decompress(self.compress()) == self'"""
-        return compressed
+    def from_bytes(cls, b: bytes) -> "CombinatorialClass":
+        """Return decompressed class from the bytes object returned by the
+        'to_bytes' function. If you are having memory issues then implement
+        this function and the to_bytes function such that
+        'cls.from_bytes(self.to_bytes()) == self'"""
+        raise NotImplementedError
 
     @abc.abstractmethod
     def __init__(self):

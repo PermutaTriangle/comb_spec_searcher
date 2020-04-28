@@ -5,6 +5,7 @@ import warnings
 from collections import defaultdict
 from typing import Tuple, TYPE_CHECKING
 
+import json
 import logzero
 import psutil
 import sympy
@@ -438,7 +439,7 @@ class CombinatorialSpecificationSearcher:
                     round(time.time() - auto_search_start, 2)
                 )
                 found_string += self.status()
-                # found_string += json.dumps(specification.to_jsonable())
+                found_string += json.dumps(specification.to_jsonable())
                 logger.info(found_string, extra=self.logger_kwargs)
                 return specification
             # worst case, search every hour

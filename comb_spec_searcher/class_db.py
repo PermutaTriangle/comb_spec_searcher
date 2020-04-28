@@ -149,25 +149,19 @@ class ClassDB:
     def _compress(self, key):
         """Return compressed version of combinatorial class."""
         try:
-            return key.compress()
-        except AttributeError:
-            raise AttributeError(
-                ("The class {} needs a compress function" ".").format(
-                    self.combinatorial_class
-                )
-            )
+            return key.to_bytes()
+        except NotImplementedError:
+            # to use compression you should implement a 'to_bytes' function.
+            return key
 
     @cssmethodtimer("decompress")
     def _decompress(self, key):
         """Return decompressed version of compressed combinatorial class."""
         try:
-            return self.combinatorial_class.decompress(key)
-        except AttributeError:
-            raise AttributeError(
-                ("The class {} needs a compress function" ".").format(
-                    self.combinatorial_class
-                )
-            )
+            return self.combinatorial_class.from_bytes(key)
+        except NotImplementedError:
+            # to use compression you should implement a 'from_bytes' function.
+            return key
 
     @cssmethodtimer("get class")
     def get_class(self, key):
