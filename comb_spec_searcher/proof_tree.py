@@ -862,7 +862,6 @@ class ProofTree:
     def from_specification(cls, spec: CombinatorialSpecification):
         nodes = dict()
         eqv_paths = dict()
-        all_classes = set()
         # find equivalence paths and setup nodes without equivalence and children
         for rule in spec.rules_dict.values():
             if isinstance(rule, EquivalencePathRule):
@@ -933,8 +932,6 @@ class ProofTree:
                 node = nodes[curr]
                 for i, child in enumerate(node.children):
                     if any(c in seen for c in child.eqv_path_comb_classes):
-                        print(child.eqv_path_comb_classes[0])
-                        print("recurse node!")
                         node.children[i] = ProofTreeNode(
                             label=child.label,
                             eqv_path_labels=child.eqv_path_labels,

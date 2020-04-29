@@ -1,8 +1,32 @@
+"""
+A class for containing the set of strategies that
+CombinatorialSpecificationSearcher (CSS) should apply when searching for a
+CombinatorialSpecification.
+
+The default setting treats the pack as follows:
+    - inferral:     These srategies are applied to every comb_class first when
+                    found. They should all be equivalence strategies and if a
+                    strategy returns a rule, then we only work from the child.
+    - initial:      After inferral we apply all of the initial strategies to
+                    a comb_class. After the initial strategies are applied, the
+                    the comb_class is added to the next queue, waiting for the
+                    level to change (when the next becomes curr).
+    - expansion:    The expansion strategies are set of sets of strategies
+                    S1, ..., Sk. The strategies S1 are applied to all
+                    comb_class in curr queue, then S2 to all, then S3, etc,
+                    until all of the strategies are applied.
+    - verification: A verification strategy is applied to every comb_class when
+                    it is first found.
+    - symmetry:     Symmetries are applied to a comb_class when it is first
+                    found.
+(the above settings can be edited by creating an alternative CSSQueue class)
+
+If the iterative boolean is True, then CSS will search for an iterative
+specification.
+"""
 from copy import copy
 from itertools import chain
-from typing import List, Optional
-
-from ..utils import get_func_name
+from typing import List, Union
 
 from .strategy import Strategy, StrategyGenerator
 
@@ -10,15 +34,22 @@ from .strategy import Strategy, StrategyGenerator
 __all__ = "StrategyPack"
 
 
+CSSstrategy = Union[Strategy, StrategyGenerator]
+
+
 class StrategyPack:
+    """
+    A pack used by CSS to guide how to search for a specification.
+    """
+
     def __init__(
         self,
-        initial_strats: List[StrategyGenerator],
-        inferral_strats: List[Strategy],
-        expansion_strats: List[List[StrategyGenerator]],
-        ver_strats: List[Strategy],
+        initial_strats: List[CSSstrategy],
+        inferral_strats: List[CSSstrategy],
+        expansion_strats: List[List[CSSstrategy]],
+        ver_strats: List[CSSstrategy],
         name: str,
-        symmetries: List[StrategyGenerator] = [],
+        symmetries: List[CSSstrategy] = None,
         iterative: bool = False,
     ):
         self.name = name
@@ -26,7 +57,7 @@ class StrategyPack:
         self.inferral_strats = inferral_strats
         self.ver_strats = ver_strats
         self.expansion_strats = expansion_strats
-        self.symmetries = symmetries
+        self.symmetries = symmetries if symmetries is not None else []
         self.iterative = iterative
 
     def __contains__(self, strategy: Strategy) -> bool:
@@ -104,6 +135,9 @@ class StrategyPack:
 
     # JSON methods
     def to_jsonable(self) -> dict:
+        """
+        Return a JSON serializable dictionary.
+        """
         return {
             "name": self.name,
             "initial_strats": [s.to_jsonable() for s in self.initial_strats],
@@ -119,6 +153,9 @@ class StrategyPack:
 
     @classmethod
     def from_dict(cls, d: dict) -> "StrategyPack":
+        """
+        Return a StrategyPack from the dict object return by the to_jsonable method.
+        """
         name = d["name"]
         initial_strats = [
             Strategy.from_dict(strat_dict) for strat_dict in d["initial_strats"]

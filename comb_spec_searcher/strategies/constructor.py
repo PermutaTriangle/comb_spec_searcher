@@ -14,7 +14,7 @@ used throughout to denote size.
 from functools import reduce
 from itertools import product
 from operator import add, mul
-from typing import Any, Callable, Iterable, Iterator, Tuple
+from typing import Callable, Iterable, Iterator, Tuple
 import abc
 
 from sympy import Eq, Function
@@ -27,6 +27,8 @@ __all__ = ("Constructor", "CartesianProduct", "DisjointUnion", "Empty")
 
 
 RelianceProfile = Tuple[Tuple[int, ...], ...]
+SubGens = Tuple[Callable[..., Iterator[CombinatorialObject]], ...]
+SubRecs = Tuple[Callable[..., int], ...]
 
 
 class Constructor(abc.ABC):
@@ -53,7 +55,7 @@ class Constructor(abc.ABC):
         """
 
     @abc.abstractmethod
-    def get_recurrence(self, subrecs: Callable[[Any], int], **parameters: int) -> int:
+    def get_recurrence(self, subrecs: SubRecs, **parameters: int) -> int:
         """
         Return the count for the given parameters, assuming the children are
         counted by the subrecs given.
@@ -61,7 +63,7 @@ class Constructor(abc.ABC):
 
     @abc.abstractmethod
     def get_sub_objects(
-        self, subgens: Callable[[int], CombinatorialObject], **parameters: int
+        self, subgens: SubGens, **parameters: int
     ) -> Iterator[Tuple[CombinatorialObject, ...]]:
         """Return the subobjs/image of the bijection implied by the constructor."""
 
@@ -97,13 +99,13 @@ class Atom(Constructor):
         # TODO: implement in multiple variable
         return Eq(lhs_func, sympy.abc.x ** self.parameters["n"])
 
-    def get_recurrence(self, subrecs: Callable[[Any], int], **parameters: int) -> int:
+    def get_recurrence(self, subrecs: SubRecs, **parameters: int) -> int:
         if parameters == self.parameters:
             return 1
         return 0
 
     def get_sub_objects(
-        self, subgens: Callable[[int], CombinatorialObject], **parameters: int
+        self, subgens: SubGens, **parameters: int
     ) -> Iterator[Tuple[CombinatorialObject, ...]]:
         if parameters == self.parameters:
             yield tuple()
@@ -141,14 +143,16 @@ class CartesianProduct(Constructor):
     def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
         return Eq(lhs_func, reduce(mul, rhs_funcs, 1))
 
-    # pylint: disable=arguments-differ
-    def reliance_profile(self, n: int) -> RelianceProfile:
+    def reliance_profile(self, **parameters: int) -> RelianceProfile:
         # TODO: implement in multiple variables
+        assert len(parameters) == 1, "only implemented in one variable, namely 'n'"
+        n = parameters["n"]
         return tuple(f(n) for f in self._reliance_profile_functions)
 
-    def _valid_compositions(self, n: int) -> Iterator[Tuple[int, ...]]:
-        # TODO: be smarter!
-        reliance_profile = self.reliance_profile(n)
+    def _valid_compositions(self, **parameters: int) -> Iterator[Tuple[int, ...]]:
+        assert len(parameters) == 1, "only implemented in one variable, namely 'n'"
+        n = parameters["n"]
+        reliance_profile = self.reliance_profile(n=n)
         if all(reliance_profile):
             minmax = tuple((min(p), max(p)) for p in reliance_profile)
 
@@ -169,9 +173,11 @@ class CartesianProduct(Constructor):
 
             yield from _helper(n, minmax)
 
-    def get_recurrence(self, subrecs: Tuple[Callable[[Any], int]], n: int) -> int:
+    def get_recurrence(self, subrecs: SubRecs, **parameters: int) -> int:
+        assert len(parameters) == 1, "only implemented in one variable, namely 'n'"
+        n = parameters["n"]
         res = 0
-        for comp in self._valid_compositions(n):
+        for comp in self._valid_compositions(n=n):
             tmp = 1
             for i, rec in enumerate(subrecs):
                 tmp *= rec(n=comp[i])
@@ -181,12 +187,15 @@ class CartesianProduct(Constructor):
         return res
 
     def get_sub_objects(
-        self, subgens: Callable[[int], CombinatorialObject], n: int
+        self, subgens: SubGens, **parameters: int
     ) -> Iterator[Tuple[CombinatorialObject, ...]]:
-        for comp in self._valid_compositions(n):
-            yield from map(
-                tuple, product(*tuple(subgen(n=i) for i, subgen in zip(comp, subgens))),
-            )
+        assert len(parameters) == 1, "only implemented in one variable, namely 'n'"
+        n = parameters["n"]
+        for comp in self._valid_compositions(n=n):
+            for sub_objs in product(
+                *tuple(subgen(n=i) for i, subgen in zip(comp, subgens))
+            ):
+                yield tuple(sub_objs)
 
     def get_eq_symbol(self) -> str:
         return "="
@@ -211,20 +220,21 @@ class DisjointUnion(Constructor):
         return Eq(lhs_func, reduce(add, rhs_funcs, 0))
 
     # pylint: disable=arguments-differ
-    def reliance_profile(self, n: int) -> RelianceProfile:
+    def reliance_profile(self, **parameters: int) -> RelianceProfile:
         # TODO: implement in multiple variables
+        assert len(parameters) == 1, "only implemented in one variable, namely 'n'"
+        n = parameters["n"]
         return tuple((n,) for _ in range(self.number_of_children))
 
-    def get_recurrence(
-        self, subrecs: Callable[[Any], int], **lhs_parameters: Any
-    ) -> int:
-        return sum(rec(**lhs_parameters) for rec in subrecs)
+    def get_recurrence(self, subrecs: SubRecs, **parameters: int) -> int:
+        return sum(rec(**parameters) for rec in subrecs)
 
     def get_sub_objects(
-        self, subgens: Callable[[int], CombinatorialObject], n: int
+        self, subgens: SubGens, **parameters: int
     ) -> Iterator[Tuple[CombinatorialObject, ...]]:
+        assert len(parameters) == 1, "only implemented in one variable, namely 'n'"
         for i, subgen in enumerate(subgens):
-            for gp in subgen(n=n):
+            for gp in subgen(**parameters):
                 yield tuple(None for _ in range(i)) + (gp,) + tuple(
                     None for _ in range(len(subgens) - i - 1)
                 )
@@ -248,17 +258,15 @@ class Empty(Constructor):
     def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
         return Eq(lhs_func, 0)
 
-    # pylint: disable=arguments-differ
-    def reliance_profile(self, n: int) -> RelianceProfile:
-        # TODO: implement in multiple variables
+    def reliance_profile(self, **parameters: int) -> RelianceProfile:
+        assert len(parameters) == 1, "only implemented in one variable, namely 'n'"
         return tuple()
 
-    def get_recurrence(
-        self, subrecs: Callable[[Any], int], **lhs_parameters: Any
-    ) -> int:
+    def get_recurrence(self, subrecs: SubRecs, **parameters: int) -> int:
         return 0
 
     def get_sub_objects(
-        self, subgens: Callable[[int], CombinatorialObject], n: int
+        self, subgens: SubGens, **parameters: int
     ) -> Iterator[Tuple[CombinatorialObject, ...]]:
-        return []
+        assert len(parameters) == 1, "only implemented in one variable, namely 'n'"
+        return iter([])

@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import Iterable, Iterator
+from typing import Iterable, Iterator, Tuple, TYPE_CHECKING
 from .combinatorial_class import CombinatorialClass, CombinatorialObject
 from .strategies import Strategy
 from .strategies import EmptyStrategy, EquivalencePathRule, ReverseRule, Rule
@@ -8,6 +8,8 @@ from logzero import logger
 from sympy import Eq, Function
 import sympy
 
+if TYPE_CHECKING:
+    from typing import Dict
 
 __all__ = ("CombinatorialSpecification",)
 
@@ -16,8 +18,8 @@ class CombinatorialSpecification:
     def __init__(
         self,
         root: CombinatorialClass,
-        strategies: Iterable[Strategy],
-        equivalence_paths: Iterable[Iterable[CombinatorialClass]],
+        strategies: Iterable[Tuple[CombinatorialClass, Strategy]],
+        equivalence_paths: Iterable[Tuple[CombinatorialClass]],
     ):
         # TODO: Think more about equivalence, its going to come back to bite you soon!
         # you really want to store the paths needed
@@ -46,7 +48,7 @@ class CombinatorialSpecification:
             self.rules_dict.values()
         ):  # list as we lazily assign empty rules
             rule.set_subrecs(self.get_rule)
-        self.labels = {}
+        self.labels = {}  # type: Dict[CombinatorialClass, int]
 
     def get_rule(self, comb_class: CombinatorialClass) -> Rule:
         if comb_class.is_empty():
@@ -85,6 +87,9 @@ class CombinatorialSpecification:
                     self.get_function(rule.comb_class),
                     sympy.Function("NOTIMPLEMENTED")(sympy.abc.x),
                 )
+
+    def get_genf(self):
+        raise NotImplementedError
 
     def count_objects_of_size(self, size: int) -> int:
         return self.root_rule.count_objects_of_size(n=size)

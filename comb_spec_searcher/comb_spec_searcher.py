@@ -3,7 +3,7 @@ import os
 import time
 import warnings
 from collections import defaultdict
-from typing import Tuple, TYPE_CHECKING
+from typing import Tuple, TYPE_CHECKING, Union
 
 import json
 import logzero
@@ -383,7 +383,7 @@ class CombinatorialSpecificationSearcher:
         start_string += str(self.strategy_pack)
         return start_string
 
-    def auto_search(self, **kwargs):
+    def auto_search(self, **kwargs) -> Union[None, CombinatorialSpecification]:
         """
         An automatic search function.
 

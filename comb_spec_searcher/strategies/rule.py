@@ -3,17 +3,27 @@ The rule class is used for a specific application of a strategy on a tiling.
 This is not something the user should implement, as it is just a wrapper for
 calling the Strategy class and storing its results.
 
-A CombinatorialSpecification is a really just a set of Rule.
+A CombinatorialSpecification is (more or less) a set of Rule.
 """
-from typing import Callable, Iterable, Iterator, List, Optional, Tuple, TYPE_CHECKING
+from typing import (
+    Callable,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    TYPE_CHECKING,
+)
 from sympy import Eq, Function
 from .constructor import Constructor
 from ..combinatorial_class import CombinatorialClass, CombinatorialObject
+from ..exception import InvalidOperationError
 
 __all__ = ("Rule", "VerificationRule")
 
 if TYPE_CHECKING:
-    from .strategy import Strategy
+    from typing import Any, Dict, Union
+    from .strategy import Strategy, VerificationStrategy
 
 
 class Rule:
@@ -23,16 +33,18 @@ class Rule:
 
     def __init__(
         self,
-        strategy: "Strategy",
+        strategy: Strategy,
         comb_class: CombinatorialClass,
         children: Optional[Tuple[CombinatorialClass, ...]] = None,
     ):
         self.comb_class = comb_class
         self.strategy = strategy
-        self.count_cache = {}
-        self.obj_cache = {}
-        self.subrecs = None
-        self.subgenerators = None
+        self.count_cache = {}  # type: Dict[Any, int]
+        self.obj_cache = {}  # type: Dict[Any, List[CombinatorialObject]]
+        self.subrecs = None  # type: Union[None, Tuple[Callable[..., int], ...]]
+        self.subgenerators = (
+            None
+        )  # type: Union[None, Tuple[Callable[..., Iterator[CombinatorialObject]], ...]]
         self._children = children
 
     @property
@@ -64,9 +76,7 @@ class Rule:
         """
         return self.strategy.workable
 
-    def set_subrecs(
-        self, get_subrule: Callable[[CombinatorialClass], "SpecificRule"]
-    ) -> None:
+    def set_subrecs(self, get_subrule: Callable[[CombinatorialClass], "Rule"]) -> None:
         """
         In general a rule comes in the context of a set of rules, e.g. in a
         CombinatorialSpecification. In order to count, generate, etc using the
@@ -87,6 +97,8 @@ class Rule:
         """
         if self._children is None:
             self._children = self.strategy.decomposition_function(self.comb_class)
+            if self._children is None:
+                raise InvalidOperationError("Strategy does not apply")
         return self._children
 
     @property
@@ -113,9 +125,7 @@ class Rule:
         """
         return self.strategy.backward_map(self.comb_class, objs, self.children)
 
-    def forward_map(
-        self, obj: CombinatorialObject
-    ) -> Tuple[Tuple[CombinatorialObject, CombinatorialClass], ...]:
+    def forward_map(self, obj: CombinatorialObject) -> Tuple[CombinatorialObject, ...]:
         """
         This encodes the forward map of the underlying bijection that the
         strategy implies.
@@ -140,7 +150,9 @@ class Rule:
         key = tuple(parameters.items())
         res = self.count_cache.get(key)
         if res is None:
-            assert self.set_subrecs is not None
+            assert (
+                self.subrecs is not None
+            ), "you must call the set_subrecs function first"
             res = self.constructor.get_recurrence(self.subrecs, **parameters)
             self.count_cache[key] = res
         return res
@@ -152,12 +164,12 @@ class Rule:
         Return the equation for the (ordinary) generating function.
         """
         lhs_func = get_function(self.comb_class)
-        rhs_funcs = [get_function(comb_class) for comb_class in self.children]
+        rhs_funcs = tuple(get_function(comb_class) for comb_class in self.children)
         return self.constructor.get_equation(lhs_func, rhs_funcs)
 
     def generate_objects_of_size(
         self, **parameters: int
-    ) -> Iterator[Tuple[Tuple[CombinatorialObject, CombinatorialClass], ...]]:
+    ) -> Iterator[CombinatorialObject]:
         """
         Generate the objects by using the underlying bijection between the
         parent and children.
@@ -167,6 +179,9 @@ class Rule:
         if res is not None:
             yield from res
             return
+        assert (
+            self.subgenerators is not None
+        ), "you must call the set_subrecs function first"
         res = []
         for subobjs in self.constructor.get_sub_objects(
             self.subgenerators, **parameters
@@ -174,7 +189,7 @@ class Rule:
             obj = self.backward_map(subobjs)
             yield obj
             res.append(obj)
-        self.obj_cache[key] = tuple(res)
+        self.obj_cache[key] = res
 
     def __eq__(self, other) -> bool:
         return (
@@ -230,7 +245,7 @@ class EquivalencePathRule(Rule):
     A class for shortening a chain of equivalence rules into a single Rule.
     """
 
-    def __init__(self, rules: Iterable[Rule]):
+    def __init__(self, rules: Sequence[Rule]):
         assert all(
             len(rule.children) == 1 and rule.constructor.is_equivalence()
             for rule in rules
@@ -266,13 +281,11 @@ class EquivalencePathRule(Rule):
             res = (rule.backward_map(res),)
         return res[0]
 
-    def forward_map(
-        self, obj: CombinatorialObject
-    ) -> Tuple[Tuple[CombinatorialObject, CombinatorialClass], ...]:
+    def forward_map(self, obj: CombinatorialObject) -> Tuple[CombinatorialObject, ...]:
         res = obj
         for rule in reversed(self.rules):
-            res = rule.backward_map(res)[0]
-        return res
+            res = rule.forward_map(res)[0]
+        return (res,)
 
     def __eq__(self, other) -> bool:
         return super().__eq__(other) and [r.strategy for r in self.rules] == [
@@ -334,10 +347,14 @@ class ReverseRule(Rule):
     def backward_map(
         self, objs: Tuple[CombinatorialObject, ...]
     ) -> CombinatorialObject:
-        return self.strategy.forward_map(self.children[0], objs[0], (self.comb_class,))
+        return self.strategy.forward_map(self.children[0], objs[0], (self.comb_class,))[
+            0
+        ]
 
     def forward_map(self, obj: CombinatorialObject) -> Tuple[CombinatorialObject, ...]:
-        return self.strategy.backward_map(self.children[0], (obj,), (self.comb_class,))
+        return (
+            self.strategy.backward_map(self.children[0], (obj,), (self.comb_class,)),
+        )
 
 
 class VerificationRule(Rule):
@@ -350,6 +367,7 @@ class VerificationRule(Rule):
         key = tuple(parameters.items())
         res = self.count_cache.get(key)
         if res is None:
+            assert isinstance(self.strategy, VerificationStrategy)
             res = self.strategy.count_objects_of_size(self.comb_class, **parameters)
             self.count_cache[key] = res
         return res
@@ -358,6 +376,7 @@ class VerificationRule(Rule):
         self, get_function: Callable[[CombinatorialClass], Function]
     ) -> Eq:
         lhs_func = get_function(self.comb_class)
+        assert isinstance(self.strategy, VerificationStrategy)
         return self.strategy.get_equation(self.comb_class, lhs_func)
 
     def generate_objects_of_size(
@@ -368,10 +387,11 @@ class VerificationRule(Rule):
         if res is not None:
             yield from res
             return
+        assert isinstance(self.strategy, VerificationStrategy)
         res = []
         for obj in self.strategy.generate_objects_of_size(
             self.comb_class, **parameters
         ):
             yield obj
             res.append(obj)
-        self.obj_cache[key] = tuple(res)
+        self.obj_cache[key] = res
