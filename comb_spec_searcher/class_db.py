@@ -112,13 +112,15 @@ class ClassDB:
         else:
             label = self.class_to_info[compressed_class].label
 
-    def _get_info(self, key: Key):
+    def _get_info(self, key: Key) -> Info:
         """
         Return Info for given key.
         """
         if isinstance(key, CombinatorialClass):
             compressed_key = self._compress(key)
             info = self.class_to_info.get(compressed_key)
+            f = self._compress
+            reveal_locals()
             if info is None:
                 self.add(compressed_key, compressed=True)
                 info = self.class_to_info[compressed_key]
@@ -166,6 +168,10 @@ class ClassDB:
         Return combinatorial class of key.
         """
         info = self._get_info(key)
+        c = info.comb_class
+        d = self._decompress(info.comb_class)
+        f = self._decompress
+        reveal_locals()
         return self._decompress(info.comb_class)
 
     @cssmethodtimer("get label")

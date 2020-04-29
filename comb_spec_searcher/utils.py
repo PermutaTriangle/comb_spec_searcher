@@ -1,12 +1,18 @@
 """Some useful miscellaneous functions used througout the package."""
 import importlib
+import time
 from functools import partial
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
 import sympy
 from logzero import logger
 
 from comb_spec_searcher.exception import TaylorExpansionError
-import time
+
+if TYPE_CHECKING:
+    from comb_spec_searcher import CombinatorialSpecificationSearcher
+
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 class cssmethodtimer:
@@ -15,7 +21,7 @@ class cssmethodtimer:
     def __init__(self, explanation: str):
         self.explanation = explanation
 
-    def __call__(self, func):
+    def __call__(self, func: F) -> F:
         def inner(css: "CombinatorialSpecificationSearcher", *args, **kwargs):
             start = time.time()
             res = func(css, *args, **kwargs)
@@ -23,7 +29,7 @@ class cssmethodtimer:
             css.func_calls[self.explanation] += 1
             return res
 
-        return inner
+        return cast(F, inner)
 
 
 class cssiteratortimer:
@@ -32,7 +38,7 @@ class cssiteratortimer:
     def __init__(self, explanation: str):
         self.explanation = explanation
 
-    def __call__(self, func):
+    def __call__(self, func: F) -> F:
         def inner(css: "CombinatorialSpecificationSearcher", *args, **kwargs):
             key = self.explanation
             if self.explanation == "_expand_class_with_strategy":
@@ -44,7 +50,7 @@ class cssiteratortimer:
                 yield res
                 start = time.time()
 
-        return inner
+        return cast(F, inner)
 
 
 def get_func_name(f, warn=False, logger_kwargs=None):

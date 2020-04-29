@@ -1,13 +1,9 @@
 """
 An abstract class for a CombinatorialClass.
 """
-from importlib import import_module
-from typing import Any, Iterator, TYPE_CHECKING
 import abc
-
-if TYPE_CHECKING:
-    from typing import Type
-
+from importlib import import_module
+from typing import Any, Iterator, Type
 
 __all__ = ("CombinatorialClass", "CombinatorialObject")
 
@@ -42,9 +38,7 @@ class CombinatorialClass(abc.ABC):
     def from_dict(cls, d: dict) -> "CombinatorialClass":
         """Return the combinatorial class from the json dict representation."""
         module = import_module(d["class_module"])
-        StratClass = getattr(
-            module, d["comb_class"]
-        )  # type: Type[CombinatorialClass] # noqa: E501
+        StratClass = getattr(module, d["comb_class"])  # type: Type[CombinatorialClass]
         assert issubclass(
             StratClass, CombinatorialClass
         ), "Not a valid CombinatorialClass"
