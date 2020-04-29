@@ -1,5 +1,18 @@
+"""
+The constructor class contains all the method, and logic, needed to get the
+enumeration, generate objects, and sample objects.
+
+The default constructors implemented are:
+- Atom
+- CartesianProduct
+- DisjointUnion
+- Empty
+
+Currently the constructors are implemented in one variable, namely 'n' which is
+used throughout to denote size.
+"""
 from functools import reduce
-from itertools import chain, product
+from itertools import product
 from operator import add, mul
 from typing import Any, Callable, Iterable, Iterator, Tuple
 import abc
@@ -20,7 +33,7 @@ class Constructor(abc.ABC):
     """The constructor is akin to the 'counting function' in the comb exp paper."""
 
     @abc.abstractmethod
-    def is_equivalence(self):
+    def is_equivalence(self) -> bool:
         """
         Return true if the constructor is the same as "=" when there is only
         one child.
@@ -68,11 +81,17 @@ class Constructor(abc.ABC):
 
 
 class Atom(Constructor):
+    """
+    The Atom constructor is used for counting a combinatorial class that
+    consists of exactly one object. The parameters the Atom is initialised with
+    are the parameters satisfied by the single object.
+    """
+
     def __init__(self, **parameters):
         self.parameters = dict(**parameters)
 
-    def is_equivalence(self):
-        self.size = 1
+    def is_equivalence(self) -> bool:
+        return False
 
     def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
         # TODO: implement in multiple variable
@@ -95,6 +114,14 @@ class Atom(Constructor):
 
 
 class CartesianProduct(Constructor):
+    """
+    The CartesianProduct is initialised with the children of the rule that is
+    being counted. These are needed in the reliance profile. In particular,
+    the CombinatorialClass that you are counting must have implemented the
+    methods 'is_positive', and 'is_atom', which are needed to ensure that the
+    recursions are productive.
+    """
+
     def __init__(self, children: Iterable[CombinatorialClass]):
         number_of_positive = sum(
             1 for comb_class in children if comb_class.is_positive()
@@ -108,17 +135,18 @@ class CartesianProduct(Constructor):
             for child in children
         )
 
-    def is_equivalence(self):
+    def is_equivalence(self) -> bool:
         return True
 
     def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
         return Eq(lhs_func, reduce(mul, rhs_funcs, 1))
 
-    def reliance_profile(self, n: int):
+    # pylint: disable=arguments-differ
+    def reliance_profile(self, n: int) -> RelianceProfile:
         # TODO: implement in multiple variables
         return tuple(f(n) for f in self._reliance_profile_functions)
 
-    def _valid_compositions(self, n: int):
+    def _valid_compositions(self, n: int) -> Iterator[Tuple[int, ...]]:
         # TODO: be smarter!
         reliance_profile = self.reliance_profile(n)
         if all(reliance_profile):
@@ -168,15 +196,21 @@ class CartesianProduct(Constructor):
 
 
 class DisjointUnion(Constructor):
+    """
+    The DisjointUnion constructor takes as input the children. Each constructor
+    is unique up to the length of the children being used to count.
+    """
+
     def __init__(self, children: Tuple[CombinatorialClass, ...]):
         self.number_of_children = len(children)
 
-    def is_equivalence(self):
+    def is_equivalence(self) -> bool:
         return True
 
     def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
         return Eq(lhs_func, reduce(add, rhs_funcs, 0))
 
+    # pylint: disable=arguments-differ
     def reliance_profile(self, n: int) -> RelianceProfile:
         # TODO: implement in multiple variables
         return tuple((n,) for _ in range(self.number_of_children))
@@ -203,12 +237,18 @@ class DisjointUnion(Constructor):
 
 
 class Empty(Constructor):
-    def is_equivalence(self):
+    """
+    The Empty constructor is used for counting CombinatorialClass that are
+    empty.
+    """
+
+    def is_equivalence(self) -> bool:
         return False
 
     def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
         return Eq(lhs_func, 0)
 
+    # pylint: disable=arguments-differ
     def reliance_profile(self, n: int) -> RelianceProfile:
         # TODO: implement in multiple variables
         return tuple()
@@ -221,5 +261,4 @@ class Empty(Constructor):
     def get_sub_objects(
         self, subgens: Callable[[int], CombinatorialObject], n: int
     ) -> Iterator[Tuple[CombinatorialObject, ...]]:
-        if 0:
-            yield 1
+        return []

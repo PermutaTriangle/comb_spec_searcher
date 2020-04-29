@@ -1,15 +1,26 @@
-from typing import Callable, Iterator, Optional, Tuple, TYPE_CHECKING
+"""
+The rule class is used for a specific application of a strategy on a tiling.
+This is not something the user should implement, as it is just a wrapper for
+calling the Strategy class and storing its results.
+
+A CombinatorialSpecification is a really just a set of Rule.
+"""
+from typing import Callable, Iterable, Iterator, List, Optional, Tuple, TYPE_CHECKING
 from sympy import Eq, Function
 from .constructor import Constructor
 from ..combinatorial_class import CombinatorialClass, CombinatorialObject
 
-__all__ = ("EmptyRule", "Rule", "VerificationRule")
+__all__ = ("Rule", "VerificationRule")
 
 if TYPE_CHECKING:
     from .strategy import Strategy
 
 
 class Rule:
+    """
+    An instance of Rule is created by the __call__ method of strategy.
+    """
+
     def __init__(
         self,
         strategy: "Strategy",
@@ -21,25 +32,46 @@ class Rule:
         self.count_cache = {}
         self.obj_cache = {}
         self.subrecs = None
+        self.subgenerators = None
         self._children = children
 
     @property
     def ignore_parent(self) -> bool:
+        """
+        Return True if it is not worth expanding the parent/comb_class if
+        this rule is found.
+        """
         return self.strategy.ignore_parent
 
     @property
     def inferrable(self) -> bool:
+        """
+        Return True if the children could change using inferral strategies.
+        """
         return self.strategy.inferrable
 
     @property
     def possibly_empty(self) -> bool:
+        """
+        Return True if it is possible that a child is empty.
+        """
         return self.strategy.possibly_empty
 
     @property
     def workable(self) -> bool:
+        """
+        Return True if the children can expanded using other strategies.
+        """
         return self.strategy.workable
 
-    def set_subrecs(self, get_subrule: Callable[[CombinatorialClass], "SpecificRule"]):
+    def set_subrecs(
+        self, get_subrule: Callable[[CombinatorialClass], "SpecificRule"]
+    ) -> None:
+        """
+        In general a rule comes in the context of a set of rules, e.g. in a
+        CombinatorialSpecification. In order to count, generate, etc using the
+        rule we must set the subfunctions that the children refer to.
+        """
         self.subrecs = tuple(
             get_subrule(child).count_objects_of_size for child in self.children
         )
@@ -49,32 +81,62 @@ class Rule:
 
     @property
     def children(self) -> Tuple[CombinatorialClass, ...]:
+        """
+        Return the tuple of CombinatorialClass that are found by applying the
+        decomposition function of the strategy to the parent.
+        """
         if self._children is None:
             self._children = self.strategy.decomposition_function(self.comb_class)
         return self._children
 
     @property
     def constructor(self) -> Constructor:
+        """
+        Return the constructor, that contains all the information about how to
+        count/generate objects from the rule.
+        """
         return self.strategy.constructor(self.comb_class, self.children)
 
     @property
     def formal_step(self) -> str:
+        """
+        Return a string with a short explanation about the rule.
+        """
         return self.strategy.formal_step()
 
     def backward_map(
         self, objs: Tuple[CombinatorialObject, ...]
     ) -> CombinatorialObject:
+        """
+        This encodes the backward map of the underlying bijection that the
+        strategy implies.
+        """
         return self.strategy.backward_map(self.comb_class, objs, self.children)
-
-    def to_reverse_rule(self) -> "ReverseRule":
-        return ReverseRule(self)
 
     def forward_map(
         self, obj: CombinatorialObject
     ) -> Tuple[Tuple[CombinatorialObject, CombinatorialClass], ...]:
+        """
+        This encodes the forward map of the underlying bijection that the
+        strategy implies.
+        """
         return self.strategy.forward_map(self.comb_class, obj, self.children)
 
-    def count_objects_of_size(self, **parameters):
+    def to_reverse_rule(self) -> "ReverseRule":
+        """
+        Return the reverse rule. At this stage, reverse rules can only be
+        created for equivalence rules.
+        """
+        assert (
+            len(self.children) == 1 and self.constructor.is_equivalence()
+        ), "reverse rule can only be created for equivalence rules"
+        return ReverseRule(self)
+
+    def count_objects_of_size(self, **parameters: int) -> int:
+        """
+        The function count the objects with respect to the parameters. The
+        result is cached.
+        """
         key = tuple(parameters.items())
         res = self.count_cache.get(key)
         if res is None:
@@ -86,13 +148,20 @@ class Rule:
     def get_equation(
         self, get_function: Callable[[CombinatorialClass], Function]
     ) -> Eq:
+        """
+        Return the equation for the (ordinary) generating function.
+        """
         lhs_func = get_function(self.comb_class)
         rhs_funcs = [get_function(comb_class) for comb_class in self.children]
         return self.constructor.get_equation(lhs_func, rhs_funcs)
 
     def generate_objects_of_size(
-        self, **parameters
+        self, **parameters: int
     ) -> Iterator[Tuple[Tuple[CombinatorialObject, CombinatorialClass], ...]]:
+        """
+        Generate the objects by using the underlying bijection between the
+        parent and children.
+        """
         key = tuple(parameters.items())
         res = self.obj_cache.get(key)
         if res is not None:
@@ -107,14 +176,14 @@ class Rule:
             res.append(obj)
         self.obj_cache[key] = tuple(res)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return (
-            type(self) == type(other)
+            isinstance(other, self.__class__)
             and self.comb_class == other.comb_class
             and self.strategy == other.strategy
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         def frontpad(res, height):
             n = max(len(s) for s in res)
             for _ in range(height - len(res)):
@@ -157,7 +226,11 @@ class Rule:
 
 
 class EquivalencePathRule(Rule):
-    def __init__(self, rules):
+    """
+    A class for shortening a chain of equivalence rules into a single Rule.
+    """
+
+    def __init__(self, rules: Iterable[Rule]):
         assert all(
             len(rule.children) == 1 and rule.constructor.is_equivalence()
             for rule in rules
@@ -173,7 +246,11 @@ class EquivalencePathRule(Rule):
     def formal_step(self) -> str:
         return ", then ".join(rule.formal_step for rule in self.rules)
 
-    def eqv_path_rules(self):
+    def eqv_path_rules(self) -> List[Tuple[CombinatorialClass, Rule]]:
+        """
+        Returns the list of (parent, rule) pairs that make up the equivalence
+        path.
+        """
         eqv_path_rules = []
         curr = self.comb_class
         for rule in self.rules:
@@ -197,12 +274,12 @@ class EquivalencePathRule(Rule):
             res = rule.backward_map(res)[0]
         return res
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return super().__eq__(other) and [r.strategy for r in self.rules] == [
             r.strategy for r in other.rules
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         def frontpad(res, height):
             n = max(len(s) for s in res)
             for _ in range(height - len(res)):
@@ -236,9 +313,13 @@ class EquivalencePathRule(Rule):
 
 
 class ReverseRule(Rule):
-    def __init__(self, rule):
+    """
+    A class for creating the reverse of an equivalence rule.
+    """
+
+    def __init__(self, rule: Rule):
         assert (
-            len(rule.children) == 1
+            len(rule.children) == 1 and rule.constructor.is_equivalence
         ), "reversing a rule only works for equivalence rules"
         super().__init__(rule.strategy, rule.children[0], (rule.comb_class,))
 
@@ -260,7 +341,12 @@ class ReverseRule(Rule):
 
 
 class VerificationRule(Rule):
-    def count_objects_of_size(self, **parameters):
+    """
+    A class for verification rules. In particular, the children will be an
+    empty tuple if it applies, else None.
+    """
+
+    def count_objects_of_size(self, **parameters: int) -> int:
         key = tuple(parameters.items())
         res = self.count_cache.get(key)
         if res is None:
@@ -274,7 +360,9 @@ class VerificationRule(Rule):
         lhs_func = get_function(self.comb_class)
         return self.strategy.get_equation(self.comb_class, lhs_func)
 
-    def generate_objects_of_size(self, **parameters):
+    def generate_objects_of_size(
+        self, **parameters: int
+    ) -> Iterator[CombinatorialObject]:
         key = tuple(parameters.items())
         res = self.obj_cache.get(key)
         if res is not None:
