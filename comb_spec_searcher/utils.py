@@ -1,3 +1,4 @@
+"""Some useful miscellaneous functions used througout the package."""
 import importlib
 from functools import partial
 

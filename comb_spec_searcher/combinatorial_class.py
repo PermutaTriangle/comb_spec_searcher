@@ -1,17 +1,26 @@
+"""
+An abstract class for a CombinatorialClass.
+"""
 from importlib import import_module
-from typing import Any, Iterator
-
+from typing import Any, Iterator, TYPE_CHECKING
 import abc
+
+if TYPE_CHECKING:
+    from typing import Type
+
 
 __all__ = ("CombinatorialClass", "CombinatorialObject")
 
 
 class CombinatorialObject(abc.ABC):
+    """Abstract class for a combinatorial object."""
+
     @abc.abstractmethod
     def __len__(self) -> int:
         pass
 
     def size(self) -> int:
+        """Return the size of the object"""
         return len(self)
 
 
@@ -35,7 +44,7 @@ class CombinatorialClass(abc.ABC):
         module = import_module(d["class_module"])
         StratClass = getattr(
             module, d["comb_class"]
-        )  # type: Type[Strategy] # noqa: E501
+        )  # type: Type[CombinatorialClass] # noqa: E501
         assert issubclass(
             StratClass, CombinatorialClass
         ), "Not a valid CombinatorialClass"
@@ -49,7 +58,7 @@ class CombinatorialClass(abc.ABC):
             "comb_class": c.__name__,
         }
 
-    def get_genf(self, *args, **kwargs):
+    def get_genf(self, *args, **kwargs) -> Any:
         """Return the generating function for the combinatorial class"""
         raise NotImplementedError(
             (
@@ -60,7 +69,7 @@ class CombinatorialClass(abc.ABC):
             )
         )
 
-    def get_min_poly(self, *args, **kwargs):
+    def get_min_poly(self, *args, **kwargs) -> Any:
         """Return the minimum polynomial for the combinatorial class
         in terms of 'F'"""
         raise NotImplementedError(
@@ -110,14 +119,6 @@ class CombinatorialClass(abc.ABC):
             "for your combinatorial class."
         )
 
-    def from_parts(self, *args, **kwargs) -> CombinatorialObject:
-        """Return the object created from the parts given by a cartesian rule
-        applied on the comb_class. This is required for random sampling. The
-        formal step will be passed as the kwarg 'formal_step'."""
-        raise NotImplementedError(
-            "This function is needed to perform random" " sampling."
-        )
-
     def to_bytes(self) -> bytes:
         """Return a compressed version of the class in the form of a 'bytes'
         object. If you are having memory issues then implement this function
@@ -125,6 +126,7 @@ class CombinatorialClass(abc.ABC):
         'cls.from_bytes(self.to_bytes()) == self'"""
         raise NotImplementedError
 
+    @classmethod
     def from_bytes(cls, b: bytes) -> "CombinatorialClass":
         """Return decompressed class from the bytes object returned by the
         'to_bytes' function. If you are having memory issues then implement
@@ -153,4 +155,5 @@ class CombinatorialClass(abc.ABC):
         pass
 
     def _get_class_name(self) -> str:
+        """Return the name of the class."""
         return type(self).__name__

@@ -1,18 +1,21 @@
+"""Some custom errors."""
+
+
 class InsaneTreeError(Exception):
-    pass
+    """A sanity check failed."""
 
 
 class InvalidOperationError(Exception):
-    pass
+    """The operation used doesn't apply."""
 
 
 class ObjectMappingError(Exception):
-    pass
+    """A problem in the bijection."""
 
 
 class SpecificationNotFound(Exception):
-    pass
+    """A specification was not found."""
 
 
 class TaylorExpansionError(Exception):
-    pass
+    """An error while taylor expanding."""

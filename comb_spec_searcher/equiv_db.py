@@ -5,9 +5,16 @@ This is done using a union find method. Also, explanations of how combinatorial
 classes  are equivalent are maintained.
 
 Based on: https://www.ics.uci.edu/~eppstein/PADS/UnionFind.py
+
+In this file a combinatorial class is represented by a label, which is an
+integer, that the classdb gives.
 """
 
 from collections import deque
+from typing import List, Set, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Deque, Dict, Tuple, Union
 
 
 class EquivalenceDB:
@@ -26,21 +33,21 @@ class EquivalenceDB:
 
     def __init__(self):
         """Create a new empty equivalent database."""
-        self.parents = {}
-        self.weights = {}
-        self.verified_roots = set()
-        self.vertices = set()  # needed for finding the paths at post-processing
+        self.parents = {}  # type: Dict[int, int]
+        self.weights = {}  # type: Dict[int, int]
+        self.verified_roots = set()  # type: Set[int]
+        self.vertices = set()  # Set[Tuple[int, int]]
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Check if all information stored is the same."""
-        return (
+        return bool(
             self.parents == other.parents
             and self.weights == other.weights
             and self.verified_roots == other.verified_roots
             and self.vertices == other.vertices
         )
 
-    def __getitem__(self, comb_class):
+    def __getitem__(self, comb_class: int) -> int:
         """Find and return root combinatorial class for the set containing
         comb_class."""
         root = self.parents.get(comb_class)
@@ -60,7 +67,7 @@ class EquivalenceDB:
             self.parents[ancestor] = root
         return root
 
-    def union(self, t1, t2):
+    def union(self, t1: int, t2: int) -> None:
         """Find sets containing t1 and t2 and merge them."""
         self.vertices.add(frozenset((t1, t2)))
         verified = self.is_verified(t1) or self.is_verified(t2)
@@ -73,21 +80,21 @@ class EquivalenceDB:
         if verified:
             self.set_verified(t1)
 
-    def equivalent(self, t1, t2):
+    def equivalent(self, t1: int, t2: int) -> bool:
         """Return True if t1 and t2 are equivalent, False otherwise."""
         return self[t1] == self[t2]
 
-    def set_verified(self, comb_class):
+    def set_verified(self, comb_class: int) -> None:
         """Update database that combinatorial classes equivalent to comb_class
         are verified."""
         if not self.is_verified(comb_class):
             self.verified_roots.add(self[comb_class])
 
-    def is_verified(self, comb_class):
+    def is_verified(self, comb_class: int) -> bool:
         """Return true if any equivalent combinatorial class is verified."""
         return self[comb_class] in self.verified_roots
 
-    def equivalent_set(self, comb_class):
+    def equivalent_set(self, comb_class: int) -> Set[int]:
         """Return all of the classes equivalent to comb_class."""
         equivalent_classes = set()
         for t in self.parents:
@@ -95,7 +102,7 @@ class EquivalenceDB:
                 equivalent_classes.add(t)
         return equivalent_classes
 
-    def find_path(self, comb_class, other_comb_class):
+    def find_path(self, comb_class: int, other_comb_class: int) -> List[int]:
         """
         BFS for shortest path.
 
@@ -105,8 +112,8 @@ class EquivalenceDB:
             raise KeyError("The classes given are not equivalent.")
         if comb_class == other_comb_class:
             return [comb_class]
-        equivalent_comb_classes = {}
-        reverse_map = {}
+        equivalent_comb_classes = {}  # type: Dict[int, int]
+        reverse_map = {}  # type: Dict[int, int]
 
         for x in self.parents:
             n = len(equivalent_comb_classes)
@@ -114,7 +121,9 @@ class EquivalenceDB:
                 equivalent_comb_classes[x] = n
                 reverse_map[n] = x
 
-        adjacency_list = [[] for i in range(len(equivalent_comb_classes))]
+        adjacency_list = [
+            [] for i in range(len(equivalent_comb_classes))
+        ]  # type: List[List[int]]
         for (t1, t2) in self.vertices:
             if self.equivalent(t1, comb_class):
                 u = equivalent_comb_classes[t1]
@@ -122,7 +131,7 @@ class EquivalenceDB:
                 adjacency_list[u].append(v)
                 adjacency_list[v].append(u)
 
-        dequeue = deque()
+        dequeue = deque()  # type: Deque[int]
 
         start = equivalent_comb_classes[comb_class]
         end = equivalent_comb_classes[other_comb_class]
@@ -131,7 +140,7 @@ class EquivalenceDB:
 
         dequeue.append(start)
         visited = [False for i in range(n)]
-        neighbour = [None for i in range(n)]
+        neighbour = [None for i in range(n)]  # type: List[Union[int, None]]
         while dequeue:
             u = dequeue.popleft()
             if u == end:
@@ -147,8 +156,11 @@ class EquivalenceDB:
 
         path = [reverse_map[end]]
         while neighbour[end] is not None:
-            t = reverse_map[neighbour[end]]
+            assert isinstance(end, int), "something went wrong"
+            a = neighbour[end]
+            assert isinstance(a, int), "something went wrong"
+            t = reverse_map[a]
             path.append(t)
-            end = neighbour[end]
+            end = a
 
         return path[::-1]
