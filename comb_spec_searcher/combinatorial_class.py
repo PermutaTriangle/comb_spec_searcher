@@ -34,7 +34,8 @@ class CombinatorialClass(abc.ABC):
         """Return True if there are no object of any lengths."""
         return False
 
-    @abc.abstractclassmethod
+    @classmethod
+    @abc.abstractmethod
     def from_dict(cls, d: dict) -> "CombinatorialClass":
         """Return the combinatorial class from the json dict representation."""
         module = import_module(d["class_module"])

@@ -2,11 +2,11 @@
 A database for rules.
 """
 from collections import defaultdict
-from typing import Any, Dict, Set, Tuple
+from typing import Dict, Iterator, List, Set, Tuple
 from .equiv_db import EquivalenceDB
 from .exception import SpecificationNotFound
-from .strategies.constructor import DisjointUnion
-from .strategies.rule import Rule
+from .strategies import Strategy
+from .strategies import Rule
 from .tree_searcher import (
     iterative_proof_tree_finder,
     iterative_prune,
@@ -15,6 +15,9 @@ from .tree_searcher import (
     prune,
     random_proof_tree,
 )
+
+
+Specification = Tuple[List[Tuple[int, Strategy]], List[int]]
 
 
 class RuleDB:
@@ -32,14 +35,14 @@ class RuleDB:
         dictionary. Calling works the same way as explanations.
         """
         # the values are needed for finding the specification in post-processing
-        self.rule_to_strategy = {}
+        self.rule_to_strategy: Dict[Tuple[int, Tuple[int, ...]], Strategy] = {}
         self.equivdb = EquivalenceDB()
 
     def __eq__(self, other) -> bool:
         """Check if all stored information is the same."""
-        return self.rule_to_strategy == other.rule_to_strategy
+        return bool(self.rule_to_strategy == other.rule_to_strategy)
 
-    def add(self, start: int, ends: Tuple[int, ...], rule: Rule):
+    def add(self, start: int, ends: Tuple[int, ...], rule: Rule) -> None:
         """
         Add a rule to the database.
 
@@ -54,19 +57,19 @@ class RuleDB:
             self.set_equivalent(start, ends[0])
         self.rule_to_strategy[(start, ends)] = rule.strategy
 
-    def is_verified(self, label):
+    def is_verified(self, label: int) -> bool:
         """Return True if label has been verified."""
-        return self.equivdb.is_verified(label)
+        return bool(self.equivdb.is_verified(label))
 
-    def set_verified(self, label):
+    def set_verified(self, label: int) -> None:
         """Mark label as verified."""
         self.equivdb.set_verified(label)
 
-    def are_equivalent(self, label, other):
+    def are_equivalent(self, label: int, other: int) -> bool:
         """Return true if label and other are equivalent."""
-        return self.equivdb.equivalent(label, other)
+        return bool(self.equivdb.equivalent(label, other))
 
-    def set_equivalent(self, label, other):
+    def set_equivalent(self, label: int, other: int) -> None:
         """Mark label and other as equivalent."""
         self.equivdb.union(label, other)
 
@@ -79,22 +82,24 @@ class RuleDB:
             )
         return rules_dict
 
-    def all_rules(self):
+    def all_rules(self) -> Iterator[Tuple[int, Tuple[int, ...], Strategy]]:
+        """Yield all the rules found so far."""
         for start, ends in self:
             yield start, ends, self.rule_to_strategy[(start, ends)]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[int, Tuple[int, ...]]]:
         """Iterate through rules as the pairs (start, end)."""
-        for start, ends in self.rule_to_strategy.keys():
+        for start, ends in self.rule_to_strategy:
             if len(ends) != 1 or not self.are_equivalent(start, ends[0]):
                 yield start, ends
 
-    def contains(self, start, ends):
+    def contains(self, start: int, ends: Tuple[int, ...]) -> bool:
         """Return true if the rule start -> ends is in the database."""
         ends = tuple(sorted(ends))
         return (start, ends) in self.rule_to_strategy
 
     def status(self) -> str:
+        """Return a string describing the status of the rule database."""
         status = "RuleDB status:\n"
         status += "\tTotal number of combinatorial rules is {}\n" "".format(
             len(self.rule_to_strategy)
@@ -106,11 +111,13 @@ class RuleDB:
     # Below are methods for finding a combinatorial specification. #
     ################################################################
 
-    def has_proof_tree(self, label):
+    def has_proof_tree(self, label: int) -> bool:
         """Return True if a proof tree has been found, false otherwise."""
         return self.is_verified(label)
 
-    def rule_from_equivalence_rule(self, eqv_start, eqv_ends):
+    def rule_from_equivalence_rule(
+        self, eqv_start: int, eqv_ends: Tuple[int, ...]
+    ) -> Tuple[int, Tuple[int, ...]]:
         """Return a rule that satisfies the equivalence rule."""
         eqv_start = self.equivdb[eqv_start]
         eqv_ends = tuple(sorted(self.equivdb[l] for l in eqv_ends))
@@ -121,7 +128,7 @@ class RuleDB:
             if eqv_start == temp_start and eqv_ends == temp_ends:
                 return start, ends
 
-    def find_proof_tree(self, label: int, iterative: bool = False):
+    def find_proof_tree(self, label: int, iterative: bool = False) -> Node:
         """Search for a proof tree based on current data found."""
         rules_dict = self.rules_up_to_equivalence()
         # Prune all unverified labels (recursively)
@@ -146,7 +153,9 @@ class RuleDB:
             raise SpecificationNotFound("No specification for label {}".format(label))
         return proof_tree
 
-    def get_specification_rules(self, label: int, iterative: bool = False):
+    def get_specification_rules(
+        self, label: int, iterative: bool = False
+    ) -> Specification:
         """
         Return a list of pairs (label, rule) which form a specification.
         The specification returned is random, so two calls to the function
@@ -155,11 +164,12 @@ class RuleDB:
         proof_tree_node = self.find_proof_tree(label=label, iterative=iterative)
         return self._get_specification_rules(label, proof_tree_node)
 
-    def _get_specification_rules(self, label: int, proof_tree_node: Node):
-        res = []
+    def _get_specification_rules(
+        self, label: int, proof_tree_node: Node
+    ) -> Specification:
         # We will need to add equivalence rules from each internal label to its
         # equivalent label as a start.
-        children = dict()
+        children: Dict[int, Tuple[int, ...]] = dict()
         internal_nodes = set([label])
         for node in proof_tree_node.nodes():
             eqv_start, eqv_ends = (
@@ -179,39 +189,40 @@ class RuleDB:
                     path = self.equivdb.find_path(label, start)
                     for a, b in zip(path[:-1], path[1:]):
                         try:
-                            rule = self.rule_to_strategy[(a, (b,))]
-                            res.append((a, rule))
+                            strategy = self.rule_to_strategy[(a, (b,))]
+                            res.append((a, strategy))
                         except KeyError:
-                            rule = self.rule_to_strategy[(b, (a,))]
-                            res.append((b, rule))
+                            strategy = self.rule_to_strategy[(b, (a,))]
+                            res.append((b, strategy))
                     if len(path) > 1:
                         eqv_paths.append(path)
-            rule = self.rule_to_strategy[(start, ends)]
-            res.append((start, rule))
+            strategy = self.rule_to_strategy[(start, ends)]
+            res.append((start, strategy))
         return res, eqv_paths
 
-    def all_specifications(self, label, iterative: bool = False):
+    def all_specifications(
+        self, label: int, iterative: bool = False
+    ) -> Iterator[Specification]:
         """
         A generator that yields all specifications in the universe for
         the given label.
         """
-        rules_dict = self.tree_search_prep()
-        # Prune all unverified labels (recursively)
         if iterative:
-            rules_dict = iterative_prune(rules_dict, root=self.equivdb[label])
-        else:
-            rules_dict = prune(rules_dict)
+            raise NotImplementedError(
+                "There is no method for yielding all iterative proof trees."
+            )
+        rules_dict = self.rules_up_to_equivalence()
+        # Prune all unverified labels (recursively)
+        rules_dict = prune(rules_dict)
 
-        if self.equivdb[self.start_label] in rules_dict:
-            if self.iterative:
-                raise NotImplementedError(
-                    "There is no method for yielding all iterative proof trees."
-                )
+        if self.equivdb[label] in rules_dict:
             proof_trees = proof_tree_generator_dfs(rules_dict, root=self.equivdb[label])
         for proof_tree_node in proof_trees:
             yield self._get_specification_rules(label, proof_tree_node)
 
-    def get_smallest_specification(self, label: int, iterative: bool = False):
+    def get_smallest_specification(
+        self, label: int, iterative: bool = False
+    ) -> Specification:
         """
         Return the smallest specification in the universe for label. It uses
         exponential search to find it.

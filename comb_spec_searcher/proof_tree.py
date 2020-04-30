@@ -2,6 +2,8 @@
 A proof tree class.
 
 This can be used to get the generating function for the class.
+
+The class is only used for reverse compatability with ComboPal.
 """
 import json
 import random
