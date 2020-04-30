@@ -11,10 +11,7 @@ integer, that the classdb gives.
 """
 
 from collections import deque
-from typing import List, Set, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from typing import Deque, Dict, Tuple, Union
+from typing import Deque, Dict, FrozenSet, List, Set, Union
 
 
 class EquivalenceDB:
@@ -33,10 +30,10 @@ class EquivalenceDB:
 
     def __init__(self):
         """Create a new empty equivalent database."""
-        self.parents = {}  # type: Dict[int, int]
-        self.weights = {}  # type: Dict[int, int]
-        self.verified_roots = set()  # type: Set[int]
-        self.vertices = set()  # Set[Tuple[int, int]]
+        self.parents: Dict[int, int] = {}
+        self.weights: Dict[int, int] = {}
+        self.verified_roots: Set[int] = set()
+        self.vertices: Set[FrozenSet[int]] = set()
 
     def __eq__(self, other) -> bool:
         """Check if all information stored is the same."""
@@ -112,8 +109,8 @@ class EquivalenceDB:
             raise KeyError("The classes given are not equivalent.")
         if comb_class == other_comb_class:
             return [comb_class]
-        equivalent_comb_classes = {}  # type: Dict[int, int]
-        reverse_map = {}  # type: Dict[int, int]
+        equivalent_comb_classes: Dict[int, int] = {}
+        reverse_map: Dict[int, int] = {}
 
         for x in self.parents:
             n = len(equivalent_comb_classes)
@@ -121,9 +118,9 @@ class EquivalenceDB:
                 equivalent_comb_classes[x] = n
                 reverse_map[n] = x
 
-        adjacency_list = [
+        adjacency_list: List[List[int]] = [
             [] for i in range(len(equivalent_comb_classes))
-        ]  # type: List[List[int]]
+        ]
         for (t1, t2) in self.vertices:
             if self.equivalent(t1, comb_class):
                 u = equivalent_comb_classes[t1]
@@ -131,7 +128,7 @@ class EquivalenceDB:
                 adjacency_list[u].append(v)
                 adjacency_list[v].append(u)
 
-        dequeue = deque()  # type: Deque[int]
+        dequeue: Deque[int] = deque()
 
         start = equivalent_comb_classes[comb_class]
         end = equivalent_comb_classes[other_comb_class]
@@ -140,7 +137,7 @@ class EquivalenceDB:
 
         dequeue.append(start)
         visited = [False for i in range(n)]
-        neighbour = [None for i in range(n)]  # type: List[Union[int, None]]
+        neighbour: List[Union[int, None]] = [None for i in range(n)]
         while dequeue:
             u = dequeue.popleft()
             if u == end:

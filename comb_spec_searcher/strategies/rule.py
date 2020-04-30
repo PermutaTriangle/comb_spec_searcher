@@ -6,24 +6,28 @@ calling the Strategy class and storing its results.
 A CombinatorialSpecification is (more or less) a set of Rule.
 """
 from typing import (
+    Any,
     Callable,
+    Dict,
     Iterator,
     List,
     Optional,
     Sequence,
     Tuple,
     TYPE_CHECKING,
+    Union,
 )
 from sympy import Eq, Function
 from .constructor import Constructor
 from ..combinatorial_class import CombinatorialClass, CombinatorialObject
-from ..exception import InvalidOperationError
+from ..exception import StrategyDoesNotApply
 
-__all__ = ("Rule", "VerificationRule")
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Union
     from .strategy import Strategy, VerificationStrategy
+
+
+__all__ = ("Rule", "VerificationRule")
 
 
 class Rule:
@@ -33,18 +37,18 @@ class Rule:
 
     def __init__(
         self,
-        strategy: Strategy,
+        strategy: "Strategy",
         comb_class: CombinatorialClass,
         children: Optional[Tuple[CombinatorialClass, ...]] = None,
     ):
         self.comb_class = comb_class
         self.strategy = strategy
-        self.count_cache = {}  # type: Dict[Any, int]
-        self.obj_cache = {}  # type: Dict[Any, List[CombinatorialObject]]
-        self.subrecs = None  # type: Union[None, Tuple[Callable[..., int], ...]]
-        self.subgenerators = (
-            None
-        )  # type: Union[None, Tuple[Callable[..., Iterator[CombinatorialObject]], ...]]
+        self.count_cache: Dict[Any, int] = {}
+        self.obj_cache: Dict[Any, List[CombinatorialObject]] = {}
+        self.subrecs: Union[None, Tuple[Callable[..., int], ...]] = None
+        self.subgenerators: Union[
+            None, Tuple[Callable[..., Iterator[CombinatorialObject]], ...]
+        ] = (None)
         self._children = children
 
     @property
@@ -98,7 +102,7 @@ class Rule:
         if self._children is None:
             self._children = self.strategy.decomposition_function(self.comb_class)
             if self._children is None:
-                raise InvalidOperationError("Strategy does not apply")
+                raise StrategyDoesNotApply("{} does not apply".format(self.strategy))
         return self._children
 
     @property
@@ -363,11 +367,19 @@ class VerificationRule(Rule):
     empty tuple if it applies, else None.
     """
 
+    def __init__(
+        self,
+        strategy: "VerificationStrategy",
+        comb_class: CombinatorialClass,
+        children: Optional[Tuple[CombinatorialClass, ...]] = None,
+    ):
+        super().__init__(strategy, comb_class, children)
+        self.strategy: "VerificationStrategy"
+
     def count_objects_of_size(self, **parameters: int) -> int:
         key = tuple(parameters.items())
         res = self.count_cache.get(key)
         if res is None:
-            assert isinstance(self.strategy, VerificationStrategy)
             res = self.strategy.count_objects_of_size(self.comb_class, **parameters)
             self.count_cache[key] = res
         return res
@@ -376,7 +388,6 @@ class VerificationRule(Rule):
         self, get_function: Callable[[CombinatorialClass], Function]
     ) -> Eq:
         lhs_func = get_function(self.comb_class)
-        assert isinstance(self.strategy, VerificationStrategy)
         return self.strategy.get_equation(self.comb_class, lhs_func)
 
     def generate_objects_of_size(
@@ -387,7 +398,6 @@ class VerificationRule(Rule):
         if res is not None:
             yield from res
             return
-        assert isinstance(self.strategy, VerificationStrategy)
         res = []
         for obj in self.strategy.generate_objects_of_size(
             self.comb_class, **parameters

@@ -13,7 +13,11 @@ from logzero import logger
 
 from .class_db import ClassDB
 from .class_queue import DefaultQueue
-from .exception import InvalidOperationError, SpecificationNotFound
+from .exception import (
+    InvalidOperationError,
+    SpecificationNotFound,
+    StrategyDoesNotApply,
+)
 from .rule_db import RuleDB
 from .specification import CombinatorialSpecification
 from .strategies import Strategy, StrategyGenerator, StrategyPack
@@ -151,9 +155,11 @@ class CombinatorialSpecificationSearcher:
                     " __call__ method should yield Strategy or "
                     "Strategy(comb_class, children) object."
                 )
-            if rule.children is None:
-                continue  # this means the strategy does not apply
-            if len(rule.children) == 1 and comb_class == rule.children[0]:
+            try:
+                children = rule.children
+            except StrategyDoesNotApply:
+                continue
+            if len(children) == 1 and comb_class == children[0]:
                 logger.debug(
                     "The equivalence strategy %s returned the same "
                     "combinatorial class when applied to %r",
@@ -162,9 +168,7 @@ class CombinatorialSpecificationSearcher:
                     extra=self.logger_kwargs,
                 )
                 continue
-            end_labels = [
-                self.classdb.get_label(comb_class) for comb_class in rule.children
-            ]
+            end_labels = [self.classdb.get_label(comb_class) for comb_class in children]
             logger.debug(
                 "Adding combinatorial rule %s -> %s with constructor" " '%s'",
                 label,
@@ -180,7 +184,7 @@ class CombinatorialSpecificationSearcher:
                     if not self.ruledb.are_equivalent(label, l):
                         self._add_empty_rule(l)
                 if self.debug:
-                    for l, c in zip(end_labels, rule.children):
+                    for l, c in zip(end_labels, children):
                         if not self.ruledb.are_equivalent(label, l):
                             assert c.is_empty()
 

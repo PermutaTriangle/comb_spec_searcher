@@ -2,12 +2,15 @@
 A queue of labels.
 """
 from collections import Counter, deque
-from typing import Iterator, List, Tuple, TYPE_CHECKING
+from typing import Deque, Iterator, List, Set, Tuple
+from typing import Counter as CounterType
 import abc
 
+from .strategies.strategy_pack import StrategyPack
+from .strategies.strategy import CSSstrategy
 
-if TYPE_CHECKING:
-    from comb_spec_searcher import CombinatorialClass, StrategyGenerator, StrategyPack
+
+WorkPacket = Tuple[int, Tuple[CSSstrategy, ...], bool]
 
 
 class CSSQueue(abc.ABC):
@@ -15,31 +18,32 @@ class CSSQueue(abc.ABC):
     A queue of labels.
     """
 
-    def __init__(self, pack: "StrategyPack"):
-        self.inferral_strategies = pack.inferral_strats
-        self.initial_strategies = pack.initial_strats
-        self.expansion_strats = pack.expansion_strats
+    def __init__(self, pack: StrategyPack):
+        self.inferral_strategies = tuple(pack.inferral_strats)
+        self.initial_strategies = tuple(pack.initial_strats)
+        self.expansion_strats = tuple(tuple(x) for x in pack.expansion_strats)
+        self.iterator = self._iter_helper()
 
     @abc.abstractmethod
-    def add(self, label) -> None:
+    def add(self, label: int) -> None:
         """Add a label to the queue."""
 
     @abc.abstractmethod
-    def set_not_inferrable(self, label) -> None:
+    def set_not_inferrable(self, label: int) -> None:
         """You should avoid yielding label with an inferral strategy in future."""
 
     @abc.abstractmethod
-    def set_verified(self, label) -> None:
+    def set_verified(self, label: int) -> None:
         """Label was verified, how should the queue react?"""
 
     @abc.abstractmethod
-    def set_stop_yielding(self, label) -> None:
+    def set_stop_yielding(self, label: int) -> None:
         """You should stop yielding label. CSS indicated that this label should
         no longer be yielded, e.g., expanding another symmetry or expanding
         only children"""
 
     @abc.abstractmethod
-    def do_level(self) -> Iterator[Tuple[int, List["StrategyGenerator"], bool]]:
+    def do_level(self) -> Iterator[WorkPacket]:
         """Return a 'level'. The definition of level can be chosen by the user,
         but it determines the functionality of the do_level method in CSS."""
 
@@ -48,7 +52,7 @@ class CSSQueue(abc.ABC):
         """Return a string that indicates that current status of the queue."""
 
     @abc.abstractmethod
-    def _iter_helper(self) -> Iterator[Tuple[int, List["StrategyGenerator"], bool]]:
+    def _iter_helper(self) -> Iterator[WorkPacket]:
         """
         Yield the combinatorial classes in queue.
         It should yield triples (label, strategies, inferral)
@@ -60,16 +64,10 @@ class CSSQueue(abc.ABC):
         strategies will be applied cyclically until no change.
         """
 
-    @property
-    def iterator(self):
-        if not hasattr(self, "_iterator"):
-            self._iterator = self._iter_helper()
-        return self._iterator
-
-    def __iter__(self):
+    def __iter__(self) -> Iterator[WorkPacket]:
         yield from self.iterator
 
-    def __next__(self):
+    def __next__(self) -> WorkPacket:
         try:
             return next(self.iterator)
         except StopIteration:
@@ -81,38 +79,38 @@ class DefaultQueue(CSSQueue):
     The default queue used by CSS.
     """
 
-    def __init__(self, pack: "StrategyPack"):
+    def __init__(self, pack: StrategyPack):
         super().__init__(pack)
-        self.working = deque()  # add to this queue for inferral and initial strategies
-        self.next_level = (
-            Counter()
-        )  # after initial, add to this one for expansion strats on the next level
-        self.curr_level = (
-            deque()
-        )  # add back to curr level if not expanded by all expansion strats
-        self.inferral_expanded = set()
-        self.initial_expanded = set()
-        self.expansion_expanded = [set() for _ in range(len(self.expansion_strats))]
-        self.ignore = set()  # never try expand
-        self.inferral_ignore = set()  # never try inferral expand
-        self.queue_sizes = []
+        self.working: Deque[int] = deque()
+        self.next_level: CounterType[int] = Counter()
+        self.curr_level: Deque[int] = deque()
+        self.inferral_expanded: Set[int] = set()
+        self.initial_expanded: Set[int] = set()
+        self.expansion_expanded: List[Set[int]] = [
+            set() for _ in range(len(self.expansion_strats))
+        ]
+        self.ignore: Set[int] = set()
+        self.inferral_ignore: Set[int] = set()
+        self.queue_sizes: List[int] = []
         self._iterator = iter(self._iter_helper())
 
     @property
     def levels_completed(self):
+        """Return the number of times swapped from curr to next."""
         return len(self.queue_sizes)
 
     def add(self, label: int) -> None:
         if self.can_do_inferral(label) or self.can_do_initial(label):
             self.working.append(label)
         elif label not in self.ignore:
-            self.next_level.add(label)
+            self.next_level.update((label,))
 
     def set_verified(self, label) -> None:
         self.set_stop_yielding(label)
 
     def set_not_inferrable(self, label: int) -> None:
-        self.inferral_expanded.add(label)
+        if label not in self.ignore:
+            self.inferral_expanded.add(label)
 
     def set_stop_yielding(self, label: int) -> None:
         self._add_to_ignore(label)
@@ -139,7 +137,7 @@ class DefaultQueue(CSSQueue):
         """Return true if expansion strategies can be applied."""
         return label not in self.ignore and label not in self.expansion_expanded[idx]
 
-    def _iter_helper(self) -> Iterator[Tuple[int, List["StrategyGenerator"], bool]]:
+    def _iter_helper(self) -> Iterator[WorkPacket]:
         """
         Yield the next combinatorial class in current queue.
 
@@ -153,11 +151,10 @@ class DefaultQueue(CSSQueue):
                 label = self.working.popleft()
                 if self.can_do_inferral(label):
                     yield label, self.inferral_strategies, True
-                    if label not in self.ignore:
-                        self.inferral_expanded.add(label)
+                    self.inferral_expanded.add(label)
                 for strat in self.initial_strategies:
                     if self.can_do_initial(label):
-                        yield label, [strat], False
+                        yield label, (strat,), False
                     else:
                         break
                 else:
@@ -171,7 +168,7 @@ class DefaultQueue(CSSQueue):
                     if self.can_do_expansion(label, idx):
                         for strat in strats:
                             if self.can_do_expansion(label, idx):
-                                yield label, [strat], False
+                                yield label, (strat,), False
                             else:
                                 break
                         else:
@@ -197,7 +194,7 @@ class DefaultQueue(CSSQueue):
                 self.next_level = Counter()
                 continue
 
-    def do_level(self) -> Iterator[Tuple[int, List["StrategyGenerator"], bool]]:
+    def do_level(self) -> Iterator[WorkPacket]:
         """
         An iterator of all combinatorial classes in the current queue.
 

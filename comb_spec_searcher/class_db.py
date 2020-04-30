@@ -9,16 +9,13 @@ if is_empty has been checked.
 """
 
 from collections import defaultdict
-from typing import Iterator, Optional, Type, TYPE_CHECKING, Union
+from typing import Dict, Iterator, Optional, Type, Union
 
 from .combinatorial_class import CombinatorialClass
 from .utils import cssmethodtimer
 
 ClassKey = Union[bytes, CombinatorialClass]
 Key = Union[CombinatorialClass, int]
-
-if TYPE_CHECKING:
-    from typing import Dict
 
 
 class Info:
@@ -60,11 +57,11 @@ class ClassDB:
     """
 
     def __init__(self, combinatorial_class: Type[CombinatorialClass]):
-        self.class_to_info = {}  # type: Dict[ClassKey, Info]
-        self.label_to_info = {}  # type: Dict[int, Info]
+        self.class_to_info: Dict[ClassKey, Info] = {}
+        self.label_to_info: Dict[int, Info] = {}
         self.combinatorial_class = combinatorial_class
-        self.func_calls = defaultdict(int)  # type: Dict[str, int]
-        self.func_times = defaultdict(float)  # type: Dict[str, float]
+        self.func_calls: Dict[str, int] = defaultdict(int)
+        self.func_times: Dict[str, float] = defaultdict(float)
 
     def __iter__(self) -> Iterator[int]:
         """
@@ -73,7 +70,7 @@ class ClassDB:
         for key in self.label_to_info:
             yield key
 
-    def __contains__(self, key: Key):
+    def __contains__(self, key: Key) -> bool:
         """
         Return true if the the key is already in the database.
         """
@@ -92,7 +89,7 @@ class ClassDB:
 
     def add(
         self, comb_class: Union[bytes, CombinatorialClass], compressed: bool = False,
-    ):
+    ) -> None:
         """
         Add a combinatorial class to the database.
         """

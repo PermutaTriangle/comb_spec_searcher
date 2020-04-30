@@ -38,7 +38,7 @@ class CombinatorialClass(abc.ABC):
     def from_dict(cls, d: dict) -> "CombinatorialClass":
         """Return the combinatorial class from the json dict representation."""
         module = import_module(d["class_module"])
-        StratClass = getattr(module, d["comb_class"])  # type: Type[CombinatorialClass]
+        StratClass: Type["CombinatorialClass"] = getattr(module, d["comb_class"])
         assert issubclass(
             StratClass, CombinatorialClass
         ), "Not a valid CombinatorialClass"

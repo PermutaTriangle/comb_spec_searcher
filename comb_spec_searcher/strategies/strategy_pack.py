@@ -25,15 +25,12 @@ If the iterative boolean is True, then CSS will search for an iterative
 specification.
 """
 from itertools import chain
-from typing import Iterable, Union
+from typing import Iterable
 
-from .strategy import Strategy, StrategyGenerator
+from .strategy import Strategy, CSSstrategy
 
 
 __all__ = "StrategyPack"
-
-
-CSSstrategy = Union[Strategy, StrategyGenerator]
 
 
 class StrategyPack:

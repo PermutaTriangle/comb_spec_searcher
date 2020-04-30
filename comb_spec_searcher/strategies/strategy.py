@@ -34,7 +34,7 @@ it should return an iterator of Strategy to try and apply to the comb_class.
 """
 import abc
 from importlib import import_module
-from typing import Any, Iterator, Optional, Tuple, TYPE_CHECKING, Union
+from typing import Any, Iterator, Optional, Tuple, Type, TYPE_CHECKING, Union
 
 from sympy import Eq, Function
 from .constructor import CartesianProduct, Constructor, DisjointUnion
@@ -43,11 +43,8 @@ from ..combinatorial_class import CombinatorialClass, CombinatorialObject
 from ..exception import InvalidOperationError, ObjectMappingError
 
 if TYPE_CHECKING:
-    from typing import Type
-    from comb_spec_searcher import (
-        CombinatorialSpecification,
-        StrategyPack,
-    )
+    from .strategy_pack import StrategyPack
+    from comb_spec_searcher import CombinatorialSpecification
 
 
 __all__ = (
@@ -58,6 +55,9 @@ __all__ = (
     "SymmetryStrategy",
     "VerificationStrategy",
 )
+
+
+CSSstrategy = Union["Strategy", "StrategyGenerator"]
 
 
 class Strategy(abc.ABC):
@@ -226,18 +226,16 @@ class Strategy(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def from_dict(cls, d: dict) -> "Strategy":
+    def from_dict(cls, d: dict) -> CSSstrategy:
         """
         Return the strategy from the json representation.
         """
         module = import_module(d["class_module"])
-        StratClass = getattr(
-            module, d["strategy_class"]
-        )  # type: Type[Strategy] # noqa: E501
+        StratClass: Type[CSSstrategy] = getattr(module, d["strategy_class"])
         assert issubclass(
             StratClass, (Strategy, StrategyGenerator)
         ), "Not a valid strategy"
-        return StratClass.from_dict(d)  # type: ignore
+        return StratClass.from_dict(d)
 
 
 class CartesianProductStrategy(Strategy):
@@ -530,7 +528,7 @@ class EmptyStrategy(VerificationStrategy):
     def formal_step(self) -> str:
         return "is empty"
 
-    def pack(self) -> StrategyPack:
+    def pack(self) -> "StrategyPack":
         raise InvalidOperationError("No pack for the empty strategy.")
 
     @classmethod
@@ -595,15 +593,13 @@ class StrategyGenerator(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def from_dict(cls, d: dict) -> "Strategy":
+    def from_dict(cls, d: dict) -> CSSstrategy:
         """
         Return the strategy from the json representation.
         """
         module = import_module(d["class_module"])
-        StratClass = getattr(
-            module, d["strategy_class"]
-        )  # type: Type[StrategyGenerator] # noqa: E501
+        StratClass: Type[CSSstrategy] = getattr(module, d["strategy_class"])
         assert issubclass(
             StratClass, (Strategy, StrategyGenerator)
         ), "Not a valid strategy generator"
-        return StratClass.from_dict(d)  # type: ignore
+        return StratClass.from_dict(d)
