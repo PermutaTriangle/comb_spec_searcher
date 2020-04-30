@@ -12,7 +12,7 @@ from comb_spec_searcher.exception import TaylorExpansionError
 if TYPE_CHECKING:
     from comb_spec_searcher import CombinatorialSpecificationSearcher
 
-F = TypeVar("F", bound=Callable[..., Any])
+Func = TypeVar("Func", bound=Callable[..., Any])
 
 
 class cssmethodtimer:
@@ -21,7 +21,7 @@ class cssmethodtimer:
     def __init__(self, explanation: str):
         self.explanation = explanation
 
-    def __call__(self, func: F) -> F:
+    def __call__(self, func: Func) -> Func:
         def inner(css: "CombinatorialSpecificationSearcher", *args, **kwargs):
             start = time.time()
             res = func(css, *args, **kwargs)
@@ -29,7 +29,7 @@ class cssmethodtimer:
             css.func_calls[self.explanation] += 1
             return res
 
-        return cast(F, inner)
+        return cast(Func, inner)
 
 
 class cssiteratortimer:

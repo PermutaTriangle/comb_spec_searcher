@@ -1,5 +1,6 @@
 """Some custom errors."""
 
+
 class ExceededMaxtimeError(Exception):
     """Ran out of time."""
 
