@@ -67,14 +67,16 @@ class Constructor(abc.ABC):
     ) -> Iterator[Tuple[CombinatorialObject, ...]]:
         """Return the subobjs/image of the bijection implied by the constructor."""
 
-    def get_eq_symbol(self) -> str:
+    @staticmethod
+    def get_eq_symbol() -> str:
         """
         Return a choice for '=' in the pretty print a '=' b '+' c of rules.
         Your choice should be a single charachter.
         """
         return "="
 
-    def get_op_symbol(self) -> str:
+    @staticmethod
+    def get_op_symbol() -> str:
         """
         Return a choice for '+' in the pretty print a '=' b '+' c of rules.
         Your choice should be a single charachter.
@@ -109,7 +111,6 @@ class Atom(Constructor):
     ) -> Iterator[Tuple[CombinatorialObject, ...]]:
         if parameters == self.parameters:
             yield tuple()
-        return
 
     def reliance_profile(self, **parameters) -> RelianceProfile:
         return tuple()
@@ -197,10 +198,12 @@ class CartesianProduct(Constructor):
             ):
                 yield tuple(sub_objs)
 
-    def get_eq_symbol(self) -> str:
+    @staticmethod
+    def get_eq_symbol() -> str:
         return "="
 
-    def get_op_symbol(self) -> str:
+    @staticmethod
+    def get_op_symbol() -> str:
         return "x"
 
 
@@ -239,10 +242,12 @@ class DisjointUnion(Constructor):
                     None for _ in range(len(subgens) - i - 1)
                 )
 
-    def get_eq_symbol(self) -> str:
+    @staticmethod
+    def get_eq_symbol() -> str:
         return "="
 
-    def get_op_symbol(self) -> str:
+    @staticmethod
+    def get_op_symbol() -> str:
         return "+"
 
 

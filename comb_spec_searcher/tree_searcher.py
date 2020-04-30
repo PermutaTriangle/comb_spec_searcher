@@ -64,7 +64,7 @@ def iterative_prune(rules_dict: RulesDict, root: Optional[int] = None) -> RulesD
     if root is not None:
         verified_labels.add(root)
     rdict = deepcopy(rules_dict)
-    new_rules_dict = defaultdict(set)
+    new_rules_dict: RulesDict = defaultdict(set)
     while True:
         changed = False
         for k, rule_set in list(rdict.items()):
@@ -130,7 +130,7 @@ def iterative_proof_tree_bfs(rules_dict: RulesDict, root: int) -> Node:
 
 def random_proof_tree(rules_dict: RulesDict, root: int) -> Node:
     """Return random tree found by breadth first search."""
-    seen = set()
+    seen: Set[int] = set()
     root_node = Node(root)
     queue = deque([root_node])
     while queue:
@@ -247,7 +247,7 @@ def iterative_proof_tree_finder(rules_dict: RulesDict, root: int) -> Node:
     if root is not None:
         verified_labels.add(root)
     rdict = deepcopy(rules_dict)
-    new_rules_dict = defaultdict(set)
+    new_rules_dict: RulesDict = defaultdict(set)
     while True:
         changed = False
         for k, rule_set in list(rdict.items()):

@@ -75,7 +75,7 @@ class RuleDB:
 
     def rules_up_to_equivalence(self) -> Dict[int, Set[Tuple[int, ...]]]:
         """Return a defaultdict containing all rules up to the equivalence."""
-        rules_dict = defaultdict(set)
+        rules_dict: Dict[int, Set[Tuple[int, ...]]] = defaultdict(set)
         for start, ends in self:
             rules_dict[self.equivdb[start]].add(
                 tuple(sorted(self.equivdb[e] for e in ends))
@@ -184,9 +184,9 @@ class RuleDB:
         res = []
         eqv_paths = []
         for start, ends in children.items():
-            for label in internal_nodes:
-                if self.are_equivalent(start, label):
-                    path = self.equivdb.find_path(label, start)
+            for eqv_label in internal_nodes:
+                if self.are_equivalent(start, eqv_label):
+                    path = self.equivdb.find_path(eqv_label, start)
                     for a, b in zip(path[:-1], path[1:]):
                         try:
                             strategy = self.rule_to_strategy[(a, (b,))]

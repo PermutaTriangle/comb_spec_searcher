@@ -145,6 +145,7 @@ class DefaultQueue(CSSQueue):
         return first combinatorial class. Return None if no combinatorial
         classes to expand.
         """
+        # pylint: disable=too-many-nested-blocks
         self.queue_sizes.append(len(self.curr_level))
         while True:
             if self.working:

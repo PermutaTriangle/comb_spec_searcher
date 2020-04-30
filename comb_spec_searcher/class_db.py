@@ -139,6 +139,7 @@ class ClassDB:
         """
         Return compressed version of combinatorial class.
         """
+        # pylint: disable=no-self-use
         try:
             return key.to_bytes()
         except NotImplementedError:

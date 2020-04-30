@@ -414,6 +414,7 @@ class VerificationStrategy(Strategy):
         """
         if not self.verified(comb_class):
             raise InvalidOperationError("The combinatorial class is not verified")
+        # pylint: disable=import-outside-toplevel
         from ..comb_spec_searcher import CombinatorialSpecificationSearcher
 
         searcher = CombinatorialSpecificationSearcher(comb_class, self.pack)
@@ -528,6 +529,7 @@ class EmptyStrategy(VerificationStrategy):
     def formal_step(self) -> str:
         return "is empty"
 
+    @property
     def pack(self) -> "StrategyPack":
         raise InvalidOperationError("No pack for the empty strategy.")
 
