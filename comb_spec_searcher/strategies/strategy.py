@@ -542,9 +542,6 @@ class EmptyStrategy(VerificationStrategy):
         return "the empty strategy"
 
 
-STRATEGY_OUTPUT = Union[Optional[Strategy], Iterator[Strategy]]
-
-
 class StrategyGenerator(abc.ABC):
     """
     The StrategyGenerator class can be used instead of the Strategy class if
@@ -552,7 +549,9 @@ class StrategyGenerator(abc.ABC):
     """
 
     @abc.abstractmethod
-    def __call__(self, comb_class: CombinatorialClass) -> STRATEGY_OUTPUT:
+    def __call__(
+        self, comb_class: CombinatorialClass, **kwargs: Any
+    ) -> Iterator[Union[Rule, Strategy]]:
         """
         Returns the results of the strategy on a comb_class.
         """

@@ -17,7 +17,7 @@ from .tree_searcher import (
 )
 
 
-Specification = Tuple[List[Tuple[int, Strategy]], List[int]]
+Specification = Tuple[List[Tuple[int, Strategy]], List[List[int]]]
 
 
 class RuleDB:
