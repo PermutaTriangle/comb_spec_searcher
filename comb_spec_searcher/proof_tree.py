@@ -3,7 +3,8 @@ A proof tree class.
 
 This can be used to get the generating function for the class.
 
-The class is only used for reverse compatability with ComboPal.
+The class is only used for reverse compatability with ComboPal. You should use
+the Specification class.
 """
 import json
 import random
@@ -18,8 +19,7 @@ from logzero import logger
 from .exception import InsaneTreeError, TaylorExpansionError
 from .specification import CombinatorialSpecification
 from .strategies.constructor import CartesianProduct, DisjointUnion
-from .strategies.rule import EquivalencePathRule, Rule, VerificationRule
-from .tree_searcher import Node as tree_searcher_node
+from .strategies.rule import EquivalencePathRule, VerificationRule
 from .utils import (
     check_equation,
     check_poly,
@@ -34,6 +34,8 @@ __all__ = ("ProofTree",)
 
 
 class ProofTreeNode:
+    """Class is deprecated - use CombinatorialSpecification."""
+
     # pylint: disable=too-many-instance-attributes
     def __init__(
         self,
@@ -69,9 +71,11 @@ class ProofTreeNode:
 
     @property
     def logger_kwargs(self):
+        """Class is deprecated - use CombinatorialSpecification."""
         return {"processname": "ProofTreeNode {}".format(self.label)}
 
     def to_jsonable(self):
+        """Class is deprecated - use CombinatorialSpecification."""
         output = dict()
         output["label"] = self.label
         output["eqv_path_labels"] = list(self.eqv_path_labels)
@@ -89,6 +93,7 @@ class ProofTreeNode:
 
     @classmethod
     def from_dict(cls, combclass, jsondict):
+        """Class is deprecated - use CombinatorialSpecification."""
         if "eqv_path_objects" in jsondict:
             warnings.warn(
                 (
@@ -120,6 +125,7 @@ class ProofTreeNode:
 
     @classmethod
     def from_json(cls, combclass, jsonstr):
+        """Class is deprecated - use CombinatorialSpecification."""
         jsondict = json.loads(jsonstr)
         return cls.from_dict(combclass, jsondict)
 
@@ -127,6 +133,7 @@ class ProofTreeNode:
     def _error_string(
         parent, children, strat_type, formal_step, length, parent_total, children_total
     ):
+        """Class is deprecated - use CombinatorialSpecification."""
         error = "Insane " + strat_type + " Strategy Found!\n"
         error += formal_step + "\n"
         error += "Found at length {} \n".format(length)
@@ -257,6 +264,7 @@ class ProofTreeNode:
         self.objects_of_length[n] = res
 
     def sanity_check(self, length, of_length=None):
+        """Class is deprecated - use CombinatorialSpecification."""
         if of_length is None:
             raise ValueError("of_length is undefined.")
 
@@ -333,6 +341,7 @@ class ProofTreeNode:
         )
 
     def get_function(self, min_poly=False):
+        """Class is deprecated - use CombinatorialSpecification."""
         if min_poly:
             return sympy.var("F_" + str(self.label))
         return sympy.Function("F_" + str(self.label))(sympy.abc.x)
@@ -340,6 +349,7 @@ class ProofTreeNode:
     def get_equation(
         self, root_func=None, root_class=None, dummy_eq=False, min_poly=False, **kwargs
     ):
+        """Class is deprecated - use CombinatorialSpecification."""
         lhs = self.get_function(min_poly)
         if self.disjoint_union:
             rhs = reduce(
@@ -472,9 +482,11 @@ class ProofTreeNode:
         self.terms.extend(coeffs[len(self.terms) :])
 
     def is_atom(self):
+        """Class is deprecated - use CombinatorialSpecification."""
         return any(comb_class.is_atom() for comb_class in self.eqv_path_comb_classes)
 
     def is_epsilon(self):
+        """Class is deprecated - use CombinatorialSpecification."""
         return any(comb_class.is_epsilon() for comb_class in self.eqv_path_comb_classes)
 
     @property
@@ -493,7 +505,17 @@ class ProofTreeNode:
 
 
 class ProofTree:
+    """Class is deprecated - use CombinatorialSpecification."""
+
     def __init__(self, root):
+        warnings.warn(
+            (
+                "The ProofTree class is deprecated."
+                " Use CombinatorialSpecification instead."
+            ),
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if not isinstance(root, ProofTreeNode):
             raise TypeError("Root must be a ProofTreeNode.")
         self.root = root
@@ -502,22 +524,27 @@ class ProofTree:
 
     @property
     def logger_kwargs(self):
+        """Class is deprecated - use CombinatorialSpecification."""
         return {"processname": "ProofTree"}
 
     def to_jsonable(self):
+        """Class is deprecated - use CombinatorialSpecification."""
         return {"root": self.root.to_jsonable()}
 
     @classmethod
     def from_dict(cls, combclass, jsondict):
+        """Class is deprecated - use CombinatorialSpecification."""
         root = ProofTreeNode.from_dict(combclass, jsondict["root"])
         return cls(root)
 
     @classmethod
     def from_json(cls, combclass, jsonstr):
+        """Class is deprecated - use CombinatorialSpecification."""
         jsondict = json.loads(jsonstr)
         return cls.from_dict(combclass, jsondict)
 
     def _of_length(self, comb_class, length):
+        """Class is deprecated - use CombinatorialSpecification."""
         if comb_class not in self._of_length_cache:
             self._of_length_cache[comb_class] = {}
 
@@ -726,6 +753,7 @@ class ProofTree:
         raise RuntimeError("Incorrect minimum polynomial\n{}".format(basis))
 
     def random_sample(self, length=100):
+        """Class is deprecated - use CombinatorialSpecification."""
         if any(len(node.terms) < length + 1 for node in self.nodes()):
             logger.info(("Computing terms"))
             self._recursion_setup()
@@ -737,6 +765,7 @@ class ProofTree:
         return self.root.random_sample(length)
 
     def nodes(self, root=None):
+        """Class is deprecated - use CombinatorialSpecification."""
         if root is None:
             root = self.root
         yield root
@@ -745,20 +774,24 @@ class ProofTree:
                 yield node
 
     def number_of_nodes(self):
+        """Class is deprecated - use CombinatorialSpecification."""
         return len(list(self.nodes()))
 
     def number_of_comb_classes(self):
+        """Class is deprecated - use CombinatorialSpecification."""
         count = 0
         for node in self.nodes():
             count += len(node.eqv_path_comb_classes)
         return count
 
     def comb_classes(self, root=None):
+        """Class is deprecated - use CombinatorialSpecification."""
         for node in self.nodes():
             for comb_class in node.eqv_path_comb_classes:
                 yield comb_class
 
     def sanity_check(self, length=8, raiseerror=True):
+        """Class is deprecated - use CombinatorialSpecification."""
         overall_error = ""
         for comb_class in self.comb_classes():
             if comb_class.is_empty():
@@ -790,7 +823,6 @@ class ProofTree:
         queue. All classes are assumed to be expandable. The '**kwargs' are
         passed to the 'auto_search' method and the searcher init method.
         """
-        # pylint: disable=import-outside-toplevel
         from .comb_spec_searcher import CombinatorialSpecificationSearcher
 
         Searcher = kwargs.get("css", CombinatorialSpecificationSearcher)
@@ -833,9 +865,10 @@ class ProofTree:
             elif node.strategy_verified:
                 ver_label = get_label(node.eqv_path_comb_classes[-1])
                 css._add_to_queue(ver_label)
-        return css.auto_search(**kwargs)
+        return ProofTree.from_specification(css.auto_search(**kwargs))
 
     def _recursion_setup(self):
+        """Class is deprecated - use CombinatorialSpecification."""
         label_to_node = dict()
 
         for node in self.nodes():
@@ -849,11 +882,13 @@ class ProofTree:
         self._fixed_recursion = True
 
     def count_objects_of_length(self, n):
+        """Class is deprecated - use CombinatorialSpecification."""
         if not self._fixed_recursion:
             self._recursion_setup()
         return self.root.count_objects_of_length(n)
 
     def generate_objects_of_length(self, n):
+        """Class is deprecated - use CombinatorialSpecification."""
         self._recursion_setup()
         yield from self.root.generate_objects_of_length(n)
 
@@ -861,7 +896,8 @@ class ProofTree:
         return all(node1 == node2 for node1, node2 in zip(self.nodes(), other.nodes()))
 
     @classmethod
-    def from_specification(cls, spec: CombinatorialSpecification):
+    def from_specification(cls, spec: CombinatorialSpecification) -> "ProofTree":
+        """Return a ProofTree from a CombinatorialSpecification."""
         nodes = dict()
         eqv_paths = dict()
         # find equivalence paths and setup nodes without equivalence and children
@@ -925,7 +961,7 @@ class ProofTree:
 
         seen = set()
         queue = [spec.root]
-        copy_nodes = {**nodes}
+        copy_nodes: dict = {**nodes}
         while copy_nodes and queue:
             curr = queue.pop()
             seen.add(curr)
