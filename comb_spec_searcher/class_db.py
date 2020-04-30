@@ -91,7 +91,7 @@ class ClassDB:
         )
 
     def add(
-        self, comb_class: CombinatorialClass, compressed: bool = False,
+        self, comb_class: Union[bytes, CombinatorialClass], compressed: bool = False,
     ):
         """
         Add a combinatorial class to the database.
@@ -101,6 +101,9 @@ class ClassDB:
                 ("Trying to add something that isn't a" "CombinatorialClass.")
             )
         if not compressed:
+            assert isinstance(
+                comb_class, CombinatorialClass
+            ), "trying to add non combinatorial class to database"
             compressed_class = self._compress(comb_class)
         else:
             compressed_class = comb_class
@@ -119,8 +122,6 @@ class ClassDB:
         if isinstance(key, CombinatorialClass):
             compressed_key = self._compress(key)
             info = self.class_to_info.get(compressed_key)
-            f = self._compress
-            reveal_locals()
             if info is None:
                 self.add(compressed_key, compressed=True)
                 info = self.class_to_info[compressed_key]
@@ -168,10 +169,6 @@ class ClassDB:
         Return combinatorial class of key.
         """
         info = self._get_info(key)
-        c = info.comb_class
-        d = self._decompress(info.comb_class)
-        f = self._decompress
-        reveal_locals()
         return self._decompress(info.comb_class)
 
     @cssmethodtimer("get label")

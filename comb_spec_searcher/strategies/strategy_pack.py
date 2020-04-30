@@ -24,9 +24,8 @@ The default setting treats the pack as follows:
 If the iterative boolean is True, then CSS will search for an iterative
 specification.
 """
-from copy import copy
 from itertools import chain
-from typing import List, Union
+from typing import Iterable, Union
 
 from .strategy import Strategy, StrategyGenerator
 
@@ -44,23 +43,23 @@ class StrategyPack:
 
     def __init__(
         self,
-        initial_strats: List[CSSstrategy],
-        inferral_strats: List[CSSstrategy],
-        expansion_strats: List[List[CSSstrategy]],
-        ver_strats: List[CSSstrategy],
+        initial_strats: Iterable[CSSstrategy],
+        inferral_strats: Iterable[CSSstrategy],
+        expansion_strats: Iterable[Iterable[CSSstrategy]],
+        ver_strats: Iterable[CSSstrategy],
         name: str,
-        symmetries: List[CSSstrategy] = None,
+        symmetries: Iterable[CSSstrategy] = None,
         iterative: bool = False,
     ):
         self.name = name
-        self.initial_strats = initial_strats
-        self.inferral_strats = inferral_strats
-        self.ver_strats = ver_strats
-        self.expansion_strats = expansion_strats
-        self.symmetries = symmetries if symmetries is not None else []
+        self.initial_strats = tuple(initial_strats)
+        self.inferral_strats = tuple(inferral_strats)
+        self.ver_strats = tuple(ver_strats)
+        self.expansion_strats = tuple(tuple(x) for x in expansion_strats)
+        self.symmetries = tuple(symmetries) if symmetries is not None else []
         self.iterative = iterative
 
-    def __contains__(self, strategy: Strategy) -> bool:
+    def __contains__(self, strategy: CSSstrategy) -> bool:
         """
         Check if the pack contains a strategy.
 
@@ -117,21 +116,10 @@ class StrategyPack:
             string += "Set {}: {}\n".format(i + 1, strats)
         return string
 
-    def __eq__(self, other: object):
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, StrategyPack):
             return NotImplemented
         return self.__dict__ == other.__dict__
-
-    def __copy__(self) -> "TileScopePack":
-        return self.__class__(
-            name=self.name,
-            initial_strats=copy(self.initial_strats),
-            ver_strats=copy(self.ver_strats),
-            inferral_strats=copy(self.inferral_strats),
-            expansion_strats=[copy(strat_list) for strat_list in self.expansion_strats],
-            symmetries=copy(self.symmetries),
-            iterative=self.iterative,
-        )
 
     # JSON methods
     def to_jsonable(self) -> dict:
@@ -185,9 +173,7 @@ class StrategyPack:
 
     # Method to add power to a pack
     # Pack are immutable, these methods return a new pack.
-    def add_initial(
-        self, strategy: StrategyGenerator, name_ext: str = ""
-    ) -> "StrategyPack":
+    def add_initial(self, strategy: CSSstrategy, name_ext: str = "") -> "StrategyPack":
         """
         Create a new pack with an additional initial strategy and append
         name_ext to the name of the pack.
@@ -196,15 +182,17 @@ class StrategyPack:
             raise ValueError(
                 ("The strategy {!r} is already in pack." "".format(strategy))
             )
-        new_pack = copy(self)
-        new_pack.initial_strats.append(strategy)
-        if name_ext:
-            new_pack.name = "_".join([self.name, name_ext])
-        return new_pack
+        return self.__class__(
+            name="_".join([self.name, name_ext]) if name_ext else self.name,
+            initial_strats=self.initial_strats + (strategy,),
+            ver_strats=self.ver_strats,
+            inferral_strats=self.inferral_strats,
+            expansion_strats=self.expansion_strats,
+            symmetries=self.symmetries,
+            iterative=self.iterative,
+        )
 
-    def add_inferral(
-        self, strategy: StrategyGenerator, name_ext: str = ""
-    ) -> "StrategyPack":
+    def add_inferral(self, strategy: CSSstrategy, name_ext: str = "") -> "StrategyPack":
         """
         Create a new pack with an additional inferral strategy and append
         name_ext to the name of the pack.
@@ -213,14 +201,18 @@ class StrategyPack:
             raise ValueError(
                 ("The strategy {!r} is already in pack." "".format(strategy))
             )
-        new_pack = copy(self)
-        new_pack.inferral_strats.append(strategy)
-        if name_ext:
-            new_pack.name = "_".join([self.name, name_ext])
-        return new_pack
+        return self.__class__(
+            name="_".join([self.name, name_ext]) if name_ext else self.name,
+            initial_strats=self.initial_strats,
+            ver_strats=self.ver_strats,
+            inferral_strats=self.inferral_strats + (strategy,),
+            expansion_strats=self.expansion_strats,
+            symmetries=self.symmetries,
+            iterative=self.iterative,
+        )
 
     def add_verification(
-        self, strategy: StrategyGenerator, name_ext: str = ""
+        self, strategy: CSSstrategy, name_ext: str = ""
     ) -> "StrategyPack":
         """
         Create a new pack with an additional verification strategy and append
@@ -230,8 +222,12 @@ class StrategyPack:
             raise ValueError(
                 ("The strategy {!r} is already in pack." "".format(strategy))
             )
-        new_pack = copy(self)
-        new_pack.ver_strats.append(strategy)
-        if name_ext:
-            new_pack.name = "_".join([self.name, name_ext])
-        return new_pack
+        return self.__class__(
+            name="_".join([self.name, name_ext]) if name_ext else self.name,
+            initial_strats=self.initial_strats,
+            ver_strats=self.ver_strats + (strategy,),
+            inferral_strats=self.inferral_strats,
+            expansion_strats=self.expansion_strats,
+            symmetries=self.symmetries,
+            iterative=self.iterative,
+        )
