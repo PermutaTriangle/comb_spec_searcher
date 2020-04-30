@@ -323,7 +323,6 @@ class DisjointUnionStrategy(Strategy):
             "contains O, where it should be O."
         )
 
-    @abc.abstractmethod
     def backward_map(
         self,
         comb_class: CombinatorialClass,
@@ -386,7 +385,6 @@ class VerificationStrategy(Strategy):
             children = self.decomposition_function(comb_class)
         return VerificationRule(self, comb_class)
 
-    @abc.abstractproperty
     def pack(self) -> "StrategyPack":
         """
         Returns a StrategyPack that finds a proof tree for the comb_class in

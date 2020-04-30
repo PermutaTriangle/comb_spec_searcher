@@ -194,10 +194,12 @@ class CombinatorialSpecificationSearcher:
                 continue
             end_labels = [self.classdb.get_label(comb_class) for comb_class in children]
             logger.debug(
-                "Adding combinatorial rule %s -> %s with constructor" " '%s'",
+                "Adding combinatorial rule %s -> %s with constructor"
+                " '%s'. Explanation: %s",
                 label,
                 tuple(end_labels),
                 rule.constructor if end_labels else "verified",
+                rule.formal_step,
                 extra=self.logger_kwargs,
             )
 
@@ -256,7 +258,7 @@ class CombinatorialSpecificationSearcher:
         if not cleaned_end_labels:
             # this must be a verification strategy!
             assert isinstance(rule, VerificationRule), rule.formal_step
-        self.ruledb.add(start_label, end_labels, rule)
+        self.ruledb.add(start_label, cleaned_end_labels, rule)
 
     def _add_empty_rule(self, label: int) -> None:
         """Mark label as empty. Treated as verified as can count empty set."""
@@ -479,6 +481,7 @@ class CombinatorialSpecificationSearcher:
                 logger.info("No more classes to expand.", extra=self.logger_kwargs)
             spec_search_start = time.time()
             try:
+                logger.debug("Searching for specification.", extra=self.logger_kwargs)
                 specification = self.get_specification(smallest=smallest)
                 found_string = "Specification found {}\n".format(
                     time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime())
@@ -491,16 +494,22 @@ class CombinatorialSpecificationSearcher:
                 logger.info(found_string, extra=self.logger_kwargs)
                 return specification
             except SpecificationNotFound:
-                # worst case, search every hour
-                multiplier = 100 // perc
-                max_expansion_time = min(
-                    multiplier * (time.time() - spec_search_start), 3600
-                )
+                logger.debug("No specifcation found.", extra=self.logger_kwargs)
                 if max_time is not None:
                     if time.time() - auto_search_start > max_time:
                         raise ExceededMaxtimeError(
                             "Exceeded maximum time. Aborting auto search.",
                         )
+                # worst case, search every hour
+                multiplier = 100 // perc
+                max_expansion_time = min(
+                    multiplier * (time.time() - spec_search_start), 3600
+                )
+                logger.debug(
+                    "Will expand for %s seconds.",
+                    round(max_expansion_time, 2),
+                    extra=self.logger_kwargs,
+                )
 
     @cssmethodtimer("get specification")
     def get_specification(self, smallest: bool = False) -> CombinatorialSpecification:

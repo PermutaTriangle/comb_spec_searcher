@@ -115,6 +115,9 @@ class Atom(Constructor):
     def reliance_profile(self, **parameters) -> RelianceProfile:
         return tuple()
 
+    def __str__(self):
+        return "atom"
+
 
 class CartesianProduct(Constructor):
     """
@@ -206,6 +209,9 @@ class CartesianProduct(Constructor):
     def get_op_symbol() -> str:
         return "x"
 
+    def __str__(self) -> str:
+        return "Cartesian product"
+
 
 class DisjointUnion(Constructor):
     """
@@ -249,6 +255,9 @@ class DisjointUnion(Constructor):
     @staticmethod
     def get_op_symbol() -> str:
         return "+"
+
+    def __str__(self):
+        return "disjoint union"
 
 
 class Empty(Constructor):

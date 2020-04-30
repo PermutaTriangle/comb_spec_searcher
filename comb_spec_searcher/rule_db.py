@@ -80,6 +80,7 @@ class RuleDB:
             rules_dict[self.equivdb[start]].add(
                 tuple(sorted(self.equivdb[e] for e in ends))
             )
+        print(rules_dict)
         return rules_dict
 
     def all_rules(self) -> Iterator[Tuple[int, Tuple[int, ...], Strategy]]:
