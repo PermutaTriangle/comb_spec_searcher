@@ -3,14 +3,21 @@ A combinatorial specification is a set rules of the form a -> b1, ..., bk
 where each of the bi appear exactly once on the left hand side of some rule.
 """
 from typing import Any, Dict, Iterable, Iterator, Sequence, Tuple
+
+import sympy
 from logzero import logger
 from sympy import Eq, Function
-import sympy
-from .combinatorial_class import CombinatorialClass, CombinatorialObject
-from .strategies import Strategy, VerificationStrategy
-from .strategies import EmptyStrategy, EquivalencePathRule, ReverseRule, Rule
-from .strategies.strategy import StrategyType
 
+from .combinatorial_class import CombinatorialClass, CombinatorialObject
+from .strategies import (
+    EmptyStrategy,
+    EquivalencePathRule,
+    ReverseRule,
+    Rule,
+    Strategy,
+    VerificationStrategy,
+)
+from .strategies.strategy import StrategyType
 
 __all__ = ("CombinatorialSpecification",)
 

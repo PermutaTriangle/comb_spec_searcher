@@ -27,8 +27,7 @@ specification.
 from itertools import chain
 from typing import Iterable
 
-from .strategy import Strategy, CSSstrategy
-
+from .strategy import CSSstrategy, Strategy
 
 __all__ = "StrategyPack"
 

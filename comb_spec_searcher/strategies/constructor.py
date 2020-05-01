@@ -11,17 +11,16 @@ The default constructors implemented are:
 Currently the constructors are implemented in one variable, namely 'n' which is
 used throughout to denote size.
 """
+import abc
 from functools import reduce
 from itertools import product
 from operator import add, mul
 from typing import Callable, Iterable, Iterator, Tuple
-import abc
 
-from sympy import Eq, Function
 import sympy
+from sympy import Eq, Function
 
 from ..combinatorial_class import CombinatorialClass, CombinatorialObject
-
 
 __all__ = ("Constructor", "CartesianProduct", "DisjointUnion", "Empty")
 

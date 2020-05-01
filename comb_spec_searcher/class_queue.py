@@ -1,14 +1,13 @@
 """
 A queue of labels.
 """
-from collections import Counter, deque
-from typing import Deque, Iterator, List, Set, Tuple
-from typing import Counter as CounterType
 import abc
+from collections import Counter, deque
+from typing import Counter as CounterType
+from typing import Deque, Iterator, List, Set, Tuple
 
-from .strategies.strategy_pack import StrategyPack
 from .strategies.strategy import CSSstrategy
-
+from .strategies.strategy_pack import StrategyPack
 
 WorkPacket = Tuple[int, Tuple[CSSstrategy, ...], bool]
 

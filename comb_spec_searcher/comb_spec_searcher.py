@@ -1,25 +1,17 @@
 """A class for automatically performing combinatorial exploration."""
+import json
 import logging
 import os
 import time
 import warnings
 from collections import defaultdict
-from typing import (
-    Dict,
-    Iterator,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-)
+from typing import Dict, Iterator, Optional, Sequence, Set, Tuple
 
-import json
-import psutil
-from logzero import logger
 import logzero
-from sympy import Eq, Function
+import psutil
 import sympy
-
+from logzero import logger
+from sympy import Eq, Function
 
 from .class_db import ClassDB
 from .class_queue import DefaultQueue, WorkPacket
@@ -41,10 +33,7 @@ from .strategies import (
     VerificationStrategy,
 )
 from .strategies.strategy import CSSstrategy
-from .utils import (
-    cssmethodtimer,
-    cssiteratortimer,
-)
+from .utils import cssiteratortimer, cssmethodtimer
 
 warnings.simplefilter("once", Warning)
 

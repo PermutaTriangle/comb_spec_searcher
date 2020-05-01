@@ -29,7 +29,6 @@ from .utils import (
     taylor_expand,
 )
 
-
 __all__ = ("ProofTree",)
 
 

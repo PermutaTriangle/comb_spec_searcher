@@ -1,12 +1,13 @@
+from .class_queue import CSSQueue
 from .comb_spec_searcher import CombinatorialSpecificationSearcher
 from .combinatorial_class import CombinatorialClass, CombinatorialObject
 from .proof_tree import ProofTree
 from .specification import CombinatorialSpecification
 from .strategies import (
     Atom,
-    Constructor,
     CartesianProduct,
     CartesianProductStrategy,
+    Constructor,
     DisjointUnion,
     DisjointUnionStrategy,
     Empty,
@@ -21,4 +22,3 @@ from .strategies import (
     VerificationRule,
     VerificationStrategy,
 )
-from .class_queue import CSSQueue

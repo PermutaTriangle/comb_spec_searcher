@@ -34,25 +34,14 @@ it should return an iterator of Strategy to try and apply to the comb_class.
 """
 import abc
 from importlib import import_module
-from typing import (
-    Any,
-    Generic,
-    Iterator,
-    Optional,
-    Tuple,
-    Type,
-    TYPE_CHECKING,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Generic, Iterator, Optional, Tuple, Type, Union
 
 from sympy import Eq, Function
+
+from ..combinatorial_class import CombinatorialClassType, CombinatorialObject
+from ..exception import InvalidOperationError, ObjectMappingError
 from .constructor import CartesianProduct, Constructor, DisjointUnion
 from .rule import Rule, VerificationRule
-from ..combinatorial_class import (
-    CombinatorialClassType,
-    CombinatorialObject,
-)
-from ..exception import InvalidOperationError, ObjectMappingError
 
 if TYPE_CHECKING:
     from .strategy_pack import StrategyPack

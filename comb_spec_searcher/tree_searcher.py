@@ -4,8 +4,8 @@ Finds and returns a combinatorial specification, that we call a proof tree.
 from collections import defaultdict, deque
 from copy import deepcopy
 from itertools import chain, product
-from typing import Dict, FrozenSet, Iterator, List, Optional, Sequence, Tuple, Set
 from random import choice, shuffle
+from typing import Dict, FrozenSet, Iterator, List, Optional, Sequence, Set, Tuple
 
 __all__ = ("prune", "proof_tree_generator_dfs", "proof_tree_generator_bfs")
 

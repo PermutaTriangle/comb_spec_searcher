@@ -6,6 +6,7 @@ calling the Strategy class and storing its results.
 A CombinatorialSpecification is (more or less) a set of Rule.
 """
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -14,14 +15,14 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
-    TYPE_CHECKING,
     Union,
 )
+
 from sympy import Eq, Function
-from .constructor import Constructor
+
 from ..combinatorial_class import CombinatorialClass, CombinatorialObject
 from ..exception import StrategyDoesNotApply
-
+from .constructor import Constructor
 
 if TYPE_CHECKING:
     from .strategy import Strategy, VerificationStrategy
