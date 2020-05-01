@@ -62,7 +62,7 @@ CSSstrategy = Union["Strategy", "StrategyGenerator", "VerificationStrategy"]
 StrategyType = Union["Strategy", "VerificationStrategy"]
 
 
-class Strategy(Generic[CombinatorialClassType], abc.ABC):
+class Strategy(abc.ABC, Generic[CombinatorialClassType]):
     """
     The Strategy class is essentially following the mantra of 'strategy' from the
     combinatorial explanation paper.
@@ -148,7 +148,7 @@ class Strategy(Generic[CombinatorialClassType], abc.ABC):
     @abc.abstractmethod
     def decomposition_function(
         self, comb_class: CombinatorialClassType
-    ) -> Union[Tuple[CombinatorialClassType, ...], None]:
+    ) -> Optional[Tuple[CombinatorialClassType, ...]]:
         """
         Return the children of the strategy for the given comb_class. It
         should return None if it does not apply.
@@ -240,7 +240,7 @@ class Strategy(Generic[CombinatorialClassType], abc.ABC):
         return StratClass.from_dict(d)
 
 
-class CartesianProductStrategy(Strategy):
+class CartesianProductStrategy(Strategy[CombinatorialClassType]):
     """
     The CartesianProductStrategy is a subclass of strategy. The constructor is
     CartesianProduct. Such strategies by default assume
@@ -277,7 +277,7 @@ class CartesianProductStrategy(Strategy):
         return CartesianProduct(children)
 
 
-class DisjointUnionStrategy(Strategy):
+class DisjointUnionStrategy(Strategy[CombinatorialClassType]):
     """
     The DisjointUnionStrategy is a subclass of Strategy. The constructor used
     is DisjointUnion.
@@ -340,7 +340,7 @@ class DisjointUnionStrategy(Strategy):
         return objs[DisjointUnionStrategy.backward_map_index(objs)]
 
 
-class SymmetryStrategy(DisjointUnionStrategy):
+class SymmetryStrategy(DisjointUnionStrategy[CombinatorialClassType]):
     """General representation for a symmetry strategy."""
 
     def __init__(
@@ -358,7 +358,7 @@ class SymmetryStrategy(DisjointUnionStrategy):
         )
 
 
-class VerificationStrategy(Generic[CombinatorialClassType]):
+class VerificationStrategy(Generic[CombinatorialClassType], abc.ABC):
     """
     General representation of a strategy to enumerate combinatorial classes.
     """
@@ -478,7 +478,7 @@ class VerificationStrategy(Generic[CombinatorialClassType]):
         self, comb_class: CombinatorialClassType, **parameters: int
     ) -> int:
         """
-        A  method to count the objects.
+        A method to count the objects.
         Raises an InvalidOperationError if the combinatorial class is not verified.
         """
         if not self.verified(comb_class):

@@ -35,14 +35,14 @@ with respect to factor order is given.
 >>> tree.count_objects_of_length(15)
 9798
 """
-from typing import Iterator, Optional, Sequence, Tuple, Union
+from typing import Iterable, Iterator, Optional, Sequence, Tuple, Union
 
 from comb_spec_searcher import (
     CartesianProductStrategy,
-    DisjointUnionStrategy,
     CombinatorialClass,
     CombinatorialObject,
     CombinatorialSpecificationSearcher,
+    DisjointUnionStrategy,
     Strategy,
     StrategyPack,
     VerificationStrategy,
@@ -59,9 +59,9 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
 
     def __init__(
         self,
-        prefix: str,
-        patterns: Sequence[str],
-        alphabet: Sequence[str],
+        prefix: Word,
+        patterns: Iterable[Word],
+        alphabet: Iterable[str],
         just_prefix: bool = False,
     ):
         if not all(isinstance(l, str) and len(l) == 1 for l in alphabet):
@@ -75,7 +75,7 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
         self.patterns = tuple(sorted(patterns))
         self.just_prefix = just_prefix
 
-    def word_over_alphabet(self, word):
+    def word_over_alphabet(self, word: Word) -> bool:
         """Return True if word consists of letters from the alphabet."""
         return isinstance(word, str) and all(l in self.alphabet for l in word)
 
@@ -96,7 +96,7 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
         }
 
     @classmethod
-    def from_dict(cls, data) -> "AvoidingWithPrefix":
+    def from_dict(cls, data: dict) -> "AvoidingWithPrefix":
         """Create an instance of the class from the dictionary returned by the
         'to_jsonable' method."""
         return cls(
@@ -106,7 +106,9 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
             bool(int(data["just_prefix"])),
         )
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, AvoidingWithPrefix):
+            return NotImplemented
         return bool(
             self.alphabet == other.alphabet
             and self.prefix == other.prefix
@@ -151,10 +153,10 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
 # the strategies
 
 
-class ExpansionStrategy(DisjointUnionStrategy, Strategy[AvoidingWithPrefix]):
+class ExpansionStrategy(DisjointUnionStrategy[AvoidingWithPrefix]):
     def decomposition_function(
         self, avoiding_with_prefix: AvoidingWithPrefix
-    ) -> Union[Tuple[AvoidingWithPrefix, ...], None]:
+    ) -> Optional[Tuple[AvoidingWithPrefix, ...]]:
         if not avoiding_with_prefix.just_prefix:
             alphabet, prefix, patterns = (
                 avoiding_with_prefix.alphabet,
@@ -216,23 +218,19 @@ class OnlyPrefix(VerificationStrategy[AvoidingWithPrefix]):
         return avoiding_with_prefix.just_prefix
 
     def count_objects_of_size(
-        self, avoiding_with_prefix: AvoidingWithPrefix, **parameters: int
+        self, comb_class: AvoidingWithPrefix, **parameters: int
     ) -> int:
         """Verification strategies must contain a method to count the objects."""
-        if self.verified(avoiding_with_prefix) and parameters["n"] == len(
-            avoiding_with_prefix.prefix
-        ):
+        if self.verified(comb_class) and parameters["n"] == len(comb_class.prefix):
             return 1
         return 0
 
     def generate_objects_of_size(
-        self, avoiding_with_prefix: AvoidingWithPrefix, **parameters: int
+        self, comb_class: AvoidingWithPrefix, **parameters: int
     ) -> Iterator[Word]:
         """Verification strategies must contain a method to generate the objects."""
-        if self.verified(avoiding_with_prefix) and parameters["n"] == len(
-            avoiding_with_prefix.prefix
-        ):
-            yield Word(avoiding_with_prefix.prefix)
+        if self.verified(comb_class) and parameters["n"] == len(comb_class.prefix):
+            yield Word(comb_class.prefix)
 
     @classmethod
     def from_dict(cls, d) -> "OnlyPrefix":
@@ -245,7 +243,7 @@ class OnlyPrefix(VerificationStrategy[AvoidingWithPrefix]):
         return self.__class__.__name__ + "()"
 
 
-class RemoveFrontOfPrefix(CartesianProductStrategy, Strategy[AvoidingWithPrefix]):
+class RemoveFrontOfPrefix(CartesianProductStrategy[AvoidingWithPrefix]):
     def decomposition_function(
         self, avoiding_with_prefix: AvoidingWithPrefix
     ) -> Union[Tuple[AvoidingWithPrefix, ...], None]:
@@ -342,16 +340,20 @@ if __name__ == "__main__":
     alphabet = input(
         ("Input the alphabet (letters should be separated by a" " comma):")
     ).split(",")
-    patterns = input(
-        (
-            "Input the patterns to be avoided (patterns should be "
-            "separated by a comma):"
+    patterns = tuple(
+        map(
+            Word,
+            input(
+                (
+                    "Input the patterns to be avoided (patterns should be "
+                    "separated by a comma):"
+                )
+            ).split(","),
         )
-    ).split(",")
+    )
 
-    start_class = AvoidingWithPrefix("", patterns, alphabet)
+    start_class = AvoidingWithPrefix(Word(), patterns, alphabet)
     searcher = CombinatorialSpecificationSearcher(start_class, pack, debug=True)
-
     spec = searcher.auto_search(status_update=10)
 
     import time
