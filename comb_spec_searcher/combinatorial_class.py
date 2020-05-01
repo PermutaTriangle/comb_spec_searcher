@@ -3,9 +3,14 @@ An abstract class for a CombinatorialClass.
 """
 import abc
 from importlib import import_module
-from typing import Any, Iterator, Type
+from typing import Any, Generic, Iterator, Type, TypeVar
 
 __all__ = ("CombinatorialClass", "CombinatorialObject")
+
+CombinatorialObjectType = TypeVar(
+    "CombinatorialObjectType", bound="CombinatorialObject"
+)
+CombinatorialClassType = TypeVar("CombinatorialClassType", bound="CombinatorialClass")
 
 
 class CombinatorialObject(abc.ABC):
@@ -20,7 +25,7 @@ class CombinatorialObject(abc.ABC):
         return len(self)
 
 
-class CombinatorialClass(abc.ABC):
+class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
     """
     Base class for CombSpecSearcher combinatorial class
 
@@ -76,7 +81,7 @@ class CombinatorialClass(abc.ABC):
             )
         )
 
-    def objects_of_size(self, size: int) -> Iterator[CombinatorialObject]:
+    def objects_of_size(self, size: int) -> Iterator[CombinatorialObjectType]:
         """Returns an iterable of combinatorial objects of a given length"""
         raise NotImplementedError(
             "This function needs to be added to your "

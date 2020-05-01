@@ -43,6 +43,7 @@ from comb_spec_searcher import (
     CombinatorialClass,
     CombinatorialObject,
     CombinatorialSpecificationSearcher,
+    Strategy,
     StrategyPack,
     VerificationStrategy,
 )
@@ -52,7 +53,7 @@ class Word(str, CombinatorialObject):
     pass
 
 
-class AvoidingWithPrefix(CombinatorialClass):
+class AvoidingWithPrefix(CombinatorialClass[Word]):
     """The set of words over the 'alphabet' starting with 'prefix' that avoid
     the consecutive 'patterns'."""
 
@@ -150,7 +151,7 @@ class AvoidingWithPrefix(CombinatorialClass):
 # the strategies
 
 
-class ExpansionStrategy(DisjointUnionStrategy):
+class ExpansionStrategy(DisjointUnionStrategy, Strategy[AvoidingWithPrefix, Word]):
     def decomposition_function(
         self, avoiding_with_prefix: AvoidingWithPrefix
     ) -> Union[Tuple[AvoidingWithPrefix, ...], None]:
@@ -203,7 +204,7 @@ class ExpansionStrategy(DisjointUnionStrategy):
         return cls()
 
 
-class OnlyPrefix(VerificationStrategy):
+class OnlyPrefix(VerificationStrategy[AvoidingWithPrefix, Word]):
     def formal_step(self) -> str:
         return "its just a word"
 
@@ -243,7 +244,7 @@ class OnlyPrefix(VerificationStrategy):
         return self.__class__.__name__ + "()"
 
 
-class RemoveFrontOfPrefix(CartesianProductStrategy):
+class RemoveFrontOfPrefix(CartesianProductStrategy, Strategy[AvoidingWithPrefix, Word]):
     def decomposition_function(
         self, avoiding_with_prefix: AvoidingWithPrefix
     ) -> Union[Tuple[AvoidingWithPrefix, ...], None]:

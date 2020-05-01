@@ -37,7 +37,7 @@ class Rule:
 
     def __init__(
         self,
-        strategy: "Strategy",
+        strategy: "Strategy[CombinatorialClass, CombinatorialObject]",
         comb_class: CombinatorialClass,
         children: Optional[Tuple[CombinatorialClass, ...]] = None,
     ):
@@ -373,8 +373,8 @@ class VerificationRule(Rule):
         comb_class: CombinatorialClass,
         children: Optional[Tuple[CombinatorialClass, ...]] = None,
     ):
-        super().__init__(strategy, comb_class, children)
-        self.strategy: "VerificationStrategy"
+        super().__init__(strategy, comb_class, children)  # type: ignore
+        self.strategy: "VerificationStrategy"  # type: ignore
 
     def count_objects_of_size(self, **parameters: int) -> int:
         key = tuple(parameters.items())

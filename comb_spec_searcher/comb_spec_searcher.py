@@ -38,6 +38,7 @@ from .strategies import (
     StrategyGenerator,
     StrategyPack,
     VerificationRule,
+    VerificationStrategy,
 )
 from .strategies.strategy import CSSstrategy
 from .utils import (
@@ -145,7 +146,7 @@ class CombinatorialSpecificationSearcher:
         self, comb_class: CombinatorialClass, strategy: CSSstrategy
     ) -> Iterator[Rule]:
         """Yield all the rules given by a strategy/strategy generator."""
-        if isinstance(strategy, Strategy):
+        if isinstance(strategy, (Strategy, VerificationStrategy)):
             yield strategy(comb_class, **self.kwargs)
         elif isinstance(strategy, StrategyGenerator):
             for strat in strategy(comb_class, **self.kwargs):
@@ -258,7 +259,7 @@ class CombinatorialSpecificationSearcher:
         if not cleaned_end_labels:
             # this must be a verification strategy!
             assert isinstance(rule, VerificationRule), rule.formal_step
-        self.ruledb.add(start_label, cleaned_end_labels, rule)
+        self.ruledb.add(start_label, tuple(cleaned_end_labels), rule)
 
     def _add_empty_rule(self, label: int) -> None:
         """Mark label as empty. Treated as verified as can count empty set."""

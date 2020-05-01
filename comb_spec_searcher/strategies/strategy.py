@@ -34,12 +34,26 @@ it should return an iterator of Strategy to try and apply to the comb_class.
 """
 import abc
 from importlib import import_module
-from typing import Any, Iterator, Optional, Tuple, Type, TYPE_CHECKING, Union
+from typing import (
+    Any,
+    Generic,
+    Iterator,
+    Optional,
+    Tuple,
+    Type,
+    TYPE_CHECKING,
+    Union,
+)
 
 from sympy import Eq, Function
 from .constructor import CartesianProduct, Constructor, DisjointUnion
 from .rule import Rule, VerificationRule
-from ..combinatorial_class import CombinatorialClass, CombinatorialObject
+from ..combinatorial_class import (
+    CombinatorialClass,
+    CombinatorialClassType,
+    CombinatorialObject,
+    CombinatorialObjectType,
+)
 from ..exception import InvalidOperationError, ObjectMappingError
 
 if TYPE_CHECKING:
@@ -57,10 +71,10 @@ __all__ = (
 )
 
 
-CSSstrategy = Union["Strategy", "StrategyGenerator"]
+CSSstrategy = Union["Strategy", "StrategyGenerator", "VerificationStrategy"]
 
 
-class Strategy(abc.ABC):
+class Strategy(Generic[CombinatorialClassType, CombinatorialObjectType], abc.ABC):
     """
     The Strategy class is essentially following the mantra of 'strategy' from the
     combinatorial explanation paper.
@@ -105,9 +119,9 @@ class Strategy(abc.ABC):
         self._workable = workable
 
     def __call__(
-        self,
-        comb_class: CombinatorialClass,
-        children: Tuple[CombinatorialClass, ...] = None,
+        self: "Strategy[CombinatorialClassType, CombinatorialObjectType]",
+        comb_class: CombinatorialClassType,
+        children: Tuple[CombinatorialClassType, ...] = None,
         **kwargs
     ) -> Rule:
         if children is None:
@@ -145,8 +159,8 @@ class Strategy(abc.ABC):
 
     @abc.abstractmethod
     def decomposition_function(
-        self, comb_class: CombinatorialClass
-    ) -> Union[Tuple[CombinatorialClass, ...], None]:
+        self, comb_class: CombinatorialClassType
+    ) -> Union[Tuple[CombinatorialClassType, ...], None]:
         """
         Return the children of the strategy for the given comb_class. It
         should return None if it does not apply.
@@ -155,8 +169,8 @@ class Strategy(abc.ABC):
     @abc.abstractmethod
     def constructor(
         self,
-        comb_class: CombinatorialClass,
-        children: Optional[Tuple[CombinatorialClass, ...]] = None,
+        comb_class: CombinatorialClassType,
+        children: Optional[Tuple[CombinatorialClassType, ...]] = None,
     ) -> Constructor:
         """
         This is where the details of the 'reliance profile' and 'counting'
@@ -174,10 +188,10 @@ class Strategy(abc.ABC):
     @abc.abstractmethod
     def backward_map(
         self,
-        comb_class: CombinatorialClass,
-        objs: Tuple[CombinatorialObject, ...],
-        children: Optional[Tuple[CombinatorialClass, ...]] = None,
-    ) -> CombinatorialObject:
+        comb_class: CombinatorialClassType,
+        objs: Tuple[CombinatorialObjectType, ...],
+        children: Optional[Tuple[CombinatorialClassType, ...]] = None,
+    ) -> CombinatorialObjectType:
         """
         The forward direction of the underlying bijection used for object
         generation and sampling.
@@ -188,10 +202,10 @@ class Strategy(abc.ABC):
     @abc.abstractmethod
     def forward_map(
         self,
-        comb_class: CombinatorialClass,
-        obj: CombinatorialObject,
-        children: Optional[Tuple[CombinatorialClass, ...]] = None,
-    ) -> Tuple[CombinatorialObject, ...]:
+        comb_class: CombinatorialClassType,
+        obj: CombinatorialObjectType,
+        children: Optional[Tuple[CombinatorialClassType, ...]] = None,
+    ) -> Tuple[CombinatorialObjectType, ...]:
         """
         The backward direction of the underlying bijection used for object
         generation and sampling.
@@ -233,7 +247,7 @@ class Strategy(abc.ABC):
         module = import_module(d["class_module"])
         StratClass: Type[CSSstrategy] = getattr(module, d["strategy_class"])
         assert issubclass(
-            StratClass, (Strategy, StrategyGenerator)
+            StratClass, (Strategy, StrategyGenerator, VerificationStrategy)
         ), "Not a valid strategy"
         return StratClass.from_dict(d)
 
@@ -265,8 +279,8 @@ class CartesianProductStrategy(Strategy):
 
     def constructor(
         self,
-        comb_class: CombinatorialClass,
-        children: Optional[Tuple[CombinatorialClass, ...]] = None,
+        comb_class: CombinatorialClassType,
+        children: Optional[Tuple[CombinatorialClassType, ...]] = None,
     ) -> Constructor:
         if children is None:
             children = self.decomposition_function(comb_class)
@@ -300,8 +314,8 @@ class DisjointUnionStrategy(Strategy):
 
     def constructor(
         self,
-        comb_class: CombinatorialClass,
-        children: Optional[Tuple[CombinatorialClass, ...]] = None,
+        comb_class: CombinatorialClassType,
+        children: Optional[Tuple[CombinatorialClassType, ...]] = None,
     ) -> Constructor:
         if children is None:
             children = self.decomposition_function(comb_class)
@@ -310,7 +324,7 @@ class DisjointUnionStrategy(Strategy):
         return DisjointUnion(children)
 
     @staticmethod
-    def backward_map_index(objs: Tuple[CombinatorialObject, ...],) -> int:
+    def backward_map_index(objs: Tuple[CombinatorialObjectType, ...],) -> int:
         """
         Return the index of the comb_class that the sub_object returned.
         """
@@ -325,10 +339,10 @@ class DisjointUnionStrategy(Strategy):
 
     def backward_map(
         self,
-        comb_class: CombinatorialClass,
-        objs: Tuple[CombinatorialObject, ...],
-        children: Optional[Tuple[CombinatorialClass, ...]] = None,
-    ) -> CombinatorialObject:
+        comb_class: CombinatorialClassType,
+        objs: Tuple[CombinatorialObjectType, ...],
+        children: Optional[Tuple[CombinatorialClassType, ...]] = None,
+    ) -> CombinatorialObjectType:
         """
         This method will enable us to generate objects, and sample.
         If it is a direct bijection, the below implementation will work!
@@ -356,7 +370,7 @@ class SymmetryStrategy(DisjointUnionStrategy):
         )
 
 
-class VerificationStrategy(Strategy):
+class VerificationStrategy(Generic[CombinatorialClassType, CombinatorialObjectType]):
     """
     General representation of a strategy to enumerate combinatorial classes.
     """
@@ -368,17 +382,44 @@ class VerificationStrategy(Strategy):
         possibly_empty: bool = True,
         workable: bool = True,
     ):
-        super().__init__(
-            ignore_parent=ignore_parent,
-            inferrable=inferrable,
-            possibly_empty=possibly_empty,
-            workable=workable,
-        )
+        self._ignore_parent = ignore_parent
+        self._inferrable = inferrable
+        self._possibly_empty = possibly_empty
+        self._workable = workable
+
+    @property
+    def ignore_parent(self) -> bool:
+        """
+        Return True if it is not worth expanding the parent/comb_class if
+        the strategy applies.
+        """
+        return self._ignore_parent
+
+    @property
+    def inferrable(self) -> bool:
+        """
+        Return True if the children could change using inferral strategies.
+        """
+        return self._inferrable
+
+    @property
+    def possibly_empty(self) -> bool:
+        """
+        Return True if it is possible that a child is empty.
+        """
+        return self._possibly_empty
+
+    @property
+    def workable(self) -> bool:
+        """
+        Return True if the children can expanded using other strategies.
+        """
+        return self._workable
 
     def __call__(
         self,
-        comb_class: CombinatorialClass,
-        children: Tuple[CombinatorialClass, ...] = None,
+        comb_class: CombinatorialClassType,
+        children: Tuple[CombinatorialClassType, ...] = None,
         **kwargs
     ) -> Rule:
         if children is None:
@@ -397,13 +438,13 @@ class VerificationStrategy(Strategy):
         )
 
     @abc.abstractmethod
-    def verified(self, comb_class: CombinatorialClass) -> bool:
+    def verified(self, comb_class: CombinatorialClassType) -> bool:
         """
         Returns True if enumeration strategy works for the combinatorial class.
         """
 
     def get_specification(
-        self, comb_class: CombinatorialClass
+        self, comb_class: CombinatorialClassType
     ) -> "CombinatorialSpecification":
         """
         Returns a combinatorial specification for the combinatorial class.
@@ -422,7 +463,7 @@ class VerificationStrategy(Strategy):
         )
         return specification
 
-    def get_genf(self, comb_class: CombinatorialClass) -> Any:
+    def get_genf(self, comb_class: CombinatorialClassType) -> Any:
         """
         Returns the generating function for the combinatorial class.
         Raises an InvalidOperationError if the combinatorial class is not verified.
@@ -432,8 +473,8 @@ class VerificationStrategy(Strategy):
         return self.get_specification(comb_class).get_genf()
 
     def decomposition_function(
-        self, comb_class: CombinatorialClass
-    ) -> Union[Tuple[CombinatorialClass, ...], None]:
+        self, comb_class: CombinatorialClassType
+    ) -> Union[Tuple[CombinatorialClassType, ...], None]:
         """
         A combinatorial class C is marked as verified by returning a rule
         C -> (). This ensures that C is in a combinatorial specification as it
@@ -445,31 +486,8 @@ class VerificationStrategy(Strategy):
             return tuple()
         return None
 
-    def constructor(
-        self,
-        comb_class: CombinatorialClass,
-        children: Optional[Tuple[CombinatorialClass, ...]] = None,
-    ) -> Constructor:
-        raise InvalidOperationError("No constructor on a verification strategy")
-
-    def backward_map(
-        self,
-        comb_class: CombinatorialClass,
-        objs: Tuple[CombinatorialObject, ...],
-        children: Optional[Tuple[CombinatorialClass, ...]] = None,
-    ) -> CombinatorialObject:
-        raise InvalidOperationError("No backward map on a verification strategy")
-
-    def forward_map(
-        self,
-        comb_class: CombinatorialClass,
-        obj: CombinatorialObject,
-        children: Optional[Tuple[CombinatorialClass, ...]] = None,
-    ) -> Tuple[CombinatorialObject, ...]:
-        raise InvalidOperationError("No backward map on a verification strategy")
-
     def count_objects_of_size(
-        self, comb_class: CombinatorialClass, **parameters
+        self, comb_class: CombinatorialClassType, **parameters: int
     ) -> int:
         """
         A  method to count the objects.
@@ -477,24 +495,44 @@ class VerificationStrategy(Strategy):
         """
         if not self.verified(comb_class):
             raise InvalidOperationError("The combinatorial class is not verified")
-        return self.get_specification(comb_class).count_objects_of_size(**parameters)
+        return int(
+            self.get_specification(comb_class).count_objects_of_size(**parameters)
+        )
 
-    def get_equation(self, comb_class: CombinatorialClass, lhs_func: Function,) -> Eq:
+    def get_equation(
+        self, comb_class: CombinatorialClassType, lhs_func: Function,
+    ) -> Eq:
         """
         Return an equation for comb_class' (ordinary) generating function.
         """
         return Eq(lhs_func, self.get_genf(comb_class))
 
     def generate_objects_of_size(
-        self, comb_class: CombinatorialClass, **parameters
-    ) -> Iterator[CombinatorialObject]:
+        self, comb_class: CombinatorialClassType, **parameters
+    ) -> Iterator[CombinatorialObjectType]:
         """
         A method to generate the objects.
         Raises an InvalidOperationError if the combinatorial class is not verified.
         """
         if not self.verified(comb_class):
             raise InvalidOperationError("The combinatorial class is not verified")
-        return self.get_specification(comb_class).generate_objects_of_size(**parameters)
+        raise NotImplementedError
+        # yield from self.get_specification(comb_class).generate_objects_of_size(**parameters)
+
+    def to_jsonable(self):
+        return Strategy.to_jsonable(self)
+
+    @classmethod
+    @abc.abstractmethod
+    def from_dict(cls, d: dict) -> CSSstrategy:
+        """
+        Return the strategy from the json representation.
+        """
+        return Strategy.from_dict(d)
+
+
+# class AtomStrategy(VerificationStrategy):
+#     # TODO!
 
 
 class EmptyStrategy(VerificationStrategy):
@@ -503,26 +541,26 @@ class EmptyStrategy(VerificationStrategy):
     """
 
     def count_objects_of_size(
-        self, comb_class: CombinatorialClass, **parameters
+        self, comb_class: CombinatorialClassType, **parameters
     ) -> int:
         """
         Verification strategies must contain a method to count the objects.
         """
         return 0
 
-    def get_genf(self, comb_class: CombinatorialClass) -> Any:
+    def get_genf(self, comb_class: CombinatorialClassType) -> Any:
         return 0
 
     def generate_objects_of_size(
-        self, comb_class: CombinatorialClass, **parameters
-    ) -> Iterator[CombinatorialObject]:
+        self, comb_class: CombinatorialClassType, **parameters
+    ) -> Iterator[CombinatorialObjectType]:
         """
         Verification strategies must contain a method to generate the objects.
         """
         return iter([])
 
-    def verified(self, comb_class: CombinatorialClass) -> bool:
-        return comb_class.is_empty()
+    def verified(self, comb_class: CombinatorialClassType) -> bool:
+        return bool(comb_class.is_empty())
 
     def formal_step(self) -> str:
         return "is empty"
@@ -550,7 +588,7 @@ class StrategyGenerator(abc.ABC):
 
     @abc.abstractmethod
     def __call__(
-        self, comb_class: CombinatorialClass, **kwargs: Any
+        self, comb_class: CombinatorialClassType, **kwargs: Any
     ) -> Iterator[Union[Rule, Strategy]]:
         """
         Returns the results of the strategy on a comb_class.
@@ -596,9 +634,4 @@ class StrategyGenerator(abc.ABC):
         """
         Return the strategy from the json representation.
         """
-        module = import_module(d["class_module"])
-        StratClass: Type[CSSstrategy] = getattr(module, d["strategy_class"])
-        assert issubclass(
-            StratClass, (Strategy, StrategyGenerator)
-        ), "Not a valid strategy generator"
-        return StratClass.from_dict(d)
+        return Strategy.from_dict(d)
