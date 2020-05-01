@@ -28,15 +28,17 @@ class EquivalenceDB:
       equivalent.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Create a new empty equivalent database."""
         self.parents: Dict[int, int] = {}
         self.weights: Dict[int, int] = {}
         self.verified_roots: Set[int] = set()
         self.vertices: Set[FrozenSet[int]] = set()
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Check if all information stored is the same."""
+        if not isinstance(other, EquivalenceDB):
+            return NotImplemented
         return bool(
             self.parents == other.parents
             and self.weights == other.weights

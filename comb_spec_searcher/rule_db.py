@@ -2,20 +2,19 @@
 A database for rules.
 """
 from collections import defaultdict
-from typing import Dict, Iterator, List, Set, Tuple
+from typing import Dict, Iterable, Iterator, List, Optional, Set, Tuple
+
 from .equiv_db import EquivalenceDB
 from .exception import SpecificationNotFound
-from .strategies import Strategy
-from .strategies import Rule
+from .strategies import Rule, Strategy
 from .tree_searcher import (
+    Node,
     iterative_proof_tree_finder,
     iterative_prune,
-    Node,
     proof_tree_generator_dfs,
     prune,
     random_proof_tree,
 )
-
 
 Specification = Tuple[List[Tuple[int, Strategy]], List[List[int]]]
 
@@ -23,7 +22,7 @@ Specification = Tuple[List[Tuple[int, Strategy]], List[List[int]]]
 class RuleDB:
     """A database for rules found."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initialise.
 
@@ -38,11 +37,13 @@ class RuleDB:
         self.rule_to_strategy: Dict[Tuple[int, Tuple[int, ...]], Strategy] = {}
         self.equivdb = EquivalenceDB()
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Check if all stored information is the same."""
+        if not isinstance(other, RuleDB):
+            return NotImplemented
         return bool(self.rule_to_strategy == other.rule_to_strategy)
 
-    def add(self, start: int, ends: Tuple[int, ...], rule: Rule) -> None:
+    def add(self, start: int, ends: Iterable[int], rule: Rule) -> None:
         """
         Add a rule to the database.
 
@@ -80,7 +81,6 @@ class RuleDB:
             rules_dict[self.equivdb[start]].add(
                 tuple(sorted(self.equivdb[e] for e in ends))
             )
-        print(rules_dict)
         return rules_dict
 
     def all_rules(self) -> Iterator[Tuple[int, Tuple[int, ...], Strategy]]:
@@ -117,9 +117,13 @@ class RuleDB:
         return self.is_verified(label)
 
     def rule_from_equivalence_rule(
-        self, eqv_start: int, eqv_ends: Tuple[int, ...]
-    ) -> Tuple[int, Tuple[int, ...]]:
-        """Return a rule that satisfies the equivalence rule."""
+        self, eqv_start: int, eqv_ends: Iterable[int]
+    ) -> Optional[Tuple[int, Tuple[int, ...]]]:
+        """
+        Return a rule that satisfies the equivalence rule.
+
+        Returns None if no such rule exists.
+        """
         eqv_start = self.equivdb[eqv_start]
         eqv_ends = tuple(sorted(self.equivdb[l] for l in eqv_ends))
         for rule in self:
@@ -128,6 +132,7 @@ class RuleDB:
             temp_ends = tuple(sorted(self.equivdb[l] for l in ends))
             if eqv_start == temp_start and eqv_ends == temp_ends:
                 return start, ends
+        return None
 
     def find_proof_tree(self, label: int, iterative: bool = False) -> Node:
         """Search for a proof tree based on current data found."""

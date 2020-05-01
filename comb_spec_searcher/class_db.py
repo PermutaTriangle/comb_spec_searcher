@@ -33,7 +33,9 @@ class Info:
         self.label = label
         self.empty = empty
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Info):
+            return NotImplemented
         return (
             self.comb_class == self.comb_class
             and self.label == self.label
@@ -81,7 +83,9 @@ class ClassDB:
             info = self.label_to_info.get(key)
         return info is not None
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ClassDB):
+            return NotImplemented
         return bool(
             self.class_to_info == other.class_to_info
             and self.label_to_info == other.label_to_info
