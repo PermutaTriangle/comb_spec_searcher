@@ -151,7 +151,7 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
 # the strategies
 
 
-class ExpansionStrategy(DisjointUnionStrategy, Strategy[AvoidingWithPrefix, Word]):
+class ExpansionStrategy(DisjointUnionStrategy, Strategy[AvoidingWithPrefix]):
     def decomposition_function(
         self, avoiding_with_prefix: AvoidingWithPrefix
     ) -> Union[Tuple[AvoidingWithPrefix, ...], None]:
@@ -173,13 +173,14 @@ class ExpansionStrategy(DisjointUnionStrategy, Strategy[AvoidingWithPrefix, Word
     def forward_map(
         self,
         avoiding_with_prefix: AvoidingWithPrefix,
-        word: Word,
+        word: CombinatorialObject,
         children: Optional[Tuple[AvoidingWithPrefix, ...]] = None,
     ) -> Tuple[Word, ...]:
         """
         The backward direction of the underlying bijection used for object
         generation and sampling.
         """
+        assert isinstance(word, Word)
         if children is None:
             children = self.decomposition_function(avoiding_with_prefix)
             assert children is not None
@@ -204,7 +205,7 @@ class ExpansionStrategy(DisjointUnionStrategy, Strategy[AvoidingWithPrefix, Word
         return cls()
 
 
-class OnlyPrefix(VerificationStrategy[AvoidingWithPrefix, Word]):
+class OnlyPrefix(VerificationStrategy[AvoidingWithPrefix]):
     def formal_step(self) -> str:
         return "its just a word"
 
@@ -244,7 +245,7 @@ class OnlyPrefix(VerificationStrategy[AvoidingWithPrefix, Word]):
         return self.__class__.__name__ + "()"
 
 
-class RemoveFrontOfPrefix(CartesianProductStrategy, Strategy[AvoidingWithPrefix, Word]):
+class RemoveFrontOfPrefix(CartesianProductStrategy, Strategy[AvoidingWithPrefix]):
     def decomposition_function(
         self, avoiding_with_prefix: AvoidingWithPrefix
     ) -> Union[Tuple[AvoidingWithPrefix, ...], None]:
@@ -286,13 +287,16 @@ class RemoveFrontOfPrefix(CartesianProductStrategy, Strategy[AvoidingWithPrefix,
     def backward_map(
         self,
         avoiding_with_prefix: AvoidingWithPrefix,
-        words: Tuple[Word, ...],
+        words: Tuple[CombinatorialObject, ...],
         children: Optional[Tuple[AvoidingWithPrefix, ...]] = None,
     ) -> Word:
         """
         The forward direction of the underlying bijection used for object
         generation and sampling.
         """
+        assert len(words) == 2
+        assert isinstance(words[0], Word)
+        assert isinstance(words[1], Word)
         if children is None:
             children = self.decomposition_function(avoiding_with_prefix)
             assert children is not None
@@ -301,13 +305,14 @@ class RemoveFrontOfPrefix(CartesianProductStrategy, Strategy[AvoidingWithPrefix,
     def forward_map(
         self,
         comb_class: AvoidingWithPrefix,
-        word: Word,
+        word: CombinatorialObject,
         children: Optional[Tuple[AvoidingWithPrefix, ...]] = None,
     ) -> Tuple[Word, ...]:
         """
         The backward direction of the underlying bijection used for object
         generation and sampling.
         """
+        assert isinstance(word, Word)
         if children is None:
             children = self.decomposition_function(comb_class)
             assert children is not None

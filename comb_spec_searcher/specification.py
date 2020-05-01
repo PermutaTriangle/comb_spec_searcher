@@ -7,8 +7,9 @@ from logzero import logger
 from sympy import Eq, Function
 import sympy
 from .combinatorial_class import CombinatorialClass, CombinatorialObject
-from .strategies import Strategy
+from .strategies import Strategy, VerificationStrategy
 from .strategies import EmptyStrategy, EquivalencePathRule, ReverseRule, Rule
+from .strategies.strategy import StrategyType
 
 
 __all__ = ("CombinatorialSpecification",)
@@ -24,7 +25,7 @@ class CombinatorialSpecification:
     def __init__(
         self,
         root: CombinatorialClass,
-        strategies: Iterable[Tuple[CombinatorialClass, Strategy]],
+        strategies: Iterable[Tuple[CombinatorialClass, StrategyType]],
         equivalence_paths: Iterable[Sequence[CombinatorialClass]],
     ):
         self.root = root
@@ -209,7 +210,7 @@ class CombinatorialSpecification:
         for comb_class_dict, strategy_dict in d["strategies"]:
             comb_class = CombinatorialClass.from_dict(comb_class_dict)
             strategy = Strategy.from_dict(strategy_dict)
-            assert isinstance(strategy, Strategy)
+            assert isinstance(strategy, (Strategy, VerificationStrategy))
             strategies.append((comb_class, strategy))
         return cls(
             root=CombinatorialClass.from_dict(d["root"]),

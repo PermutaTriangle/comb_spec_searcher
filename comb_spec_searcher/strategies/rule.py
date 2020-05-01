@@ -37,7 +37,7 @@ class Rule:
 
     def __init__(
         self,
-        strategy: "Strategy[CombinatorialClass, CombinatorialObject]",
+        strategy: "Strategy",
         comb_class: CombinatorialClass,
         children: Optional[Tuple[CombinatorialClass, ...]] = None,
     ):

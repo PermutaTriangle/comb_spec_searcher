@@ -168,8 +168,6 @@ class RuleDB:
     def _get_specification_rules(
         self, label: int, proof_tree_node: Node
     ) -> Specification:
-        # We will need to add equivalence rules from each internal label to its
-        # equivalent label as a start.
         children: Dict[int, Tuple[int, ...]] = dict()
         internal_nodes = set([label])
         for node in proof_tree_node.nodes():

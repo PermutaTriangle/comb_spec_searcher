@@ -49,10 +49,8 @@ from sympy import Eq, Function
 from .constructor import CartesianProduct, Constructor, DisjointUnion
 from .rule import Rule, VerificationRule
 from ..combinatorial_class import (
-    CombinatorialClass,
     CombinatorialClassType,
     CombinatorialObject,
-    CombinatorialObjectType,
 )
 from ..exception import InvalidOperationError, ObjectMappingError
 
@@ -72,9 +70,10 @@ __all__ = (
 
 
 CSSstrategy = Union["Strategy", "StrategyGenerator", "VerificationStrategy"]
+StrategyType = Union["Strategy", "VerificationStrategy"]
 
 
-class Strategy(Generic[CombinatorialClassType, CombinatorialObjectType], abc.ABC):
+class Strategy(Generic[CombinatorialClassType], abc.ABC):
     """
     The Strategy class is essentially following the mantra of 'strategy' from the
     combinatorial explanation paper.
@@ -119,7 +118,7 @@ class Strategy(Generic[CombinatorialClassType, CombinatorialObjectType], abc.ABC
         self._workable = workable
 
     def __call__(
-        self: "Strategy[CombinatorialClassType, CombinatorialObjectType]",
+        self: "Strategy[CombinatorialClassType]",
         comb_class: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...] = None,
         **kwargs
@@ -189,9 +188,9 @@ class Strategy(Generic[CombinatorialClassType, CombinatorialObjectType], abc.ABC
     def backward_map(
         self,
         comb_class: CombinatorialClassType,
-        objs: Tuple[CombinatorialObjectType, ...],
+        objs: Tuple[CombinatorialObject, ...],
         children: Optional[Tuple[CombinatorialClassType, ...]] = None,
-    ) -> CombinatorialObjectType:
+    ) -> CombinatorialObject:
         """
         The forward direction of the underlying bijection used for object
         generation and sampling.
@@ -203,9 +202,9 @@ class Strategy(Generic[CombinatorialClassType, CombinatorialObjectType], abc.ABC
     def forward_map(
         self,
         comb_class: CombinatorialClassType,
-        obj: CombinatorialObjectType,
+        obj: CombinatorialObject,
         children: Optional[Tuple[CombinatorialClassType, ...]] = None,
-    ) -> Tuple[CombinatorialObjectType, ...]:
+    ) -> Tuple[CombinatorialObject, ...]:
         """
         The backward direction of the underlying bijection used for object
         generation and sampling.
@@ -324,7 +323,7 @@ class DisjointUnionStrategy(Strategy):
         return DisjointUnion(children)
 
     @staticmethod
-    def backward_map_index(objs: Tuple[CombinatorialObjectType, ...],) -> int:
+    def backward_map_index(objs: Tuple[CombinatorialObject, ...],) -> int:
         """
         Return the index of the comb_class that the sub_object returned.
         """
@@ -340,9 +339,9 @@ class DisjointUnionStrategy(Strategy):
     def backward_map(
         self,
         comb_class: CombinatorialClassType,
-        objs: Tuple[CombinatorialObjectType, ...],
+        objs: Tuple[CombinatorialObject, ...],
         children: Optional[Tuple[CombinatorialClassType, ...]] = None,
-    ) -> CombinatorialObjectType:
+    ) -> CombinatorialObject:
         """
         This method will enable us to generate objects, and sample.
         If it is a direct bijection, the below implementation will work!
@@ -370,7 +369,7 @@ class SymmetryStrategy(DisjointUnionStrategy):
         )
 
 
-class VerificationStrategy(Generic[CombinatorialClassType, CombinatorialObjectType]):
+class VerificationStrategy(Generic[CombinatorialClassType]):
     """
     General representation of a strategy to enumerate combinatorial classes.
     """
@@ -509,7 +508,7 @@ class VerificationStrategy(Generic[CombinatorialClassType, CombinatorialObjectTy
 
     def generate_objects_of_size(
         self, comb_class: CombinatorialClassType, **parameters
-    ) -> Iterator[CombinatorialObjectType]:
+    ) -> Iterator[CombinatorialObject]:
         """
         A method to generate the objects.
         Raises an InvalidOperationError if the combinatorial class is not verified.
@@ -529,6 +528,9 @@ class VerificationStrategy(Generic[CombinatorialClassType, CombinatorialObjectTy
         Return the strategy from the json representation.
         """
         return Strategy.from_dict(d)
+
+    def __eq__(self, other: object) -> bool:
+        return self.__class__ == other.__class__ and self.__dict__ == other.__dict__
 
 
 # class AtomStrategy(VerificationStrategy):
@@ -553,7 +555,7 @@ class EmptyStrategy(VerificationStrategy):
 
     def generate_objects_of_size(
         self, comb_class: CombinatorialClassType, **parameters
-    ) -> Iterator[CombinatorialObjectType]:
+    ) -> Iterator[CombinatorialObject]:
         """
         Verification strategies must contain a method to generate the objects.
         """
