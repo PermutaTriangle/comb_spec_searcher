@@ -415,7 +415,7 @@ class VerificationStrategy(Strategy):
         # pylint: disable=import-outside-toplevel
         from ..comb_spec_searcher import CombinatorialSpecificationSearcher
 
-        searcher = CombinatorialSpecificationSearcher(comb_class, self.pack)
+        searcher = CombinatorialSpecificationSearcher(comb_class, self.pack())
         specification = searcher.auto_search()
         assert specification is not None, InvalidOperationError(
             "Cannot find a specification"

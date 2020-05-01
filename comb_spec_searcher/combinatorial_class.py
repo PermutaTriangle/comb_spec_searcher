@@ -30,7 +30,7 @@ class CombinatorialClass(abc.ABC):
     """
 
     @abc.abstractmethod
-    def is_empty(self, *args, **kwargs) -> bool:
+    def is_empty(self) -> bool:
         """Return True if there are no object of any lengths."""
         return False
 

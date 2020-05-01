@@ -35,9 +35,7 @@ with respect to factor order is given.
 >>> tree.count_objects_of_length(15)
 9798
 """
-from itertools import product
-
-from sympy import abc, var
+from typing import Iterator, Optional, Sequence, Tuple, Union
 
 from comb_spec_searcher import (
     CartesianProductStrategy,
@@ -48,8 +46,6 @@ from comb_spec_searcher import (
     StrategyPack,
     VerificationStrategy,
 )
-
-from typing import Sequence, List, Tuple, Union, Optional, Iterator
 
 
 class Word(str, CombinatorialObject):
@@ -65,7 +61,7 @@ class AvoidingWithPrefix(CombinatorialClass):
         prefix: str,
         patterns: Sequence[str],
         alphabet: Sequence[str],
-        just_prefix=False,
+        just_prefix: bool = False,
     ):
         if not all(isinstance(l, str) and len(l) == 1 for l in alphabet):
             raise ValueError("Alphabet must be an iterable of letters.")
@@ -84,12 +80,12 @@ class AvoidingWithPrefix(CombinatorialClass):
 
     # methods required for combinatorial exploration
 
-    def is_empty(self):
+    def is_empty(self) -> bool:
         """Return True if no word over the alphabet avoiding the patterns has
         this prefix."""
-        return any(p in self.prefix for p in self.patterns)
+        return bool(any(p in self.prefix for p in self.patterns))
 
-    def to_jsonable(self):
+    def to_jsonable(self) -> dict:
         """Return a jsonable object of the combinatorial class."""
         return {
             "prefix": self.prefix,
@@ -99,7 +95,7 @@ class AvoidingWithPrefix(CombinatorialClass):
         }
 
     @classmethod
-    def from_dict(cls, data):
+    def from_dict(cls, data) -> "AvoidingWithPrefix":
         """Create an instance of the class from the dictionary returned by the
         'to_jsonable' method."""
         return cls(
@@ -109,61 +105,15 @@ class AvoidingWithPrefix(CombinatorialClass):
             bool(int(data["just_prefix"])),
         )
 
-    # methods for computing the generating function
-
-    # def get_genf(self, **kwargs):
-    #     """Return the generating function when only a prefix."""
-    #     if self.just_prefix:
-    #         if self.is_empty():
-    #             return 0
-    #         else:
-    #             return abc.x ** len(self.prefix)
-    #     else:
-    #         raise NotImplementedError(("Only implemented get_genf for only " "prefix."))
-
-    # def get_min_poly(self, *args, **kwargs):
-    #     """Return the minimum polynomial satisfied by the generating function
-    #     of the combinatorial class (in terms of F)."""
-    #     if self.just_prefix:
-    #         if self.is_empty():
-    #             return 0
-    #         else:
-    #             return var("F") - abc.x ** len(self.prefix)
-    #     else:
-    #         raise NotImplementedError(
-    #             ("Only implemented get_min_poly for " "only prefix.")
-    #         )
-
-    # def objects_of_length(self, length):
-    #     """Yield the words of given length that start with prefix and avoid the
-    #     patterns. If just_prefix, then only yield that word."""
-
-    #     def possible_words():
-    #         """Yield all words of given length over the alphabet with prefix"""
-    #         if len(self.prefix) > length:
-    #             return
-    #         for letters in product(self.alphabet, repeat=length - len(self.prefix)):
-    #             yield self.prefix + "".join(a for a in letters)
-
-    #     if self.just_prefix:
-    #         if length == len(self.prefix) and not self.is_empty():
-    #             yield self.prefix
-    #         return
-    #     for word in possible_words():
-    #         if all(patt not in word for patt in self.patterns):
-    #             yield word
-
-    # The dunder methods required to perform combinatorial exploration
-
-    def __eq__(self, other):
-        return (
+    def __eq__(self, other) -> bool:
+        return bool(
             self.alphabet == other.alphabet
             and self.prefix == other.prefix
             and self.patterns == other.patterns
             and self.just_prefix == other.just_prefix
         )
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(
             hash(self.prefix)
             + hash(self.patterns)
@@ -171,7 +121,7 @@ class AvoidingWithPrefix(CombinatorialClass):
             + hash(self.just_prefix)
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.just_prefix:
             return "The word {}".format(self.prefix)
         return "Words over {{{}}} avoiding {{{}}} with prefix {}" "".format(
@@ -180,20 +130,20 @@ class AvoidingWithPrefix(CombinatorialClass):
             self.prefix if self.prefix else '""',
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "AvoidindWithPrefix({}, {}, {}".format(
             repr(self.prefix), repr(self.patterns), repr(self.alphabet)
         )
 
     # Method required to get the counts
 
-    def is_epsilon(self):
+    def is_epsilon(self) -> bool:
         return self.prefix == "" and self.just_prefix
 
-    def is_atom(self):
+    def is_atom(self) -> bool:
         return len(self.prefix) == 1 and self.just_prefix
 
-    def is_positive(self):
+    def is_positive(self) -> bool:
         return len(self.prefix) > 0
 
 
@@ -249,12 +199,12 @@ class ExpansionStrategy(DisjointUnionStrategy):
         return self.__class__.__name__ + "()"
 
     @classmethod
-    def from_dict(cls, d):
+    def from_dict(cls, d) -> "ExpansionStrategy":
         return cls()
 
 
 class OnlyPrefix(VerificationStrategy):
-    def formal_step(self):
+    def formal_step(self) -> str:
         return "its just a word"
 
     def verified(self, avoiding_with_prefix: AvoidingWithPrefix) -> bool:
@@ -264,7 +214,7 @@ class OnlyPrefix(VerificationStrategy):
         return avoiding_with_prefix.just_prefix
 
     def count_objects_of_size(
-        self, avoiding_with_prefix: AvoidingWithPrefix, **parameters
+        self, avoiding_with_prefix: AvoidingWithPrefix, **parameters: int
     ) -> int:
         """Verification strategies must contain a method to count the objects."""
         if self.verified(avoiding_with_prefix) and parameters["n"] == len(
@@ -274,7 +224,7 @@ class OnlyPrefix(VerificationStrategy):
         return 0
 
     def generate_objects_of_size(
-        self, avoiding_with_prefix: AvoidingWithPrefix, **parameters
+        self, avoiding_with_prefix: AvoidingWithPrefix, **parameters: int
     ) -> Iterator[Word]:
         """Verification strategies must contain a method to generate the objects."""
         if self.verified(avoiding_with_prefix) and parameters["n"] == len(
@@ -283,7 +233,7 @@ class OnlyPrefix(VerificationStrategy):
             yield Word(avoiding_with_prefix.prefix)
 
     @classmethod
-    def from_dict(cls, d):
+    def from_dict(cls, d) -> "OnlyPrefix":
         return cls()
 
     def __str__(self) -> str:
@@ -300,26 +250,24 @@ class RemoveFrontOfPrefix(CartesianProductStrategy):
         """If the k is the maximum length of a pattern to be avoided, then any
         occurrence using indices further to the right of the prefix can use at
         most the last k - 1 letters in the prefix."""
-        if avoiding_with_prefix.just_prefix:
-            return
-        safe = self.index_safe_to_remove_up_to(avoiding_with_prefix)
-        if safe > 0:
-            prefix, patterns, alphabet = (
-                avoiding_with_prefix.prefix,
-                avoiding_with_prefix.patterns,
-                avoiding_with_prefix.alphabet,
-            )
-            start_prefix = prefix[:safe]
-            end_prefix = prefix[safe:]
-            start = AvoidingWithPrefix(start_prefix, patterns, alphabet, True)
-            end = AvoidingWithPrefix(end_prefix, patterns, alphabet)
-            return (start, end)
+        if not avoiding_with_prefix.just_prefix:
+            safe = self.index_safe_to_remove_up_to(avoiding_with_prefix)
+            if safe > 0:
+                prefix, patterns, alphabet = (
+                    avoiding_with_prefix.prefix,
+                    avoiding_with_prefix.patterns,
+                    avoiding_with_prefix.alphabet,
+                )
+                start_prefix = prefix[:safe]
+                end_prefix = prefix[safe:]
+                start = AvoidingWithPrefix(start_prefix, patterns, alphabet, True)
+                end = AvoidingWithPrefix(end_prefix, patterns, alphabet)
+                return (start, end)
 
     def index_safe_to_remove_up_to(self, avoiding_with_prefix: AvoidingWithPrefix):
-        prefix, patterns, alphabet = (
+        prefix, patterns = (
             avoiding_with_prefix.prefix,
             avoiding_with_prefix.patterns,
-            avoiding_with_prefix.alphabet,
         )
         # safe will be the index of the prefix in which we can remove upto without
         # affecting the avoidance conditions
