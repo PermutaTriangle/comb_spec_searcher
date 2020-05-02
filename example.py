@@ -5,34 +5,34 @@ with respect to factor order is given.
 >>> alphabet = ['a', 'b']
 >>> start_class = AvoidingWithPrefix('', ['b'], alphabet)
 >>> searcher = CombinatorialSpecificationSearcher(start_class, pack)
->>> tree = searcher.auto_search(status_update=10)
->>> [tree.count_objects_of_size(n=i) for i in range(10)]
+>>> specification = searcher.auto_search(status_update=10)
+>>> [specification.count_objects_of_size(n=i) for i in range(10)]
 [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 
 >>> start_class = AvoidingWithPrefix('', ['ab'], alphabet)
 >>> searcher = CombinatorialSpecificationSearcher(start_class, pack)
->>> tree = searcher.auto_search(status_update=10)
->>> [tree.count_objects_of_size(n=i) for i in range(10)]
+>>> specification = searcher.auto_search(status_update=10)
+>>> [specification.count_objects_of_size(n=i) for i in range(10)]
 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 >>> start_class = AvoidingWithPrefix('', ['aa', 'bb'], alphabet)
 >>> searcher = CombinatorialSpecificationSearcher(start_class, pack)
->>> tree = searcher.auto_search(status_update=10)
->>> [tree.count_objects_of_size(n=i) for i in range(10)]
+>>> specification = searcher.auto_search(status_update=10)
+>>> [specification.count_objects_of_size(n=i) for i in range(10)]
 [1, 2, 2, 2, 2, 2, 2, 2, 2, 2]
 
 >>> start_class = AvoidingWithPrefix('', ['bb'], alphabet)
 >>> searcher = CombinatorialSpecificationSearcher(start_class, pack)
->>> tree = searcher.auto_search(status_update=10)
->>> [tree.count_objects_of_size(n=i) for i in range(11)]
+>>> specification = searcher.auto_search(status_update=10)
+>>> [specification.count_objects_of_size(n=i) for i in range(11)]
 [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144]
 
 >>> start_class = AvoidingWithPrefix('', ['ababa', 'babb'], alphabet)
 >>> searcher = CombinatorialSpecificationSearcher(start_class, pack)
->>> tree = searcher.auto_search()
->>> [tree.count_objects_of_size(n=i) for i in range(11)]
+>>> specification = searcher.auto_search()
+>>> [specification.count_objects_of_size(n=i) for i in range(11)]
 [1, 2, 4, 8, 15, 27, 48, 87, 157, 283, 511]
->>> tree.count_objects_of_size(n=15)
+>>> specification.count_objects_of_size(n=15)
 9798
 """
 from typing import Iterable, Iterator, Optional, Tuple, Union
@@ -362,7 +362,7 @@ if __name__ == "__main__":
         print("Counting time:", round(time.time() - start, 2), "seconds")
         start = time.time()
         c = 0
-        for _ in spec.generate_objects_of_size(i):
+        for _ in spec.generate_objects_of_size(n=i):
             c += 1
         print(c)
         print("Object generation time:", round(time.time() - start, 2), "seconds")
