@@ -358,7 +358,7 @@ class SymmetryStrategy(DisjointUnionStrategy[CombinatorialClassType]):
         )
 
 
-class VerificationStrategy(Generic[CombinatorialClassType], abc.ABC):
+class VerificationStrategy(abc.ABC, Generic[CombinatorialClassType]):
     """
     General representation of a strategy to enumerate combinatorial classes.
     """
@@ -496,7 +496,7 @@ class VerificationStrategy(Generic[CombinatorialClassType], abc.ABC):
         return Eq(lhs_func, self.get_genf(comb_class))
 
     def generate_objects_of_size(
-        self, comb_class: CombinatorialClassType, **parameters
+        self, comb_class: CombinatorialClassType, **parameters: int
     ) -> Iterator[CombinatorialObject]:
         """
         A method to generate the objects.
@@ -504,8 +504,9 @@ class VerificationStrategy(Generic[CombinatorialClassType], abc.ABC):
         """
         if not self.verified(comb_class):
             raise InvalidOperationError("The combinatorial class is not verified")
-        raise NotImplementedError
-        # yield from self.get_specification(comb_class).generate_objects_of_size(**parameters)
+        yield from self.get_specification(comb_class).generate_objects_of_size(
+            **parameters
+        )
 
     def to_jsonable(self):
         return Strategy.to_jsonable(self)
@@ -532,7 +533,7 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClassType]):
     """
 
     def count_objects_of_size(
-        self, comb_class: CombinatorialClassType, **parameters
+        self, comb_class: CombinatorialClassType, **parameters: int
     ) -> int:
         """
         Verification strategies must contain a method to count the objects.
@@ -543,7 +544,7 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClassType]):
         return 0
 
     def generate_objects_of_size(
-        self, comb_class: CombinatorialClassType, **parameters
+        self, comb_class: CombinatorialClassType, **parameters: int
     ) -> Iterator[CombinatorialObject]:
         """
         Verification strategies must contain a method to generate the objects.

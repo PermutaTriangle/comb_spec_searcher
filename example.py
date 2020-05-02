@@ -73,6 +73,7 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
             raise ValueError("Patterns must be words over the given alphabet.")
         self.patterns: Tuple[Word, ...] = tuple(sorted(map(Word, patterns)))
         self.just_prefix = just_prefix
+        super().__init__()
 
     def word_over_alphabet(self, word: str) -> bool:
         """Return True if word consists of letters from the alphabet."""
@@ -95,14 +96,11 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "AvoidingWithPrefix":
+    def from_dict(cls, d: dict) -> "AvoidingWithPrefix":
         """Create an instance of the class from the dictionary returned by the
         'to_jsonable' method."""
         return cls(
-            data["prefix"],
-            data["patterns"],
-            data["alphabet"],
-            bool(int(data["just_prefix"])),
+            d["prefix"], d["patterns"], d["alphabet"], bool(int(d["just_prefix"])),
         )
 
     def __eq__(self, other: object) -> bool:

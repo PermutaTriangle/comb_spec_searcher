@@ -42,8 +42,9 @@ class CombinatorialSpecification:
         self.rules_dict: Dict[CombinatorialClass, Rule] = {}
         for comb_class, strategy in strategies:
             rule = strategy(comb_class)
-            if len(rule.children) == 1 and rule.constructor.is_equivalence():
-                equivalence_rules[(comb_class, rule.children[0])] = rule
+            children = rule.non_empty_children()
+            if len(children) == 1 and rule.constructor.is_equivalence():
+                equivalence_rules[(comb_class, children[0])] = rule
             else:
                 self.rules_dict[comb_class] = strategy(comb_class)
         for eqv_path in equivalence_paths:

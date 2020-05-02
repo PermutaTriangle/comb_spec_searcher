@@ -121,6 +121,13 @@ class Rule:
         """
         return self.strategy.formal_step()
 
+    def non_empty_children(self) -> Tuple[CombinatorialClass, ...]:
+        """
+        Return the tuple of non-empty combinatorial classes that are found
+        by applying the decomposition function.
+        """
+        return tuple(child for child in self.children if not child.is_empty())
+
     def backward_map(
         self, objs: Tuple[CombinatorialObject, ...]
     ) -> CombinatorialObject:
