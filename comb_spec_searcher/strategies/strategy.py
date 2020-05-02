@@ -36,7 +36,7 @@ import abc
 from importlib import import_module
 from typing import TYPE_CHECKING, Any, Generic, Iterator, Optional, Tuple, Type, Union
 
-from sympy import Eq, Function
+from sympy import Eq, Expr, Function, Integer
 
 from ..combinatorial_class import CombinatorialClassType, CombinatorialObject
 from ..exception import InvalidOperationError, ObjectMappingError
@@ -451,7 +451,7 @@ class VerificationStrategy(abc.ABC, Generic[CombinatorialClassType]):
         )
         return specification
 
-    def get_genf(self, comb_class: CombinatorialClassType) -> Any:
+    def get_genf(self, comb_class: CombinatorialClassType) -> Expr:
         """
         Returns the generating function for the combinatorial class.
         Raises an InvalidOperationError if the combinatorial class is not verified.
@@ -540,8 +540,8 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClassType]):
         """
         return 0
 
-    def get_genf(self, comb_class: CombinatorialClassType) -> Any:
-        return 0
+    def get_genf(self, comb_class: CombinatorialClassType) -> Integer:
+        return Integer(0)
 
     def generate_objects_of_size(
         self, comb_class: CombinatorialClassType, **parameters: int

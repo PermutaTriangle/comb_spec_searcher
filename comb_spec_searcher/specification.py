@@ -6,7 +6,7 @@ from typing import Any, Dict, Iterable, Iterator, Sequence, Tuple
 
 import sympy
 from logzero import logger
-from sympy import Eq, Function, solve, var
+from sympy import Eq, Expr, Function, solve, var
 
 from .combinatorial_class import CombinatorialClass, CombinatorialObject
 from .exception import IncorrectGeneratingFunctionError, TaylorExpansionError
@@ -122,7 +122,7 @@ class CombinatorialSpecification:
                     sympy.Function("NOTIMPLEMENTED")(x),
                 )
 
-    def get_genf(self, check: int = 6) -> Any:
+    def get_genf(self, check: int = 6) -> Expr:
         """
         Return the generating function for the root comb class.
 
