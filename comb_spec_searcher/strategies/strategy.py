@@ -526,7 +526,7 @@ class VerificationStrategy(Generic[CombinatorialClassType], abc.ABC):
 #     # TODO!
 
 
-class EmptyStrategy(VerificationStrategy):
+class EmptyStrategy(VerificationStrategy[CombinatorialClassType]):
     """
     A subclass for when a combinatorial class is equal to the empty set.
     """
@@ -556,7 +556,6 @@ class EmptyStrategy(VerificationStrategy):
     def formal_step(self) -> str:
         return "is empty"
 
-    @property
     def pack(self) -> "StrategyPack":
         raise InvalidOperationError("No pack for the empty strategy.")
 

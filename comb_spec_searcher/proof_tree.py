@@ -822,6 +822,7 @@ class ProofTree:
         queue. All classes are assumed to be expandable. The '**kwargs' are
         passed to the 'auto_search' method and the searcher init method.
         """
+        # pylint: disable=import-outside-toplevel
         from .comb_spec_searcher import CombinatorialSpecificationSearcher
 
         Searcher = kwargs.get("css", CombinatorialSpecificationSearcher)

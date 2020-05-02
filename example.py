@@ -35,7 +35,7 @@ with respect to factor order is given.
 >>> tree.count_objects_of_length(15)
 9798
 """
-from typing import Iterable, Iterator, Optional, Sequence, Tuple, Union
+from typing import Iterable, Iterator, Optional, Tuple, Union
 
 from comb_spec_searcher import (
     CartesianProductStrategy,
@@ -43,7 +43,6 @@ from comb_spec_searcher import (
     CombinatorialObject,
     CombinatorialSpecificationSearcher,
     DisjointUnionStrategy,
-    Strategy,
     StrategyPack,
     VerificationStrategy,
 )
@@ -59,8 +58,8 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
 
     def __init__(
         self,
-        prefix: Word,
-        patterns: Iterable[Word],
+        prefix: str,
+        patterns: Iterable[str],
         alphabet: Iterable[str],
         just_prefix: bool = False,
     ):
@@ -69,13 +68,13 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
         self.alphabet = tuple(sorted(alphabet))
         if not self.word_over_alphabet(prefix):
             raise ValueError("Prefix must be a word over the given alphabet.")
-        self.prefix = prefix
+        self.prefix: Word = Word(prefix)
         if not all(self.word_over_alphabet(patt) for patt in patterns):
             raise ValueError("Patterns must be words over the given alphabet.")
-        self.patterns = tuple(sorted(patterns))
+        self.patterns: Tuple[Word, ...] = tuple(sorted(map(Word, patterns)))
         self.just_prefix = just_prefix
 
-    def word_over_alphabet(self, word: Word) -> bool:
+    def word_over_alphabet(self, word: str) -> bool:
         """Return True if word consists of letters from the alphabet."""
         return isinstance(word, str) and all(l in self.alphabet for l in word)
 
