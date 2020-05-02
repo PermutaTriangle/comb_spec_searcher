@@ -119,21 +119,19 @@ class CombinatorialSpecification:
         """Return the generating function for the root comb class."""
         raise NotImplementedError
 
-    def count_objects_of_size(self, size: int) -> int:
+    def count_objects_of_size(self, **parameters) -> int:
         """
-        Return the number of objects of given size in the root comb_class.
+        Return the number of objects with the given parameters.
+        Note, 'n' is reserved for the size of the object.
+        """
+        return self.root_rule.count_objects_of_size(**parameters)
 
-        # TODO: update for arbitrary parameters
+    def generate_objects_of_size(self, **parameters) -> Iterator[CombinatorialObject]:
         """
-        return self.root_rule.count_objects_of_size(n=size)
-
-    def generate_objects_of_size(self, size: int) -> Iterator[CombinatorialObject]:
+        Return the bjects with the given parameters.
+        Note, 'n' is reserved for the size of the object.
         """
-        Return the objects of given size in the root comb_class.
-
-        # TODO: update for arbitrary parameters
-        """
-        for obj in self.root_rule.generate_objects_of_size(n=size):
+        for obj in self.root_rule.generate_objects_of_size(**parameters):
             yield obj
 
     def __eq__(self, other) -> bool:
