@@ -38,7 +38,11 @@ from typing import TYPE_CHECKING, Any, Generic, Iterator, Optional, Tuple, Type,
 
 from sympy import Eq, Expr, Function, Integer
 
-from ..combinatorial_class import CombinatorialClassType, CombinatorialObject
+from ..combinatorial_class import (
+    CombinatorialClass,
+    CombinatorialClassType,
+    CombinatorialObject,
+)
 from ..exception import InvalidOperationError, ObjectMappingError
 from .constructor import CartesianProduct, Constructor, DisjointUnion
 from .rule import Rule, VerificationRule
@@ -523,35 +527,35 @@ class VerificationStrategy(abc.ABC, Generic[CombinatorialClassType]):
         return self.__class__ == other.__class__ and self.__dict__ == other.__dict__
 
 
-# class AtomStrategy(VerificationStrategy):
+# class AtomStrategy(VerificationStrategy[CombinatorialClass]):
 #     # TODO!
 
 
-class EmptyStrategy(VerificationStrategy[CombinatorialClassType]):
+class EmptyStrategy(VerificationStrategy[CombinatorialClass]):
     """
     A subclass for when a combinatorial class is equal to the empty set.
     """
 
     def count_objects_of_size(
-        self, comb_class: CombinatorialClassType, **parameters: int
+        self, comb_class: CombinatorialClass, **parameters: int
     ) -> int:
         """
         Verification strategies must contain a method to count the objects.
         """
         return 0
 
-    def get_genf(self, comb_class: CombinatorialClassType) -> Integer:
+    def get_genf(self, comb_class: CombinatorialClass) -> Integer:
         return Integer(0)
 
     def generate_objects_of_size(
-        self, comb_class: CombinatorialClassType, **parameters: int
+        self, comb_class: CombinatorialClass, **parameters: int
     ) -> Iterator[CombinatorialObject]:
         """
         Verification strategies must contain a method to generate the objects.
         """
         return iter([])
 
-    def verified(self, comb_class: CombinatorialClassType) -> bool:
+    def verified(self, comb_class: CombinatorialClass) -> bool:
         return bool(comb_class.is_empty())
 
     def formal_step(self) -> str:

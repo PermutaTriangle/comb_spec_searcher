@@ -2,7 +2,7 @@
 A combinatorial specification is a set rules of the form a -> b1, ..., bk
 where each of the bi appear exactly once on the left hand side of some rule.
 """
-from typing import Any, Dict, Iterable, Iterator, Sequence, Tuple
+from typing import Dict, Iterable, Iterator, Sequence, Tuple
 
 import sympy
 from logzero import logger
@@ -72,7 +72,7 @@ class CombinatorialSpecification:
     def get_rule(self, comb_class: CombinatorialClass) -> Rule:
         """Return the rule with comb class on the left."""
         if comb_class.is_empty():
-            empty_strat: EmptyStrategy[CombinatorialClass] = EmptyStrategy()
+            empty_strat = EmptyStrategy()
             self.rules_dict[comb_class] = empty_strat(comb_class)
         return self.rules_dict[comb_class]
 
