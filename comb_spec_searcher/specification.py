@@ -6,9 +6,10 @@ from typing import Any, Dict, Iterable, Iterator, Sequence, Tuple
 
 import sympy
 from logzero import logger
-from sympy import Eq, Function
+from sympy import Eq, Function, solve, var
 
 from .combinatorial_class import CombinatorialClass, CombinatorialObject
+from .exception import IncorrectGeneratingFunctionError, TaylorExpansionError
 from .strategies import (
     EmptyStrategy,
     EquivalencePathRule,
@@ -18,6 +19,7 @@ from .strategies import (
     VerificationStrategy,
 )
 from .strategies.strategy import StrategyType
+from .utils import maple_equations, taylor_expand
 
 __all__ = ("CombinatorialSpecification",)
 
@@ -70,7 +72,8 @@ class CombinatorialSpecification:
     def get_rule(self, comb_class: CombinatorialClass) -> Rule:
         """Return the rule with comb class on the left."""
         if comb_class.is_empty():
-            self.rules_dict[comb_class] = EmptyStrategy()(comb_class)
+            empty_strat: EmptyStrategy[CombinatorialClass] = EmptyStrategy()
+            self.rules_dict[comb_class] = empty_strat(comb_class)
         return self.rules_dict[comb_class]
 
     @property
@@ -90,8 +93,11 @@ class CombinatorialSpecification:
         """
         Return a sympy function for the comb class, using the label it is
         assigned.
+
+        TODO: call comb_class for its parameters - 'x' is reserved for size.
         """
-        return Function("F_{}".format(self.get_label(comb_class)))(sympy.abc.x)
+        x = var("x")
+        return Function("F_{}".format(self.get_label(comb_class)))(x)
 
     def get_equations(self) -> Iterator[Eq]:
         """
@@ -110,14 +116,41 @@ class CombinatorialSpecification:
                     self.get_label(rule.comb_class),
                     rule.comb_class,
                 )
+                x = var("x")
                 yield Eq(
                     self.get_function(rule.comb_class),
-                    sympy.Function("NOTIMPLEMENTED")(sympy.abc.x),
+                    sympy.Function("NOTIMPLEMENTED")(x),
                 )
 
-    def get_genf(self) -> Any:
-        """Return the generating function for the root comb class."""
-        raise NotImplementedError
+    def get_genf(self, check: int = 6) -> Any:
+        """
+        Return the generating function for the root comb class.
+
+        # TODO: consider what to do if multiple variables.
+        """
+        eqs = set(self.get_equations())
+        root_func = self.get_function(self.root)
+        initial_conditions = [self.count_objects_of_size(n=i) for i in range(check + 1)]
+        logger.info(maple_equations(root_func, initial_conditions, eqs,),)
+        logger.info("Solving...")
+        solutions = solve(
+            eqs,
+            tuple([eq.lhs for eq in eqs]),
+            dict=True,
+            cubics=False,
+            quartics=False,
+            quintics=False,
+        )
+        for solution in solutions:
+            genf = solution[root_func]
+            logger.info("Checking initial conditions for: %s", genf)
+            try:
+                expansion = taylor_expand(genf, check)
+            except TaylorExpansionError:
+                continue
+            if expansion == initial_conditions:
+                return genf
+        raise IncorrectGeneratingFunctionError
 
     def count_objects_of_size(self, **parameters) -> int:
         """

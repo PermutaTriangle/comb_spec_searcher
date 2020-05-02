@@ -9,9 +9,8 @@ from typing import Dict, Iterator, Optional, Sequence, Set, Tuple
 
 import logzero
 import psutil
-import sympy
 from logzero import logger
-from sympy import Eq, Function
+from sympy import Eq, Function, var
 
 from .class_db import ClassDB
 from .class_queue import DefaultQueue, WorkPacket
@@ -306,7 +305,7 @@ class CombinatorialSpecificationSearcher:
         """
         Returns a set of equations for all rules currently found.
         """
-        x = sympy.abc.x
+        x = var("x")
 
         def get_function(comb_class):
             label = self.classdb.get_label(comb_class)

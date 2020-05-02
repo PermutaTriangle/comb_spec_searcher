@@ -37,6 +37,8 @@ with respect to factor order is given.
 """
 from typing import Iterable, Iterator, Optional, Tuple, Union
 
+from sympy import var
+
 from comb_spec_searcher import (
     CartesianProductStrategy,
     CombinatorialClass,
@@ -229,6 +231,10 @@ class OnlyPrefix(VerificationStrategy[AvoidingWithPrefix]):
         if self.verified(comb_class) and parameters["n"] == len(comb_class.prefix):
             yield Word(comb_class.prefix)
 
+    def get_genf(self, comb_class: AvoidingWithPrefix):
+        x = var("x")
+        return x ** len(comb_class.prefix)
+
     @classmethod
     def from_dict(cls, d) -> "OnlyPrefix":
         return cls()
@@ -353,6 +359,7 @@ if __name__ == "__main__":
     searcher = CombinatorialSpecificationSearcher(start_class, pack, debug=True)
     spec = searcher.auto_search(status_update=10)
     print(spec)
+    print(spec.get_genf())
     import time
 
     for i in range(20):

@@ -597,7 +597,12 @@ class ProofTree:
         root_func = self.root.get_function()
         eqs = self.get_equations(root_class=root_class, root_func=root_func)
         logger.info(
-            maple_equations(root_func, root_class, eqs), extra=self.logger_kwargs
+            maple_equations(
+                root_func,
+                [len(list(root_class.objects_of_length(i))) for i in range(6)],
+                eqs,
+            ),
+            extra=self.logger_kwargs,
         )
         logger.info("Solving...", extra=self.logger_kwargs)
 
@@ -678,7 +683,14 @@ class ProofTree:
 
         func = self.root.get_function(min_poly=True)
         comb_class = self.root.eqv_path_comb_classes[0]
-        logger.info(maple_equations(func, comb_class, eqs), extra=self.logger_kwargs)
+        logger.info(
+            maple_equations(
+                func,
+                [len(list(comb_class.objects_of_length(i))) for i in range(6)],
+                eqs,
+            ),
+            extra=self.logger_kwargs,
+        )
         logger.info(
             "Computing Groebner basis with 'elimination' order.",
             extra=self.logger_kwargs,

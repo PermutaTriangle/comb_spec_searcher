@@ -5,6 +5,10 @@ class ExceededMaxtimeError(Exception):
     """Ran out of time."""
 
 
+class IncorrectGeneratingFunctionError(Exception):
+    """The incorrect generating function was found."""
+
+
 class InsaneTreeError(Exception):
     """A sanity check failed."""
 
