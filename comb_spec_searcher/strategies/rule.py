@@ -144,6 +144,16 @@ class Rule:
         """
         return self.strategy.forward_map(self.comb_class, obj, self.children)
 
+    def to_equivalence_rule(self) -> "EquivalenceRule":
+        """
+        Return the reverse rule. At this stage, reverse rules can only be
+        created for equivalence rules.
+        """
+        assert (
+            self.constructor.is_equivalence()
+        ), "EquivalenceRule can only be created for equivalence rules"
+        return EquivalenceRule(self)
+
     def to_reverse_rule(self) -> "ReverseRule":
         """
         Return the reverse rule. At this stage, reverse rules can only be
@@ -250,6 +260,35 @@ class Rule:
                     join(res, op_symbol)
                     join(res, child)
         return "Explanation: {}\n".format(self.formal_step) + "\n".join(x for x in res)
+
+
+class EquivalenceRule(Rule):
+    def __init__(self, rule: Rule):
+        non_empty_children = rule.non_empty_children()
+        assert (
+            len(non_empty_children) == 1 and rule.constructor.is_equivalence
+        ), "not an equivalence rule"
+        child = non_empty_children[0]
+        super().__init__(rule.strategy, rule.comb_class, (child,))
+        self.child_idx = rule.children.index(child)
+        self.actual_children = rule.children
+
+    @property
+    def constructor(self) -> Constructor:
+        return self.strategy.constructor(self.comb_class, self.actual_children)
+
+    @property
+    def formal_step(self) -> str:
+        return "{} but only the child at index {} is non-empty".format(
+            self.strategy.formal_step(), self.child_idx
+        )
+
+    def forward_map(self, obj: CombinatorialObject) -> Tuple[CombinatorialObject, ...]:
+        return (
+            self.strategy.forward_map(self.comb_class, obj, self.actual_children)[
+                self.child_idx
+            ],
+        )
 
 
 class EquivalencePathRule(Rule):
