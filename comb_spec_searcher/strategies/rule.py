@@ -435,7 +435,7 @@ class VerificationRule(Rule):
         self, get_function: Callable[[CombinatorialClass], Function]
     ) -> Eq:
         lhs_func = get_function(self.comb_class)
-        return self.strategy.get_equation(self.comb_class, lhs_func)
+        return Eq(lhs_func, self.strategy.get_genf(self.comb_class))
 
     def generate_objects_of_size(
         self, **parameters: int

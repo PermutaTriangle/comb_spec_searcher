@@ -3,7 +3,6 @@ The constructor class contains all the method, and logic, needed to get the
 enumeration, generate objects, and sample objects.
 
 The default constructors implemented are:
-- Atom
 - CartesianProduct
 - DisjointUnion
 - Empty
@@ -81,41 +80,6 @@ class Constructor(abc.ABC):
         Your choice should be a single charachter.
         """
         return "+"
-
-
-class Atom(Constructor):
-    """
-    The Atom constructor is used for counting a combinatorial class that
-    consists of exactly one object. The parameters the Atom is initialised with
-    are the parameters satisfied by the single object.
-    """
-
-    def __init__(self, **parameters):
-        self.parameters = dict(**parameters)
-
-    def is_equivalence(self) -> bool:
-        return False
-
-    def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
-        # TODO: implement in multiple variable
-        return Eq(lhs_func, sympy.abc.x ** self.parameters["n"])
-
-    def get_recurrence(self, subrecs: SubRecs, **parameters: int) -> int:
-        if parameters == self.parameters:
-            return 1
-        return 0
-
-    def get_sub_objects(
-        self, subgens: SubGens, **parameters: int
-    ) -> Iterator[Tuple[CombinatorialObject, ...]]:
-        if parameters == self.parameters:
-            yield tuple()
-
-    def reliance_profile(self, **parameters) -> RelianceProfile:
-        return tuple()
-
-    def __str__(self):
-        return "atom"
 
 
 class CartesianProduct(Constructor):
@@ -257,29 +221,3 @@ class DisjointUnion(Constructor):
 
     def __str__(self):
         return "disjoint union"
-
-
-class Empty(Constructor):
-    """
-    The Empty constructor is used for counting CombinatorialClass that are
-    empty.
-    """
-
-    def is_equivalence(self) -> bool:
-        return False
-
-    def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
-        return Eq(lhs_func, 0)
-
-    def reliance_profile(self, **parameters: int) -> RelianceProfile:
-        assert len(parameters) == 1, "only implemented in one variable, namely 'n'"
-        return tuple()
-
-    def get_recurrence(self, subrecs: SubRecs, **parameters: int) -> int:
-        return 0
-
-    def get_sub_objects(
-        self, subgens: SubGens, **parameters: int
-    ) -> Iterator[Tuple[CombinatorialObject, ...]]:
-        assert len(parameters) == 1, "only implemented in one variable, namely 'n'"
-        return iter([])
