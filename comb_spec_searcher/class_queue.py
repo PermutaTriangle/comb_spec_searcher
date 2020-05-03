@@ -64,7 +64,11 @@ class CSSQueue(abc.ABC):
         """
 
     def __iter__(self) -> Iterator[WorkPacket]:
-        yield from self.iterator
+        while True:
+            try:
+                yield next(self)
+            except StopIteration:
+                break
 
     def __next__(self) -> WorkPacket:
         try:
@@ -91,7 +95,6 @@ class DefaultQueue(CSSQueue):
         self.ignore: Set[int] = set()
         self.inferral_ignore: Set[int] = set()
         self.queue_sizes: List[int] = []
-        self._iterator = iter(self._iter_helper())
 
     @property
     def levels_completed(self):
@@ -126,11 +129,19 @@ class DefaultQueue(CSSQueue):
 
     def can_do_inferral(self, label: int) -> bool:
         """Return true if inferral strategies can be applied."""
-        return label not in self.ignore and label not in self.inferral_ignore
+        return bool(
+            self.inferral_strategies
+            and label not in self.ignore
+            and label not in self.inferral_ignore
+        )
 
     def can_do_initial(self, label: int) -> bool:
         """Return true if initial strategies can be applied."""
-        return label not in self.ignore and label not in self.initial_expanded
+        return bool(
+            self.initial_strategies
+            and label not in self.ignore
+            and label not in self.initial_expanded
+        )
 
     def can_do_expansion(self, label: int, idx: int) -> bool:
         """Return true if expansion strategies can be applied."""

@@ -483,7 +483,7 @@ class CombinatorialSpecificationSearcher:
                 logger.info(found_string, extra=self.logger_kwargs)
                 return specification
             except SpecificationNotFound:
-                logger.debug("No specifcation found.", extra=self.logger_kwargs)
+                logger.debug("No specification found.", extra=self.logger_kwargs)
                 if max_time is not None:
                     if time.time() - auto_search_start > max_time:
                         raise ExceededMaxtimeError(

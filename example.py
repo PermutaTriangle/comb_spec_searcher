@@ -373,4 +373,3 @@ if __name__ == "__main__":
             c += 1
         print(c)
         print("Object generation time:", round(time.time() - start_time, 2), "seconds")
-    

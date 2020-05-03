@@ -592,7 +592,7 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass]):
         raise InvalidOperationError("No pack for the empty strategy.")
 
     @classmethod
-    def from_dict(cls, d) -> "EmptyStrategy":
+    def from_dict(cls, d: dict) -> "EmptyStrategy":
         return cls(**d)
 
     def __repr__(self) -> str:
