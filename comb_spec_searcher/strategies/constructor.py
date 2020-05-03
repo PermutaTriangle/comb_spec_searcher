@@ -16,12 +16,11 @@ from itertools import product
 from operator import add, mul
 from typing import Callable, Iterable, Iterator, Tuple
 
-import sympy
 from sympy import Eq, Function
 
 from ..combinatorial_class import CombinatorialClass, CombinatorialObject
 
-__all__ = ("Constructor", "CartesianProduct", "DisjointUnion", "Empty")
+__all__ = ("Constructor", "CartesianProduct", "DisjointUnion")
 
 
 RelianceProfile = Tuple[Tuple[int, ...], ...]

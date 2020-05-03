@@ -340,10 +340,10 @@ pack = StrategyPack(
 
 
 if __name__ == "__main__":
-    alphabet = input(
+    example_alphabet = input(
         ("Input the alphabet (letters should be separated by a" " comma):")
     ).split(",")
-    patterns = tuple(
+    example_patterns = tuple(
         map(
             Word,
             input(
@@ -355,21 +355,22 @@ if __name__ == "__main__":
         )
     )
 
-    start_class = AvoidingWithPrefix(Word(), patterns, alphabet)
+    start_class = AvoidingWithPrefix(Word(), example_patterns, example_alphabet)
     searcher = CombinatorialSpecificationSearcher(start_class, pack, debug=True)
     spec = searcher.auto_search(status_update=10)
     print(spec)
     print(spec.get_genf())
     import time
 
-    for i in range(20):
-        print("=" * 10, i, "=" * 10)
-        start = time.time()
-        print(spec.count_objects_of_size(n=i))
-        print("Counting time:", round(time.time() - start, 2), "seconds")
-        start = time.time()
+    for n in range(20):
+        print("=" * 10, n, "=" * 10)
+        start_time = time.time()
+        print(spec.count_objects_of_size(n=n))
+        print("Counting time:", round(time.time() - start_time, 2), "seconds")
+        start_time = time.time()
         c = 0
-        for _ in spec.generate_objects_of_size(n=i):
+        for _ in spec.generate_objects_of_size(n=n):
             c += 1
         print(c)
-        print("Object generation time:", round(time.time() - start, 2), "seconds")
+        print("Object generation time:", round(time.time() - start_time, 2), "seconds")
+    
