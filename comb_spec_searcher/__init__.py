@@ -4,13 +4,11 @@ from .combinatorial_class import CombinatorialClass, CombinatorialObject
 from .proof_tree import ProofTree
 from .specification import CombinatorialSpecification
 from .strategies import (
-    Atom,
     CartesianProduct,
     CartesianProductStrategy,
     Constructor,
     DisjointUnion,
     DisjointUnionStrategy,
-    Empty,
     EmptyStrategy,
     EquivalencePathRule,
     ReverseRule,
