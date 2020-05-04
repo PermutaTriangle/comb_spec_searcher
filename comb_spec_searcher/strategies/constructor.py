@@ -54,7 +54,7 @@ class Constructor(abc.ABC):
         """
 
     @abc.abstractmethod
-    def get_recurrence(self, subrecs: SubRecs, **parameters: int) -> int:
+    def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
         """
         Return the count for the given parameters, assuming the children are
         counted by the subrecs given.
@@ -62,7 +62,7 @@ class Constructor(abc.ABC):
 
     @abc.abstractmethod
     def get_sub_objects(
-        self, subgens: SubGens, **parameters: int
+        self, subgens: SubGens, n: int, **parameters: int
     ) -> Iterator[Tuple[CombinatorialObject, ...]]:
         """Return the subobjs/image of the bijection implied by the constructor."""
 
@@ -153,9 +153,8 @@ class CartesianProduct(Constructor):
 
             yield from _helper(n, minmax)
 
-    def get_recurrence(self, subrecs: SubRecs, **parameters: int) -> int:
-        assert len(parameters) == 1, "only implemented in one variable, namely 'n'"
-        n = parameters["n"]
+    def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
+        assert len(parameters) == 0, "only implemented in one variable, namely 'n'"
         res = 0
         for comp in self._valid_compositions(n=n):
             tmp = 1
@@ -167,10 +166,9 @@ class CartesianProduct(Constructor):
         return res
 
     def get_sub_objects(
-        self, subgens: SubGens, **parameters: int
+        self, subgens: SubGens, n: int, **parameters: int
     ) -> Iterator[Tuple[CombinatorialObject, ...]]:
-        assert len(parameters) == 1, "only implemented in one variable, namely 'n'"
-        n = parameters["n"]
+        assert len(parameters) == 0, "only implemented in one variable, namely 'n'"
         for comp in self._valid_compositions(n=n):
             for sub_objs in product(
                 *tuple(subgen(n=i) for i, subgen in zip(comp, subgens))
@@ -234,16 +232,16 @@ class DisjointUnion(Constructor):
         n = parameters["n"]
         return tuple((n,) for _ in range(self.number_of_children))
 
-    def get_recurrence(self, subrecs: SubRecs, **parameters: int) -> int:
-        return sum(rec(**parameters) for rec in subrecs)
+    def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
+        return sum(rec(n, **parameters) for rec in subrecs)
 
     def get_sub_objects(
-        self, subgens: SubGens, **parameters: int
+        self, subgens: SubGens, n: int, **parameters: int
     ) -> Iterator[Tuple[CombinatorialObject, ...]]:
-        assert len(parameters) == 1, "only implemented in one variable, namely 'n'"
+        assert len(parameters) == 0, "only implemented in one variable, namely 'n'"
         for i, subgen in enumerate(subgens):
-            for obj in subgen(**parameters):
-                yield tuple(None for _ in range(i)) + (obj,) + tuple(
+            for gp in subgen(n, **parameters):
+                yield tuple(None for _ in range(i)) + (gp,) + tuple(
                     None for _ in range(len(subgens) - i - 1)
                 )
 

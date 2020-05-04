@@ -217,18 +217,18 @@ class OnlyPrefix(VerificationStrategy[AvoidingWithPrefix]):
         return avoiding_with_prefix.just_prefix
 
     def count_objects_of_size(
-        self, comb_class: AvoidingWithPrefix, **parameters: int
+        self, comb_class: AvoidingWithPrefix, n: int, **parameters: int
     ) -> int:
         """Verification strategies must contain a method to count the objects."""
-        if self.verified(comb_class) and parameters["n"] == len(comb_class.prefix):
+        if self.verified(comb_class) and n == len(comb_class.prefix):
             return 1
         return 0
 
     def generate_objects_of_size(
-        self, comb_class: AvoidingWithPrefix, **parameters: int
+        self, comb_class: AvoidingWithPrefix, n: int, **parameters: int
     ) -> Iterator[Word]:
         """Verification strategies must contain a method to generate the objects."""
-        if self.verified(comb_class) and parameters["n"] == len(comb_class.prefix):
+        if self.verified(comb_class) and n == len(comb_class.prefix):
             yield Word(comb_class.prefix)
 
     def get_genf(self, comb_class: AvoidingWithPrefix):
