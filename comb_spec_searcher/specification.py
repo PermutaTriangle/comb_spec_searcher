@@ -152,22 +152,26 @@ class CombinatorialSpecification:
                 return genf
         raise IncorrectGeneratingFunctionError
 
-    def count_objects_of_size(self, **parameters) -> int:
+    def count_objects_of_size(self, n: int, **parameters) -> int:
         """
         Return the number of objects with the given parameters.
         Note, 'n' is reserved for the size of the object.
         """
-        return self.root_rule.count_objects_of_size(**parameters)
+        return self.root_rule.count_objects_of_size(n, **parameters)
 
-    def generate_objects_of_size(self, **parameters) -> Iterator[CombinatorialObject]:
+    def generate_objects_of_size(
+        self, n: int, **parameters
+    ) -> Iterator[CombinatorialObject]:
         """
-        Return the bjects with the given parameters.
+        Return the objects with the given parameters.
         Note, 'n' is reserved for the size of the object.
         """
-        for obj in self.root_rule.generate_objects_of_size(**parameters):
+        for obj in self.root_rule.generate_objects_of_size(n, **parameters):
             yield obj
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, CombinatorialSpecification):
+            return NotImplemented
         return bool(self.root == other.root and self.rules_dict == other.rules_dict)
 
     def __str__(self) -> str:

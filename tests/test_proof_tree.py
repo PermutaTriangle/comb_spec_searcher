@@ -2,7 +2,7 @@ import pytest
 
 from comb_spec_searcher import CombinatorialSpecificationSearcher
 from comb_spec_searcher.utils import taylor_expand
-from example import AvoidingWithPrefix, pack
+from example import AvoidingWithPrefix, Word, pack
 
 
 @pytest.fixture
@@ -38,3 +38,13 @@ def test_count_object_of_length_all_values(specification):
         283,
         511,
     ]
+
+
+def test_generate_objects_of_length(specification):
+    assert len(list(specification.generate_objects_of_size(0))) == 1
+    assert len(list(specification.generate_objects_of_size(1))) == 2
+    assert len(list(specification.generate_objects_of_size(2))) == 4
+    assert len(list(specification.generate_objects_of_size(3))) == 8
+    assert len(list(specification.generate_objects_of_size(4))) == 15
+    assert Word("babb") not in specification.generate_objects_of_size(4)
+    assert Word("aaaa") in specification.generate_objects_of_size(4)

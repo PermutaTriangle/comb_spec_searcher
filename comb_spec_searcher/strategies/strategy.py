@@ -520,7 +520,7 @@ class VerificationStrategy(AbstractStrategy, Generic[CombinatorialClassType]):
         return None
 
     def count_objects_of_size(
-        self, comb_class: CombinatorialClassType, **parameters: int
+        self, comb_class: CombinatorialClassType, n: int, **parameters: int
     ) -> int:
         """
         A method to count the objects.
@@ -529,11 +529,11 @@ class VerificationStrategy(AbstractStrategy, Generic[CombinatorialClassType]):
         if not self.verified(comb_class):
             raise InvalidOperationError("The combinatorial class is not verified")
         return int(
-            self.get_specification(comb_class).count_objects_of_size(**parameters)
+            self.get_specification(comb_class).count_objects_of_size(n, **parameters)
         )
 
     def generate_objects_of_size(
-        self, comb_class: CombinatorialClassType, **parameters: int
+        self, comb_class: CombinatorialClassType, n: int, **parameters: int
     ) -> Iterator[CombinatorialObject]:
         """
         A method to generate the objects.
@@ -542,7 +542,7 @@ class VerificationStrategy(AbstractStrategy, Generic[CombinatorialClassType]):
         if not self.verified(comb_class):
             raise InvalidOperationError("The combinatorial class is not verified")
         yield from self.get_specification(comb_class).generate_objects_of_size(
-            **parameters
+            n, **parameters
         )
 
     @classmethod
@@ -564,7 +564,7 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass]):
     """
 
     def count_objects_of_size(
-        self, comb_class: CombinatorialClass, **parameters: int
+        self, comb_class: CombinatorialClass, n: int, **parameters: int
     ) -> int:
         """
         Verification strategies must contain a method to count the objects.
@@ -575,7 +575,7 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass]):
         return Integer(0)
 
     def generate_objects_of_size(
-        self, comb_class: CombinatorialClass, **parameters: int
+        self, comb_class: CombinatorialClass, n: int, **parameters: int
     ) -> Iterator[CombinatorialObject]:
         """
         Verification strategies must contain a method to generate the objects.

@@ -164,18 +164,18 @@ class Rule:
         ), "reverse rule can only be created for equivalence rules"
         return ReverseRule(self)
 
-    def count_objects_of_size(self, **parameters: int) -> int:
+    def count_objects_of_size(self, n: int, **parameters: int) -> int:
         """
         The function count the objects with respect to the parameters. The
         result is cached.
         """
-        key = tuple(parameters.items())
+        key = (("n", n),) + tuple(parameters.items())
         res = self.count_cache.get(key)
         if res is None:
             assert (
                 self.subrecs is not None
             ), "you must call the set_subrecs function first"
-            res = self.constructor.get_recurrence(self.subrecs, **parameters)
+            res = self.constructor.get_recurrence(self.subrecs, n, **parameters)
             self.count_cache[key] = res
         return res
 
@@ -190,13 +190,13 @@ class Rule:
         return self.constructor.get_equation(lhs_func, rhs_funcs)
 
     def generate_objects_of_size(
-        self, **parameters: int
+        self, n: int, **parameters: int
     ) -> Iterator[CombinatorialObject]:
         """
         Generate the objects by using the underlying bijection between the
         parent and children.
         """
-        key = tuple(parameters.items())
+        key = (("n", n),) + tuple(parameters.items())
         res = self.obj_cache.get(key)
         if res is not None:
             yield from res
@@ -206,7 +206,7 @@ class Rule:
         ), "you must call the set_subrecs function first"
         res = []
         for subobjs in self.constructor.get_sub_objects(
-            self.subgenerators, **parameters
+            self.subgenerators, n, **parameters
         ):
             obj = self.backward_map(subobjs)
             yield obj
@@ -423,11 +423,11 @@ class VerificationRule(Rule):
         super().__init__(strategy, comb_class, children)  # type: ignore
         self.strategy: "VerificationStrategy"  # type: ignore
 
-    def count_objects_of_size(self, **parameters: int) -> int:
-        key = tuple(parameters.items())
+    def count_objects_of_size(self, n: int, **parameters: int) -> int:
+        key = (("n", n),) + tuple(parameters.items())
         res = self.count_cache.get(key)
         if res is None:
-            res = self.strategy.count_objects_of_size(self.comb_class, **parameters)
+            res = self.strategy.count_objects_of_size(self.comb_class, n, **parameters)
             self.count_cache[key] = res
         return res
 
@@ -438,16 +438,16 @@ class VerificationRule(Rule):
         return Eq(lhs_func, self.strategy.get_genf(self.comb_class))
 
     def generate_objects_of_size(
-        self, **parameters: int
+        self, n: int, **parameters: int
     ) -> Iterator[CombinatorialObject]:
-        key = tuple(parameters.items())
+        key = (("n", n),) + tuple(parameters.items())
         res = self.obj_cache.get(key)
         if res is not None:
             yield from res
             return
         res = []
         for obj in self.strategy.generate_objects_of_size(
-            self.comb_class, **parameters
+            self.comb_class, n, **parameters
         ):
             yield obj
             res.append(obj)
