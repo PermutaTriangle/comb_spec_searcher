@@ -5,7 +5,7 @@ from functools import partial
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
 from logzero import logger
-from sympy import O, Poly, solve, Symbol, var
+from sympy import O, Poly, Symbol, solve, var
 
 from comb_spec_searcher.exception import TaylorExpansionError
 
