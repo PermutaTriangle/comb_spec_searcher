@@ -169,7 +169,7 @@ class Rule:
         The function count the objects with respect to the parameters. The
         result is cached.
         """
-        key = (("n", n),) + tuple(parameters.items())
+        key = (n,) + tuple(sorted(parameters.items()))
         res = self.count_cache.get(key)
         if res is None:
             assert (
@@ -196,7 +196,7 @@ class Rule:
         Generate the objects by using the underlying bijection between the
         parent and children.
         """
-        key = (("n", n),) + tuple(parameters.items())
+        key = (n,) + tuple(sorted(parameters.items()))
         res = self.obj_cache.get(key)
         if res is not None:
             yield from res
@@ -424,7 +424,7 @@ class VerificationRule(Rule):
         self.strategy: "VerificationStrategy"  # type: ignore
 
     def count_objects_of_size(self, n: int, **parameters: int) -> int:
-        key = (("n", n),) + tuple(parameters.items())
+        key = (n,) + tuple(sorted(parameters.items()))
         res = self.count_cache.get(key)
         if res is None:
             res = self.strategy.count_objects_of_size(self.comb_class, n, **parameters)
@@ -440,7 +440,7 @@ class VerificationRule(Rule):
     def generate_objects_of_size(
         self, n: int, **parameters: int
     ) -> Iterator[CombinatorialObject]:
-        key = (("n", n),) + tuple(parameters.items())
+        key = (n,) + tuple(sorted(parameters.items()))
         res = self.obj_cache.get(key)
         if res is not None:
             yield from res
