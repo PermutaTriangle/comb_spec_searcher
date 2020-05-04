@@ -545,6 +545,19 @@ class VerificationStrategy(AbstractStrategy, Generic[CombinatorialClassType]):
             **parameters
         )
 
+    def random_sample_object_of_size(
+        self, comb_class: CombinatorialClassType, n: int, **parameters: int
+    ) -> CombinatorialObject:
+        """
+        A method to sample uniformly at random from a verified combinatorial class.
+        Raises an InvalidOperationError if the combinatorial class is not verified.
+        """
+        if not self.verified(comb_class):
+            raise InvalidOperationError("The combinatorial class is not verified")
+        return self.get_specification(comb_class).random_sample_object_of_size(
+            n, **parameters
+        )
+
     @classmethod
     @abc.abstractmethod
     def from_dict(cls, d: dict) -> CSSstrategy:
@@ -581,6 +594,11 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass]):
         Verification strategies must contain a method to generate the objects.
         """
         return iter([])
+
+    def random_sample_object_of_size(
+        self, comb_class: CombinatorialClass, n: int, **parameters: int
+    ) -> CombinatorialObject:
+        raise InvalidOperationError("Can't sample from empty set.")
 
     def verified(self, comb_class: CombinatorialClass) -> bool:
         return bool(comb_class.is_empty())

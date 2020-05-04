@@ -14,6 +14,7 @@ import abc
 from functools import reduce
 from itertools import product
 from operator import add, mul
+from random import randint
 from typing import Callable, Iterable, Iterator, Tuple
 
 from sympy import Eq, Function
@@ -26,6 +27,7 @@ __all__ = ("Constructor", "CartesianProduct", "DisjointUnion")
 RelianceProfile = Tuple[Tuple[int, ...], ...]
 SubGens = Tuple[Callable[..., Iterator[CombinatorialObject]], ...]
 SubRecs = Tuple[Callable[..., int], ...]
+SubSamplers = Tuple[Callable[..., CombinatorialObject], ...]
 
 
 class Constructor(abc.ABC):
@@ -63,6 +65,18 @@ class Constructor(abc.ABC):
         self, subgens: SubGens, **parameters: int
     ) -> Iterator[Tuple[CombinatorialObject, ...]]:
         """Return the subobjs/image of the bijection implied by the constructor."""
+
+    @abc.abstractmethod
+    def random_sample_sub_objects(
+        self,
+        parent_count: int,
+        subsamplers: SubSamplers,
+        subrecs: SubRecs,
+        n: int,
+        **parameters: int
+    ):
+        """Return a randomly sampled subobjs/image of the bijection implied
+        by the constructor."""
 
     @staticmethod
     def get_eq_symbol() -> str:
@@ -163,6 +177,29 @@ class CartesianProduct(Constructor):
             ):
                 yield tuple(sub_objs)
 
+    def random_sample_sub_objects(
+        self,
+        parent_count: int,
+        subsamplers: SubSamplers,
+        subrecs: SubRecs,
+        n: int,
+        **parameters: int
+    ):
+        assert not parameters, "only implemented in one variable"
+        random_choice = randint(1, parent_count)
+        total = 0
+        for comp in self._valid_compositions(n=n):
+            tmp = 1
+            for i, rec in enumerate(subrecs):
+                tmp *= rec(n=comp[i])
+                if tmp == 0:
+                    break
+            total += tmp
+            if random_choice <= total:
+                return tuple(
+                    subsampler(n=i) for i, subsampler in zip(comp, subsamplers)
+                )
+
     @staticmethod
     def get_eq_symbol() -> str:
         return "="
@@ -205,9 +242,29 @@ class DisjointUnion(Constructor):
     ) -> Iterator[Tuple[CombinatorialObject, ...]]:
         assert len(parameters) == 1, "only implemented in one variable, namely 'n'"
         for i, subgen in enumerate(subgens):
-            for gp in subgen(**parameters):
-                yield tuple(None for _ in range(i)) + (gp,) + tuple(
+            for obj in subgen(**parameters):
+                yield tuple(None for _ in range(i)) + (obj,) + tuple(
                     None for _ in range(len(subgens) - i - 1)
+                )
+
+    def random_sample_sub_objects(
+        self,
+        parent_count: int,
+        subsamplers: SubSamplers,
+        subrecs: SubRecs,
+        n: int,
+        **parameters: int
+    ):
+        random_choice = randint(1, parent_count)
+        total = 0
+        for idx, (subrec, subsampler) in enumerate(zip(subrecs, subsamplers)):
+            total += subrec(n=n, **parameters)
+            if random_choice <= total:
+                obj = subsampler(n=n, **parameters)
+                return (
+                    tuple(None for _ in range(idx))
+                    + (obj,)
+                    + tuple(None for _ in range(len(subrecs) - idx - 1))
                 )
 
     @staticmethod

@@ -15,7 +15,6 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
-    Union,
 )
 
 from sympy import Eq, Function
@@ -46,10 +45,11 @@ class Rule:
         self.strategy = strategy
         self.count_cache: Dict[Any, int] = {}
         self.obj_cache: Dict[Any, List[CombinatorialObject]] = {}
-        self.subrecs: Union[None, Tuple[Callable[..., int], ...]] = None
-        self.subgenerators: Union[
-            None, Tuple[Callable[..., Iterator[CombinatorialObject]], ...]
+        self.subrecs: Optional[Tuple[Callable[..., int], ...]] = None
+        self.subgenerators: Optional[
+            Tuple[Callable[..., Iterator[CombinatorialObject]], ...]
         ] = (None)
+        self.subsamplers: Optional[Tuple[Callable[..., CombinatorialObject], ...]]
         self._children = children
 
     @property
@@ -92,6 +92,9 @@ class Rule:
         )
         self.subgenerators = tuple(
             get_subrule(child).generate_objects_of_size for child in self.children
+        )
+        self.subsamplers = tuple(
+            get_subrule(child).random_sample_object_of_size for child in self.children
         )
 
     @property
@@ -212,6 +215,20 @@ class Rule:
             yield obj
             res.append(obj)
         self.obj_cache[key] = res
+
+    def random_sample_object_of_size(
+        self, n: int, **parameters: int
+    ) -> CombinatorialObject:
+        assert self.subrecs is not None, "you must call the set_subrecs function first"
+        assert (
+            self.subsamplers is not None
+        ), "you must call the set_subrecs function first"
+        total_count = self.count_objects_of_size(n=n, **parameters)
+        subobjs = self.constructor.random_sample_sub_objects(
+            total_count, self.subsamplers, self.subrecs, n, **parameters
+        )
+        obj = self.backward_map(subobjs)
+        return obj
 
     def __eq__(self, other) -> bool:
         return (
@@ -452,3 +469,10 @@ class VerificationRule(Rule):
             yield obj
             res.append(obj)
         self.obj_cache[key] = res
+
+    def random_sample_object_of_size(
+        self, n: int, **parameters: int
+    ) -> CombinatorialObject:
+        return self.strategy.random_sample_object_of_size(
+            self.comb_class, n, **parameters
+        )
