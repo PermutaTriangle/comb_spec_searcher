@@ -169,6 +169,15 @@ class CombinatorialSpecification:
         for obj in self.root_rule.generate_objects_of_size(n, **parameters):
             yield obj
 
+    def random_sample_object_of_size(
+        self, n: int, **parameters: int
+    ) -> CombinatorialObject:
+        """
+        Return a uniformly random object of the given size. This is done using
+        the "recursive" method.
+        """
+        return self.root_rule.random_sample_object_of_size(n, **parameters)
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, CombinatorialSpecification):
             return NotImplemented
