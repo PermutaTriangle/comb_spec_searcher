@@ -182,11 +182,11 @@ objects later.
 
 .. code:: python
 
-   ...     def is_atom(self) -> bool:
+   ...     def is_atom(self):
    ...        """Return True if the class contains a single word."""
    ...        return self.just_prefix
    ...
-   ...     def minimum_size_of_object(self) -> int:
+   ...     def minimum_size_of_object(self):
    ...        """Return the size of the smallest object in the class."""
    ...        return len(self.prefix)
 
@@ -233,9 +233,7 @@ create multiple rules, and as such should be implemented as generators.
 
 
    >>> class ExpansionStrategy(DisjointUnionStrategy[AvoidingWithPrefix]):
-   ...     def decomposition_function(
-   ...        self, avoiding_with_prefix: AvoidingWithPrefix
-   ...     ) -> Optional[Tuple[AvoidingWithPrefix, ...]]:
+   ...     def decomposition_function(self, avoiding_with_prefix):
    ...        if not avoiding_with_prefix.just_prefix:
    ...           alphabet, prefix, patterns = (
    ...                 avoiding_with_prefix.alphabet,
@@ -248,15 +246,10 @@ create multiple rules, and as such should be implemented as generators.
    ...                 children.append(ends_with_a)
    ...           return tuple(children)
    ...
-   ...     def formal_step(self) -> str:
+   ...     def formal_step(self):
    ...        return "Either just the prefix, or append a letter from the alphabet"
    ...
-   ...     def forward_map(
-   ...        self,
-   ...        avoiding_with_prefix: AvoidingWithPrefix,
-   ...        word: CombinatorialObject,
-   ...        children: Optional[Tuple[AvoidingWithPrefix, ...]] = None,
-   ...     ) -> Tuple[Word, ...]:
+   ...     def forward_map(self, avoiding_with_prefix, word, children=None):
    ...        """
    ...        The backward direction of the underlying bijection used for object
    ...        generation and sampling.
@@ -275,14 +268,14 @@ create multiple rules, and as such should be implemented as generators.
    ...                    + tuple(None for _ in range(len(children) - idx - 1))
    ...                 )
    ...
-   ...     def __str__(self) -> str:
+   ...     def __str__(self):
    ...        return self.formal_step()
    ...
-   ...     def __repr__(self) -> str:
+   ...     def __repr__(self):
    ...        return self.__class__.__name__ + "()"
    ...
    ...     @classmethod
-   ...     def from_dict(cls, d) -> "ExpansionStrategy":
+   ...     def from_dict(cls, d):
    ...        return cls()
 
 
@@ -299,9 +292,7 @@ constructor is cartesian product a ``DecompositionRule``.
 
 
    >>> class RemoveFrontOfPrefix(CartesianProductStrategy[AvoidingWithPrefix]):
-   ...     def decomposition_function(
-   ...        self, avoiding_with_prefix: AvoidingWithPrefix
-   ...     ) -> Union[Tuple[AvoidingWithPrefix, ...], None]:
+   ...     def decomposition_function(self, avoiding_with_prefix):
    ...        """If the k is the maximum size of a pattern to be avoided, then any
    ...        occurrence using indices further to the right of the prefix can use at
    ...        most the last k - 1 letters in the prefix."""
@@ -319,7 +310,7 @@ constructor is cartesian product a ``DecompositionRule``.
    ...                 end = AvoidingWithPrefix(end_prefix, patterns, alphabet)
    ...                 return (start, end)
    ...
-   ...     def index_safe_to_remove_up_to(self, avoiding_with_prefix: AvoidingWithPrefix):
+   ...     def index_safe_to_remove_up_to(self, avoiding_with_prefix):
    ...        prefix, patterns = (
    ...           avoiding_with_prefix.prefix,
    ...           avoiding_with_prefix.patterns,
@@ -334,15 +325,10 @@ constructor is cartesian product a ``DecompositionRule``.
    ...           safe = i + 1
    ...        return safe
    ...
-   ...     def formal_step(self) -> str:
+   ...     def formal_step(self):
    ...        return "removing redundant prefix"
    ...
-   ...     def backward_map(
-   ...        self,
-   ...        avoiding_with_prefix: AvoidingWithPrefix,
-   ...        words: Tuple[CombinatorialObject, ...],
-   ...        children: Optional[Tuple[AvoidingWithPrefix, ...]] = None,
-   ...     ) -> Word:
+   ...     def backward_map(self, avoiding_with_prefix, words, children=None):
    ...        """
    ...        The forward direction of the underlying bijection used for object
    ...        generation and sampling.
@@ -355,12 +341,7 @@ constructor is cartesian product a ``DecompositionRule``.
    ...           assert children is not None
    ...        return Word(words[0] + words[1])
    ...
-   ...     def forward_map(
-   ...        self,
-   ...        comb_class: AvoidingWithPrefix,
-   ...        word: CombinatorialObject,
-   ...        children: Optional[Tuple[AvoidingWithPrefix, ...]] = None,
-   ...     ) -> Tuple[Word, ...]:
+   ...     def forward_map(self, comb_class, word, children=None):
    ...        """
    ...        The backward direction of the underlying bijection used for object
    ...        generation and sampling.
@@ -375,10 +356,10 @@ constructor is cartesian product a ``DecompositionRule``.
    ...     def from_dict(cls, d):
    ...        return cls()
    ...
-   ...     def __str__(self) -> str:
+   ...     def __str__(self):
    ...        return self.formal_step()
    ...
-   ...     def __repr__(self) -> str:
+   ...     def __repr__(self):
    ...        return self.__class__.__name__ + "()"
 
 With these three strategies we are now ready to perform combinatorial
