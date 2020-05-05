@@ -4,6 +4,7 @@ from .combinatorial_class import CombinatorialClass, CombinatorialObject
 from .proof_tree import ProofTree
 from .specification import CombinatorialSpecification
 from .strategies import (
+    AbstractStrategy,
     AtomStrategy,
     CartesianProduct,
     CartesianProductStrategy,

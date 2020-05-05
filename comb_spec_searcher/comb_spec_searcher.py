@@ -24,6 +24,7 @@ from .exception import (
 from .rule_db import RuleDB
 from .specification import CombinatorialSpecification
 from .strategies import (
+    AbstractStrategy,
     Rule,
     Strategy,
     StrategyGenerator,
@@ -134,13 +135,13 @@ class CombinatorialSpecificationSearcher:
         self, comb_class: CombinatorialClass, strategy: CSSstrategy
     ) -> Iterator[Rule]:
         """Yield all the rules given by a strategy/strategy generator."""
-        if isinstance(strategy, (Strategy, VerificationStrategy)):
+        if isinstance(strategy, AbstractStrategy):
             yield strategy(comb_class, **self.kwargs)
         elif isinstance(strategy, StrategyGenerator):
             for strat in strategy(comb_class, **self.kwargs):
                 if isinstance(strat, Rule):
                     yield strat
-                elif isinstance(strat, Strategy):
+                elif isinstance(strat, AbstractStrategy):
                     yield strat(comb_class, **self.kwargs)
 
     @cssiteratortimer("_expand_class_with_strategy")
@@ -154,20 +155,21 @@ class CombinatorialSpecificationSearcher:
         """
         Will expand the class with given strategy. Return time taken.
         """
+        logger.debug(
+            "Expanding label %s with %s",
+            label,
+            strategy_generator,
+            extra=self.logger_kwargs,
+        )
         if label is None:
             label = self.classdb.get_label(comb_class)
 
-        for strategy in self._rules_from_strategy(comb_class, strategy_generator):
-            if isinstance(strategy, Strategy):
-                rule = strategy(comb_class)
-            elif isinstance(strategy, Rule):
-                rule = strategy
-            else:
-                raise TypeError(
-                    "Attempting to add non Rule type. A Strategy Generator's"
-                    " __call__ method should yield Strategy or "
-                    "Strategy(comb_class, children) object."
-                )
+        for rule in self._rules_from_strategy(comb_class, strategy_generator):
+            assert isinstance(rule, Rule), (
+                "Attempting to add non Rule type. A Strategy Generator's"
+                " __call__ method should yield Strategy or "
+                "Strategy(comb_class, children) object."
+            )
             try:
                 children = rule.children
             except StrategyDoesNotApply:

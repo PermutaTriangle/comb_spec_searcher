@@ -69,6 +69,7 @@ if TYPE_CHECKING:
 
 
 __all__ = (
+    "AbstractStrategy",
     "CartesianProductStrategy",
     "DisjointUnionStrategy",
     "Strategy",
