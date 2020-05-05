@@ -184,12 +184,10 @@ class CombinatorialSpecificationSearcher:
             end_labels = [self.classdb.get_label(comb_class) for comb_class in children]
             # TODO: observe that creating this constructor could be costly, e.g. Cartesian
             logger.debug(
-                "Adding combinatorial rule %s -> %s with constructor"
-                " '%s'. Explanation: %s",
+                "Adding combinatorial rule %s -> %s\n%s",
                 label,
                 tuple(end_labels),
-                rule.constructor if end_labels else "verified",
-                rule.formal_step,
+                rule,
                 extra=self.logger_kwargs,
             )
 
