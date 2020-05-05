@@ -182,6 +182,7 @@ class CombinatorialSpecificationSearcher:
                 )
                 continue
             end_labels = [self.classdb.get_label(comb_class) for comb_class in children]
+            # TODO: observe that creating this constructor could be costly, e.g. Cartesian
             logger.debug(
                 "Adding combinatorial rule %s -> %s with constructor"
                 " '%s'. Explanation: %s",

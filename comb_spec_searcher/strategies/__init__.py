@@ -1,6 +1,7 @@
 from .constructor import CartesianProduct, Constructor, DisjointUnion
 from .rule import EquivalencePathRule, ReverseRule, Rule, VerificationRule
 from .strategy import (
+    AtomStrategy,
     CartesianProductStrategy,
     DisjointUnionStrategy,
     EmptyStrategy,
