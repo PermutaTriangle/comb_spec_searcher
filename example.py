@@ -35,6 +35,7 @@ with respect to factor order is given.
 >>> specification.count_objects_of_size(n=15)
 9798
 """
+from itertools import product
 from typing import Iterable, Optional, Tuple, Union
 
 from comb_spec_searcher import (
@@ -142,6 +143,25 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
 
     def minimum_size_of_object(self) -> int:
         return len(self.prefix)
+
+    def objects_of_size(self, size):
+        """Yield the words of given size that start with prefix and avoid the
+       patterns. If just_prefix, then only yield that word."""
+
+        def possible_words():
+            """Yield all words of given size over the alphabet with prefix"""
+            if len(self.prefix) > size:
+                return
+            for letters in product(self.alphabet, repeat=size - len(self.prefix)):
+                yield self.prefix + "".join(a for a in letters)
+
+        if self.just_prefix:
+            if size == len(self.prefix) and not self.is_empty():
+                yield self.prefix
+            return
+        for word in possible_words():
+            if all(patt not in word for patt in self.patterns):
+                yield word
 
 
 # the strategies

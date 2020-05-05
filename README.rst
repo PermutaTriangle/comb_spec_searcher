@@ -146,7 +146,7 @@ if the same class appears multiple times.
 
 Perhaps the most important function to be implemented is the
 ``is_empty`` function. This should return ``True`` if there are no
-objects of any length in the class, otherwise ``False``. If it is not
+objects of any size in the class, otherwise ``False``. If it is not
 correctly implemented it may lead to tautological specifications. For
 example, in our case the class is empty if and only if the prefix
 contains a pattern to be avoided.
@@ -233,57 +233,57 @@ create multiple rules, and as such should be implemented as generators.
 
 
    >>> class ExpansionStrategy(DisjointUnionStrategy[AvoidingWithPrefix]):
-   ...      def decomposition_function(
-   ...         self, avoiding_with_prefix: AvoidingWithPrefix
-   ...      ) -> Optional[Tuple[AvoidingWithPrefix, ...]]:
-   ...         if not avoiding_with_prefix.just_prefix:
-   ...            alphabet, prefix, patterns = (
-   ...                  avoiding_with_prefix.alphabet,
-   ...                  avoiding_with_prefix.prefix,
-   ...                  avoiding_with_prefix.patterns,
-   ...            )
-   ...            children = [AvoidingWithPrefix(prefix, patterns, alphabet, True)]
-   ...            for a in alphabet:
-   ...                  ends_with_a = AvoidingWithPrefix(prefix + a, patterns, alphabet)
-   ...                  children.append(ends_with_a)
-   ...            return tuple(children)
+   ...     def decomposition_function(
+   ...        self, avoiding_with_prefix: AvoidingWithPrefix
+   ...     ) -> Optional[Tuple[AvoidingWithPrefix, ...]]:
+   ...        if not avoiding_with_prefix.just_prefix:
+   ...           alphabet, prefix, patterns = (
+   ...                 avoiding_with_prefix.alphabet,
+   ...                 avoiding_with_prefix.prefix,
+   ...                 avoiding_with_prefix.patterns,
+   ...           )
+   ...           children = [AvoidingWithPrefix(prefix, patterns, alphabet, True)]
+   ...           for a in alphabet:
+   ...                 ends_with_a = AvoidingWithPrefix(prefix + a, patterns, alphabet)
+   ...                 children.append(ends_with_a)
+   ...           return tuple(children)
    ...
-   ...      def formal_step(self) -> str:
-   ...         return "Either just the prefix, or append a letter from the alphabet"
+   ...     def formal_step(self) -> str:
+   ...        return "Either just the prefix, or append a letter from the alphabet"
    ...
-   ...      def forward_map(
-   ...         self,
-   ...         avoiding_with_prefix: AvoidingWithPrefix,
-   ...         word: CombinatorialObject,
-   ...         children: Optional[Tuple[AvoidingWithPrefix, ...]] = None,
-   ...      ) -> Tuple[Word, ...]:
-   ...         """
-   ...         The backward direction of the underlying bijection used for object
-   ...         generation and sampling.
-   ...         """
-   ...         assert isinstance(word, Word)
-   ...         if children is None:
-   ...            children = self.decomposition_function(avoiding_with_prefix)
-   ...            assert children is not None
-   ...         if len(word) == len(avoiding_with_prefix.prefix):
-   ...            return (word,) + tuple(None for i in range(len(children) - 1))
-   ...         for idx, child in enumerate(children[1:]):
-   ...            if word[: len(child.prefix)] == child.prefix:
-   ...                  return (
-   ...                     tuple(None for _ in range(idx + 1))
-   ...                     + (child,)
-   ...                     + tuple(None for _ in range(len(children) - idx - 1))
-   ...                  )
+   ...     def forward_map(
+   ...        self,
+   ...        avoiding_with_prefix: AvoidingWithPrefix,
+   ...        word: CombinatorialObject,
+   ...        children: Optional[Tuple[AvoidingWithPrefix, ...]] = None,
+   ...     ) -> Tuple[Word, ...]:
+   ...        """
+   ...        The backward direction of the underlying bijection used for object
+   ...        generation and sampling.
+   ...        """
+   ...        assert isinstance(word, Word)
+   ...        if children is None:
+   ...           children = self.decomposition_function(avoiding_with_prefix)
+   ...           assert children is not None
+   ...        if len(word) == len(avoiding_with_prefix.prefix):
+   ...           return (word,) + tuple(None for i in range(len(children) - 1))
+   ...        for idx, child in enumerate(children[1:]):
+   ...           if word[: len(child.prefix)] == child.prefix:
+   ...                 return (
+   ...                    tuple(None for _ in range(idx + 1))
+   ...                    + (child,)
+   ...                    + tuple(None for _ in range(len(children) - idx - 1))
+   ...                 )
    ...
-   ...      def __str__(self) -> str:
-   ...         return self.formal_step()
+   ...     def __str__(self) -> str:
+   ...        return self.formal_step()
    ...
-   ...      def __repr__(self) -> str:
-   ...         return self.__class__.__name__ + "()"
+   ...     def __repr__(self) -> str:
+   ...        return self.__class__.__name__ + "()"
    ...
-   ...      @classmethod
-   ...      def from_dict(cls, d) -> "ExpansionStrategy":
-   ...         return cls()
+   ...     @classmethod
+   ...     def from_dict(cls, d) -> "ExpansionStrategy":
+   ...        return cls()
 
 
 The final strategy we will need is one that peels off much as possible
@@ -299,87 +299,87 @@ constructor is cartesian product a ``DecompositionRule``.
 
 
    >>> class RemoveFrontOfPrefix(CartesianProductStrategy[AvoidingWithPrefix]):
-   ...      def decomposition_function(
-   ...         self, avoiding_with_prefix: AvoidingWithPrefix
-   ...      ) -> Union[Tuple[AvoidingWithPrefix, ...], None]:
-   ...         """If the k is the maximum length of a pattern to be avoided, then any
-   ...         occurrence using indices further to the right of the prefix can use at
-   ...         most the last k - 1 letters in the prefix."""
-   ...         if not avoiding_with_prefix.just_prefix:
-   ...            safe = self.index_safe_to_remove_up_to(avoiding_with_prefix)
-   ...            if safe > 0:
-   ...                  prefix, patterns, alphabet = (
-   ...                     avoiding_with_prefix.prefix,
-   ...                     avoiding_with_prefix.patterns,
-   ...                     avoiding_with_prefix.alphabet,
-   ...                  )
-   ...                  start_prefix = prefix[:safe]
-   ...                  end_prefix = prefix[safe:]
-   ...                  start = AvoidingWithPrefix(start_prefix, patterns, alphabet, True)
-   ...                  end = AvoidingWithPrefix(end_prefix, patterns, alphabet)
-   ...                  return (start, end)
+   ...     def decomposition_function(
+   ...        self, avoiding_with_prefix: AvoidingWithPrefix
+   ...     ) -> Union[Tuple[AvoidingWithPrefix, ...], None]:
+   ...        """If the k is the maximum size of a pattern to be avoided, then any
+   ...        occurrence using indices further to the right of the prefix can use at
+   ...        most the last k - 1 letters in the prefix."""
+   ...        if not avoiding_with_prefix.just_prefix:
+   ...           safe = self.index_safe_to_remove_up_to(avoiding_with_prefix)
+   ...           if safe > 0:
+   ...                 prefix, patterns, alphabet = (
+   ...                    avoiding_with_prefix.prefix,
+   ...                    avoiding_with_prefix.patterns,
+   ...                    avoiding_with_prefix.alphabet,
+   ...                 )
+   ...                 start_prefix = prefix[:safe]
+   ...                 end_prefix = prefix[safe:]
+   ...                 start = AvoidingWithPrefix(start_prefix, patterns, alphabet, True)
+   ...                 end = AvoidingWithPrefix(end_prefix, patterns, alphabet)
+   ...                 return (start, end)
    ...
-   ...      def index_safe_to_remove_up_to(self, avoiding_with_prefix: AvoidingWithPrefix):
-   ...         prefix, patterns = (
-   ...            avoiding_with_prefix.prefix,
-   ...            avoiding_with_prefix.patterns,
-   ...         )
-   ...         # safe will be the index of the prefix in which we can remove upto without
-   ...         # affecting the avoidance conditions
-   ...         safe = max(0, len(prefix) - max(len(p) for p in patterns) + 1)
-   ...         for i in range(safe, len(prefix)):
-   ...            end = prefix[i:]
-   ...            if any(end == patt[: len(end)] for patt in patterns):
-   ...                  break
-   ...            safe = i + 1
-   ...         return safe
+   ...     def index_safe_to_remove_up_to(self, avoiding_with_prefix: AvoidingWithPrefix):
+   ...        prefix, patterns = (
+   ...           avoiding_with_prefix.prefix,
+   ...           avoiding_with_prefix.patterns,
+   ...        )
+   ...        # safe will be the index of the prefix in which we can remove upto without
+   ...        # affecting the avoidance conditions
+   ...        safe = max(0, len(prefix) - max(len(p) for p in patterns) + 1)
+   ...        for i in range(safe, len(prefix)):
+   ...           end = prefix[i:]
+   ...           if any(end == patt[: len(end)] for patt in patterns):
+   ...                 break
+   ...           safe = i + 1
+   ...        return safe
    ...
-   ...      def formal_step(self) -> str:
-   ...         return "removing redundant prefix"
+   ...     def formal_step(self) -> str:
+   ...        return "removing redundant prefix"
    ...
-   ...      def backward_map(
-   ...         self,
-   ...         avoiding_with_prefix: AvoidingWithPrefix,
-   ...         words: Tuple[CombinatorialObject, ...],
-   ...         children: Optional[Tuple[AvoidingWithPrefix, ...]] = None,
-   ...      ) -> Word:
-   ...         """
-   ...         The forward direction of the underlying bijection used for object
-   ...         generation and sampling.
-   ...         """
-   ...         assert len(words) == 2
-   ...         assert isinstance(words[0], Word)
-   ...         assert isinstance(words[1], Word)
-   ...         if children is None:
-   ...            children = self.decomposition_function(avoiding_with_prefix)
-   ...            assert children is not None
-   ...         return Word(words[0] + words[1])
+   ...     def backward_map(
+   ...        self,
+   ...        avoiding_with_prefix: AvoidingWithPrefix,
+   ...        words: Tuple[CombinatorialObject, ...],
+   ...        children: Optional[Tuple[AvoidingWithPrefix, ...]] = None,
+   ...     ) -> Word:
+   ...        """
+   ...        The forward direction of the underlying bijection used for object
+   ...        generation and sampling.
+   ...        """
+   ...        assert len(words) == 2
+   ...        assert isinstance(words[0], Word)
+   ...        assert isinstance(words[1], Word)
+   ...        if children is None:
+   ...           children = self.decomposition_function(avoiding_with_prefix)
+   ...           assert children is not None
+   ...        return Word(words[0] + words[1])
    ...
-   ...      def forward_map(
-   ...         self,
-   ...         comb_class: AvoidingWithPrefix,
-   ...         word: CombinatorialObject,
-   ...         children: Optional[Tuple[AvoidingWithPrefix, ...]] = None,
-   ...      ) -> Tuple[Word, ...]:
-   ...         """
-   ...         The backward direction of the underlying bijection used for object
-   ...         generation and sampling.
-   ...         """
-   ...         assert isinstance(word, Word)
-   ...         if children is None:
-   ...            children = self.decomposition_function(comb_class)
-   ...            assert children is not None
-   ...         return Word(children[0].prefix), Word(word[len(children[0].prefix) :])
+   ...     def forward_map(
+   ...        self,
+   ...        comb_class: AvoidingWithPrefix,
+   ...        word: CombinatorialObject,
+   ...        children: Optional[Tuple[AvoidingWithPrefix, ...]] = None,
+   ...     ) -> Tuple[Word, ...]:
+   ...        """
+   ...        The backward direction of the underlying bijection used for object
+   ...        generation and sampling.
+   ...        """
+   ...        assert isinstance(word, Word)
+   ...        if children is None:
+   ...           children = self.decomposition_function(comb_class)
+   ...           assert children is not None
+   ...        return Word(children[0].prefix), Word(word[len(children[0].prefix) :])
    ...
-   ...      @classmethod
-   ...      def from_dict(cls, d):
-   ...         return cls()
+   ...     @classmethod
+   ...     def from_dict(cls, d):
+   ...        return cls()
    ...
-   ...      def __str__(self) -> str:
-   ...         return self.formal_step()
+   ...     def __str__(self) -> str:
+   ...        return self.formal_step()
    ...
-   ...      def __repr__(self) -> str:
-   ...         return self.__class__.__name__ + "()"
+   ...     def __repr__(self) -> str:
+   ...        return self.__class__.__name__ + "()"
 
 With these three strategies we are now ready to perform combinatorial
 exploration using the following pack.
@@ -425,25 +425,25 @@ counts the number of objects of each size. This can be done by using the
 
 Finally, in order to get initial terms, you will also need to implement
 the ``objects_of_size`` function which should yield all of the objects
-of a given length in the class.
+of a given size in the class.
 
 .. code:: python
 
    >>> from itertools import product
 
-   >>> def objects_of_size(self, length):
-   ...     """Yield the words of given length that start with prefix and avoid the
+   >>> def objects_of_size(self, size):
+   ...     """Yield the words of given size that start with prefix and avoid the
    ...     patterns. If just_prefix, then only yield that word."""
    ...     def possible_words():
-   ...         """Yield all words of given length over the alphabet with prefix"""
-   ...         if len(self.prefix) > length:
+   ...         """Yield all words of given size over the alphabet with prefix"""
+   ...         if len(self.prefix) > size:
    ...            return
    ...         for letters in product(self.alphabet,
-   ...                                 repeat=length - len(self.prefix)):
+   ...                                 repeat=size - len(self.prefix)):
    ...             yield self.prefix + "".join(a for a in letters)
    ...
    ...     if self.just_prefix:
-   ...         if length == len(self.prefix) and not self.is_empty():
+   ...         if size == len(self.prefix) and not self.is_empty():
    ...             yield self.prefix
    ...         return
    ...     for word in possible_words():
@@ -461,12 +461,12 @@ With these in place if we then call the ``get_genf`` function
 we see that the the generating function is
 ``F = -(x**7 + x**5 + x**4 + x**3 + x**2 + 1)/(x**6 + x**3 - x**2 + 2*x - 1)``.
 
-Moreover, we can get directly the number of objects by length with the method
+Moreover, we can get directly the number of objects by size with the method
 `count_objects_of_size`.
 
 .. code:: python
 
-   >>> [spec.count_objects_of_length(i) for i in range(11)]
+   >>> [spec.count_objects_of_size(i) for i in range(11)]
    [1, 2, 4, 8, 15, 27, 48, 87, 157, 283, 511]
 
 You can now try this yourself using the file ``example.py``, which can
