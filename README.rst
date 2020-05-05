@@ -183,12 +183,12 @@ objects later.
 .. code:: python
 
    ...     def is_atom(self) -> bool:
-   ...         """Return True if the class contains a single word."""
-   ...         return self.just_prefix
+   ...        """Return True if the class contains a single word."""
+   ...        return self.just_prefix
    ...
-   ...      def minimum_size_of_object(self) -> int:
-   ...         """Return the size of the smallest object in the class."""
-   ...         return len(self.prefix)
+   ...     def minimum_size_of_object(self) -> int:
+   ...        """Return the size of the smallest object in the class."""
+   ...        return len(self.prefix)
 
 Our ``CombinatorialClass`` is now ready. What is left to do is create
 the strategies that the ``CombinatorialSpecificationSearcher`` will use
