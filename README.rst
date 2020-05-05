@@ -198,11 +198,11 @@ we will populate in the remainder of this example.
 
 .. code:: python
 
-   >>> from comb_spec_searcher import StrategyPack
+   >>> from comb_spec_searcher import AtomStrategy, StrategyPack
    >>> pack = StrategyPack(initial_strats=[],
    ...                     inferral_strats=[],
    ...                     expansion_strats=[],
-   ...                     ver_strats=[],
+   ...                     ver_strats=[AtomStrategy()],
    ...                     name=("Finding specification for words avoiding "
    ...                           "consecutive patterns."))
 
@@ -213,16 +213,25 @@ returns a single equivalence rule - ``expansion_strats``: yields rules
 for classes - ``ver_strats``: returns a rule when the count of a class
 is known.
 
-For example, every word over the alphabet ``Σ`` starting with prefix
-``p`` is either just ``p`` or has prefix ``pa`` for some ``a`` in ``Σ``.
-This rule is splitting the original into disjoint subsets. We call a
-rule using disjoint union a ``DisjointUnionStrategy``. Although in this case
-thereis a unique rule created by the strategy, strategies are assumed to
+In our pack we have already added the AtomStrategy. This will verify any
+combinatorial class that is an atom, in particular this is determined by the
+``is_atom`` method we implemented on ``CombinatorialClass``. To get the
+enumeration at the end, the strategy also uses the method
+``minimum_size_of_object`` on ``CombinatorialClass``. As we've implemented
+these two methods already, we are free to use the ``AtomStrategy``.
+
+Now we will create our first strategy. Every word over the alphabet ``Σ``
+starting with prefix ``p`` is either just ``p`` or has prefix ``pa`` for some
+``a`` in ``Σ``. This rule is splitting the original into disjoint subsets. We
+call a rule using disjoint union a ``DisjointUnionStrategy``. Although in this
+case thereis a unique rule created by the strategy, strategies are assumed to
 create multiple rules, and as such should be implemented as generators.
 
 .. code:: python
 
    >>> from comb_spec_searcher import DisjointUnionStrategy
+
+
    >>> class ExpansionStrategy(DisjointUnionStrategy[AvoidingWithPrefix]):
    ...      def decomposition_function(
    ...         self, avoiding_with_prefix: AvoidingWithPrefix
@@ -286,7 +295,7 @@ constructor is cartesian product a ``DecompositionRule``.
 
 .. code:: python
 
-   >>> from comb_spec_searcher import DecompositionRule
+   >>> from comb_spec_searcher import CartesianProductStrategy
 
 
    >>> class RemoveFrontOfPrefix(CartesianProductStrategy[AvoidingWithPrefix]):
