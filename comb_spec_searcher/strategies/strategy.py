@@ -458,7 +458,7 @@ class VerificationStrategy(AbstractStrategy, Generic[CombinatorialClassType]):
     ) -> Rule:
         if children is None:
             children = self.decomposition_function(comb_class)
-        return VerificationRule(self, comb_class)
+        return VerificationRule(self, comb_class, children)
 
     def pack(self) -> "StrategyPack":
         """

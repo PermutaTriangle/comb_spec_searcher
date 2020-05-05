@@ -143,6 +143,17 @@ class CombinatorialSpecificationSearcher:
                     yield strat
                 elif isinstance(strat, AbstractStrategy):
                     yield strat(comb_class, **self.kwargs)
+                else:
+                    raise InvalidOperationError(
+                        "Attempting to add non Rule type. A Strategy "
+                        "Generator's __call__ method should yield Strategy or "
+                        "Strategy(comb_class, children) object."
+                    )
+        else:
+            raise InvalidOperationError(
+                "CSS can only expand a combinatorial class with "
+                "Strategy and StrategyGenerator"
+            )
 
     @cssiteratortimer("_expand_class_with_strategy")
     def _expand_class_with_strategy(
@@ -165,11 +176,6 @@ class CombinatorialSpecificationSearcher:
             label = self.classdb.get_label(comb_class)
 
         for rule in self._rules_from_strategy(comb_class, strategy_generator):
-            assert isinstance(rule, Rule), (
-                "Attempting to add non Rule type. A Strategy Generator's"
-                " __call__ method should yield Strategy or "
-                "Strategy(comb_class, children) object."
-            )
             try:
                 children = rule.children
             except StrategyDoesNotApply:
