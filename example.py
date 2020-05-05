@@ -320,18 +320,18 @@ if __name__ == "__main__":
     for n in range(20):
         print("=" * 10, n, "=" * 10)
 
-        start = time.time()
+        start_time = time.time()
         print(spec.count_objects_of_size(n))
-        print("Counting time:", round(time.time() - start, 2), "seconds")
+        print("Counting time:", round(time.time() - start_time, 2), "seconds")
 
-        start = time.time()
+        start_time = time.time()
         c = 0
         for _ in spec.generate_objects_of_size(n):
             c += 1
         print(c)
-        print("Object generation time:", round(time.time() - start, 2), "seconds")
+        print("Object generation time:", round(time.time() - start_time, 2), "seconds")
 
-        start = time.time()
-        word = spec.random_sample_object_of_size(n)
-        print(word)
-        print("Time to sample:", round(time.time() - start, 2), "seconds")
+        start_time = time.time()
+        random_word = spec.random_sample_object_of_size(n)
+        print(random_word)
+        print("Time to sample:", round(time.time() - start_time, 2), "seconds")

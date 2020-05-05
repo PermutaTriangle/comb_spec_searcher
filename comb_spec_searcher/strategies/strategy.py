@@ -600,7 +600,8 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass]):
         self, comb_class: CombinatorialClass, n: int, **parameters: int
     ) -> CombinatorialObject:
         if n == comb_class.minimum_size_of_object():
-            return next(comb_class.objects_of_size(n))
+            obj: CombinatorialObject = next(comb_class.objects_of_size(n))
+            return obj
 
     def verified(self, comb_class: CombinatorialClass) -> bool:
         return bool(comb_class.is_atom())
@@ -613,7 +614,7 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass]):
 
     @classmethod
     def from_dict(cls, d: dict) -> "AtomStrategy":
-        return cls(**d)
+        return cls()
 
     def __repr__(self) -> str:
         return self.__class__.__name__ + "()"
@@ -662,7 +663,7 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass]):
 
     @classmethod
     def from_dict(cls, d: dict) -> "EmptyStrategy":
-        return cls(**d)
+        return cls()
 
     def __repr__(self) -> str:
         return self.__class__.__name__ + "()"
