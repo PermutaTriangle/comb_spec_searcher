@@ -178,6 +178,9 @@ class CombinatorialSpecification:
         """
         return self.root_rule.random_sample_object_of_size(n, **parameters)
 
+    def number_of_rules(self) -> int:
+        return len(self.rules_dict)
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, CombinatorialSpecification):
             return NotImplemented
@@ -185,7 +188,7 @@ class CombinatorialSpecification:
 
     def __str__(self) -> str:
         res = "A combinatorial specification with {} rules.".format(
-            len(self.rules_dict)
+            self.number_of_rules()
         )
         eqv_paths = {
             rule.comb_class: rule
