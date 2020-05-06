@@ -476,9 +476,9 @@ class CombinatorialSpecificationSearcher:
                 expanding = False
                 logger.info("No more classes to expand.", extra=self.logger_kwargs)
             spec_search_start = time.time()
-            try:
-                logger.debug("Searching for specification.", extra=self.logger_kwargs)
-                specification = self.get_specification(smallest=smallest)
+            logger.debug("Searching for specification.", extra=self.logger_kwargs)
+            specification = self.get_specification(smallest=smallest)
+            if specification is not None:
                 found_string = "Specification found {}\n".format(
                     time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime())
                 )
@@ -489,7 +489,7 @@ class CombinatorialSpecificationSearcher:
                 found_string += json.dumps(specification.to_jsonable())
                 logger.info(found_string, extra=self.logger_kwargs)
                 return specification
-            except SpecificationNotFound:
+            else:
                 logger.debug("No specification found.", extra=self.logger_kwargs)
                 if max_time is not None:
                     if time.time() - auto_search_start > max_time:
@@ -508,7 +508,9 @@ class CombinatorialSpecificationSearcher:
                 )
 
     @cssmethodtimer("get specification")
-    def get_specification(self, smallest: bool = False) -> CombinatorialSpecification:
+    def get_specification(
+        self, smallest: bool = False
+    ) -> Optional[CombinatorialSpecification]:
         """
         Return a CombinatorialSpecification if the universe contains one.
 
@@ -527,7 +529,7 @@ class CombinatorialSpecificationSearcher:
                     self.start_label, iterative=self.iterative
                 )
         except SpecificationNotFound:
-            raise SpecificationNotFound("There is no specification in the universe.")
+            return None
         start_class = self.classdb.get_class(self.start_label)
         comb_class_eqv_paths = tuple(
             tuple(self.classdb.get_class(l) for l in path) for path in eqv_paths
