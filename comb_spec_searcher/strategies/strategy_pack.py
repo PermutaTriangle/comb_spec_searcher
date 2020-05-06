@@ -52,7 +52,7 @@ class StrategyPack:
         self.inferral_strats = tuple(inferral_strats)
         self.ver_strats = tuple(ver_strats)
         self.expansion_strats = tuple(tuple(x) for x in expansion_strats)
-        self.symmetries = tuple(symmetries) if symmetries is not None else []
+        self.symmetries = tuple(symmetries) if symmetries is not None else tuple()
         self.iterative = iterative
 
     def __contains__(self, strategy: CSSstrategy) -> bool:
@@ -207,11 +207,9 @@ class StrategyPack:
             iterative=self.iterative,
         )
 
-    def add_verification(
-        self, strategy: CSSstrategy, name_ext: str = ""
-    ) -> "StrategyPack":
+    def add_symmetry(self, strategy: CSSstrategy, name_ext: str = "") -> "StrategyPack":
         """
-        Create a new pack with an additional verification strategy and append
+        Create a new pack with an additional symmetry strategy and append
         name_ext to the name of the pack.
         """
         if strategy in self:
@@ -221,9 +219,45 @@ class StrategyPack:
         return self.__class__(
             name="_".join([self.name, name_ext]) if name_ext else self.name,
             initial_strats=self.initial_strats,
-            ver_strats=self.ver_strats + (strategy,),
+            ver_strats=self.ver_strats,
+            inferral_strats=self.inferral_strats,
+            expansion_strats=self.expansion_strats,
+            symmetries=self.symmetries + (strategy,),
+            iterative=self.iterative,
+        )
+
+    def add_verification(
+        self, strategy: CSSstrategy, name_ext: str = "", replace: bool = False
+    ) -> "StrategyPack":
+        """
+        Create a new pack with an additional verification strategy and append
+        name_ext to the name of the pack.
+        If replace is set, it will ignore old verification strategies
+        """
+        if not replace and strategy in self:
+            raise ValueError(
+                ("The strategy {!r} is already in pack." "".format(strategy))
+            )
+        return self.__class__(
+            name="_".join([self.name, name_ext]) if name_ext else self.name,
+            initial_strats=self.initial_strats,
+            ver_strats=(tuple() if replace else self.ver_strats) + (strategy,),
             inferral_strats=self.inferral_strats,
             expansion_strats=self.expansion_strats,
             symmetries=self.symmetries,
             iterative=self.iterative,
+        )
+
+    def make_iterative(self, name_ext: str = "") -> "StrategyPack":
+        """
+        Create a new pack with same strategies but iterative
+        """
+        return self.__class__(
+            name="_".join([self.name, name_ext]) if name_ext else self.name,
+            initial_strats=self.initial_strats,
+            ver_strats=self.ver_strats,
+            inferral_strats=self.inferral_strats,
+            expansion_strats=self.expansion_strats,
+            symmetries=self.symmetries,
+            iterative=True,
         )
