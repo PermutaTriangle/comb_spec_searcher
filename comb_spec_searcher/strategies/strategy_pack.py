@@ -25,9 +25,11 @@ If the iterative boolean is True, then CSS will search for an iterative
 specification.
 """
 from itertools import chain
-from typing import Iterable
+from typing import Iterable, Type, TypeVar
 
 from .strategy import CSSstrategy, Strategy
+
+PackType = TypeVar("PackType", bound="StrategyPack")
 
 __all__ = "StrategyPack"
 
@@ -136,7 +138,7 @@ class StrategyPack:
         }
 
     @classmethod
-    def from_dict(cls, d: dict) -> "StrategyPack":
+    def from_dict(cls: Type[PackType], d: dict) -> PackType:
         """
         Return a StrategyPack from the dict object return by the to_jsonable method.
         """
@@ -169,7 +171,9 @@ class StrategyPack:
 
     # Method to add power to a pack
     # Pack are immutable, these methods return a new pack.
-    def add_initial(self, strategy: CSSstrategy, name_ext: str = "") -> "StrategyPack":
+    def add_initial(
+        self: PackType, strategy: CSSstrategy, name_ext: str = ""
+    ) -> PackType:
         """
         Create a new pack with an additional initial strategy and append
         name_ext to the name of the pack.
@@ -188,7 +192,9 @@ class StrategyPack:
             iterative=self.iterative,
         )
 
-    def add_inferral(self, strategy: CSSstrategy, name_ext: str = "") -> "StrategyPack":
+    def add_inferral(
+        self: PackType, strategy: CSSstrategy, name_ext: str = ""
+    ) -> PackType:
         """
         Create a new pack with an additional inferral strategy and append
         name_ext to the name of the pack.
@@ -207,7 +213,9 @@ class StrategyPack:
             iterative=self.iterative,
         )
 
-    def add_symmetry(self, strategy: CSSstrategy, name_ext: str = "") -> "StrategyPack":
+    def add_symmetry(
+        self: PackType, strategy: CSSstrategy, name_ext: str = ""
+    ) -> PackType:
         """
         Create a new pack with an additional symmetry strategy and append
         name_ext to the name of the pack.
@@ -227,8 +235,8 @@ class StrategyPack:
         )
 
     def add_verification(
-        self, strategy: CSSstrategy, name_ext: str = "", replace: bool = False
-    ) -> "StrategyPack":
+        self: PackType, strategy: CSSstrategy, name_ext: str = "", replace: bool = False
+    ) -> PackType:
         """
         Create a new pack with an additional verification strategy and append
         name_ext to the name of the pack.
@@ -248,7 +256,7 @@ class StrategyPack:
             iterative=self.iterative,
         )
 
-    def make_iterative(self, name_ext: str = "") -> "StrategyPack":
+    def make_iterative(self: PackType, name_ext: str = "") -> PackType:
         """
         Create a new pack with same strategies but iterative
         """
