@@ -11,7 +11,7 @@ Currently the constructors are implemented in one variable, namely 'n' which is
 used throughout to denote size.
 """
 import abc
-from functools import reduce
+from functools import reduce, partial
 from itertools import product
 from operator import add, mul
 from random import randint
@@ -47,7 +47,7 @@ class Constructor(abc.ABC):
         """
 
     @abc.abstractmethod
-    def reliance_profile(self, **parameters: int) -> RelianceProfile:
+    def reliance_profile(self, n: int, **parameters: int) -> RelianceProfile:
         """
         Return the reliance profile. That is for the parameters given,
         which parameters of each individual subclass are required.
@@ -100,22 +100,36 @@ class CartesianProduct(Constructor):
     The CartesianProduct is initialised with the children of the rule that is
     being counted. These are needed in the reliance profile. In particular,
     the CombinatorialClass that you are counting must have implemented the
-    methods 'is_positive', and 'is_atom', which are needed to ensure that the
+    methods is_atom' and 'minimum_size_of_object', which are needed to ensure that the
     recursions are productive.
     """
 
     def __init__(self, children: Iterable[CombinatorialClass]):
-        number_of_positive = sum(
-            1 for comb_class in children if comb_class.is_positive()
+        self.minimum_size = sum(
+            comb_class.minimum_size_of_object() for comb_class in children
         )
-        self._reliance_profile_functions = tuple(
-            (lambda n: tuple(range(1, min(2, n - number_of_positive + 2))))
-            if child.is_atom()
-            else (lambda n: tuple(range(1, n - number_of_positive + 2)))
-            if child.is_positive()
-            else (lambda n: tuple(range(0, n - number_of_positive + 1)))
-            for child in children
-        )
+        reliance_profile_functions = []
+        for child in children:
+            min_child_size = child.minimum_size_of_object()
+            if child.is_atom():
+                func = partial(self.child_reliance_profile, min_child_size, atom=True)
+            else:
+                func = partial(self.child_reliance_profile, min_child_size)
+            reliance_profile_functions.append(func)
+
+        self._reliance_profile_functions = tuple(reliance_profile_functions)
+
+    def child_reliance_profile(
+        self, min_child_size: int, n: int, atom: bool = False
+    ) -> Tuple[int, ...]:
+        if atom:
+            return tuple(
+                range(
+                    min_child_size,
+                    min(n - self.minimum_size + min_child_size + 1, min_child_size + 1),
+                )
+            )
+        return tuple(range(min_child_size, n - self.minimum_size + min_child_size + 1))
 
     def is_equivalence(self) -> bool:
         return True
@@ -123,16 +137,16 @@ class CartesianProduct(Constructor):
     def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
         return Eq(lhs_func, reduce(mul, rhs_funcs, 1))
 
-    def reliance_profile(self, **parameters: int) -> RelianceProfile:
+    def reliance_profile(self, n: int, **parameters: int) -> RelianceProfile:
         # TODO: implement in multiple variables
-        assert len(parameters) == 1, "only implemented in one variable, namely 'n'"
-        n = parameters["n"]
+        assert not parameters, "only implemented in one variable, namely 'n'"
         return tuple(f(n) for f in self._reliance_profile_functions)
 
-    def _valid_compositions(self, **parameters: int) -> Iterator[Tuple[int, ...]]:
-        assert len(parameters) == 1, "only implemented in one variable, namely 'n'"
-        n = parameters["n"]
-        reliance_profile = self.reliance_profile(n=n)
+    def _valid_compositions(
+        self, n: int, **parameters: int
+    ) -> Iterator[Tuple[int, ...]]:
+        assert not parameters, "only implemented in one variable, namely 'n'"
+        reliance_profile = self.reliance_profile(n)
         if all(reliance_profile):
             minmax = tuple((min(p), max(p)) for p in reliance_profile)
 
@@ -156,7 +170,7 @@ class CartesianProduct(Constructor):
     def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
         assert len(parameters) == 0, "only implemented in one variable, namely 'n'"
         res = 0
-        for comp in self._valid_compositions(n=n):
+        for comp in self._valid_compositions(n):
             tmp = 1
             for i, rec in enumerate(subrecs):
                 tmp *= rec(n=comp[i])
@@ -169,7 +183,7 @@ class CartesianProduct(Constructor):
         self, subgens: SubGens, n: int, **parameters: int
     ) -> Iterator[Tuple[CombinatorialObject, ...]]:
         assert len(parameters) == 0, "only implemented in one variable, namely 'n'"
-        for comp in self._valid_compositions(n=n):
+        for comp in self._valid_compositions(n):
             for sub_objs in product(
                 *tuple(subgen(n=i) for i, subgen in zip(comp, subgens))
             ):
@@ -186,7 +200,7 @@ class CartesianProduct(Constructor):
         assert not parameters, "only implemented in one variable"
         random_choice = randint(1, parent_count)
         total = 0
-        for comp in self._valid_compositions(n=n):
+        for comp in self._valid_compositions(n):
             tmp = 1
             for i, rec in enumerate(subrecs):
                 tmp *= rec(n=comp[i])
@@ -194,9 +208,7 @@ class CartesianProduct(Constructor):
                     break
             total += tmp
             if random_choice <= total:
-                return tuple(
-                    subsampler(n=i) for i, subsampler in zip(comp, subsamplers)
-                )
+                return tuple(subsampler(i) for i, subsampler in zip(comp, subsamplers))
 
     @staticmethod
     def get_eq_symbol() -> str:
@@ -225,11 +237,9 @@ class DisjointUnion(Constructor):
     def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
         return Eq(lhs_func, reduce(add, rhs_funcs, 0))
 
-    # pylint: disable=arguments-differ
-    def reliance_profile(self, **parameters: int) -> RelianceProfile:
+    def reliance_profile(self, n: int, **parameters: int) -> RelianceProfile:
         # TODO: implement in multiple variables
-        assert len(parameters) == 1, "only implemented in one variable, namely 'n'"
-        n = parameters["n"]
+        assert not parameters, "only implemented in one variable, namely 'n'"
         return tuple((n,) for _ in range(self.number_of_children))
 
     def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:

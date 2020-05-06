@@ -35,18 +35,17 @@ with respect to factor order is given.
 >>> specification.count_objects_of_size(n=15)
 9798
 """
-from typing import Iterable, Iterator, Optional, Tuple, Union
-
-from sympy import var
+from itertools import product
+from typing import Iterable, Optional, Tuple, Union
 
 from comb_spec_searcher import (
+    AtomStrategy,
     CartesianProductStrategy,
     CombinatorialClass,
     CombinatorialObject,
     CombinatorialSpecificationSearcher,
     DisjointUnionStrategy,
     StrategyPack,
-    VerificationStrategy,
 )
 
 
@@ -139,14 +138,30 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
 
     # Method required to get the counts
 
-    def is_epsilon(self) -> bool:
-        return self.prefix == "" and self.just_prefix
-
     def is_atom(self) -> bool:
-        return len(self.prefix) == 1 and self.just_prefix
+        return self.just_prefix
 
-    def is_positive(self) -> bool:
-        return len(self.prefix) > 0
+    def minimum_size_of_object(self) -> int:
+        return len(self.prefix)
+
+    def objects_of_size(self, size):
+        """Yield the words of given size that start with prefix and avoid the
+       patterns. If just_prefix, then only yield that word."""
+
+        def possible_words():
+            """Yield all words of given size over the alphabet with prefix"""
+            if len(self.prefix) > size:
+                return
+            for letters in product(self.alphabet, repeat=size - len(self.prefix)):
+                yield self.prefix + "".join(a for a in letters)
+
+        if self.just_prefix:
+            if size == len(self.prefix) and not self.is_empty():
+                yield self.prefix
+            return
+        for word in possible_words():
+            if all(patt not in word for patt in self.patterns):
+                yield word
 
 
 # the strategies
@@ -204,46 +219,6 @@ class ExpansionStrategy(DisjointUnionStrategy[AvoidingWithPrefix]):
     @classmethod
     def from_dict(cls, d) -> "ExpansionStrategy":
         return cls()
-
-
-class OnlyPrefix(VerificationStrategy[AvoidingWithPrefix]):
-    def formal_step(self) -> str:
-        return "its just a word"
-
-    def verified(self, avoiding_with_prefix: AvoidingWithPrefix) -> bool:
-        """
-        Returns True if enumeration strategy works for the combinatorial class.
-        """
-        return avoiding_with_prefix.just_prefix
-
-    def count_objects_of_size(
-        self, comb_class: AvoidingWithPrefix, n: int, **parameters: int
-    ) -> int:
-        """Verification strategies must contain a method to count the objects."""
-        if self.verified(comb_class) and n == len(comb_class.prefix):
-            return 1
-        return 0
-
-    def generate_objects_of_size(
-        self, comb_class: AvoidingWithPrefix, n: int, **parameters: int
-    ) -> Iterator[Word]:
-        """Verification strategies must contain a method to generate the objects."""
-        if self.verified(comb_class) and n == len(comb_class.prefix):
-            yield Word(comb_class.prefix)
-
-    def get_genf(self, comb_class: AvoidingWithPrefix):
-        x = var("x")
-        return x ** len(comb_class.prefix)
-
-    @classmethod
-    def from_dict(cls, d) -> "OnlyPrefix":
-        return cls()
-
-    def __str__(self) -> str:
-        return self.formal_step()
-
-    def __repr__(self) -> str:
-        return self.__class__.__name__ + "()"
 
 
 class RemoveFrontOfPrefix(CartesianProductStrategy[AvoidingWithPrefix]):
@@ -334,7 +309,7 @@ pack = StrategyPack(
     initial_strats=[RemoveFrontOfPrefix()],
     inferral_strats=[],
     expansion_strats=[[ExpansionStrategy()]],
-    ver_strats=[OnlyPrefix()],
+    ver_strats=[AtomStrategy()],
     name=("Finding specification for words avoiding consecutive patterns."),
 )
 
@@ -364,12 +339,19 @@ if __name__ == "__main__":
 
     for n in range(20):
         print("=" * 10, n, "=" * 10)
+
         start_time = time.time()
-        print(spec.count_objects_of_size(n=n))
+        print(spec.count_objects_of_size(n))
         print("Counting time:", round(time.time() - start_time, 2), "seconds")
+
         start_time = time.time()
         c = 0
-        for _ in spec.generate_objects_of_size(n=n):
+        for _ in spec.generate_objects_of_size(n):
             c += 1
         print(c)
         print("Object generation time:", round(time.time() - start_time, 2), "seconds")
+
+        start_time = time.time()
+        random_word = spec.random_sample_object_of_size(n)
+        print(random_word)
+        print("Time to sample:", round(time.time() - start_time, 2), "seconds")

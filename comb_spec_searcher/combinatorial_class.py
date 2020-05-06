@@ -82,41 +82,26 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
         )
 
     def objects_of_size(self, size: int) -> Iterator[CombinatorialObjectType]:
-        """Returns an iterable of combinatorial objects of a given length"""
+        """Returns an iterable of combinatorial objects of a given length. """
         raise NotImplementedError(
-            "This function needs to be added to your "
-            "combinatorial class in order to use the "
-            "debug settings and for initial conditions"
-            " for computing the generating function"
+            "To use object generation and sampling with the AtomStrategy, this"
+            "must be at least implemented for every class that is an atom."
         )
 
-    def is_epsilon(self) -> bool:
-        """Returns True if the generating function equals 1"""
+    def is_atom(self):
+        """Returns True if the combinatorial class contains a single object."""
         raise NotImplementedError(
-            "If you want to use the "
-            "'count_objects_of_length' function "
-            "for a proof tree then you must implement "
-            "'is_epsilon' for your combinatorial class."
+            "To use the CartesianProduct constructor, 'is_atom' and "
+            "'minimum_size_of_object' must be implemented."
         )
 
-    def is_atom(self) -> bool:
-        """Returns True if the generating function equals x"""
+    def minimum_size_of_object(self) -> int:
+        """Return the size of the smallest object in the combinatorial class.
+        Note, for productivity reasons, you must at least return 1, if this
+        should be greater than 0. """
         raise NotImplementedError(
-            "If you want to use the "
-            "'count_objects_of_length' function "
-            "for a proof tree then you must implement "
-            "'is_epsilon', 'is_atom' and 'is_positive' "
-            "for your combinatorial class."
-        )
-
-    def is_positive(self) -> bool:
-        """Returns True if the constant term of the generating function is 0"""
-        raise NotImplementedError(
-            "If you want to use the "
-            "'count_objects_of_length' function "
-            "for a proof tree then you must implement "
-            "'is_epsilon', 'is_atom' and 'is_positive' "
-            "for your combinatorial class."
+            "To use the CartesianProduct constructor, 'is_atom' and "
+            "'minimum_size_of_object' must be implemented."
         )
 
     def to_bytes(self) -> bytes:

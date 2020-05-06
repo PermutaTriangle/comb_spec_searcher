@@ -51,6 +51,7 @@ class Rule:
         ] = (None)
         self.subsamplers: Optional[Tuple[Callable[..., CombinatorialObject], ...]]
         self._children = children
+        self._constructor: Optional[Constructor] = None
 
     @property
     def ignore_parent(self) -> bool:
@@ -115,7 +116,13 @@ class Rule:
         Return the constructor, that contains all the information about how to
         count/generate objects from the rule.
         """
-        return self.strategy.constructor(self.comb_class, self.children)
+        if self._constructor is None:
+            self._constructor = self.strategy.constructor(
+                self.comb_class, self.children
+            )
+            if self._constructor is None:
+                raise StrategyDoesNotApply("{} does not apply".format(self.strategy))
+        return self._constructor
 
     @property
     def formal_step(self) -> str:

@@ -52,7 +52,7 @@ import abc
 from importlib import import_module
 from typing import TYPE_CHECKING, Any, Generic, Iterator, Optional, Tuple, Type, Union
 
-from sympy import Expr, Integer
+from sympy import Expr, Integer, var
 
 from ..combinatorial_class import (
     CombinatorialClass,
@@ -69,6 +69,7 @@ if TYPE_CHECKING:
 
 
 __all__ = (
+    "AbstractStrategy",
     "CartesianProductStrategy",
     "DisjointUnionStrategy",
     "Strategy",
@@ -457,7 +458,7 @@ class VerificationStrategy(AbstractStrategy, Generic[CombinatorialClassType]):
     ) -> Rule:
         if children is None:
             children = self.decomposition_function(comb_class)
-        return VerificationRule(self, comb_class)
+        return VerificationRule(self, comb_class, children)
 
     def pack(self) -> "StrategyPack":
         """
@@ -567,8 +568,60 @@ class VerificationStrategy(AbstractStrategy, Generic[CombinatorialClassType]):
         return super().from_dict(d)
 
 
-# class AtomStrategy(VerificationStrategy[CombinatorialClass]):
-#     # TODO!
+class AtomStrategy(VerificationStrategy[CombinatorialClass]):
+    """
+    A subclass for when a combinatorial class is an atom - meaning consisting
+    of a single object.
+    """
+
+    def count_objects_of_size(
+        self, comb_class: CombinatorialClass, n: int, **parameters: int
+    ) -> int:
+        """
+        Verification strategies must contain a method to count the objects.
+        """
+        if n == comb_class.minimum_size_of_object():
+            return 1
+        return 0
+
+    def get_genf(self, comb_class: CombinatorialClass) -> Expr:
+        x = var("x")
+        return x ** comb_class.minimum_size_of_object()
+
+    def generate_objects_of_size(
+        self, comb_class: CombinatorialClass, n: int, **parameters: int
+    ) -> Iterator[CombinatorialObject]:
+        """
+        Verification strategies must contain a method to generate the objects.
+        """
+        if n == comb_class.minimum_size_of_object():
+            yield from comb_class.objects_of_size(n)
+
+    def random_sample_object_of_size(
+        self, comb_class: CombinatorialClass, n: int, **parameters: int
+    ) -> CombinatorialObject:
+        if n == comb_class.minimum_size_of_object():
+            obj: CombinatorialObject = next(comb_class.objects_of_size(n))
+            return obj
+
+    def verified(self, comb_class: CombinatorialClass) -> bool:
+        return bool(comb_class.is_atom())
+
+    def formal_step(self) -> str:
+        return "is atom"
+
+    def pack(self) -> "StrategyPack":
+        raise InvalidOperationError("No pack for the empty strategy.")
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "AtomStrategy":
+        return cls()
+
+    def __repr__(self) -> str:
+        return self.__class__.__name__ + "()"
+
+    def __str__(self) -> str:
+        return "verify atoms"
 
 
 class EmptyStrategy(VerificationStrategy[CombinatorialClass]):
@@ -611,7 +664,7 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass]):
 
     @classmethod
     def from_dict(cls, d: dict) -> "EmptyStrategy":
-        return cls(**d)
+        return cls()
 
     def __repr__(self) -> str:
         return self.__class__.__name__ + "()"

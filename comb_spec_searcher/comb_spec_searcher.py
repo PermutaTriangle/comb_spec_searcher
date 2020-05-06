@@ -24,6 +24,7 @@ from .exception import (
 from .rule_db import RuleDB
 from .specification import CombinatorialSpecification
 from .strategies import (
+    AbstractStrategy,
     Rule,
     Strategy,
     StrategyGenerator,
@@ -134,14 +135,25 @@ class CombinatorialSpecificationSearcher:
         self, comb_class: CombinatorialClass, strategy: CSSstrategy
     ) -> Iterator[Rule]:
         """Yield all the rules given by a strategy/strategy generator."""
-        if isinstance(strategy, (Strategy, VerificationStrategy)):
+        if isinstance(strategy, AbstractStrategy):
             yield strategy(comb_class, **self.kwargs)
         elif isinstance(strategy, StrategyGenerator):
             for strat in strategy(comb_class, **self.kwargs):
                 if isinstance(strat, Rule):
                     yield strat
-                elif isinstance(strat, Strategy):
+                elif isinstance(strat, AbstractStrategy):
                     yield strat(comb_class, **self.kwargs)
+                else:
+                    raise InvalidOperationError(
+                        "Attempting to add non Rule type. A Strategy "
+                        "Generator's __call__ method should yield Strategy or "
+                        "Strategy(comb_class, children) object."
+                    )
+        else:
+            raise InvalidOperationError(
+                "CSS can only expand a combinatorial class with "
+                "Strategy and StrategyGenerator"
+            )
 
     @cssiteratortimer("_expand_class_with_strategy")
     def _expand_class_with_strategy(
@@ -154,20 +166,16 @@ class CombinatorialSpecificationSearcher:
         """
         Will expand the class with given strategy. Return time taken.
         """
+        logger.debug(
+            "Expanding label %s with %s",
+            label,
+            strategy_generator,
+            extra=self.logger_kwargs,
+        )
         if label is None:
             label = self.classdb.get_label(comb_class)
 
-        for strategy in self._rules_from_strategy(comb_class, strategy_generator):
-            if isinstance(strategy, Strategy):
-                rule = strategy(comb_class)
-            elif isinstance(strategy, Rule):
-                rule = strategy
-            else:
-                raise TypeError(
-                    "Attempting to add non Rule type. A Strategy Generator's"
-                    " __call__ method should yield Strategy or "
-                    "Strategy(comb_class, children) object."
-                )
+        for rule in self._rules_from_strategy(comb_class, strategy_generator):
             try:
                 children = rule.children
             except StrategyDoesNotApply:
@@ -182,13 +190,12 @@ class CombinatorialSpecificationSearcher:
                 )
                 continue
             end_labels = [self.classdb.get_label(comb_class) for comb_class in children]
+            # TODO: observe that creating this constructor could be costly, e.g. Cartesian
             logger.debug(
-                "Adding combinatorial rule %s -> %s with constructor"
-                " '%s'. Explanation: %s",
+                "Adding combinatorial rule %s -> %s\n%s",
                 label,
                 tuple(end_labels),
-                rule.constructor if end_labels else "verified",
-                rule.formal_step,
+                rule,
                 extra=self.logger_kwargs,
             )
 
