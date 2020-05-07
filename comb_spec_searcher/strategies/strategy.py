@@ -78,9 +78,7 @@ __all__ = (
     "VerificationStrategy",
 )
 
-
 CSSstrategy = Union["Strategy", "StrategyGenerator", "VerificationStrategy"]
-StrategyType = Union["Strategy", "VerificationStrategy"]
 
 
 class AbstractStrategy(abc.ABC, Generic[CombinatorialClassType]):
@@ -187,7 +185,7 @@ class AbstractStrategy(abc.ABC, Generic[CombinatorialClassType]):
         module = import_module(d["class_module"])
         StratClass: Type[CSSstrategy] = getattr(module, d["strategy_class"])
         assert issubclass(
-            StratClass, (Strategy, StrategyGenerator, VerificationStrategy)
+            StratClass, (AbstractStrategy, StrategyGenerator)
         ), "Not a valid strategy"
         return StratClass.from_dict(d)
 
@@ -239,7 +237,7 @@ class Strategy(AbstractStrategy[CombinatorialClassType]):
         )
 
     def __call__(
-        self: "Strategy[CombinatorialClassType]",
+        self,
         comb_class: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...] = None,
         **kwargs
