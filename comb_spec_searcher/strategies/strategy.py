@@ -50,7 +50,7 @@ AtomStrategy, relying on CombinatorialClass methods.
 """
 import abc
 from importlib import import_module
-from typing import TYPE_CHECKING, Any, Generic, Iterator, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Generic, Iterator, Optional, Tuple, Type, Union
 
 from sympy import Expr, Integer, var
 
@@ -192,7 +192,7 @@ class AbstractStrategy(abc.ABC, Generic[CombinatorialClassType]):
         return StratClass.from_dict(d)
 
 
-class Strategy(AbstractStrategy, Generic[CombinatorialClassType]):
+class Strategy(AbstractStrategy[CombinatorialClassType]):
     """
     The Strategy class is essentially following the mantra of 'strategy' from the
     combinatorial explanation paper.
@@ -416,7 +416,7 @@ class SymmetryStrategy(DisjointUnionStrategy[CombinatorialClassType]):
         )
 
 
-class VerificationStrategy(AbstractStrategy, Generic[CombinatorialClassType]):
+class VerificationStrategy(AbstractStrategy[CombinatorialClassType]):
     """
     For a VerificationStrategy you must implement the methods:
         - verified:                 Return True if the combinatorial class is
@@ -673,7 +673,7 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass]):
         return "the empty strategy"
 
 
-class StrategyGenerator(abc.ABC):
+class StrategyGenerator(abc.ABC, Generic[CombinatorialClassType]):
     """
     The StrategyGenerator class can be used instead of the Strategy class if
     you wish to expand a combinatorial class with a family of strategies.
@@ -681,8 +681,8 @@ class StrategyGenerator(abc.ABC):
 
     @abc.abstractmethod
     def __call__(
-        self, comb_class: CombinatorialClassType, **kwargs: Any
-    ) -> Iterator[Union[Rule, Strategy]]:
+        self, comb_class: CombinatorialClassType, **kwargs
+    ) -> Iterator[Union[Rule, AbstractStrategy]]:
         """
         Returns the results of the strategy on a comb_class.
         """
