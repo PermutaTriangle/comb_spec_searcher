@@ -81,6 +81,18 @@ __all__ = (
 CSSstrategy = Union["Strategy", "StrategyGenerator", "VerificationStrategy"]
 
 
+def strategy_from_dict(d) -> CSSstrategy:
+    """
+    Return the AbstractStrategy or StrategyGenerator from the json representation.
+    """
+    module = import_module(d.pop("class_module"))
+    StratClass: Type[CSSstrategy] = getattr(module, d.pop("strategy_class"))
+    assert issubclass(
+        StratClass, (AbstractStrategy, StrategyGenerator)
+    ), "Not a valid strategy"
+    return StratClass.from_dict(d)
+
+
 class AbstractStrategy(abc.ABC, Generic[CombinatorialClassType]):
     """
     A base class for strategies for methods that Strategy and
@@ -160,9 +172,6 @@ class AbstractStrategy(abc.ABC, Generic[CombinatorialClassType]):
     def __str__(self) -> str:
         return self.formal_step()
 
-    def __repr__(self) -> str:
-        return self.__class__.__name__ + "()"
-
     def to_jsonable(self) -> dict:
         """
         Return a dictionary form of the strategy.
@@ -178,16 +187,9 @@ class AbstractStrategy(abc.ABC, Generic[CombinatorialClassType]):
         }
 
     @classmethod
+    @abc.abstractmethod
     def from_dict(cls, d: dict) -> CSSstrategy:
-        """
-        Return the strategy from the json representation.
-        """
-        module = import_module(d["class_module"])
-        StratClass: Type[CSSstrategy] = getattr(module, d["strategy_class"])
-        assert issubclass(
-            StratClass, (AbstractStrategy, StrategyGenerator)
-        ), "Not a valid strategy"
-        return StratClass.from_dict(d)
+        return strategy_from_dict(d)
 
 
 class Strategy(AbstractStrategy[CombinatorialClassType]):
@@ -286,14 +288,6 @@ class Strategy(AbstractStrategy[CombinatorialClassType]):
         """
         if children is None:
             children = self.decomposition_function(comb_class)
-
-    @classmethod
-    @abc.abstractmethod
-    def from_dict(cls, d: dict) -> CSSstrategy:
-        """
-        Return the strategy from the json representation.
-        """
-        return super().from_dict(d)
 
 
 class CartesianProductStrategy(Strategy[CombinatorialClassType]):
@@ -435,17 +429,13 @@ class VerificationStrategy(AbstractStrategy[CombinatorialClassType]):
     """
 
     def __init__(
-        self,
-        ignore_parent: bool = True,
-        inferrable: bool = True,
-        possibly_empty: bool = True,
-        workable: bool = True,
+        self, ignore_parent: bool = True,
     ):
         super().__init__(
             ignore_parent=ignore_parent,
-            inferrable=inferrable,
-            possibly_empty=possibly_empty,
-            workable=workable,
+            inferrable=False,
+            possibly_empty=False,
+            workable=False,
         )
 
     def __call__(
@@ -557,13 +547,12 @@ class VerificationStrategy(AbstractStrategy[CombinatorialClassType]):
             n, **parameters
         )
 
-    @classmethod
-    @abc.abstractmethod
-    def from_dict(cls, d: dict) -> CSSstrategy:
-        """
-        Return the strategy from the json representation.
-        """
-        return super().from_dict(d)
+    def to_jsonable(self) -> dict:
+        d = super().to_jsonable()
+        d.pop("inferrable")
+        d.pop("possibly_empty")
+        d.pop("workable")
+        return d
 
 
 class AtomStrategy(VerificationStrategy[CombinatorialClass]):
@@ -571,6 +560,9 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass]):
     A subclass for when a combinatorial class is an atom - meaning consisting
     of a single object.
     """
+
+    def __init__(self):
+        super().__init__(ignore_parent=True)
 
     def count_objects_of_size(
         self, comb_class: CombinatorialClass, n: int, **parameters: int
@@ -611,8 +603,14 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass]):
     def pack(self) -> "StrategyPack":
         raise InvalidOperationError("No pack for the empty strategy.")
 
+    def to_jsonable(self):
+        d = super().to_jsonable()
+        d.pop("ignore_parent")
+        return d
+
     @classmethod
     def from_dict(cls, d: dict) -> "AtomStrategy":
+        assert not d
         return cls()
 
     def __repr__(self) -> str:
@@ -626,6 +624,9 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass]):
     """
     A subclass for when a combinatorial class is equal to the empty set.
     """
+
+    def __init__(self):
+        super().__init__(ignore_parent=True,)
 
     def count_objects_of_size(
         self, comb_class: CombinatorialClass, n: int, **parameters: int
@@ -660,8 +661,14 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass]):
     def pack(self) -> "StrategyPack":
         raise InvalidOperationError("No pack for the empty strategy.")
 
+    def to_jsonable(self):
+        d = super().to_jsonable()
+        d.pop("ignore_parent")
+        return d
+
     @classmethod
     def from_dict(cls, d: dict) -> "EmptyStrategy":
+        assert not d
         return cls()
 
     def __repr__(self) -> str:
@@ -725,4 +732,4 @@ class StrategyGenerator(abc.ABC, Generic[CombinatorialClassType]):
         """
         Return the strategy from the json representation.
         """
-        return AbstractStrategy.from_dict(d)
+        return strategy_from_dict(d)
