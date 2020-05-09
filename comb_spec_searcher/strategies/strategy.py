@@ -59,7 +59,7 @@ from ..combinatorial_class import (
     CombinatorialClassType,
     CombinatorialObject,
 )
-from ..exception import InvalidOperationError, ObjectMappingError
+from ..exception import InvalidOperationError, ObjectMappingError, StrategyDoesNotApply
 from .constructor import CartesianProduct, Constructor, DisjointUnion
 from .rule import Rule, VerificationRule
 
@@ -323,7 +323,7 @@ class CartesianProductStrategy(Strategy[CombinatorialClassType]):
         if children is None:
             children = self.decomposition_function(comb_class)
             if children is None:
-                raise InvalidOperationError("Strategy does not apply")
+                raise StrategyDoesNotApply("Strategy does not apply")
         return CartesianProduct(children)
 
 
@@ -358,7 +358,7 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType]):
         if children is None:
             children = self.decomposition_function(comb_class)
             if children is None:
-                raise InvalidOperationError("Strategy does not apply")
+                raise StrategyDoesNotApply("Strategy does not apply")
         return DisjointUnion(children)
 
     @staticmethod
@@ -470,17 +470,17 @@ class VerificationStrategy(AbstractStrategy[CombinatorialClassType]):
     ) -> "CombinatorialSpecification":
         """
         Returns a combinatorial specification for the combinatorial class.
-        Raises an `InvalidOperationError` if no specification can be found,
+        Raises an `StrategyDoesNotApply` if no specification can be found,
         e.g. if it is not verified.
         """
         if not self.verified(comb_class):
-            raise InvalidOperationError("The combinatorial class is not verified")
+            raise StrategyDoesNotApply("The combinatorial class is not verified")
         # pylint: disable=import-outside-toplevel
         from ..comb_spec_searcher import CombinatorialSpecificationSearcher
 
         searcher = CombinatorialSpecificationSearcher(comb_class, self.pack())
         specification = searcher.auto_search()
-        assert specification is not None, InvalidOperationError(
+        assert specification is not None, StrategyDoesNotApply(
             "Cannot find a specification"
         )
         return specification
@@ -488,10 +488,10 @@ class VerificationStrategy(AbstractStrategy[CombinatorialClassType]):
     def get_genf(self, comb_class: CombinatorialClassType) -> Expr:
         """
         Returns the generating function for the combinatorial class.
-        Raises an InvalidOperationError if the combinatorial class is not verified.
+        Raises an StrategyDoesNotApply if the combinatorial class is not verified.
         """
         if not self.verified(comb_class):
-            raise InvalidOperationError("The combinatorial class is not verified")
+            raise StrategyDoesNotApply("The combinatorial class is not verified")
         return self.get_specification(comb_class).get_genf()
 
     def decomposition_function(
@@ -513,10 +513,10 @@ class VerificationStrategy(AbstractStrategy[CombinatorialClassType]):
     ) -> int:
         """
         A method to count the objects.
-        Raises an InvalidOperationError if the combinatorial class is not verified.
+        Raises an StrategyDoesNotApply if the combinatorial class is not verified.
         """
         if not self.verified(comb_class):
-            raise InvalidOperationError("The combinatorial class is not verified")
+            raise StrategyDoesNotApply("The combinatorial class is not verified")
         return int(
             self.get_specification(comb_class).count_objects_of_size(n, **parameters)
         )
@@ -526,10 +526,10 @@ class VerificationStrategy(AbstractStrategy[CombinatorialClassType]):
     ) -> Iterator[CombinatorialObject]:
         """
         A method to generate the objects.
-        Raises an InvalidOperationError if the combinatorial class is not verified.
+        Raises an StrategyDoesNotApply if the combinatorial class is not verified.
         """
         if not self.verified(comb_class):
-            raise InvalidOperationError("The combinatorial class is not verified")
+            raise StrategyDoesNotApply("The combinatorial class is not verified")
         yield from self.get_specification(comb_class).generate_objects_of_size(
             n, **parameters
         )
@@ -539,10 +539,10 @@ class VerificationStrategy(AbstractStrategy[CombinatorialClassType]):
     ) -> CombinatorialObject:
         """
         A method to sample uniformly at random from a verified combinatorial class.
-        Raises an InvalidOperationError if the combinatorial class is not verified.
+        Raises an StrategyDoesNotApply if the combinatorial class is not verified.
         """
         if not self.verified(comb_class):
-            raise InvalidOperationError("The combinatorial class is not verified")
+            raise StrategyDoesNotApply("The combinatorial class is not verified")
         return self.get_specification(comb_class).random_sample_object_of_size(
             n, **parameters
         )
@@ -575,6 +575,8 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass]):
         return 0
 
     def get_genf(self, comb_class: CombinatorialClass) -> Expr:
+        if not self.verified(comb_class):
+            raise StrategyDoesNotApply("can't find generating function for non-atom")
         x = var("x")
         return x ** comb_class.minimum_size_of_object()
 
@@ -650,7 +652,7 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass]):
     def random_sample_object_of_size(
         self, comb_class: CombinatorialClass, n: int, **parameters: int
     ) -> CombinatorialObject:
-        raise InvalidOperationError("Can't sample from empty set.")
+        raise StrategyDoesNotApply("Can't sample from empty set.")
 
     def verified(self, comb_class: CombinatorialClass) -> bool:
         return bool(comb_class.is_empty())
