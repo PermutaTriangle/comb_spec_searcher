@@ -575,7 +575,8 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass]):
             return 1
         return 0
 
-    def get_genf(self, comb_class: CombinatorialClass) -> Expr:
+    @staticmethod
+    def get_genf(comb_class: CombinatorialClass) -> Expr:
         x = var("x")
         return x ** comb_class.minimum_size_of_object()
 
