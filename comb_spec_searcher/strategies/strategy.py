@@ -67,7 +67,7 @@ from ..combinatorial_class import (
     CombinatorialClassType,
     CombinatorialObject,
 )
-from ..exception import InvalidOperationError, ObjectMappingError
+from ..exception import InvalidOperationError, ObjectMappingError, StrategyDoesNotApply
 from .constructor import CartesianProduct, Constructor, DisjointUnion
 from .rule import Rule, VerificationRule
 
@@ -86,9 +86,19 @@ __all__ = (
     "VerificationStrategy",
 )
 
-
 CSSstrategy = Union["Strategy", "StrategyGenerator", "VerificationStrategy"]
-StrategyType = Union["Strategy", "VerificationStrategy"]
+
+
+def strategy_from_dict(d) -> CSSstrategy:
+    """
+    Return the AbstractStrategy or StrategyGenerator from the json representation.
+    """
+    module = import_module(d.pop("class_module"))
+    StratClass: Type[CSSstrategy] = getattr(module, d.pop("strategy_class"))
+    assert issubclass(
+        StratClass, (AbstractStrategy, StrategyGenerator)
+    ), "Not a valid strategy"
+    return StratClass.from_dict(d)
 
 
 class AbstractStrategy(abc.ABC, Generic[CombinatorialClassType]):
@@ -174,9 +184,6 @@ class AbstractStrategy(abc.ABC, Generic[CombinatorialClassType]):
     def __str__(self) -> str:
         return self.formal_step()
 
-    def __repr__(self) -> str:
-        return self.__class__.__name__ + "()"
-
     def to_jsonable(self) -> dict:
         """
         Return a dictionary form of the strategy.
@@ -220,16 +227,9 @@ class AbstractStrategy(abc.ABC, Generic[CombinatorialClassType]):
         return AbstractStrategy.from_dict(json.loads(to_load.decode()))
 
     @classmethod
+    @abc.abstractmethod
     def from_dict(cls, d: dict) -> CSSstrategy:
-        """
-        Return the strategy from the json representation.
-        """
-        module = import_module(d["class_module"])
-        StratClass: Type[CSSstrategy] = getattr(module, d["strategy_class"])
-        assert issubclass(
-            StratClass, (Strategy, StrategyGenerator, VerificationStrategy)
-        ), "Not a valid strategy"
-        return StratClass.from_dict(d)
+        return strategy_from_dict(d)
 
     @classmethod
     def build_zdict(cls) -> List[str]:
@@ -287,7 +287,7 @@ class Strategy(AbstractStrategy[CombinatorialClassType]):
         )
 
     def __call__(
-        self: "Strategy[CombinatorialClassType]",
+        self,
         comb_class: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...] = None,
         **kwargs
@@ -337,14 +337,6 @@ class Strategy(AbstractStrategy[CombinatorialClassType]):
         if children is None:
             children = self.decomposition_function(comb_class)
 
-    @classmethod
-    @abc.abstractmethod
-    def from_dict(cls, d: dict) -> CSSstrategy:
-        """
-        Return the strategy from the json representation.
-        """
-        return super().from_dict(d)
-
 
 class CartesianProductStrategy(Strategy[CombinatorialClassType]):
     """
@@ -379,7 +371,7 @@ class CartesianProductStrategy(Strategy[CombinatorialClassType]):
         if children is None:
             children = self.decomposition_function(comb_class)
             if children is None:
-                raise InvalidOperationError("Strategy does not apply")
+                raise StrategyDoesNotApply("Strategy does not apply")
         return CartesianProduct(children)
 
 
@@ -414,7 +406,7 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType]):
         if children is None:
             children = self.decomposition_function(comb_class)
             if children is None:
-                raise InvalidOperationError("Strategy does not apply")
+                raise StrategyDoesNotApply("Strategy does not apply")
         return DisjointUnion(children)
 
     @staticmethod
@@ -485,17 +477,13 @@ class VerificationStrategy(AbstractStrategy[CombinatorialClassType]):
     """
 
     def __init__(
-        self,
-        ignore_parent: bool = True,
-        inferrable: bool = True,
-        possibly_empty: bool = True,
-        workable: bool = True,
+        self, ignore_parent: bool = True,
     ):
         super().__init__(
             ignore_parent=ignore_parent,
-            inferrable=inferrable,
-            possibly_empty=possibly_empty,
-            workable=workable,
+            inferrable=False,
+            possibly_empty=False,
+            workable=False,
         )
 
     def __call__(
@@ -530,17 +518,17 @@ class VerificationStrategy(AbstractStrategy[CombinatorialClassType]):
     ) -> "CombinatorialSpecification":
         """
         Returns a combinatorial specification for the combinatorial class.
-        Raises an `InvalidOperationError` if no specification can be found,
+        Raises an `StrategyDoesNotApply` if no specification can be found,
         e.g. if it is not verified.
         """
         if not self.verified(comb_class):
-            raise InvalidOperationError("The combinatorial class is not verified")
+            raise StrategyDoesNotApply("The combinatorial class is not verified")
         # pylint: disable=import-outside-toplevel
         from ..comb_spec_searcher import CombinatorialSpecificationSearcher
 
         searcher = CombinatorialSpecificationSearcher(comb_class, self.pack())
         specification = searcher.auto_search()
-        assert specification is not None, InvalidOperationError(
+        assert specification is not None, StrategyDoesNotApply(
             "Cannot find a specification"
         )
         return specification
@@ -548,10 +536,10 @@ class VerificationStrategy(AbstractStrategy[CombinatorialClassType]):
     def get_genf(self, comb_class: CombinatorialClassType) -> Expr:
         """
         Returns the generating function for the combinatorial class.
-        Raises an InvalidOperationError if the combinatorial class is not verified.
+        Raises an StrategyDoesNotApply if the combinatorial class is not verified.
         """
         if not self.verified(comb_class):
-            raise InvalidOperationError("The combinatorial class is not verified")
+            raise StrategyDoesNotApply("The combinatorial class is not verified")
         return self.get_specification(comb_class).get_genf()
 
     def decomposition_function(
@@ -573,10 +561,10 @@ class VerificationStrategy(AbstractStrategy[CombinatorialClassType]):
     ) -> int:
         """
         A method to count the objects.
-        Raises an InvalidOperationError if the combinatorial class is not verified.
+        Raises an StrategyDoesNotApply if the combinatorial class is not verified.
         """
         if not self.verified(comb_class):
-            raise InvalidOperationError("The combinatorial class is not verified")
+            raise StrategyDoesNotApply("The combinatorial class is not verified")
         return int(
             self.get_specification(comb_class).count_objects_of_size(n, **parameters)
         )
@@ -586,10 +574,10 @@ class VerificationStrategy(AbstractStrategy[CombinatorialClassType]):
     ) -> Iterator[CombinatorialObject]:
         """
         A method to generate the objects.
-        Raises an InvalidOperationError if the combinatorial class is not verified.
+        Raises an StrategyDoesNotApply if the combinatorial class is not verified.
         """
         if not self.verified(comb_class):
-            raise InvalidOperationError("The combinatorial class is not verified")
+            raise StrategyDoesNotApply("The combinatorial class is not verified")
         yield from self.get_specification(comb_class).generate_objects_of_size(
             n, **parameters
         )
@@ -599,21 +587,20 @@ class VerificationStrategy(AbstractStrategy[CombinatorialClassType]):
     ) -> CombinatorialObject:
         """
         A method to sample uniformly at random from a verified combinatorial class.
-        Raises an InvalidOperationError if the combinatorial class is not verified.
+        Raises an StrategyDoesNotApply if the combinatorial class is not verified.
         """
         if not self.verified(comb_class):
-            raise InvalidOperationError("The combinatorial class is not verified")
+            raise StrategyDoesNotApply("The combinatorial class is not verified")
         return self.get_specification(comb_class).random_sample_object_of_size(
             n, **parameters
         )
 
-    @classmethod
-    @abc.abstractmethod
-    def from_dict(cls, d: dict) -> CSSstrategy:
-        """
-        Return the strategy from the json representation.
-        """
-        return super().from_dict(d)
+    def to_jsonable(self) -> dict:
+        d = super().to_jsonable()
+        d.pop("inferrable")
+        d.pop("possibly_empty")
+        d.pop("workable")
+        return d
 
 
 class AtomStrategy(VerificationStrategy[CombinatorialClass]):
@@ -622,8 +609,12 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass]):
     of a single object.
     """
 
+    def __init__(self):
+        super().__init__(ignore_parent=True)
+
+    @staticmethod
     def count_objects_of_size(
-        self, comb_class: CombinatorialClass, n: int, **parameters: int
+        comb_class: CombinatorialClass, n: int, **parameters: int
     ) -> int:
         """
         Verification strategies must contain a method to count the objects.
@@ -633,11 +624,14 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass]):
         return 0
 
     def get_genf(self, comb_class: CombinatorialClass) -> Expr:
+        if not self.verified(comb_class):
+            raise StrategyDoesNotApply("Can't find generating functon for non-atom.")
         x = var("x")
         return x ** comb_class.minimum_size_of_object()
 
+    @staticmethod
     def generate_objects_of_size(
-        self, comb_class: CombinatorialClass, n: int, **parameters: int
+        comb_class: CombinatorialClass, n: int, **parameters: int
     ) -> Iterator[CombinatorialObject]:
         """
         Verification strategies must contain a method to generate the objects.
@@ -645,24 +639,34 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass]):
         if n == comb_class.minimum_size_of_object():
             yield from comb_class.objects_of_size(n)
 
+    @staticmethod
     def random_sample_object_of_size(
-        self, comb_class: CombinatorialClass, n: int, **parameters: int
+        comb_class: CombinatorialClass, n: int, **parameters: int
     ) -> CombinatorialObject:
         if n == comb_class.minimum_size_of_object():
             obj: CombinatorialObject = next(comb_class.objects_of_size(n))
             return obj
 
-    def verified(self, comb_class: CombinatorialClass) -> bool:
+    @staticmethod
+    def verified(comb_class: CombinatorialClass) -> bool:
         return bool(comb_class.is_atom())
 
-    def formal_step(self) -> str:
+    @staticmethod
+    def formal_step() -> str:
         return "is atom"
 
-    def pack(self) -> "StrategyPack":
+    @staticmethod
+    def pack() -> "StrategyPack":
         raise InvalidOperationError("No pack for the empty strategy.")
+
+    def to_jsonable(self) -> dict:
+        d: dict = super().to_jsonable()
+        d.pop("ignore_parent")
+        return d
 
     @classmethod
     def from_dict(cls, d: dict) -> "AtomStrategy":
+        assert not d
         return cls()
 
     def __repr__(self) -> str:
@@ -677,8 +681,12 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass]):
     A subclass for when a combinatorial class is equal to the empty set.
     """
 
+    def __init__(self):
+        super().__init__(ignore_parent=True,)
+
+    @staticmethod
     def count_objects_of_size(
-        self, comb_class: CombinatorialClass, n: int, **parameters: int
+        comb_class: CombinatorialClass, n: int, **parameters: int
     ) -> int:
         """
         Verification strategies must contain a method to count the objects.
@@ -686,32 +694,47 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass]):
         return 0
 
     def get_genf(self, comb_class: CombinatorialClass) -> Integer:
+        if not self.verified(comb_class):
+            raise StrategyDoesNotApply(
+                "can't find generating functon for non-empty class."
+            )
         return Integer(0)
 
+    @staticmethod
     def generate_objects_of_size(
-        self, comb_class: CombinatorialClass, n: int, **parameters: int
+        comb_class: CombinatorialClass, n: int, **parameters: int
     ) -> Iterator[CombinatorialObject]:
         """
         Verification strategies must contain a method to generate the objects.
         """
         return iter([])
 
+    @staticmethod
     def random_sample_object_of_size(
-        self, comb_class: CombinatorialClass, n: int, **parameters: int
+        comb_class: CombinatorialClass, n: int, **parameters: int
     ) -> CombinatorialObject:
-        raise InvalidOperationError("Can't sample from empty set.")
+        raise StrategyDoesNotApply("Can't sample from empty set.")
 
-    def verified(self, comb_class: CombinatorialClass) -> bool:
+    @staticmethod
+    def verified(comb_class: CombinatorialClass) -> bool:
         return bool(comb_class.is_empty())
 
-    def formal_step(self) -> str:
+    @staticmethod
+    def formal_step() -> str:
         return "is empty"
 
-    def pack(self) -> "StrategyPack":
+    @staticmethod
+    def pack() -> "StrategyPack":
         raise InvalidOperationError("No pack for the empty strategy.")
+
+    def to_jsonable(self) -> dict:
+        d: dict = super().to_jsonable()
+        d.pop("ignore_parent")
+        return d
 
     @classmethod
     def from_dict(cls, d: dict) -> "EmptyStrategy":
+        assert not d
         return cls()
 
     def __repr__(self) -> str:
@@ -783,4 +806,4 @@ class StrategyGenerator(abc.ABC, Generic[CombinatorialClassType]):
         """
         Return the strategy from the json representation.
         """
-        return AbstractStrategy.from_dict(d)
+        return strategy_from_dict(d)

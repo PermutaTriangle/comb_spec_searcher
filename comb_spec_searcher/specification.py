@@ -11,6 +11,7 @@ from sympy import Eq, Expr, Function, solve, var
 from .combinatorial_class import CombinatorialClass, CombinatorialObject
 from .exception import IncorrectGeneratingFunctionError, TaylorExpansionError
 from .strategies import (
+    AbstractStrategy,
     EmptyStrategy,
     EquivalencePathRule,
     ReverseRule,
@@ -18,7 +19,6 @@ from .strategies import (
     Strategy,
     VerificationStrategy,
 )
-from .strategies.strategy import StrategyType
 from .utils import maple_equations, taylor_expand
 
 __all__ = ("CombinatorialSpecification",)
@@ -34,7 +34,7 @@ class CombinatorialSpecification:
     def __init__(
         self,
         root: CombinatorialClass,
-        strategies: Iterable[Tuple[CombinatorialClass, StrategyType]],
+        strategies: Iterable[Tuple[CombinatorialClass, AbstractStrategy]],
         equivalence_paths: Iterable[Sequence[CombinatorialClass]],
     ):
         self.root = root
