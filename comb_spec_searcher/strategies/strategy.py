@@ -575,8 +575,9 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass]):
             return 1
         return 0
 
-    @staticmethod
-    def get_genf(comb_class: CombinatorialClass) -> Expr:
+    def get_genf(self, comb_class: CombinatorialClass) -> Expr:
+        if not self.verified(comb_class):
+            raise StrategyDoesNotApply("Can't find generating functon for non-atom.")
         x = var("x")
         return x ** comb_class.minimum_size_of_object()
 
@@ -644,8 +645,11 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass]):
         """
         return 0
 
-    @staticmethod
-    def get_genf(comb_class: CombinatorialClass) -> Integer:
+    def get_genf(self, comb_class: CombinatorialClass) -> Integer:
+        if not self.verified(comb_class):
+            raise StrategyDoesNotApply(
+                "can't find generating functon for non-empty class."
+            )
         return Integer(0)
 
     @staticmethod
