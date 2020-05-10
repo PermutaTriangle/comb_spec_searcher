@@ -3,10 +3,13 @@ A database for rules.
 """
 from collections import defaultdict
 from typing import Dict, Iterable, Iterator, List, Optional, Set, Tuple
+import zlib
+import json
+import platform
 
 from .equiv_db import EquivalenceDB
 from .exception import SpecificationNotFound
-from .strategies import Rule, Strategy
+from .strategies import AbstractStrategy, Rule, Strategy
 from .tree_searcher import (
     Node,
     iterative_proof_tree_finder,
@@ -22,7 +25,7 @@ Specification = Tuple[List[Tuple[int, Strategy]], List[List[int]]]
 class RuleDB:
     """A database for rules found."""
 
-    def __init__(self) -> None:
+    def __init__(self, compression_zdict: List[str] = []) -> None:
         """
         Initialise.
 
@@ -34,7 +37,11 @@ class RuleDB:
         dictionary. Calling works the same way as explanations.
         """
         # the values are needed for finding the specification in post-processing
-        self.rule_to_strategy: Dict[Tuple[int, Tuple[int, ...]], Strategy] = {}
+        self.rule_to_strategy: Dict[Tuple[int, Tuple[int, ...]], bytes] = {}
+
+        dedup_zdict: List[str] = list(dict.fromkeys(compression_zdict))[::-1]
+        self.compression_zdict: bytes = "".join(dedup_zdict).encode()
+
         self.equivdb = EquivalenceDB()
 
     def __eq__(self, other: object) -> bool:
@@ -56,7 +63,9 @@ class RuleDB:
             self.set_verified(start)
         if len(ends) == 1 and rule.constructor.is_equivalence():
             self.set_equivalent(start, ends[0])
-        self.rule_to_strategy[(start, ends)] = rule.strategy
+        self.rule_to_strategy[(start, ends)] = rule.strategy.compress(
+            zdict=self.compression_zdict
+        )
 
     def is_verified(self, label: int) -> bool:
         """Return True if label has been verified."""
@@ -86,7 +95,9 @@ class RuleDB:
     def all_rules(self) -> Iterator[Tuple[int, Tuple[int, ...], Strategy]]:
         """Yield all the rules found so far."""
         for start, ends in self:
-            yield start, ends, self.rule_to_strategy[(start, ends)]
+            yield start, ends, AbstractStrategy.decompress(
+                self.rule_to_strategy[(start, ends)], zdict=self.compression_zdict
+            )
 
     def __iter__(self) -> Iterator[Tuple[int, Tuple[int, ...]]]:
         """Iterate through rules as the pairs (start, end)."""
@@ -102,9 +113,23 @@ class RuleDB:
     def status(self) -> str:
         """Return a string describing the status of the rule database."""
         status = "RuleDB status:\n"
-        status += "\tTotal number of combinatorial rules is {}\n" "".format(
+        status += "\tTotal number of combinatorial rules is {}\n".format(
             len(self.rule_to_strategy)
         )
+        status += "\tStrategy compression has taken {} seconds\n".format(
+            round(AbstractStrategy.compression_time, 2)
+        )
+        if platform.python_implementation() == "CPython":
+            try:
+                comp_rate = 1 - (
+                    AbstractStrategy.compressed_size
+                    / AbstractStrategy.uncompressed_size
+                )
+            except:
+                comp_rate = 0
+            status += "\tStrategy compression rate is {}%\n".format(
+                round(comp_rate * 100)
+            )
         # TODO: strategy verified, verified, equivalence sets?
         return status
 
@@ -193,14 +218,22 @@ class RuleDB:
                     path = self.equivdb.find_path(eqv_label, start)
                     for a, b in zip(path[:-1], path[1:]):
                         try:
-                            strategy = self.rule_to_strategy[(a, (b,))]
+                            strategy = AbstractStrategy.decompress(
+                                self.rule_to_strategy[(a, (b,))],
+                                zdict=self.compression_zdict,
+                            )
                             res.append((a, strategy))
                         except KeyError:
-                            strategy = self.rule_to_strategy[(b, (a,))]
+                            strategy = AbstractStrategy.decompress(
+                                self.rule_to_strategy[(b, (a,))],
+                                zdict=self.compression_zdict,
+                            )
                             res.append((b, strategy))
                     if len(path) > 1:
                         eqv_paths.append(path)
-            strategy = self.rule_to_strategy[(start, ends)]
+            strategy = AbstractStrategy.decompress(
+                self.rule_to_strategy[(start, ends)], zdict=self.compression_zdict
+            )
             res.append((start, strategy))
         return res, eqv_paths
 

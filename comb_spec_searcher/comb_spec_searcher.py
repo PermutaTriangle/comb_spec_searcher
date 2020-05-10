@@ -2,10 +2,11 @@
 import json
 import logging
 import os
+import sys
 import time
 import warnings
 from collections import defaultdict
-from typing import Dict, Iterator, Optional, Sequence, Set, Tuple
+from typing import Dict, Iterator, List, Optional, Sequence, Set, Tuple
 
 import logzero
 import psutil
@@ -65,9 +66,11 @@ class CombinatorialSpecificationSearcher:
         self.kwargs["logger"] = self.logger_kwargs
         self.kwargs["symmetry"] = bool(strategy_pack.symmetries)
 
+        self.compression_zdict = self.build_zdict()
+
         self.classdb = ClassDB(type(start_class))
         self.classqueue = DefaultQueue(strategy_pack)
-        self.ruledb = RuleDB()
+        self.ruledb = RuleDB(compression_zdict=self.compression_zdict)
 
         # initialise the run with start_class
         self.start_label = self.classdb.get_label(start_class)
@@ -92,6 +95,56 @@ class CombinatorialSpecificationSearcher:
     def symmetries(self) -> Sequence[CSSstrategy]:
         """The symmetries functions for the strategy pack."""
         return self.strategy_pack.symmetries
+
+    def build_zdict(self) -> str:
+        """
+        Return a list of common strings that may appear in the JSON of the
+        strategies to be compressed.
+        """
+        # According to zlib's documentation, the most frequently appear strings
+        # should appear at the end. We'll build it in reverse and then reverse
+        # it after it's passed to the ruledb.
+        strings = []
+        strings.append("true")
+        strings.append("false")
+        strings.append('"class_module": ')
+        strings.append('"strategy_class": ')
+        strings.append('"ignore_parent": ')
+        strings.append('"inferrable": ')
+        strings.append('"possibly_empty": ')
+        strings.append('"workable": ')
+
+        pack_dict = self.strategy_pack.to_jsonable()
+        strat_keys = [
+            "initial_strats",
+            "inferral_strats",
+            "ver_strats",
+            "expansion_strats",
+            "symmetries",
+        ]
+
+        def strat_to_zdict(strat) -> List[str]:
+            strs = []
+            strs.append(".".join(strat["class_module"].split(".")[:-1]) + ".")
+            strs.append(strat["class_module"].split(".")[-1])
+            strs.append(strat["strategy_class"] + '": ')
+            strat_class = getattr(
+                sys.modules[strat["class_module"]], strat["strategy_class"]
+            )
+            strs.extend(strat_class.build_zdict())
+            return strs
+
+        for key, strat_dict in pack_dict.items():
+            if key in strat_keys:
+                if key == "expansion_strats":
+                    for group in strat_dict:
+                        for strat in group:
+                            strings.extend(strat_to_zdict(strat))
+                else:
+                    for strat in strat_dict:
+                        strings.extend(strat_to_zdict(strat))
+
+        return strings
 
     def try_verify(self, comb_class: CombinatorialClass, label: int) -> None:
         """

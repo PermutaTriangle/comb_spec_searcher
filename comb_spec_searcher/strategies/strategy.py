@@ -50,7 +50,15 @@ AtomStrategy, relying on CombinatorialClass methods.
 """
 import abc
 from importlib import import_module
-from typing import TYPE_CHECKING, Generic, Iterator, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Generic, Iterator, List, Optional, Tuple, Type, Union
+import json
+import time
+import platform
+import sys
+import zlib
+
+if platform.python_implementation() == "CPython":
+    from pympler.asizeof import asizeof
 
 from sympy import Expr, Integer, var
 
@@ -88,6 +96,10 @@ class AbstractStrategy(abc.ABC, Generic[CombinatorialClassType]):
     A base class for strategies for methods that Strategy and
     VerificationStrategy have in common.
     """
+
+    uncompressed_size = 0
+    compressed_size = 0
+    compression_time = 0
 
     def __init__(
         self,
@@ -179,6 +191,34 @@ class AbstractStrategy(abc.ABC, Generic[CombinatorialClassType]):
             "workable": self._workable,
         }
 
+    def compress(self, zdict: bytes) -> bytes:
+        """
+        Compress and return a strategy to a bytes object using zlib.compressobj
+        and a zdict for improved compression.
+        """
+        AbstractStrategy.compression_time -= time.time()
+        to_compress = json.dumps(self.to_jsonable()).encode()
+        comp_obj = zlib.compressobj(level=9, zdict=zdict)
+        compressed = comp_obj.compress(to_compress) + comp_obj.flush()
+        AbstractStrategy.compression_time += time.time()
+
+        if platform.python_implementation() == "CPython":
+            AbstractStrategy.uncompressed_size += asizeof(to_compress)
+            AbstractStrategy.compressed_size += asizeof(compressed)
+
+        return compressed
+
+    @classmethod
+    def decompress(cls, strat: bytes, zdict: bytes) -> CSSstrategy:
+        """
+        Decompress and return a strategy using zlib.decompressobj and a zdict for
+        improved compression.
+        """
+        decomp = zlib.decompressobj(zdict=zdict)
+        to_load = decomp.decompress(strat) + decomp.flush()
+
+        return AbstractStrategy.from_dict(json.loads(to_load.decode()))
+
     @classmethod
     def from_dict(cls, d: dict) -> CSSstrategy:
         """
@@ -190,6 +230,14 @@ class AbstractStrategy(abc.ABC, Generic[CombinatorialClassType]):
             StratClass, (Strategy, StrategyGenerator, VerificationStrategy)
         ), "Not a valid strategy"
         return StratClass.from_dict(d)
+
+    @classmethod
+    def build_zdict(cls) -> List[str]:
+        """
+        Return a list of common strings that may appear in the JSON of the
+        strategies to be compressed.
+        """
+        return []
 
 
 class Strategy(AbstractStrategy[CombinatorialClassType]):
@@ -710,6 +758,14 @@ class StrategyGenerator(abc.ABC, Generic[CombinatorialClassType]):
         # TODO: do better, why is it hashable at all?
         """
         return hash(self.__class__)
+
+    @classmethod
+    def build_zdict(cls) -> List[str]:
+        """
+        Return a list of common strings that may appear in the JSON of the
+        strategies to be compressed.
+        """
+        return []
 
     def to_jsonable(self) -> dict:
         """
