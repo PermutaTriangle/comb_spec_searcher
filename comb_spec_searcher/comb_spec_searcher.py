@@ -26,11 +26,9 @@ from .specification import CombinatorialSpecification
 from .strategies import (
     AbstractStrategy,
     Rule,
-    Strategy,
     StrategyGenerator,
     StrategyPack,
     VerificationRule,
-    VerificationStrategy,
 )
 from .strategies.strategy import CSSstrategy
 from .utils import cssiteratortimer, cssmethodtimer
@@ -489,23 +487,22 @@ class CombinatorialSpecificationSearcher:
                 found_string += json.dumps(specification.to_jsonable())
                 logger.info(found_string, extra=self.logger_kwargs)
                 return specification
-            else:
-                logger.debug("No specification found.", extra=self.logger_kwargs)
-                if max_time is not None:
-                    if time.time() - auto_search_start > max_time:
-                        raise ExceededMaxtimeError(
-                            "Exceeded maximum time. Aborting auto search.",
-                        )
-                # worst case, search every hour
-                multiplier = 100 // perc
-                max_expansion_time = min(
-                    multiplier * (time.time() - spec_search_start), 3600
-                )
-                logger.debug(
-                    "Will expand for %s seconds.",
-                    round(max_expansion_time, 2),
-                    extra=self.logger_kwargs,
-                )
+            logger.debug("No specification found.", extra=self.logger_kwargs)
+            if max_time is not None:
+                if time.time() - auto_search_start > max_time:
+                    raise ExceededMaxtimeError(
+                        "Exceeded maximum time. Aborting auto search.",
+                    )
+            # worst case, search every hour
+            multiplier = 100 // perc
+            max_expansion_time = min(
+                multiplier * (time.time() - spec_search_start), 3600
+            )
+            logger.debug(
+                "Will expand for %s seconds.",
+                round(max_expansion_time, 2),
+                extra=self.logger_kwargs,
+            )
 
     @cssmethodtimer("get specification")
     def get_specification(

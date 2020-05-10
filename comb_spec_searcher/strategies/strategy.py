@@ -564,8 +564,9 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass]):
     def __init__(self):
         super().__init__(ignore_parent=True)
 
+    @staticmethod
     def count_objects_of_size(
-        self, comb_class: CombinatorialClass, n: int, **parameters: int
+        comb_class: CombinatorialClass, n: int, **parameters: int
     ) -> int:
         """
         Verification strategies must contain a method to count the objects.
@@ -575,13 +576,12 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass]):
         return 0
 
     def get_genf(self, comb_class: CombinatorialClass) -> Expr:
-        if not self.verified(comb_class):
-            raise StrategyDoesNotApply("can't find generating function for non-atom")
         x = var("x")
         return x ** comb_class.minimum_size_of_object()
 
+    @staticmethod
     def generate_objects_of_size(
-        self, comb_class: CombinatorialClass, n: int, **parameters: int
+        comb_class: CombinatorialClass, n: int, **parameters: int
     ) -> Iterator[CombinatorialObject]:
         """
         Verification strategies must contain a method to generate the objects.
@@ -589,24 +589,28 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass]):
         if n == comb_class.minimum_size_of_object():
             yield from comb_class.objects_of_size(n)
 
+    @staticmethod
     def random_sample_object_of_size(
-        self, comb_class: CombinatorialClass, n: int, **parameters: int
+        comb_class: CombinatorialClass, n: int, **parameters: int
     ) -> CombinatorialObject:
         if n == comb_class.minimum_size_of_object():
             obj: CombinatorialObject = next(comb_class.objects_of_size(n))
             return obj
 
-    def verified(self, comb_class: CombinatorialClass) -> bool:
+    @staticmethod
+    def verified(comb_class: CombinatorialClass) -> bool:
         return bool(comb_class.is_atom())
 
-    def formal_step(self) -> str:
+    @staticmethod
+    def formal_step() -> str:
         return "is atom"
 
-    def pack(self) -> "StrategyPack":
+    @staticmethod
+    def pack() -> "StrategyPack":
         raise InvalidOperationError("No pack for the empty strategy.")
 
-    def to_jsonable(self):
-        d = super().to_jsonable()
+    def to_jsonable(self) -> dict:
+        d: dict = super().to_jsonable()
         d.pop("ignore_parent")
         return d
 
@@ -630,41 +634,48 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass]):
     def __init__(self):
         super().__init__(ignore_parent=True,)
 
+    @staticmethod
     def count_objects_of_size(
-        self, comb_class: CombinatorialClass, n: int, **parameters: int
+        comb_class: CombinatorialClass, n: int, **parameters: int
     ) -> int:
         """
         Verification strategies must contain a method to count the objects.
         """
         return 0
 
-    def get_genf(self, comb_class: CombinatorialClass) -> Integer:
+    @staticmethod
+    def get_genf(comb_class: CombinatorialClass) -> Integer:
         return Integer(0)
 
+    @staticmethod
     def generate_objects_of_size(
-        self, comb_class: CombinatorialClass, n: int, **parameters: int
+        comb_class: CombinatorialClass, n: int, **parameters: int
     ) -> Iterator[CombinatorialObject]:
         """
         Verification strategies must contain a method to generate the objects.
         """
         return iter([])
 
+    @staticmethod
     def random_sample_object_of_size(
-        self, comb_class: CombinatorialClass, n: int, **parameters: int
+        comb_class: CombinatorialClass, n: int, **parameters: int
     ) -> CombinatorialObject:
         raise StrategyDoesNotApply("Can't sample from empty set.")
 
-    def verified(self, comb_class: CombinatorialClass) -> bool:
+    @staticmethod
+    def verified(comb_class: CombinatorialClass) -> bool:
         return bool(comb_class.is_empty())
 
-    def formal_step(self) -> str:
+    @staticmethod
+    def formal_step() -> str:
         return "is empty"
 
-    def pack(self) -> "StrategyPack":
+    @staticmethod
+    def pack() -> "StrategyPack":
         raise InvalidOperationError("No pack for the empty strategy.")
 
-    def to_jsonable(self):
-        d = super().to_jsonable()
+    def to_jsonable(self) -> dict:
+        d: dict = super().to_jsonable()
         d.pop("ignore_parent")
         return d
 
