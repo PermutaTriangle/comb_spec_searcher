@@ -5,53 +5,61 @@ calling the Strategy class and storing its results.
 
 A CombinatorialSpecification is (more or less) a set of Rule.
 """
+import abc
 from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
     Dict,
+    Generic,
     Iterator,
     List,
     Optional,
     Sequence,
     Tuple,
+    cast,
 )
 
 from sympy import Eq, Function
 
-from ..combinatorial_class import CombinatorialClass, CombinatorialObject
+from ..combinatorial_class import CombinatorialClassType, CombinatorialObjectType
 from ..exception import StrategyDoesNotApply
 from .constructor import Constructor
 
 if TYPE_CHECKING:
-    from .strategy import Strategy, VerificationStrategy
+    from .strategy import AbstractStrategy, Strategy, VerificationStrategy
 
 
 __all__ = ("Rule", "VerificationRule")
 
 
-class Rule:
+class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectType]):
     """
     An instance of Rule is created by the __call__ method of strategy.
     """
 
     def __init__(
         self,
-        strategy: "Strategy",
-        comb_class: CombinatorialClass,
-        children: Optional[Tuple[CombinatorialClass, ...]] = None,
+        strategy: "AbstractStrategy[CombinatorialClassType, CombinatorialObjectType]",
+        comb_class: CombinatorialClassType,
+        children: Optional[Tuple[CombinatorialClassType, ...]] = None,
     ):
         self.comb_class = comb_class
-        self.strategy = strategy
+        self._strategy = strategy
         self.count_cache: Dict[Any, int] = {}
-        self.obj_cache: Dict[Any, List[CombinatorialObject]] = {}
+        self.obj_cache: Dict[Any, List[CombinatorialObjectType]] = {}
         self.subrecs: Optional[Tuple[Callable[..., int], ...]] = None
         self.subgenerators: Optional[
-            Tuple[Callable[..., Iterator[CombinatorialObject]], ...]
+            Tuple[Callable[..., Iterator[CombinatorialObjectType]], ...]
         ] = (None)
-        self.subsamplers: Optional[Tuple[Callable[..., CombinatorialObject], ...]]
+        self.subsamplers: Optional[Tuple[Callable[..., CombinatorialObjectType], ...]]
         self._children = children
-        self._constructor: Optional[Constructor] = None
+
+    @property
+    def strategy(
+        self,
+    ) -> "AbstractStrategy[CombinatorialClassType, CombinatorialObjectType]":
+        return self._strategy
 
     @property
     def ignore_parent(self) -> bool:
@@ -59,30 +67,36 @@ class Rule:
         Return True if it is not worth expanding the parent/comb_class if
         this rule is found.
         """
-        return self.strategy.ignore_parent
+        return self._strategy.ignore_parent
 
     @property
     def inferrable(self) -> bool:
         """
         Return True if the children could change using inferral strategies.
         """
-        return self.strategy.inferrable
+        return self._strategy.inferrable
 
     @property
     def possibly_empty(self) -> bool:
         """
         Return True if it is possible that a child is empty.
         """
-        return self.strategy.possibly_empty
+        return self._strategy.possibly_empty
 
     @property
     def workable(self) -> bool:
         """
         Return True if the children can expanded using other strategies.
         """
-        return self.strategy.workable
+        return self._strategy.workable
 
-    def set_subrecs(self, get_subrule: Callable[[CombinatorialClass], "Rule"]) -> None:
+    def set_subrecs(
+        self,
+        get_subrule: Callable[
+            [CombinatorialClassType],
+            "AbstractRule[CombinatorialClassType, CombinatorialObjectType]",
+        ],
+    ) -> None:
         """
         In general a rule comes in the context of a set of rules, e.g. in a
         CombinatorialSpecification. In order to count, generate, etc using the
@@ -99,19 +113,133 @@ class Rule:
         )
 
     @property
-    def children(self) -> Tuple[CombinatorialClass, ...]:
+    def children(self) -> Tuple[CombinatorialClassType, ...]:
         """
         Return the tuple of CombinatorialClass that are found by applying the
         decomposition function of the strategy to the parent.
         """
         if self._children is None:
-            self._children = self.strategy.decomposition_function(self.comb_class)
+            self._children = self._strategy.decomposition_function(self.comb_class)
             if self._children is None:
-                raise StrategyDoesNotApply("{} does not apply".format(self.strategy))
+                raise StrategyDoesNotApply("{} does not apply".format(self._strategy))
         return self._children
 
     @property
-    def constructor(self) -> Constructor:
+    def formal_step(self) -> str:
+        """
+        Return a string with a short explanation about the rule.
+        """
+        return self._strategy.formal_step()
+
+    def non_empty_children(self) -> Tuple[CombinatorialClassType, ...]:
+        """
+        Return the tuple of non-empty combinatorial classes that are found
+        by applying the decomposition function.
+        """
+        return tuple(child for child in self.children if not child.is_empty())
+
+    @abc.abstractmethod
+    def count_objects_of_size(self, n: int, **parameters: int) -> int:
+        """
+        The function count the objects with respect to the parameters. The
+        result is cached.
+        """
+
+    @abc.abstractmethod
+    def get_equation(
+        self, get_function: Callable[[CombinatorialClassType], Function]
+    ) -> Eq:
+        """
+        Return the equation for the (ordinary) generating function.
+        """
+
+    @abc.abstractmethod
+    def generate_objects_of_size(
+        self, n: int, **parameters: int
+    ) -> Iterator[CombinatorialObjectType]:
+        """
+        Generate the objects by using the underlying bijection between the
+        parent and children.
+        """
+
+    @abc.abstractmethod
+    def random_sample_object_of_size(
+        self, n: int, **parameters: int
+    ) -> CombinatorialObjectType:
+        """Return a random objects of the give size."""
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, AbstractRule):
+            return NotImplemented
+        return (
+            isinstance(other, self.__class__)
+            and self.comb_class == other.comb_class
+            and self._strategy == other._strategy
+        )
+
+    def __str__(self) -> str:
+        def frontpad(res, height):
+            n = max(len(s) for s in res)
+            for _ in range(height - len(res)):
+                res.append(" " * n)
+
+        def backpad(res):
+            n = max(len(s) for s in res)
+            for i, s in enumerate(res):
+                res[i] = s + " " * (n - len(s))
+
+        def join(res, new):
+            backpad(new)
+            backpad(res)
+            frontpad(res, len(new))
+            for i, s in enumerate(new):
+                res[i] += s
+
+        res = str(self.comb_class).split("\n")
+        backpad(res)
+        if isinstance(self, Rule):
+            children = [str(child).split("\n") for child in self.children]
+            symbol_height = 1
+            eq_symbol = (
+                ["     " for i in range(symbol_height)]
+                + ["  {}  ".format(self.constructor.get_eq_symbol())]
+                + ["     " for i in range(symbol_height)]
+            )
+            join(res, eq_symbol)
+            join(res, children[0])
+            if len(children) > 1:
+                op_symbol = (
+                    ["     " for i in range(symbol_height)]
+                    + ["  {}  ".format(self.constructor.get_op_symbol())]
+                    + ["     " for i in range(symbol_height)]
+                )
+                for child in children[1:]:
+                    join(res, op_symbol)
+                    join(res, child)
+        return f"Explanation: {self.formal_step}\n" + "\n".join(x for x in res)
+
+
+class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
+    def __init__(
+        self,
+        strategy: "Strategy[CombinatorialClassType, CombinatorialObjectType]",
+        comb_class: CombinatorialClassType,
+        children: Optional[Tuple[CombinatorialClassType, ...]] = None,
+    ):
+        super().__init__(strategy, comb_class, children)
+        self._constructor: Optional[Constructor] = None
+
+    @property
+    def strategy(self) -> "Strategy[CombinatorialClassType, CombinatorialObjectType]":
+        return cast(
+            "Strategy[CombinatorialClassType, CombinatorialObjectType]",
+            super().strategy,
+        )
+
+    @property
+    def constructor(
+        self,
+    ) -> Constructor[CombinatorialClassType, CombinatorialObjectType]:
         """
         Return the constructor, that contains all the information about how to
         count/generate objects from the rule.
@@ -124,30 +252,18 @@ class Rule:
                 raise StrategyDoesNotApply("{} does not apply".format(self.strategy))
         return self._constructor
 
-    @property
-    def formal_step(self) -> str:
-        """
-        Return a string with a short explanation about the rule.
-        """
-        return self.strategy.formal_step()
-
-    def non_empty_children(self) -> Tuple[CombinatorialClass, ...]:
-        """
-        Return the tuple of non-empty combinatorial classes that are found
-        by applying the decomposition function.
-        """
-        return tuple(child for child in self.children if not child.is_empty())
-
     def backward_map(
-        self, objs: Tuple[CombinatorialObject, ...]
-    ) -> CombinatorialObject:
+        self, objs: Tuple[CombinatorialObjectType, ...]
+    ) -> CombinatorialObjectType:
         """
         This encodes the backward map of the underlying bijection that the
         strategy implies.
         """
         return self.strategy.backward_map(self.comb_class, objs, self.children)
 
-    def forward_map(self, obj: CombinatorialObject) -> Tuple[CombinatorialObject, ...]:
+    def forward_map(
+        self, obj: CombinatorialObjectType
+    ) -> Tuple[CombinatorialObjectType, ...]:
         """
         This encodes the forward map of the underlying bijection that the
         strategy implies.
@@ -190,7 +306,7 @@ class Rule:
         return res
 
     def get_equation(
-        self, get_function: Callable[[CombinatorialClass], Function]
+        self, get_function: Callable[[CombinatorialClassType], Function]
     ) -> Eq:
         """
         Return the equation for the (ordinary) generating function.
@@ -201,7 +317,7 @@ class Rule:
 
     def generate_objects_of_size(
         self, n: int, **parameters: int
-    ) -> Iterator[CombinatorialObject]:
+    ) -> Iterator[CombinatorialObjectType]:
         """
         Generate the objects by using the underlying bijection between the
         parent and children.
@@ -225,7 +341,7 @@ class Rule:
 
     def random_sample_object_of_size(
         self, n: int, **parameters: int
-    ) -> CombinatorialObject:
+    ) -> CombinatorialObjectType:
         assert self.subrecs is not None, "you must call the set_subrecs function first"
         assert (
             self.subsamplers is not None
@@ -237,56 +353,8 @@ class Rule:
         obj = self.backward_map(subobjs)
         return obj
 
-    def __eq__(self, other) -> bool:
-        return (
-            isinstance(other, self.__class__)
-            and self.comb_class == other.comb_class
-            and self.strategy == other.strategy
-        )
 
-    def __str__(self) -> str:
-        def frontpad(res, height):
-            n = max(len(s) for s in res)
-            for _ in range(height - len(res)):
-                res.append(" " * n)
-
-        def backpad(res):
-            n = max(len(s) for s in res)
-            for i, s in enumerate(res):
-                res[i] = s + " " * (n - len(s))
-
-        def join(res, new):
-            backpad(new)
-            backpad(res)
-            frontpad(res, len(new))
-            for i, s in enumerate(new):
-                res[i] += s
-
-        res = str(self.comb_class).split("\n")
-        backpad(res)
-        if self.children:
-            children = [str(child).split("\n") for child in self.children]
-            symbol_height = 1
-            eq_symbol = (
-                ["     " for i in range(symbol_height)]
-                + ["  {}  ".format(self.constructor.get_eq_symbol())]
-                + ["     " for i in range(symbol_height)]
-            )
-            join(res, eq_symbol)
-            join(res, children[0])
-            if len(children) > 1:
-                op_symbol = (
-                    ["     " for i in range(symbol_height)]
-                    + ["  {}  ".format(self.constructor.get_op_symbol())]
-                    + ["     " for i in range(symbol_height)]
-                )
-                for child in children[1:]:
-                    join(res, op_symbol)
-                    join(res, child)
-        return "Explanation: {}\n".format(self.formal_step) + "\n".join(x for x in res)
-
-
-class EquivalenceRule(Rule):
+class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     def __init__(self, rule: Rule):
         non_empty_children = rule.non_empty_children()
         assert (
@@ -307,7 +375,9 @@ class EquivalenceRule(Rule):
             self.strategy.formal_step(), self.child_idx
         )
 
-    def forward_map(self, obj: CombinatorialObject) -> Tuple[CombinatorialObject, ...]:
+    def forward_map(
+        self, obj: CombinatorialObjectType
+    ) -> Tuple[CombinatorialObjectType, ...]:
         return (
             self.strategy.forward_map(self.comb_class, obj, self.actual_children)[
                 self.child_idx
@@ -315,7 +385,7 @@ class EquivalenceRule(Rule):
         )
 
 
-class EquivalencePathRule(Rule):
+class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     """
     A class for shortening a chain of equivalence rules into a single Rule.
     """
@@ -336,7 +406,7 @@ class EquivalencePathRule(Rule):
     def formal_step(self) -> str:
         return ", then ".join(rule.formal_step for rule in self.rules)
 
-    def eqv_path_rules(self) -> List[Tuple[CombinatorialClass, Rule]]:
+    def eqv_path_rules(self) -> List[Tuple[CombinatorialClassType, Rule]]:
         """
         Returns the list of (parent, rule) pairs that make up the equivalence
         path.
@@ -349,14 +419,16 @@ class EquivalencePathRule(Rule):
         return eqv_path_rules
 
     def backward_map(
-        self, objs: Tuple[CombinatorialObject, ...]
-    ) -> CombinatorialObject:
+        self, objs: Tuple[CombinatorialObjectType, ...]
+    ) -> CombinatorialObjectType:
         res = objs
         for rule in reversed(self.rules):
             res = (rule.backward_map(res),)
         return res[0]
 
-    def forward_map(self, obj: CombinatorialObject) -> Tuple[CombinatorialObject, ...]:
+    def forward_map(
+        self, obj: CombinatorialObjectType
+    ) -> Tuple[CombinatorialObjectType, ...]:
         res = obj
         for rule in reversed(self.rules):
             res = rule.forward_map(res)[0]
@@ -400,7 +472,7 @@ class EquivalencePathRule(Rule):
         return "Explanation: {}\n".format(self.formal_step) + "\n".join(x for x in res)
 
 
-class ReverseRule(Rule):
+class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     """
     A class for creating the reverse of an equivalence rule.
     """
@@ -420,19 +492,21 @@ class ReverseRule(Rule):
         return "reverse of '{}'".format(self.strategy.formal_step())
 
     def backward_map(
-        self, objs: Tuple[CombinatorialObject, ...]
-    ) -> CombinatorialObject:
+        self, objs: Tuple[CombinatorialObjectType, ...]
+    ) -> CombinatorialObjectType:
         return self.strategy.forward_map(self.children[0], objs[0], (self.comb_class,))[
             0
         ]
 
-    def forward_map(self, obj: CombinatorialObject) -> Tuple[CombinatorialObject, ...]:
+    def forward_map(
+        self, obj: CombinatorialObjectType
+    ) -> Tuple[CombinatorialObjectType, ...]:
         return (
             self.strategy.backward_map(self.children[0], (obj,), (self.comb_class,)),
         )
 
 
-class VerificationRule(Rule):
+class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
     """
     A class for verification rules. In particular, the children will be an
     empty tuple if it applies, else None.
@@ -440,12 +514,21 @@ class VerificationRule(Rule):
 
     def __init__(
         self,
-        strategy: "VerificationStrategy",
-        comb_class: CombinatorialClass,
-        children: Optional[Tuple[CombinatorialClass, ...]] = None,
+        strat: "VerificationStrategy[CombinatorialClassType,CombinatorialObjectType]",
+        comb_class: CombinatorialClassType,
+        children: Optional[Tuple[CombinatorialClassType, ...]] = None,
     ):
-        super().__init__(strategy, comb_class, children)  # type: ignore
-        self.strategy: "VerificationStrategy"  # type: ignore
+        assert not children
+        super().__init__(strat, comb_class, children)
+
+    @property
+    def strategy(
+        self,
+    ) -> "VerificationStrategy[CombinatorialClassType, CombinatorialObjectType]":
+        return cast(
+            "VerificationStrategy[CombinatorialClassType, CombinatorialObjectType]",
+            super().strategy,
+        )
 
     def count_objects_of_size(self, n: int, **parameters: int) -> int:
         key = (n,) + tuple(sorted(parameters.items()))
@@ -456,14 +539,14 @@ class VerificationRule(Rule):
         return res
 
     def get_equation(
-        self, get_function: Callable[[CombinatorialClass], Function]
+        self, get_function: Callable[[CombinatorialClassType], Function]
     ) -> Eq:
         lhs_func = get_function(self.comb_class)
         return Eq(lhs_func, self.strategy.get_genf(self.comb_class))
 
     def generate_objects_of_size(
         self, n: int, **parameters: int
-    ) -> Iterator[CombinatorialObject]:
+    ) -> Iterator[CombinatorialObjectType]:
         key = (n,) + tuple(sorted(parameters.items()))
         res = self.obj_cache.get(key)
         if res is not None:
@@ -479,7 +562,7 @@ class VerificationRule(Rule):
 
     def random_sample_object_of_size(
         self, n: int, **parameters: int
-    ) -> CombinatorialObject:
+    ) -> CombinatorialObjectType:
         return self.strategy.random_sample_object_of_size(
             self.comb_class, n, **parameters
         )
