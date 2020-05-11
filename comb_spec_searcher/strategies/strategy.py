@@ -58,7 +58,7 @@ import sys
 import zlib
 
 if platform.python_implementation() == "CPython":
-    from pympler.asizeof import asizeof
+    from pympler.asizeof import asizeof  # type: ignore
 
 from sympy import Expr, Integer, var
 
@@ -107,9 +107,9 @@ class AbstractStrategy(abc.ABC, Generic[CombinatorialClassType]):
     VerificationStrategy have in common.
     """
 
-    uncompressed_size = 0
-    compressed_size = 0
-    compression_time = 0
+    uncompressed_size: int = 0
+    compressed_size: int = 0
+    compression_time: float = 0
 
     def __init__(
         self,

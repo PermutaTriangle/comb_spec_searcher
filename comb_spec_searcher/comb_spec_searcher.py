@@ -94,7 +94,7 @@ class CombinatorialSpecificationSearcher:
         """The symmetries functions for the strategy pack."""
         return self.strategy_pack.symmetries
 
-    def build_zdict(self) -> str:
+    def build_zdict(self) -> List[str]:
         """
         Return a list of common strings that may appear in the JSON of the
         strategies to be compressed.
@@ -102,7 +102,7 @@ class CombinatorialSpecificationSearcher:
         # According to zlib's documentation, the most frequently appear strings
         # should appear at the end. We'll build it in reverse and then reverse
         # it after it's passed to the ruledb.
-        strings = []
+        strings: List[str] = []
         strings.append("true")
         strings.append("false")
         strings.append('"class_module": ')
