@@ -196,6 +196,7 @@ class AbstractStrategy(abc.ABC, Generic[CombinatorialClassType]):
         Return a dictionary form of the strategy.
         """
         c = self.__class__
+
         return {
             "class_module": c.__module__,
             "strategy_class": c.__name__,

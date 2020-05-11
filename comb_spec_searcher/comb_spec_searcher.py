@@ -1,4 +1,5 @@
 """A class for automatically performing combinatorial exploration."""
+from importlib import import_module
 import json
 import logging
 import os
@@ -124,10 +125,14 @@ class CombinatorialSpecificationSearcher:
             strs.append(".".join(strat["class_module"].split(".")[:-1]) + ".")
             strs.append(strat["class_module"].split(".")[-1])
             strs.append(strat["strategy_class"] + '": ')
-            strat_class = getattr(
-                sys.modules[strat["class_module"]], strat["strategy_class"]
-            )
+            module = import_module(strat["class_module"])
+            try:
+                strat_class = getattr(module, strat["strategy_class"])
+            except:
+                strat_class = eval(strat["strategy_class"])
+
             strs.extend(strat_class.build_zdict())
+
             return strs
 
         for key, strat_dict in pack_dict.items():
