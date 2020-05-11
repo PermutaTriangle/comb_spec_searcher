@@ -7,7 +7,7 @@ import platform
 
 from .equiv_db import EquivalenceDB
 from .exception import SpecificationNotFound
-from .strategies import AbstractStrategy, Rule, Strategy
+from .strategies import AbstractStrategy, Rule
 from .tree_searcher import (
     Node,
     iterative_proof_tree_finder,
