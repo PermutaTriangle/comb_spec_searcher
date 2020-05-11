@@ -23,7 +23,7 @@ Specification = Tuple[List[Tuple[int, Strategy]], List[List[int]]]
 class RuleDB:
     """A database for rules found."""
 
-    def __init__(self, compression_zdict: List[str] = []) -> None:
+    def __init__(self, compression_zdict: List[str]) -> None:
         """
         Initialise.
 
@@ -123,7 +123,7 @@ class RuleDB:
                     AbstractStrategy.compressed_size
                     / AbstractStrategy.uncompressed_size
                 )
-            except:
+            except ZeroDivisionError:
                 comp_rate = 0
             status += "\tStrategy compression rate is {}%\n".format(
                 round(comp_rate * 100)

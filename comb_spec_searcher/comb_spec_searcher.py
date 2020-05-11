@@ -64,11 +64,9 @@ class CombinatorialSpecificationSearcher:
         self.kwargs["logger"] = self.logger_kwargs
         self.kwargs["symmetry"] = bool(strategy_pack.symmetries)
 
-        self.compression_zdict = self.build_zdict()
-
         self.classdb = ClassDB(type(start_class))
         self.classqueue = DefaultQueue(strategy_pack)
-        self.ruledb = RuleDB(compression_zdict=self.compression_zdict)
+        self.ruledb = RuleDB(compression_zdict=self.build_zdict())
 
         # initialise the run with start_class
         self.start_label = self.classdb.get_label(start_class)
