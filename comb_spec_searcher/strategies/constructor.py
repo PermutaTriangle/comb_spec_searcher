@@ -131,10 +131,12 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
             )
         return tuple(range(min_child_size, n - self.minimum_size + min_child_size + 1))
 
-    def is_equivalence(self) -> bool:
+    @staticmethod
+    def is_equivalence() -> bool:
         return True
 
-    def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
+    @staticmethod
+    def get_equation(lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
         return Eq(lhs_func, reduce(mul, rhs_funcs, 1))
 
     def reliance_profile(self, n: int, **parameters: int) -> RelianceProfile:
@@ -231,10 +233,12 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
     def __init__(self, children: Tuple[CombinatorialClassType, ...]):
         self.number_of_children = len(children)
 
-    def is_equivalence(self) -> bool:
+    @staticmethod
+    def is_equivalence() -> bool:
         return True
 
-    def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
+    @staticmethod
+    def get_equation(lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
         return Eq(lhs_func, reduce(add, rhs_funcs, 0))
 
     def reliance_profile(self, n: int, **parameters: int) -> RelianceProfile:
@@ -242,11 +246,13 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         assert not parameters, "only implemented in one variable, namely 'n'"
         return tuple((n,) for _ in range(self.number_of_children))
 
-    def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
+    @staticmethod
+    def get_recurrence(subrecs: SubRecs, n: int, **parameters: int) -> int:
         return sum(rec(n, **parameters) for rec in subrecs)
 
+    @staticmethod
     def get_sub_objects(
-        self, subgens: SubGens, n: int, **parameters: int
+        subgens: SubGens, n: int, **parameters: int
     ) -> Iterator[Tuple[CombinatorialObjectType, ...]]:
         assert len(parameters) == 0, "only implemented in one variable, namely 'n'"
         for i, subgen in enumerate(subgens):
@@ -255,8 +261,8 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
                     None for _ in range(len(subgens) - i - 1)
                 )
 
+    @staticmethod
     def random_sample_sub_objects(
-        self,
         parent_count: int,
         subsamplers: SubSamplers,
         subrecs: SubRecs,
