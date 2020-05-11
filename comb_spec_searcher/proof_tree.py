@@ -19,7 +19,7 @@ from logzero import logger
 from .exception import InsaneTreeError, TaylorExpansionError
 from .specification import CombinatorialSpecification
 from .strategies.constructor import CartesianProduct, DisjointUnion
-from .strategies.rule import EquivalencePathRule, VerificationRule
+from .strategies.rule import EquivalencePathRule, Rule, VerificationRule
 from .utils import (
     check_equation,
     check_poly,
@@ -938,7 +938,7 @@ class ProofTree:
                     strategy_verified=True,
                     formal_step=rule.formal_step,
                 )
-            else:
+            elif isinstance(rule, Rule):
                 nodes[rule.comb_class] = ProofTreeNode(
                     label=spec.get_label(rule.comb_class),
                     eqv_path_labels=[spec.get_label(rule.comb_class)],
@@ -950,6 +950,8 @@ class ProofTree:
                     strategy_verified=False,
                     formal_step=rule.formal_step,
                 )
+            else:
+                raise ValueError(f"Don't know what to do with the rule class of {rule}")
 
         # fix equiv paths and children
         for node in list(nodes.values()):

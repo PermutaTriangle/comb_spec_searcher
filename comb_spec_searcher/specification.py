@@ -2,7 +2,7 @@
 A combinatorial specification is a set rules of the form a -> b1, ..., bk
 where each of the bi appear exactly once on the left hand side of some rule.
 """
-from typing import Dict, Iterable, Iterator, Sequence, Tuple, Generic
+from typing import Dict, Generic, Iterable, Iterator, Sequence, Tuple
 
 import sympy
 from logzero import logger
@@ -23,6 +23,7 @@ from .strategies import (
     Strategy,
     VerificationStrategy,
 )
+from .strategies.rule import AbstractRule
 from .utils import maple_equations, taylor_expand
 
 __all__ = ("CombinatorialSpecification",)
@@ -40,18 +41,27 @@ class CombinatorialSpecification(
     def __init__(
         self,
         root: CombinatorialClassType,
-        strategies: Iterable[Tuple[CombinatorialClassType, AbstractStrategy]],
+        strategies: Iterable[
+            Tuple[
+                CombinatorialClassType,
+                AbstractStrategy[CombinatorialClassType, CombinatorialObjectType],
+            ]
+        ],
         equivalence_paths: Iterable[Sequence[CombinatorialClassType]],
     ):
         self.root = root
         equivalence_rules: Dict[
             Tuple[CombinatorialClassType, CombinatorialClassType], Rule
         ] = {}
-        self.rules_dict: Dict[CombinatorialClassType, Rule] = {}
+        self.rules_dict: Dict[CombinatorialClassType, AbstractRule] = {}
         for comb_class, strategy in strategies:
             rule = strategy(comb_class)
             non_empty_children = rule.non_empty_children()
-            if len(non_empty_children) == 1 and rule.constructor.is_equivalence():
+            if (
+                isinstance(rule, Rule)
+                and len(non_empty_children) == 1
+                and rule.constructor.is_equivalence()
+            ):
                 equivalence_rules[(comb_class, non_empty_children[0])] = (
                     rule if len(rule.children) == 1 else rule.to_equivalence_rule()
                 )
@@ -75,7 +85,9 @@ class CombinatorialSpecification(
             rule.set_subrecs(self.get_rule)
         self.labels: Dict[CombinatorialClassType, int] = {}
 
-    def get_rule(self, comb_class: CombinatorialClassType) -> Rule:
+    def get_rule(
+        self, comb_class: CombinatorialClassType
+    ) -> AbstractRule[CombinatorialClassType, CombinatorialObjectType]:
         """Return the rule with comb class on the left."""
         if comb_class.is_empty():
             empty_strat = EmptyStrategy()
@@ -83,7 +95,9 @@ class CombinatorialSpecification(
         return self.rules_dict[comb_class]
 
     @property
-    def root_rule(self) -> Rule:
+    def root_rule(
+        self,
+    ) -> AbstractRule[CombinatorialClassType, CombinatorialObjectType]:
         """Return the rule of the root comb class."""
         return self.rules_dict[self.root]
 
@@ -264,7 +278,7 @@ class CombinatorialSpecification(
         }
 
     @classmethod
-    def from_dict(cls, d: dict) -> "CombinatorialSpecification":
+    def from_dict(cls, d):
         """
         Return the specification with the dictionary outputter by the
         'to_jsonable' method
