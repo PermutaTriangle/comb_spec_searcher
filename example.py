@@ -167,7 +167,7 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
 # the strategies
 
 
-class ExpansionStrategy(DisjointUnionStrategy[AvoidingWithPrefix]):
+class ExpansionStrategy(DisjointUnionStrategy[AvoidingWithPrefix, Word]):
     def decomposition_function(
         self, avoiding_with_prefix: AvoidingWithPrefix
     ) -> Optional[Tuple[AvoidingWithPrefix, ...]]:
@@ -221,7 +221,7 @@ class ExpansionStrategy(DisjointUnionStrategy[AvoidingWithPrefix]):
         return cls()
 
 
-class RemoveFrontOfPrefix(CartesianProductStrategy[AvoidingWithPrefix]):
+class RemoveFrontOfPrefix(CartesianProductStrategy[AvoidingWithPrefix, Word]):
     def decomposition_function(
         self, avoiding_with_prefix: AvoidingWithPrefix
     ) -> Union[Tuple[AvoidingWithPrefix, ...], None]:
