@@ -1,6 +1,11 @@
+import json
+
 import pytest
 
-from comb_spec_searcher import CombinatorialSpecificationSearcher
+from comb_spec_searcher import (
+    CombinatorialSpecification,
+    CombinatorialSpecificationSearcher,
+)
 from comb_spec_searcher.utils import taylor_expand
 from example import AvoidingWithPrefix, Word, pack
 
@@ -16,6 +21,19 @@ def specification():
 def test_specification_with_genf(specification):
     genf = specification.get_genf()
     assert taylor_expand(genf) == [1, 2, 4, 8, 15, 27, 48, 87, 157, 283, 511]
+
+
+def test_specification_json(specification):
+    new_spec = CombinatorialSpecification.from_dict(
+        json.loads(json.dumps(specification.to_jsonable()))
+    )
+    assert isinstance(new_spec, CombinatorialSpecification)
+    assert specification.root == new_spec.root
+    assert specification.get_genf() == new_spec.get_genf()
+    assert specification.count_objects_of_size(20) == new_spec.count_objects_of_size(20)
+    assert list(specification.generate_objects_of_size(8)) == list(
+        new_spec.generate_objects_of_size(8)
+    )
 
 
 @pytest.mark.repeat(50)

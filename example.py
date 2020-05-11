@@ -89,12 +89,12 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
 
     def to_jsonable(self) -> dict:
         """Return a jsonable object of the combinatorial class."""
-        return {
-            "prefix": self.prefix,
-            "patterns": tuple(sorted(self.patterns)),
-            "alphabet": tuple(sorted(self.alphabet)),
-            "just_prefix": int(self.just_prefix),
-        }
+        d = super().to_jsonable()
+        d["prefix"] = self.prefix
+        d["patterns"] = tuple(sorted(self.patterns))
+        d["alphabet"] = tuple(sorted(self.alphabet))
+        d["just_prefix"] = int(self.just_prefix)
+        return d
 
     @classmethod
     def from_dict(cls, d: dict) -> "AvoidingWithPrefix":
