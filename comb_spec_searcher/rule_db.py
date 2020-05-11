@@ -3,8 +3,6 @@ A database for rules.
 """
 from collections import defaultdict
 from typing import Dict, Iterable, Iterator, List, Optional, Set, Tuple
-import zlib
-import json
 import platform
 
 from .equiv_db import EquivalenceDB

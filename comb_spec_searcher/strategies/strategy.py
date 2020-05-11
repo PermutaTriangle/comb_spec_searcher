@@ -54,11 +54,7 @@ from typing import TYPE_CHECKING, Generic, Iterator, List, Optional, Tuple, Type
 import json
 import time
 import platform
-import sys
 import zlib
-
-if platform.python_implementation() == "CPython":
-    from pympler.asizeof import asizeof  # type: ignore
 
 from sympy import Expr, Integer, var
 
@@ -74,6 +70,9 @@ from .rule import Rule, VerificationRule
 if TYPE_CHECKING:
     from .strategy_pack import StrategyPack
     from comb_spec_searcher import CombinatorialSpecification
+
+if platform.python_implementation() == "CPython":
+    from pympler.asizeof import asizeof  # type: ignore
 
 
 __all__ = (
