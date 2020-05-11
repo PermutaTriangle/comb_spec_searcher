@@ -2,13 +2,17 @@
 A combinatorial specification is a set rules of the form a -> b1, ..., bk
 where each of the bi appear exactly once on the left hand side of some rule.
 """
-from typing import Dict, Iterable, Iterator, Sequence, Tuple
+from typing import Dict, Iterable, Iterator, Sequence, Tuple, Generic
 
 import sympy
 from logzero import logger
 from sympy import Eq, Expr, Function, solve, var
 
-from .combinatorial_class import CombinatorialClass, CombinatorialObject
+from .combinatorial_class import (
+    CombinatorialClass,
+    CombinatorialClassType,
+    CombinatorialObjectType,
+)
 from .exception import IncorrectGeneratingFunctionError, TaylorExpansionError
 from .strategies import (
     AbstractStrategy,
@@ -24,7 +28,9 @@ from .utils import maple_equations, taylor_expand
 __all__ = ("CombinatorialSpecification",)
 
 
-class CombinatorialSpecification:
+class CombinatorialSpecification(
+    Generic[CombinatorialClassType, CombinatorialObjectType]
+):
     """
     A combinatorial specification is a set rules of the form a -> b1, ..., bk
     where each of the bi appear exactly once on the left hand side of some
@@ -33,15 +39,15 @@ class CombinatorialSpecification:
 
     def __init__(
         self,
-        root: CombinatorialClass,
-        strategies: Iterable[Tuple[CombinatorialClass, AbstractStrategy]],
-        equivalence_paths: Iterable[Sequence[CombinatorialClass]],
+        root: CombinatorialClassType,
+        strategies: Iterable[Tuple[CombinatorialClassType, AbstractStrategy]],
+        equivalence_paths: Iterable[Sequence[CombinatorialClassType]],
     ):
         self.root = root
         equivalence_rules: Dict[
-            Tuple[CombinatorialClass, CombinatorialClass], Rule
+            Tuple[CombinatorialClassType, CombinatorialClassType], Rule
         ] = {}
-        self.rules_dict: Dict[CombinatorialClass, Rule] = {}
+        self.rules_dict: Dict[CombinatorialClassType, Rule] = {}
         for comb_class, strategy in strategies:
             rule = strategy(comb_class)
             non_empty_children = rule.non_empty_children()
@@ -67,9 +73,9 @@ class CombinatorialSpecification:
             self.rules_dict.values()
         ):  # list as we lazily assign empty rules
             rule.set_subrecs(self.get_rule)
-        self.labels: Dict[CombinatorialClass, int] = {}
+        self.labels: Dict[CombinatorialClassType, int] = {}
 
-    def get_rule(self, comb_class: CombinatorialClass) -> Rule:
+    def get_rule(self, comb_class: CombinatorialClassType) -> Rule:
         """Return the rule with comb class on the left."""
         if comb_class.is_empty():
             empty_strat = EmptyStrategy()
@@ -81,7 +87,7 @@ class CombinatorialSpecification:
         """Return the rule of the root comb class."""
         return self.rules_dict[self.root]
 
-    def get_label(self, comb_class: CombinatorialClass) -> int:
+    def get_label(self, comb_class: CombinatorialClassType) -> int:
         """Return a unique label for the comb class."""
         res = self.labels.get(comb_class)
         if res is None:
@@ -89,7 +95,7 @@ class CombinatorialSpecification:
             self.labels[comb_class] = res
         return res
 
-    def get_function(self, comb_class: CombinatorialClass) -> Function:
+    def get_function(self, comb_class: CombinatorialClassType) -> Function:
         """
         Return a sympy function for the comb class, using the label it is
         assigned.
@@ -161,7 +167,7 @@ class CombinatorialSpecification:
 
     def generate_objects_of_size(
         self, n: int, **parameters
-    ) -> Iterator[CombinatorialObject]:
+    ) -> Iterator[CombinatorialObjectType]:
         """
         Return the objects with the given parameters.
         Note, 'n' is reserved for the size of the object.
@@ -171,7 +177,7 @@ class CombinatorialSpecification:
 
     def random_sample_object_of_size(
         self, n: int, **parameters: int
-    ) -> CombinatorialObject:
+    ) -> CombinatorialObjectType:
         """
         Return a uniformly random object of the given size. This is done using
         the "recursive" method.

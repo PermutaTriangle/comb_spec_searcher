@@ -58,10 +58,11 @@ from ..combinatorial_class import (
     CombinatorialClass,
     CombinatorialClassType,
     CombinatorialObject,
+    CombinatorialObjectType,
 )
 from ..exception import InvalidOperationError, ObjectMappingError, StrategyDoesNotApply
 from .constructor import CartesianProduct, Constructor, DisjointUnion
-from .rule import Rule, VerificationRule
+from .rule import AbstractRule, Rule, VerificationRule
 
 if TYPE_CHECKING:
     from .strategy_pack import StrategyPack
@@ -93,7 +94,9 @@ def strategy_from_dict(d) -> CSSstrategy:
     return StratClass.from_dict(d)
 
 
-class AbstractStrategy(abc.ABC, Generic[CombinatorialClassType]):
+class AbstractStrategy(
+    abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectType]
+):
     """
     A base class for strategies for methods that Strategy and
     VerificationStrategy have in common.
@@ -117,7 +120,7 @@ class AbstractStrategy(abc.ABC, Generic[CombinatorialClassType]):
         comb_class: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...] = None,
         **kwargs
-    ) -> Rule:
+    ) -> AbstractRule[CombinatorialClassType, CombinatorialObjectType]:
         """
         Return the rule formed by using the strategy.
         """
@@ -167,6 +170,8 @@ class AbstractStrategy(abc.ABC, Generic[CombinatorialClassType]):
         """
 
     def __eq__(self, other: object) -> bool:
+        if isinstance(other, AbstractStrategy):
+            return NotImplemented
         return self.__class__ == other.__class__ and self.__dict__ == other.__dict__
 
     def __str__(self) -> str:
@@ -192,7 +197,7 @@ class AbstractStrategy(abc.ABC, Generic[CombinatorialClassType]):
         return strategy_from_dict(d)
 
 
-class Strategy(AbstractStrategy[CombinatorialClassType]):
+class Strategy(AbstractStrategy[CombinatorialClassType, CombinatorialObjectType]):
     """
     The Strategy class is essentially following the mantra of 'strategy' from the
     combinatorial explanation paper.
@@ -243,7 +248,7 @@ class Strategy(AbstractStrategy[CombinatorialClassType]):
         comb_class: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...] = None,
         **kwargs
-    ) -> Rule:
+    ) -> Rule[CombinatorialClassType, CombinatorialObjectType]:
         if children is None:
             children = self.decomposition_function(comb_class)
         return Rule(self, comb_class, children=children)
@@ -265,9 +270,9 @@ class Strategy(AbstractStrategy[CombinatorialClassType]):
     def backward_map(
         self,
         comb_class: CombinatorialClassType,
-        objs: Tuple[CombinatorialObject, ...],
+        objs: Tuple[CombinatorialObjectType, ...],
         children: Optional[Tuple[CombinatorialClassType, ...]] = None,
-    ) -> CombinatorialObject:
+    ) -> CombinatorialObjectType:
         """
         The forward direction of the underlying bijection used for object
         generation and sampling.
@@ -279,9 +284,9 @@ class Strategy(AbstractStrategy[CombinatorialClassType]):
     def forward_map(
         self,
         comb_class: CombinatorialClassType,
-        obj: CombinatorialObject,
+        obj: CombinatorialObjectType,
         children: Optional[Tuple[CombinatorialClassType, ...]] = None,
-    ) -> Tuple[CombinatorialObject, ...]:
+    ) -> Tuple[CombinatorialObjectType, ...]:
         """
         The backward direction of the underlying bijection used for object
         generation and sampling.
@@ -290,7 +295,9 @@ class Strategy(AbstractStrategy[CombinatorialClassType]):
             children = self.decomposition_function(comb_class)
 
 
-class CartesianProductStrategy(Strategy[CombinatorialClassType]):
+class CartesianProductStrategy(
+    Strategy[CombinatorialClassType, CombinatorialObjectType]
+):
     """
     The CartesianProductStrategy is a subclass of strategy. The constructor is
     CartesianProduct. Such strategies by default assume
@@ -327,7 +334,7 @@ class CartesianProductStrategy(Strategy[CombinatorialClassType]):
         return CartesianProduct(children)
 
 
-class DisjointUnionStrategy(Strategy[CombinatorialClassType]):
+class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObjectType]):
     """
     The DisjointUnionStrategy is a subclass of Strategy. The constructor used
     is DisjointUnion.
@@ -362,7 +369,7 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType]):
         return DisjointUnion(children)
 
     @staticmethod
-    def backward_map_index(objs: Tuple[CombinatorialObject, ...],) -> int:
+    def backward_map_index(objs: Tuple[CombinatorialObjectType, ...],) -> int:
         """
         Return the index of the comb_class that the sub_object returned.
         """
@@ -378,9 +385,9 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType]):
     def backward_map(
         self,
         comb_class: CombinatorialClassType,
-        objs: Tuple[CombinatorialObject, ...],
+        objs: Tuple[CombinatorialObjectType, ...],
         children: Optional[Tuple[CombinatorialClassType, ...]] = None,
-    ) -> CombinatorialObject:
+    ) -> CombinatorialObjectType:
         """
         This method will enable us to generate objects, and sample.
         If it is a direct bijection, the below implementation will work!
@@ -390,7 +397,9 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType]):
         return objs[DisjointUnionStrategy.backward_map_index(objs)]
 
 
-class SymmetryStrategy(DisjointUnionStrategy[CombinatorialClassType]):
+class SymmetryStrategy(
+    DisjointUnionStrategy[CombinatorialClassType, CombinatorialObjectType]
+):
     """General representation for a symmetry strategy."""
 
     def __init__(
@@ -408,7 +417,9 @@ class SymmetryStrategy(DisjointUnionStrategy[CombinatorialClassType]):
         )
 
 
-class VerificationStrategy(AbstractStrategy[CombinatorialClassType]):
+class VerificationStrategy(
+    AbstractStrategy[CombinatorialClassType, CombinatorialObjectType]
+):
     """
     For a VerificationStrategy you must implement the methods:
         - verified:                 Return True if the combinatorial class is
@@ -443,7 +454,7 @@ class VerificationStrategy(AbstractStrategy[CombinatorialClassType]):
         comb_class: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...] = None,
         **kwargs
-    ) -> Rule:
+    ) -> VerificationRule[CombinatorialClassType, CombinatorialObjectType]:
         if children is None:
             children = self.decomposition_function(comb_class)
         return VerificationRule(self, comb_class, children)
@@ -467,7 +478,7 @@ class VerificationStrategy(AbstractStrategy[CombinatorialClassType]):
 
     def get_specification(
         self, comb_class: CombinatorialClassType
-    ) -> "CombinatorialSpecification":
+    ) -> "CombinatorialSpecification[CombinatorialClassType, CombinatorialObjectType]":
         """
         Returns a combinatorial specification for the combinatorial class.
         Raises an `StrategyDoesNotApply` if no specification can be found,
@@ -523,7 +534,7 @@ class VerificationStrategy(AbstractStrategy[CombinatorialClassType]):
 
     def generate_objects_of_size(
         self, comb_class: CombinatorialClassType, n: int, **parameters: int
-    ) -> Iterator[CombinatorialObject]:
+    ) -> Iterator[CombinatorialObjectType]:
         """
         A method to generate the objects.
         Raises an StrategyDoesNotApply if the combinatorial class is not verified.
@@ -536,7 +547,7 @@ class VerificationStrategy(AbstractStrategy[CombinatorialClassType]):
 
     def random_sample_object_of_size(
         self, comb_class: CombinatorialClassType, n: int, **parameters: int
-    ) -> CombinatorialObject:
+    ) -> CombinatorialObjectType:
         """
         A method to sample uniformly at random from a verified combinatorial class.
         Raises an StrategyDoesNotApply if the combinatorial class is not verified.
@@ -555,7 +566,7 @@ class VerificationStrategy(AbstractStrategy[CombinatorialClassType]):
         return d
 
 
-class AtomStrategy(VerificationStrategy[CombinatorialClass]):
+class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]):
     """
     A subclass for when a combinatorial class is an atom - meaning consisting
     of a single object.
@@ -628,7 +639,7 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass]):
         return "verify atoms"
 
 
-class EmptyStrategy(VerificationStrategy[CombinatorialClass]):
+class EmptyStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]):
     """
     A subclass for when a combinatorial class is equal to the empty set.
     """
