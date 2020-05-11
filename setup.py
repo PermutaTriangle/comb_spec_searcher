@@ -22,6 +22,7 @@ setup(
         "Tracker": ("https://github.com/PermutaTriangle/comb_spec_searcher" "/issues"),
     },
     packages=find_packages(),
+    package_data={"comb_spec_searcher": ["py.typed"]},
     long_description=read("README.rst"),
     python_requires=">=3.6",
     classifiers=[
