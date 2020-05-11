@@ -170,7 +170,7 @@ class AbstractStrategy(
         """
 
     def __eq__(self, other: object) -> bool:
-        if isinstance(other, AbstractStrategy):
+        if not isinstance(other, AbstractStrategy):
             return NotImplemented
         return self.__class__ == other.__class__ and self.__dict__ == other.__dict__
 

@@ -14,3 +14,9 @@ def test_json_encoding():
     new_empty = strategy_from_dict(empty.to_jsonable())
     assert empty.__class__ == new_empty.__class__
     assert empty.__dict__ == new_empty.__dict__
+
+
+def test_equality():
+    atom1 = AtomStrategy()
+    atom2 = AtomStrategy()
+    assert atom1 == atom2
