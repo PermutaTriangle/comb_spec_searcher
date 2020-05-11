@@ -30,6 +30,7 @@ from .strategies import (
     StrategyPack,
     VerificationRule,
 )
+from .strategies.rule import AbstractRule
 from .strategies.strategy import CSSstrategy
 from .utils import cssiteratortimer, cssmethodtimer
 
@@ -131,7 +132,7 @@ class CombinatorialSpecificationSearcher:
 
     def _rules_from_strategy(
         self, comb_class: CombinatorialClass, strategy: CSSstrategy
-    ) -> Iterator[Rule]:
+    ) -> Iterator[AbstractRule]:
         """Yield all the rules given by a strategy/strategy generator."""
         if isinstance(strategy, AbstractStrategy):
             yield strategy(comb_class, **self.kwargs)
@@ -160,7 +161,7 @@ class CombinatorialSpecificationSearcher:
         strategy_generator: CSSstrategy,
         label: Optional[int] = None,
         initial: bool = False,
-    ) -> Iterator[Tuple[int, Tuple[int, ...], Rule]]:
+    ) -> Iterator[Tuple[int, Tuple[int, ...], AbstractRule]]:
         """
         Will expand the class with given strategy. Return time taken.
         """
@@ -211,7 +212,7 @@ class CombinatorialSpecificationSearcher:
             yield label, tuple(end_labels), rule
 
     def _add_rule(
-        self, start_label: int, end_labels: Tuple[int, ...], rule: Rule
+        self, start_label: int, end_labels: Tuple[int, ...], rule: AbstractRule
     ) -> None:
         """
         Add the cleaned rules labels.
