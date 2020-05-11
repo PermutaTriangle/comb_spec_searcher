@@ -232,7 +232,7 @@ create multiple rules, and as such should be implemented as generators.
    >>> from comb_spec_searcher import DisjointUnionStrategy
 
 
-   >>> class ExpansionStrategy(DisjointUnionStrategy[AvoidingWithPrefix]):
+   >>> class ExpansionStrategy(DisjointUnionStrategy):
    ...     def decomposition_function(self, avoiding_with_prefix):
    ...        if not avoiding_with_prefix.just_prefix:
    ...           alphabet, prefix, patterns = (
@@ -291,7 +291,7 @@ constructor is cartesian product a ``DecompositionRule``.
    >>> from comb_spec_searcher import CartesianProductStrategy
 
 
-   >>> class RemoveFrontOfPrefix(CartesianProductStrategy[AvoidingWithPrefix]):
+   >>> class RemoveFrontOfPrefix(CartesianProductStrategy):
    ...     def decomposition_function(self, avoiding_with_prefix):
    ...        """If the k is the maximum size of a pattern to be avoided, then any
    ...        occurrence using indices further to the right of the prefix can use at
