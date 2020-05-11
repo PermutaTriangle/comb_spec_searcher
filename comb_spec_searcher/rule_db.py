@@ -16,8 +16,9 @@ from .tree_searcher import (
     prune,
     random_proof_tree,
 )
+from .utils import cssmethodtimer
 
-Specification = Tuple[List[Tuple[int, Strategy]], List[List[int]]]
+Specification = Tuple[List[Tuple[int, AbstractStrategy]], List[List[int]]]
 
 
 class RuleDB:
@@ -42,6 +43,9 @@ class RuleDB:
 
         self.equivdb = EquivalenceDB()
 
+        self.func_calls: Dict[str, int] = defaultdict(int)
+        self.func_times: Dict[str, float] = defaultdict(float)
+
     def __eq__(self, other: object) -> bool:
         """Check if all stored information is the same."""
         if not isinstance(other, RuleDB):
@@ -61,9 +65,7 @@ class RuleDB:
             self.set_verified(start)
         if len(ends) == 1 and rule.constructor.is_equivalence():
             self.set_equivalent(start, ends[0])
-        self.rule_to_strategy[(start, ends)] = rule.strategy.compress(
-            zdict=self.compression_zdict
-        )
+        self.rule_to_strategy[(start, ends)] = self._compress(rule.strategy)
 
     def is_verified(self, label: int) -> bool:
         """Return True if label has been verified."""
@@ -90,12 +92,10 @@ class RuleDB:
             )
         return rules_dict
 
-    def all_rules(self) -> Iterator[Tuple[int, Tuple[int, ...], Strategy]]:
+    def all_rules(self) -> Iterator[Tuple[int, Tuple[int, ...], AbstractStrategy]]:
         """Yield all the rules found so far."""
         for start, ends in self:
-            yield start, ends, AbstractStrategy.decompress(
-                self.rule_to_strategy[(start, ends)], zdict=self.compression_zdict
-            )
+            yield start, ends, self._decompress(self.rule_to_strategy[(start, ends)])
 
     def __iter__(self) -> Iterator[Tuple[int, Tuple[int, ...]]]:
         """Iterate through rules as the pairs (start, end)."""
@@ -114,9 +114,12 @@ class RuleDB:
         status += "\tTotal number of combinatorial rules is {}\n".format(
             len(self.rule_to_strategy)
         )
-        status += "\tStrategy compression has taken {} seconds\n".format(
-            round(AbstractStrategy.compression_time, 2)
-        )
+        for explanation in self.func_calls:
+            count = self.func_calls[explanation]
+            time_spent = self.func_times[explanation]
+            status += "\tApplied {} {} times. Time spent is {} seconds.\n".format(
+                explanation, count, round(time_spent, 2)
+            )
         if platform.python_implementation() == "CPython":
             try:
                 comp_rate = 1 - (
@@ -216,22 +219,18 @@ class RuleDB:
                     path = self.equivdb.find_path(eqv_label, start)
                     for a, b in zip(path[:-1], path[1:]):
                         try:
-                            strategy = AbstractStrategy.decompress(
-                                self.rule_to_strategy[(a, (b,))],
-                                zdict=self.compression_zdict,
+                            strategy = self._decompress(
+                                self.rule_to_strategy[(a, (b,))]
                             )
                             res.append((a, strategy))
                         except KeyError:
-                            strategy = AbstractStrategy.decompress(
-                                self.rule_to_strategy[(b, (a,))],
-                                zdict=self.compression_zdict,
+                            strategy = self._decompress(
+                                self.rule_to_strategy[(b, (a,))]
                             )
                             res.append((b, strategy))
                     if len(path) > 1:
                         eqv_paths.append(path)
-            strategy = AbstractStrategy.decompress(
-                self.rule_to_strategy[(start, ends)], zdict=self.compression_zdict
-            )
+            strategy = self._decompress(self.rule_to_strategy[(start, ends)])
             res.append((start, strategy))
         return res, eqv_paths
 
@@ -288,3 +287,17 @@ class RuleDB:
             except StopIteration:
                 minimum = middle + 1
         return self._get_specification_rules(label, tree)
+
+    @cssmethodtimer("compress strategy")
+    def _compress(self, strategy: AbstractStrategy) -> bytes:
+        """
+        Return compressed version of combinatorial class.
+        """
+        return strategy.compress(zdict=self.compression_zdict)
+
+    @cssmethodtimer("decompress strategy")
+    def _decompress(self, strategy: bytes) -> AbstractStrategy:
+        """
+        Return decompressed version of compressed combinatorial class.
+        """
+        return AbstractStrategy.decompress(strategy, zdict=self.compression_zdict)

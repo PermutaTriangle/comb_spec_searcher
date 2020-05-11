@@ -50,9 +50,18 @@ AtomStrategy, relying on CombinatorialClass methods.
 """
 import abc
 from importlib import import_module
-from typing import TYPE_CHECKING, Generic, Iterator, List, Optional, Tuple, Type, Union
+from typing import (
+    cast,
+    TYPE_CHECKING,
+    Generic,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+)
 import json
-import time
 import platform
 import zlib
 
@@ -108,7 +117,6 @@ class AbstractStrategy(abc.ABC, Generic[CombinatorialClassType]):
 
     uncompressed_size: int = 0
     compressed_size: int = 0
-    compression_time: float = 0
 
     def __init__(
         self,
@@ -202,11 +210,9 @@ class AbstractStrategy(abc.ABC, Generic[CombinatorialClassType]):
         Compress and return a strategy to a bytes object using zlib.compressobj
         and a zdict for improved compression.
         """
-        AbstractStrategy.compression_time -= time.time()
         to_compress = json.dumps(self.to_jsonable()).encode()
         comp_obj = zlib.compressobj(level=9, zdict=zdict)
         compressed = comp_obj.compress(to_compress) + comp_obj.flush()
-        AbstractStrategy.compression_time += time.time()
 
         if platform.python_implementation() == "CPython":
             AbstractStrategy.uncompressed_size += asizeof(to_compress)
@@ -215,7 +221,7 @@ class AbstractStrategy(abc.ABC, Generic[CombinatorialClassType]):
         return compressed
 
     @classmethod
-    def decompress(cls, strat: bytes, zdict: bytes) -> CSSstrategy:
+    def decompress(cls, strat: bytes, zdict: bytes) -> "AbstractStrategy":
         """
         Decompress and return a strategy using zlib.decompressobj and a zdict for
         improved compression.
@@ -223,7 +229,9 @@ class AbstractStrategy(abc.ABC, Generic[CombinatorialClassType]):
         decomp = zlib.decompressobj(zdict=zdict)
         to_load = decomp.decompress(strat) + decomp.flush()
 
-        return AbstractStrategy.from_dict(json.loads(to_load.decode()))
+        return cast(
+            AbstractStrategy, AbstractStrategy.from_dict(json.loads(to_load.decode()))
+        )
 
     @classmethod
     @abc.abstractmethod
