@@ -11,26 +11,26 @@ Currently the constructors are implemented in one variable, namely 'n' which is
 used throughout to denote size.
 """
 import abc
-from functools import reduce, partial
+from functools import partial, reduce
 from itertools import product
 from operator import add, mul
 from random import randint
-from typing import Callable, Iterable, Iterator, Tuple
+from typing import Callable, Generic, Iterable, Iterator, Tuple
 
 from sympy import Eq, Function
 
-from ..combinatorial_class import CombinatorialClass, CombinatorialObject
+from ..combinatorial_class import CombinatorialClassType, CombinatorialObjectType
 
 __all__ = ("Constructor", "CartesianProduct", "DisjointUnion")
 
 
 RelianceProfile = Tuple[Tuple[int, ...], ...]
-SubGens = Tuple[Callable[..., Iterator[CombinatorialObject]], ...]
+SubGens = Tuple[Callable[..., Iterator[CombinatorialObjectType]], ...]
 SubRecs = Tuple[Callable[..., int], ...]
-SubSamplers = Tuple[Callable[..., CombinatorialObject], ...]
+SubSamplers = Tuple[Callable[..., CombinatorialObjectType], ...]
 
 
-class Constructor(abc.ABC):
+class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectType]):
     """The constructor is akin to the 'counting function' in the comb exp paper."""
 
     @abc.abstractmethod
@@ -63,7 +63,7 @@ class Constructor(abc.ABC):
     @abc.abstractmethod
     def get_sub_objects(
         self, subgens: SubGens, n: int, **parameters: int
-    ) -> Iterator[Tuple[CombinatorialObject, ...]]:
+    ) -> Iterator[Tuple[CombinatorialObjectType, ...]]:
         """Return the subobjs/image of the bijection implied by the constructor."""
 
     @abc.abstractmethod
@@ -95,7 +95,7 @@ class Constructor(abc.ABC):
         return "+"
 
 
-class CartesianProduct(Constructor):
+class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     """
     The CartesianProduct is initialised with the children of the rule that is
     being counted. These are needed in the reliance profile. In particular,
@@ -104,7 +104,7 @@ class CartesianProduct(Constructor):
     recursions are productive.
     """
 
-    def __init__(self, children: Iterable[CombinatorialClass]):
+    def __init__(self, children: Iterable[CombinatorialClassType]):
         self.minimum_size = sum(
             comb_class.minimum_size_of_object() for comb_class in children
         )
@@ -181,7 +181,7 @@ class CartesianProduct(Constructor):
 
     def get_sub_objects(
         self, subgens: SubGens, n: int, **parameters: int
-    ) -> Iterator[Tuple[CombinatorialObject, ...]]:
+    ) -> Iterator[Tuple[CombinatorialObjectType, ...]]:
         assert len(parameters) == 0, "only implemented in one variable, namely 'n'"
         for comp in self._valid_compositions(n):
             for sub_objs in product(
@@ -222,13 +222,13 @@ class CartesianProduct(Constructor):
         return "Cartesian product"
 
 
-class DisjointUnion(Constructor):
+class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     """
     The DisjointUnion constructor takes as input the children. Each constructor
     is unique up to the length of the children being used to count.
     """
 
-    def __init__(self, children: Tuple[CombinatorialClass, ...]):
+    def __init__(self, children: Tuple[CombinatorialClassType, ...]):
         self.number_of_children = len(children)
 
     def is_equivalence(self) -> bool:
@@ -247,7 +247,7 @@ class DisjointUnion(Constructor):
 
     def get_sub_objects(
         self, subgens: SubGens, n: int, **parameters: int
-    ) -> Iterator[Tuple[CombinatorialObject, ...]]:
+    ) -> Iterator[Tuple[CombinatorialObjectType, ...]]:
         assert len(parameters) == 0, "only implemented in one variable, namely 'n'"
         for i, subgen in enumerate(subgens):
             for gp in subgen(n, **parameters):
