@@ -27,7 +27,7 @@ Strategy. The functions required are:
                                 passed is empty. If your strategy needs extra
                                 parameters to recreate you should overwrite the
                                 to_jsonable method.
-Also included in this file is a StrategyGenerator class. This is useful if you
+Also included in this file is a StrategyFactory class. This is useful if you
 are defining a family of strategies. When the __call__ method is applied to it,
 it should return an iterator of Strategy to try and apply to the comb_class.
 
@@ -74,22 +74,22 @@ __all__ = (
     "CartesianProductStrategy",
     "DisjointUnionStrategy",
     "Strategy",
-    "StrategyGenerator",
+    "StrategyFactory",
     "SymmetryStrategy",
     "VerificationStrategy",
 )
 
-CSSstrategy = Union["Strategy", "StrategyGenerator", "VerificationStrategy"]
+CSSstrategy = Union["Strategy", "StrategyFactory", "VerificationStrategy"]
 
 
 def strategy_from_dict(d) -> CSSstrategy:
     """
-    Return the AbstractStrategy or StrategyGenerator from the json representation.
+    Return the AbstractStrategy or StrategyFactory from the json representation.
     """
     module = import_module(d.pop("class_module"))
     StratClass: Type[CSSstrategy] = getattr(module, d.pop("strategy_class"))
     assert issubclass(
-        StratClass, (AbstractStrategy, StrategyGenerator)
+        StratClass, (AbstractStrategy, StrategyFactory)
     ), "Not a valid strategy"
     return StratClass.from_dict(d)
 
@@ -707,9 +707,9 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject
         return "the empty strategy"
 
 
-class StrategyGenerator(abc.ABC, Generic[CombinatorialClassType]):
+class StrategyFactory(abc.ABC, Generic[CombinatorialClassType]):
     """
-    The StrategyGenerator class can be used instead of the Strategy class if
+    The StrategyFactory class can be used instead of the Strategy class if
     you wish to expand a combinatorial class with a family of strategies.
     """
 

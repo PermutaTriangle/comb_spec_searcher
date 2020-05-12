@@ -26,7 +26,7 @@ from .specification import CombinatorialSpecification
 from .strategies import (
     AbstractStrategy,
     Rule,
-    StrategyGenerator,
+    StrategyFactory,
     StrategyPack,
     VerificationRule,
 )
@@ -136,7 +136,7 @@ class CombinatorialSpecificationSearcher:
         """Yield all the rules given by a strategy/strategy generator."""
         if isinstance(strategy, AbstractStrategy):
             yield strategy(comb_class, **self.kwargs)
-        elif isinstance(strategy, StrategyGenerator):
+        elif isinstance(strategy, StrategyFactory):
             for strat in strategy(comb_class, **self.kwargs):
                 if isinstance(strat, Rule):
                     yield strat
@@ -151,7 +151,7 @@ class CombinatorialSpecificationSearcher:
         else:
             raise InvalidOperationError(
                 "CSS can only expand a combinatorial class with "
-                "Strategy and StrategyGenerator"
+                "Strategy and StrategyFactory"
             )
 
     @cssiteratortimer("_expand_class_with_strategy")

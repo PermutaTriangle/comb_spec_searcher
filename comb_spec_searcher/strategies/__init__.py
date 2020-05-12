@@ -7,7 +7,7 @@ from .strategy import (
     DisjointUnionStrategy,
     EmptyStrategy,
     Strategy,
-    StrategyGenerator,
+    StrategyFactory,
     SymmetryStrategy,
     VerificationStrategy,
 )
@@ -27,7 +27,7 @@ __all__ = [
     "DisjointUnionStrategy",
     "EmptyStrategy",
     "Strategy",
-    "StrategyGenerator",
+    "StrategyFactory",
     "SymmetryStrategy",
     "VerificationStrategy",
     "StrategyPack",
