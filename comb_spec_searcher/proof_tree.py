@@ -2,6 +2,9 @@
 A proof tree class.
 
 This can be used to get the generating function for the class.
+
+The class is only used for reverse compatability with ComboPal. You should use
+the Specification class.
 """
 import json
 import random
@@ -13,9 +16,11 @@ from operator import add, mul
 import sympy
 from logzero import logger
 
-from comb_spec_searcher.exception import InsaneTreeError, TaylorExpansionError
-from comb_spec_searcher.tree_searcher import Node as tree_searcher_node
-from comb_spec_searcher.utils import (
+from .exception import InsaneTreeError, TaylorExpansionError
+from .specification import CombinatorialSpecification
+from .strategies.constructor import CartesianProduct, DisjointUnion
+from .strategies.rule import EquivalencePathRule, Rule, VerificationRule
+from .utils import (
     check_equation,
     check_poly,
     compositions,
@@ -24,8 +29,12 @@ from comb_spec_searcher.utils import (
     taylor_expand,
 )
 
+__all__ = ("ProofTree",)
+
 
 class ProofTreeNode:
+    """Class is deprecated - use CombinatorialSpecification."""
+
     # pylint: disable=too-many-instance-attributes
     def __init__(
         self,
@@ -53,7 +62,6 @@ class ProofTreeNode:
         self.disjoint_union = disjoint_union
         self.recursion = recursion
         self.formal_step = formal_step
-        self.sympy_function = None
         self.terms = []
         self.recurse_node = None
         self.genf = None
@@ -61,9 +69,11 @@ class ProofTreeNode:
 
     @property
     def logger_kwargs(self):
+        """Class is deprecated - use CombinatorialSpecification."""
         return {"processname": "ProofTreeNode {}".format(self.label)}
 
     def to_jsonable(self):
+        """Class is deprecated - use CombinatorialSpecification."""
         output = dict()
         output["label"] = self.label
         output["eqv_path_labels"] = list(self.eqv_path_labels)
@@ -81,6 +91,7 @@ class ProofTreeNode:
 
     @classmethod
     def from_dict(cls, combclass, jsondict):
+        """Class is deprecated - use CombinatorialSpecification."""
         if "eqv_path_objects" in jsondict:
             warnings.warn(
                 (
@@ -112,6 +123,8 @@ class ProofTreeNode:
 
     @classmethod
     def from_json(cls, combclass, jsonstr):
+        """Class is deprecated - use CombinatorialSpecification."""
+        warnings.warn("ProofTreeNode is deprecated, use CombinatorialSpecification")
         jsondict = json.loads(jsonstr)
         return cls.from_dict(combclass, jsondict)
 
@@ -119,6 +132,7 @@ class ProofTreeNode:
     def _error_string(
         parent, children, strat_type, formal_step, length, parent_total, children_total
     ):
+        """Class is deprecated - use CombinatorialSpecification."""
         error = "Insane " + strat_type + " Strategy Found!\n"
         error += formal_step + "\n"
         error += "Found at length {} \n".format(length)
@@ -249,6 +263,7 @@ class ProofTreeNode:
         self.objects_of_length[n] = res
 
     def sanity_check(self, length, of_length=None):
+        """Class is deprecated - use CombinatorialSpecification."""
         if of_length is None:
             raise ValueError("of_length is undefined.")
 
@@ -325,6 +340,7 @@ class ProofTreeNode:
         )
 
     def get_function(self, min_poly=False):
+        """Class is deprecated - use CombinatorialSpecification."""
         if min_poly:
             return sympy.var("F_" + str(self.label))
         return sympy.Function("F_" + str(self.label))(sympy.abc.x)
@@ -332,6 +348,7 @@ class ProofTreeNode:
     def get_equation(
         self, root_func=None, root_class=None, dummy_eq=False, min_poly=False, **kwargs
     ):
+        """Class is deprecated - use CombinatorialSpecification."""
         lhs = self.get_function(min_poly)
         if self.disjoint_union:
             rhs = reduce(
@@ -464,9 +481,11 @@ class ProofTreeNode:
         self.terms.extend(coeffs[len(self.terms) :])
 
     def is_atom(self):
+        """Class is deprecated - use CombinatorialSpecification."""
         return any(comb_class.is_atom() for comb_class in self.eqv_path_comb_classes)
 
     def is_epsilon(self):
+        """Class is deprecated - use CombinatorialSpecification."""
         return any(comb_class.is_epsilon() for comb_class in self.eqv_path_comb_classes)
 
     @property
@@ -485,7 +504,17 @@ class ProofTreeNode:
 
 
 class ProofTree:
+    """Class is deprecated - use CombinatorialSpecification."""
+
     def __init__(self, root):
+        warnings.warn(
+            (
+                "The ProofTree class is deprecated."
+                " Use CombinatorialSpecification instead."
+            ),
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if not isinstance(root, ProofTreeNode):
             raise TypeError("Root must be a ProofTreeNode.")
         self.root = root
@@ -494,22 +523,27 @@ class ProofTree:
 
     @property
     def logger_kwargs(self):
+        """Class is deprecated - use CombinatorialSpecification."""
         return {"processname": "ProofTree"}
 
     def to_jsonable(self):
+        """Class is deprecated - use CombinatorialSpecification."""
         return {"root": self.root.to_jsonable()}
 
     @classmethod
     def from_dict(cls, combclass, jsondict):
+        """Class is deprecated - use CombinatorialSpecification."""
         root = ProofTreeNode.from_dict(combclass, jsondict["root"])
         return cls(root)
 
     @classmethod
     def from_json(cls, combclass, jsonstr):
+        """Class is deprecated - use CombinatorialSpecification."""
         jsondict = json.loads(jsonstr)
         return cls.from_dict(combclass, jsondict)
 
     def _of_length(self, comb_class, length):
+        """Class is deprecated - use CombinatorialSpecification."""
         if comb_class not in self._of_length_cache:
             self._of_length_cache[comb_class] = {}
 
@@ -563,7 +597,12 @@ class ProofTree:
         root_func = self.root.get_function()
         eqs = self.get_equations(root_class=root_class, root_func=root_func)
         logger.info(
-            maple_equations(root_func, root_class, eqs), extra=self.logger_kwargs
+            maple_equations(
+                root_func,
+                [len(list(root_class.objects_of_length(i))) for i in range(6)],
+                eqs,
+            ),
+            extra=self.logger_kwargs,
         )
         logger.info("Solving...", extra=self.logger_kwargs)
 
@@ -644,7 +683,14 @@ class ProofTree:
 
         func = self.root.get_function(min_poly=True)
         comb_class = self.root.eqv_path_comb_classes[0]
-        logger.info(maple_equations(func, comb_class, eqs), extra=self.logger_kwargs)
+        logger.info(
+            maple_equations(
+                func,
+                [len(list(comb_class.objects_of_length(i))) for i in range(6)],
+                eqs,
+            ),
+            extra=self.logger_kwargs,
+        )
         logger.info(
             "Computing Groebner basis with 'elimination' order.",
             extra=self.logger_kwargs,
@@ -718,6 +764,7 @@ class ProofTree:
         raise RuntimeError("Incorrect minimum polynomial\n{}".format(basis))
 
     def random_sample(self, length=100):
+        """Class is deprecated - use CombinatorialSpecification."""
         if any(len(node.terms) < length + 1 for node in self.nodes()):
             logger.info(("Computing terms"))
             self._recursion_setup()
@@ -729,6 +776,7 @@ class ProofTree:
         return self.root.random_sample(length)
 
     def nodes(self, root=None):
+        """Class is deprecated - use CombinatorialSpecification."""
         if root is None:
             root = self.root
         yield root
@@ -737,20 +785,24 @@ class ProofTree:
                 yield node
 
     def number_of_nodes(self):
+        """Class is deprecated - use CombinatorialSpecification."""
         return len(list(self.nodes()))
 
     def number_of_comb_classes(self):
+        """Class is deprecated - use CombinatorialSpecification."""
         count = 0
         for node in self.nodes():
             count += len(node.eqv_path_comb_classes)
         return count
 
     def comb_classes(self, root=None):
+        """Class is deprecated - use CombinatorialSpecification."""
         for node in self.nodes():
             for comb_class in node.eqv_path_comb_classes:
                 yield comb_class
 
     def sanity_check(self, length=8, raiseerror=True):
+        """Class is deprecated - use CombinatorialSpecification."""
         overall_error = ""
         for comb_class in self.comb_classes():
             if comb_class.is_empty():
@@ -769,41 +821,6 @@ class ProofTree:
         if overall_error:
             return False, overall_error
         return True, "Sanity checked, all good at length {}".format(length)
-
-    @classmethod
-    def from_comb_spec_searcher(cls, root, css):
-        # pylint: disable=protected-access
-        if not isinstance(root, tree_searcher_node):
-            raise TypeError("Requires a tree searcher node, treated as root.")
-        proof_tree = ProofTree(ProofTree.from_comb_spec_searcher_node(root, css))
-        proof_tree._recursion_fixer(css)
-        return proof_tree
-
-    def _recursion_fixer(self, css, root=None, in_labels=None):
-        if root is None:
-            root = self.root
-        if in_labels is None:
-            in_labels = list(self.non_recursive_in_labels())
-        if root.recursion:
-            in_label = root.eqv_path_labels[0]
-            out_label = in_label
-            for eqv_label in in_labels:
-                if css.equivdb.equivalent(in_label, eqv_label):
-                    out_label = eqv_label
-                    break
-            assert css.equivdb.equivalent(in_label, out_label)
-
-            eqv_path, explanations = css.equivdb.eqv_path_with_explanation(
-                in_label, out_label
-            )
-            comb_classes = [css.classdb.get_class(l) for l in eqv_path]
-
-            root.eqv_path_labels = eqv_path
-            root.eqv_path_comb_classes = comb_classes
-            root.eqv_explanations = explanations
-
-        for child in root.children:
-            self._recursion_fixer(css, child, in_labels)
 
     def expand_tree(self, pack, **kwargs):
         """
@@ -860,116 +877,10 @@ class ProofTree:
             elif node.strategy_verified:
                 ver_label = get_label(node.eqv_path_comb_classes[-1])
                 css._add_to_queue(ver_label)
-        return css.auto_search(**kwargs)
-
-    def non_recursive_in_labels(self, root=None):
-        if root is None:
-            root = self.root
-        if not root.recursion:
-            yield root.eqv_path_labels[0]
-        for child in root.children:
-            for x in self.non_recursive_in_labels(child):
-                yield x
-
-    @classmethod
-    def from_comb_spec_searcher_node(cls, root, css, in_label=None):
-        if not isinstance(root, tree_searcher_node):
-            raise TypeError("Requires a tree searcher node, treated as root.")
-        label = root.label
-        if in_label is None:
-            in_label = root.label
-        else:
-            assert css.equivdb.equivalent(root.label, in_label)
-
-        if not root.children:
-            eqv_ver_label = css.equivalent_strategy_verified_label(in_label)
-            if eqv_ver_label is not None:
-                # verified!
-                path, explanations = css.equivdb.eqv_path_with_explanation(
-                    in_label, eqv_ver_label
-                )
-                comb_classes = [css.classdb.get_class(l) for l in path]
-
-                formal_step = css.classdb.verification_reason(eqv_ver_label)
-                return ProofTreeNode(
-                    label,
-                    path,
-                    comb_classes,
-                    explanations,
-                    strategy_verified=True,
-                    formal_step=formal_step,
-                )
-            # recurse! we reparse these at the end, so recursed labels etc
-            # are not interesting.
-            return ProofTreeNode(
-                label,
-                [in_label],
-                [css.classdb.get_class(in_label)],
-                formal_step="recurse",
-                recursion=True,
-            )
-        rule = css.rule_from_equivence_rule(
-            root.label, tuple(c.label for c in root.children)
-        )
-        start, ends = rule
-        formal_step = css.ruledb.explanation(start, ends)
-        constructor = css.ruledb.constructor(start, ends)
-
-        eqv_path, explanations = css.equivdb.eqv_path_with_explanation(in_label, start)
-        eqv_comb_classes = [css.classdb.get_class(l) for l in eqv_path]
-
-        strat_children = []
-        ends = list(ends)
-        for child in root.children:
-            for next_label in ends:
-                if css.equivdb.equivalent(next_label, child.label):
-                    ends.remove(next_label)
-                    sub_tree = ProofTree.from_comb_spec_searcher_node(
-                        child, css, next_label
-                    )
-                    strat_children.append(sub_tree)
-                    break
-
-        if constructor == "cartesian":
-            # decomposition!
-            return ProofTreeNode(
-                label,
-                eqv_path,
-                eqv_comb_classes,
-                explanations,
-                decomposition=True,
-                formal_step=formal_step,
-                children=strat_children,
-            )
-        if constructor in ("disjoint", "equiv"):
-            # batch!
-            return ProofTreeNode(
-                label,
-                eqv_path,
-                eqv_comb_classes,
-                explanations,
-                disjoint_union=True,
-                formal_step=formal_step,
-                children=strat_children,
-            )
-        if constructor == "other":
-            return ProofTreeNode(
-                label,
-                eqv_path,
-                eqv_comb_classes,
-                explanations,
-                formal_step=formal_step,
-                children=strat_children,
-            )
-        logger.debug(
-            "Unknown constructor '%s' of type '%s'. " "Use 'other' instead.",
-            constructor,
-            type(constructor),
-            extra={"processname": "css_to_proof_tree"},
-        )
-        raise NotImplementedError("Only handle cartesian and disjoint")
+        return ProofTree.from_specification(css.auto_search(**kwargs))
 
     def _recursion_setup(self):
+        """Class is deprecated - use CombinatorialSpecification."""
         label_to_node = dict()
 
         for node in self.nodes():
@@ -983,13 +894,107 @@ class ProofTree:
         self._fixed_recursion = True
 
     def count_objects_of_length(self, n):
+        """Class is deprecated - use CombinatorialSpecification."""
         if not self._fixed_recursion:
             self._recursion_setup()
         return self.root.count_objects_of_length(n)
 
     def generate_objects_of_length(self, n):
+        """Class is deprecated - use CombinatorialSpecification."""
         self._recursion_setup()
         yield from self.root.generate_objects_of_length(n)
 
     def __eq__(self, other):
         return all(node1 == node2 for node1, node2 in zip(self.nodes(), other.nodes()))
+
+    @classmethod
+    def from_specification(cls, spec: CombinatorialSpecification) -> "ProofTree":
+        """Return a ProofTree from a CombinatorialSpecification."""
+        nodes = dict()
+        eqv_paths = dict()
+        # find equivalence paths and setup nodes without equivalence and children
+        for rule in spec.rules_dict.values():
+            if isinstance(rule, EquivalencePathRule):
+                eqv_path_labels = []
+                eqv_path_comb_classes = []
+                eqv_explanations = []
+                for comb_class, eqv_rule in rule.eqv_path_rules():
+                    eqv_path_labels.append(spec.get_label(comb_class))
+                    eqv_path_comb_classes.append(comb_class)
+                    eqv_explanations.append(eqv_rule.formal_step)
+                eqv_path_comb_classes.append(rule.children[0])
+                eqv_paths[rule.comb_class] = (
+                    eqv_path_labels,
+                    eqv_path_comb_classes,
+                    eqv_explanations,
+                )
+            elif isinstance(rule, VerificationRule):
+                nodes[rule.comb_class] = ProofTreeNode(
+                    label=spec.get_label(rule.comb_class),
+                    eqv_path_labels=[spec.get_label(rule.comb_class)],
+                    eqv_path_comb_classes=[rule.comb_class],
+                    eqv_explanations=[],
+                    children=[],
+                    strategy_verified=True,
+                    formal_step=rule.formal_step,
+                )
+            elif isinstance(rule, Rule):
+                nodes[rule.comb_class] = ProofTreeNode(
+                    label=spec.get_label(rule.comb_class),
+                    eqv_path_labels=[spec.get_label(rule.comb_class)],
+                    eqv_path_comb_classes=[rule.comb_class],
+                    eqv_explanations=[],
+                    children=list(rule.children),
+                    decomposition=isinstance(rule.constructor, CartesianProduct),
+                    disjoint_union=isinstance(rule.constructor, DisjointUnion),
+                    strategy_verified=False,
+                    formal_step=rule.formal_step,
+                )
+            else:
+                raise ValueError(f"Don't know what to do with the rule class of {rule}")
+
+        # fix equiv paths and children
+        for node in list(nodes.values()):
+            if node.children:
+                new_children = []
+                for child in node.children:
+                    if child in eqv_paths:
+                        (
+                            eqv_path_labels,
+                            eqv_path_comb_classes,
+                            eqv_explanations,
+                        ) = eqv_paths[child]
+                        eqv_node = nodes[eqv_path_comb_classes[-1]]
+                        eqv_node.eqv_path_labels = eqv_path_labels
+                        eqv_node.eqv_path_comb_classes = eqv_path_comb_classes
+                        eqv_node.eqv_explanations = eqv_explanations
+                        new_children.append(nodes[eqv_path_comb_classes[-1]])
+                    else:
+                        new_children.append(nodes[child])
+                node.children = new_children
+
+        seen = set()
+        queue = [spec.root]
+        copy_nodes: dict = {**nodes}
+        while copy_nodes and queue:
+            curr = queue.pop()
+            seen.add(curr)
+            node = copy_nodes.pop(curr, None)
+            if node is not None:
+                node = nodes[curr]
+                for i, child in enumerate(node.children):
+                    if any(c in seen for c in child.eqv_path_comb_classes):
+                        node.children[i] = ProofTreeNode(
+                            label=child.label,
+                            eqv_path_labels=child.eqv_path_labels,
+                            eqv_path_comb_classes=child.eqv_path_comb_classes,
+                            eqv_explanations=child.eqv_explanations,
+                            children=[],
+                            strategy_verified=False,
+                            recursion=True,
+                            formal_step="recurse",
+                        )
+                    else:
+                        queue.append(child.eqv_path_comb_classes[-1])
+
+        return ProofTree(nodes[spec.root])

@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fix the `is_expanded` function to check for inferral and initial expansion
 - Fix the `__contain__` of ClassDB so that it actually works.
 
+### Removed
+- Support for Python 3.5 and earlier
+
 ## [0.4.0] - 2020-02-20
 ### Fixed
 - Fix the dict method of Info so that it saves all the attributes.

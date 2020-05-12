@@ -1,80 +1,61 @@
-import importlib
-from functools import partial
+"""Some useful miscellaneous functions used througout the package."""
+import time
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
-import sympy
-from logzero import logger
+from sympy import O, Poly, Symbol, solve, var
 
 from comb_spec_searcher.exception import TaylorExpansionError
 
+if TYPE_CHECKING:
+    from comb_spec_searcher import CombinatorialSpecificationSearcher
 
-def get_func_name(f, warn=False, logger_kwargs=None):
-    """Return a string that is the name of the function f."""
-    if not callable(f):
-        raise TypeError("Function given is not callable.")
-    if isinstance(f, partial):
-        f = f.func
-        if warn:
-            if logger_kwargs is None:
-                logger_kwargs = {"processname": "utils"}
-            logger.warning(
-                "forgetting kwargs given to partial function " "using strategy %s",
-                f.__name__,
-                extra=logger_kwargs,
-            )
-    return f.__name__
+Func = TypeVar("Func", bound=Callable[..., Any])
 
 
-def get_module_and_func_names(f, warn=False, logger_kwargs=None):
-    """Return the module and name of a function f."""
-    if isinstance(f, partial):
-        f = f.func
-        if warn:
-            if logger_kwargs is None:
-                logger_kwargs = {"processname": "utils"}
-            logger.warning(
-                "forgetting kwargs given to partial function " "using strategy %s",
-                f.__name__,
-                extra=logger_kwargs,
-            )
-    return (f.__module__, f.__name__)
+class cssmethodtimer:
+    """This is a decorator for counting and timing function calls."""
+
+    def __init__(self, explanation: str):
+        self.explanation = explanation
+
+    def __call__(self, func: Func) -> Func:
+        def inner(css: "CombinatorialSpecificationSearcher", *args, **kwargs):
+            start = time.time()
+            res = func(css, *args, **kwargs)
+            css.func_times[self.explanation] += time.time() - start
+            css.func_calls[self.explanation] += 1
+            return res
+
+        return cast(Func, inner)
 
 
-def get_func(module_name, func_name, warn=False, logger_kwargs=None):
-    """Return the function with given module and function names."""
-    if logger_kwargs is None:
-        logger_kwargs = {"processname": "utils"}
-    try:
-        module = importlib.import_module(module_name)
-        func = getattr(module, func_name)
-        assert callable(func)
-        return func
-    except ModuleNotFoundError:
-        if warn:
-            logger.warning("No module named %s", module_name, extra=logger_kwargs)
-    except AttributeError:
-        if warn:
-            logger.warning(
-                "No function named %s in module %s.",
-                func_name,
-                module_name,
-                extra=logger_kwargs,
-            )
-    except AssertionError:
-        if warn:
-            logger.warning(
-                "%s is in module %s is not callable.",
-                func_name,
-                module_name,
-                extra=logger_kwargs,
-            )
+class cssiteratortimer:
+    """This is a decorator for counting and timing function calls."""
+
+    def __init__(self, explanation: str):
+        self.explanation = explanation
+
+    def __call__(self, func: Func) -> Func:
+        def inner(css: "CombinatorialSpecificationSearcher", *args, **kwargs):
+            key = self.explanation
+            if self.explanation == "_expand_class_with_strategy":
+                key = str(args[1])
+            css.func_calls[key] += 1
+            start = time.time()
+            for res in func(css, *args, **kwargs):
+                css.func_times[key] += time.time() - start
+                yield res
+                start = time.time()
+
+        return cast(Func, inner)
 
 
 def check_poly(min_poly, initial, root_initial=None, root_func=None):
     """Return True if this is a minimum polynomial for the generating
     function F with the given initial terms. Input is a polynomial in F,
     and initial terms."""
-    F = sympy.Symbol("F")
-    x = sympy.abc.x
+    F = Symbol("F")
+    x = var("x")
     init_poly = 0
     for i, coeff in enumerate(initial):
         init_poly += coeff * x ** i
@@ -87,15 +68,15 @@ def check_poly(min_poly, initial, root_initial=None, root_func=None):
         verification = verification.subs({root_func: root_poly})
     verification = verification.expand()
     verification = verification.series(x, n=len(initial)).removeO()
-    verification = (verification + sympy.O(sympy.abc.x ** (len(initial) - 1))).removeO()
+    verification = (verification + O(x ** (len(initial) - 1))).removeO()
     return verification == 0
 
 
 def check_equation(equation, initial, root_initial=None, root_func=None):
     """Return True if an equation in terms of the generating function F and x
     is satisfied."""
-    F = sympy.Symbol("F")
-    solutions = sympy.solve(
+    F = Symbol("F")
+    solutions = solve(
         equation, F, dict=True, cubics=False, quartics=False, quintics=False
     )
     for solution in solutions:
@@ -112,8 +93,8 @@ def check_equation(equation, initial, root_initial=None, root_func=None):
 def get_solution(equation, initial):
     """Return solution of equation in F and x with the given initial
     conditions."""
-    F = sympy.Symbol("F")
-    solutions = sympy.solve(
+    F = Symbol("F")
+    solutions = solve(
         equation, F, dict=True, cubics=False, quartics=False, quintics=False
     )
     for solution in solutions:
@@ -126,13 +107,14 @@ def get_solution(equation, initial):
             return genf
 
 
-def taylor_expand(genf, n=10):
+def taylor_expand(genf, n: int = 10):
+    x = var("x")
     try:
         num, den = genf.as_numer_denom()
         num = num.expand()
         den = den.expand()
         genf = num / den
-        ser = sympy.Poly(genf.series(n=n + 1).removeO(), sympy.abc.x)
+        ser = Poly(genf.series(n=n + 1).removeO(), x)
         res = ser.all_coeffs()
         res = res[::-1] + [0] * (n + 1 - len(res))
     except Exception:
@@ -140,7 +122,7 @@ def taylor_expand(genf, n=10):
     return res
 
 
-def maple_equations(root_func, root_class, eqs):
+def maple_equations(root_func, count, eqs):
     s = "# The system of {} equations\n".format(len(eqs))
     s += "root_func := {}:\n".format(str(root_func)).replace("(x)", "")
     s += "eqs := [\n"
@@ -148,9 +130,7 @@ def maple_equations(root_func, root_class, eqs):
         "(x)", ""
     )
     s += "\n]:\n"
-    s += "count := {}:".format(
-        [len(list(root_class.objects_of_length(i))) for i in range(6)]
-    )
+    s += "count := {}:".format(list(count))
     return s
 
 

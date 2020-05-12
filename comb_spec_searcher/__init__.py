@@ -1,18 +1,34 @@
 from .comb_spec_searcher import CombinatorialSpecificationSearcher
-from .combinatorial_class import CombinatorialClass
-from .proof_tree import ProofTree
+from .combinatorial_class import CombinatorialClass, CombinatorialObject
+from .specification import CombinatorialSpecification
 from .strategies import (
-    BatchRule,
-    BatchStrategy,
-    DecompositionRule,
-    DecompositionStrategy,
-    EquivalenceRule,
-    EquivalenceStrategy,
-    InferralRule,
-    InferralStrategy,
-    Rule,
+    AtomStrategy,
+    CartesianProduct,
+    CartesianProductStrategy,
+    Constructor,
+    DisjointUnion,
+    DisjointUnionStrategy,
     Strategy,
+    StrategyFactory,
     StrategyPack,
-    VerificationRule,
+    SymmetryStrategy,
     VerificationStrategy,
 )
+
+__all__ = [
+    "CombinatorialSpecificationSearcher",
+    "CombinatorialClass",
+    "CombinatorialObject",
+    "CombinatorialSpecification",
+    "AtomStrategy",
+    "CartesianProduct",
+    "CartesianProductStrategy",
+    "Constructor",
+    "DisjointUnion",
+    "DisjointUnionStrategy",
+    "Strategy",
+    "StrategyFactory",
+    "StrategyPack",
+    "SymmetryStrategy",
+    "VerificationStrategy",
+]
