@@ -189,7 +189,8 @@ class CombinatorialSpecificationSearcher:
                 )
                 continue
             end_labels = [self.classdb.get_label(comb_class) for comb_class in children]
-            # TODO: observe that creating this constructor could be costly, e.g. Cartesian
+            # TODO: observe that creating this constructor could be costly,
+            # e.g. Cartesian
             logger.debug(
                 "Adding combinatorial rule %s -> %s\n%s",
                 label,
@@ -384,8 +385,9 @@ class CombinatorialSpecificationSearcher:
             time_spent = self.func_times[explanation]
             percentage = int((time_spent * 100) / total)
             total_perc += total
-            status += "\tApplied {} {} times. Time spent is {} seconds (~{}%).\n".format(
-                explanation, count, round(time_spent, 2), percentage,
+            status += (
+                f"\tApplied {explanation} {count} times."
+                f" Time spent is {round(time_spent, 2)} seconds (~{percentage}%).\n"
             )
 
         status += self.classdb.status() + "\n"
