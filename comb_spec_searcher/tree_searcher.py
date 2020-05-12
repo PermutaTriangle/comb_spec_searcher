@@ -94,22 +94,23 @@ def proof_tree_dfs(rules_dict: RulesDict, root: int, seen: Optional[Set[int]] = 
             return seen, root_node
         seen.add(root)
         rule = choice(list(rule_set))
-        visited, trees = proof_forest_dfs(rules_dict, rule, seen)
+        visited, trees = all_proof_trees_dfs(rules_dict, rule, seen)
         root_node.children = trees
         return visited, root_node
 
 
-def proof_forest_dfs(
+def all_proof_trees_dfs(
     rules_dict: RulesDict, roots: Sequence[int], seen: Optional[Set[int]] = None
 ) -> Tuple[Set[int], List[Node]]:
-    """Return a random proof tree found by dfs."""
+    """Return all labels which have been seen, together with all of the trees
+    using the given roots.."""
     if seen is None:
         seen = set()
     if not roots:
         return seen, []
     root, roots = roots[0], roots[1:]
     seen1, tree = proof_tree_dfs(rules_dict, root, seen)
-    seen2, trees = proof_forest_dfs(rules_dict, roots, seen1)
+    seen2, trees = all_proof_trees_dfs(rules_dict, roots, seen1)
     return seen1.union(seen2), [tree] + trees
 
 
