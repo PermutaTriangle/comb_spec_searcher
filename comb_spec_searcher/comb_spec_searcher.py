@@ -21,7 +21,7 @@ from .exception import (
     SpecificationNotFound,
     StrategyDoesNotApply,
 )
-from .rule_db import RuleDB
+from .rule_db import RuleDBBase, RuleDBForgetStrategy
 from .specification import CombinatorialSpecification
 from .strategies import (
     AbstractStrategy,
@@ -66,7 +66,7 @@ class CombinatorialSpecificationSearcher:
 
         self.classdb = ClassDB(type(start_class))
         self.classqueue = DefaultQueue(strategy_pack)
-        self.ruledb = RuleDB()
+        self.ruledb: RuleDBBase = RuleDBForgetStrategy(self.classdb, self.strategy_pack)
 
         # initialise the run with start_class
         self.start_label = self.classdb.get_label(start_class)
