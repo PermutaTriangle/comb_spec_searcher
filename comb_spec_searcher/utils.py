@@ -1,10 +1,7 @@
 """Some useful miscellaneous functions used througout the package."""
-import importlib
 import time
-from functools import partial
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
-from logzero import logger
 from sympy import O, Poly, Symbol, solve, var
 
 from comb_spec_searcher.exception import TaylorExpansionError
@@ -51,68 +48,6 @@ class cssiteratortimer:
                 start = time.time()
 
         return cast(Func, inner)
-
-
-def get_func_name(f, warn=False, logger_kwargs=None):
-    """Return a string that is the name of the function f."""
-    if not callable(f):
-        raise TypeError("Function given is not callable.")
-    if isinstance(f, partial):
-        f = f.func
-        if warn:
-            if logger_kwargs is None:
-                logger_kwargs = {"processname": "utils"}
-            logger.warning(
-                "forgetting kwargs given to partial function " "using strategy %s",
-                f.__name__,
-                extra=logger_kwargs,
-            )
-    return f.__name__
-
-
-def get_module_and_func_names(f, warn=False, logger_kwargs=None):
-    """Return the module and name of a function f."""
-    if isinstance(f, partial):
-        f = f.func
-        if warn:
-            if logger_kwargs is None:
-                logger_kwargs = {"processname": "utils"}
-            logger.warning(
-                "forgetting kwargs given to partial function " "using strategy %s",
-                f.__name__,
-                extra=logger_kwargs,
-            )
-    return (f.__module__, f.__name__)
-
-
-def get_func(module_name, func_name, warn=False, logger_kwargs=None):
-    """Return the function with given module and function names."""
-    if logger_kwargs is None:
-        logger_kwargs = {"processname": "utils"}
-    try:
-        module = importlib.import_module(module_name)
-        func = getattr(module, func_name)
-        assert callable(func)
-        return func
-    except ModuleNotFoundError:
-        if warn:
-            logger.warning("No module named %s", module_name, extra=logger_kwargs)
-    except AttributeError:
-        if warn:
-            logger.warning(
-                "No function named %s in module %s.",
-                func_name,
-                module_name,
-                extra=logger_kwargs,
-            )
-    except AssertionError:
-        if warn:
-            logger.warning(
-                "%s is in module %s is not callable.",
-                func_name,
-                module_name,
-                extra=logger_kwargs,
-            )
 
 
 def check_poly(min_poly, initial, root_initial=None, root_func=None):

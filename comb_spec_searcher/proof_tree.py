@@ -62,7 +62,6 @@ class ProofTreeNode:
         self.disjoint_union = disjoint_union
         self.recursion = recursion
         self.formal_step = formal_step
-        self.sympy_function = None
         self.terms = []
         self.recurse_node = None
         self.genf = None
@@ -125,6 +124,7 @@ class ProofTreeNode:
     @classmethod
     def from_json(cls, combclass, jsonstr):
         """Class is deprecated - use CombinatorialSpecification."""
+        warnings.warn("ProofTreeNode is deprecated, use CombinatorialSpecification")
         jsondict = json.loads(jsonstr)
         return cls.from_dict(combclass, jsondict)
 
