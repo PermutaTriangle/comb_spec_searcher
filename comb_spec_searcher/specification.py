@@ -2,7 +2,7 @@
 A combinatorial specification is a set rules of the form a -> b1, ..., bk
 where each of the bi appear exactly once on the left hand side of some rule.
 """
-from typing import Dict, Generic, Iterable, Iterator, Sequence, Tuple
+from typing import Dict, Generic, Iterable, Iterator, Optional, Sequence, Tuple
 
 import sympy
 from logzero import logger
@@ -11,9 +11,16 @@ from sympy import Eq, Expr, Function, solve, var
 from .combinatorial_class import (
     CombinatorialClass,
     CombinatorialClassType,
+    CombinatorialObject,
     CombinatorialObjectType,
 )
-from .exception import IncorrectGeneratingFunctionError, TaylorExpansionError
+from .exception import (
+    IncorrectGeneratingFunctionError,
+    InvalidOperationError,
+    SpecificationNotFound,
+    TaylorExpansionError,
+)
+from .rule_db import Specification
 from .strategies import (
     AbstractStrategy,
     EmptyStrategy,
@@ -21,6 +28,8 @@ from .strategies import (
     ReverseRule,
     Rule,
     Strategy,
+    StrategyPack,
+    VerificationRule,
     VerificationStrategy,
 )
 from .strategies.rule import AbstractRule
@@ -50,11 +59,31 @@ class CombinatorialSpecification(
         equivalence_paths: Iterable[Sequence[CombinatorialClassType]],
     ):
         self.root = root
+        self.rules_dict: Dict[CombinatorialClassType, AbstractRule] = {}
+        self._populate_rules_dict(strategies, equivalence_paths)
+        for rule in list(
+            self.rules_dict.values()
+        ):  # list as we lazily assign empty rules
+            rule.set_subrecs(self.get_rule)
+        self.labels: Dict[CombinatorialClassType, int] = {}
+
+    def _populate_rules_dict(
+        self,
+        strategies: Iterable[
+            Tuple[
+                CombinatorialClassType,
+                AbstractStrategy[CombinatorialClassType, CombinatorialObjectType],
+            ]
+        ],
+        equivalence_paths: Iterable[Sequence[CombinatorialClassType]],
+    ) -> None:
         equivalence_rules: Dict[
             Tuple[CombinatorialClassType, CombinatorialClassType], Rule
         ] = {}
-        self.rules_dict: Dict[CombinatorialClassType, AbstractRule] = {}
+        verification_packs: Dict[CombinatorialClassType, StrategyPack] = {}
         for comb_class, strategy in strategies:
+            if isinstance(strategy, AlreadyVerified):
+                continue
             rule = strategy(comb_class)
             non_empty_children = rule.non_empty_children()
             if (
@@ -65,8 +94,25 @@ class CombinatorialSpecification(
                 equivalence_rules[(comb_class, non_empty_children[0])] = (
                     rule if len(rule.children) == 1 else rule.to_equivalence_rule()
                 )
+            elif non_empty_children:
+                self.rules_dict[comb_class] = rule
+            elif isinstance(rule, VerificationRule):
+                try:
+                    verification_packs[comb_class] = rule.strategy.pack()
+                except InvalidOperationError:
+                    self.rules_dict[comb_class] = strategy(comb_class)
             else:
-                self.rules_dict[comb_class] = strategy(comb_class)
+                raise ValueError("Non verification rule has no children.")
+        self._add_equivalence_path_rules(equivalence_paths, equivalence_rules)
+        self._expand_verified_comb_classes(verification_packs)
+
+    def _add_equivalence_path_rules(
+        self,
+        equivalence_paths: Iterable[Sequence[CombinatorialClassType]],
+        equivalence_rules: Dict[
+            Tuple[CombinatorialClassType, CombinatorialClassType], Rule
+        ],
+    ) -> None:
         for eqv_path in equivalence_paths:
             if len(eqv_path) > 1:
                 start = eqv_path[0]
@@ -79,11 +125,33 @@ class CombinatorialSpecification(
                     rules.append(rule)
                 self.rules_dict[start] = EquivalencePathRule(rules)
 
-        for rule in list(
-            self.rules_dict.values()
-        ):  # list as we lazily assign empty rules
-            rule.set_subrecs(self.get_rule)
-        self.labels: Dict[CombinatorialClassType, int] = {}
+    def _expand_verified_comb_classes(
+        self, verification_packs: Dict[CombinatorialClassType, StrategyPack],
+    ) -> None:
+        for comb_class, pack in verification_packs.items():
+            from .comb_spec_searcher import CombinatorialSpecificationSearcher
+
+            css = CombinatorialSpecificationSearcher(
+                comb_class,
+                pack.add_verification(
+                    AlreadyVerified(self.rules_dict), apply_first=True
+                ),
+            )
+            new_rules: Optional[Specification] = None
+            while new_rules is None:
+                css.do_level()
+                try:
+                    new_rules = css.ruledb.get_specification_rules(css.start_label)
+                except SpecificationNotFound:
+                    continue
+            rules, eqv_paths = new_rules
+            comb_class_eqv_paths = tuple(
+                tuple(css.classdb.get_class(l) for l in path) for path in eqv_paths
+            )
+            comb_class_rules = [
+                (css.classdb.get_class(label), rule) for label, rule in rules
+            ]
+            self._populate_rules_dict(comb_class_rules, comb_class_eqv_paths)
 
     def get_rule(
         self, comb_class: CombinatorialClassType
@@ -124,9 +192,17 @@ class CombinatorialSpecification(
         Yield all equations on the (ordinary) generating function that the
         rules of the specification imply.
         """
+        funcs: Dict[CombinatorialClass, Function] = {
+            comb_class: self.get_function(comb_class)
+            for comb_class, rule in self.rules_dict.items()
+            if not isinstance(rule, VerificationRule)
+        }
         for rule in self.rules_dict.values():
             try:
-                eq = rule.get_equation(self.get_function)
+                if isinstance(rule, VerificationRule):
+                    eq = rule.get_equation(self.get_function, funcs)
+                else:
+                    eq = rule.get_equation(self.get_function)
                 if not isinstance(eq, bool):
                     yield eq
             except NotImplementedError:
@@ -150,7 +226,20 @@ class CombinatorialSpecification(
         """
         eqs = set(self.get_equations())
         root_func = self.get_function(self.root)
-        initial_conditions = [self.count_objects_of_size(n=i) for i in range(check + 1)]
+        try:
+            logger.info("Computing initial conditions")
+            initial_conditions = [
+                self.count_objects_of_size(n=i) for i in range(check + 1)
+            ]
+        except NotImplementedError as e:
+            logger.info(
+                "Reverting to generating objects from root for initial "
+                "conditions due to:\nNotImplementedError: %s",
+                e,
+            )
+            initial_conditions = [
+                len(list(self.root.objects_of_size(i))) for i in range(check + 1)
+            ]
         logger.info(maple_equations(root_func, initial_conditions, eqs,),)
         logger.info("Solving...")
         solutions = solve(
@@ -297,3 +386,24 @@ class CombinatorialSpecification(
                 for eqv_path in d["eqv_paths"]
             ],
         )
+
+
+class AlreadyVerified(VerificationStrategy[CombinatorialClass, CombinatorialObject]):
+    def __init__(self, verfied_comb_classes: Iterable[CombinatorialClass]):
+        self.verified_classes = frozenset(verfied_comb_classes)
+        super().__init__()
+
+    def verified(self, comb_class: CombinatorialClass) -> bool:
+        return comb_class in self.verified_classes
+
+    def formal_step(self) -> str:
+        return "already verified"
+
+    def to_jsonable(self) -> dict:
+        d: dict = super().to_jsonable()
+        d["comb_classes"] = [c.to_jsonable() for c in self.verified_classes]
+        return d
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "AlreadyVerified":
+        return cls([CombinatorialClass.from_dict(c) for c in d["comb_classes"]])
