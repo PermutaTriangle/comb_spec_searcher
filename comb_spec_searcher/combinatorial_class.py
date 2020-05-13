@@ -81,8 +81,10 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
             )
         )
 
-    def objects_of_size(self, size: int) -> Iterator[CombinatorialObjectType]:
-        """Returns an iterable of combinatorial objects of a given length. """
+    def objects_of_size(
+        self, n: int, **parameters: int
+    ) -> Iterator[CombinatorialObjectType]:
+        """Returns an iterable of combinatorial objects of a given size."""
         raise NotImplementedError(
             "To use object generation and sampling with the AtomStrategy, this"
             "must be at least implemented for every class that is an atom."
