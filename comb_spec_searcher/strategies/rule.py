@@ -375,6 +375,17 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
             self.strategy.formal_step(), self.child_idx
         )
 
+    def backward_map(
+        self, objs: Tuple[CombinatorialObjectType, ...]
+    ) -> CombinatorialObjectType:
+        actual_objs = tuple(
+            objs[0] if i == self.child_idx else None
+            for i in range(len(self.actual_children))
+        )
+        return self.strategy.backward_map(
+            self.comb_class, actual_objs, self.actual_children
+        )
+
     def forward_map(
         self, obj: CombinatorialObjectType
     ) -> Tuple[CombinatorialObjectType, ...]:
