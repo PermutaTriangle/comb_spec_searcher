@@ -129,6 +129,7 @@ class CombinatorialSpecification(
         self, verification_packs: Dict[CombinatorialClassType, StrategyPack],
     ) -> None:
         for comb_class, pack in verification_packs.items():
+            # pylint: disable=import-outside-toplevel
             from .comb_spec_searcher import CombinatorialSpecificationSearcher
 
             css = CombinatorialSpecificationSearcher(
@@ -396,7 +397,8 @@ class AlreadyVerified(VerificationStrategy[CombinatorialClass, CombinatorialObje
     def verified(self, comb_class: CombinatorialClass) -> bool:
         return comb_class in self.verified_classes
 
-    def formal_step(self) -> str:
+    @staticmethod
+    def formal_step() -> str:
         return "already verified"
 
     def to_jsonable(self) -> dict:
