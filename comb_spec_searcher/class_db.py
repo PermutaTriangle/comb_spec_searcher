@@ -8,6 +8,7 @@ Contains information about if combinatorial classes have been found by
 if is_empty has been checked.
 """
 
+import zlib
 from collections import defaultdict
 from typing import Dict, Generic, Iterator, Optional, Type, Union
 
@@ -145,7 +146,7 @@ class ClassDB(Generic[CombinatorialClassType]):
         """
         # pylint: disable=no-self-use
         try:
-            return key.to_bytes()
+            return zlib.compress(key.to_bytes(), 9)
         except NotImplementedError:
             # to use compression you should implement a 'to_bytes' function.
             return key
@@ -157,7 +158,7 @@ class ClassDB(Generic[CombinatorialClassType]):
         """
         try:
             assert isinstance(key, bytes)
-            return self.combinatorial_class.from_bytes(key)  # type: ignore
+            return self.combinatorial_class.from_bytes(zlib.decompress(key))
         except (AssertionError, NotImplementedError):
             # to use compression you should implement a 'from_bytes' function.
             assert isinstance(

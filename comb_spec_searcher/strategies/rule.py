@@ -6,6 +6,7 @@ calling the Strategy class and storing its results.
 A CombinatorialSpecification is (more or less) a set of Rule.
 """
 import abc
+from functools import partial
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -23,7 +24,7 @@ from typing import (
 from sympy import Eq, Function
 
 from ..combinatorial_class import CombinatorialClassType, CombinatorialObjectType
-from ..exception import StrategyDoesNotApply
+from ..exception import SanityCheckFailure, StrategyDoesNotApply
 from .constructor import Constructor
 
 if TYPE_CHECKING:
@@ -167,6 +168,66 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         self, n: int, **parameters: int
     ) -> CombinatorialObjectType:
         """Return a random objects of the give size."""
+
+    def sanity_check(self, n: int, **parameters: int) -> bool:
+        """Sanity check that this is a valid rule."""
+
+        def brute_force_count(
+            comb_class: CombinatorialClassType, n: int, **parameters
+        ) -> int:
+            return len(list(comb_class.objects_of_size(n, **parameters)))
+
+        def brute_force_generation(
+            comb_class: CombinatorialClassType, n: int, **parameters: int
+        ) -> Iterator[CombinatorialObjectType]:
+            yield from comb_class.objects_of_size(n, **parameters)
+
+        actual_count = brute_force_count(self.comb_class, n, **parameters)
+        temprec = self.subrecs
+        self.subrecs = tuple(
+            partial(brute_force_count, child) for child in self.children
+        )
+        rule_count = self.count_objects_of_size(n, **parameters)
+        self.subrecs = temprec
+        try:
+            assert actual_count == rule_count
+        except AssertionError:
+            raise SanityCheckFailure(
+                "The following rule failed sanity check:\n{}\nFailed with "
+                "parameters:\n{}\nThe actual count is {}. "
+                "The rule count is {}.".format(
+                    self,
+                    ", ".join(
+                        ["n = {}".format(n)]
+                        + ["{} = {}".format(p, v) for p, v in parameters]
+                    ),
+                    actual_count,
+                    rule_count,
+                )
+            )
+
+        actual_objects = set(
+            list(brute_force_generation(self.comb_class, n, **parameters))
+        )
+        tempgen = self.subgenerators
+        self.subgenerators = tuple(
+            partial(brute_force_generation, child) for child in self.children
+        )
+        rule_objects = set(list(self.generate_objects_of_size(n, **parameters)))
+        self.subgenerators = tempgen
+        try:
+            assert actual_objects == rule_objects
+        except AssertionError:
+            raise SanityCheckFailure(
+                "The following rule failed sanity check:\n{}\nFailed with "
+                "parameters:\n{}\nThe rule generated the wrong objects.".format(
+                    self,
+                    ", ".join(
+                        ["n = {}".format(n)]
+                        + ["{} = {}".format(p, v) for p, v in parameters]
+                    ),
+                )
+            )
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, AbstractRule):

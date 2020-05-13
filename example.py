@@ -153,11 +153,11 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
             if len(self.prefix) > size:
                 return
             for letters in product(self.alphabet, repeat=size - len(self.prefix)):
-                yield self.prefix + "".join(a for a in letters)
+                yield Word(self.prefix + "".join(a for a in letters))
 
         if self.just_prefix:
             if size == len(self.prefix) and not self.is_empty():
-                yield self.prefix
+                yield Word(self.prefix)
             return
         for word in possible_words():
             if all(patt not in word for patt in self.patterns):

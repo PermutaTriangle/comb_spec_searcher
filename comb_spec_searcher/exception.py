@@ -21,6 +21,10 @@ class ObjectMappingError(Exception):
     """A problem in the bijection."""
 
 
+class SanityCheckFailure(Exception):
+    """Failed a sanity check."""
+
+
 class SpecificationNotFound(Exception):
     """A specification was not found."""
 
