@@ -253,7 +253,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         return self._constructor
 
     def backward_map(
-        self, objs: Tuple[CombinatorialObjectType, ...]
+        self, objs: Tuple[Optional[CombinatorialObjectType], ...]
     ) -> CombinatorialObjectType:
         """
         This encodes the backward map of the underlying bijection that the
@@ -263,7 +263,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
 
     def forward_map(
         self, obj: CombinatorialObjectType
-    ) -> Tuple[CombinatorialObjectType, ...]:
+    ) -> Tuple[Optional[CombinatorialObjectType], ...]:
         """
         This encodes the forward map of the underlying bijection that the
         strategy implies.
@@ -376,7 +376,7 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         )
 
     def backward_map(
-        self, objs: Tuple[CombinatorialObjectType, ...]
+        self, objs: Tuple[Optional[CombinatorialObjectType], ...]
     ) -> CombinatorialObjectType:
         actual_objs = tuple(
             objs[0] if i == self.child_idx else None
@@ -388,7 +388,7 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
 
     def forward_map(
         self, obj: CombinatorialObjectType
-    ) -> Tuple[CombinatorialObjectType, ...]:
+    ) -> Tuple[Optional[CombinatorialObjectType], ...]:
         return (
             self.strategy.forward_map(self.comb_class, obj, self.actual_children)[
                 self.child_idx
@@ -430,19 +430,19 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
         return eqv_path_rules
 
     def backward_map(
-        self, objs: Tuple[CombinatorialObjectType, ...]
+        self, objs: Tuple[Optional[CombinatorialObjectType], ...]
     ) -> CombinatorialObjectType:
-        res = objs
+        res = cast(Tuple[CombinatorialObjectType], objs)
         for rule in reversed(self.rules):
             res = (rule.backward_map(res),)
         return res[0]
 
     def forward_map(
         self, obj: CombinatorialObjectType
-    ) -> Tuple[CombinatorialObjectType, ...]:
-        res = obj
+    ) -> Tuple[Optional[CombinatorialObjectType], ...]:
+        res = cast(CombinatorialObjectType, obj)
         for rule in reversed(self.rules):
-            res = rule.forward_map(res)[0]
+            res = cast(CombinatorialObjectType, rule.forward_map(res)[0])
         return (res,)
 
     def __eq__(self, other) -> bool:
@@ -503,15 +503,17 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         return "reverse of '{}'".format(self.strategy.formal_step())
 
     def backward_map(
-        self, objs: Tuple[CombinatorialObjectType, ...]
+        self, objs: Tuple[Optional[CombinatorialObjectType], ...]
     ) -> CombinatorialObjectType:
-        return self.strategy.forward_map(self.children[0], objs[0], (self.comb_class,))[
-            0
-        ]
+        obj = cast(CombinatorialObjectType, objs[0])
+        return cast(
+            CombinatorialObjectType,
+            self.strategy.forward_map(self.children[0], obj, (self.comb_class,))[0],
+        )
 
     def forward_map(
         self, obj: CombinatorialObjectType
-    ) -> Tuple[CombinatorialObjectType, ...]:
+    ) -> Tuple[Optional[CombinatorialObjectType], ...]:
         return (
             self.strategy.backward_map(self.children[0], (obj,), (self.comb_class,)),
         )
