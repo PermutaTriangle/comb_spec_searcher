@@ -66,3 +66,14 @@ def test_generate_objects_of_length(specification):
     assert len(list(specification.generate_objects_of_size(4))) == 15
     assert Word("babb") not in specification.generate_objects_of_size(4)
     assert Word("aaaa") in specification.generate_objects_of_size(4)
+
+
+def test_count_object_of_length_big_value(specification):
+    specification.count_objects_of_size(1000)
+
+
+def test_random_sample(specification):
+    """
+    Just test that it works and don't hit the maximum recursion depth.
+    """
+    assert len(specification.random_sample_object_of_size(1000)) == 1000

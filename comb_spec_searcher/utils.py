@@ -1,4 +1,5 @@
 """Some useful miscellaneous functions used througout the package."""
+import sys
 import time
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
@@ -48,6 +49,25 @@ class cssiteratortimer:
                 start = time.time()
 
         return cast(Func, inner)
+
+
+class RecursionLimit:
+    """
+    A context manager to momentarily increase the recursion limit.
+    """
+
+    def __init__(self, limit: int):
+        self.curr_limit = sys.getrecursionlimit()
+        if self.curr_limit < limit:
+            self.limit = limit
+        else:
+            self.limit = self.curr_limit
+
+    def __enter__(self) -> None:
+        sys.setrecursionlimit(self.limit)
+
+    def __exit__(self, exc_type, exc_value, exc_traceback) -> None:
+        sys.setrecursionlimit(self.curr_limit)
 
 
 def check_poly(min_poly, initial, root_initial=None, root_func=None):
