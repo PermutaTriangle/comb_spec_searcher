@@ -191,14 +191,26 @@ class CombinatorialSpecificationSearcher:
             end_labels = [self.classdb.get_label(comb_class) for comb_class in children]
             # TODO: observe that creating this constructor could be costly,
             # e.g. Cartesian
-            logger.debug(
-                "Adding combinatorial rule %s -> %s\n%s",
-                label,
-                tuple(end_labels),
-                rule,
-                extra=self.logger_kwargs,
-            )
-
+            if self.debug:
+                logger.debug(
+                    "Adding combinatorial rule %s -> %s\n%s",
+                    label,
+                    tuple(end_labels),
+                    rule,
+                    extra=self.logger_kwargs,
+                )
+                try:
+                    n = 4
+                    # TODO: test for multiple variable
+                    for i in range(n + 1):
+                        rule.sanity_check(n=i)
+                    logger.debug("Sanity checked rule to length %s.", n)
+                except NotImplementedError as e:
+                    logger.debug(
+                        "Could not sanity check rule due to:\n"
+                        "NotImplementedError: %s",
+                        e,
+                    )
             if any(self.ruledb.are_equivalent(label, l) for l in end_labels):
                 # This says comb_class = comb_class, so we skip it, but mark
                 # every other class as empty.
