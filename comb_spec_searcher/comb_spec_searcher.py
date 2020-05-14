@@ -422,44 +422,57 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
     @cssmethodtimer("status")
     def gc_status(self) -> str:
         status = "Memory Status:\n"
-        status += "\tTotal Memory OS has Allocated: {}\n".format(self.get_mem())
+        status += "\tTotal Memory OS has Allocated: {}\n".format(
+            self.size_to_readable(self.get_mem())
+        )
         if platform.python_implementation() == "CPython":
             pass
         elif platform.python_implementation() == "PyPy":
             gc_stats = gc.get_stats()
-            status += "\tCurrent Memory Used: {}\n".format(
-                gc_stats.total_gc_memory  # type: ignore
-            )
-            status += "\tCurrent Memory Allocated: {}\n".format(
-                gc_stats.total_allocated_memory  # type: ignore
-            )
-            status += "\tCurrent JIT Memory Used: {}\n".format(
-                gc_stats.jit_backend_used  # type: ignore
-            )
-            status += "\tCurrent JIT Memory Allocated: {}\n".format(
-                gc_stats.jit_backend_allocated  # type: ignore
-            )
-            status += "\tPeak Memory Used: {}\n".format(
-                gc_stats.peak_memory  # type: ignore
-            )
-            status += "\tPeak Memory Allocated: {}\n".format(
-                gc_stats.peak_allocated_memory  # type: ignore
-            )
-
+            stats = [
+                ("Current Memory Used", gc_stats.total_gc_memory),  # type: ignore
+                (
+                    "Current Memory Allocated",
+                    gc_stats.total_allocated_memory,  # type: ignore
+                ),
+                ("Current JIT Memory Used", gc_stats.jit_backend_used),  # type: ignore
+                (
+                    "Current JIT Memory Allocated",
+                    gc_stats.jit_backend_allocated,  # type: ignore
+                ),
+                ("Peak Memory Used", gc_stats.peak_memory),  # type: ignore
+                (
+                    "Peak Memory Allocated Memory Used",
+                    gc_stats.peak_allocated_memory,  # type: ignore
+                ),
+            ]
+            for (desc, mem) in stats:
+                status += "\t{}: {}\n".format(desc, self.nice_pypy_mem(mem))
             status += "\tTotal Garbage Collection Time: {} seconds\n".format(
                 round(gc_stats.total_gc_time / 1000, 2)  # type: ignore
             )
         return status
 
     @staticmethod
-    def get_mem() -> str:
+    def nice_pypy_mem(mem: str) -> str:
+        return mem.replace("KB", " KiB").replace("MB", " MiB").replace("GB", " GiB")
+
+    @staticmethod
+    def get_mem() -> int:
         """Return memory used by CombSpecSearcher - note this is actually the
         memory usage of the process that the instance of CombSpecSearcher was
         invoked."""
-        mem = psutil.Process(os.getpid()).memory_info().rss
-        if mem / 1024 ** 3 < 1:
-            return str(round(mem / 1024 ** 2)) + " MiB"
-        return str(round(mem / 1024 ** 3, 3)) + " GiB"
+        return int(psutil.Process(os.getpid()).memory_info().rss)
+
+    @staticmethod
+    def size_to_readable(size: int) -> str:
+        """Convert a size in bytes to a human readable value in KiB, MiB, or
+        GiB"""
+        if size / 1024 ** 2 < 1:
+            return str(round(size / 1024)) + " KiB"
+        if size / 1024 ** 3 < 1:
+            return str(round(size / 1024 ** 2, 1)) + " MiB"
+        return str(round(size / 1024 ** 3, 3)) + " GiB"
 
     def run_information(self) -> str:
         """Return string detailing what CombSpecSearcher is looking for."""
