@@ -424,7 +424,8 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         return status
 
     @cssmethodtimer("status")
-    def gc_status(self) -> str:
+    def gc_status(self) -> str:  # pylint: disable=no-self-use
+        # The self argument is actually used by the decorator
         status = "Memory Status:\n"
         status += "\tTotal Memory OS has Allocated: {}\n".format(
             size_to_readable(get_mem())
