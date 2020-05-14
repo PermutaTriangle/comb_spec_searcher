@@ -5,7 +5,7 @@ import os
 import time
 import warnings
 from collections import defaultdict
-from typing import Dict, Iterator, Optional, Sequence, Set, Tuple
+from typing import Dict, Generic, Iterator, Optional, Sequence, Set, Tuple
 
 import logzero
 import psutil
@@ -14,7 +14,7 @@ from sympy import Eq, Function, var
 
 from .class_db import ClassDB
 from .class_queue import DefaultQueue, WorkPacket
-from .combinatorial_class import CombinatorialClass
+from .combinatorial_class import CombinatorialClassType
 from .exception import (
     ExceededMaxtimeError,
     InvalidOperationError,
@@ -37,7 +37,7 @@ from .utils import cssiteratortimer, cssmethodtimer
 warnings.simplefilter("once", Warning)
 
 
-class CombinatorialSpecificationSearcher:
+class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
     """
     The CombinatorialSpecificationSearcher class.
 
@@ -46,7 +46,7 @@ class CombinatorialSpecificationSearcher:
     """
 
     def __init__(
-        self, start_class: "CombinatorialClass", strategy_pack: StrategyPack, **kwargs
+        self, start_class: CombinatorialClassType, strategy_pack: StrategyPack, **kwargs
     ):
         """Initialise CombinatorialSpecificationSearcher."""
         self.strategy_pack = strategy_pack
@@ -64,7 +64,7 @@ class CombinatorialSpecificationSearcher:
         self.kwargs["logger"] = self.logger_kwargs
         self.kwargs["symmetry"] = bool(strategy_pack.symmetries)
 
-        self.classdb = ClassDB(type(start_class))
+        self.classdb = ClassDB[CombinatorialClassType](type(start_class))
         self.classqueue = DefaultQueue(strategy_pack)
         self.ruledb = RuleDB()
 
@@ -92,7 +92,7 @@ class CombinatorialSpecificationSearcher:
         """The symmetries functions for the strategy pack."""
         return self.strategy_pack.symmetries
 
-    def try_verify(self, comb_class: CombinatorialClass, label: int) -> None:
+    def try_verify(self, comb_class: CombinatorialClassType, label: int) -> None:
         """
         Try to verify the combinatorial class.
         """
@@ -107,7 +107,7 @@ class CombinatorialSpecificationSearcher:
             self.tried_to_verify.add(label)
 
     @cssmethodtimer("is empty")
-    def is_empty(self, comb_class: CombinatorialClass, label: int) -> bool:
+    def is_empty(self, comb_class: CombinatorialClassType, label: int) -> bool:
         """Return True if a combinatorial class contains no objects, False
         otherwise."""
         empty = self.classdb.is_empty(comb_class, label)
@@ -131,7 +131,7 @@ class CombinatorialSpecificationSearcher:
                     self._add_rule(start_label, end_labels, rule)
 
     def _rules_from_strategy(
-        self, comb_class: CombinatorialClass, strategy: CSSstrategy
+        self, comb_class: CombinatorialClassType, strategy: CSSstrategy
     ) -> Iterator[AbstractRule]:
         """Yield all the rules given by a strategy/strategy generator."""
         if isinstance(strategy, AbstractStrategy):
@@ -157,7 +157,7 @@ class CombinatorialSpecificationSearcher:
     @cssiteratortimer("_expand_class_with_strategy")
     def _expand_class_with_strategy(
         self,
-        comb_class: CombinatorialClass,
+        comb_class: CombinatorialClassType,
         strategy_generator: CSSstrategy,
         label: Optional[int] = None,
         initial: bool = False,
@@ -272,7 +272,7 @@ class CombinatorialSpecificationSearcher:
         """Mark label as empty. Treated as verified as can count empty set."""
         self.classdb.set_empty(label, empty=True)
 
-    def _symmetry_expand(self, comb_class: CombinatorialClass, label: int) -> None:
+    def _symmetry_expand(self, comb_class: CombinatorialClassType, label: int) -> None:
         """Add symmetries of combinatorial class to the database."""
         sym_labels = set([label])
         for strategy_generator in self.symmetries:
@@ -287,7 +287,7 @@ class CombinatorialSpecificationSearcher:
 
     def _inferral_expand(
         self,
-        comb_class: CombinatorialClass,
+        comb_class: CombinatorialClassType,
         label: int,
         inferral_strategies: Tuple[CSSstrategy, ...],
         skip: Optional[CSSstrategy] = None,

@@ -613,10 +613,12 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
         return res
 
     def get_equation(
-        self, get_function: Callable[[CombinatorialClassType], Function]
+        self,
+        get_function: Callable[[CombinatorialClassType], Function],
+        funcs: Optional[Dict[CombinatorialClassType, Function]] = None,
     ) -> Eq:
         lhs_func = get_function(self.comb_class)
-        return Eq(lhs_func, self.strategy.get_genf(self.comb_class))
+        return Eq(lhs_func, self.strategy.get_genf(self.comb_class, funcs))
 
     def generate_objects_of_size(
         self, n: int, **parameters: int

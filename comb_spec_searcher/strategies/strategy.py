@@ -50,9 +50,19 @@ AtomStrategy, relying on CombinatorialClass methods.
 """
 import abc
 from importlib import import_module
-from typing import TYPE_CHECKING, Generic, Iterator, Optional, Tuple, Type, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Dict,
+    Generic,
+    Iterator,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+    cast,
+)
 
-from sympy import Expr, Integer, var
+from sympy import Expr, Function, Integer, var
 
 from ..combinatorial_class import (
     CombinatorialClass,
@@ -497,7 +507,11 @@ class VerificationStrategy(
         )
         return specification
 
-    def get_genf(self, comb_class: CombinatorialClassType) -> Expr:
+    def get_genf(
+        self,
+        comb_class: CombinatorialClassType,
+        funcs: Optional[Dict[CombinatorialClassType, Function]] = None,
+    ) -> Expr:
         """
         Returns the generating function for the combinatorial class.
         Raises an StrategyDoesNotApply if the combinatorial class is not verified.
@@ -587,7 +601,11 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
             return 1
         return 0
 
-    def get_genf(self, comb_class: CombinatorialClass) -> Expr:
+    def get_genf(
+        self,
+        comb_class: CombinatorialClass,
+        funcs: Optional[Dict[CombinatorialClass, Function]] = None,
+    ) -> Expr:
         if not self.verified(comb_class):
             raise StrategyDoesNotApply("Can't find generating functon for non-atom.")
         x = var("x")
@@ -657,7 +675,11 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject
         """
         return 0
 
-    def get_genf(self, comb_class: CombinatorialClass) -> Integer:
+    def get_genf(
+        self,
+        comb_class: CombinatorialClass,
+        funcs: Optional[Dict[CombinatorialClass, Function]] = None,
+    ) -> Integer:
         if not self.verified(comb_class):
             raise StrategyDoesNotApply(
                 "can't find generating functon for non-empty class."

@@ -114,11 +114,15 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
         raise NotImplementedError
 
     @classmethod
-    def from_bytes(cls, b: bytes) -> "CombinatorialClass":
-        """Return decompressed class from the bytes object returned by the
+    def from_bytes(
+        cls: Type[CombinatorialClassType], b: bytes
+    ) -> CombinatorialClassType:
+        """
+        Return decompressed class from the bytes object returned by the
         'to_bytes' function. If you are having memory issues then implement
         this function and the to_bytes function such that
-        'cls.from_bytes(self.to_bytes()) == self'"""
+        'cls.from_bytes(self.to_bytes()) == self'
+        """
         raise NotImplementedError
 
     @abc.abstractmethod

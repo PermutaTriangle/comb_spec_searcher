@@ -235,7 +235,11 @@ class StrategyPack:
         )
 
     def add_verification(
-        self: PackType, strategy: CSSstrategy, name_ext: str = "", replace: bool = False
+        self: PackType,
+        strategy: CSSstrategy,
+        name_ext: str = "",
+        replace: bool = False,
+        apply_first: bool = False,
     ) -> PackType:
         """
         Create a new pack with an additional verification strategy and append
@@ -246,10 +250,14 @@ class StrategyPack:
             raise ValueError(
                 ("The strategy {!r} is already in pack." "".format(strategy))
             )
+        if apply_first:
+            ver_strats = (strategy,) + (tuple() if replace else self.ver_strats)
+        else:
+            ver_strats = (tuple() if replace else self.ver_strats) + (strategy,)
         return self.__class__(
             name="_".join([self.name, name_ext]) if name_ext else self.name,
             initial_strats=self.initial_strats,
-            ver_strats=(tuple() if replace else self.ver_strats) + (strategy,),
+            ver_strats=ver_strats,
             inferral_strats=self.inferral_strats,
             expansion_strats=self.expansion_strats,
             symmetries=self.symmetries,

@@ -10,13 +10,13 @@ if is_empty has been checked.
 
 import zlib
 from collections import defaultdict
-from typing import Dict, Iterator, Optional, Type, Union
+from typing import Dict, Generic, Iterator, Optional, Type, Union, cast
 
-from .combinatorial_class import CombinatorialClass
+from .combinatorial_class import CombinatorialClassType
 from .utils import cssmethodtimer
 
-ClassKey = Union[bytes, CombinatorialClass]
-Key = Union[CombinatorialClass, int]
+ClassKey = Union[bytes, CombinatorialClassType]
+Key = Union[CombinatorialClassType, int]
 
 
 class Info:
@@ -44,7 +44,7 @@ class Info:
         )
 
 
-class ClassDB:
+class ClassDB(Generic[CombinatorialClassType]):
     """
     A database for combinatorial classes.
 
@@ -59,7 +59,7 @@ class ClassDB:
     otherwise.
     """
 
-    def __init__(self, combinatorial_class: Type[CombinatorialClass]):
+    def __init__(self, combinatorial_class: Type[CombinatorialClassType]):
         self.class_to_info: Dict[ClassKey, Info] = {}
         self.label_to_info: Dict[int, Info] = {}
         self.combinatorial_class = combinatorial_class
@@ -77,11 +77,13 @@ class ClassDB:
         """
         Return true if the the key is already in the database.
         """
-        if isinstance(key, CombinatorialClass):
+        if isinstance(key, self.combinatorial_class):
             comb_class = self._compress(key)
             info = self.class_to_info.get(comb_class)
-        if isinstance(key, int):
+        elif isinstance(key, int):
             info = self.label_to_info.get(key)
+        else:
+            raise ValueError("Invalid key")
         return info is not None
 
     def __eq__(self, other: object) -> bool:
@@ -92,19 +94,17 @@ class ClassDB:
             and self.label_to_info == other.label_to_info
         )
 
-    def add(
-        self, comb_class: Union[bytes, CombinatorialClass], compressed: bool = False,
-    ) -> None:
+    def add(self, comb_class: ClassKey, compressed: bool = False,) -> None:
         """
         Add a combinatorial class to the database.
         """
-        if not compressed and not isinstance(comb_class, CombinatorialClass):
+        if not compressed and not isinstance(comb_class, self.combinatorial_class):
             raise TypeError(
                 ("Trying to add something that isn't a" "CombinatorialClass.")
             )
         if not compressed:
             assert isinstance(
-                comb_class, CombinatorialClass
+                comb_class, self.combinatorial_class
             ), "trying to add non combinatorial class to database"
             compressed_class = self._compress(comb_class)
         else:
@@ -121,7 +121,7 @@ class ClassDB:
         """
         Return Info for given key.
         """
-        if isinstance(key, CombinatorialClass):
+        if isinstance(key, self.combinatorial_class):
             compressed_key = self._compress(key)
             info = self.class_to_info.get(compressed_key)
             if info is None:
@@ -140,7 +140,7 @@ class ClassDB:
         return info
 
     @cssmethodtimer("compress")
-    def _compress(self, key: CombinatorialClass) -> Union[bytes, CombinatorialClass]:
+    def _compress(self, key: CombinatorialClassType) -> ClassKey:
         """
         Return compressed version of combinatorial class.
         """
@@ -152,22 +152,25 @@ class ClassDB:
             return key
 
     @cssmethodtimer("decompress")
-    def _decompress(self, key: Union[bytes, CombinatorialClass]) -> CombinatorialClass:
+    def _decompress(self, key: ClassKey) -> CombinatorialClassType:
         """
         Return decompressed version of compressed combinatorial class.
         """
         try:
             assert isinstance(key, bytes)
-            return self.combinatorial_class.from_bytes(zlib.decompress(key))
+            return cast(
+                CombinatorialClassType,
+                self.combinatorial_class.from_bytes(zlib.decompress(key)),
+            )
         except (AssertionError, NotImplementedError):
             # to use compression you should implement a 'from_bytes' function.
             assert isinstance(
-                key, CombinatorialClass
+                key, self.combinatorial_class
             ), "you must implement a 'from_bytes' function to use compression"
             return key
 
     @cssmethodtimer("get class")
-    def get_class(self, key: Key) -> CombinatorialClass:
+    def get_class(self, key: Key) -> CombinatorialClassType:
         """
         Return combinatorial class of key.
         """
@@ -183,7 +186,7 @@ class ClassDB:
         return info.label
 
     def is_empty(
-        self, comb_class: CombinatorialClass, label: Optional[int] = None
+        self, comb_class: CombinatorialClassType, label: Optional[int] = None
     ) -> bool:
         """
         Return True if combinatorial class is empty set, False if not.
@@ -196,15 +199,15 @@ class ClassDB:
             info = self._get_info(label)
         empty = info.empty
         if empty is None:
-            if not isinstance(comb_class, CombinatorialClass):
+            if not isinstance(comb_class, self.combinatorial_class):
                 comb_class = self.get_class(comb_class)
             empty = self._is_empty(comb_class)
             self.set_empty(label, empty)
         return bool(empty)
 
     @cssmethodtimer("is empty")
-    def _is_empty(self, comb_class: CombinatorialClass) -> bool:
-        if not isinstance(comb_class, CombinatorialClass):
+    def _is_empty(self, comb_class: CombinatorialClassType) -> bool:
+        if not isinstance(comb_class, self.combinatorial_class):
             comb_class = self.get_class(comb_class)
         return comb_class.is_empty()
 
