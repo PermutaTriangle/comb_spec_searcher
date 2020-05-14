@@ -1,4 +1,6 @@
 """Some useful miscellaneous functions used througout the package."""
+import os
+import psutil
 import sys
 import time
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
@@ -194,3 +196,24 @@ def compositions(n, k):
         a[h + 1] += 1
         h += 1
         yield tuple(a)
+
+
+def nice_pypy_mem(mem: str) -> str:
+    return mem.replace("KB", " KiB").replace("MB", " MiB").replace("GB", " GiB")
+
+
+def get_mem() -> int:
+    """Return memory used by CombSpecSearcher - note this is actually the
+    memory usage of the process that the instance of CombSpecSearcher was
+    invoked."""
+    return int(psutil.Process(os.getpid()).memory_info().rss)
+
+
+def size_to_readable(size: int) -> str:
+    """Convert a size in bytes to a human readable value in KiB, MiB, or
+    GiB"""
+    if size / 1024 ** 2 < 1:
+        return str(round(size / 1024)) + " KiB"
+    if size / 1024 ** 3 < 1:
+        return str(round(size / 1024 ** 2, 1)) + " MiB"
+    return str(round(size / 1024 ** 3, 3)) + " GiB"

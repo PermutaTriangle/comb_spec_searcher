@@ -2,7 +2,6 @@
 import gc
 import json
 import logging
-import os
 import platform
 import time
 import warnings
@@ -10,7 +9,6 @@ from collections import defaultdict
 from typing import Dict, Generic, Iterator, Optional, Sequence, Set, Tuple
 
 import logzero
-import psutil
 from logzero import logger
 from sympy import Eq, Function, var
 
@@ -34,7 +32,13 @@ from .strategies import (
 )
 from .strategies.rule import AbstractRule
 from .strategies.strategy import CSSstrategy
-from .utils import cssiteratortimer, cssmethodtimer
+from .utils import (
+    cssiteratortimer,
+    cssmethodtimer,
+    size_to_readable,
+    get_mem,
+    nice_pypy_mem,
+)
 
 warnings.simplefilter("once", Warning)
 
@@ -423,7 +427,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
     def gc_status(self) -> str:
         status = "Memory Status:\n"
         status += "\tTotal Memory OS has Allocated: {}\n".format(
-            self.size_to_readable(self.get_mem())
+            size_to_readable(get_mem())
         )
         if platform.python_implementation() == "CPython":
             pass
@@ -447,32 +451,11 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 ),
             ]
             for (desc, mem) in stats:
-                status += "\t{}: {}\n".format(desc, self.nice_pypy_mem(mem))
+                status += "\t{}: {}\n".format(desc, nice_pypy_mem(mem))
             status += "\tTotal Garbage Collection Time: {} seconds\n".format(
                 round(gc_stats.total_gc_time / 1000, 2)  # type: ignore
             )
         return status
-
-    @staticmethod
-    def nice_pypy_mem(mem: str) -> str:
-        return mem.replace("KB", " KiB").replace("MB", " MiB").replace("GB", " GiB")
-
-    @staticmethod
-    def get_mem() -> int:
-        """Return memory used by CombSpecSearcher - note this is actually the
-        memory usage of the process that the instance of CombSpecSearcher was
-        invoked."""
-        return int(psutil.Process(os.getpid()).memory_info().rss)
-
-    @staticmethod
-    def size_to_readable(size: int) -> str:
-        """Convert a size in bytes to a human readable value in KiB, MiB, or
-        GiB"""
-        if size / 1024 ** 2 < 1:
-            return str(round(size / 1024)) + " KiB"
-        if size / 1024 ** 3 < 1:
-            return str(round(size / 1024 ** 2, 1)) + " MiB"
-        return str(round(size / 1024 ** 3, 3)) + " GiB"
 
     def run_information(self) -> str:
         """Return string detailing what CombSpecSearcher is looking for."""
