@@ -40,6 +40,9 @@ from .utils import (
     size_to_readable,
 )
 
+if platform.python_implementation() == "CPython":
+    from pympler.asizeof import asizeof  # type: ignore
+
 warnings.simplefilter("once", Warning)
 
 
@@ -394,13 +397,16 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         yield from self.classqueue.do_level()
 
     @cssmethodtimer("status")
-    def status(self) -> str:
+    def status(self, elaborate: bool) -> str:
         """
         Return a string of the current status of the CombSpecSearcher.
 
         It includes:
         - number of combinatorial classes, and information about verification
         - the times spent in each of the main functions
+
+        "elaborate" status updates are those that provide information that
+        may be slow to compute
         """
         status = "CSS status:\n"
 
@@ -420,18 +426,31 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         status += self.classdb.status() + "\n"
         status += self.classqueue.status() + "\n"
         status += self.ruledb.status() + "\n"
-        status += self.gc_status()
+        status += self.mem_status(elaborate)
         return status
 
     @cssmethodtimer("status")
-    def gc_status(self) -> str:  # pylint: disable=no-self-use
-        # The self argument is actually used by the decorator
+    def mem_status(self, elaborate: bool) -> str:
+        """Provide status information related to memory usage."""
+
         status = "Memory Status:\n"
         status += "\tTotal Memory OS has Allocated: {}\n".format(
             size_to_readable(get_mem())
         )
         if platform.python_implementation() == "CPython":
-            pass
+            # Note: "asizeof" can be very slow!
+            if elaborate:
+                status += "\tCSS Size: {}\n".format(size_to_readable(asizeof(self)))
+                status += "\tClassDB Size: {}\n".format(
+                    size_to_readable(asizeof(self.classdb))
+                )
+                status += "\tClassQueue Size: {}\n".format(
+                    size_to_readable(asizeof(self.classqueue))
+                )
+                status += "\tRuleDB Size: {}\n".format(
+                    size_to_readable(asizeof(self.ruledb))
+                )
+
         elif platform.python_implementation() == "PyPy":
             gc_stats = gc.get_stats()
             stats = [
@@ -456,6 +475,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             status += "\tTotal Garbage Collection Time: {} seconds\n".format(
                 round(gc_stats.total_gc_time / 1000, 2)  # type: ignore
             )
+
         return status
 
     def run_information(self) -> str:
@@ -482,6 +502,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         Information is logged to logger.info. It will also log the proof tree,
         in json format. For periodic status_updates, set the keyword flag
         'status_update', an update will be given every status_update seconds.
+        "Elaborate" status updates, which provide slow-to-calculate information
+        will be given periodically, so that they take less than 1% of computation
+        time.
 
         If 'smallest' is set to 'True' then the searcher will return a proof
         tree that is as small as possible.
@@ -501,8 +524,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         status_update = kwargs.get("status_update", None)
         max_time = kwargs.get("max_time", None)
         smallest = kwargs.get("smallest", False)
-        if status_update:
-            status_start = time.time()
+        status_start = time.time()
         start_string = "Auto search started {}\n".format(
             time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime())
         )
@@ -523,7 +545,25 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                         status = "\nTime taken so far is {} seconds\n".format(
                             round(time.time() - auto_search_start, 2)
                         )
-                        status += self.status()
+                        elaborate = (
+                            time.time() - auto_search_start
+                            > 100 * self.func_times["status"]
+                        )
+                        status_start = time.time()
+                        status += self.status(elaborate=elaborate)
+                        if elaborate:
+                            status += "\t\t[status update took {} seconds]\n".format(
+                                round(time.time() - status_start, 2)
+                            )
+                        next_elaborate = (
+                            100 * self.func_times["status"]
+                            - time.time()
+                            + auto_search_start
+                        )
+                        status += (
+                            "\t\t [next elaborate status update in {} seconds]\n"
+                            "".format(round(next_elaborate, 2))
+                        )
                         logger.info(status, extra=self.logger_kwargs)
                         status_start = time.time()
             else:
@@ -539,7 +579,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 found_string += "Time taken was {} seconds\n".format(
                     round(time.time() - auto_search_start, 2)
                 )
-                found_string += self.status()
+                found_string += self.status(elaborate=True)
                 found_string += json.dumps(specification.to_jsonable())
                 logger.info(found_string, extra=self.logger_kwargs)
                 return specification
