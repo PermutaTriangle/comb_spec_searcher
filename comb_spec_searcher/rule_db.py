@@ -115,7 +115,7 @@ class RuleDBBase(abc.ABC):
     def status(self) -> str:
         """Return a string describing the status of the rule database."""
         status = "RuleDB status:\n"
-        status += "\tTotal number of combinatorial rules is {}\n" "".format(
+        status += "\tTotal number of combinatorial rules is {}".format(
             len(self.rule_to_strategy)
         )
         # TODO: strategy verified, verified, equivalence sets?

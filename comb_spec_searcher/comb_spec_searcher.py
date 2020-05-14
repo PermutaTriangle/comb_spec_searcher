@@ -1,14 +1,14 @@
 """A class for automatically performing combinatorial exploration."""
+import gc
 import json
 import logging
-import os
+import platform
 import time
 import warnings
 from collections import defaultdict
 from typing import Dict, Generic, Iterator, Optional, Sequence, Set, Tuple
 
 import logzero
-import psutil
 from logzero import logger
 from sympy import Eq, Function, var
 
@@ -32,7 +32,13 @@ from .strategies import (
 )
 from .strategies.rule import AbstractRule
 from .strategies.strategy import CSSstrategy
-from .utils import cssiteratortimer, cssmethodtimer
+from .utils import (
+    cssiteratortimer,
+    cssmethodtimer,
+    get_mem,
+    nice_pypy_mem,
+    size_to_readable,
+)
 
 warnings.simplefilter("once", Warning)
 
@@ -398,10 +404,6 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         """
         status = "CSS status:\n"
 
-        status += "\tMemory (alone and shared) currently in use: {}\n".format(
-            self.get_mem()
-        )
-
         total = sum(self.func_times.values())
         status += "\tTotal time accounted for is {} seconds.\n".format(round(total, 2))
         total_perc: float = 0
@@ -417,18 +419,44 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
 
         status += self.classdb.status() + "\n"
         status += self.classqueue.status() + "\n"
-        status += self.ruledb.status()
+        status += self.ruledb.status() + "\n"
+        status += self.gc_status()
         return status
 
-    @staticmethod
-    def get_mem() -> str:
-        """Return memory used by CombSpecSearcher - note this is actually the
-        memory usage of the process that the instance of CombSpecSearcher was
-        invoked."""
-        mem = psutil.Process(os.getpid()).memory_info().rss
-        if mem / 1024 ** 3 < 1:
-            return str(round(mem / 1024 ** 2)) + " MiB"
-        return str(round(mem / 1024 ** 3, 3)) + " GiB"
+    @cssmethodtimer("status")
+    def gc_status(self) -> str:  # pylint: disable=no-self-use
+        # The self argument is actually used by the decorator
+        status = "Memory Status:\n"
+        status += "\tTotal Memory OS has Allocated: {}\n".format(
+            size_to_readable(get_mem())
+        )
+        if platform.python_implementation() == "CPython":
+            pass
+        elif platform.python_implementation() == "PyPy":
+            gc_stats = gc.get_stats()
+            stats = [
+                ("Current Memory Used", gc_stats.total_gc_memory),  # type: ignore
+                (
+                    "Current Memory Allocated",
+                    gc_stats.total_allocated_memory,  # type: ignore
+                ),
+                ("Current JIT Memory Used", gc_stats.jit_backend_used),  # type: ignore
+                (
+                    "Current JIT Memory Allocated",
+                    gc_stats.jit_backend_allocated,  # type: ignore
+                ),
+                ("Peak Memory Used", gc_stats.peak_memory),  # type: ignore
+                (
+                    "Peak Memory Allocated Memory Used",
+                    gc_stats.peak_allocated_memory,  # type: ignore
+                ),
+            ]
+            for (desc, mem) in stats:
+                status += "\t{}: {}\n".format(desc, nice_pypy_mem(mem))
+            status += "\tTotal Garbage Collection Time: {} seconds\n".format(
+                round(gc_stats.total_gc_time / 1000, 2)  # type: ignore
+            )
+        return status
 
     def run_information(self) -> str:
         """Return string detailing what CombSpecSearcher is looking for."""
