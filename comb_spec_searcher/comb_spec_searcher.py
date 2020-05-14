@@ -427,7 +427,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             pass
         elif platform.python_implementation() == "PyPy":
             gc_stats = gc.get_stats()
-            status += "\tCurrent Memory Used: {}\n".format(gc_stats.total_gc_memory)  # type: ignore
+            status += "\tCurrent Memory Used: {}\n".format(
+                gc_stats.total_gc_memory  # type: ignore
+            )
             status += "\tCurrent Memory Allocated: {}\n".format(
                 gc_stats.total_allocated_memory  # type: ignore
             )
@@ -437,7 +439,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             status += "\tCurrent JIT Memory Allocated: {}\n".format(
                 gc_stats.jit_backend_allocated  # type: ignore
             )
-            status += "\tPeak Memory Used: {}\n".format(gc_stats.peak_memory)  # type: ignore
+            status += "\tPeak Memory Used: {}\n".format(
+                gc_stats.peak_memory  # type: ignore
+            )
             status += "\tPeak Memory Allocated: {}\n".format(
                 gc_stats.peak_allocated_memory  # type: ignore
             )
