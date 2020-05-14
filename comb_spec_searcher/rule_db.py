@@ -1,14 +1,27 @@
 """
 A database for rules.
 """
+import abc
 from collections import defaultdict
-from typing import Dict, Iterable, Iterator, List, Optional, Set, Tuple
+from typing import (
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    MutableMapping,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+    cast,
+)
 
+from .class_db import ClassDB
 from .equiv_db import EquivalenceDB
-from .exception import SpecificationNotFound
-from .strategies import Rule, VerificationRule
+from .exception import SpecificationNotFound, StrategyDoesNotApply
+from .strategies import Rule, StrategyPack, VerificationRule
 from .strategies.rule import AbstractRule
-from .strategies.strategy import AbstractStrategy
+from .strategies.strategy import AbstractStrategy, StrategyFactory
 from .tree_searcher import (
     Node,
     iterative_proof_tree_finder,
@@ -19,29 +32,23 @@ from .tree_searcher import (
 )
 
 Specification = Tuple[List[Tuple[int, AbstractStrategy]], List[List[int]]]
+RuleKey = Tuple[int, Tuple[int, ...]]
 
 
-class RuleDB:
+class RuleDBBase(abc.ABC):
     """A database for rules found."""
 
     def __init__(self) -> None:
-        """
-        Initialise.
-
-        - The rules dict keep all rules, where keys are start and items are
-        sets of ends.
-        - The explanations give reason/formal steps for rules. Call for an
-        explanation of rule start->ends with d[start][ends].
-        - Some strategies require back maps, these are stored in the back maps
-        dictionary. Calling works the same way as explanations.
-        """
-        # the values are needed for finding the specification in post-processing
-        self.rule_to_strategy: Dict[Tuple[int, Tuple[int, ...]], AbstractStrategy] = {}
         self.equivdb = EquivalenceDB()
+
+    @property
+    @abc.abstractmethod
+    def rule_to_strategy(self,) -> MutableMapping[RuleKey, AbstractStrategy]:
+        pass
 
     def __eq__(self, other: object) -> bool:
         """Check if all stored information is the same."""
-        if not isinstance(other, RuleDB):
+        if not isinstance(other, self.__class__):
             return NotImplemented
         return bool(self.rule_to_strategy == other.rule_to_strategy)
 
@@ -263,3 +270,93 @@ class RuleDB:
             except StopIteration:
                 minimum = middle + 1
         return self._get_specification_rules(label, tree)
+
+
+class RuleDB(RuleDBBase):
+    def __init__(self) -> None:
+        super().__init__()
+        self._rule_to_strategy: Dict[Tuple[int, Tuple[int, ...]], AbstractStrategy] = {}
+
+    @property
+    def rule_to_strategy(self) -> Dict[Tuple[int, Tuple[int, ...]], AbstractStrategy]:
+        return self._rule_to_strategy
+
+
+class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
+    """
+    A mapping from rules to strategies that recompute the strategy every time it's
+    needed instead of storing it in order to save memory.
+
+    Also in order to save memory we store flat version of the rules, i.e. for a rule
+    (a, (b, c,...)) we store (a, b, c,...)
+    """
+
+    def __init__(self, classdb: ClassDB, strat_pack: StrategyPack) -> None:
+        self.classdb = classdb
+        self.pack = strat_pack
+        self.rules: Set[Tuple[int, ...]] = set()
+
+    @staticmethod
+    def _flatten(tuple_: RuleKey) -> Tuple[int, ...]:
+        return (tuple_[0],) + tuple_[1]
+
+    @staticmethod
+    def _unflatten(tuple_: Tuple[int, ...]) -> RuleKey:
+        return (tuple_[0], tuple_[1:])
+
+    def __getitem__(self, key: RuleKey) -> AbstractStrategy:
+        if self._flatten(key) not in self.rules:
+            raise KeyError(key)
+        parent = self.classdb.get_class(key[0])
+        for strat in self.pack:
+            if isinstance(strat, StrategyFactory):
+                strats_or_rules: Iterable[Union[Rule, AbstractStrategy]] = strat(parent)
+            else:
+                strats_or_rules = [strat]
+            rules: Iterator[AbstractRule] = (
+                x(parent) if isinstance(x, AbstractStrategy) else x
+                for x in strats_or_rules
+            )
+            for rule in rules:
+                try:
+                    nonempty_children = tuple(
+                        c for c in rule.children if not self.classdb.is_empty(c)
+                    )
+                    end_labels = tuple(
+                        sorted(map(self.classdb.get_label, nonempty_children))
+                    )
+                    if end_labels == key[1]:
+                        return rule.strategy
+                except StrategyDoesNotApply:
+                    pass
+        err_message = (
+            f"Could not recompute the strategy for the rule {key} with "
+            " any of the strategies"
+        )
+        raise RuntimeError(err_message)
+
+    def __setitem__(self, key: RuleKey, value: AbstractStrategy) -> None:
+        self.rules.add(self._flatten(key))
+
+    def __delitem__(self, key: RuleKey) -> None:
+        self.rules.remove(self._flatten(key))
+
+    def __iter__(self) -> Iterator[RuleKey]:
+        for rule in self.rules:
+            yield self._unflatten(rule)
+
+    def __len__(self) -> int:
+        return len(self.rules)
+
+    def __contains__(self, key: object) -> bool:
+        return self._flatten(cast(RuleKey, key)) in self.rules
+
+
+class RuleDBForgetStrategy(RuleDBBase):
+    def __init__(self, classdb: ClassDB, strat_pack: StrategyPack) -> None:
+        super().__init__()
+        self.rules = RecomputingDict(classdb, strat_pack)
+
+    @property
+    def rule_to_strategy(self):
+        return self.rules

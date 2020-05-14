@@ -77,3 +77,10 @@ def test_random_sample(specification):
     Just test that it works and don't hit the maximum recursion depth.
     """
     assert len(specification.random_sample_object_of_size(1000)) == 1000
+
+
+def test_forget_ruledb():
+    alphabet = ["a", "b"]
+    start_class = AvoidingWithPrefix("", ["ababa", "babb"], alphabet)
+    searcher = CombinatorialSpecificationSearcher(start_class, pack, ruledb="forget")
+    return searcher.auto_search()

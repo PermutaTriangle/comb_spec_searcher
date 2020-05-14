@@ -21,7 +21,7 @@ from .exception import (
     SpecificationNotFound,
     StrategyDoesNotApply,
 )
-from .rule_db import RuleDB
+from .rule_db import RuleDB, RuleDBBase, RuleDBForgetStrategy
 from .specification import CombinatorialSpecification
 from .strategies import (
     AbstractStrategy,
@@ -48,7 +48,14 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
     def __init__(
         self, start_class: CombinatorialClassType, strategy_pack: StrategyPack, **kwargs
     ):
-        """Initialise CombinatorialSpecificationSearcher."""
+        """
+        Initialise CombinatorialSpecificationSearcher.
+
+        INPUT:
+            - `ruledb`: a string to specify the type of ruledb to use for the
+            search. Default to `None` but can be changed to "forget" for a ruledb that
+            saves more memory.
+        """
         self.strategy_pack = strategy_pack
         self.debug = kwargs.get("debug", False)
         if not self.debug:
@@ -66,7 +73,13 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
 
         self.classdb = ClassDB[CombinatorialClassType](type(start_class))
         self.classqueue = DefaultQueue(strategy_pack)
-        self.ruledb = RuleDB()
+
+        if kwargs.get("ruledb") is None:
+            self.ruledb: RuleDBBase = RuleDB()
+        elif kwargs.get("ruledb") == "forget":
+            self.ruledb = RuleDBForgetStrategy(self.classdb, self.strategy_pack)
+        else:
+            raise ValueError("ruledb argument should be None or 'forget'")
 
         # initialise the run with start_class
         self.start_label = self.classdb.get_label(start_class)

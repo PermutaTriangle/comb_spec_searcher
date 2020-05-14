@@ -25,7 +25,7 @@ If the iterative boolean is True, then CSS will search for an iterative
 specification.
 """
 from itertools import chain
-from typing import Iterable, Type, TypeVar
+from typing import Iterable, Iterator, Type, TypeVar
 
 from .strategy import CSSstrategy, Strategy
 
@@ -57,6 +57,16 @@ class StrategyPack:
         self.symmetries = tuple(symmetries) if symmetries is not None else tuple()
         self.iterative = iterative
 
+    def __iter__(self) -> Iterator[CSSstrategy]:
+        """Iterator over all the strategies in the pack."""
+        return chain(
+            self.initial_strats,
+            self.ver_strats,
+            self.inferral_strats,
+            self.symmetries,
+            *self.expansion_strats,
+        )
+
     def __contains__(self, strategy: CSSstrategy) -> bool:
         """
         Check if the pack contains a strategy.
@@ -64,13 +74,7 @@ class StrategyPack:
         Two strategy from the same Strategy class are consider the same even if
         they have different parameter.
         """
-        strats_in_pack = chain(
-            self.initial_strats,
-            self.ver_strats,
-            self.inferral_strats,
-            *self.expansion_strats,
-        )
-        return any(strat.__class__ == strategy.__class__ for strat in strats_in_pack)
+        return any(strat.__class__ == strategy.__class__ for strat in self)
 
     def __repr__(self) -> str:
         s = "{}(\n".format(self.__class__.__name__)
