@@ -263,7 +263,7 @@ class RemoveFrontOfPrefix(CartesianProductStrategy[AvoidingWithPrefix, Word]):
     def backward_map(
         self,
         avoiding_with_prefix: AvoidingWithPrefix,
-        words: Tuple[CombinatorialObject, ...],
+        words: Tuple[Optional[CombinatorialObject], ...],
         children: Optional[Tuple[AvoidingWithPrefix, ...]] = None,
     ) -> Word:
         """

@@ -89,9 +89,10 @@ class CombinatorialSpecification(
         self, comb_class: CombinatorialClassType
     ) -> AbstractRule[CombinatorialClassType, CombinatorialObjectType]:
         """Return the rule with comb class on the left."""
-        if comb_class.is_empty():
-            empty_strat = EmptyStrategy()
-            self.rules_dict[comb_class] = empty_strat(comb_class)
+        if comb_class not in self.rules_dict:
+            if comb_class.is_empty():
+                empty_strat = EmptyStrategy()
+                self.rules_dict[comb_class] = empty_strat(comb_class)
         return self.rules_dict[comb_class]
 
     @property

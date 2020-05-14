@@ -50,7 +50,7 @@ AtomStrategy, relying on CombinatorialClass methods.
 """
 import abc
 from importlib import import_module
-from typing import TYPE_CHECKING, Generic, Iterator, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Generic, Iterator, Optional, Tuple, Type, Union, cast
 
 from sympy import Expr, Integer, var
 
@@ -270,7 +270,7 @@ class Strategy(AbstractStrategy[CombinatorialClassType, CombinatorialObjectType]
     def backward_map(
         self,
         comb_class: CombinatorialClassType,
-        objs: Tuple[CombinatorialObjectType, ...],
+        objs: Tuple[Optional[CombinatorialObjectType], ...],
         children: Optional[Tuple[CombinatorialClassType, ...]] = None,
     ) -> CombinatorialObjectType:
         """
@@ -286,7 +286,7 @@ class Strategy(AbstractStrategy[CombinatorialClassType, CombinatorialObjectType]
         comb_class: CombinatorialClassType,
         obj: CombinatorialObjectType,
         children: Optional[Tuple[CombinatorialClassType, ...]] = None,
-    ) -> Tuple[CombinatorialObjectType, ...]:
+    ) -> Tuple[Optional[CombinatorialObjectType], ...]:
         """
         The backward direction of the underlying bijection used for object
         generation and sampling.
@@ -369,12 +369,12 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObject
         return DisjointUnion(children)
 
     @staticmethod
-    def backward_map_index(objs: Tuple[CombinatorialObjectType, ...],) -> int:
+    def backward_map_index(objs: Tuple[Optional[CombinatorialObjectType], ...]) -> int:
         """
         Return the index of the comb_class that the sub_object returned.
         """
         for idx, obj in enumerate(objs):
-            if isinstance(obj, CombinatorialObject):
+            if obj is not None:
                 return idx
         raise ObjectMappingError(
             "For a disjoint union strategy, an object O is mapped to the tuple"
@@ -385,7 +385,7 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObject
     def backward_map(
         self,
         comb_class: CombinatorialClassType,
-        objs: Tuple[CombinatorialObjectType, ...],
+        objs: Tuple[Optional[CombinatorialObjectType], ...],
         children: Optional[Tuple[CombinatorialClassType, ...]] = None,
     ) -> CombinatorialObjectType:
         """
@@ -394,7 +394,8 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObject
         """
         if children is None:
             children = self.decomposition_function(comb_class)
-        return objs[DisjointUnionStrategy.backward_map_index(objs)]
+        idx = DisjointUnionStrategy.backward_map_index(objs)
+        return cast(CombinatorialObjectType, objs[idx])
 
 
 class SymmetryStrategy(
