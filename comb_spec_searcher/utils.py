@@ -1,9 +1,9 @@
 """Some useful miscellaneous functions used througout the package."""
 import os
-import psutil
 import sys
 import time
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
+import psutil
 
 from sympy import O, Poly, Symbol, solve, var
 
@@ -199,6 +199,8 @@ def compositions(n, k):
 
 
 def nice_pypy_mem(mem: str) -> str:
+    """Improves formatting of the memory statistics produced by pypy's
+    garbage collector (which are provided as strings)"""
     return mem.replace("KB", " KiB").replace("MB", " MiB").replace("GB", " GiB")
 
 
