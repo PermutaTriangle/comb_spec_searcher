@@ -33,7 +33,7 @@ from .strategies import (
     VerificationStrategy,
 )
 from .strategies.rule import AbstractRule
-from .utils import maple_equations, taylor_expand
+from .utils import RecursionLimit, maple_equations, taylor_expand
 
 __all__ = ("CombinatorialSpecification",)
 
@@ -158,9 +158,10 @@ class CombinatorialSpecification(
         self, comb_class: CombinatorialClassType
     ) -> AbstractRule[CombinatorialClassType, CombinatorialObjectType]:
         """Return the rule with comb class on the left."""
-        if comb_class.is_empty():
-            empty_strat = EmptyStrategy()
-            self.rules_dict[comb_class] = empty_strat(comb_class)
+        if comb_class not in self.rules_dict:
+            if comb_class.is_empty():
+                empty_strat = EmptyStrategy()
+                self.rules_dict[comb_class] = empty_strat(comb_class)
         return self.rules_dict[comb_class]
 
     @property
@@ -267,7 +268,9 @@ class CombinatorialSpecification(
         Return the number of objects with the given parameters.
         Note, 'n' is reserved for the size of the object.
         """
-        return self.root_rule.count_objects_of_size(n, **parameters)
+        limit = n * self.number_of_rules()
+        with RecursionLimit(limit):
+            return self.root_rule.count_objects_of_size(n, **parameters)
 
     def generate_objects_of_size(
         self, n: int, **parameters
@@ -286,7 +289,9 @@ class CombinatorialSpecification(
         Return a uniformly random object of the given size. This is done using
         the "recursive" method.
         """
-        return self.root_rule.random_sample_object_of_size(n, **parameters)
+        limit = n * self.number_of_rules()
+        with RecursionLimit(limit):
+            return self.root_rule.random_sample_object_of_size(n, **parameters)
 
     def number_of_rules(self) -> int:
         return len(self.rules_dict)
