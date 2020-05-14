@@ -13,6 +13,7 @@ from typing import (
     Set,
     Tuple,
     Union,
+    cast,
 )
 
 from .class_db import ClassDB
@@ -285,15 +286,26 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
     """
     A mapping from rules to strategies that recompute the strategy every time it's
     needed instead of storing it in order to save memory.
+
+    Also in order to save memory we store flat version of the rules, i.e. for a rule
+    (a, (b, c,...)) we store (a, b, c,...)
     """
 
     def __init__(self, classdb: ClassDB, strat_pack: StrategyPack) -> None:
         self.classdb = classdb
         self.pack = strat_pack
-        self.rules: Set[RuleKey] = set()
+        self.rules: Set[Tuple[int, ...]] = set()
+
+    @staticmethod
+    def _flatten(tuple_: RuleKey) -> Tuple[int, ...]:
+        return (tuple_[0],) + tuple_[1]
+
+    @staticmethod
+    def _unflatten(tuple_: Tuple[int, ...]) -> RuleKey:
+        return (tuple_[0], tuple_[1:])
 
     def __getitem__(self, key: RuleKey) -> AbstractStrategy:
-        if key not in self.rules:
+        if self._flatten(key) not in self.rules:
             raise KeyError(key)
         parent = self.classdb.get_class(key[0])
         for strat in self.pack:
@@ -324,19 +336,20 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
         raise RuntimeError(err_message)
 
     def __setitem__(self, key: RuleKey, value: AbstractStrategy) -> None:
-        self.rules.add(key)
+        self.rules.add(self._flatten(key))
 
     def __delitem__(self, key: RuleKey) -> None:
-        self.rules.remove(key)
+        self.rules.remove(self._flatten(key))
 
     def __iter__(self) -> Iterator[RuleKey]:
-        return iter(self.rules)
+        for rule in self.rules:
+            yield self._unflatten(rule)
 
     def __len__(self) -> int:
         return len(self.rules)
 
     def __contains__(self, key: object) -> bool:
-        return key in self.rules
+        return self._flatten(cast(RuleKey, key)) in self.rules
 
 
 class RuleDBForgetStrategy(RuleDBBase):
