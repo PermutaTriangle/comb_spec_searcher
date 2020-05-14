@@ -10,7 +10,7 @@ if is_empty has been checked.
 
 import zlib
 from collections import defaultdict
-from typing import Dict, Generic, Iterator, Optional, Type, Union
+from typing import Dict, Generic, Iterator, Optional, Type, Union, cast
 
 from .combinatorial_class import CombinatorialClassType
 from .utils import cssmethodtimer
@@ -158,7 +158,10 @@ class ClassDB(Generic[CombinatorialClassType]):
         """
         try:
             assert isinstance(key, bytes)
-            return self.combinatorial_class.from_bytes(zlib.decompress(key))
+            return cast(
+                CombinatorialClassType,
+                self.combinatorial_class.from_bytes(zlib.decompress(key)),
+            )
         except (AssertionError, NotImplementedError):
             # to use compression you should implement a 'from_bytes' function.
             assert isinstance(
