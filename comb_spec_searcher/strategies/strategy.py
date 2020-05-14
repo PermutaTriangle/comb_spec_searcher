@@ -50,7 +50,17 @@ AtomStrategy, relying on CombinatorialClass methods.
 """
 import abc
 from importlib import import_module
-from typing import TYPE_CHECKING, Generic, Iterator, Optional, Tuple, Type, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Dict,
+    Generic,
+    Iterator,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+    cast,
+)
 
 from sympy import Expr, Function, Integer, var
 
