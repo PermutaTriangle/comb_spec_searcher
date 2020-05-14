@@ -35,9 +35,9 @@ from .strategies.strategy import CSSstrategy
 from .utils import (
     cssiteratortimer,
     cssmethodtimer,
-    size_to_readable,
     get_mem,
     nice_pypy_mem,
+    size_to_readable,
 )
 
 warnings.simplefilter("once", Warning)

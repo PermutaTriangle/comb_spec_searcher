@@ -3,14 +3,15 @@ import os
 import sys
 import time
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
-import psutil
 
+import psutil
 from sympy import O, Poly, Symbol, solve, var
 
 from comb_spec_searcher.exception import TaylorExpansionError
 
 if TYPE_CHECKING:
     from comb_spec_searcher import CombinatorialSpecificationSearcher
+
 
 Func = TypeVar("Func", bound=Callable[..., Any])
 
