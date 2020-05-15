@@ -139,15 +139,15 @@ class DefaultQueue(CSSQueue):
         Populate the staging queue that is used by next to return WorkPacket.
         """
         self.queue_sizes.append(len(self.curr_level))
-        if self.working:
+        if not self.staging and self.working:
             self.staging.extend(self._iter_helper_working())
-            return
-        if not self.curr_level:
-            self._change_level()
-        if self.curr_level:
-            self.staging.extend(self._iter_helper_curr())
-        else:
-            raise StopIteration("No more class to expand")
+        if not self.staging:
+            if not self.curr_level:
+                self._change_level()
+            if self.curr_level:
+                self.staging.extend(self._iter_helper_curr())
+        if not self.staging:
+            raise StopIteration("No more classes to expand")
 
     def _change_level(self) -> None:
         self.curr_level = deque(
@@ -186,13 +186,12 @@ class DefaultQueue(CSSQueue):
         self.next_level.update((label,))
 
     def __next__(self) -> WorkPacket:
-        while True:
-            if not self.staging:
-                self._populate_staging()
-            while self.staging:
-                wp = self.staging.popleft()
-                if wp.label not in self.ignore:
-                    return wp
+        while self.staging:
+            wp = self.staging.popleft()
+            if wp.label not in self.ignore:
+                return wp
+        self._populate_staging()
+        return next(self)
 
     def do_level(self) -> Iterator[WorkPacket]:
         """
