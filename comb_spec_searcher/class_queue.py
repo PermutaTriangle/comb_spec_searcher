@@ -138,7 +138,6 @@ class DefaultQueue(CSSQueue):
         """
         Populate the staging queue that is used by next to return WorkPacket.
         """
-        self.queue_sizes.append(len(self.curr_level))
         if not self.staging and self.working:
             self.staging.extend(self._iter_helper_working())
         if not self.staging:
