@@ -133,23 +133,15 @@ class DefaultQueue(CSSQueue):
 
     def can_do_inferral(self, label: int) -> bool:
         """Return true if inferral strategies can be applied."""
-        return bool(
-            self.inferral_strategies
-            and label not in self.ignore
-            and label not in self.inferral_ignore
-        )
+        return bool(self.inferral_strategies and label not in self.inferral_ignore)
 
     def can_do_initial(self, label: int) -> bool:
         """Return true if initial strategies can be applied."""
-        return bool(
-            self.initial_strategies
-            and label not in self.ignore
-            and label not in self.initial_expanded
-        )
+        return bool(self.initial_strategies and label not in self.initial_expanded)
 
     def can_do_expansion(self, label: int, idx: int) -> bool:
         """Return true if expansion strategies can be applied."""
-        return label not in self.ignore and label not in self.expansion_expanded[idx]
+        return label not in self.expansion_expanded[idx]
 
     def _iter_helper(self) -> Iterator[WorkPacket]:
         """
@@ -184,12 +176,8 @@ class DefaultQueue(CSSQueue):
         for idx, strats in enumerate(self.expansion_strats):
             if self.can_do_expansion(label, idx):
                 for strat in strats:
-                    if self.can_do_expansion(label, idx):
-                        yield WorkPacket(label, (strat,), False)
-                    else:
-                        break
-                else:
-                    self.expansion_expanded[idx].add(label)
+                    yield WorkPacket(label, (strat,), False)
+                self.expansion_expanded[idx].add(label)
                 if idx + 1 < len(self.expansion_strats) and (
                     self.can_do_expansion(label, idx + 1)
                 ):
@@ -204,15 +192,17 @@ class DefaultQueue(CSSQueue):
         if self.can_do_inferral(label):
             yield WorkPacket(label, self.inferral_strategies, True)
             self.inferral_expanded.add(label)
-        for strat in self.initial_strategies:
-            if self.can_do_initial(label):
+        if self.can_do_initial(label):
+            for strat in self.initial_strategies:
                 yield WorkPacket(label, (strat,), False)
-            else:
-                break
-        else:
-            if label not in self.ignore:
-                self.initial_expanded.add(label)
+            self.initial_expanded.add(label)
         self.next_level.update((label,))
+
+    def __next__(self) -> WorkPacket:
+        for wp in self.iterator:
+            if wp.label not in self.ignore:
+                return wp
+        raise StopIteration("No more class to expand")
 
     def do_level(self) -> Iterator[WorkPacket]:
         """
