@@ -26,6 +26,15 @@ class CSSQueue(abc.ABC):
         self.initial_strategies = tuple(pack.initial_strats)
         self.expansion_strats = tuple(tuple(x) for x in pack.expansion_strats)
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, CSSQueue):
+            return NotImplemented
+        return (
+            self.inferral_strategies == other.inferral_strategies
+            and self.initial_strategies == other.initial_strategies
+            and self.expansion_strats == other.expansion_strats
+        )
+
     @abc.abstractmethod
     def add(self, label: int) -> None:
         """Add a label to the queue."""
@@ -90,6 +99,24 @@ class DefaultQueue(CSSQueue):
         self.inferral_ignore: Set[int] = set()
         self.queue_sizes: List[int] = []
         self.staging: Deque[WorkPacket] = deque([])
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, DefaultQueue):
+            return NotImplemented
+        return (
+            super().__eq__(other)
+            and self.working == other.working
+            and self.next_level == other.next_level
+            and self.curr_level == other.curr_level
+            and self.inferral_expanded == other.inferral_expanded
+            and self.initial_expanded == other.initial_expanded
+            and self.initial_expanded == other.initial_expanded
+            and self.expansion_expanded == other.expansion_expanded
+            and self.ignore == other.ignore
+            and self.inferral_ignore == other.inferral_ignore
+            and self.queue_sizes == other.queue_sizes
+            and self.staging == other.staging
+        )
 
     @property
     def levels_completed(self):
