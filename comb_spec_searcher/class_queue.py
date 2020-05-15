@@ -25,7 +25,6 @@ class CSSQueue(abc.ABC):
         self.inferral_strategies = tuple(pack.inferral_strats)
         self.initial_strategies = tuple(pack.initial_strats)
         self.expansion_strats = tuple(tuple(x) for x in pack.expansion_strats)
-        self.iterator = self._iter_helper()
 
     @abc.abstractmethod
     def add(self, label: int) -> None:
@@ -54,8 +53,11 @@ class CSSQueue(abc.ABC):
     def status(self) -> str:
         """Return a string that indicates that current status of the queue."""
 
+    def __iter__(self) -> Iterator[WorkPacket]:
+        return self
+
     @abc.abstractmethod
-    def _iter_helper(self) -> Iterator[WorkPacket]:
+    def __next__(self) -> WorkPacket:
         """
         Yield the combinatorial classes in queue.
         It should yield triples (label, strategies, inferral)
@@ -66,19 +68,7 @@ class CSSQueue(abc.ABC):
         children, and assume you are ignore the parent from now on. The
         strategies will be applied cyclically until no change.
         """
-
-    def __iter__(self) -> Iterator[WorkPacket]:
-        while True:
-            try:
-                yield next(self)
-            except StopIteration:
-                break
-
-    def __next__(self) -> WorkPacket:
-        try:
-            return next(self.iterator)
-        except StopIteration:
-            raise StopIteration("No more classes to expand.")
+        raise NotImplementedError
 
 
 class DefaultQueue(CSSQueue):
@@ -99,6 +89,7 @@ class DefaultQueue(CSSQueue):
         self.ignore: Set[int] = set()
         self.inferral_ignore: Set[int] = set()
         self.queue_sizes: List[int] = []
+        self.staging: Deque[WorkPacket] = deque([])
 
     @property
     def levels_completed(self):
@@ -143,26 +134,22 @@ class DefaultQueue(CSSQueue):
         """Return true if expansion strategies can be applied."""
         return label not in self.expansion_expanded[idx]
 
-    def _iter_helper(self) -> Iterator[WorkPacket]:
+    def _populate_staging(self) -> None:
         """
-        Yield the next combinatorial class in current queue.
-
-        If current queue becomes empty will change next queue to current and
-        return first combinatorial class. Return None if no combinatorial
-        classes to expand.
+        Populate the staging queue that is used by next to return WorkPacket.
         """
         self.queue_sizes.append(len(self.curr_level))
-        while True:
-            if self.working:
-                yield from self._iter_helper_working()
-            elif self.curr_level:
-                yield from self._iter_helper_curr()
-            elif self.next_level:
-                self._iter_helper_change_level()
-            else:
-                return None
+        if self.working:
+            self.staging.extend(self._iter_helper_working())
+            return
+        if not self.curr_level:
+            self._change_level()
+        if self.curr_level:
+            self.staging.extend(self._iter_helper_curr())
+        else:
+            raise StopIteration("No more class to expand")
 
-    def _iter_helper_change_level(self) -> None:
+    def _change_level(self) -> None:
         self.curr_level = deque(
             label
             for label, _ in sorted(self.next_level.items(), key=lambda x: -x[1])
@@ -199,10 +186,13 @@ class DefaultQueue(CSSQueue):
         self.next_level.update((label,))
 
     def __next__(self) -> WorkPacket:
-        for wp in self.iterator:
-            if wp.label not in self.ignore:
-                return wp
-        raise StopIteration("No more class to expand")
+        while True:
+            if not self.staging:
+                self._populate_staging()
+            while self.staging:
+                wp = self.staging.popleft()
+                if wp.label not in self.ignore:
+                    return wp
 
     def do_level(self) -> Iterator[WorkPacket]:
         """
