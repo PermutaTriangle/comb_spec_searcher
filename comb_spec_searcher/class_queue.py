@@ -4,12 +4,16 @@ A queue of labels.
 import abc
 from collections import Counter, deque
 from typing import Counter as CounterType
-from typing import Deque, Iterator, List, Set, Tuple
+from typing import Deque, Iterator, List, NamedTuple, Set, Tuple
 
 from .strategies.strategy import CSSstrategy
 from .strategies.strategy_pack import StrategyPack
 
-WorkPacket = Tuple[int, Tuple[CSSstrategy, ...], bool]
+
+class WorkPacket(NamedTuple):
+    label: int
+    strategies: Tuple[CSSstrategy, ...]
+    inferral: bool
 
 
 class CSSQueue(abc.ABC):
@@ -166,7 +170,7 @@ class DefaultQueue(CSSQueue):
             else:
                 return None
 
-    def _iter_helper_change_level(self):
+    def _iter_helper_change_level(self) -> None:
         self.curr_level = deque(
             label
             for label, _ in sorted(self.next_level.items(), key=lambda x: -x[1])
@@ -175,13 +179,13 @@ class DefaultQueue(CSSQueue):
         self.queue_sizes.append(len(self.curr_level))
         self.next_level = Counter()
 
-    def _iter_helper_curr(self):
+    def _iter_helper_curr(self) -> Iterator[WorkPacket]:
         label = self.curr_level.popleft()
         for idx, strats in enumerate(self.expansion_strats):
             if self.can_do_expansion(label, idx):
                 for strat in strats:
                     if self.can_do_expansion(label, idx):
-                        yield label, (strat,), False
+                        yield WorkPacket(label, (strat,), False)
                     else:
                         break
                 else:
@@ -195,14 +199,14 @@ class DefaultQueue(CSSQueue):
             # finished applying all strategies to this label, ignore from now on
             self._add_to_ignore(label)
 
-    def _iter_helper_working(self):
+    def _iter_helper_working(self) -> Iterator[WorkPacket]:
         label = self.working.popleft()
         if self.can_do_inferral(label):
-            yield label, self.inferral_strategies, True
+            yield WorkPacket(label, self.inferral_strategies, True)
             self.inferral_expanded.add(label)
         for strat in self.initial_strategies:
             if self.can_do_initial(label):
-                yield label, (strat,), False
+                yield WorkPacket(label, (strat,), False)
             else:
                 break
         else:
