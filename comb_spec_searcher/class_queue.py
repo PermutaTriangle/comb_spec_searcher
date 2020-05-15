@@ -155,55 +155,60 @@ class DefaultQueue(CSSQueue):
         return first combinatorial class. Return None if no combinatorial
         classes to expand.
         """
-        # pylint: disable=too-many-nested-blocks
         self.queue_sizes.append(len(self.curr_level))
         while True:
             if self.working:
-                label = self.working.popleft()
-                if self.can_do_inferral(label):
-                    yield label, self.inferral_strategies, True
-                    self.inferral_expanded.add(label)
-                for strat in self.initial_strategies:
-                    if self.can_do_initial(label):
+                yield from self._iter_helper_working()
+            elif self.curr_level:
+                yield from self._iter_helper_curr()
+            elif self.next_level:
+                self._iter_helper_change_level()
+            else:
+                return None
+
+    def _iter_helper_change_level(self):
+        self.curr_level = deque(
+            label
+            for label, _ in sorted(self.next_level.items(), key=lambda x: -x[1])
+            if self.expansion_strats and self.can_do_expansion(label, 0)
+        )
+        self.queue_sizes.append(len(self.curr_level))
+        self.next_level = Counter()
+
+    def _iter_helper_curr(self):
+        label = self.curr_level.popleft()
+        for idx, strats in enumerate(self.expansion_strats):
+            if self.can_do_expansion(label, idx):
+                for strat in strats:
+                    if self.can_do_expansion(label, idx):
                         yield label, (strat,), False
                     else:
                         break
                 else:
-                    if label not in self.ignore:
-                        self.initial_expanded.add(label)
-                self.next_level.update((label,))
+                    self.expansion_expanded[idx].add(label)
+                if idx + 1 < len(self.expansion_strats) and (
+                    self.can_do_expansion(label, idx + 1)
+                ):
+                    self.curr_level.append(label)
+                break
+        else:
+            # finished applying all strategies to this label, ignore from now on
+            self._add_to_ignore(label)
 
-            elif self.curr_level:
-                label = self.curr_level.popleft()
-                for idx, strats in enumerate(self.expansion_strats):
-                    if self.can_do_expansion(label, idx):
-                        for strat in strats:
-                            if self.can_do_expansion(label, idx):
-                                yield label, (strat,), False
-                            else:
-                                break
-                        else:
-                            self.expansion_expanded[idx].add(label)
-                        if idx + 1 < len(self.expansion_strats) and (
-                            self.can_do_expansion(label, idx + 1)
-                        ):
-                            self.curr_level.append(label)
-                        break
-                else:
-                    # finished applying all strategies to this label, ignore from now on
-                    self._add_to_ignore(label)
+    def _iter_helper_working(self):
+        label = self.working.popleft()
+        if self.can_do_inferral(label):
+            yield label, self.inferral_strategies, True
+            self.inferral_expanded.add(label)
+        for strat in self.initial_strategies:
+            if self.can_do_initial(label):
+                yield label, (strat,), False
             else:
-                # input("Finished level {}".format(self.levels_completed))
-                if not self.next_level:
-                    return None
-                self.curr_level = deque(
-                    label
-                    for label, _ in sorted(self.next_level.items(), key=lambda x: -x[1])
-                    if self.expansion_strats and self.can_do_expansion(label, 0)
-                )
-                self.queue_sizes.append(len(self.curr_level))
-                self.next_level = Counter()
-                continue
+                break
+        else:
+            if label not in self.ignore:
+                self.initial_expanded.add(label)
+        self.next_level.update((label,))
 
     def do_level(self) -> Iterator[WorkPacket]:
         """
