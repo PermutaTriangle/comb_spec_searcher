@@ -133,9 +133,6 @@ class DefaultQueue(CSSQueue):
             self._expansion_expanded[idx].add(label)
 
     def set_stop_yielding(self, label: int) -> None:
-        self._add_to_ignore(label)
-
-    def _add_to_ignore(self, label: int) -> None:
         self.ignore.add(label)
         # can remove it elsewhere to keep sets "small"
         self._inferral_expanded.discard(label)
@@ -194,7 +191,7 @@ class DefaultQueue(CSSQueue):
                 break
         else:
             # finished applying all strategies to this label, ignore from now on
-            self._add_to_ignore(label)
+            self.set_stop_yielding(label)
 
     def _iter_helper_working(self) -> Iterator[WorkPacket]:
         label = self.working.popleft()
