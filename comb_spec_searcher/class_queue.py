@@ -29,11 +29,7 @@ class CSSQueue(abc.ABC):
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, CSSQueue):
             return NotImplemented
-        return (
-            self.inferral_strategies == other.inferral_strategies
-            and self.initial_strategies == other.initial_strategies
-            and self.expansion_strats == other.expansion_strats
-        )
+        return self.__class__ == other.__class__ and self.__dict__ == other.__dict__
 
     @abc.abstractmethod
     def add(self, label: int) -> None:
@@ -102,18 +98,7 @@ class DefaultQueue(CSSQueue):
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, DefaultQueue):
             return NotImplemented
-        return (
-            super().__eq__(other)
-            and self.working == other.working
-            and self.next_level == other.next_level
-            and self.curr_level == other.curr_level
-            and self._inferral_expanded == other._inferral_expanded
-            and self._initial_expanded == other._initial_expanded
-            and self._expansion_expanded == other._expansion_expanded
-            and self.ignore == other.ignore
-            and self.queue_sizes == other.queue_sizes
-            and self.staging == other.staging
-        )
+        return self.__class__ == other.__class__ and self.__dict__ == other.__dict__
 
     @property
     def levels_completed(self):
