@@ -6,7 +6,7 @@ import platform
 import time
 import warnings
 from collections import defaultdict
-from typing import Dict, Generic, Iterator, Optional, Sequence, Set, Tuple
+from typing import Any, Dict, Generic, Iterator, Optional, Sequence, Set, Tuple, cast
 
 import logzero
 from logzero import logger
@@ -41,7 +41,7 @@ from .utils import (
 )
 
 if platform.python_implementation() == "CPython":
-    from pympler.asizeof import asizeof  # type: ignore
+    from pympler.asizeof import asizeof
 
 warnings.simplefilter("once", Warning)
 
@@ -452,28 +452,19 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 )
 
         elif platform.python_implementation() == "PyPy":
-            gc_stats = gc.get_stats()
+            gc_stats = cast(Any, gc.get_stats())
             stats = [
-                ("Current Memory Used", gc_stats.total_gc_memory),  # type: ignore
-                (
-                    "Current Memory Allocated",
-                    gc_stats.total_allocated_memory,  # type: ignore
-                ),
-                ("Current JIT Memory Used", gc_stats.jit_backend_used),  # type: ignore
-                (
-                    "Current JIT Memory Allocated",
-                    gc_stats.jit_backend_allocated,  # type: ignore
-                ),
-                ("Peak Memory Used", gc_stats.peak_memory),  # type: ignore
-                (
-                    "Peak Memory Allocated Memory Used",
-                    gc_stats.peak_allocated_memory,  # type: ignore
-                ),
+                ("Current Memory Used", gc_stats.total_gc_memory),
+                ("Current Memory Allocated", gc_stats.total_allocated_memory,),
+                ("Current JIT Memory Used", gc_stats.jit_backend_used),
+                ("Current JIT Memory Allocated", gc_stats.jit_backend_allocated,),
+                ("Peak Memory Used", gc_stats.peak_memory),
+                ("Peak Memory Allocated Memory Used", gc_stats.peak_allocated_memory,),
             ]
             for (desc, mem) in stats:
                 status += "\t{}: {}\n".format(desc, nice_pypy_mem(mem))
             status += "\tTotal Garbage Collection Time: {} seconds\n".format(
-                round(gc_stats.total_gc_time / 1000, 2)  # type: ignore
+                round(gc_stats.total_gc_time / 1000, 2)
             )
 
         return status
@@ -486,6 +477,36 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         )
         start_string += str(self.strategy_pack)
         return start_string
+
+    def _log_spec_found(
+        self, specification: CombinatorialSpecification, start_time: float
+    ):
+        found_string = "Specification found {}\n".format(
+            time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime())
+        )
+        found_string += "Time taken was {} seconds\n".format(
+            round(time.time() - start_time, 2)
+        )
+        found_string += self.status(elaborate=True)
+        found_string += json.dumps(specification.to_jsonable())
+        logger.info(found_string, extra=self.logger_kwargs)
+
+    def _log_status(self, start_time: float) -> None:
+        status = "\nTime taken so far is {} seconds\n".format(
+            round(time.time() - start_time, 2)
+        )
+        elaborate = time.time() - start_time > 100 * self.func_times["status"]
+        status_start = time.time()
+        status += self.status(elaborate=elaborate)
+        if elaborate:
+            status += "\t\t[status update took {} seconds]\n".format(
+                round(time.time() - status_start, 2)
+            )
+        next_elaborate = 100 * self.func_times["status"] - time.time() + start_time
+        status += "\t\t [next elaborate status update in {} seconds]\n" "".format(
+            round(next_elaborate, 2)
+        )
+        logger.info(status, extra=self.logger_kwargs)
 
     def auto_search(self, **kwargs) -> CombinatorialSpecification:
         """
@@ -540,32 +561,12 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                     self._expand(label, strategies, inferral)
                 if time.time() - expansion_start > max_expansion_time:
                     break
-                if status_update is not None:
-                    if time.time() - status_start > status_update:
-                        status = "\nTime taken so far is {} seconds\n".format(
-                            round(time.time() - auto_search_start, 2)
-                        )
-                        elaborate = (
-                            time.time() - auto_search_start
-                            > 100 * self.func_times["status"]
-                        )
-                        status_start = time.time()
-                        status += self.status(elaborate=elaborate)
-                        if elaborate:
-                            status += "\t\t[status update took {} seconds]\n".format(
-                                round(time.time() - status_start, 2)
-                            )
-                        next_elaborate = (
-                            100 * self.func_times["status"]
-                            - time.time()
-                            + auto_search_start
-                        )
-                        status += (
-                            "\t\t [next elaborate status update in {} seconds]\n"
-                            "".format(round(next_elaborate, 2))
-                        )
-                        logger.info(status, extra=self.logger_kwargs)
-                        status_start = time.time()
+                if (
+                    status_update is not None
+                    and time.time() - status_start > status_update
+                ):
+                    self._log_status(auto_search_start)
+                    status_start = time.time()
             else:
                 expanding = False
                 logger.info("No more classes to expand.", extra=self.logger_kwargs)
@@ -573,15 +574,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             logger.debug("Searching for specification.", extra=self.logger_kwargs)
             specification = self.get_specification(smallest=smallest)
             if specification is not None:
-                found_string = "Specification found {}\n".format(
-                    time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime())
-                )
-                found_string += "Time taken was {} seconds\n".format(
-                    round(time.time() - auto_search_start, 2)
-                )
-                found_string += self.status(elaborate=True)
-                found_string += json.dumps(specification.to_jsonable())
-                logger.info(found_string, extra=self.logger_kwargs)
+                self._log_spec_found(specification, auto_search_start)
                 return specification
             logger.debug("No specification found.", extra=self.logger_kwargs)
             if max_time is not None:
