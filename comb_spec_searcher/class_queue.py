@@ -90,13 +90,12 @@ class DefaultQueue(CSSQueue):
         self.working: Deque[int] = deque()
         self.next_level: CounterType[int] = Counter()
         self.curr_level: Deque[int] = deque()
-        self.inferral_expanded: Set[int] = set()
-        self.initial_expanded: Set[int] = set()
-        self.expansion_expanded: List[Set[int]] = [
+        self._inferral_expanded: Set[int] = set()
+        self._initial_expanded: Set[int] = set()
+        self._expansion_expanded: List[Set[int]] = [
             set() for _ in range(len(self.expansion_strats))
         ]
         self.ignore: Set[int] = set()
-        self.inferral_ignore: Set[int] = set()
         self.queue_sizes: List[int] = []
         self.staging: Deque[WorkPacket] = deque([])
 
@@ -108,12 +107,10 @@ class DefaultQueue(CSSQueue):
             and self.working == other.working
             and self.next_level == other.next_level
             and self.curr_level == other.curr_level
-            and self.inferral_expanded == other.inferral_expanded
-            and self.initial_expanded == other.initial_expanded
-            and self.initial_expanded == other.initial_expanded
-            and self.expansion_expanded == other.expansion_expanded
+            and self._inferral_expanded == other._inferral_expanded
+            and self._initial_expanded == other._initial_expanded
+            and self._expansion_expanded == other._expansion_expanded
             and self.ignore == other.ignore
-            and self.inferral_ignore == other.inferral_ignore
             and self.queue_sizes == other.queue_sizes
             and self.staging == other.staging
         )
@@ -133,8 +130,22 @@ class DefaultQueue(CSSQueue):
         self.set_stop_yielding(label)
 
     def set_not_inferrable(self, label: int) -> None:
+        """Mark the label such that it's not expanded with inferral anymore"""
         if label not in self.ignore:
-            self.inferral_expanded.add(label)
+            self._inferral_expanded.add(label)
+
+    def set_not_initial(self, label: int) -> None:
+        """Mark the label such that it's not expanded with initial anymore"""
+        if label not in self.ignore:
+            self._initial_expanded.add(label)
+
+    def set_expansion_expanded(self, label: int, idx: int) -> None:
+        """
+        Mark the label such that it's not expanded with expansion for the given
+        indices anymore
+        """
+        if label not in self.ignore:
+            self._expansion_expanded[idx].add(label)
 
     def set_stop_yielding(self, label: int) -> None:
         self._add_to_ignore(label)
@@ -142,24 +153,26 @@ class DefaultQueue(CSSQueue):
     def _add_to_ignore(self, label: int) -> None:
         self.ignore.add(label)
         # can remove it elsewhere to keep sets "small"
-        self.inferral_ignore.discard(label)
-        self.inferral_expanded.discard(label)
-        self.initial_expanded.discard(label)
-        for s in self.expansion_expanded:
+        self._inferral_expanded.discard(label)
+        self._initial_expanded.discard(label)
+        for s in self._expansion_expanded:
             s.discard(label)
         self.next_level.pop(label, None)
 
     def can_do_inferral(self, label: int) -> bool:
         """Return true if inferral strategies can be applied."""
-        return bool(self.inferral_strategies and label not in self.inferral_ignore)
+        return bool(self.inferral_strategies) and label not in self._inferral_expanded
 
     def can_do_initial(self, label: int) -> bool:
         """Return true if initial strategies can be applied."""
-        return bool(self.initial_strategies and label not in self.initial_expanded)
+        return bool(self.initial_strategies) and label not in self._initial_expanded
 
     def can_do_expansion(self, label: int, idx: int) -> bool:
         """Return true if expansion strategies can be applied."""
-        return label not in self.expansion_expanded[idx]
+        return (
+            idx < len(self.expansion_strats)
+            and label not in self._expansion_expanded[idx]
+        )
 
     def _populate_staging(self) -> None:
         """
@@ -190,10 +203,8 @@ class DefaultQueue(CSSQueue):
             if self.can_do_expansion(label, idx):
                 for strat in strats:
                     yield WorkPacket(label, (strat,), False)
-                self.expansion_expanded[idx].add(label)
-                if idx + 1 < len(self.expansion_strats) and (
-                    self.can_do_expansion(label, idx + 1)
-                ):
+                self.set_expansion_expanded(label, idx)
+                if self.can_do_expansion(label, idx + 1):
                     self.curr_level.append(label)
                 break
         else:
@@ -204,11 +215,11 @@ class DefaultQueue(CSSQueue):
         label = self.working.popleft()
         if self.can_do_inferral(label):
             yield WorkPacket(label, self.inferral_strategies, True)
-            self.inferral_expanded.add(label)
+            self.set_not_inferrable(label)
         if self.can_do_initial(label):
             for strat in self.initial_strategies:
                 yield WorkPacket(label, (strat,), False)
-            self.initial_expanded.add(label)
+            self.set_not_initial(label)
         self.next_level.update((label,))
 
     def __next__(self) -> WorkPacket:
