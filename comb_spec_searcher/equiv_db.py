@@ -68,6 +68,8 @@ class EquivalenceDB:
 
     def union(self, t1: int, t2: int) -> None:
         """Find sets containing t1 and t2 and merge them."""
+        if t1 == t2:
+            return
         self.vertices.add(frozenset((t1, t2)))
         verified = self.is_verified(t1) or self.is_verified(t2)
         roots = [self[t1], self[t2]]
