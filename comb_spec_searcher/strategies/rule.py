@@ -171,6 +171,9 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
 
     def sanity_check(self, n: int, **parameters: int) -> bool:
         """Sanity check that this is a valid rule."""
+        if isinstance(self, VerificationRule):
+            # TODO: test more thoroughly
+            return True
 
         def brute_force_count(
             comb_class: CombinatorialClassType, n: int, **parameters
