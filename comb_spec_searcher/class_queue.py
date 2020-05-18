@@ -152,7 +152,8 @@ class DefaultQueue(CSSQueue):
     def can_do_expansion(self, label: int, idx: int) -> bool:
         """Return true if expansion strategies can be applied."""
         return (
-            idx < len(self.expansion_strats)
+            label not in self.ignore
+            and idx < len(self.expansion_strats)
             and label not in self._expansion_expanded[idx]
         )
 
