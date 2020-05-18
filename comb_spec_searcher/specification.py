@@ -310,6 +310,13 @@ class CombinatorialSpecification(
             for rule in self.rules_dict.values()
             if isinstance(rule, EquivalencePathRule)
         }
+        if self.root in eqv_paths:
+            eqv_rule = eqv_paths.pop(self.root)
+            child_label = self.get_label(eqv_rule.comb_class)
+            child_eqv_label = self.get_label(eqv_rule.children[0])
+            res += "\n\n"
+            res += "{} = {}\n".format(child_label, child_eqv_label)
+            res += str(eqv_rule)
         for c, r in self.rules_dict.items():
             if isinstance(r, EquivalencePathRule):
                 continue
