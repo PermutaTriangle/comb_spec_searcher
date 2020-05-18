@@ -972,6 +972,17 @@ class ProofTree:
                     else:
                         new_children.append(nodes[child])
                 node.children = new_children
+        # fix root in eqv paths
+        if spec.root in eqv_paths:
+            (eqv_path_labels, eqv_path_comb_classes, eqv_explanations) = eqv_paths[
+                spec.root
+            ]
+
+            eqv_node = nodes.pop(eqv_path_comb_classes[-1])
+            eqv_node.eqv_path_labels = eqv_path_labels
+            eqv_node.eqv_path_comb_classes = eqv_path_comb_classes
+            eqv_node.eqv_explanations = eqv_explanations
+            nodes[spec.root] = eqv_node
 
         seen = set()
         queue = [spec.root]
