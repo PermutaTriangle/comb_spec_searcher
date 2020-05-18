@@ -161,12 +161,12 @@ class DefaultQueue(CSSQueue):
         """
         Populate the staging queue that is used by next to return WorkPacket.
         """
-        if not self.staging and self.working:
+        while not self.staging and self.working:
             self.staging.extend(self._iter_helper_working())
         if not self.staging:
             if not self.curr_level:
                 self._change_level()
-            if self.curr_level:
+            while not self.staging and self.curr_level:
                 self.staging.extend(self._iter_helper_curr())
         if not self.staging:
             raise StopIteration("No more classes to expand")
