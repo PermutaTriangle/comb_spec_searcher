@@ -50,8 +50,7 @@ class cssiteratortimer:
                 css.func_times[key] += time.time() - start
                 yield res
                 start = time.time()
-            else:
-                css.func_times[key] += time.time() - start
+            css.func_times[key] += time.time() - start
 
         return cast(Func, inner)
 
