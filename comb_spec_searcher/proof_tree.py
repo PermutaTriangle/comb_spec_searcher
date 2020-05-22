@@ -223,7 +223,9 @@ class ProofTree:
             if node is not None:
                 node = nodes[curr]
                 for i, child in enumerate(node.children):
-                    if any(c in seen for c in child.eqv_path_comb_classes):
+                    if not child.strategy_verified and any(
+                        c in seen for c in child.eqv_path_comb_classes
+                    ):
                         node.children[i] = ProofTreeNode(
                             label=child.label,
                             eqv_path_labels=child.eqv_path_labels,
