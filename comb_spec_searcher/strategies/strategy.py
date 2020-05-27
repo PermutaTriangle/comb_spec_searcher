@@ -371,12 +371,12 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObject
         self,
         comb_class: CombinatorialClassType,
         children: Optional[Tuple[CombinatorialClassType, ...]] = None,
-    ) -> Constructor:
+    ) -> DisjointUnion:
         if children is None:
             children = self.decomposition_function(comb_class)
             if children is None:
                 raise StrategyDoesNotApply("Strategy does not apply")
-        return DisjointUnion(children)
+        return DisjointUnion(comb_class, children)
 
     @staticmethod
     def backward_map_index(objs: Tuple[Optional[CombinatorialObjectType], ...]) -> int:

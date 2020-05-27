@@ -15,7 +15,7 @@ from functools import partial, reduce
 from itertools import product
 from operator import add, mul
 from random import randint
-from typing import Callable, Generic, Iterable, Iterator, Tuple
+from typing import Callable, Dict, Generic, Iterable, Iterator, Optional, Tuple
 
 from sympy import Eq, Function
 
@@ -102,12 +102,34 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
     the CombinatorialClass that you are counting must have implemented the
     methods is_atom' and 'minimum_size_of_object', which are needed to ensure that the
     recursions are productive.
+
+    This CartesianProduct constructor only considerss compositions of n. If
+    other parameters are given, then these should be passed to one other factor.
+    The details of this must be given using 'parameters'. This is a tuple, where
+    the ith dictionary tells the constructor for each variable on the child which
+    variable it came from.
+    (In particual, each extra variable on the child must be a key in the dictionary,
+    and each extra variable in the parent must appear as a value in exactly one
+    dictionary.)
     """
 
-    def __init__(self, children: Iterable[CombinatorialClassType]):
+    def __init__(
+        self,
+        children: Iterable[CombinatorialClassType],
+        parameters: Optional[Tuple[Dict[str, str], ...]] = None,
+    ):
+
+        children = tuple(children)
+
+        if parameters is not None:
+            self.parameters = tuple(parameters)
+        else:
+            self.parameters = tuple(dict() for _ in children)
+
         self.minimum_size = sum(
             comb_class.minimum_size_of_object() for comb_class in children
         )
+
         reliance_profile_functions = []
         for child in children:
             min_child_size = child.minimum_size_of_object()
@@ -170,12 +192,20 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
             yield from _helper(n, minmax)
 
     def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
-        assert len(parameters) == 0, "only implemented in one variable, namely 'n'"
+        # print("n =", n, parameters)
+        extra_params = tuple(
+            {
+                child_var: parameters[parent_var]
+                for child_var, parent_var in param.items()
+            }
+            for param in self.parameters
+        )
+        # print(extra_params)
         res = 0
         for comp in self._valid_compositions(n):
             tmp = 1
-            for i, rec in enumerate(subrecs):
-                tmp *= rec(n=comp[i])
+            for (i, rec), extra_param in zip(enumerate(subrecs), extra_params):
+                tmp *= rec(n=comp[i], **extra_param)
                 if tmp == 0:
                     break
             res += tmp
@@ -228,10 +258,33 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
     """
     The DisjointUnion constructor takes as input the children. Each constructor
     is unique up to the length of the children being used to count.
+
+    Extra parameters are passed on using the parameters dictionaries. Each
+    dictionaries keys should be the extra variable of the child pointing the
+    variable on the parent it came from.
+    If a parents variable does not map to a child, then this variable must be 0
+    as the child contains no occurences.
     """
 
-    def __init__(self, children: Tuple[CombinatorialClassType, ...]):
+    def __init__(
+        self,
+        parent: CombinatorialClassType,
+        children: Tuple[CombinatorialClassType, ...],
+        parameters: Optional[Tuple[Dict[str, str], ...]] = None,
+    ):
         self.number_of_children = len(children)
+        if parameters is not None:
+            self.parameters = parameters
+        else:
+            self.parameters = tuple(
+                {x: x for x in parent.extra_parameters()}
+                for _ in range(self.number_of_children)
+            )
+
+        self.zeroes = tuple(
+            frozenset(parent.extra_parameters()) - frozenset(parameter.values())
+            for parameter in self.parameters
+        )
 
     @staticmethod
     def is_equivalence() -> bool:
@@ -246,9 +299,20 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         assert not parameters, "only implemented in one variable, namely 'n'"
         return tuple((n,) for _ in range(self.number_of_children))
 
-    @staticmethod
-    def get_recurrence(subrecs: SubRecs, n: int, **parameters: int) -> int:
-        return sum(rec(n, **parameters) for rec in subrecs)
+    def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
+
+        if not parameters:
+            return sum(rec(n) for rec in subrecs)
+        res = 0
+        for idx, rec in enumerate(subrecs):
+            if any(val != 0 and k in self.zeroes[idx] for k, val in parameters.items()):
+                continue
+            extra_params = {
+                child_var: parameters[parent_var]
+                for child_var, parent_var in self.parameters[idx].items()
+            }
+            res += rec(n=n, **extra_params)
+        return res
 
     @staticmethod
     def get_sub_objects(
