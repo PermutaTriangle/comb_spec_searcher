@@ -360,6 +360,9 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         result is cached.
         """
         key = (n,) + tuple(sorted(parameters.items()))
+        assert sorted(["n"] + list(parameters)) == sorted(
+            ("n",) + self.comb_class.extra_parameters()
+        )
         res = self.count_cache.get(key)
         if res is None:
             assert (
@@ -609,6 +612,7 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
 
     def count_objects_of_size(self, n: int, **parameters: int) -> int:
         key = (n,) + tuple(sorted(parameters.items()))
+        assert set(parameters) == set(self.comb_class.extra_parameters())
         res = self.count_cache.get(key)
         if res is None:
             res = self.strategy.count_objects_of_size(self.comb_class, n, **parameters)
