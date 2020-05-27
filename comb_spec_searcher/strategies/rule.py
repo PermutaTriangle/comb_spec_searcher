@@ -370,6 +370,15 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
             ), "you must call the set_subrecs function first"
             res = self.constructor.get_recurrence(self.subrecs, n, **parameters)
             self.count_cache[key] = res
+        assert res == len(
+            list(self.comb_class.objects_of_size(n, **parameters))
+        ), "counting failed for the rule \n{}\nparameters: n = {}, {}\ncomputed {}, actual {}".format(
+            self,
+            n,
+            parameters,
+            res,
+            len(list(self.comb_class.objects_of_size(n, **parameters))),
+        )
         return res
 
     def get_equation(
@@ -617,6 +626,15 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
         if res is None:
             res = self.strategy.count_objects_of_size(self.comb_class, n, **parameters)
             self.count_cache[key] = res
+        assert res == len(
+            list(self.comb_class.objects_of_size(n, **parameters))
+        ), "counting failed for the rule \n{}\nparameters: n = {}, {}\ncomputed {}, actual {}".format(
+            self,
+            n,
+            parameters,
+            res,
+            len(list(self.comb_class.objects_of_size(n, **parameters))),
+        )
         return res
 
     def get_equation(
