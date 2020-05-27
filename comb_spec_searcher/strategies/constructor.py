@@ -116,15 +116,15 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
     def __init__(
         self,
         children: Iterable[CombinatorialClassType],
-        parameters: Optional[Tuple[Dict[str, str], ...]] = None,
+        extra_parameters: Optional[Tuple[Dict[str, str], ...]] = None,
     ):
 
         children = tuple(children)
 
-        if parameters is not None:
-            self.parameters = tuple(parameters)
+        if extra_parameters is not None:
+            self.extra_parameters = tuple(extra_parameters)
         else:
-            self.parameters = tuple(dict() for _ in children)
+            self.extra_parameters = tuple(dict() for _ in children)
 
         self.minimum_size = sum(
             comb_class.minimum_size_of_object() for comb_class in children
@@ -198,7 +198,7 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
                 child_var: parameters[parent_var]
                 for child_var, parent_var in param.items()
             }
-            for param in self.parameters
+            for param in self.extra_parameters
         )
         # print(extra_params)
         res = 0
@@ -270,20 +270,20 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         self,
         parent: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...],
-        parameters: Optional[Tuple[Dict[str, str], ...]] = None,
+        extra_parameters: Optional[Tuple[Dict[str, str], ...]] = None,
     ):
         self.number_of_children = len(children)
-        if parameters is not None:
-            self.parameters = parameters
+        if extra_parameters is not None:
+            self.extra_parameters = extra_parameters
         else:
-            self.parameters = tuple(
+            self.extra_parameters = tuple(
                 {x: x for x in parent.extra_parameters()}
                 for _ in range(self.number_of_children)
             )
 
         self.zeroes = tuple(
             frozenset(parent.extra_parameters()) - frozenset(parameter.values())
-            for parameter in self.parameters
+            for parameter in self.extra_parameters
         )
 
     @staticmethod
@@ -300,7 +300,6 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         return tuple((n,) for _ in range(self.number_of_children))
 
     def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
-
         if not parameters:
             return sum(rec(n) for rec in subrecs)
         res = 0
@@ -309,7 +308,7 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
                 continue
             extra_params = {
                 child_var: parameters[parent_var]
-                for child_var, parent_var in self.parameters[idx].items()
+                for child_var, parent_var in self.extra_parameters[idx].items()
             }
             res += rec(n=n, **extra_params)
         return res

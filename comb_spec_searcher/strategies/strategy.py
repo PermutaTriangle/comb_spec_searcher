@@ -341,7 +341,24 @@ class CartesianProductStrategy(
             children = self.decomposition_function(comb_class)
             if children is None:
                 raise StrategyDoesNotApply("Strategy does not apply")
-        return CartesianProduct(children)
+        return CartesianProduct(
+            children, extra_parameters=self.extra_parameters(comb_class, children)
+        )
+
+    def extra_parameters(
+        self,
+        comb_class: CombinatorialClassType,
+        children: Optional[Tuple[CombinatorialClassType, ...]] = None,
+    ) -> Tuple[Dict[str, str], ...]:
+        assert not comb_class.extra_parameters(), (
+            "you need to update the 'extra_parameters' method in order to enumerate "
+            "class with multiple extra_parameters using CartesianProduct"
+        )
+        if children is None:
+            children = self.decomposition_function(comb_class)
+            if children is None:
+                raise StrategyDoesNotApply("Strategy does not apply")
+        return tuple(dict() for _ in children)
 
 
 class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObjectType]):
@@ -376,7 +393,26 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObject
             children = self.decomposition_function(comb_class)
             if children is None:
                 raise StrategyDoesNotApply("Strategy does not apply")
-        return DisjointUnion(comb_class, children)
+        return DisjointUnion(
+            comb_class,
+            children,
+            extra_parameters=self.extra_parameters(comb_class, children),
+        )
+
+    def extra_parameters(
+        self,
+        comb_class: CombinatorialClassType,
+        children: Optional[Tuple[CombinatorialClassType, ...]] = None,
+    ) -> Tuple[Dict[str, str], ...]:
+        assert not comb_class.extra_parameters(), (
+            "you need to update the 'extra_parameters' method in order to enumerate "
+            "class with multiple extra_parameters using DisjointUnion"
+        )
+        if children is None:
+            children = self.decomposition_function(comb_class)
+            if children is None:
+                raise StrategyDoesNotApply("Strategy does not apply")
+        return tuple(dict() for _ in children)
 
     @staticmethod
     def backward_map_index(objs: Tuple[Optional[CombinatorialObjectType], ...]) -> int:
