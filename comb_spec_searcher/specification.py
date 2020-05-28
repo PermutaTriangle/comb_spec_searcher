@@ -296,6 +296,17 @@ class CombinatorialSpecification(
     def number_of_rules(self) -> int:
         return len(self.rules_dict)
 
+    def sanity_check(self, length: int = 5) -> bool:
+        """
+        Sanity check the specification to the given length.
+
+        Raise an SanityCheckFailure error if it fails.
+        """
+        return all(
+            all(rule.sanity_check(n) for rule in self.rules_dict.values())
+            for n in range(length + 1)
+        )
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, CombinatorialSpecification):
             return NotImplemented
