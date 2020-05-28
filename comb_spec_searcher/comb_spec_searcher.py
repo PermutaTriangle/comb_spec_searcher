@@ -567,15 +567,20 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         max_expansion_time = 0
         expanding = True
         last_label = None
+        count = 0
         while expanding:
             expansion_start = time.time()
             for label, strategies, inferral in self._labels_to_expand():
+                count += 1
                 if label != last_label:
                     comb_class = self.classdb.get_class(label)
                     last_label = label
                 if not self.ruledb.is_verified(label):
                     self._expand(comb_class, strategies, inferral)
-                if time.time() - expansion_start > max_expansion_time:
+                # if time.time() - expansion_start > max_expansion_time:
+                # break
+                if count == 2500:
+                    count = 0
                     break
                 if (
                     status_update is not None
