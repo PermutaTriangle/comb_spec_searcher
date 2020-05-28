@@ -427,6 +427,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         status += self.classqueue.status() + "\n"
         status += self.ruledb.status() + "\n"
         status += self.mem_status(elaborate)
+
         return status
 
     @cssmethodtimer("status")
@@ -438,7 +439,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             size_to_readable(get_mem())
         )
         if platform.python_implementation() == "CPython":
-            # Note: "asizeof" can be very slow!
+            # Warning: "asizeof" can be very slow!
             if elaborate:
                 status += "\tCSS Size: {}\n".format(size_to_readable(asizeof(self)))
                 status += "\tClassDB Size: {}\n".format(
@@ -496,16 +497,22 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             round(time.time() - start_time, 2)
         )
         elaborate = time.time() - start_time > 100 * self.func_times["status"]
+
         status_start = time.time()
         status += self.status(elaborate=elaborate)
+
+        next_elaborate = max(
+            0, 100 * self.func_times["status"] - (time.time() - start_time)
+        )
+
         if elaborate:
-            status += "\t\t[status update took {} seconds]\n".format(
+            status += " -- status update took {} seconds --\n".format(
                 round(time.time() - status_start, 2)
             )
-        next_elaborate = 100 * self.func_times["status"] - time.time() + start_time
-        status += "\t\t [next elaborate status update in {} seconds]\n" "".format(
-            round(next_elaborate, 2)
-        )
+        else:
+            status += " -- next elaborate status update in {} seconds --\n".format(
+                round(next_elaborate, 2)
+            )
         logger.info(status, extra=self.logger_kwargs)
 
     def auto_search(self, **kwargs) -> CombinatorialSpecification:
@@ -554,13 +561,18 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
 
         max_expansion_time = 0
         expanding = True
+        count = 0
         while expanding:
             expansion_start = time.time()
             for label, strategies, inferral in self._labels_to_expand():
+                count += 1
                 if not self.ruledb.is_verified(label):
                     self._expand(label, strategies, inferral)
                 if time.time() - expansion_start > max_expansion_time:
                     break
+                # if count == 10000:
+                # count = 0
+                # break
                 if (
                     status_update is not None
                     and time.time() - status_start > status_update

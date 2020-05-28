@@ -15,6 +15,8 @@ if TYPE_CHECKING:
 
 Func = TypeVar("Func", bound=Callable[..., Any])
 
+DISABLE_TIMINGS = False
+
 
 class cssmethodtimer:
     """This is a decorator for counting and timing function calls."""
@@ -23,6 +25,10 @@ class cssmethodtimer:
         self.explanation = explanation
 
     def __call__(self, func: Func) -> Func:
+        if DISABLE_TIMINGS:
+            print("replacing")
+            return cast(Func, func)
+
         def inner(css: "CombinatorialSpecificationSearcher", *args, **kwargs):
             start = time.time()
             res = func(css, *args, **kwargs)
@@ -40,6 +46,10 @@ class cssiteratortimer:
         self.explanation = explanation
 
     def __call__(self, func: Func) -> Func:
+        if DISABLE_TIMINGS:
+            print("replacing")
+            return cast(Func, func)
+
         def inner(css: "CombinatorialSpecificationSearcher", *args, **kwargs):
             key = self.explanation
             if self.explanation == "_expand_class_with_strategy":
