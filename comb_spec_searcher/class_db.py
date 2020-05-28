@@ -233,5 +233,5 @@ class ClassDB(Generic[CombinatorialClassType]):
                 explanation, count, round(time_spent, 2)
             )
         # TODO: empty classes?
-        status = status[:-2]
+        status = status[:-1]
         return status
