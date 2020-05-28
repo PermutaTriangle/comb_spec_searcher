@@ -136,13 +136,17 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         return empty
 
     def _expand(
-        self, label: int, strategies: Tuple[CSSstrategy, ...], inferral: bool
+        self,
+        comb_class: CombinatorialClassType,
+        strategies: Tuple[CSSstrategy, ...],
+        inferral: bool,
     ) -> None:
         """
         Will expand the combinatorial class with given label using the given
         strategies.
         """
-        comb_class = self.classdb.get_class(label)
+        # comb_class = self.classdb.get_class(label)
+        label = self.classdb.get_label(comb_class)
         if inferral:
             self._inferral_expand(comb_class, label, strategies)
         else:
@@ -374,7 +378,8 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         """Expand combinatorial classes in current queue. Combintorial classes
         found added to next."""
         for label, strategies, inferral in self._do_level_labels():
-            self._expand(label, strategies, inferral)
+            comb_class = self.classdb.get_class(label)
+            self._expand(comb_class, strategies, inferral)
 
     @cssiteratortimer("queue")
     def _labels_to_expand(self) -> Iterator[WorkPacket]:
@@ -561,11 +566,15 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
 
         max_expansion_time = 0
         expanding = True
+        last_label = None
         while expanding:
             expansion_start = time.time()
             for label, strategies, inferral in self._labels_to_expand():
+                if label != last_label:
+                    comb_class = self.classdb.get_class(label)
+                    last_label = label
                 if not self.ruledb.is_verified(label):
-                    self._expand(label, strategies, inferral)
+                    self._expand(comb_class, strategies, inferral)
                 if time.time() - expansion_start > max_expansion_time:
                     break
                 if (
