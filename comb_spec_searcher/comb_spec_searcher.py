@@ -562,18 +562,13 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
 
         max_expansion_time = 0
         expanding = True
-        count = 0
         while expanding:
             expansion_start = time.time()
             for label, strategies, inferral in self._labels_to_expand():
-                count += 1
                 if not self.ruledb.is_verified(label):
                     self._expand(label, strategies, inferral)
                 if time.time() - expansion_start > max_expansion_time:
                     break
-                # if count == 10000:
-                # count = 0
-                # break
                 if (
                     status_update is not None
                     and time.time() - status_start > status_update
