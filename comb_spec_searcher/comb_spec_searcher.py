@@ -488,7 +488,8 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             round(time.time() - start_time, 2)
         )
         found_string += self.status(elaborate=True)
-        found_string += json.dumps(specification.to_jsonable())
+        found_string += str(specification)
+        found_string += json.dumps(specification.to_jsonable(), separators=(",", ":"))
         logger.info(found_string, extra=self.logger_kwargs)
 
     def _log_status(self, start_time: float) -> None:
