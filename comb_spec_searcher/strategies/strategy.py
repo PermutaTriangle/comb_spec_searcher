@@ -351,8 +351,9 @@ class CartesianProductStrategy(
         children: Optional[Tuple[CombinatorialClassType, ...]] = None,
     ) -> Tuple[Dict[str, str], ...]:
         assert not comb_class.extra_parameters(), (
-            "you need to update the 'extra_parameters' method in order to enumerate "
-            "class with multiple extra_parameters using CartesianProduct"
+            "you need to update the 'extra_parameters' method in the strategy {} "
+            "in order to enumerate class with multiple extra_parameters using "
+            "CartesianProduct".format(str(self))
         )
         if children is None:
             children = self.decomposition_function(comb_class)
@@ -405,8 +406,9 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObject
         children: Optional[Tuple[CombinatorialClassType, ...]] = None,
     ) -> Tuple[Dict[str, str], ...]:
         assert not comb_class.extra_parameters(), (
-            "you need to update the 'extra_parameters' method in order to enumerate "
-            "class with multiple extra_parameters using DisjointUnion"
+            "you need to update the 'extra_parameters' method in the strategy {} "
+            "in order to enumerate class with multiple extra_parameters using "
+            "DisjointUnion".format(str(self))
         )
         if children is None:
             children = self.decomposition_function(comb_class)
