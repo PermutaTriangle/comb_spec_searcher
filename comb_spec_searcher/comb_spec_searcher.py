@@ -620,6 +620,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         comb_class_eqv_paths = tuple(
             tuple(self.classdb.get_class(l) for l in path) for path in eqv_paths
         )
+        logger.info(
+            "Creating a specification", extra=self.logger_kwargs,
+        )
         return CombinatorialSpecification(
             start_class,
             [(self.classdb.get_class(label), rule) for label, rule in rules],
