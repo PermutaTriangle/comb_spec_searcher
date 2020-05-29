@@ -39,10 +39,13 @@ setup(
         "Topic :: Education",
         "Topic :: Scientific/Engineering :: Mathematics",
     ],
+    # fmt: off
+    # Disable formatting until this is solved https://github.com/psf/black/issues/1288
     install_requires=[
         "logzero==1.5.0",
-        "sympy==1.5.1",
+        "sympy==1.6",
         "psutil==5.7.0",
         "pympler==0.8",
     ],
+    # fmt: on
 )
