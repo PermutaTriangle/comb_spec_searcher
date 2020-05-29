@@ -295,7 +295,7 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         return Eq(lhs_func, reduce(add, rhs_funcs, 0))
 
     def reliance_profile(self, n: int, **parameters: int) -> RelianceProfile:
-        # TODO: implement in multiple variables
+        # TODO: implement in multiple variables and use in get_recurrence
         assert not parameters, "only implemented in one variable, namely 'n'"
         return tuple((n,) for _ in range(self.number_of_children))
 

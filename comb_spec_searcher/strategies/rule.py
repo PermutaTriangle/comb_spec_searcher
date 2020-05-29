@@ -362,6 +362,11 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         key = (n,) + tuple(sorted(parameters.items()))
         assert sorted(["n"] + list(parameters)) == sorted(
             ("n",) + self.comb_class.extra_parameters()
+        ), (
+            "parameters did not match comb_class for the rule \n{}\nparameters "
+            "given: {}\n comb_class_parameters: {}".format(
+                self, list(parameters), self.comb_class.extra_parameters(),
+            )
         )
         res = self.count_cache.get(key)
         if res is None:
@@ -370,15 +375,37 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
             ), "you must call the set_subrecs function first"
             res = self.constructor.get_recurrence(self.subrecs, n, **parameters)
             self.count_cache[key] = res
-        assert res == len(
-            list(self.comb_class.objects_of_size(n, **parameters))
-        ), "counting failed for the rule \n{}\nparameters: n = {}, {}\ncomputed {}, actual {}".format(
-            self,
-            n,
-            parameters,
-            res,
-            len(list(self.comb_class.objects_of_size(n, **parameters))),
-        )
+        #     if tuple(parameters):
+        #         print(self)
+        #         print("n =", n, parameters)
+        #         print("parent -> children params:", self.constructor.extra_parameters)
+        #         if hasattr(self.constructor, "zeroes"):
+        #             print("zeroes:", self.constructor.zeroes)
+        #         fusion_attrs = [
+        #             "extra_parameters",
+        #             "reversed_extra_parameters",
+        #             "fuse_parameter",
+        #             "left_sided_parameters",
+        #             "right_sided_parameters",
+        #             "both_sided_parameters",
+        #             "rec_function",
+        #             "fusion_type",
+        #             "predeterminable_left_right_points",
+        #         ]
+        #         for string in fusion_attrs:
+        #             if hasattr(self.constructor, string):
+        #                 print(string + ":", getattr(self.constructor, string))
+        #     print("result:", res)
+        # assert res == len(list(self.comb_class.objects_of_size(n, **parameters))), (
+        #     "counting failed for the rule \n{}\nparameters: n = {}, {}\n"
+        #     "computed {}, actual {}".format(
+        #         self,
+        #         n,
+        #         parameters,
+        #         res,
+        #         len(list(self.comb_class.objects_of_size(n, **parameters))),
+        #     )
+        # )
         return res
 
     def get_equation(
@@ -626,15 +653,16 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
         if res is None:
             res = self.strategy.count_objects_of_size(self.comb_class, n, **parameters)
             self.count_cache[key] = res
-        assert res == len(
-            list(self.comb_class.objects_of_size(n, **parameters))
-        ), "counting failed for the rule \n{}\nparameters: n = {}, {}\ncomputed {}, actual {}".format(
-            self,
-            n,
-            parameters,
-            res,
-            len(list(self.comb_class.objects_of_size(n, **parameters))),
-        )
+        # assert res == len(list(self.comb_class.objects_of_size(n, **parameters))), (
+        #     "counting failed for the rule \n{}\nparameters: n = {}, {}\n"
+        #     "computed {}, actual {}".format(
+        #         self,
+        #         n,
+        #         parameters,
+        #         res,
+        #         len(list(self.comb_class.objects_of_size(n, **parameters))),
+        #     )
+        # )
         return res
 
     def get_equation(
