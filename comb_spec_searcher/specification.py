@@ -142,7 +142,7 @@ class CombinatorialSpecification(
             while new_rules is None:
                 css.do_level()
                 try:
-                    new_rules = css.ruledb.get_specification_rules(css.start_label)
+                    new_rules = css.ruledb.get_smallest_specification(css.start_label)
                 except SpecificationNotFound:
                     continue
             rules, eqv_paths = new_rules
