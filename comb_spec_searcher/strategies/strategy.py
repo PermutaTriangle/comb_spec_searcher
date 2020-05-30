@@ -405,6 +405,12 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObject
         comb_class: CombinatorialClassType,
         children: Optional[Tuple[CombinatorialClassType, ...]] = None,
     ) -> Tuple[Dict[str, str], ...]:
+        """
+        This should be a tuple of dictionaries where the child parameters point
+        to the corresponding parent parameter. Any parent parameter not
+        corresponding to a child parameter must have no objects that are on
+        that child.
+        """
         assert not comb_class.extra_parameters(), (
             "you need to update the 'extra_parameters' method in the strategy {} "
             "in order to enumerate class with multiple extra_parameters using "
