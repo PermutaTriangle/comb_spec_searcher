@@ -25,7 +25,7 @@ from sympy import Eq, Function
 
 from ..combinatorial_class import CombinatorialClassType, CombinatorialObjectType
 from ..exception import SanityCheckFailure, StrategyDoesNotApply
-from .constructor import Constructor
+from .constructor import Constructor, DisjointUnion
 
 if TYPE_CHECKING:
     from .strategy import AbstractStrategy, Strategy, VerificationStrategy
@@ -375,7 +375,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
             ), "you must call the set_subrecs function first"
             res = self.constructor.get_recurrence(self.subrecs, n, **parameters)
             self.count_cache[key] = res
-        #     if tuple(parameters):
+        #     if self.comb_class.extra_parameters():
         #         print(self)
         #         print("n =", n, parameters)
         #         print("parent -> children params:", self.constructor.extra_parameters)
@@ -467,10 +467,23 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         super().__init__(rule.strategy, rule.comb_class, (child,))
         self.child_idx = rule.children.index(child)
         self.actual_children = rule.children
+        self._constructor: Optional[Constructor] = None
 
     @property
-    def constructor(self) -> Constructor:
-        return self.strategy.constructor(self.comb_class, self.actual_children)
+    def constructor(
+        self,
+    ) -> Constructor[CombinatorialClassType, CombinatorialObjectType]:
+        """
+        Return the constructor, that contains all the information about how to
+        count/generate objects from the rule.
+        """
+        if self._constructor is None:
+            self._constructor = self.strategy.constructor(
+                self.comb_class, self.actual_children
+            )
+            if self._constructor is None:
+                raise StrategyDoesNotApply("{} does not apply".format(self.strategy))
+        return self._constructor
 
     @property
     def formal_step(self) -> str:
@@ -511,10 +524,29 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
         )
         super().__init__(rules[0].strategy, rules[0].comb_class, rules[-1].children)
         self.rules = rules
+        self._constructor: Optional[DisjointUnion] = None
 
     @property
     def constructor(self) -> Constructor:
-        return self.strategy.constructor(self.comb_class, self.children)
+        if self._constructor is None:
+            if not self.comb_class.extra_parameters():
+                return DisjointUnion(self.comb_class, self.children)
+            extra_parameters: Dict[str, str] = {
+                k: k for k in self.comb_class.extra_parameters()
+            }
+            for rule in self.rules:
+                rules_parameters = rule.strategy.extra_parameters(
+                    rule.comb_class, rule.children
+                )[0]
+                extra_parameters = {
+                    rules_parameters[child_var]: parent_var
+                    for child_var, parent_var in extra_parameters.items()
+                    if child_var in rules_parameters
+                }
+            self._constructor = DisjointUnion(
+                self.comb_class, self.children, (extra_parameters,)
+            )
+        return self._constructor
 
     @property
     def formal_step(self) -> str:
