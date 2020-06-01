@@ -179,6 +179,9 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
 
         Raise a SanityCheckFailure error if the sanity_check fails.
         """
+        if self.comb_class.extra_parameters:
+            raise NotImplementedError("sanity check only implemented in one variable")
+
         if isinstance(self, VerificationRule):
             # TODO: test more thoroughly
             return True
