@@ -28,7 +28,12 @@ from ..exception import SanityCheckFailure, StrategyDoesNotApply
 from .constructor import Constructor, DisjointUnion
 
 if TYPE_CHECKING:
-    from .strategy import AbstractStrategy, Strategy, VerificationStrategy
+    from .strategy import (
+        AbstractStrategy,
+        DisjointUnion,
+        Strategy,
+        VerificationStrategy,
+    )
 
 
 __all__ = ("Rule", "VerificationRule")
@@ -525,6 +530,7 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
         super().__init__(rules[0].strategy, rules[0].comb_class, rules[-1].children)
         self.rules = rules
         self._constructor: Optional[DisjointUnion] = None
+        self._strategy: "DisjointUnionStrategy" = rules[0].strategy
 
     @property
     def constructor(self) -> Constructor:
