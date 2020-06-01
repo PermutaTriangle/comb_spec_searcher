@@ -81,8 +81,8 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
             )
         )
 
-    @staticmethod
-    def extra_parameters() -> Tuple[str, ...]:
+    @property
+    def extra_parameters(self) -> Tuple[str, ...]:
         """
         Return a the parameters used to get the enumeration of the
         class. It is assumed we are always aware of 'n' which counts size.

@@ -30,7 +30,6 @@ from .constructor import Constructor, DisjointUnion
 if TYPE_CHECKING:
     from .strategy import (
         AbstractStrategy,
-        DisjointUnion,
         Strategy,
         VerificationStrategy,
     )
@@ -366,11 +365,11 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         """
         key = (n,) + tuple(sorted(parameters.items()))
         assert sorted(["n"] + list(parameters)) == sorted(
-            ("n",) + self.comb_class.extra_parameters()
+            ("n",) + self.comb_class.extra_parameters
         ), (
             "parameters did not match comb_class for the rule \n{}\nparameters "
             "given: {}\n comb_class_parameters: {}".format(
-                self, list(parameters), self.comb_class.extra_parameters(),
+                self, list(parameters), self.comb_class.extra_parameters,
             )
         )
         res = self.count_cache.get(key)
@@ -380,7 +379,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
             ), "you must call the set_subrecs function first"
             res = self.constructor.get_recurrence(self.subrecs, n, **parameters)
             self.count_cache[key] = res
-        #     if self.comb_class.extra_parameters():
+        #     if self.comb_class.extra_parameters:
         #         print(self)
         #         print("n =", n, parameters)
         #         print("parent -> children params:", self.constructor.extra_parameters)
@@ -530,15 +529,14 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
         super().__init__(rules[0].strategy, rules[0].comb_class, rules[-1].children)
         self.rules = rules
         self._constructor: Optional[DisjointUnion] = None
-        self._strategy: "DisjointUnionStrategy" = rules[0].strategy
 
     @property
     def constructor(self) -> Constructor:
         if self._constructor is None:
-            if not self.comb_class.extra_parameters():
+            if not self.comb_class.extra_parameters:
                 return DisjointUnion(self.comb_class, self.children)
             extra_parameters: Dict[str, str] = {
-                k: k for k in self.comb_class.extra_parameters()
+                k: k for k in self.comb_class.extra_parameters
             }
             for rule in self.rules:
                 rules_parameters = rule.strategy.extra_parameters(
@@ -686,7 +684,7 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
 
     def count_objects_of_size(self, n: int, **parameters: int) -> int:
         key = (n,) + tuple(sorted(parameters.items()))
-        assert set(parameters) == set(self.comb_class.extra_parameters())
+        assert set(parameters) == set(self.comb_class.extra_parameters)
         res = self.count_cache.get(key)
         if res is None:
             res = self.strategy.count_objects_of_size(self.comb_class, n, **parameters)

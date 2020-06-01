@@ -277,12 +277,12 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
             self.extra_parameters = extra_parameters
         else:
             self.extra_parameters = tuple(
-                {x: x for x in parent.extra_parameters()}
+                {x: x for x in parent.extra_parameters}
                 for _ in range(self.number_of_children)
             )
 
         self.zeroes = tuple(
-            frozenset(parent.extra_parameters()) - frozenset(parameter.values())
+            frozenset(parent.extra_parameters) - frozenset(parameter.values())
             for parameter in self.extra_parameters
         )
 
