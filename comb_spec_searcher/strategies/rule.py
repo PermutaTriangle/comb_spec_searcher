@@ -174,7 +174,11 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         """Return a random objects of the give size."""
 
     def sanity_check(self, n: int, **parameters: int) -> bool:
-        """Sanity check that this is a valid rule."""
+        """
+        Sanity check that this is a valid rule.
+
+        Raise a SanityCheckFailure error if the sanity_check fails.
+        """
         if isinstance(self, VerificationRule):
             # TODO: test more thoroughly
             return True
@@ -196,21 +200,15 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         )
         rule_count = self.count_objects_of_size(n, **parameters)
         self.subrecs = temprec
-        try:
-            assert actual_count == rule_count
-        except AssertionError:
+        params_str = ", ".join([f"n = {n}"] + [f"{p} = {v}" for p, v in parameters])
+        if actual_count != rule_count:
             raise SanityCheckFailure(
-                "The following rule failed sanity check:\n{}\nFailed with "
-                "parameters:\n{}\nThe actual count is {}. "
-                "The rule count is {}.".format(
-                    self,
-                    ", ".join(
-                        ["n = {}".format(n)]
-                        + ["{} = {}".format(p, v) for p, v in parameters]
-                    ),
-                    actual_count,
-                    rule_count,
-                )
+                f"The following rule failed sanity check:\n"
+                f"{self}\n"
+                f"Failed with parameters:\n"
+                f"{params_str}\n"
+                f"The actual count is {actual_count}.\n"
+                f"The rule count is {rule_count}.",
             )
 
         actual_objects = set(
@@ -222,19 +220,15 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         )
         rule_objects = set(list(self.generate_objects_of_size(n, **parameters)))
         self.subgenerators = tempgen
-        try:
-            assert actual_objects == rule_objects
-        except AssertionError:
+        if actual_objects != rule_objects:
             raise SanityCheckFailure(
-                "The following rule failed sanity check:\n{}\nFailed with "
-                "parameters:\n{}\nThe rule generated the wrong objects.".format(
-                    self,
-                    ", ".join(
-                        ["n = {}".format(n)]
-                        + ["{} = {}".format(p, v) for p, v in parameters]
-                    ),
-                )
+                f"The following rule failed sanity check:\n"
+                f"{self}\n"
+                f"Failed with parameters:\n"
+                f"{params_str}\n"
+                f"The rule generated the wrong objects."
             )
+        return True
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, AbstractRule):

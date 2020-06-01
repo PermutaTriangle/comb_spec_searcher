@@ -206,12 +206,12 @@ class DefaultQueue(CSSQueue):
         self.next_level.update((label,))
 
     def __next__(self) -> WorkPacket:
-        while self.staging:
-            wp = self.staging.popleft()
-            if wp.label not in self.ignore:
-                return wp
-        self._populate_staging()
-        return next(self)
+        while True:
+            while self.staging:
+                wp = self.staging.popleft()
+                if wp.label not in self.ignore:
+                    return wp
+            self._populate_staging()
 
     def do_level(self) -> Iterator[WorkPacket]:
         """
