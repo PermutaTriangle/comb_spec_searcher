@@ -168,6 +168,8 @@ class DefaultQueue(CSSQueue):
                 self._change_level()
             while not self.staging and self.curr_level:
                 self.staging.extend(self._iter_helper_curr())
+                if not self.curr_level:
+                    self._change_level()
         if not self.staging:
             raise StopIteration("No more classes to expand")
 
