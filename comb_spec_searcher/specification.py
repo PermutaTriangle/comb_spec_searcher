@@ -2,6 +2,7 @@
 A combinatorial specification is a set rules of the form a -> b1, ..., bk
 where each of the bi appear exactly once on the left hand side of some rule.
 """
+from copy import copy
 from typing import Dict, Generic, Iterable, Iterator, Optional, Sequence, Tuple
 
 import sympy
@@ -316,35 +317,36 @@ class CombinatorialSpecification(
         res = "A combinatorial specification with {} rules.".format(
             self.number_of_rules()
         )
-        eqv_paths = {
-            rule.comb_class: rule
-            for rule in self.rules_dict.values()
-            if isinstance(rule, EquivalencePathRule)
-        }
-        if self.root in eqv_paths:
-            eqv_rule = eqv_paths.pop(self.root)
-            child_label = self.get_label(eqv_rule.comb_class)
-            child_eqv_label = self.get_label(eqv_rule.children[0])
-            res += "\n\n"
-            res += "{} = {}\n".format(child_label, child_eqv_label)
-            res += str(eqv_rule)
-        for c, r in self.rules_dict.items():
-            if isinstance(r, EquivalencePathRule):
-                continue
-            start_label = self.get_label(c)
-            end_labels = tuple(self.get_label(c) for c in r.children)
+        rules_dict = copy(self.rules_dict)
+
+        def update_res(comb_class: CombinatorialClassType, res: str):
+            try:
+                rule = rules_dict.pop(comb_class)
+            except KeyError:
+                assert comb_class in self.rules_dict
+                return res
+            if isinstance(rule, EquivalencePathRule):
+                child_label = self.get_label(rule.comb_class)
+                child_eqv_label = self.get_label(rule.children[0])
+                res += "\n\n"
+                res += "{} = {}\n".format(child_label, child_eqv_label)
+                res += str(rule)
+                try:
+                    rule = rules_dict.pop(rule.children[0])
+                except KeyError:
+                    assert comb_class in self.rules_dict
+                    return res
+            start_label = self.get_label(rule.comb_class)
+            end_labels = tuple(self.get_label(c) for c in rule.children)
             res += "\n\n"
             res += "{} -> {}\n".format(start_label, end_labels)
-            res += str(r)
-            for child in r.children:
-                if child in eqv_paths:
-                    eqv_rule = eqv_paths.pop(child)
-                    child_label = self.get_label(eqv_rule.comb_class)
-                    child_eqv_label = self.get_label(eqv_rule.children[0])
-                    res += "\n\n"
-                    res += "{} = {}\n".format(child_label, child_eqv_label)
-                    res += str(eqv_rule)
-        assert not eqv_paths
+            res += str(rule)
+            for child in rule.children:
+                res = update_res(child, res)
+            return res
+
+        res = update_res(self.root, res)
+        assert not rules_dict
         return res
 
     def equations_string(self) -> str:
