@@ -103,12 +103,12 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
     methods is_atom' and 'minimum_size_of_object', which are needed to ensure that the
     recursions are productive.
 
-    This CartesianProduct constructor only considerss compositions of n. If
+    This CartesianProduct constructor only considers compositions of n. If
     other parameters are given, then these should be passed to one other factor.
     The details of this must be given using 'parameters'. This is a tuple, where
     the ith dictionary tells the constructor for each variable on the child which
     variable it came from.
-    (In particual, each extra variable on the child must be a key in the dictionary,
+    (In particular, each extra variable on the child must be a key in the dictionary,
     and each extra variable in the parent must appear as a value in exactly one
     dictionary.)
     """
@@ -116,7 +116,7 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
     def __init__(
         self,
         children: Iterable[CombinatorialClassType],
-        extra_parameters: Optional[Tuple[Dict[str, str], ...]] = None,
+        extra_parameters: Tuple[Dict[str, str], ...] = None,
     ):
 
         children = tuple(children)
@@ -192,7 +192,8 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
             yield from _helper(n, minmax)
 
     def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
-        # print("n =", n, parameters)
+        # The extra parameters variable maps each of the parent parameter to
+        # the unique child that contains it was mapped to.
         extra_params = tuple(
             {
                 child_var: parameters[parent_var]
@@ -200,7 +201,6 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
             }
             for param in self.extra_parameters
         )
-        # print(extra_params)
         res = 0
         for comp in self._valid_compositions(n):
             tmp = 1
@@ -260,7 +260,7 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
     is unique up to the length of the children being used to count.
 
     Extra parameters are passed on using the parameters dictionaries. Each
-    dictionaries keys should be the extra variable of the child pointing the
+    dictionary's keys should be the extra variable of the child pointing the
     variable on the parent it came from.
     If a parents variable does not map to a child, then this variable must be 0
     as the child contains no occurences.
@@ -270,7 +270,7 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         self,
         parent: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...],
-        extra_parameters: Optional[Tuple[Dict[str, str], ...]] = None,
+        extra_parameters: Tuple[Dict[str, str], ...] = None,
     ):
         self.number_of_children = len(children)
         if extra_parameters is not None:
@@ -304,6 +304,8 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
             return sum(rec(n) for rec in subrecs)
         res = 0
         for idx, rec in enumerate(subrecs):
+            # if a parent parameter is not mapped to by some child parameter
+            # then it is assumed that the value of the parent parameter must be 0
             if any(val != 0 and k in self.zeroes[idx] for k, val in parameters.items()):
                 continue
             extra_params = {

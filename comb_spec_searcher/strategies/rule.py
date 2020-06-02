@@ -376,6 +376,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
             ), "you must call the set_subrecs function first"
             res = self.constructor.get_recurrence(self.subrecs, n, **parameters)
             self.count_cache[key] = res
+        # # THE FOLLOWING CODE SNIPPET IS FOR DEBUGGING PURPOSES
         #     if self.comb_class.extra_parameters:
         #         print(self)
         #         print("n =", n, parameters)
@@ -528,7 +529,7 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
         self._constructor: Optional[DisjointUnion] = None
 
     @property
-    def constructor(self) -> Constructor:
+    def constructor(self) -> DisjointUnion:
         if self._constructor is None:
             if not self.comb_class.extra_parameters:
                 return DisjointUnion(self.comb_class, self.children)
@@ -686,6 +687,7 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
         if res is None:
             res = self.strategy.count_objects_of_size(self.comb_class, n, **parameters)
             self.count_cache[key] = res
+        # # THE FOLLOWING CODE SNIPPET IS FOR DEBUGGING PURPOSES
         # assert res == len(list(self.comb_class.objects_of_size(n, **parameters))), (
         #     "counting failed for the rule \n{}\nparameters: n = {}, {}\n"
         #     "computed {}, actual {}".format(
