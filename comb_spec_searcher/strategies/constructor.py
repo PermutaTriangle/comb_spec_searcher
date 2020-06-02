@@ -15,7 +15,7 @@ from functools import partial, reduce
 from itertools import product
 from operator import add, mul
 from random import randint
-from typing import Callable, Dict, Generic, Iterable, Iterator, Tuple
+from typing import Callable, Dict, Generic, Iterable, Iterator, Optional, Tuple
 
 from sympy import Eq, Function
 
@@ -116,7 +116,7 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
     def __init__(
         self,
         children: Iterable[CombinatorialClassType],
-        extra_parameters: Tuple[Dict[str, str], ...] = None,
+        extra_parameters: Optional[Tuple[Dict[str, str], ...]] = None,
     ):
 
         children = tuple(children)
@@ -270,7 +270,7 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         self,
         parent: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...],
-        extra_parameters: Tuple[Dict[str, str], ...] = None,
+        extra_parameters: Optional[Tuple[Dict[str, str], ...]] = None,
     ):
         self.number_of_children = len(children)
         if extra_parameters is not None:
