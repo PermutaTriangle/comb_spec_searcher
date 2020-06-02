@@ -140,13 +140,14 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         comb_class: CombinatorialClassType,
         strategies: Tuple[CSSstrategy, ...],
         inferral: bool,
+        label: int,
     ) -> None:
         """
         Will expand the combinatorial class with given label using the given
         strategies.
         """
         # comb_class = self.classdb.get_class(label)
-        label = self.classdb.get_label(comb_class)
+        # label = self.classdb.get_label(comb_class)
         if inferral:
             self._inferral_expand(comb_class, label, strategies)
         else:
@@ -379,7 +380,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         found added to next."""
         for label, strategies, inferral in self._do_level_labels():
             comb_class = self.classdb.get_class(label)
-            self._expand(comb_class, strategies, inferral)
+            self._expand(comb_class, strategies, inferral, label)
 
     @cssiteratortimer("queue")
     def _labels_to_expand(self) -> Iterator[WorkPacket]:
@@ -576,7 +577,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                     comb_class = self.classdb.get_class(label)
                     last_label = label
                 if not self.ruledb.is_verified(label):
-                    self._expand(comb_class, strategies, inferral)
+                    self._expand(comb_class, strategies, inferral, label)
                 # if time.time() - expansion_start > max_expansion_time:
                 # break
                 if count == 2500:
