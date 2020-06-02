@@ -3,12 +3,14 @@ A proof tree class.
 
 This can be used to get the generating function for the class.
 
-The class is only used for reverse compatability with ComboPal. You should use
+The class is only used for reverse compatibility with ComboPal. You should use
 the Specification class.
 """
 import json
 import warnings
+from typing import Iterable, List
 
+from .combinatorial_class import CombinatorialClass
 from .specification import CombinatorialSpecification
 from .strategies.constructor import CartesianProduct, DisjointUnion
 from .strategies.rule import EquivalencePathRule, Rule, VerificationRule
@@ -22,25 +24,25 @@ class ProofTreeNode:
     # pylint: disable=too-many-instance-attributes
     def __init__(
         self,
-        label,
-        eqv_path_labels,
-        eqv_path_comb_classes,
-        eqv_explanations=None,
-        children=None,
-        strategy_verified=False,
-        decomposition=False,
-        disjoint_union=False,
-        recursion=False,
-        formal_step="",
+        label: int,
+        eqv_path_labels: Iterable[int],
+        eqv_path_comb_classes: Iterable[CombinatorialClass],
+        eqv_explanations: Iterable[str] = None,
+        children: Iterable["ProofTreeNode"] = None,
+        strategy_verified: bool = False,
+        decomposition: bool = False,
+        disjoint_union: bool = False,
+        recursion: bool = False,
+        formal_step: str = "",
     ):
         self.label = label
-        self.eqv_path_labels = eqv_path_labels
-        self.eqv_path_comb_classes = eqv_path_comb_classes
+        self.eqv_path_labels = list(eqv_path_labels)
+        self.eqv_path_comb_classes = list(eqv_path_comb_classes)
         if eqv_explanations is not None:
-            self.eqv_explanations = eqv_explanations
+            self.eqv_explanations = list(eqv_explanations)
         else:
             self.eqv_explanations = []
-        self.children = children if children is not None else []
+        self.children = list(children) if children is not None else []
         self.strategy_verified = strategy_verified
         self.decomposition = decomposition
         self.disjoint_union = disjoint_union
@@ -139,104 +141,61 @@ class ProofTree:
     @classmethod
     def from_specification(cls, spec: CombinatorialSpecification) -> "ProofTree":
         """Return a ProofTree from a CombinatorialSpecification."""
-        nodes = dict()
-        eqv_paths = dict()
-        # find equivalence paths and setup nodes without equivalence and children
-        for rule in spec.rules_dict.values():
+        seen: List[Rule] = list()
+
+        def proof_tree_node(comb_class: CombinatorialClass) -> ProofTreeNode:
+            rule = spec.rules_dict[comb_class]
+            # Setting up the equivalence path
             if isinstance(rule, EquivalencePathRule):
-                eqv_path_labels = []
-                eqv_path_comb_classes = []
-                eqv_explanations = []
-                for comb_class, eqv_rule in rule.eqv_path_rules():
-                    eqv_path_labels.append(spec.get_label(comb_class))
-                    eqv_path_comb_classes.append(comb_class)
+                eqv_path_labels: List[int] = []
+                eqv_path_comb_classes: List[CombinatorialClass] = []
+                eqv_explanations: List[str] = []
+                for path_class, eqv_rule in rule.eqv_path_rules():
+                    eqv_path_labels.append(spec.get_label(path_class))
+                    eqv_path_comb_classes.append(path_class)
                     eqv_explanations.append(eqv_rule.formal_step)
                 eqv_path_comb_classes.append(rule.children[0])
-                eqv_paths[rule.comb_class] = (
-                    eqv_path_labels,
-                    eqv_path_comb_classes,
-                    eqv_explanations,
-                )
-            elif isinstance(rule, VerificationRule):
-                nodes[rule.comb_class] = ProofTreeNode(
+                rule = spec.rules_dict[rule.children[0]]
+            else:
+                eqv_path_labels = [spec.get_label(rule.comb_class)]
+                eqv_path_comb_classes = [rule.comb_class]
+                eqv_explanations = []
+            if isinstance(rule, VerificationRule):
+                return ProofTreeNode(
                     label=spec.get_label(rule.comb_class),
-                    eqv_path_labels=[spec.get_label(rule.comb_class)],
-                    eqv_path_comb_classes=[rule.comb_class],
-                    eqv_explanations=[],
+                    eqv_path_labels=eqv_path_labels,
+                    eqv_path_comb_classes=eqv_path_comb_classes,
+                    eqv_explanations=eqv_explanations,
                     children=[],
                     strategy_verified=True,
                     formal_step=rule.formal_step,
                 )
-            elif isinstance(rule, Rule):
-                nodes[rule.comb_class] = ProofTreeNode(
+            if isinstance(rule, Rule):
+                if rule in seen:
+                    # Setting up recursion node
+                    return ProofTreeNode(
+                        label=spec.get_label(rule.comb_class),
+                        eqv_path_labels=eqv_path_labels,
+                        eqv_path_comb_classes=eqv_path_comb_classes,
+                        eqv_explanations=eqv_explanations,
+                        children=[],
+                        strategy_verified=False,
+                        recursion=True,
+                        formal_step="recurse",
+                    )
+                seen.append(rule)
+                children = [proof_tree_node(c) for c in rule.children]
+                return ProofTreeNode(
                     label=spec.get_label(rule.comb_class),
-                    eqv_path_labels=[spec.get_label(rule.comb_class)],
-                    eqv_path_comb_classes=[rule.comb_class],
-                    eqv_explanations=[],
-                    children=list(rule.children),
+                    eqv_path_labels=eqv_path_labels,
+                    eqv_path_comb_classes=eqv_path_comb_classes,
+                    eqv_explanations=eqv_explanations,
+                    children=children,
                     decomposition=isinstance(rule.constructor, CartesianProduct),
                     disjoint_union=isinstance(rule.constructor, DisjointUnion),
                     strategy_verified=False,
                     formal_step=rule.formal_step,
                 )
-            else:
-                raise ValueError(f"Don't know what to do with the rule class of {rule}")
+            raise ValueError(f"Don't know what to do with the rule class of {rule}")
 
-        # fix equiv paths and children
-        for node in list(nodes.values()):
-            if node.children:
-                new_children = []
-                for child in node.children:
-                    if child in eqv_paths:
-                        (
-                            eqv_path_labels,
-                            eqv_path_comb_classes,
-                            eqv_explanations,
-                        ) = eqv_paths[child]
-                        eqv_node = nodes[eqv_path_comb_classes[-1]]
-                        eqv_node.eqv_path_labels = eqv_path_labels
-                        eqv_node.eqv_path_comb_classes = eqv_path_comb_classes
-                        eqv_node.eqv_explanations = eqv_explanations
-                        new_children.append(nodes[eqv_path_comb_classes[-1]])
-                    else:
-                        new_children.append(nodes[child])
-                node.children = new_children
-        # fix root in eqv paths
-        if spec.root in eqv_paths:
-            (eqv_path_labels, eqv_path_comb_classes, eqv_explanations) = eqv_paths[
-                spec.root
-            ]
-
-            eqv_node = nodes.pop(eqv_path_comb_classes[-1])
-            eqv_node.eqv_path_labels = eqv_path_labels
-            eqv_node.eqv_path_comb_classes = eqv_path_comb_classes
-            eqv_node.eqv_explanations = eqv_explanations
-            nodes[spec.root] = eqv_node
-
-        seen = set()
-        queue = [spec.root]
-        copy_nodes: dict = {**nodes}
-        while copy_nodes and queue:
-            curr = queue.pop()
-            seen.add(curr)
-            node = copy_nodes.pop(curr, None)
-            if node is not None:
-                node = nodes[curr]
-                for i, child in enumerate(node.children):
-                    if not child.strategy_verified and any(
-                        c in seen for c in child.eqv_path_comb_classes
-                    ):
-                        node.children[i] = ProofTreeNode(
-                            label=child.label,
-                            eqv_path_labels=child.eqv_path_labels,
-                            eqv_path_comb_classes=child.eqv_path_comb_classes,
-                            eqv_explanations=child.eqv_explanations,
-                            children=[],
-                            strategy_verified=False,
-                            recursion=True,
-                            formal_step="recurse",
-                        )
-                    else:
-                        queue.append(child.eqv_path_comb_classes[-1])
-
-        return ProofTree(nodes[spec.root])
+        return ProofTree(proof_tree_node(spec.root))
