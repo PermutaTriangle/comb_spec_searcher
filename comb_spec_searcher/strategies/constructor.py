@@ -15,7 +15,7 @@ from functools import partial, reduce
 from itertools import product
 from operator import add, mul
 from random import randint
-from typing import Callable, Dict, Generic, Iterable, Iterator, Optional, Tuple
+from typing import Callable, Dict, Generic, Iterable, Iterator, Tuple
 
 from sympy import Eq, Function
 
