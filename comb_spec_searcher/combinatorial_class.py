@@ -1,11 +1,31 @@
+"""
+An abstract class for a CombinatorialClass.
+"""
 import abc
+from importlib import import_module
+from typing import Any, Generic, Iterator, Tuple, Type, TypeVar
 
-import sympy.abc
+__all__ = ("CombinatorialClass", "CombinatorialObject")
 
-__all__ = ("CombinatorialClass")
+CombinatorialObjectType = TypeVar(
+    "CombinatorialObjectType", bound="CombinatorialObject"
+)
+CombinatorialClassType = TypeVar("CombinatorialClassType", bound="CombinatorialClass")
 
 
-class CombinatorialClass(abc.ABC):
+class CombinatorialObject(abc.ABC):
+    """Abstract class for a combinatorial object."""
+
+    @abc.abstractmethod
+    def __len__(self) -> int:
+        pass
+
+    def size(self) -> int:
+        """Return the size of the object"""
+        return len(self)
+
+
+class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
     """
     Base class for CombSpecSearcher combinatorial class
 
@@ -15,104 +35,124 @@ class CombinatorialClass(abc.ABC):
     """
 
     @abc.abstractmethod
-    def is_empty(self, *args, **kwargs):
+    def is_empty(self) -> bool:
         """Return True if there are no object of any lengths."""
         return False
 
+    @classmethod
     @abc.abstractmethod
-    def to_jsonable(self):
-        """Return JSONable data structure of the class (a dictionary)"""
-        pass
+    def from_dict(cls, d: dict) -> "CombinatorialClass":
+        """Return the combinatorial class from the json dict representation."""
+        module = import_module(d["class_module"])
+        StratClass: Type["CombinatorialClass"] = getattr(module, d["comb_class"])
+        assert issubclass(
+            StratClass, CombinatorialClass
+        ), "Not a valid CombinatorialClass"
+        return StratClass.from_dict(d)  # type: ignore
 
-    def get_genf(self, *args, **kwargs):
+    def to_jsonable(self) -> dict:
+        """Return a dictionary form of the combinatorial class."""
+        c = self.__class__
+        return {
+            "class_module": c.__module__,
+            "comb_class": c.__name__,
+        }
+
+    def get_genf(self, *args, **kwargs) -> Any:
         """Return the generating function for the combinatorial class"""
-        raise NotImplementedError(("If you want to use the 'get_genf' function"
-                                   "for a proof tree then you must implement"
-                                   " 'get_genf' for verified combinatorial "
-                                   "classes."))
+        raise NotImplementedError(
+            (
+                "If you want to use the 'get_genf' function"
+                "for a proof tree then you must implement"
+                " 'get_genf' for verified combinatorial "
+                "classes."
+            )
+        )
 
-    def get_min_poly(self, *args, **kwargs):
+    def get_min_poly(self, *args, **kwargs) -> Any:
         """Return the minimum polynomial for the combinatorial class
         in terms of 'F'"""
-        raise NotImplementedError(("If you want to use the 'get_min_poly' "
-                                   "function for a proof tree then you must "
-                                   "implement 'get_genf' for verified "
-                                   "combinatorial classes."))
+        raise NotImplementedError(
+            (
+                "If you want to use the 'get_min_poly' "
+                "function for a proof tree then you must "
+                "implement 'get_genf' for verified "
+                "combinatorial classes."
+            )
+        )
 
-    def objects_of_length(self, length):
-        """Returns an iterable of combinatorial objects of a given length"""
-        raise NotImplementedError("This function needs to be added to your "
-                                  "combinatorial class in order to use the "
-                                  "debug settings and for initial conditions"
-                                  " for computing the generating function")
+    @property
+    def extra_parameters(self) -> Tuple[str, ...]:
+        """
+        Return a the parameters used to get the enumeration of the
+        class. It is assumed we are always aware of 'n' which counts size.
+        """
+        return tuple()
 
-    def is_epsilon(self):
-        """Returns True if the generating function equals 1"""
-        raise NotImplementedError("If you want to use the "
-                                  "'count_objects_of_length' function "
-                                  "for a proof tree then you must implement "
-                                  "'is_epsilon' for your combinatorial class.")
+    def objects_of_size(
+        self, n: int, **parameters: int
+    ) -> Iterator[CombinatorialObjectType]:
+        """Returns an iterable of combinatorial objects of a given size."""
+        raise NotImplementedError(
+            "To use object generation and sampling with the AtomStrategy, this"
+            "must be at least implemented for every class that is an atom."
+        )
 
     def is_atom(self):
-        """Returns True if the generating function equals x"""
-        raise NotImplementedError("If you want to use the "
-                                  "'count_objects_of_length' function "
-                                  "for a proof tree then you must implement "
-                                  "'is_epsilon', 'is_atom' and 'is_positive' "
-                                  "for your combinatorial class.")
+        """Returns True if the combinatorial class contains a single object."""
+        raise NotImplementedError(
+            "To use the CartesianProduct constructor, 'is_atom' and "
+            "'minimum_size_of_object' must be implemented."
+        )
 
-    def is_positive(self):
-        """Returns True if the constant term of the generating function is 0"""
-        raise NotImplementedError("If you want to use the "
-                                  "'count_objects_of_length' function "
-                                  "for a proof tree then you must implement "
-                                  "'is_epsilon', 'is_atom' and 'is_positive' "
-                                  "for your combinatorial class.")
+    def minimum_size_of_object(self) -> int:
+        """Return the size of the smallest object in the combinatorial class.
+        Note, for productivity reasons, you must at least return 1, if this
+        should be greater than 0. """
+        raise NotImplementedError(
+            "To use the CartesianProduct constructor, 'is_atom' and "
+            "'minimum_size_of_object' must be implemented."
+        )
 
-    def from_dict(self):
-        """Return combinatorial class from the jsonable object."""
-        raise NotImplementedError("This function is need to reinstantiate a "
-                                  "combinatorial class.")
-
-    def from_parts(self, *args, **kwargs):
-        """Return the object created from the parts given by a cartesian rule
-        applied on the comb_class. This is required for random sampling. The
-        formal step will be passed as the kwarg 'formal_step'."""
-        raise NotImplementedError("This function is needed to perform random"
-                                  " sampling.")
-
-    def compress(self):
-        """Return a compressed version of the class. If you are having memory
-        issues then implement this function and the decompress function such
-        that 'cls.decompress(self.compress()) == self'"""
-        return self
+    def to_bytes(self) -> bytes:
+        """Return a compressed version of the class in the form of a 'bytes'
+        object. If you are having memory issues then implement this function
+        and the from_bytes function such that
+        'cls.from_bytes(self.to_bytes()) == self'"""
+        raise NotImplementedError
 
     @classmethod
-    def decompress(cls, compressed):
-        """Return decompressed class from string by compress function. If you
-        are having memory issues then implement this function and the compress
-        function such that 'cls.decompress(self.compress()) == self'"""
-        return compressed
+    def from_bytes(
+        cls: Type[CombinatorialClassType], b: bytes
+    ) -> CombinatorialClassType:
+        """
+        Return decompressed class from the bytes object returned by the
+        'to_bytes' function. If you are having memory issues then implement
+        this function and the to_bytes function such that
+        'cls.from_bytes(self.to_bytes()) == self'
+        """
+        raise NotImplementedError
 
     @abc.abstractmethod
     def __init__(self):
         return
 
     @abc.abstractmethod
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return False
 
     @abc.abstractmethod
-    def __hash__(self):
+    def __hash__(self) -> int:
         pass
 
     @abc.abstractmethod
-    def __repr__(self):
+    def __repr__(self) -> str:
         pass
 
     @abc.abstractmethod
-    def __str__(self):
+    def __str__(self) -> str:
         pass
 
-    def _get_class_name(self):
+    def _get_class_name(self) -> str:
+        """Return the name of the class."""
         return type(self).__name__

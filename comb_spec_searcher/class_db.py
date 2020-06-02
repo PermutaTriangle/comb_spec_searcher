@@ -1,97 +1,50 @@
 """
-A database for combinatorial class found.
+A database for combinatorial class found. It gives each combinatorial class
+a unique label. Each combinatorial class object is compressed, and decompressed
+using the CombinatorialClass 'to_bytes' and 'from_bytes' method if these are
+implemented.
 
-Contains information about if combinatorial classes have been expanded, found
-by symmetries etc. It gives each combinatorial class a unique label.
+Contains information about if combinatorial classes have been found by
+if is_empty has been checked.
 """
 
-from base64 import b64decode, b64encode
+import zlib
+from collections import defaultdict
+from typing import Dict, Generic, Iterator, Optional, Type, Union, cast
 
-from logzero import logger
+from .combinatorial_class import CombinatorialClassType
+from .utils import cssmethodtimer
 
-from .combinatorial_class import CombinatorialClass
+ClassKey = Union[bytes, CombinatorialClassType]
+Key = Union[CombinatorialClassType, int]
 
 
-class Info(object):
-    """Information about a combinatorial class."""
-    def __init__(self, comb_class, label, **kwargs):
-        """Initialise information."""
+class Info:
+    """
+    Information about a combinatorial class.
+        - the class,
+        - the label,
+        - is it empty?
+    """
+
+    def __init__(
+        self, comb_class: ClassKey, label: int, empty: Optional[bool] = None,
+    ):
         self.comb_class = comb_class
         self.label = label
-        self.expanded = kwargs.get('expanded', 0)
-        self.symmetry_expanded = kwargs.get('symmetry_expanded', False)
-        self.initial_expanded = kwargs.get('initial_expanded', False)
-        self.expanding_children_only = kwargs.get('expanding_children_only',
-                                                  False)
-        self.expanding_other_sym = kwargs.get('expanding_other_sym', False)
-        self.expandable = kwargs.get('expandable', False)
-        self.inferrable = kwargs.get('inferrable', True)
-        self.inferral_expanded = kwargs.get('inferral_expanded', False)
-        self.verified = kwargs.get('verified', None)
-        self.verification_reason = kwargs.get('verification_reason', None)
-        self.empty = kwargs.get('empty', None)
-        self.strategy_verified = kwargs.get('strategy_verified', None)
+        self.empty = empty
 
-    def to_dict(self):
-        """Return dictionary object of self that is JSON serializable."""
-        try:
-            b64encode(self.comb_class).decode()
-        except Exception as e:
-            logger.warn(("Lost information about tiling with encoding as:\n"
-                         "" + str(self.comb_class) + "\n" + str(e)))
-            return None
-        return {
-            'comb_class': b64encode(self.comb_class).decode(),
-            'label': self.label,
-            'expanded': self.expanded,
-            'symmetry_expanded': self.symmetry_expanded,
-            'initial_expanded': self.initial_expanded,
-            'expanding_children_only': self.expanding_children_only,
-            'expanding_other_sym': self.expanding_other_sym,
-            'expandable': self.expandable,
-            'inferral_expanded': self.inferral_expanded,
-            'verified': self.verified,
-            'empty': self.empty,
-            'strategy_verified': self.strategy_verified,
-        }
-
-    @classmethod
-    def from_dict(cls, dict):
-        """Return Info object from dictionary."""
-        return cls(
-            comb_class=b64decode(dict['comb_class'].encode()),
-            label=int(dict['label']),
-            expanded=int(dict.get('expanded', 0)),
-            symmetry_expanded=dict.get('symmetry_expanded', False),
-            initial_expanded=dict.get('initial_expanded', False),
-            expanding_children_only=dict.get('expanding_children_only', False),
-            expanding_other_sym=dict.get('expanding_other_sym', False),
-            expandable=dict.get('expandable', False),
-            inferral_expanded=dict.get('inferral_expanded', False),
-            verified=dict.get('verified', None),
-            empty=dict.get('empty', None),
-            strategy_verified=dict.get('strategy_verified', False),
-        )
-
-    def __eq__(self, other):
-        """Equal if all parameters are equal."""
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Info):
+            return NotImplemented
         return (
-            self.comb_class == self.comb_class and
-            self.label == self.label and
-            self.expanded == self.expanded and
-            self.symmetry_expanded == self.symmetry_expanded and
-            self.initial_expanded == self.initial_expanded and
-            self.expanding_children_only == self.expanding_children_only and
-            self.expanding_other_sym == self.expanding_other_sym and
-            self.expandable == self.expandable and
-            self.inferral_expanded == self.inferral_expanded and
-            self.verified == self.verified and
-            self.empty == self.empty and
-            self.strategy_verified == self.strategy_verified
+            self.comb_class == self.comb_class
+            and self.label == self.label
+            and self.empty == self.empty
         )
 
 
-class ClassDB(object):
+class ClassDB(Generic[CombinatorialClassType]):
     """
     A database for combinatorial classes.
 
@@ -101,280 +54,184 @@ class ClassDB(object):
     - DB.add(class) will label the class and add it to the database.
     - DB.get_class(key) return the class with the given key.
     - DB.get_label(key) return the label of the given key.
-    - DB.set_property(key) will set the property to true for key.
-    - DB.is_property(key) will return True if the key has the property, False
+    - DB.set_empty(key) will set empty to be true for key.
+    - DB.is_empty(key) will return True if the key is empty, False
     otherwise.
-    - Sets verified classes with explanation.
     """
 
-    def __init__(self, combinatorial_class):
-        """
-        Initialise.
-
-        Two dictionaries allow you to call database with either the
-        combinatorial class, or the unique label of the combinatorial class.
-        The key can therefore be either the label or the combinatorial class.
-        """
-        self.class_to_info = {}
-        self.label_to_info = {}
-        if combinatorial_class is None:
-            raise TypeError("Need to declare type of combinatorial class.")
+    def __init__(self, combinatorial_class: Type[CombinatorialClassType]):
+        self.class_to_info: Dict[ClassKey, Info] = {}
+        self.label_to_info: Dict[int, Info] = {}
         self.combinatorial_class = combinatorial_class
+        self.func_calls: Dict[str, int] = defaultdict(int)
+        self.func_times: Dict[str, float] = defaultdict(float)
 
-    def __iter__(self):
-        """Iterator of labels."""
-        for key in self.label_to_info.keys():
+    def __iter__(self) -> Iterator[int]:
+        """
+        Iterator of labels.
+        """
+        for key in self.label_to_info:
             yield key
 
-    def __contains__(self, key):
-        """Check for containment."""
-        if isinstance(key, CombinatorialClass):
-            self._compress(key)
-            info = self.class_to_info.get(key)
-        if isinstance(key, int):
+    def __contains__(self, key: Key) -> bool:
+        """
+        Return true if the the key is already in the database.
+        """
+        if isinstance(key, self.combinatorial_class):
+            comb_class = self._compress(key)
+            info = self.class_to_info.get(comb_class)
+        elif isinstance(key, int):
             info = self.label_to_info.get(key)
+        else:
+            raise ValueError("Invalid key")
         return info is not None
 
-    def __eq__(self, other):
-        """Equal if all information stored is the same."""
-        return (self.class_to_info == other.class_to_info and
-                self.label_to_info == other.label_to_info)
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ClassDB):
+            return NotImplemented
+        return bool(
+            self.class_to_info == other.class_to_info
+            and self.label_to_info == other.label_to_info
+        )
 
-    def to_dict(self):
-        """Return dictionary object of self."""
-        return {label: info.to_dict()
-                for label, info in self.label_to_info.items()}
-
-    @classmethod
-    def from_dict(cls, dict, combinatorial_class):
-        """Return ClassDB for dictionary object."""
-        classdb = cls(combinatorial_class)
-        for label, info in dict.items():
-            info = Info.from_dict(info)
-            label = info.label
-            comb_class = info.comb_class
-            classdb.label_to_info[label] = info
-            classdb.class_to_info[comb_class] = info
-        return classdb
-
-    def add(self,
-            comb_class,
-            symmetry_expanded=False,
-            expanding_other_sym=False,
-            expandable=False,
-            compressed=False):
+    def add(self, comb_class: ClassKey, compressed: bool = False,) -> None:
         """
         Add a combinatorial class to the database.
-
-        Can also set some information about the combinatorial class on adding.
         """
-        if not compressed and not isinstance(comb_class, CombinatorialClass):
-            raise TypeError(("Trying to add something that isn't a"
-                            "CombinatorialClass."))
+        if not compressed and not isinstance(comb_class, self.combinatorial_class):
+            raise TypeError(
+                ("Trying to add something that isn't a" "CombinatorialClass.")
+            )
         if not compressed:
+            assert isinstance(
+                comb_class, self.combinatorial_class
+            ), "trying to add non combinatorial class to database"
             compressed_class = self._compress(comb_class)
         else:
             compressed_class = comb_class
         if compressed_class not in self.class_to_info:
             label = len(self.class_to_info)
-            info = Info(compressed_class,
-                        label,
-                        symmetry_expanded=symmetry_expanded,
-                        expanding_other_sym=expanding_other_sym,
-                        expandable=expandable)
+            info = Info(compressed_class, label)
             self.class_to_info[compressed_class] = info
             self.label_to_info[label] = info
         else:
             label = self.class_to_info[compressed_class].label
-            if expandable:
-                self.set_expandable(label)
-            if expanding_other_sym:
-                self.set_expanding_other_sym(label)
-            if symmetry_expanded:
-                self.set_symmetry_expanded(label)
 
-    def _get_info(self, key):
-        """Return Info for given key."""
-        if isinstance(key, CombinatorialClass):
-            key = self._compress(key)
-            info = self.class_to_info.get(key)
+    def _get_info(self, key: Key) -> Info:
+        """
+        Return Info for given key.
+        """
+        if isinstance(key, self.combinatorial_class):
+            compressed_key = self._compress(key)
+            info = self.class_to_info.get(compressed_key)
             if info is None:
-                self.add(key, compressed=True)
-                info = self.class_to_info[key]
+                self.add(compressed_key, compressed=True)
+                info = self.class_to_info[compressed_key]
         elif isinstance(key, int):
             info = self.label_to_info.get(key)
             if info is None:
                 raise KeyError("Key not in ClassDB.")
         else:
-            raise TypeError('ClassDB only accepts'
-                            'CombinatorialClass and will decompress with'
-                            '{}.'.format(self.combinatorial_class))
+            raise TypeError(
+                "ClassDB only accepts"
+                "CombinatorialClass and will decompress with"
+                "{}.".format(self.combinatorial_class)
+            )
         return info
 
-    def _compress(self, key):
-        """Return compressed version of combinatorial class."""
+    @cssmethodtimer("compress")
+    def _compress(self, key: CombinatorialClassType) -> ClassKey:
+        """
+        Return compressed version of combinatorial class.
+        """
+        # pylint: disable=no-self-use
         try:
-            return key.compress()
-        except AttributeError:
-            raise AttributeError(("The class {} needs a compress function"
-                                  ".").format(self.combinatorial_class))
+            return zlib.compress(key.to_bytes(), 9)
+        except NotImplementedError:
+            # to use compression you should implement a 'to_bytes' function.
+            return key
 
-    def _decompress(self, key):
-        """Return decompressed version of compressed combinatorial class."""
+    @cssmethodtimer("decompress")
+    def _decompress(self, key: ClassKey) -> CombinatorialClassType:
+        """
+        Return decompressed version of compressed combinatorial class.
+        """
         try:
-            return self.combinatorial_class.decompress(key)
-        except AttributeError:
-            raise AttributeError(("The class {} needs a compress function"
-                                  ".").format(self.combinatorial_class))
+            assert isinstance(key, bytes)
+            return cast(
+                CombinatorialClassType,
+                self.combinatorial_class.from_bytes(zlib.decompress(key)),
+            )
+        except (AssertionError, NotImplementedError):
+            # to use compression you should implement a 'from_bytes' function.
+            assert isinstance(
+                key, self.combinatorial_class
+            ), "you must implement a 'from_bytes' function to use compression"
+            return key
 
-    def get_class(self, key):
-        """Return combinatorial class of key."""
+    @cssmethodtimer("get class")
+    def get_class(self, key: Key) -> CombinatorialClassType:
+        """
+        Return combinatorial class of key.
+        """
         info = self._get_info(key)
         return self._decompress(info.comb_class)
 
-    def get_label(self, key):
-        """Return label of key."""
+    @cssmethodtimer("get label")
+    def get_label(self, key: Key) -> int:
+        """
+        Return label of key.
+        """
         info = self._get_info(key)
         return info.label
 
-    def number_times_expanded(self, key):
+    def is_empty(
+        self, comb_class: CombinatorialClassType, label: Optional[int] = None
+    ) -> bool:
         """
-        Return number of times combinatorial class has been expanded.
-
-        i.e., the number of sets strategies that have been used to expanded
-        the combinatorial class corresponding to the key.
+        Return True if combinatorial class is empty set, False if not.
+        Return None if status not set.
         """
-        info = self._get_info(key)
-        return info.expanded
+        if label is None:
+            info = self._get_info(comb_class)
+            label = info.label
+        else:
+            info = self._get_info(label)
+        empty = info.empty
+        if empty is None:
+            if not isinstance(comb_class, self.combinatorial_class):
+                comb_class = self.get_class(comb_class)
+            empty = self._is_empty(comb_class)
+            self.set_empty(label, empty)
+        return bool(empty)
 
-    def increment_expanded(self, key):
-        """Increment counter for times combinatorial class was expanded."""
-        info = self._get_info(key)
-        info.expanded += 1
+    @cssmethodtimer("is empty")
+    def _is_empty(self, comb_class: CombinatorialClassType) -> bool:
+        if not isinstance(comb_class, self.combinatorial_class):
+            comb_class = self.get_class(comb_class)
+        return comb_class.is_empty()
 
-    def is_expandable(self, key):
-        """Return True if expandable, False otherwise."""
-        info = self._get_info(key)
-        return info.expandable
-
-    def set_expandable(self, key, expandable=True):
-        """Update database about combinatorial class inferrability."""
-        info = self._get_info(key)
-        info.expandable = expandable or bool(info.expandable)
-
-    def is_inferrable(self, key):
-        """Return True if inferrable, False otherwise."""
-        info = self._get_info(key)
-        return info.inferrable
-
-    def set_inferrable(self, key, inferrable=True):
-        """Update database about combinatorial class inferrability."""
-        info = self._get_info(key)
-        info.inferrable = inferrable and bool(info.inferrable)
-
-    def is_verified(self, key):
+    def set_empty(self, key: Key, empty: bool = True) -> None:
         """
-        Return True if combinatorial class has been verified, and False if not
-        verified. Return None if status not set.
-
-        Verification must have an explanation, i.e, from a strategy.
-        """
-        return self._get_info(key).verified
-
-    def set_verified(self, key, verified=True, explanation=None):
-        """
-        Update database about combinatorial class being verified
-
-        An explanation should be provided.
+        Update database about comb class being empty.
         """
         info = self._get_info(key)
-        info.verified = verified or bool(info.verified)
-        info.verification_reason = explanation
+        info.empty = empty
 
-    def verification_reason(self, key):
-        """Return explanation of verification, None if not verified."""
-        return self._get_info(key).verification_reason
-
-    def is_empty(self, key):
-        """Return True if combinatorial class is empty set, False if not.
-        Return None if status not set."""
-        return self._get_info(key).empty
-
-    def set_empty(self, key, empty=True):
-        """Update database about comb class being empty."""
-        info = self._get_info(key)
-        info.empty = (empty or bool(info.empty))
-
-    def verified_labels(self):
-        """Yield all the labels that are verified."""
-        for x in self.label_to_info:
-            if self.is_verified(x):
-                yield x
-
-    def empty_labels(self):
-        """Yield all the labels that are verified."""
-        for x in self.label_to_info:
-            if self.is_empty(x):
-                yield x
-
-    def is_strategy_verified(self, key):
-        """Return True if combinatorial class verified by a strategy.
-        Returns None if never updated."""
-        return self._get_info(key).strategy_verified
-
-    def set_strategy_verified(self, key, strategy_verified=True):
-        """Update database combinatorial class is verified by a strategy."""
-        info = self._get_info(key)
-        info.strategy_verified = (strategy_verified or
-                                  bool(info.strategy_verified))
-
-    def is_symmetry_expanded(self, key):
-        """Return True if combinatorial class was expanded by symmetries."""
-        return self._get_info(key).symmetry_expanded
-
-    def set_symmetry_expanded(self, key, symmetry_expanded=True):
-        """Update database that combinatorial class was symmetry expanded."""
-        info = self._get_info(key)
-        info.symmetry_expanded = (symmetry_expanded or
-                                  bool(info.symmetry_expanded))
-
-    def is_expanding_children_only(self, key):
-        """Return True if not expanding as expanding other children only."""
-        return self._get_info(key).expanding_children_only
-
-    def set_expanding_children_only(self, key, expanding_children_only=True):
-        """Update database if expanding childern_only."""
-        info = self._get_info(key)
-        info.expanding_children_only = (expanding_children_only or
-                                        bool(info.expanding_children_only))
-
-    def is_expanding_other_sym(self, key):
-        """Return True if symmetry of combinatorial class is being expaned."""
-        return self._get_info(key).expanding_other_sym
-
-    def set_expanding_other_sym(self, key, expanding_other_sym=True):
-        """Update database symmetry of combinatorial class is being
-        expanded."""
-        info = self._get_info(key)
-        info.expanding_other_sym = (expanding_other_sym or
-                                    bool(info.expanding_other_sym))
-
-    def is_initial_expanded(self, key):
-        """Return True if combinatorial class was initial expanded."""
-        return self._get_info(key).initial_expanded
-
-    def set_initial_expanded(self, key, initial_expanded=True):
-        """Update database that combinatorial class was initial expanded."""
-        info = self._get_info(key)
-        info.initial_expanded = (initial_expanded or
-                                 bool(info.initial_expanded))
-
-    def is_inferral_expanded(self, key):
-        """Return True if combinatorial class was inferral expanded."""
-        return self._get_info(key).inferral_expanded
-
-    def set_inferral_expanded(self, key, inferral_expanded=True):
-        """Update database that combinatorial class was inferral expanded."""
-        info = self._get_info(key)
-        info.inferral_expanded = (inferral_expanded or
-                                  bool(info.inferral_expanded))
+    def status(self) -> str:
+        """
+        Return a string with the current status of the run.
+        """
+        status = "ClassDB status:\n"
+        status += "\tTotal number of combinatorial classes found is {}\n".format(
+            len(self.label_to_info)
+        )
+        for explanation in self.func_calls:
+            count = self.func_calls[explanation]
+            time_spent = self.func_times[explanation]
+            status += "\tApplied {} {} times. Time spent is {} seconds.\n".format(
+                explanation, count, round(time_spent, 2)
+            )
+        # TODO: empty classes?
+        status = status[:-1]
+        return status
