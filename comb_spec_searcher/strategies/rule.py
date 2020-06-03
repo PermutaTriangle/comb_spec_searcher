@@ -630,6 +630,7 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
             len(rule.children) == 1 and rule.constructor.is_equivalence
         ), "reversing a rule only works for equivalence rules"
         super().__init__(rule.strategy, rule.children[0], (rule.comb_class,))
+        self.original_rule = rule
 
     @property
     def constructor(self) -> Constructor:
@@ -642,18 +643,12 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     def backward_map(
         self, objs: Tuple[Optional[CombinatorialObjectType], ...]
     ) -> CombinatorialObjectType:
-        obj = cast(CombinatorialObjectType, objs[0])
-        return cast(
-            CombinatorialObjectType,
-            self.strategy.forward_map(self.children[0], obj, (self.comb_class,))[0],
-        )
+        return cast(CombinatorialObjectType, self.original_rule.forward_map(objs[0])[0])
 
     def forward_map(
         self, obj: CombinatorialObjectType
     ) -> Tuple[Optional[CombinatorialObjectType], ...]:
-        return (
-            self.strategy.backward_map(self.children[0], (obj,), (self.comb_class,)),
-        )
+        return (self.original_rule.backward_map((obj,)),)
 
 
 class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
