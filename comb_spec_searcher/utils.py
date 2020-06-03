@@ -23,7 +23,7 @@ class cssmethodtimer:
         self.explanation = explanation
 
     def __call__(self, func: Func) -> Func:
-        return func
+        # return func
 
         def inner(css: "CombinatorialSpecificationSearcher", *args, **kwargs):
             start = time.time()
@@ -42,7 +42,7 @@ class cssiteratortimer:
         self.explanation = explanation
 
     def __call__(self, func: Func) -> Func:
-        return func
+        # return func
 
         def inner(css: "CombinatorialSpecificationSearcher", *args, **kwargs):
             key = self.explanation
