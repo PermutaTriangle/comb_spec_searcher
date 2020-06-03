@@ -25,10 +25,14 @@ from sympy import Eq, Function
 
 from ..combinatorial_class import CombinatorialClassType, CombinatorialObjectType
 from ..exception import SanityCheckFailure, StrategyDoesNotApply
-from .constructor import Constructor
+from .constructor import Constructor, DisjointUnion
 
 if TYPE_CHECKING:
-    from .strategy import AbstractStrategy, Strategy, VerificationStrategy
+    from .strategy import (
+        AbstractStrategy,
+        Strategy,
+        VerificationStrategy,
+    )
 
 
 __all__ = ("Rule", "VerificationRule")
@@ -170,7 +174,14 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         """Return a random objects of the give size."""
 
     def sanity_check(self, n: int, **parameters: int) -> bool:
-        """Sanity check that this is a valid rule."""
+        """
+        Sanity check that this is a valid rule.
+
+        Raise a SanityCheckFailure error if the sanity_check fails.
+        """
+        if self.comb_class.extra_parameters:
+            raise NotImplementedError("sanity check only implemented in one variable")
+
         if isinstance(self, VerificationRule):
             # TODO: test more thoroughly
             return True
@@ -192,21 +203,15 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         )
         rule_count = self.count_objects_of_size(n, **parameters)
         self.subrecs = temprec
-        try:
-            assert actual_count == rule_count
-        except AssertionError:
+        params_str = ", ".join([f"n = {n}"] + [f"{p} = {v}" for p, v in parameters])
+        if actual_count != rule_count:
             raise SanityCheckFailure(
-                "The following rule failed sanity check:\n{}\nFailed with "
-                "parameters:\n{}\nThe actual count is {}. "
-                "The rule count is {}.".format(
-                    self,
-                    ", ".join(
-                        ["n = {}".format(n)]
-                        + ["{} = {}".format(p, v) for p, v in parameters]
-                    ),
-                    actual_count,
-                    rule_count,
-                )
+                f"The following rule failed sanity check:\n"
+                f"{self}\n"
+                f"Failed with parameters:\n"
+                f"{params_str}\n"
+                f"The actual count is {actual_count}.\n"
+                f"The rule count is {rule_count}.",
             )
 
         actual_objects = set(
@@ -218,19 +223,15 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         )
         rule_objects = set(list(self.generate_objects_of_size(n, **parameters)))
         self.subgenerators = tempgen
-        try:
-            assert actual_objects == rule_objects
-        except AssertionError:
+        if actual_objects != rule_objects:
             raise SanityCheckFailure(
-                "The following rule failed sanity check:\n{}\nFailed with "
-                "parameters:\n{}\nThe rule generated the wrong objects.".format(
-                    self,
-                    ", ".join(
-                        ["n = {}".format(n)]
-                        + ["{} = {}".format(p, v) for p, v in parameters]
-                    ),
-                )
+                f"The following rule failed sanity check:\n"
+                f"{self}\n"
+                f"Failed with parameters:\n"
+                f"{params_str}\n"
+                f"The rule generated the wrong objects."
             )
+        return True
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, AbstractRule):
@@ -360,6 +361,14 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         result is cached.
         """
         key = (n,) + tuple(sorted(parameters.items()))
+        assert sorted(["n"] + list(parameters)) == sorted(
+            ("n",) + self.comb_class.extra_parameters
+        ), (
+            "parameters did not match comb_class for the rule \n{}\nparameters "
+            "given: {}\n comb_class_parameters: {}".format(
+                self, list(parameters), self.comb_class.extra_parameters,
+            )
+        )
         res = self.count_cache.get(key)
         if res is None:
             assert (
@@ -367,6 +376,38 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
             ), "you must call the set_subrecs function first"
             res = self.constructor.get_recurrence(self.subrecs, n, **parameters)
             self.count_cache[key] = res
+        # # THE FOLLOWING CODE SNIPPET IS FOR DEBUGGING PURPOSES
+        #     if self.comb_class.extra_parameters:
+        #         print(self)
+        #         print("n =", n, parameters)
+        #         print("parent -> children params:", self.constructor.extra_parameters)
+        #         if hasattr(self.constructor, "zeroes"):
+        #             print("zeroes:", self.constructor.zeroes)
+        #         fusion_attrs = [
+        #             "extra_parameters",
+        #             "reversed_extra_parameters",
+        #             "fuse_parameter",
+        #             "left_sided_parameters",
+        #             "right_sided_parameters",
+        #             "both_sided_parameters",
+        #             "rec_function",
+        #             "fusion_type",
+        #             "predeterminable_left_right_points",
+        #         ]
+        #         for string in fusion_attrs:
+        #             if hasattr(self.constructor, string):
+        #                 print(string + ":", getattr(self.constructor, string))
+        #     print("result:", res)
+        # assert res == len(list(self.comb_class.objects_of_size(n, **parameters))), (
+        #     "counting failed for the rule \n{}\nparameters: n = {}, {}\n"
+        #     "computed {}, actual {}".format(
+        #         self,
+        #         n,
+        #         parameters,
+        #         res,
+        #         len(list(self.comb_class.objects_of_size(n, **parameters))),
+        #     )
+        # )
         return res
 
     def get_equation(
@@ -428,10 +469,23 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         super().__init__(rule.strategy, rule.comb_class, (child,))
         self.child_idx = rule.children.index(child)
         self.actual_children = rule.children
+        self._constructor: Optional[Constructor] = None
 
     @property
-    def constructor(self) -> Constructor:
-        return self.strategy.constructor(self.comb_class, self.actual_children)
+    def constructor(
+        self,
+    ) -> Constructor[CombinatorialClassType, CombinatorialObjectType]:
+        """
+        Return the constructor, that contains all the information about how to
+        count/generate objects from the rule.
+        """
+        if self._constructor is None:
+            self._constructor = self.strategy.constructor(
+                self.comb_class, self.actual_children
+            )
+            if self._constructor is None:
+                raise StrategyDoesNotApply("{} does not apply".format(self.strategy))
+        return self._constructor
 
     @property
     def formal_step(self) -> str:
@@ -472,10 +526,29 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
         )
         super().__init__(rules[0].strategy, rules[0].comb_class, rules[-1].children)
         self.rules = rules
+        self._constructor: Optional[DisjointUnion] = None
 
     @property
-    def constructor(self) -> Constructor:
-        return self.strategy.constructor(self.comb_class, self.children)
+    def constructor(self) -> DisjointUnion:
+        if self._constructor is None:
+            if not self.comb_class.extra_parameters:
+                return DisjointUnion(self.comb_class, self.children)
+            extra_parameters: Dict[str, str] = {
+                k: k for k in self.comb_class.extra_parameters
+            }
+            for rule in self.rules:
+                rules_parameters = rule.strategy.extra_parameters(
+                    rule.comb_class, rule.children
+                )[0]
+                extra_parameters = {
+                    rules_parameters[child_var]: parent_var
+                    for child_var, parent_var in extra_parameters.items()
+                    if child_var in rules_parameters
+                }
+            self._constructor = DisjointUnion(
+                self.comb_class, self.children, (extra_parameters,)
+            )
+        return self._constructor
 
     @property
     def formal_step(self) -> str:
@@ -557,6 +630,7 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
             len(rule.children) == 1 and rule.constructor.is_equivalence
         ), "reversing a rule only works for equivalence rules"
         super().__init__(rule.strategy, rule.children[0], (rule.comb_class,))
+        self.original_rule = rule
 
     @property
     def constructor(self) -> Constructor:
@@ -569,18 +643,12 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     def backward_map(
         self, objs: Tuple[Optional[CombinatorialObjectType], ...]
     ) -> CombinatorialObjectType:
-        obj = cast(CombinatorialObjectType, objs[0])
-        return cast(
-            CombinatorialObjectType,
-            self.strategy.forward_map(self.children[0], obj, (self.comb_class,))[0],
-        )
+        return cast(CombinatorialObjectType, self.original_rule.forward_map(objs[0])[0])
 
     def forward_map(
         self, obj: CombinatorialObjectType
     ) -> Tuple[Optional[CombinatorialObjectType], ...]:
-        return (
-            self.strategy.backward_map(self.children[0], (obj,), (self.comb_class,)),
-        )
+        return (self.original_rule.backward_map((obj,)),)
 
 
 class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
@@ -609,10 +677,22 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
 
     def count_objects_of_size(self, n: int, **parameters: int) -> int:
         key = (n,) + tuple(sorted(parameters.items()))
+        assert set(parameters) == set(self.comb_class.extra_parameters)
         res = self.count_cache.get(key)
         if res is None:
             res = self.strategy.count_objects_of_size(self.comb_class, n, **parameters)
             self.count_cache[key] = res
+        # # THE FOLLOWING CODE SNIPPET IS FOR DEBUGGING PURPOSES
+        # assert res == len(list(self.comb_class.objects_of_size(n, **parameters))), (
+        #     "counting failed for the rule \n{}\nparameters: n = {}, {}\n"
+        #     "computed {}, actual {}".format(
+        #         self,
+        #         n,
+        #         parameters,
+        #         res,
+        #         len(list(self.comb_class.objects_of_size(n, **parameters))),
+        #     )
+        # )
         return res
 
     def get_equation(

@@ -168,6 +168,8 @@ class DefaultQueue(CSSQueue):
                 self._change_level()
             while not self.staging and self.curr_level:
                 self.staging.extend(self._iter_helper_curr())
+                if not self.curr_level:
+                    self._change_level()
         if not self.staging:
             raise StopIteration("No more classes to expand")
 
@@ -206,12 +208,12 @@ class DefaultQueue(CSSQueue):
         self.next_level.update((label,))
 
     def __next__(self) -> WorkPacket:
-        while self.staging:
-            wp = self.staging.popleft()
-            if wp.label not in self.ignore:
-                return wp
-        self._populate_staging()
-        return next(self)
+        while True:
+            while self.staging:
+                wp = self.staging.popleft()
+                if wp.label not in self.ignore:
+                    return wp
+            self._populate_staging()
 
     def do_level(self) -> Iterator[WorkPacket]:
         """

@@ -84,3 +84,7 @@ def test_forget_ruledb():
     start_class = AvoidingWithPrefix("", ["ababa", "babb"], alphabet)
     searcher = CombinatorialSpecificationSearcher(start_class, pack, ruledb="forget")
     return searcher.auto_search()
+
+
+def test_sancheck(specification):
+    assert specification.sanity_check(6)

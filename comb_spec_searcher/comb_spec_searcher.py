@@ -38,6 +38,7 @@ from .utils import (
     get_mem,
     nice_pypy_mem,
     size_to_readable,
+    time_to_readable,
 )
 
 if platform.python_implementation() == "CPython":
@@ -495,10 +496,11 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             round(time.time() - start_time, 2)
         )
         found_string += self.status(elaborate=True)
-        found_string += json.dumps(specification.to_jsonable())
+        found_string += str(specification)
+        found_string += json.dumps(specification.to_jsonable(), separators=(",", ":"))
         logger.info(found_string, extra=self.logger_kwargs)
 
-    def _log_status(self, start_time: float) -> None:
+    def _log_status(self, start_time: float, status_update: int) -> None:
         status = "\nTime taken so far is {} seconds\n".format(
             round(time.time() - start_time, 2)
         )
@@ -507,17 +509,16 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         status_start = time.time()
         status += self.status(elaborate=elaborate)
 
-        next_elaborate = max(
-            0, 100 * self.func_times["status"] - (time.time() - start_time)
-        )
+        ne_goal = 100 * self.func_times["status"] - (time.time() - start_time)
+        next_elaborate = round(ne_goal - (ne_goal % status_update) + status_update)
 
         if elaborate:
             status += " -- status update took {} seconds --\n".format(
                 round(time.time() - status_start, 2)
             )
         else:
-            status += " -- next elaborate status update in {} seconds --\n".format(
-                round(next_elaborate, 2)
+            status += " -- next elaborate status update in {} --\n".format(
+                time_to_readable(next_elaborate)
             )
         logger.info(status, extra=self.logger_kwargs)
 
@@ -587,7 +588,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                     status_update is not None
                     and time.time() - status_start > status_update
                 ):
-                    self._log_status(auto_search_start)
+                    self._log_status(auto_search_start, status_update)
                     status_start = time.time()
             else:
                 expanding = False
@@ -641,6 +642,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         start_class = self.classdb.get_class(self.start_label)
         comb_class_eqv_paths = tuple(
             tuple(self.classdb.get_class(l) for l in path) for path in eqv_paths
+        )
+        logger.info(
+            "Creating a specification", extra=self.logger_kwargs,
         )
         return CombinatorialSpecification(
             start_class,
