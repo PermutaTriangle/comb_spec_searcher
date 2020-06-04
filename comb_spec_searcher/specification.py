@@ -2,10 +2,10 @@
 A combinatorial specification is a set rules of the form a -> b1, ..., bk
 where each of the bi appear exactly once on the left hand side of some rule.
 """
+import json
 from copy import copy
 from typing import Dict, Generic, Iterable, Iterator, Optional, Sequence, Tuple
 
-import json
 import sympy
 from logzero import logger
 from sympy import Eq, Expr, Function, solve, var
