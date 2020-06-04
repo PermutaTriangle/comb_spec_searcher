@@ -6,6 +6,7 @@ from collections import Counter, deque
 from typing import Counter as CounterType
 from typing import Deque, Iterator, List, NamedTuple, Set, Tuple
 
+from .exception import NoMoreClassToExpandError
 from .strategies.strategy import CSSstrategy
 from .strategies.strategy_pack import StrategyPack
 
@@ -163,22 +164,22 @@ class DefaultQueue(CSSQueue):
         """
         while not self.staging and self.working:
             self.staging.extend(self._iter_helper_working())
-        if not self.staging:
+        while not self.staging:
             if not self.curr_level:
                 self._change_level()
-            while not self.staging and self.curr_level:
-                self.staging.extend(self._iter_helper_curr())
-                if not self.curr_level:
-                    self._change_level()
-        if not self.staging:
-            raise StopIteration("No more classes to expand")
+            self.staging.extend(self._iter_helper_curr())
 
     def _change_level(self) -> None:
+        assert not self.staging, "Can't change level is staging is not empty"
+        assert not self.working, "Can't change level is working is not empty"
+        assert not self.curr_level, "Can't change level is curr_level is not empty"
         self.curr_level = deque(
             label
             for label, _ in sorted(self.next_level.items(), key=lambda x: -x[1])
             if self.expansion_strats and self.can_do_expansion(label, 0)
         )
+        if not self.curr_level:
+            raise StopIteration
         self.queue_sizes.append(len(self.curr_level))
         self.next_level = Counter()
 
@@ -226,6 +227,8 @@ class DefaultQueue(CSSQueue):
             try:
                 yield next(self)
             except StopIteration:
+                if curr_level == self.levels_completed:
+                    raise NoMoreClassToExpandError
                 return
 
     def status(self) -> str:
