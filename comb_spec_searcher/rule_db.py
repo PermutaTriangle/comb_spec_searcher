@@ -154,7 +154,7 @@ class RuleDBBase(abc.ABC):
         if iterative:
             rules_dict = iterative_prune(rules_dict, root=label)
         else:
-            rules_dict = prune(rules_dict)
+            prune(rules_dict)  # this function removes rules not in a specification.
 
         # only verified labels in rules_dict, in particular, there is a
         # specification if a label is in the rules_dict
