@@ -154,7 +154,7 @@ class RuleDBBase(abc.ABC):
         if iterative:
             rules_dict = iterative_prune(rules_dict, root=label)
         else:
-            rules_dict = prune(rules_dict)
+            prune(rules_dict)  # this function removes rules not in a specification.
 
         # only verified labels in rules_dict, in particular, there is a
         # specification if a label is in the rules_dict
@@ -230,7 +230,7 @@ class RuleDBBase(abc.ABC):
             )
         rules_dict = self.rules_up_to_equivalence()
         # Prune all unverified labels (recursively)
-        rules_dict = prune(rules_dict)
+        prune(rules_dict)
 
         if self.equivdb[label] in rules_dict:
             proof_trees = proof_tree_generator_dfs(rules_dict, root=self.equivdb[label])
@@ -250,7 +250,7 @@ class RuleDBBase(abc.ABC):
                 "There is no method for finding smallest iterative proof trees."
             )
         rules_dict = self.rules_up_to_equivalence()
-        rules_dict = prune(rules_dict)
+        prune(rules_dict)
 
         if not self.equivdb[label] in rules_dict:
             raise SpecificationNotFound("No specification for label {}".format(label))
