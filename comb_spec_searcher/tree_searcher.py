@@ -42,9 +42,11 @@ class Node:
         return 1 + sum(len(c) for c in self.children)
 
 
-def prune(rules_dict: RulesDict) -> RulesDict:
-    """Prune all nodes not in a combinatorial specification."""
-    rdict = deepcopy(rules_dict)
+def prune(rdict: RulesDict) -> None:
+    """
+    Prune all nodes not in a combinatorial specification. This changes rdict
+    in place.
+    """
     changed = True
     while changed:
         changed = False
@@ -55,7 +57,6 @@ def prune(rules_dict: RulesDict) -> RulesDict:
                     changed = True
                 if not rule_set:
                     del rdict[k]
-    return rdict
 
 
 def iterative_prune(rules_dict: RulesDict, root: Optional[int] = None) -> RulesDict:
