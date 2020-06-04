@@ -5,6 +5,7 @@ where each of the bi appear exactly once on the left hand side of some rule.
 from copy import copy
 from typing import Dict, Generic, Iterable, Iterator, Optional, Sequence, Tuple
 
+import json
 import sympy
 from logzero import logger
 from sympy import Eq, Expr, Function, solve, var
