@@ -2,7 +2,6 @@
 A combinatorial specification is a set rules of the form a -> b1, ..., bk
 where each of the bi appear exactly once on the left hand side of some rule.
 """
-import json
 from copy import copy
 from typing import Dict, Generic, Iterable, Iterator, Optional, Sequence, Tuple
 
@@ -347,9 +346,6 @@ class CombinatorialSpecification(
             return res
 
         res = update_res(self.root, res)
-        assert not rules_dict, "\n\n{}\n\n{}\n\n".format(
-            res, json.dumps(self.to_jsonable())
-        )
         return res
 
     def equations_string(self) -> str:
