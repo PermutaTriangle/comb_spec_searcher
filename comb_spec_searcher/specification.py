@@ -346,7 +346,9 @@ class CombinatorialSpecification(
             return res
 
         res = update_res(self.root, res)
-        assert not rules_dict
+        assert not rules_dict, "\n\n{}\n\n{}\n\n".format(
+            res, json.dumps(self.to_jsonable())
+        )
         return res
 
     def equations_string(self) -> str:

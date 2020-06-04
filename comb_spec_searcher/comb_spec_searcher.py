@@ -573,6 +573,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         while expanding:
             expansion_start = time.time()
             for label, strategies, inferral in self._labels_to_expand():
+                count += 1
                 if label != last_label:
                     comb_class = self.classdb.get_class(label)
                     last_label = label
