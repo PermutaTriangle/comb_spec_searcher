@@ -377,7 +377,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
     def do_level(self) -> None:
         """Expand combinatorial classes in current queue. Combintorial classes
         found added to next."""
-        for label, strategies, inferral in self._do_level_labels():
+        for label, strategies, inferral in self.classqueue.do_level():
             comb_class = self.classdb.get_class(label)
             self._expand(comb_class, label, strategies, inferral)
 
@@ -396,10 +396,6 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
     @cssmethodtimer("queue")
     def _stop_yielding(self, label: int):
         self.classqueue.set_stop_yielding(label)
-
-    @cssiteratortimer("queue")
-    def _do_level_labels(self) -> Iterator[WorkPacket]:
-        yield from self.classqueue.do_level()
 
     @cssmethodtimer("status")
     def status(self, elaborate: bool) -> str:

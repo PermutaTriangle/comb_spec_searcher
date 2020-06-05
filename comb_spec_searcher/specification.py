@@ -3,7 +3,7 @@ A combinatorial specification is a set rules of the form a -> b1, ..., bk
 where each of the bi appear exactly once on the left hand side of some rule.
 """
 from copy import copy
-from typing import Dict, Generic, Iterable, Iterator, Optional, Sequence, Tuple
+from typing import Dict, Generic, Iterable, Iterator, Sequence, Tuple
 
 import sympy
 from logzero import logger
@@ -18,10 +18,10 @@ from .combinatorial_class import (
 from .exception import (
     IncorrectGeneratingFunctionError,
     InvalidOperationError,
+    NoMoreClassesToExpandError,
     SpecificationNotFound,
     TaylorExpansionError,
 )
-from .rule_db import Specification
 from .strategies import (
     AbstractStrategy,
     EmptyStrategy,
@@ -139,13 +139,17 @@ class CombinatorialSpecification(
                     AlreadyVerified(self.rules_dict), apply_first=True
                 ),
             )
-            new_rules: Optional[Specification] = None
-            while new_rules is None:
-                css.do_level()
+            while True:
+                try:
+                    css.do_level()
+                except NoMoreClassesToExpandError:
+                    new_rules = css.ruledb.get_smallest_specification(css.start_label)
+                    break
                 try:
                     new_rules = css.ruledb.get_smallest_specification(css.start_label)
+                    break
                 except SpecificationNotFound:
-                    continue
+                    pass
             rules, eqv_paths = new_rules
             comb_class_eqv_paths = tuple(
                 tuple(css.classdb.get_class(l) for l in path) for path in eqv_paths

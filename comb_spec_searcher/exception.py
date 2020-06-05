@@ -33,5 +33,9 @@ class StrategyDoesNotApply(Exception):
     """A strategy does not apply to the combinatorial class."""
 
 
+class NoMoreClassesToExpandError(Exception):
+    """The class queue has run out of classes to try and expand."""
+
+
 class TaylorExpansionError(Exception):
     """An error while taylor expanding."""
