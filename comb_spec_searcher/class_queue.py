@@ -6,7 +6,7 @@ from collections import Counter, deque
 from typing import Counter as CounterType
 from typing import Deque, Iterator, List, NamedTuple, Set, Tuple
 
-from .exception import NoMoreClassToExpandError
+from .exception import NoMoreClassesToExpandError
 from .strategies.strategy import CSSstrategy
 from .strategies.strategy_pack import StrategyPack
 
@@ -228,7 +228,7 @@ class DefaultQueue(CSSQueue):
                 yield next(self)
             except StopIteration:
                 if curr_level == self.levels_completed:
-                    raise NoMoreClassToExpandError
+                    raise NoMoreClassesToExpandError
                 return
 
     def status(self) -> str:
