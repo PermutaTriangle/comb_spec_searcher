@@ -33,6 +33,7 @@ if TYPE_CHECKING:
         Strategy,
         VerificationStrategy,
     )
+    from .strategy_pack import StrategyPack
 
 
 __all__ = ("Rule", "VerificationRule")
@@ -694,6 +695,9 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
         #     )
         # )
         return res
+
+    def pack(self) -> "StrategyPack":
+        return self.strategy.pack(self.comb_class)
 
     def get_equation(
         self,

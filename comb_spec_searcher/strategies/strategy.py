@@ -502,7 +502,7 @@ class VerificationStrategy(
             children = self.decomposition_function(comb_class)
         return VerificationRule(self, comb_class, children)
 
-    def pack(self) -> "StrategyPack":
+    def pack(self, comb_class: CombinatorialClassType) -> "StrategyPack":
         """
         Returns a StrategyPack that finds a proof tree for the comb_class in
         which the verification strategies used are "simpler".
@@ -532,7 +532,7 @@ class VerificationStrategy(
         # pylint: disable=import-outside-toplevel
         from ..comb_spec_searcher import CombinatorialSpecificationSearcher
 
-        searcher = CombinatorialSpecificationSearcher(comb_class, self.pack())
+        searcher = CombinatorialSpecificationSearcher(comb_class, self.pack(comb_class))
         specification = searcher.auto_search()
         assert specification is not None, StrategyDoesNotApply(
             "Cannot find a specification"
@@ -670,7 +670,7 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
         return "is atom"
 
     @staticmethod
-    def pack() -> "StrategyPack":
+    def pack(comb_class: CombinatorialClass) -> "StrategyPack":
         raise InvalidOperationError("No pack for the empty strategy.")
 
     def to_jsonable(self) -> dict:
@@ -742,7 +742,7 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject
         return "is empty"
 
     @staticmethod
-    def pack() -> "StrategyPack":
+    def pack(comb_class: CombinatorialClass) -> "StrategyPack":
         raise InvalidOperationError("No pack for the empty strategy.")
 
     def to_jsonable(self) -> dict:
