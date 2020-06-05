@@ -139,19 +139,17 @@ class CombinatorialSpecification(
                     AlreadyVerified(self.rules_dict), apply_first=True
                 ),
             )
-            done_expanding = False
-            while not done_expanding:
+            while True:
                 try:
                     css.do_level()
                 except NoMoreClassesToExpandError:
                     new_rules = css.ruledb.get_smallest_specification(css.start_label)
-                    done_expanding = True
+                    break
                 try:
                     new_rules = css.ruledb.get_smallest_specification(css.start_label)
+                    break
                 except SpecificationNotFound:
                     pass
-                else:
-                    done_expanding = True
             rules, eqv_paths = new_rules
             comb_class_eqv_paths = tuple(
                 tuple(css.classdb.get_class(l) for l in path) for path in eqv_paths
