@@ -176,7 +176,7 @@ class StrategyPack:
     # Method to add power to a pack
     # Pack are immutable, these methods return a new pack.
     def add_initial(
-        self: PackType, strategy: CSSstrategy, name_ext: str = ""
+        self: PackType, strategy: CSSstrategy, name_ext: str = "", apply_first=False
     ) -> PackType:
         """
         Create a new pack with an additional initial strategy and append
@@ -186,9 +186,13 @@ class StrategyPack:
             raise ValueError(
                 ("The strategy {!r} is already in pack." "".format(strategy))
             )
+        if apply_first:
+            initial_strats = (strategy,) + self.initial_strats
+        else:
+            initial_strats = self.initial_strats + (strategy,)
         return self.__class__(
             name="_".join([self.name, name_ext]) if name_ext else self.name,
-            initial_strats=self.initial_strats + (strategy,),
+            initial_strats=initial_strats,
             ver_strats=self.ver_strats,
             inferral_strats=self.inferral_strats,
             expansion_strats=self.expansion_strats,
