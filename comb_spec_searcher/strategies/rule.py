@@ -538,9 +538,14 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
                 k: k for k in self.comb_class.extra_parameters
             }
             for rule in self.rules:
-                rules_parameters = rule.strategy.extra_parameters(
-                    rule.comb_class, rule.children
-                )[0]
+                if isinstance(rule, EquivalenceRule):
+                    rules_parameters = rule.strategy.extra_parameters(
+                        rule.comb_class, rule.actual_children
+                    )[rule.child_idx]
+                else:
+                    rules_parameters = rule.strategy.extra_parameters(
+                        rule.comb_class, rule.children
+                    )[0]
                 extra_parameters = {
                     rules_parameters[child_var]: parent_var
                     for child_var, parent_var in extra_parameters.items()
