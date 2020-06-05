@@ -184,6 +184,9 @@ class AbstractStrategy(
             return NotImplemented
         return self.__class__ == other.__class__ and self.__dict__ == other.__dict__
 
+    def __repr__(self):
+        return self.__class__.__name__ + "()"
+
     def __str__(self) -> str:
         return self.formal_step()
 

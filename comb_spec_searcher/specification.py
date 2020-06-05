@@ -346,7 +346,6 @@ class CombinatorialSpecification(
             return res
 
         res = update_res(self.root, res)
-        assert not rules_dict
         return res
 
     def equations_string(self) -> str:
