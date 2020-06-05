@@ -34,7 +34,7 @@ class StrategyDoesNotApply(Exception):
 
 
 class NoMoreClassesToExpandError(Exception):
-    """The class queue does didn't do anything in the current level."""
+    """The class queue has run out of classes to try and expand."""
 
 
 class TaylorExpansionError(Exception):
