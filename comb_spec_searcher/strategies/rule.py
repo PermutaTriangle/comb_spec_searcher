@@ -464,8 +464,8 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     def __init__(self, rule: Rule):
         non_empty_children = rule.non_empty_children()
         assert (
-            len(non_empty_children) == 1 and rule.constructor.is_equivalence
-        ), "not an equivalence rule"
+            len(non_empty_children) == 1 and rule.constructor.is_equivalence()
+        ), "not an equivalence rule: {}".format(str(rule))
         child = non_empty_children[0]
         super().__init__(rule.strategy, rule.comb_class, (child,))
         self.child_idx = rule.children.index(child)
