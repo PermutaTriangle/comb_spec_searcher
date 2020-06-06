@@ -46,6 +46,8 @@ if platform.python_implementation() == "CPython":
 
 warnings.simplefilter("once", Warning)
 
+logzero.loglevel(logging.INFO)
+
 
 class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
     """
@@ -68,9 +70,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         """
         self.strategy_pack = strategy_pack
         self.debug = kwargs.get("debug", False)
-        if not self.debug:
-            logzero.loglevel(logging.INFO, True)
-        else:
+        if self.debug:
             logzero.loglevel(logging.DEBUG, True)
         self.kwargs = kwargs.get("function_kwargs", dict())
         self.logger_kwargs = kwargs.get("logger_kwargs", {"processname": "runner"})
