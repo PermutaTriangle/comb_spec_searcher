@@ -185,7 +185,11 @@ class AbstractStrategy(
         return self.__class__ == other.__class__ and self.__dict__ == other.__dict__
 
     def __repr__(self):
-        return self.__class__.__name__ + "()"
+        return (
+            self.__class__.__name__
+            + f"(ignore_parent={self.ignore_parent}, inferrable={self.inferrable},"
+            f" possibly_empty={self.possibly_empty}, workable={self.workable})"
+        )
 
     def __str__(self) -> str:
         return self.formal_step()
@@ -684,7 +688,7 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
         return cls()
 
     def __repr__(self) -> str:
-        return self.__class__.__name__ + "()"
+        return self.__class__.__name__ + f"(ignore_parent={self.ignore_parent})"
 
     def __str__(self) -> str:
         return "verify atoms"
@@ -696,7 +700,7 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject
     """
 
     def __init__(self):
-        super().__init__(ignore_parent=True,)
+        super().__init__(ignore_parent=True)
 
     @staticmethod
     def count_objects_of_size(
