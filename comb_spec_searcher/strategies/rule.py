@@ -383,10 +383,10 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         #         print("n =", n, parameters)
         #         if hasattr(self.constructor, "extra_parameters"):
         #             print(
-        #                 "parent -> children params:", self.constructor.extra_parameters
+        #                 "parent->children params:", self.constructor.extra_parameters
         #             )
         #         if hasattr(self.constructor, "split_parameters"):
-        #             print("parent -> child params:", self.constructor.split_parameters)
+        #             print("parent->child params:", self.constructor.split_parameters)
         #         if hasattr(self.constructor, "zeroes"):
         #             print("zeroes:", self.constructor.zeroes)
         #         fusion_attrs = [
