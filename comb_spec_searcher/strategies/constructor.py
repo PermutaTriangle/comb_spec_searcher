@@ -15,7 +15,7 @@ from functools import partial, reduce
 from itertools import product
 from operator import add, mul
 from random import randint
-from typing import Callable, Dict, Generic, Iterable, Iterator, Optional, Tuple
+from typing import Callable, Dict, Generic, Iterable, Iterator, List, Optional, Tuple
 
 from sympy import Eq, Function
 
@@ -193,11 +193,11 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
 
     def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
         # The extra parameters variable maps each of the parent parameter to
-        # the unique child that contains it was mapped to.
+        # the unique child that it was mapped to.
         extra_params = tuple(
             {
                 child_var: parameters[parent_var]
-                for child_var, parent_var in param.items()
+                for parent_var, child_var in param.items()
             }
             for param in self.extra_parameters
         )
@@ -276,13 +276,13 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         if extra_parameters is not None:
             self.extra_parameters = extra_parameters
         else:
+            assert not parent.extra_parameters
             self.extra_parameters = tuple(
-                {x: x for x in parent.extra_parameters}
-                for _ in range(self.number_of_children)
+                dict() for _ in range(self.number_of_children)
             )
 
         self.zeroes = tuple(
-            frozenset(parent.extra_parameters) - frozenset(parameter.values())
+            frozenset(parent.extra_parameters) - frozenset(parameter.keys())
             for parameter in self.extra_parameters
         )
 
@@ -299,19 +299,44 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         assert not parameters, "only implemented in one variable, namely 'n'"
         return tuple((n,) for _ in range(self.number_of_children))
 
+    def get_extra_parameters(
+        self, n: int, **parameters: int
+    ) -> List[Optional[Dict[str, int]]]:
+        """
+        Will return the extra parameters dictionary based on the parent's
+        parameters. If there is a contradiction, that is some child parameter
+        is given two or more different values that do not match, then None
+        will be returned for that child, indicating that 0 objects on the
+        child match the parents parameters.
+        """
+        res: List[Optional[Dict[str, int]]] = []
+        for extra_parameters in self.extra_parameters:
+            update_params: Dict[str, int] = {}
+            for parent_var, child_var in extra_parameters.items():
+                updated_value = parameters[parent_var]
+                if child_var not in update_params:
+                    update_params[child_var] = updated_value
+                elif update_params[child_var] != updated_value:
+                    break
+            else:
+                res.append(update_params)
+                continue
+            res.append(None)
+        return res
+
     def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
         if not parameters:
             return sum(rec(n) for rec in subrecs)
         res = 0
-        for idx, rec in enumerate(subrecs):
+        for (idx, rec), extra_params in zip(
+            enumerate(subrecs), self.get_extra_parameters(n, **parameters)
+        ):
             # if a parent parameter is not mapped to by some child parameter
             # then it is assumed that the value of the parent parameter must be 0
-            if any(val != 0 and k in self.zeroes[idx] for k, val in parameters.items()):
+            if extra_params is None or any(
+                val != 0 and k in self.zeroes[idx] for k, val in parameters.items()
+            ):
                 continue
-            extra_params = {
-                child_var: parameters[parent_var]
-                for child_var, parent_var in self.extra_parameters[idx].items()
-            }
             res += rec(n=n, **extra_params)
         return res
 
