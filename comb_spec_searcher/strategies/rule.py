@@ -377,11 +377,16 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
             ), "you must call the set_subrecs function first"
             res = self.constructor.get_recurrence(self.subrecs, n, **parameters)
             self.count_cache[key] = res
-        # # THE FOLLOWING CODE SNIPPET IS FOR DEBUGGING PURPOSES
+        #     # THE FOLLOWING CODE SNIPPET IS FOR DEBUGGING PURPOSES
         #     if self.comb_class.extra_parameters:
         #         print(self)
         #         print("n =", n, parameters)
-        #         print("parent -> children params:", self.constructor.extra_parameters)
+        #         if hasattr(self.constructor, "extra_parameters"):
+        #             print(
+        #                 "parent -> children params:", self.constructor.extra_parameters
+        #             )
+        #         if hasattr(self.constructor, "split_parameters"):
+        #             print("parent -> child params:", self.constructor.split_parameters)
         #         if hasattr(self.constructor, "zeroes"):
         #             print("zeroes:", self.constructor.zeroes)
         #         fusion_attrs = [
