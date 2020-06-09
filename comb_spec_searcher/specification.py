@@ -99,7 +99,7 @@ class CombinatorialSpecification(
                 self.rules_dict[comb_class] = rule
             elif isinstance(rule, VerificationRule):
                 try:
-                    verification_packs[comb_class] = rule.strategy.pack()
+                    verification_packs[comb_class] = rule.pack()
                 except InvalidOperationError:
                     self.rules_dict[comb_class] = strategy(comb_class)
             else:

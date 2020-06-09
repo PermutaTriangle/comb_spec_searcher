@@ -185,7 +185,11 @@ class AbstractStrategy(
         return self.__class__ == other.__class__ and self.__dict__ == other.__dict__
 
     def __repr__(self):
-        return self.__class__.__name__ + "()"
+        return (
+            self.__class__.__name__
+            + f"(ignore_parent={self.ignore_parent}, inferrable={self.inferrable},"
+            f" possibly_empty={self.possibly_empty}, workable={self.workable})"
+        )
 
     def __str__(self) -> str:
         return self.formal_step()
@@ -502,7 +506,7 @@ class VerificationStrategy(
             children = self.decomposition_function(comb_class)
         return VerificationRule(self, comb_class, children)
 
-    def pack(self) -> "StrategyPack":
+    def pack(self, comb_class: CombinatorialClassType) -> "StrategyPack":
         """
         Returns a StrategyPack that finds a proof tree for the comb_class in
         which the verification strategies used are "simpler".
@@ -532,7 +536,7 @@ class VerificationStrategy(
         # pylint: disable=import-outside-toplevel
         from ..comb_spec_searcher import CombinatorialSpecificationSearcher
 
-        searcher = CombinatorialSpecificationSearcher(comb_class, self.pack())
+        searcher = CombinatorialSpecificationSearcher(comb_class, self.pack(comb_class))
         specification = searcher.auto_search()
         assert specification is not None, StrategyDoesNotApply(
             "Cannot find a specification"
@@ -670,7 +674,7 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
         return "is atom"
 
     @staticmethod
-    def pack() -> "StrategyPack":
+    def pack(comb_class: CombinatorialClass) -> "StrategyPack":
         raise InvalidOperationError("No pack for the empty strategy.")
 
     def to_jsonable(self) -> dict:
@@ -684,7 +688,7 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
         return cls()
 
     def __repr__(self) -> str:
-        return self.__class__.__name__ + "()"
+        return self.__class__.__name__ + f"(ignore_parent={self.ignore_parent})"
 
     def __str__(self) -> str:
         return "verify atoms"
@@ -696,7 +700,7 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject
     """
 
     def __init__(self):
-        super().__init__(ignore_parent=True,)
+        super().__init__(ignore_parent=True)
 
     @staticmethod
     def count_objects_of_size(
@@ -742,7 +746,7 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject
         return "is empty"
 
     @staticmethod
-    def pack() -> "StrategyPack":
+    def pack(comb_class: CombinatorialClass) -> "StrategyPack":
         raise InvalidOperationError("No pack for the empty strategy.")
 
     def to_jsonable(self) -> dict:

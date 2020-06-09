@@ -33,6 +33,7 @@ if TYPE_CHECKING:
         Strategy,
         VerificationStrategy,
     )
+    from .strategy_pack import StrategyPack
 
 
 __all__ = ("Rule", "VerificationRule")
@@ -376,11 +377,16 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
             ), "you must call the set_subrecs function first"
             res = self.constructor.get_recurrence(self.subrecs, n, **parameters)
             self.count_cache[key] = res
-        # # THE FOLLOWING CODE SNIPPET IS FOR DEBUGGING PURPOSES
+        #     # THE FOLLOWING CODE SNIPPET IS FOR DEBUGGING PURPOSES
         #     if self.comb_class.extra_parameters:
         #         print(self)
         #         print("n =", n, parameters)
-        #         print("parent -> children params:", self.constructor.extra_parameters)
+        #         if hasattr(self.constructor, "extra_parameters"):
+        #             print(
+        #                 "parent->children params:", self.constructor.extra_parameters
+        #             )
+        #         if hasattr(self.constructor, "split_parameters"):
+        #             print("parent->child params:", self.constructor.split_parameters)
         #         if hasattr(self.constructor, "zeroes"):
         #             print("zeroes:", self.constructor.zeroes)
         #         fusion_attrs = [
@@ -463,8 +469,8 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     def __init__(self, rule: Rule):
         non_empty_children = rule.non_empty_children()
         assert (
-            len(non_empty_children) == 1 and rule.constructor.is_equivalence
-        ), "not an equivalence rule"
+            len(non_empty_children) == 1 and rule.constructor.is_equivalence()
+        ), "not an equivalence rule: {}".format(str(rule))
         child = non_empty_children[0]
         super().__init__(rule.strategy, rule.comb_class, (child,))
         self.child_idx = rule.children.index(child)
@@ -537,9 +543,14 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
                 k: k for k in self.comb_class.extra_parameters
             }
             for rule in self.rules:
-                rules_parameters = rule.strategy.extra_parameters(
-                    rule.comb_class, rule.children
-                )[0]
+                if isinstance(rule, EquivalenceRule):
+                    rules_parameters = rule.strategy.extra_parameters(
+                        rule.comb_class, rule.actual_children
+                    )[rule.child_idx]
+                else:
+                    rules_parameters = rule.strategy.extra_parameters(
+                        rule.comb_class, rule.children
+                    )[0]
                 extra_parameters = {
                     rules_parameters[child_var]: parent_var
                     for child_var, parent_var in extra_parameters.items()
@@ -694,6 +705,9 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
         #     )
         # )
         return res
+
+    def pack(self) -> "StrategyPack":
+        return self.strategy.pack(self.comb_class)
 
     def get_equation(
         self,
