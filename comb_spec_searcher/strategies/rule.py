@@ -282,7 +282,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
                 for child in children[1:]:
                     join(res, op_symbol)
                     join(res, child)
-        return f"Explanation: {self.formal_step}\n" + "\n".join(x for x in res)
+        return f"{self.formal_step}\n" + "\n".join(x for x in res)
 
 
 class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
@@ -638,7 +638,7 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
         for comb_class in comb_classes:
             join(res, eq_symbol)
             join(res, comb_class)
-        return "Explanation: {}\n".format(self.formal_step) + "\n".join(x for x in res)
+        return "{}\n".format(self.formal_step) + "\n".join(x for x in res)
 
 
 class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
