@@ -382,13 +382,16 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         #         print(self)
         #         print("n =", n, parameters)
         #         if hasattr(self.constructor, "extra_parameters"):
-        #             print(
-        #                 "parent->children params:", self.constructor.extra_parameters
-        #             )
+        #             print("parent->children params:", self.constructor.extra_parameters)
         #         if hasattr(self.constructor, "split_parameters"):
         #             print("parent->child params:", self.constructor.split_parameters)
         #         if hasattr(self.constructor, "zeroes"):
         #             print("zeroes:", self.constructor.zeroes)
+        #         if hasattr(self.constructor, "get_extra_parameters"):
+        #             print(
+        #                 "parameters_passed:",
+        #                 self.constructor.get_extra_parameters(n, **parameters),
+        #             )
         #         fusion_attrs = [
         #             "extra_parameters",
         #             "reversed_extra_parameters",
@@ -543,18 +546,25 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
                 k: k for k in self.comb_class.extra_parameters
             }
             for rule in self.rules:
+                # TODO: call extra parameters on Rule class
                 if isinstance(rule, EquivalenceRule):
                     rules_parameters = rule.strategy.extra_parameters(
                         rule.comb_class, rule.actual_children
                     )[rule.child_idx]
+                elif isinstance(rule, ReverseRule):
+                    forward_rule_parameters = rule.strategy.extra_parameters(
+                        rule.children[0]
+                    )[0]
+                    rules_parameters = {
+                        b: a for a, b in forward_rule_parameters.items()
+                    }
                 else:
                     rules_parameters = rule.strategy.extra_parameters(
                         rule.comb_class, rule.children
                     )[0]
                 extra_parameters = {
-                    rules_parameters[child_var]: parent_var
-                    for child_var, parent_var in extra_parameters.items()
-                    if child_var in rules_parameters
+                    rules_parameters[parent_var]: child_var
+                    for parent_var, child_var in extra_parameters.items()
                 }
             self._constructor = DisjointUnion(
                 self.comb_class, self.children, (extra_parameters,)
