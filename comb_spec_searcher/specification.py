@@ -265,7 +265,7 @@ class CombinatorialSpecification(
             except TaylorExpansionError:
                 continue
             if expansion == initial_conditions:
-                return genf
+                return sympy.simplify(genf)
         raise IncorrectGeneratingFunctionError
 
     def count_objects_of_size(self, n: int, **parameters) -> int:
@@ -332,8 +332,9 @@ class CombinatorialSpecification(
             if isinstance(rule, EquivalencePathRule):
                 child_label = self.get_label(rule.comb_class)
                 child_eqv_label = self.get_label(rule.children[0])
-                res += "\n\n"
-                res += "{} = {}\n".format(child_label, child_eqv_label)
+                labels = "{} = {}\n".format(child_label, child_eqv_label)
+                res += "\n{}\n".format("-" * (len(labels) - 1))
+                res += labels
                 res += str(rule)
                 try:
                     rule = rules_dict.pop(rule.children[0])
@@ -342,8 +343,9 @@ class CombinatorialSpecification(
                     return res
             start_label = self.get_label(rule.comb_class)
             end_labels = tuple(self.get_label(c) for c in rule.children)
-            res += "\n\n"
-            res += "{} -> {}\n".format(start_label, end_labels)
+            labels = "{} -> {}\n".format(start_label, end_labels)
+            res += "\n{}\n".format("-" * (len(labels) - 1))
+            res += labels
             res += str(rule)
             for child in rule.children:
                 res = update_res(child, res)
