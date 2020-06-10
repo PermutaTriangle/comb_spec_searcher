@@ -382,7 +382,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         #         print(self)
         #         print("n =", n, parameters)
         #         if hasattr(self.constructor, "extra_parameters"):
-        #             print("parent->children params:", self.constructor.extra_parameters)
+        #             print("parent->child params:", self.constructor.extra_parameters)
         #         if hasattr(self.constructor, "split_parameters"):
         #             print("parent->child params:", self.constructor.split_parameters)
         #         if hasattr(self.constructor, "zeroes"):
