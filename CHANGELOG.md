@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.0.0] - 2020-06-11
+### Changed
+
+This release is a major change of the `comb_spec_searcher` structure.
+Instead of being centered around the `ProofTree` object, this version
+introduces the `CombinatorialSpecification` object that offers many more
+features. Most notably the support for arbitrary constructors, object building
+and random sampling. The new version also widely improves support for multiple
+variables.
+
 ## [0.5.0] - 2020-03-27
 ### Added
 - `ProofTree.expand_tree()` is a method the can be used to expand a proof tree
@@ -17,6 +27,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 - Fix the `is_expanded` function to check for inferral and initial expansion
+- Fix the `__contain__` of ClassDB so that it actually works.
+
+### Removed
+- Support for Python 3.5 and earlier
 
 ## [0.4.0] - 2020-02-20
 ### Fixed

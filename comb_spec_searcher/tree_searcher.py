@@ -3,31 +3,50 @@ Finds and returns a combinatorial specification, that we call a proof tree.
 """
 from collections import defaultdict, deque
 from copy import deepcopy
-from itertools import product
+from itertools import chain, product
 from random import choice, shuffle
+from typing import Dict, FrozenSet, Iterator, List, Optional, Sequence, Set, Tuple
 
 __all__ = ("prune", "proof_tree_generator_dfs", "proof_tree_generator_bfs")
 
 
-class Node():
+RulesDict = Dict[int, Set[Tuple[int, ...]]]
+
+
+class Node:
     """A node for a proof tree."""
-    def __init__(self, n, children=None):
+
+    def __init__(self, n: int, children: Optional[List["Node"]] = None):
         if children is None:
             children = []
         self.label = n
         self.children = children
 
-    def __str__(self):
+    def labels(self) -> FrozenSet[int]:
+        """Return the set of all labels in the proof tree."""
+        if not self.children:
+            return frozenset([self.label])
+        return frozenset(chain.from_iterable(node.labels() for node in self.children))
+
+    def nodes(self) -> Iterator["Node"]:
+        """Yield all nodes in the proof tree."""
+        yield self
+        for node in self.children:
+            yield from node.nodes()
+
+    def __str__(self) -> str:
         return "".join(["(", str(self.label), *map(str, self.children), ")"])
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Return the number nodes in the proof tree."""
         return 1 + sum(len(c) for c in self.children)
 
 
-def prune(rules_dict):
-    """Prune all nodes not in a combinatorial specification."""
-    rdict = deepcopy(rules_dict)
+def prune(rdict: RulesDict) -> None:
+    """
+    Prune all nodes not in a combinatorial specification. This changes rdict
+    in place.
+    """
     changed = True
     while changed:
         changed = False
@@ -38,16 +57,15 @@ def prune(rules_dict):
                     changed = True
                 if not rule_set:
                     del rdict[k]
-    return rdict
 
 
-def iterative_prune(rules_dict, root=None):
+def iterative_prune(rules_dict: RulesDict, root: Optional[int] = None) -> RulesDict:
     """Prune all nodes not iteratively verifiable."""
-    verified_labels = set()
+    verified_labels: Set[int] = set()
     if root is not None:
         verified_labels.add(root)
     rdict = deepcopy(rules_dict)
-    new_rules_dict = defaultdict(set)
+    new_rules_dict: RulesDict = defaultdict(set)
     while True:
         changed = False
         for k, rule_set in list(rdict.items()):
@@ -64,7 +82,7 @@ def iterative_prune(rules_dict, root=None):
     return new_rules_dict
 
 
-def proof_tree_dfs(rules_dict, root, seen=None):
+def proof_tree_dfs(rules_dict: RulesDict, root: int, seen: Optional[Set[int]] = None):
     """Return random proof tree found by depth first search."""
     if seen is None:
         seen = set()
@@ -77,32 +95,27 @@ def proof_tree_dfs(rules_dict, root, seen=None):
             return seen, root_node
         seen.add(root)
         rule = choice(list(rule_set))
-        visited, trees = proof_forest_dfs(rules_dict, rule, seen)
+        visited, trees = all_proof_trees_dfs(rules_dict, rule, seen)
         root_node.children = trees
         return visited, root_node
 
 
-def proof_forest_dfs(rules_dict, roots, seen=None):
+def all_proof_trees_dfs(
+    rules_dict: RulesDict, roots: Sequence[int], seen: Optional[Set[int]] = None
+) -> Tuple[Set[int], List[Node]]:
+    """Return all labels which have been seen, together with all of the trees
+    using the given roots.."""
     if seen is None:
         seen = set()
     if not roots:
         return seen, []
     root, roots = roots[0], roots[1:]
     seen1, tree = proof_tree_dfs(rules_dict, root, seen)
-    seen2, trees = proof_forest_dfs(rules_dict, roots, seen1)
+    seen2, trees = all_proof_trees_dfs(rules_dict, roots, seen1)
     return seen1.union(seen2), [tree] + trees
 
 
-# def proof_tree_generator_dfs(rules_dict, root):
-#     """A generator for random proof trees using depth first search.
-#     N.B. The rules_dict is assumed to be pruned.
-#     """
-#     while root in rules_dict:
-#         _, tree = proof_tree_dfs(rules_dict, root)
-#         yield tree
-
-
-def iterative_proof_tree_bfs(rules_dict, root):
+def iterative_proof_tree_bfs(rules_dict: RulesDict, root: int) -> Node:
     """Takes in a iterative pruned rules_dict and returns iterative proof
     tree."""
     root_node = Node(root)
@@ -112,19 +125,14 @@ def iterative_proof_tree_bfs(rules_dict, root):
         rule = sorted(rules_dict[v.label])[0]
         if not rule == ():
             children = [Node(i) for i in rule]
-            queue.extend([child for child in children
-                          if not child.label == root])
+            queue.extend([child for child in children if not child.label == root])
             v.children = children
     return root_node
 
 
-def iterative_proof_tree_generator_bfs(rules_dict, root):
-    pass
-
-
-def random_proof_tree(rules_dict, root):
+def random_proof_tree(rules_dict: RulesDict, root: int) -> Node:
     """Return random tree found by breadth first search."""
-    seen = set()
+    seen: Set[int] = set()
     root_node = Node(root)
     queue = deque([root_node])
     while queue:
@@ -139,41 +147,49 @@ def random_proof_tree(rules_dict, root):
     return root_node
 
 
-def proof_tree_generator_bfs(rules_dict, root):
+def proof_tree_generator_bfs(rules_dict: RulesDict, root: int) -> Iterator[Node]:
     """A generator for all proof trees using breadth first search.
     N.B. The rules_dict is assumed to be pruned.
     """
-    def _bfs_helper(root_label, seen):
+
+    def _bfs_helper(root_label: int, seen: FrozenSet[int]):
         if root_label in seen:
             yield Node(root_label)
             return
         next_seen = seen.union((root_label,))
         for rule in rules_dict[root_label]:
-            for children in product(*[_bfs_helper(child_label, next_seen)
-                                      for child_label in rule]):
+            for children in product(
+                *[_bfs_helper(child_label, next_seen) for child_label in rule]
+            ):
                 root_node = Node(root_label)
                 root_node.children = children
                 yield root_node
 
-    rules_dict = {start: tuple(sorted(ends))
-                  for start, ends in rules_dict.items()}
+    sorted_rules_dict = {
+        start: tuple(sorted(ends)) for start, ends in rules_dict.items()
+    }
 
-    if root in rules_dict:
+    if root in sorted_rules_dict:
         yield from _bfs_helper(root, frozenset())
 
 
-def proof_tree_generator_dfs(rules_dict, root, maximum=None):
+def proof_tree_generator_dfs(
+    rules_dict: RulesDict, root: int, maximum: Optional[int] = None
+) -> Iterator[Node]:
     """A generator for all proof trees using depth first search.
     N.B. The rules_dict is assumed to be pruned.
     """
-    def _dfs_tree(root_label, seen, maximum=None):
+
+    def _dfs_tree(
+        root_label: int, seen: FrozenSet[int], maximum: int = None
+    ) -> Iterator[Tuple[FrozenSet[int], Node]]:
         if maximum is not None and maximum <= 0:
             return
         if root_label in seen:
             yield seen, Node(root_label)
             return
         seen = seen.union((root_label,))
-        for rule in rules_dict[root_label]:
+        for rule in sorted_rules_dict[root_label]:
             if rule == ():
                 yield seen, Node(root_label)
             else:
@@ -182,34 +198,37 @@ def proof_tree_generator_dfs(rules_dict, root, maximum=None):
                     root_node.children = children
                     yield new_seen, root_node
 
-    def _dfs_forest(root_labels, seen, maximum=None):
+    def _dfs_forest(
+        root_labels: Sequence[int], seen: FrozenSet[int], maximum: Optional[int] = None
+    ) -> Iterator[Tuple[FrozenSet[int], List[Node]]]:
         if maximum is not None and maximum <= 0:
             return
         if not root_labels:
             yield seen, []
         else:
             root, roots = root_labels[0], root_labels[1:]
-            for seen1, tree in _dfs_tree(root, seen,
-                                         maximum - len(root_labels) + 1):
+            new_max = maximum - len(root_labels) + 1 if maximum is not None else None
+            for seen1, tree in _dfs_tree(root, seen, new_max):
                 length = len(tree)
                 new_maximum = maximum - length if maximum is not None else None
                 for seen2, trees in _dfs_forest(roots, seen1, new_maximum):
                     actual_length = length + sum(len(t) for t in trees)
-                    if actual_length < maximum:
+                    if maximum is not None and actual_length < maximum:
                         yield seen1.union(seen2), [tree] + trees
 
-    rules_dict = {start: tuple(sorted(ends))
-                  for start, ends in rules_dict.items()}
+    sorted_rules_dict = {
+        start: tuple(sorted(ends)) for start, ends in rules_dict.items()
+    }
 
-    if root in rules_dict:
+    if root in sorted_rules_dict:
         for _, tree in _dfs_tree(root, frozenset(), maximum):
             yield tree
 
 
-def iterative_proof_tree_finder(rules_dict, root):
+def iterative_proof_tree_finder(rules_dict: RulesDict, root: int) -> Node:
     """Finds an iterative proof tree for root, if one exists.
     """
-    trees = {}
+    trees: Dict[int, Node] = {}
 
     def get_tree(start):
         if start == root:
@@ -230,7 +249,7 @@ def iterative_proof_tree_finder(rules_dict, root):
     if root is not None:
         verified_labels.add(root)
     rdict = deepcopy(rules_dict)
-    new_rules_dict = defaultdict(set)
+    new_rules_dict: RulesDict = defaultdict(set)
     while True:
         changed = False
         for k, rule_set in list(rdict.items()):
