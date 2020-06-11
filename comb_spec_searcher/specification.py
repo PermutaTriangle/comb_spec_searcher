@@ -204,7 +204,9 @@ class CombinatorialSpecification(
             for comb_class, rule in self.rules_dict.items()
             if not isinstance(rule, VerificationRule)
         }
-        for rule in self.rules_dict.values():
+        for _, rule in sorted(
+            self.rules_dict.items(), key=lambda x: self.get_label(x[0])
+        ):
             try:
                 if isinstance(rule, VerificationRule):
                     eq = rule.get_equation(self.get_function, funcs)
@@ -231,7 +233,7 @@ class CombinatorialSpecification(
 
         # TODO: consider what to do if multiple variables.
         """
-        eqs = set(self.get_equations())
+        eqs = tuple(self.get_equations())
         root_func = self.get_function(self.root)
         try:
             logger.info("Computing initial conditions")
@@ -267,6 +269,27 @@ class CombinatorialSpecification(
             if expansion == initial_conditions:
                 return sympy.simplify(genf)
         raise IncorrectGeneratingFunctionError
+
+    def get_maple_equations(self, check: int = 6):
+        eqs = tuple(self.get_equations())
+        root_func = self.get_function(self.root)
+        try:
+            logger.info("Computing initial conditions")
+            initial_conditions = [
+                self.count_objects_of_size(n=i) for i in range(check + 1)
+            ]
+        except NotImplementedError as e:
+            logger.info(
+                "Reverting to generating objects from root for initial "
+                "conditions due to:\nNotImplementedError: %s",
+                e,
+            )
+            initial_conditions = [
+                len(list(self.root.objects_of_size(i))) for i in range(check + 1)
+            ]
+        maple_eqs = maple_equations(root_func, initial_conditions, eqs)
+        logger.info(maple_eqs)
+        return maple_eqs
 
     def count_objects_of_size(self, n: int, **parameters) -> int:
         """
