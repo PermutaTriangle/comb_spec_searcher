@@ -375,7 +375,7 @@ class CombinatorialSpecification(
             return res
 
         res = update_res(self.root, res)
-        return res
+        return res + "\n"
 
     def equations_string(self) -> str:
         """
