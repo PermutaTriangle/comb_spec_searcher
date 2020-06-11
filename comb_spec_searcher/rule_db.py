@@ -16,6 +16,8 @@ from typing import (
     cast,
 )
 
+from logzero import logger
+
 from .class_db import ClassDB
 from .equiv_db import EquivalenceDB
 from .exception import SpecificationNotFound, StrategyDoesNotApply
@@ -257,9 +259,13 @@ class RuleDBBase(abc.ABC):
         tree = random_proof_tree(rules_dict, root=self.equivdb[label])
         minimum = 1
         maximum = len(tree)
+        logger.info(
+            "Found a specification of size %s. Looking for the smallest.", len(tree)
+        )
         # Binary search to find a smallest proof tree.
         while minimum < maximum:
             middle = (minimum + maximum) // 2
+            logger.info("Looking for specification of size %s", middle)
             try:
                 tree = next(
                     proof_tree_generator_dfs(
@@ -269,6 +275,7 @@ class RuleDBBase(abc.ABC):
                 maximum = min(middle, len(tree))
             except StopIteration:
                 minimum = middle + 1
+        logger.info("The smallest specification is of size %s.", len(tree))
         return self._get_specification_rules(label, tree)
 
 
