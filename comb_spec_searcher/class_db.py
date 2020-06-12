@@ -9,7 +9,6 @@ if is_empty has been checked.
 """
 
 import zlib
-from collections import defaultdict
 from typing import Dict, Generic, Iterator, Optional, Type, Union, cast
 
 from .combinatorial_class import CombinatorialClassType

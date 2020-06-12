@@ -1,6 +1,5 @@
 """A class for automatically performing combinatorial exploration."""
 import gc
-import json
 import logging
 import platform
 import time
