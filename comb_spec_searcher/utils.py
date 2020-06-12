@@ -1,4 +1,5 @@
 """Some useful miscellaneous functions used througout the package."""
+import logging
 import os
 import sys
 import time
@@ -72,6 +73,21 @@ class RecursionLimit:
 
     def __exit__(self, exc_type, exc_value, exc_traceback) -> None:
         sys.setrecursionlimit(self.curr_limit)
+
+
+class DisableLogging:
+    """
+    Disable all logging calls of severity level and below
+    """
+
+    def __init__(self, level: int):
+        self.level = level
+
+    def __enter__(self) -> None:
+        logging.disable(self.level)
+
+    def __exit__(self, exc_type, exc_value, exc_traceback) -> None:
+        logging.disable(logging.NOTSET)
 
 
 def check_poly(min_poly, initial, root_initial=None, root_func=None):
