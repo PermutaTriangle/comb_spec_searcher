@@ -381,19 +381,15 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             comb_class = self.classdb.get_class(label)
             self._expand(comb_class, label, strategies, inferral)
 
-    @cssiteratortimer("queue")
     def _labels_to_expand(self) -> Iterator[WorkPacket]:
         yield from self.classqueue
 
-    @cssmethodtimer("queue")
     def _add_to_queue(self, label: int):
         self.classqueue.add(label)
 
-    @cssmethodtimer("queue")
     def _not_inferrable(self, label: int):
         self.classqueue.set_not_inferrable(label)
 
-    @cssmethodtimer("queue")
     def _stop_yielding(self, label: int):
         self.classqueue.set_stop_yielding(label)
 
@@ -491,7 +487,6 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         )
         found_string += self.status(elaborate=True)
         found_string += str(specification)
-        found_string += json.dumps(specification.to_jsonable(), separators=(",", ":"))
         logger.info(found_string, extra=self.logger_kwargs)
 
     def _log_status(self, start_time: float, status_update: int) -> None:

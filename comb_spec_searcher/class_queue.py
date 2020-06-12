@@ -237,9 +237,6 @@ class DefaultQueue(CSSQueue):
         status += "\tThe size of the working queue is {}\n".format(len(self.working))
         status += "\tThe size of the current queue is {}\n".format(len(self.curr_level))
         status += "\tThe size of the next queue is {}\n".format(len(self.next_level))
-        status += "\tThe number of times added to the next queue is {}\n".format(
-            sum(self.next_level.values())
-        )
         status += "\tThe size of the current queues at each level: {}".format(
             ", ".join(str(i) for i in self.queue_sizes)
         )
