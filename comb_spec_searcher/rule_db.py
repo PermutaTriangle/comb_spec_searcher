@@ -259,13 +259,13 @@ class RuleDBBase(abc.ABC):
         tree = random_proof_tree(rules_dict, root=self.equivdb[label])
         minimum = 1
         maximum = len(tree)
-        logger.debug(
+        logger.info(
             "Found a specification of size %s. Looking for the smallest.", len(tree)
         )
         # Binary search to find a smallest proof tree.
         while minimum < maximum:
             middle = (minimum + maximum) // 2
-            logger.debug("Looking for specification of size %s", middle)
+            logger.info("Looking for specification of size %s", middle)
             try:
                 tree = next(
                     proof_tree_generator_dfs(
@@ -275,7 +275,7 @@ class RuleDBBase(abc.ABC):
                 maximum = min(middle, len(tree))
             except StopIteration:
                 minimum = middle + 1
-        logger.debug("The smallest specification is of size %s.", len(tree))
+        logger.info("The smallest specification is of size %s.", len(tree))
         return self._get_specification_rules(label, tree)
 
 
