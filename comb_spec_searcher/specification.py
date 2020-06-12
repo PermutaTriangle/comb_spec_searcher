@@ -152,7 +152,7 @@ class CombinatorialSpecification(
                     pass
             rules, eqv_paths = new_rules
             comb_class_eqv_paths = tuple(
-                tuple(css.classdb.get_class(l) for l in path) for path in eqv_paths
+                tuple(map(css.classdb.get_class, path)) for path in eqv_paths
             )
             comb_class_rules = [
                 (css.classdb.get_class(label), rule) for label, rule in rules

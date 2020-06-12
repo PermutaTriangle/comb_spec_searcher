@@ -204,7 +204,9 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         )
         rule_count = self.count_objects_of_size(n, **parameters)
         self.subrecs = temprec
-        params_str = ", ".join([f"n = {n}"] + [f"{p} = {v}" for p, v in parameters])
+        params_str = ", ".join(
+            [f"n = {n}"] + [f"{p} = {v}" for p, v in parameters.items()]
+        )
         if actual_count != rule_count:
             raise SanityCheckFailure(
                 f"The following rule failed sanity check:\n"
