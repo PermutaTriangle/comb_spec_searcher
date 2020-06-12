@@ -140,11 +140,11 @@ class RuleDBBase(abc.ABC):
         Returns None if no such rule exists.
         """
         eqv_start = self.equivdb[eqv_start]
-        eqv_ends = tuple(sorted(self.equivdb[l] for l in eqv_ends))
+        eqv_ends = tuple(sorted(map(self.equivdb.__getitem__, eqv_ends)))
         for rule in self:
             start, ends = rule
             temp_start = self.equivdb[start]
-            temp_ends = tuple(sorted(self.equivdb[l] for l in ends))
+            temp_ends = tuple(sorted(map(self.equivdb.__getitem__, ends)))
             if eqv_start == temp_start and eqv_ends == temp_ends:
                 return start, ends
         return None
@@ -160,8 +160,8 @@ class RuleDBBase(abc.ABC):
 
         # only verified labels in rules_dict, in particular, there is a
         # specification if a label is in the rules_dict
-        for l in rules_dict.keys():
-            self.set_verified(l)
+        for ver_label in rules_dict.keys():
+            self.set_verified(ver_label)
 
         if self.equivdb[label] in rules_dict:
             if iterative:

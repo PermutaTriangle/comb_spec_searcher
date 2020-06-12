@@ -64,7 +64,7 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
         alphabet: Iterable[str],
         just_prefix: bool = False,
     ):
-        if not all(isinstance(l, str) and len(l) == 1 for l in alphabet):
+        if not all(isinstance(letter, str) and len(letter) == 1 for letter in alphabet):
             raise ValueError("Alphabet must be an iterable of letters.")
         self.alphabet = tuple(sorted(alphabet))
         if not self.word_over_alphabet(prefix):
@@ -78,7 +78,7 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
 
     def word_over_alphabet(self, word: str) -> bool:
         """Return True if word consists of letters from the alphabet."""
-        return isinstance(word, str) and all(l in self.alphabet for l in word)
+        return isinstance(word, str) and all(letter in self.alphabet for letter in word)
 
     # methods required for combinatorial exploration
 
@@ -126,8 +126,8 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
         if self.just_prefix:
             return "The word {}".format(self.prefix)
         return "Words over {{{}}} avoiding {{{}}} with prefix {}" "".format(
-            ", ".join(l for l in self.alphabet),
-            ", ".join(p for p in self.patterns),
+            ", ".join(self.alphabet),
+            ", ".join(self.patterns),
             self.prefix if self.prefix else '""',
         )
 
