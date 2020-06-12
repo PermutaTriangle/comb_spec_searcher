@@ -2,6 +2,7 @@
 A combinatorial specification is a set rules of the form a -> b1, ..., bk
 where each of the bi appear exactly once on the left hand side of some rule.
 """
+import logging
 from copy import copy
 from typing import Dict, Generic, Iterable, Iterator, Sequence, Tuple
 
@@ -34,7 +35,7 @@ from .strategies import (
     VerificationStrategy,
 )
 from .strategies.rule import AbstractRule
-from .utils import RecursionLimit, maple_equations, taylor_expand
+from .utils import DisableLogging, RecursionLimit, maple_equations, taylor_expand
 
 __all__ = ("CombinatorialSpecification",)
 
@@ -143,10 +144,16 @@ class CombinatorialSpecification(
                 try:
                     css.do_level()
                 except NoMoreClassesToExpandError:
-                    new_rules = css.ruledb.get_smallest_specification(css.start_label)
+                    with DisableLogging(logging.INFO):
+                        new_rules = css.ruledb.get_smallest_specification(
+                            css.start_label
+                        )
                     break
                 try:
-                    new_rules = css.ruledb.get_smallest_specification(css.start_label)
+                    with DisableLogging(logging.INFO):
+                        new_rules = css.ruledb.get_smallest_specification(
+                            css.start_label
+                        )
                     break
                 except SpecificationNotFound:
                     pass
