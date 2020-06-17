@@ -199,7 +199,8 @@ class CombinatorialSpecification(
         TODO: call comb_class for its parameters - 'x' is reserved for size.
         """
         x = var("x")
-        return Function("F_{}".format(self.get_label(comb_class)))(x)
+        extra_parameters = [var(k) for k in comb_class.extra_parameters]
+        return Function("F_{}".format(self.get_label(comb_class)))(x, *extra_parameters)
 
     def get_equations(self) -> Iterator[Eq]:
         """
