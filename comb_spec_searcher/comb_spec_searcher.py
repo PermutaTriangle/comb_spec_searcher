@@ -1,6 +1,5 @@
 """A class for automatically performing combinatorial exploration."""
 import gc
-import json
 import logging
 import platform
 import time
@@ -237,16 +236,16 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                         "NotImplementedError: %s",
                         e,
                     )
-            if any(self.ruledb.are_equivalent(label, l) for l in end_labels):
+            if any(self.ruledb.are_equivalent(label, elabel) for elabel in end_labels):
                 # This says comb_class = comb_class, so we skip it, but mark
                 # every other class as empty.
-                for l in end_labels:
-                    if not self.ruledb.are_equivalent(label, l):
-                        self._add_empty_rule(l)
+                for elabel in end_labels:
+                    if not self.ruledb.are_equivalent(label, elabel):
+                        self._add_empty_rule(elabel)
                 if self.debug:
-                    for l, c in zip(end_labels, children):
-                        if not self.ruledb.are_equivalent(label, l):
-                            assert c.is_empty()
+                    for elabel, child in zip(end_labels, children):
+                        if not self.ruledb.are_equivalent(label, elabel):
+                            assert child.is_empty()
 
             yield label, tuple(end_labels), rule
 
@@ -360,7 +359,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         eqs = set()
         for start, ends, strategy in self.ruledb.all_rules():
             parent = self.classdb.get_class(start)
-            children = tuple(self.classdb.get_class(l) for l in ends)
+            children = tuple(map(self.classdb.get_class, ends))
             rule = strategy(parent, children)
             try:
                 eq = rule.get_equation(get_function)
@@ -381,19 +380,15 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             comb_class = self.classdb.get_class(label)
             self._expand(comb_class, label, strategies, inferral)
 
-    @cssiteratortimer("queue")
     def _labels_to_expand(self) -> Iterator[WorkPacket]:
         yield from self.classqueue
 
-    @cssmethodtimer("queue")
     def _add_to_queue(self, label: int):
         self.classqueue.add(label)
 
-    @cssmethodtimer("queue")
     def _not_inferrable(self, label: int):
         self.classqueue.set_not_inferrable(label)
 
-    @cssmethodtimer("queue")
     def _stop_yielding(self, label: int):
         self.classqueue.set_stop_yielding(label)
 
@@ -491,7 +486,6 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         )
         found_string += self.status(elaborate=True)
         found_string += str(specification)
-        found_string += json.dumps(specification.to_jsonable(), separators=(",", ":"))
         logger.info(found_string, extra=self.logger_kwargs)
 
     def _log_status(self, start_time: float, status_update: int) -> None:
@@ -630,7 +624,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             return None
         start_class = self.classdb.get_class(self.start_label)
         comb_class_eqv_paths = tuple(
-            tuple(self.classdb.get_class(l) for l in path) for path in eqv_paths
+            tuple(map(self.classdb.get_class, path)) for path in eqv_paths
         )
         logger.info(
             "Creating a specification", extra=self.logger_kwargs,
