@@ -204,7 +204,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 children = rule.children
             except StrategyDoesNotApply:
                 continue
-            if len(children) == 1 and comb_class == children[0]:
+            if len(children) == 1 and rule.comb_class == children[0]:
                 logger.debug(
                     "The equivalence strategy %s returned the same "
                     "combinatorial class when applied to %r",
