@@ -633,6 +633,8 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
         """
         Verification strategies must contain a method to count the objects.
         """
+        if comb_class.extra_parameters:
+            raise NotImplementedError
         if n == comb_class.minimum_size_of_object():
             return 1
         return 0
@@ -642,6 +644,8 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
         comb_class: CombinatorialClass,
         funcs: Optional[Dict[CombinatorialClass, Function]] = None,
     ) -> Expr:
+        if comb_class.extra_parameters:
+            raise NotImplementedError
         if not self.verified(comb_class):
             raise StrategyDoesNotApply("Can't find generating functon for non-atom.")
         x = var("x")
@@ -654,6 +658,8 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
         """
         Verification strategies must contain a method to generate the objects.
         """
+        if comb_class.extra_parameters:
+            raise NotImplementedError
         if n == comb_class.minimum_size_of_object():
             yield from comb_class.objects_of_size(n)
 
@@ -661,6 +667,8 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
     def random_sample_object_of_size(
         comb_class: CombinatorialClass, n: int, **parameters: int
     ) -> CombinatorialObject:
+        if comb_class.extra_parameters:
+            raise NotImplementedError
         if n == comb_class.minimum_size_of_object():
             obj: CombinatorialObject = next(comb_class.objects_of_size(n))
             return obj
