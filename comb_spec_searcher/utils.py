@@ -192,8 +192,10 @@ def sympy_expr_to_maple(expr):
         base, exp = expr.as_base_exp()
         return f"({sympy_expr_to_maple(base)}**{sympy_expr_to_maple(exp)})"
     if isinstance(expr.__class__, sympy.core.function.UndefinedFunction):
+        if "NOTIMPLEMENTED" in str(expr):
+            return "NOTIMPLEMENTED"
         split = re.compile(r"F_([0-9]+)\((.*)\)")
-        assert split.match(repr(expr)) is not None
+        assert split.match(repr(expr)) is not None, expr
         label = split.match(repr(expr)).group(1)
         args = map(sympy.sympify, split.match(repr(expr)).group(2).split(", "))
         content = f"{label}, " + ", ".join(map(sympy_expr_to_maple, args))
