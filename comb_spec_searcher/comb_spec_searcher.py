@@ -204,7 +204,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 children = rule.children
             except StrategyDoesNotApply:
                 continue
-            if len(children) == 1 and comb_class == children[0]:
+            if len(children) == 1 and rule.comb_class == children[0]:
                 logger.debug(
                     "The equivalence strategy %s returned the same "
                     "combinatorial class when applied to %r",
@@ -213,13 +213,18 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                     extra=self.logger_kwargs,
                 )
                 continue
-            end_labels = [self.classdb.get_label(comb_class) for comb_class in children]
+            end_labels = [self.classdb.get_label(child) for child in children]
+            if rule.comb_class == comb_class:
+                start_label = label
+            else:
+                start_label = self.classdb.get_label(rule.comb_class)
+
             # TODO: observe that creating this constructor could be costly,
             # e.g. Cartesian
             if self.debug:
                 logger.debug(
                     "Adding combinatorial rule %s -> %s\n%s",
-                    label,
+                    start_label,
                     tuple(end_labels),
                     rule,
                     extra=self.logger_kwargs,
@@ -236,18 +241,20 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                         "NotImplementedError: %s",
                         e,
                     )
-            if any(self.ruledb.are_equivalent(label, elabel) for elabel in end_labels):
+            if any(
+                self.ruledb.are_equivalent(start_label, elabel) for elabel in end_labels
+            ):
                 # This says comb_class = comb_class, so we skip it, but mark
                 # every other class as empty.
                 for elabel in end_labels:
-                    if not self.ruledb.are_equivalent(label, elabel):
+                    if not self.ruledb.are_equivalent(start_label, elabel):
                         self._add_empty_rule(elabel)
                 if self.debug:
                     for elabel, child in zip(end_labels, children):
-                        if not self.ruledb.are_equivalent(label, elabel):
+                        if not self.ruledb.are_equivalent(start_label, elabel):
                             assert child.is_empty()
 
-            yield label, tuple(end_labels), rule
+            yield start_label, tuple(end_labels), rule
 
     def _add_rule(
         self, start_label: int, end_labels: Tuple[int, ...], rule: AbstractRule

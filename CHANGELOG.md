@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.1.0] - 2020-06-18
+### Added
+- When expanding a class with a strategy, you can now create rules where the
+  parent is not the class passed to the strategy.
+- The 'get_equations' method now handles multiple parameters
+
 ## [1.0.1] - 2020-06-17
 ### Changed
 - Removed some of the detailed timing in the queue to make status report
