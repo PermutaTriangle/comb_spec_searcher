@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [1.0.2] - 2020-06-18
+## [1.1.0] - 2020-06-18
 ### Added
 - When expanding a class with a strategy, you can now create rules where the
   parent is not the class passed to the strategy.
