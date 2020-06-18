@@ -224,8 +224,10 @@ class CombinatorialSpecification(
                     yield eq
             except NotImplementedError:
                 logger.info(
-                    "can't find generating function label %s. The rule was:\n%s",
+                    "can't find generating function for the rule %s -> %s. "
+                    "The rule was:\n%s",
                     self.get_label(rule.comb_class),
+                    tuple(self.get_label(child) for child in rule.children),
                     rule,
                 )
                 x = var("x")
