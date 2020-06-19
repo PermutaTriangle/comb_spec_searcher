@@ -5,7 +5,18 @@ import platform
 import time
 import warnings
 from collections import defaultdict
-from typing import Any, Dict, Generic, Iterator, Optional, Sequence, Set, Tuple, cast
+from typing import (
+    Any,
+    Dict,
+    Generic,
+    Iterator,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Union,
+    cast,
+)
 
 import logzero
 from logzero import logger
@@ -57,7 +68,11 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
     """
 
     def __init__(
-        self, start_class: CombinatorialClassType, strategy_pack: StrategyPack, **kwargs
+        self,
+        start_class: CombinatorialClassType,
+        strategy_pack: StrategyPack,
+        ruledb: Optional[Union[str, RuleDB]] = None,
+        **kwargs
     ):
         """
         Initialise CombinatorialSpecificationSearcher.
@@ -83,12 +98,16 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         self.classdb = ClassDB[CombinatorialClassType](type(start_class))
         self.classqueue = DefaultQueue(strategy_pack)
 
-        if kwargs.get("ruledb") is None:
+        if ruledb is None:
             self.ruledb: RuleDBBase = RuleDB()
-        elif kwargs.get("ruledb") == "forget":
+        elif ruledb == "forget":
             self.ruledb = RuleDBForgetStrategy(self.classdb, self.strategy_pack)
+        elif isinstance(ruledb, RuleDB):
+            self.ruledb = ruledb
         else:
-            raise ValueError("ruledb argument should be None or 'forget'")
+            raise ValueError(
+                "ruledb argument should be None or 'forget' or a RuleDB object"
+            )
 
         # initialise the run with start_class
         self.start_label = self.classdb.get_label(start_class)
