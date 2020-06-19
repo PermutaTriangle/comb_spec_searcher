@@ -538,6 +538,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
 
         If 'smallest' is set to 'True' then the searcher will return a proof
         tree that is as small as possible.
+
+        If 'expand_verified' is set to 'False' then the searcher will not
+        expand verified classes.
         """
         auto_search_start = time.time()
 

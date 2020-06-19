@@ -47,6 +47,9 @@ class CombinatorialSpecification(
     A combinatorial specification is a set rules of the form a -> b1, ..., bk
     where each of the bi appear exactly once on the left hand side of some
     rule.
+
+    The defualt is to expand verified classes, but this can be turned off by
+    setting expand_verified to False.
     """
 
     def __init__(
