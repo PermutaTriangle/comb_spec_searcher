@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- an option on `auto_search` to not expand verified classes
+
 ### Fixed
 - when subbing parameters use simultaneous flag
 
@@ -13,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - When expanding a class with a strategy, you can now create rules where the
   parent is not the class passed to the strategy.
 - The 'get_equations' method now handles multiple parameters
+
 
 ## [1.0.1] - 2020-06-17
 ### Changed
