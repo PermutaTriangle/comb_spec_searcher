@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - an option on `auto_search` to not expand verified classes
 
+### Fixed
+- when subbing parameters use simultaneous flag
+
 ## [1.1.0] - 2020-06-18
 ### Added
 - When expanding a class with a strategy, you can now create rules where the
