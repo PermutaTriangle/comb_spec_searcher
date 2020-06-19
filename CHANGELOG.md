@@ -7,12 +7,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 ### Added
 - Support for maple equations in multiple variables
+- an option on `auto_search` to not expand verified classes
+
+### Fixed
+- when subbing parameters use simultaneous flag
 
 ## [1.1.0] - 2020-06-18
 ### Added
 - When expanding a class with a strategy, you can now create rules where the
   parent is not the class passed to the strategy.
 - The 'get_equations' method now handles multiple parameters
+
 
 ## [1.0.1] - 2020-06-17
 ### Changed
