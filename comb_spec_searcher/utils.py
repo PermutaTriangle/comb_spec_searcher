@@ -205,8 +205,7 @@ def sympy_expr_to_maple(expr):
         if "_" in symb:
             var, label = symb.split("_")
             return f"{var}[{label}]"
-        else:
-            return symb
+        return symb
     if expr.is_number:
         return f"({expr})"
     raise NotImplementedError(str(expr))
