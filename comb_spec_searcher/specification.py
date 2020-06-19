@@ -434,7 +434,7 @@ class CombinatorialSpecification(
         }
 
     @classmethod
-    def from_dict(cls, d: dict, expand_verified=False):
+    def from_dict(cls, d, expand_verified=False):
         """
         Return the specification with the dictionary outputter by the
         'to_jsonable' method
