@@ -48,7 +48,7 @@ class CombinatorialSpecification(
     where each of the bi appear exactly once on the left hand side of some
     rule.
 
-    The defualt is to expand verified classes, but this can be turned off by
+    The default is to expand verified classes, but this can be turned off by
     setting expand_verified to False.
     """
 
