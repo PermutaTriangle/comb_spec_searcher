@@ -554,6 +554,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         status_update = kwargs.get("status_update", None)
         max_time = kwargs.get("max_time", None)
         smallest = kwargs.get("smallest", False)
+        expand_verified = kwargs.get("expand_verified", True)
         status_start = time.time()
         start_string = "Auto search started {}\n".format(
             time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime())
@@ -585,7 +586,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 logger.info("No more classes to expand.", extra=self.logger_kwargs)
             spec_search_start = time.time()
             logger.debug("Searching for specification.", extra=self.logger_kwargs)
-            specification = self.get_specification(smallest=smallest)
+            specification = self.get_specification(
+                smallest=smallest, expand_verified=expand_verified
+            )
             if specification is not None:
                 self._log_spec_found(specification, auto_search_start)
                 return specification
@@ -608,7 +611,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
 
     @cssmethodtimer("get specification")
     def get_specification(
-        self, smallest: bool = False
+        self, smallest: bool = False, expand_verified: bool = True
     ) -> Optional[CombinatorialSpecification]:
         """
         Return a CombinatorialSpecification if the universe contains one.
@@ -640,4 +643,6 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             start_class,
             [(self.classdb.get_class(label), rule) for label, rule in rules],
             comb_class_eqv_paths,
+            expand_verified=expand_verified,
         )
+
