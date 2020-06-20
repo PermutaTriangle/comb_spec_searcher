@@ -169,7 +169,13 @@ class RuleDBBase(abc.ABC):
                     rules_dict, root=self.equivdb[label]
                 )
             else:
-                specification = random_proof_tree(rules_dict, root=self.equivdb[label])
+                specification = min(
+                    (
+                        random_proof_tree(rules_dict, root=self.equivdb[label])
+                        for _ in range(1000)
+                    ),
+                    key=len,
+                )
         else:
             raise SpecificationNotFound("No specification for label {}".format(label))
         return specification
