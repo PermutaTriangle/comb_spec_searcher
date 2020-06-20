@@ -47,19 +47,18 @@ def prune(rdict: RulesDict) -> RulesDict:
     Prune all nodes not in a combinatorial specification. This returns a new
     pruned rules dict.
     """
-
-    def clean_rules_dict(rdict) -> RulesDict:
-        new_rules_dict = {
-            k: set(rule for rule in rules_set if all(x in rdict for x in rule))
-            for k, rules_set in rdict.items()
-        }
-        return {k: rules_set for k, rules_set in new_rules_dict.items() if rules_set}
-
-    new_rules_dict = clean_rules_dict(rdict)
-    while rdict != new_rules_dict:
-        rdict = new_rules_dict
-        new_rules_dict = clean_rules_dict(rdict)
-    return new_rules_dict
+    changed = False
+    res: RulesDict = dict()
+    for k, rule_set in rdict.items():
+        cleaned_rule_set = set(
+            rule for rule in rule_set if all(x in rdict for x in rule)
+        )
+        if cleaned_rule_set:
+            res[k] = cleaned_rule_set
+        changed = changed or len(rule_set) != len(cleaned_rule_set)
+    if changed:
+        return prune(res)
+    return res
 
 
 def iterative_prune(rules_dict: RulesDict, root: Optional[int] = None) -> RulesDict:
