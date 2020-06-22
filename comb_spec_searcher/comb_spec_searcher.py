@@ -102,7 +102,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             self.ruledb: RuleDBBase = RuleDB()
         elif ruledb == "forget":
             self.ruledb = RuleDBForgetStrategy(self.classdb, self.strategy_pack)
-        elif isinstance(ruledb, RuleDB):
+        elif isinstance(ruledb, RuleDBBase):
             self.ruledb = ruledb
         else:
             raise ValueError(
