@@ -68,17 +68,27 @@ class LimitedStrategyRuleDB(RuleDB):
             for ver_label in rules_dict.keys():
                 self.set_verified(ver_label)
 
+        # find the rules that we want to limit, and consider only those in a spec
         rules_to_isolate = self.get_eqv_rules_using_strategies()
-        logger.info("Found %s rules to isolate.", len(rules_to_isolate))
+        rules_to_isolate = set(
+            (lhs, rhs)
+            for (lhs, rhs) in rules_to_isolate
+            if lhs in rules_dict and rhs in rules_dict[lhs]
+        )
+
+        logger.debug("Found %s rules to isolate.", len(rules_to_isolate))
 
         if len(rules_to_isolate) < self.limit:
             rule_combos = [tuple(rules_to_isolate)]
         else:
             rule_combos = list(combinations(rules_to_isolate, self.limit))
         num_combos = len(rule_combos)
-        logger.info("%s combinations to check", num_combos)
+        logger.debug("%s combinations to check", num_combos)
+
+        # for each combination of <self.limit> rules, remove all but those and
+        # reprune to see if a spec still exists
         for i, combo in enumerate(rule_combos):
-            logger.info("[ %s / %s ]", i + 1, num_combos)
+            logger.debug("[ %s / %s ]", i + 1, num_combos)
             temp_rules_dict = deepcopy(rules_dict)
             for lhs, rhs in rules_to_isolate:
                 if (lhs, rhs) in combo:
@@ -114,8 +124,8 @@ class LimitedStrategyRuleDB(RuleDB):
         smallest_so_far = random_proof_tree(rules_dict, root=root)
         smallest_size = tree_size(smallest_so_far)
 
-        logger.info("Found tree with size %s.", smallest_size)
-        logger.info(
+        logger.info("Found tree with %s nodes.", smallest_size)
+        logger.debug(
             "Looking for a smaller one for %s seconds", self.minimization_time_limit
         )
 
@@ -129,7 +139,7 @@ class LimitedStrategyRuleDB(RuleDB):
                 smallest_size = next_tree_size
 
         logger.info(
-            "After %s searches, the smallest has size %s.", num_searches, smallest_size
+            "After %s searches, the smallest has %s nodes.", num_searches, smallest_size
         )
 
         return smallest_so_far
