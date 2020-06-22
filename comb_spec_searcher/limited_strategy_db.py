@@ -1,5 +1,6 @@
 """
-    Do a docstring
+    An alternative ruledb that permits restricting the number of applications of a given
+    set of strategies to a given limit.
 """
 from copy import deepcopy
 from itertools import combinations
