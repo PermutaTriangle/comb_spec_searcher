@@ -47,6 +47,9 @@ class CombinatorialSpecification(
     A combinatorial specification is a set rules of the form a -> b1, ..., bk
     where each of the bi appear exactly once on the left hand side of some
     rule.
+
+    The default is to expand verified classes, but this can be turned off by
+    setting expand_verified to False.
     """
 
     def __init__(
@@ -59,10 +62,11 @@ class CombinatorialSpecification(
             ]
         ],
         equivalence_paths: Iterable[Sequence[CombinatorialClassType]],
+        expand_verified: bool = True,
     ):
         self.root = root
         self.rules_dict: Dict[CombinatorialClassType, AbstractRule] = {}
-        self._populate_rules_dict(strategies, equivalence_paths)
+        self._populate_rules_dict(strategies, equivalence_paths, expand_verified)
         for rule in list(
             self.rules_dict.values()
         ):  # list as we lazily assign empty rules
@@ -78,6 +82,7 @@ class CombinatorialSpecification(
             ]
         ],
         equivalence_paths: Iterable[Sequence[CombinatorialClassType]],
+        expand_verified: bool,
     ) -> None:
         equivalence_rules: Dict[
             Tuple[CombinatorialClassType, CombinatorialClassType], Rule
@@ -99,9 +104,12 @@ class CombinatorialSpecification(
             elif non_empty_children:
                 self.rules_dict[comb_class] = rule
             elif isinstance(rule, VerificationRule):
-                try:
-                    verification_packs[comb_class] = rule.pack()
-                except InvalidOperationError:
+                if expand_verified:
+                    try:
+                        verification_packs[comb_class] = rule.pack()
+                    except InvalidOperationError:
+                        self.rules_dict[comb_class] = strategy(comb_class)
+                else:
                     self.rules_dict[comb_class] = strategy(comb_class)
             else:
                 raise ValueError("Non verification rule has no children.")
@@ -164,7 +172,7 @@ class CombinatorialSpecification(
             comb_class_rules = [
                 (css.classdb.get_class(label), rule) for label, rule in rules
             ]
-            self._populate_rules_dict(comb_class_rules, comb_class_eqv_paths)
+            self._populate_rules_dict(comb_class_rules, comb_class_eqv_paths, True)
 
     def get_rule(
         self, comb_class: CombinatorialClassType
@@ -224,10 +232,11 @@ class CombinatorialSpecification(
                     yield eq
             except NotImplementedError:
                 logger.info(
-                    "can't find generating function label %s."
-                    " The comb class is:\n%s",
+                    "can't find generating function for the rule %s -> %s. "
+                    "The rule was:\n%s",
                     self.get_label(rule.comb_class),
-                    rule.comb_class,
+                    tuple(self.get_label(child) for child in rule.children),
+                    rule,
                 )
                 x = var("x")
                 yield Eq(
@@ -429,7 +438,7 @@ class CombinatorialSpecification(
         }
 
     @classmethod
-    def from_dict(cls, d):
+    def from_dict(cls, d, expand_verified=False):
         """
         Return the specification with the dictionary outputter by the
         'to_jsonable' method
@@ -447,6 +456,7 @@ class CombinatorialSpecification(
                 [CombinatorialClass.from_dict(class_dict) for class_dict in eqv_path]
                 for eqv_path in d["eqv_paths"]
             ],
+            expand_verified=expand_verified,
         )
 
 
