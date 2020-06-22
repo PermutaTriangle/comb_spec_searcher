@@ -118,6 +118,9 @@ class LimitedStrategyRuleDB(RuleDB):
         raise SpecificationNotFound("No specification for label {}".format(label))
 
     def smallish_random_proof_tree(self, rules_dict: RulesDict, root: int) -> Node:
+        """Searches a rule_dict known to contain at least one specification for a
+        small specification. Spends self.minimization_time_limit seconds searching."""
+
         def tree_size(tree):
             return len(list(tree.nodes()))
 
