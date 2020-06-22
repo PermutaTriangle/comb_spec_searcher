@@ -102,8 +102,8 @@ class LimitedStrategyRuleDB(RuleDB):
             prune(temp_rules_dict)
 
             if self.equivdb[label] in temp_rules_dict:
-                for l in temp_rules_dict.keys():
-                    self.set_verified(l)
+                for label_in_spec in temp_rules_dict.keys():
+                    self.set_verified(label_in_spec)
                 if iterative:
                     specification = iterative_proof_tree_finder(
                         temp_rules_dict, root=self.equivdb[label]
