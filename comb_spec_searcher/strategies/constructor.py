@@ -11,9 +11,8 @@ Currently the constructors are implemented in one variable, namely 'n' which is
 used throughout to denote size.
 """
 import abc
-from functools import partial, reduce
+from functools import partial
 from itertools import product
-from operator import add, mul
 from random import randint
 from typing import Callable, Dict, Generic, Iterable, Iterator, List, Optional, Tuple
 
@@ -157,9 +156,14 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
     def is_equivalence() -> bool:
         return True
 
-    @staticmethod
-    def get_equation(lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
-        return Eq(lhs_func, reduce(mul, rhs_funcs, 1))
+    def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
+        res = 1
+        for extra_parameters, rhs_func in zip(self.extra_parameters, rhs_funcs):
+            res *= rhs_func.subs(
+                {child: parent for parent, child in extra_parameters.items()},
+                simultaneous=True,
+            )
+        return Eq(lhs_func, res)
 
     def reliance_profile(self, n: int, **parameters: int) -> RelianceProfile:
         # TODO: implement in multiple variables
@@ -290,9 +294,14 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
     def is_equivalence() -> bool:
         return True
 
-    @staticmethod
-    def get_equation(lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
-        return Eq(lhs_func, reduce(add, rhs_funcs, 0))
+    def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
+        res = 0
+        for rhs_func, extra_parameters in zip(rhs_funcs, self.extra_parameters):
+            res += rhs_func.subs(
+                {child: parent for parent, child in extra_parameters.items()},
+                simultaneous=True,
+            )
+        return Eq(lhs_func, res)
 
     def reliance_profile(self, n: int, **parameters: int) -> RelianceProfile:
         # TODO: implement in multiple variables and use in get_recurrence
