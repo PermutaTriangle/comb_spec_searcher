@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 ### Added
 - an option on `auto_search` to not expand verified classes
+- a `LimitedStrategyRuleDB` to find specifications with no more than a given number of
+  strategies of certain types
 
 ### Fixed
 - when subbing parameters use simultaneous flag
@@ -89,5 +91,3 @@ variables.
 ## [0.1.0] - 2019-04-15
 ### Added
 - This changelog file.
-
-
