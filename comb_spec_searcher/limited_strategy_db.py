@@ -55,7 +55,7 @@ class LimitedStrategyRuleDB(RuleDB):
         for label_rule in self:
             rule_strat = self.rule_to_strategy[label_rule]
             start, ends = label_rule
-            if any(isinstance(rule_strat, strat) for strat in self.strategies_to_limit):
+            if isinstance(rule_strat, tuple(self.strategies_to_limit)):
                 temp_start = self.equivdb[start]
                 temp_ends = tuple(sorted(map(self.equivdb.__getitem__, ends)))
                 eqv_rules_using_strategies.add((temp_start, temp_ends))
