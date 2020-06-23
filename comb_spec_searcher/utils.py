@@ -163,12 +163,23 @@ def taylor_expand(genf, n: int = 10):
     return res
 
 
-def maple_equations(root_func, count, eqs):
+def pretty_print_equations(root_func, count, eqs) -> str:
+    s = "The system of {} equations\n".format(len(eqs))
+    s += "root_func := {}:\n".format(str(root_func))
+    s += "eqs := [\n"
+    s += ",\n".join("{} = {}".format(str(eq.lhs), str(eq.rhs)) for eq in eqs)
+    s += "\n]:\n"
+    s += "count := {}:".format(list(count))
+    if all(len(eq.lhs.args) == 1 for eq in eqs):
+        s = s.replace("(x)", "")
+    return s
+
+
+def maple_equations(root_func, count, eqs) -> str:
     """
     Convert a systems of equations to version that can be copy pasted to maple.
     """
-    s = "# The system of {} equations\n".format(len(eqs))
-    s += f"root_func := {sympy_expr_to_maple(root_func)}:\n"
+    s = f"root_func := {sympy_expr_to_maple(root_func)}:\n"
     s += "eqs := [\n"
     s += ",\n".join(map(sympy_expr_to_maple, eqs))
     s += "\n]:\n"
