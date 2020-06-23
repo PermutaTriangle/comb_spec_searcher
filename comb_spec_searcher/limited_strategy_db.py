@@ -5,7 +5,7 @@
 from copy import deepcopy
 from itertools import combinations
 from time import time
-from typing import Dict, Set, Tuple, Type
+from typing import Dict, Iterable, Set, Tuple, Type
 
 from logzero import logger
 
@@ -26,20 +26,27 @@ RulesDict = Dict[int, Set[Tuple[int, ...]]]
 
 
 class LimitedStrategyRuleDB(RuleDB):
+    """
+        An alternative ruledub that permits restricting the number of applications of a
+        given set of strategies to a given limit. The limit is a single limit for the
+        total number of strategies whose type is in the given set; it is not a per-type
+        limit.
+    """
+
     def __init__(
         self,
-        strategies_to_limit: Set[Type[AbstractStrategy]],
+        strategies_to_limit: Iterable[Type[AbstractStrategy]],
         limit: int,
         mark_verified: bool,
         minimization_time_limit: int,
     ) -> None:
-        self.strategies_to_limit = strategies_to_limit
+        self.strategies_to_limit = set(strategies_to_limit)
         self.limit = limit
         self.mark_verified = mark_verified
         self.minimization_time_limit = minimization_time_limit
         super().__init__()
 
-    def get_eqv_rules_using_strategies(self) -> Set[LabelRule]:
+    def get_rules_up_to_equiv_using_strategies(self) -> Set[LabelRule]:
         """
         returns a set of rules, up to equivalence, that come from
         <self.strategies_to_limit>
@@ -65,12 +72,8 @@ class LimitedStrategyRuleDB(RuleDB):
         else:
             prune(rules_dict)  # this function removes rules not in a specification.
 
-        if self.mark_verified:
-            for ver_label in rules_dict.keys():
-                self.set_verified(ver_label)
-
         # find the rules that we want to limit, and consider only those in a spec
-        rules_to_isolate = self.get_eqv_rules_using_strategies()
+        rules_to_isolate = self.get_rules_up_to_equiv_using_strategies()
         rules_to_isolate = set(
             (lhs, rhs)
             for (lhs, rhs) in rules_to_isolate
@@ -101,6 +104,10 @@ class LimitedStrategyRuleDB(RuleDB):
                 if len(temp_rules_dict[lhs]) == 0:
                     del temp_rules_dict[lhs]
             prune(temp_rules_dict)
+
+            if self.mark_verified:
+                for ver_label in temp_rules_dict.keys():
+                    self.set_verified(ver_label)
 
             if self.equivdb[label] in temp_rules_dict:
                 for label_in_spec in temp_rules_dict.keys():
