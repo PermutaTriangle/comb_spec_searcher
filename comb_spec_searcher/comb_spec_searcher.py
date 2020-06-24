@@ -31,7 +31,8 @@ from .exception import (
     SpecificationNotFound,
     StrategyDoesNotApply,
 )
-from .rule_db import RuleDB, RuleDBBase, RuleDBForgetStrategy
+from .rule_db import RuleDB, RuleDBForgetStrategy
+from .rule_db.base import RuleDBBase
 from .specification import CombinatorialSpecification
 from .strategies import (
     AbstractStrategy,

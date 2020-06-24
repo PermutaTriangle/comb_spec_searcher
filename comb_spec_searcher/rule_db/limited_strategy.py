@@ -9,11 +9,10 @@ from typing import Dict, Iterable, Set, Tuple, Type
 
 from logzero import logger
 
+from comb_spec_searcher.exception import SpecificationNotFound
 from comb_spec_searcher.rule_db import RuleDB
 from comb_spec_searcher.strategies import AbstractStrategy
-
-from .exception import SpecificationNotFound
-from .tree_searcher import (
+from comb_spec_searcher.tree_searcher import (
     Node,
     iterative_proof_tree_finder,
     iterative_prune,
