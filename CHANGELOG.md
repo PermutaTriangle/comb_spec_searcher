@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - when subbing parameters use simultaneous flag
 
+### Changed
+- When the searcher finds a specification, it will now spends 1% of the time
+  spent searching trying to find a small specification instead of just returning
+  a random one.
+
 ## [1.1.0] - 2020-06-18
 ### Added
 - When expanding a class with a strategy, you can now create rules where the
