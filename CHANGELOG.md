@@ -8,9 +8,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - Support for maple equations in multiple variables
 - an option on `auto_search` to not expand verified classes
+- a `LimitedStrategyRuleDB` to find specifications with no more than a given number of
+  strategies of certain types
 
 ### Fixed
 - when subbing parameters use simultaneous flag
+
+### Changed
+- When the searcher finds a specification, it will now spends 1% of the time
+  spent searching trying to find a small specification instead of just returning
+  a random one.
 
 ## [1.1.0] - 2020-06-18
 ### Added
@@ -90,5 +97,3 @@ variables.
 ## [0.1.0] - 2019-04-15
 ### Added
 - This changelog file.
-
-

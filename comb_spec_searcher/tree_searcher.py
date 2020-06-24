@@ -1,6 +1,7 @@
 """
 Finds and returns a combinatorial specification, that we call a proof tree.
 """
+import time
 from collections import defaultdict, deque
 from copy import deepcopy
 from itertools import chain, product
@@ -145,6 +146,25 @@ def random_proof_tree(rules_dict: RulesDict, root: int) -> Node:
             v.children = children
         seen.add(v.label)
     return root_node
+
+
+def smallish_random_proof_tree(
+    rules_dict: RulesDict, root: int, minimization_time_limit: float
+) -> Node:
+    """
+    Searches a rule_dict known to contain at least one specification for a
+    small specification. Spends minimization_time_limit seconds searching.
+    """
+    start_time = time.time()
+    smallest_so_far = random_proof_tree(rules_dict, root=root)
+    smallest_size = len(smallest_so_far)
+    while time.time() - start_time < minimization_time_limit:
+        next_tree = random_proof_tree(rules_dict, root=root)
+        next_tree_size = len(next_tree)
+        if next_tree_size < smallest_size:
+            smallest_so_far = next_tree
+            smallest_size = next_tree_size
+    return smallest_so_far
 
 
 def proof_tree_generator_bfs(rules_dict: RulesDict, root: int) -> Iterator[Node]:
