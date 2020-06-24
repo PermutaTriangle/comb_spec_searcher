@@ -610,7 +610,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             specification = self.get_specification(
                 smallest=kwargs.get("smallest", False),
                 expand_verified=kwargs.get("expand_verified", True),
-                minimization_time_limit=0.01 * (time.time() - spec_search_start),
+                minimization_time_limit=0.01 * (time.time() - auto_search_start),
             )
             if specification is not None:
                 self._log_spec_found(specification, auto_search_start)
