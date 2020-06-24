@@ -35,7 +35,13 @@ from .strategies import (
     VerificationStrategy,
 )
 from .strategies.rule import AbstractRule
-from .utils import DisableLogging, RecursionLimit, maple_equations, taylor_expand
+from .utils import (
+    DisableLogging,
+    RecursionLimit,
+    maple_equations,
+    pretty_print_equations,
+    taylor_expand,
+)
 
 __all__ = ("CombinatorialSpecification",)
 
@@ -266,7 +272,7 @@ class CombinatorialSpecification(
             initial_conditions = [
                 len(list(self.root.objects_of_size(i))) for i in range(check + 1)
             ]
-        logger.info(maple_equations(root_func, initial_conditions, eqs,),)
+        logger.info(pretty_print_equations(root_func, initial_conditions, eqs))
         logger.info("Solving...")
         solutions = solve(
             eqs,
@@ -287,7 +293,10 @@ class CombinatorialSpecification(
                 return sympy.simplify(genf)
         raise IncorrectGeneratingFunctionError
 
-    def get_maple_equations(self, check: int = 6):
+    def get_maple_equations(self, check: int = 6) -> str:
+        """
+        Convert the systems of equations to version that can be copy pasted to maple.
+        """
         eqs = tuple(self.get_equations())
         root_func = self.get_function(self.root)
         try:
@@ -305,8 +314,29 @@ class CombinatorialSpecification(
                 len(list(self.root.objects_of_size(i))) for i in range(check + 1)
             ]
         maple_eqs = maple_equations(root_func, initial_conditions, eqs)
-        logger.info(maple_eqs)
         return maple_eqs
+
+    def get_pretty_equations(self, check: int = 6) -> str:
+        """
+        Convert the systems of equations to a more readable format.
+        """
+        eqs = tuple(self.get_equations())
+        root_func = self.get_function(self.root)
+        try:
+            logger.info("Computing initial conditions")
+            initial_conditions = [
+                self.count_objects_of_size(n=i) for i in range(check + 1)
+            ]
+        except NotImplementedError as e:
+            logger.info(
+                "Reverting to generating objects from root for initial "
+                "conditions due to:\nNotImplementedError: %s",
+                e,
+            )
+            initial_conditions = [
+                len(list(self.root.objects_of_size(i))) for i in range(check + 1)
+            ]
+        return pretty_print_equations(root_func, initial_conditions, eqs)
 
     def count_objects_of_size(self, n: int, **parameters) -> int:
         """

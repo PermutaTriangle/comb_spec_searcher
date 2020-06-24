@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
+- Support for maple equations in multiple variables
 - an option on `auto_search` to not expand verified classes
 
 ### Fixed
