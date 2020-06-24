@@ -4,8 +4,7 @@
 """
 from copy import deepcopy
 from itertools import combinations
-from time import time
-from typing import Dict, Iterable, Set, Tuple, Type
+from typing import Iterable, Set, Tuple, Type
 
 from logzero import logger
 
@@ -17,19 +16,18 @@ from comb_spec_searcher.tree_searcher import (
     iterative_proof_tree_finder,
     iterative_prune,
     prune,
-    random_proof_tree,
+    smallish_random_proof_tree,
 )
 
 LabelRule = Tuple[int, Tuple[int, ...]]
-RulesDict = Dict[int, Set[Tuple[int, ...]]]
 
 
 class LimitedStrategyRuleDB(RuleDB):
     """
-        An alternative ruledub that permits restricting the number of applications of a
-        given set of strategies to a given limit. The limit is a single limit for the
-        total number of strategies whose type is in the given set; it is not a per-type
-        limit.
+    An alternative ruledb that permits restricting the number of applications of a
+    given set of strategies to a given limit. The limit is a single limit for the
+    total number of strategies whose type is in the given set; it is not a per-type
+    limit.
     """
 
     def __init__(
@@ -37,12 +35,10 @@ class LimitedStrategyRuleDB(RuleDB):
         strategies_to_limit: Iterable[Type[AbstractStrategy]],
         limit: int,
         mark_verified: bool,
-        minimization_time_limit: int,
     ) -> None:
         self.strategies_to_limit = set(strategies_to_limit)
         self.limit = limit
         self.mark_verified = mark_verified
-        self.minimization_time_limit = minimization_time_limit
         super().__init__()
 
     def get_rules_up_to_equiv_using_strategies(self) -> Set[LabelRule]:
@@ -60,7 +56,9 @@ class LimitedStrategyRuleDB(RuleDB):
                 eqv_rules_using_strategies.add((temp_start, temp_ends))
         return eqv_rules_using_strategies
 
-    def find_specification(self, label: int, iterative: bool = False) -> Node:
+    def find_specification(
+        self, label: int, minimization_time_limit: float, iterative: bool = False
+    ) -> Node:
         """Search for a specification based on current data found."""
         rules_dict = self.rules_up_to_equivalence()
         # Prune all unverified labels (recursively)
@@ -116,40 +114,9 @@ class LimitedStrategyRuleDB(RuleDB):
                         temp_rules_dict, root=self.equivdb[label]
                     )
                 else:
-                    specification = self.smallish_random_proof_tree(
-                        temp_rules_dict, self.equivdb[label],
+                    specification = smallish_random_proof_tree(
+                        temp_rules_dict, self.equivdb[label], minimization_time_limit
                     )
                 return specification
 
         raise SpecificationNotFound("No specification for label {}".format(label))
-
-    def smallish_random_proof_tree(self, rules_dict: RulesDict, root: int) -> Node:
-        """Searches a rule_dict known to contain at least one specification for a
-        small specification. Spends self.minimization_time_limit seconds searching."""
-
-        def tree_size(tree):
-            return len(list(tree.nodes()))
-
-        start_time = time()
-        smallest_so_far = random_proof_tree(rules_dict, root=root)
-        smallest_size = tree_size(smallest_so_far)
-
-        logger.info("Found tree with %s nodes.", smallest_size)
-        logger.debug(
-            "Looking for a smaller one for %s seconds", self.minimization_time_limit
-        )
-
-        num_searches = 1
-        while time() - start_time < self.minimization_time_limit:
-            num_searches += 1
-            next_tree = random_proof_tree(rules_dict, root=root)
-            next_tree_size = tree_size(next_tree)
-            if next_tree_size < smallest_size:
-                smallest_so_far = next_tree
-                smallest_size = next_tree_size
-
-        logger.info(
-            "After %s searches, the smallest has %s nodes.", num_searches, smallest_size
-        )
-
-        return smallest_so_far

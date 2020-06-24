@@ -18,6 +18,7 @@ from comb_spec_searcher.tree_searcher import (
     proof_tree_generator_dfs,
     prune,
     random_proof_tree,
+    smallish_random_proof_tree,
 )
 
 __all__ = ["RuleDBBase", "RuleDB"]
@@ -138,7 +139,9 @@ class RuleDBBase(abc.ABC):
                 return start, ends
         return None
 
-    def find_specification(self, label: int, iterative: bool = False) -> Node:
+    def find_specification(
+        self, label: int, minimization_time_limit: float, iterative: bool = False
+    ) -> Node:
         """Search for a specification based on current data found."""
         rules_dict = self.rules_up_to_equivalence()
         # Prune all unverified labels (recursively)
@@ -158,20 +161,26 @@ class RuleDBBase(abc.ABC):
                     rules_dict, root=self.equivdb[label]
                 )
             else:
-                specification = random_proof_tree(rules_dict, root=self.equivdb[label])
+                specification = smallish_random_proof_tree(
+                    rules_dict, self.equivdb[label], minimization_time_limit
+                )
         else:
             raise SpecificationNotFound("No specification for label {}".format(label))
         return specification
 
     def get_specification_rules(
-        self, label: int, iterative: bool = False
+        self, label: int, minimization_time_limit: float, iterative: bool = False
     ) -> Specification:
         """
         Return a list of pairs (label, rule) which form a specification.
         The specification returned is random, so two calls to the function
         may result in a a different output.
         """
-        proof_tree_node = self.find_specification(label=label, iterative=iterative)
+        proof_tree_node = self.find_specification(
+            label=label,
+            iterative=iterative,
+            minimization_time_limit=minimization_time_limit,
+        )
         return self._get_specification_rules(label, proof_tree_node)
 
     def _get_specification_rules(
