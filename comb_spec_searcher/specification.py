@@ -154,6 +154,7 @@ class CombinatorialSpecification(
                     AlreadyVerified(self.rules_dict), apply_first=True
                 ),
             )
+            logger.info(css.run_information())
             while True:
                 try:
                     css.do_level()
