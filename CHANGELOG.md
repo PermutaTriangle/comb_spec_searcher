@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - an option on `auto_search` to not expand verified classes
 - a `LimitedStrategyRuleDB` to find specifications with no more than a given number of
   strategies of certain types
+- log information when expanding a verified combinatorial class.
 
 ### Fixed
 - when subbing parameters use simultaneous flag
