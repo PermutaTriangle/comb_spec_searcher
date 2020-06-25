@@ -65,7 +65,7 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
                     end_labels = tuple(
                         sorted(map(self.classdb.get_label, nonempty_children))
                     )
-                    if end_labels == key[1]:
+                    if (label, end_labels) == key:
                         return rule.strategy
                 except StrategyDoesNotApply:
                     pass
