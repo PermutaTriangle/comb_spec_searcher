@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   strategy to a child.
 - When a parameter does not map to equivalent child we don't look for it on the
   child, preventing a `KeyError`.
+- the extra parameters dictionary is flipped when creating the constructor in a
+  reverse rule.
 
 ### Changed
 - When the searcher finds a specification, it will now spends 1% of the time
