@@ -661,6 +661,10 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     def constructor(self) -> DisjointUnion:
         if self._constructor is None:
             constructor = cast(DisjointUnion, self.original_rule.constructor)
+            assert isinstance(constructor, DisjointUnion), (
+                "reverse rule coming from non disjoint union strategy - "
+                "you'll need to update the ReverseRule constructor!"
+            )
             flipped_extra_params = {
                 b: a for a, b in constructor.extra_parameters[0].items()
             }
