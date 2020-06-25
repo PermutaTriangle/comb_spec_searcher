@@ -44,7 +44,7 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
     def __getitem__(self, key: RuleKey) -> AbstractStrategy:
         if self._flatten(key) not in self.rules:
             raise KeyError(key)
-        possible_comb_classes = tuple(map(self.classdb.get_class, (key[0],) + (key[1])))
+        possible_comb_classes = tuple(map(self.classdb.get_class, (key[0],) + key[1]))
         for comb_class, strat in product(possible_comb_classes, self.pack):
             if isinstance(strat, StrategyFactory):
                 strats_or_rules: Iterable[Union[Rule, AbstractStrategy]] = strat(
