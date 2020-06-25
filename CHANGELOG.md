@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 - when subbing parameters use simultaneous flag
+- Retrieving the rule in the forget db when the rules comes from applying a
+  strategy to a child.
 
 ### Changed
 - When the searcher finds a specification, it will now spends 1% of the time
