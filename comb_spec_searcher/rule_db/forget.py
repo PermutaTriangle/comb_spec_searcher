@@ -59,13 +59,14 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
             )
             for rule in rules:
                 try:
+                    start_label = self.classdb.get_label(rule.comb_class)
                     nonempty_children = tuple(
                         c for c in rule.children if not self.classdb.is_empty(c)
                     )
                     end_labels = tuple(
                         sorted(map(self.classdb.get_label, nonempty_children))
                     )
-                    if end_labels == key[1]:
+                    if (start_label, end_labels) == key:
                         return rule.strategy
                 except StrategyDoesNotApply:
                     pass
