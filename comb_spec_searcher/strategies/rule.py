@@ -655,10 +655,10 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         ), "reversing a rule only works for equivalence rules"
         super().__init__(rule.strategy, rule.children[0], (rule.comb_class,))
         self.original_rule = rule
-        self._constructor: Optional[Constructor] = None
+        self._constructor: Optional[DisjointUnion] = None
 
     @property
-    def constructor(self) -> Constructor:
+    def constructor(self) -> DisjointUnion:
         if self._constructor is None:
             constructor = cast(DisjointUnion, self.original_rule.constructor)
             flipped_extra_params = {
