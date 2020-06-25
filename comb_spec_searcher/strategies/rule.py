@@ -567,6 +567,7 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
                 extra_parameters = {
                     rules_parameters[parent_var]: child_var
                     for parent_var, child_var in extra_parameters.items()
+                    if parent_var in rules_parameters
                 }
             self._constructor = DisjointUnion(
                 self.comb_class, self.children, (extra_parameters,)
