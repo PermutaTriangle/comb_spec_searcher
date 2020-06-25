@@ -1,6 +1,7 @@
 """
 A database for rules.
 """
+from itertools import product
 from typing import Iterable, Iterator, List, MutableMapping, Set, Tuple, Union, cast
 
 from comb_spec_searcher.class_db import ClassDB
@@ -43,14 +44,16 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
     def __getitem__(self, key: RuleKey) -> AbstractStrategy:
         if self._flatten(key) not in self.rules:
             raise KeyError(key)
-        parent = self.classdb.get_class(key[0])
-        for strat in self.pack:
+        possible_comb_classes = tuple(map(self.classdb.get_class, (key[0],) + (key[1])))
+        for comb_class, strat in product(possible_comb_classes, self.pack):
             if isinstance(strat, StrategyFactory):
-                strats_or_rules: Iterable[Union[Rule, AbstractStrategy]] = strat(parent)
+                strats_or_rules: Iterable[Union[Rule, AbstractStrategy]] = strat(
+                    comb_class
+                )
             else:
                 strats_or_rules = [strat]
             rules: Iterator[AbstractRule] = (
-                x(parent) if isinstance(x, AbstractStrategy) else x
+                x(comb_class) if isinstance(x, AbstractStrategy) else x
                 for x in strats_or_rules
             )
             for rule in rules:
