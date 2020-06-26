@@ -300,20 +300,23 @@ class CombinatorialSpecification(
         """
         eqs = tuple(self.get_equations())
         root_func = self.get_function(self.root)
-        try:
-            logger.info("Computing initial conditions")
-            initial_conditions = [
-                self.count_objects_of_size(n=i) for i in range(check + 1)
-            ]
-        except NotImplementedError as e:
-            logger.info(
-                "Reverting to generating objects from root for initial "
-                "conditions due to:\nNotImplementedError: %s",
-                e,
-            )
-            initial_conditions = [
-                len(list(self.root.objects_of_size(i))) for i in range(check + 1)
-            ]
+        logger.info("Computing initial conditions")
+        if self.root.extra_parameters:
+            initial_conditions = []
+        else:
+            try:
+                initial_conditions = [
+                    self.count_objects_of_size(n=i) for i in range(check + 1)
+                ]
+            except NotImplementedError as e:
+                logger.info(
+                    "Reverting to generating objects from root for initial "
+                    "conditions due to:\nNotImplementedError: %s",
+                    e,
+                )
+                initial_conditions = [
+                    len(list(self.root.objects_of_size(i))) for i in range(check + 1)
+                ]
         maple_eqs = maple_equations(root_func, initial_conditions, eqs)
         return maple_eqs
 
