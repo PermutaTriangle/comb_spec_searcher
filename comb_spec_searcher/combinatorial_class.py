@@ -3,7 +3,7 @@ An abstract class for a CombinatorialClass.
 """
 import abc
 from importlib import import_module
-from typing import Any, Generic, Iterator, Tuple, Type, TypeVar
+from typing import Any, Dict, Generic, Iterator, Tuple, Type, TypeVar
 
 __all__ = ("CombinatorialClass", "CombinatorialObject")
 
@@ -88,6 +88,13 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
         class. It is assumed we are always aware of 'n' which counts size.
         """
         return tuple()
+
+    def possible_parameters(self, n: int) -> Iterator[Dict[str, int]]:
+        """
+        Return all the possible values the extra parameters could take for
+        the given value of n.
+        """
+        yield dict()
 
     def objects_of_size(
         self, n: int, **parameters: int
