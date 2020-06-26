@@ -94,6 +94,12 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
         Return all the possible values the extra parameters could take for
         the given value of n.
         """
+        if self.extra_parameters:
+            raise NotImplementedError(
+                "You need to implement the possible parameters on your "
+                "CombinatorialClass in order to use various methods, including "
+                "sanity checking."
+            )
         yield dict()
 
     def objects_of_size(
