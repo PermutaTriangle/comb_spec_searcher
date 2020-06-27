@@ -20,8 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   child, preventing a `KeyError`.
 - the extra parameters dictionary is flipped when creating the constructor in a
   reverse rule.
-- fixed the extra parameter map in `EquivalencePathRule` which was not
-  composing correctly.
+- fixed the `EquivalencePathRule.constructor` method
 
 ### Changed
 - When the searcher finds a specification, it will now spends 1% of the time
