@@ -59,6 +59,9 @@ class RuleDBBase(abc.ABC):
         if is_equiv:
             self.set_equivalent(start, ends[0])
         if len(ends) != 1 or is_equiv or not self.are_equivalent(start, ends[0]):
+            # to avoid overwriting an equivalence rule with a non-equivalence
+            # rule, we only save if an equivalence rule, or does not have the
+            # same start -> ends as some equivalence rule.
             self.rule_to_strategy[(start, ends)] = rule.strategy
 
     def is_verified(self, label: int) -> bool:
