@@ -61,7 +61,14 @@ class RuleDBBase(abc.ABC):
             and rule.constructor.is_equivalence()
         ):
             self.set_equivalent(start, ends[0])
-        self.rule_to_strategy[(start, ends)] = rule.strategy
+        if len(ends) != 1 or (
+            isinstance(rule, Rule)
+            and (
+                rule.constructor.is_equivalence()
+                or not self.are_equivalent(start, ends[0])
+            )
+        ):
+            self.rule_to_strategy[(start, ends)] = rule.strategy
 
     def is_verified(self, label: int) -> bool:
         """Return True if label has been verified."""

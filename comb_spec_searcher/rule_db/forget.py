@@ -67,6 +67,15 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
                         sorted(map(self.classdb.get_label, nonempty_children))
                     )
                     if (start_label, end_labels) == key:
+                        if (
+                            len(end_labels) == 1
+                            and self.are_equivalent(start_label, end_labels[0])
+                            and (
+                                isinstance(rule, Rule)
+                                and not rule.constructor.is_equivalence()
+                            )
+                        ):
+                            continue
                         return rule.strategy
                 except StrategyDoesNotApply:
                     pass
