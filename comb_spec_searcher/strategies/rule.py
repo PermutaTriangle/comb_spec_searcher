@@ -186,8 +186,6 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
 
         Raise a SanityCheckFailure error if the sanity_check fails.
         """
-        if self.comb_class.extra_parameters:
-            raise NotImplementedError("sanity check only implemented in one variable")
 
         if isinstance(self, VerificationRule):
             # TODO: test more thoroughly
@@ -222,7 +220,13 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
                 f"The actual count is {actual_count}.\n"
                 f"The rule count is {rule_count}.",
             )
-
+        if any(
+            comb_class.extra_parameters
+            for comb_class in [self.comb_class, *self.children]
+        ):
+            # Can't sanity check generation of objects for classes with extra
+            # TODO test more thoroughly
+            return True
         actual_objects = set(
             list(brute_force_generation(self.comb_class, n, **parameters))
         )

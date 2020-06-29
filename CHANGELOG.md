@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   strategies of certain types
 - log information when expanding a verified combinatorial class.
 - added `is_equivalence` method to `Rule`
+- sanity checking in multiple variables. In order to use this one must implement
+  the method `possible_parameters` on their `CombinatorialClass`. The sanity
+  checker only checks counts, not generation of objects.
+- Added the `initial_conditions` method to `CombinatorialClass` and a
+  `get_initial_conditions` method to `CombinatorialSpecification`.
 
 ### Fixed
 - when subbing parameters use simultaneous flag
