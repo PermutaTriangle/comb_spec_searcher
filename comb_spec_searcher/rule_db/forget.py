@@ -5,6 +5,7 @@ from itertools import product
 from typing import Iterable, Iterator, List, MutableMapping, Set, Tuple, Union, cast
 
 from comb_spec_searcher.class_db import ClassDB
+from comb_spec_searcher.equiv_db import EquivalenceDB
 from comb_spec_searcher.exception import StrategyDoesNotApply
 from comb_spec_searcher.strategies import Rule
 from comb_spec_searcher.strategies.rule import AbstractRule
@@ -28,8 +29,11 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
     (a, (b, c,...)) we store (a, b, c,...)
     """
 
-    def __init__(self, classdb: ClassDB, strat_pack: StrategyPack) -> None:
+    def __init__(
+        self, classdb: ClassDB, strat_pack: StrategyPack, equivdb: EquivalenceDB
+    ) -> None:
         self.classdb = classdb
+        self.equivdb = equivdb
         self.pack = strat_pack
         self.rules: Set[Tuple[int, ...]] = set()
 
@@ -41,9 +45,18 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
     def _unflatten(tuple_: Tuple[int, ...]) -> RuleKey:
         return (tuple_[0], tuple_[1:])
 
+    def _is_equiv(self, key: RuleKey) -> bool:
+        """
+        Returns True if the key should be the key of an equivalence rule.
+        """
+        start = key[0]
+        ends = key[1]
+        return len(ends) == 1 and self.equivdb.equivalent(start, ends[0])
+
     def __getitem__(self, key: RuleKey) -> AbstractStrategy:
         if self._flatten(key) not in self.rules:
             raise KeyError(key)
+        expect_equiv = self._is_equiv(key)
         possible_labels = (key[0],) + key[1]
         for label, strat in product(possible_labels, self.pack):
             comb_class = self.classdb.get_class(label)
@@ -67,6 +80,8 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
                         sorted(map(self.classdb.get_label, nonempty_children))
                     )
                     if (start_label, end_labels) == key:
+                        if expect_equiv and not rule.is_equivalence():
+                            continue
                         return rule.strategy
                 except StrategyDoesNotApply:
                     pass
@@ -96,7 +111,7 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
 class RuleDBForgetStrategy(RuleDBBase):
     def __init__(self, classdb: ClassDB, strat_pack: StrategyPack) -> None:
         super().__init__()
-        self.rules = RecomputingDict(classdb, strat_pack)
+        self.rules = RecomputingDict(classdb, strat_pack, self.equivdb)
 
     @property
     def rule_to_strategy(self):

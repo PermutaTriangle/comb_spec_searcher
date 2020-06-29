@@ -9,7 +9,7 @@ from logzero import logger
 
 from comb_spec_searcher.equiv_db import EquivalenceDB
 from comb_spec_searcher.exception import SpecificationNotFound
-from comb_spec_searcher.strategies import AbstractStrategy, Rule, VerificationRule
+from comb_spec_searcher.strategies import AbstractStrategy, VerificationRule
 from comb_spec_searcher.strategies.rule import AbstractRule
 from comb_spec_searcher.tree_searcher import (
     Node,
@@ -55,13 +55,14 @@ class RuleDBBase(abc.ABC):
         ends = tuple(sorted(ends))
         if isinstance(rule, VerificationRule):
             self.set_verified(start)
-        if (
-            isinstance(rule, Rule)
-            and len(ends) == 1
-            and rule.constructor.is_equivalence()
-        ):
+        is_equiv = rule.is_equivalence()
+        if is_equiv:
             self.set_equivalent(start, ends[0])
-        self.rule_to_strategy[(start, ends)] = rule.strategy
+        if len(ends) != 1 or is_equiv or not self.are_equivalent(start, ends[0]):
+            # to avoid overwriting an equivalence rule with a non-equivalence
+            # rule, we only save if an equivalence rule, or does not have the
+            # same start -> ends as some equivalence rule.
+            self.rule_to_strategy[(start, ends)] = rule.strategy
 
     def is_verified(self, label: int) -> bool:
         """Return True if label has been verified."""
