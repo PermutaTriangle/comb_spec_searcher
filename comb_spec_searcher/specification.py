@@ -4,11 +4,13 @@ where each of the bi appear exactly once on the left hand side of some rule.
 """
 import logging
 from copy import copy
-from typing import Dict, Generic, Iterable, Iterator, Sequence, Tuple
+from functools import reduce
+from operator import mul
+from typing import Dict, Generic, Iterable, Iterator, List, Sequence, Tuple
 
 import sympy
 from logzero import logger
-from sympy import Eq, Expr, Function, solve, var
+from sympy import Eq, Expr, Function, Number, solve, var
 
 from .combinatorial_class import (
     CombinatorialClass,
@@ -251,6 +253,30 @@ class CombinatorialSpecification(
                     sympy.Function("NOTIMPLEMENTED")(x),
                 )
 
+    def get_initial_conditions(self, check: int = 6) -> List[Expr]:
+        """
+        Compute the initial conditions of the root class. It will use the
+        `count_objects_of_size` method if implemented, else resort to
+        the method on the `initial_conditions` method on `CombinatorialClass.
+        """
+        logger.info("Computing initial conditions")
+        try:
+            return [
+                sum(
+                    Number(self.count_objects_of_size(n=n, **parameters))
+                    * reduce(mul, [var(k) ** val for k, val in parameters.items()], 1)
+                    for parameters in self.root.possible_parameters(n)
+                )
+                for n in range(check + 1)
+            ]
+        except NotImplementedError as e:
+            logger.info(
+                "Reverting to generating objects from root for initial "
+                "conditions due to:\nNotImplementedError: %s",
+                e,
+            )
+        return self.root.initial_conditions(check)
+
     def get_genf(self, check: int = 6) -> Expr:
         """
         Return the generating function for the root comb class.
@@ -259,20 +285,8 @@ class CombinatorialSpecification(
         """
         eqs = tuple(self.get_equations())
         root_func = self.get_function(self.root)
-        try:
-            logger.info("Computing initial conditions")
-            initial_conditions = [
-                self.count_objects_of_size(n=i) for i in range(check + 1)
-            ]
-        except NotImplementedError as e:
-            logger.info(
-                "Reverting to generating objects from root for initial "
-                "conditions due to:\nNotImplementedError: %s",
-                e,
-            )
-            initial_conditions = [
-                len(list(self.root.objects_of_size(i))) for i in range(check + 1)
-            ]
+        logger.info("Computing initial conditions")
+        initial_conditions = self.get_initial_conditions(check)
         logger.info(pretty_print_equations(root_func, initial_conditions, eqs))
         logger.info("Solving...")
         solutions = solve(
@@ -300,23 +314,7 @@ class CombinatorialSpecification(
         """
         eqs = tuple(self.get_equations())
         root_func = self.get_function(self.root)
-        logger.info("Computing initial conditions")
-        if self.root.extra_parameters:
-            initial_conditions = []
-        else:
-            try:
-                initial_conditions = [
-                    self.count_objects_of_size(n=i) for i in range(check + 1)
-                ]
-            except NotImplementedError as e:
-                logger.info(
-                    "Reverting to generating objects from root for initial "
-                    "conditions due to:\nNotImplementedError: %s",
-                    e,
-                )
-                initial_conditions = [
-                    len(list(self.root.objects_of_size(i))) for i in range(check + 1)
-                ]
+        initial_conditions = self.get_initial_conditions(check)
         maple_eqs = maple_equations(root_func, initial_conditions, eqs)
         return maple_eqs
 
@@ -326,20 +324,7 @@ class CombinatorialSpecification(
         """
         eqs = tuple(self.get_equations())
         root_func = self.get_function(self.root)
-        try:
-            logger.info("Computing initial conditions")
-            initial_conditions = [
-                self.count_objects_of_size(n=i) for i in range(check + 1)
-            ]
-        except NotImplementedError as e:
-            logger.info(
-                "Reverting to generating objects from root for initial "
-                "conditions due to:\nNotImplementedError: %s",
-                e,
-            )
-            initial_conditions = [
-                len(list(self.root.objects_of_size(i))) for i in range(check + 1)
-            ]
+        initial_conditions = self.get_initial_conditions(check)
         return pretty_print_equations(root_func, initial_conditions, eqs)
 
     def count_objects_of_size(self, n: int, **parameters) -> int:
