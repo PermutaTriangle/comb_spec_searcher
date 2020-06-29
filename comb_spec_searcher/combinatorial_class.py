@@ -5,7 +5,7 @@ import abc
 from functools import reduce
 from importlib import import_module
 from operator import mul
-from typing import Any, Dict, Generic, Iterator, List, Tuple, Type, TypeVar
+from typing import Dict, Generic, Iterator, List, Tuple, Type, TypeVar
 
 from sympy import Expr, Number, var
 
