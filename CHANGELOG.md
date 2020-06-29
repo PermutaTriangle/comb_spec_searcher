@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - a `LimitedStrategyRuleDB` to find specifications with no more than a given number of
   strategies of certain types
 - log information when expanding a verified combinatorial class.
+- added `is_equivalence` method to `Rule`
 
 ### Fixed
 - when subbing parameters use simultaneous flag
@@ -21,6 +22,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - the extra parameters dictionary is flipped when creating the constructor in a
   reverse rule.
 - fixed the `EquivalencePathRule.constructor` method
+- only save equivalence rules for rules a -> (b,) if a and b are equivalent.
 
 ### Changed
 - When the searcher finds a specification, it will now spends 1% of the time
