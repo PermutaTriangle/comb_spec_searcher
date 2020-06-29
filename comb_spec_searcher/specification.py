@@ -382,7 +382,11 @@ class CombinatorialSpecification(
         Raise an SanityCheckFailure error if it fails.
         """
         return all(
-            all(rule.sanity_check(n) for rule in self.rules_dict.values())
+            all(
+                rule.sanity_check(n, **parameters)
+                for rule in self.rules_dict.values()
+                for parameters in rule.comb_class.possible_parameters(n)
+            )
             for n in range(length + 1)
         )
 

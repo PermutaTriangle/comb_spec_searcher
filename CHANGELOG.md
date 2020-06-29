@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - a `LimitedStrategyRuleDB` to find specifications with no more than a given number of
   strategies of certain types
 - log information when expanding a verified combinatorial class.
+- sanity checking in multiple variables. In order to use this one must implement
+  the method `possible_parameters` on their `CombinatorialClass`. The sanity
+  checker only checks counts, not generation of objects.
 
 ### Fixed
 - when subbing parameters use simultaneous flag
