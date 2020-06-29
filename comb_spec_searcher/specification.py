@@ -99,11 +99,8 @@ class CombinatorialSpecification(
                 continue
             rule = strategy(comb_class)
             non_empty_children = rule.non_empty_children()
-            if (
-                isinstance(rule, Rule)
-                and len(non_empty_children) == 1
-                and rule.constructor.is_equivalence()
-            ):
+            if rule.is_equivalence():
+                assert isinstance(rule, Rule)
                 equivalence_rules[(comb_class, non_empty_children[0])] = (
                     rule if len(rule.children) == 1 else rule.to_equivalence_rule()
                 )
