@@ -160,7 +160,8 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         res = 1
         for extra_parameters, rhs_func in zip(self.extra_parameters, rhs_funcs):
             res *= rhs_func.subs(
-                {child: parent for parent, child in extra_parameters.items()}
+                {child: parent for parent, child in extra_parameters.items()},
+                simultaneous=True,
             )
         return Eq(lhs_func, res)
 
@@ -297,7 +298,8 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         res = 0
         for rhs_func, extra_parameters in zip(rhs_funcs, self.extra_parameters):
             res += rhs_func.subs(
-                {child: parent for parent, child in extra_parameters.items()}
+                {child: parent for parent, child in extra_parameters.items()},
+                simultaneous=True,
             )
         return Eq(lhs_func, res)
 
