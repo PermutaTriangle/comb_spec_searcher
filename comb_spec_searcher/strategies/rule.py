@@ -180,8 +180,6 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
 
         Raise a SanityCheckFailure error if the sanity_check fails.
         """
-        if self.comb_class.extra_parameters:
-            raise NotImplementedError("sanity check only implemented in one variable")
 
         if isinstance(self, VerificationRule):
             # TODO: test more thoroughly
@@ -216,7 +214,13 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
                 f"The actual count is {actual_count}.\n"
                 f"The rule count is {rule_count}.",
             )
-
+        if any(
+            comb_class.extra_parameters
+            for comb_class in [self.comb_class, *self.children]
+        ):
+            # Can't sanity check generation of objects for classes with extra
+            # TODO test more thoroughly
+            return True
         actual_objects = set(
             list(brute_force_generation(self.comb_class, n, **parameters))
         )
@@ -480,22 +484,25 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         super().__init__(rule.strategy, rule.comb_class, (child,))
         self.child_idx = rule.children.index(child)
         self.actual_children = rule.children
-        self._constructor: Optional[Constructor] = None
+        self._constructor: Optional[DisjointUnion] = None
 
     @property
-    def constructor(
-        self,
-    ) -> Constructor[CombinatorialClassType, CombinatorialObjectType]:
+    def constructor(self,) -> DisjointUnion:
         """
         Return the constructor, that contains all the information about how to
         count/generate objects from the rule.
         """
         if self._constructor is None:
-            self._constructor = self.strategy.constructor(
-                self.comb_class, self.actual_children
+            original_constructor = cast(
+                DisjointUnion,
+                self.strategy.constructor(self.comb_class, self.actual_children),
             )
-            if self._constructor is None:
-                raise StrategyDoesNotApply("{} does not apply".format(self.strategy))
+            assert isinstance(original_constructor, DisjointUnion)
+            self._constructor = DisjointUnion(
+                self.comb_class,
+                self.children,
+                (original_constructor.extra_parameters[self.child_idx],),
+            )
         return self._constructor
 
     @property
@@ -548,25 +555,13 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
                 k: k for k in self.comb_class.extra_parameters
             }
             for rule in self.rules:
-                # TODO: call extra parameters on Rule class
-                if isinstance(rule, EquivalenceRule):
-                    rules_parameters = rule.strategy.extra_parameters(
-                        rule.comb_class, rule.actual_children
-                    )[rule.child_idx]
-                elif isinstance(rule, ReverseRule):
-                    forward_rule_parameters = rule.strategy.extra_parameters(
-                        rule.children[0]
-                    )[0]
-                    rules_parameters = {
-                        b: a for a, b in forward_rule_parameters.items()
-                    }
-                else:
-                    rules_parameters = rule.strategy.extra_parameters(
-                        rule.comb_class, rule.children
-                    )[0]
+                original_constructor = rule.constructor
+                assert isinstance(original_constructor, DisjointUnion)
+                rules_parameters = original_constructor.extra_parameters[0]
                 extra_parameters = {
-                    rules_parameters[parent_var]: child_var
+                    parent_var: rules_parameters[child_var]
                     for parent_var, child_var in extra_parameters.items()
+                    if child_var in rules_parameters
                 }
             self._constructor = DisjointUnion(
                 self.comb_class, self.children, (extra_parameters,)
@@ -654,10 +649,23 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         ), "reversing a rule only works for equivalence rules"
         super().__init__(rule.strategy, rule.children[0], (rule.comb_class,))
         self.original_rule = rule
+        self._constructor: Optional[DisjointUnion] = None
 
     @property
-    def constructor(self) -> Constructor:
-        return self.strategy.constructor(self.comb_class, self.children)
+    def constructor(self) -> DisjointUnion:
+        if self._constructor is None:
+            original_constructor = self.original_rule.constructor
+            assert isinstance(original_constructor, DisjointUnion), (
+                "reverse rule coming from non disjoint union strategy - "
+                "you'll need to update the ReverseRule constructor!"
+            )
+            flipped_extra_params = {
+                b: a for a, b in original_constructor.extra_parameters[0].items()
+            }
+            self._constructor = DisjointUnion(
+                self.comb_class, self.children, (flipped_extra_params,)
+            )
+        return self._constructor
 
     @property
     def formal_step(self) -> str:

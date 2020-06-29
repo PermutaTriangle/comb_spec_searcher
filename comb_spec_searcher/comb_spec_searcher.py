@@ -5,7 +5,18 @@ import platform
 import time
 import warnings
 from collections import defaultdict
-from typing import Any, Dict, Generic, Iterator, Optional, Sequence, Set, Tuple, cast
+from typing import (
+    Any,
+    Dict,
+    Generic,
+    Iterator,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Union,
+    cast,
+)
 
 import logzero
 from logzero import logger
@@ -20,7 +31,8 @@ from .exception import (
     SpecificationNotFound,
     StrategyDoesNotApply,
 )
-from .rule_db import RuleDB, RuleDBBase, RuleDBForgetStrategy
+from .rule_db import RuleDB, RuleDBForgetStrategy
+from .rule_db.base import RuleDBBase
 from .specification import CombinatorialSpecification
 from .strategies import (
     AbstractStrategy,
@@ -57,7 +69,11 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
     """
 
     def __init__(
-        self, start_class: CombinatorialClassType, strategy_pack: StrategyPack, **kwargs
+        self,
+        start_class: CombinatorialClassType,
+        strategy_pack: StrategyPack,
+        ruledb: Optional[Union[str, RuleDB]] = None,
+        **kwargs,
     ):
         """
         Initialise CombinatorialSpecificationSearcher.
@@ -83,12 +99,16 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         self.classdb = ClassDB[CombinatorialClassType](type(start_class))
         self.classqueue = DefaultQueue(strategy_pack)
 
-        if kwargs.get("ruledb") is None:
+        if ruledb is None:
             self.ruledb: RuleDBBase = RuleDB()
-        elif kwargs.get("ruledb") == "forget":
+        elif ruledb == "forget":
             self.ruledb = RuleDBForgetStrategy(self.classdb, self.strategy_pack)
+        elif isinstance(ruledb, RuleDBBase):
+            self.ruledb = ruledb
         else:
-            raise ValueError("ruledb argument should be None or 'forget'")
+            raise ValueError(
+                "ruledb argument should be None or 'forget' or a RuleDB object"
+            )
 
         # initialise the run with start_class
         self.start_label = self.classdb.get_label(start_class)
@@ -590,6 +610,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             specification = self.get_specification(
                 smallest=kwargs.get("smallest", False),
                 expand_verified=kwargs.get("expand_verified", True),
+                minimization_time_limit=0.01 * (time.time() - auto_search_start),
             )
             if specification is not None:
                 self._log_spec_found(specification, auto_search_start)
@@ -613,10 +634,15 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
 
     @cssmethodtimer("get specification")
     def get_specification(
-        self, smallest: bool = False, expand_verified: bool = True
+        self,
+        minimization_time_limit: float = 10,
+        smallest: bool = False,
+        expand_verified: bool = True,
     ) -> Optional[CombinatorialSpecification]:
         """
         Return a CombinatorialSpecification if the universe contains one.
+
+        The minimization_time_limit only applies when smallest is false.
 
         The function will raise a SpecificationNotFound if no such
         CombinatorialSpecification exists in the universe.
@@ -630,7 +656,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 )
             else:
                 rules, eqv_paths = self.ruledb.get_specification_rules(
-                    self.start_label, iterative=self.iterative
+                    self.start_label,
+                    minimization_time_limit=minimization_time_limit,
+                    iterative=self.iterative,
                 )
         except SpecificationNotFound:
             return None

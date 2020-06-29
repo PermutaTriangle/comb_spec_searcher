@@ -6,10 +6,31 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
+- Support for maple equations in multiple variables
 - an option on `auto_search` to not expand verified classes
+- a `LimitedStrategyRuleDB` to find specifications with no more than a given number of
+  strategies of certain types
+- log information when expanding a verified combinatorial class.
+- sanity checking in multiple variables. In order to use this one must implement
+  the method `possible_parameters` on their `CombinatorialClass`. The sanity
+  checker only checks counts, not generation of objects.
+- Added the `initial_conditions` method to `CombinatorialClass` and a
+  `get_initial_conditions` method to `CombinatorialSpecification`.
 
 ### Fixed
 - when subbing parameters use simultaneous flag
+- Retrieving the rule in the forget db when the rules comes from applying a
+  strategy to a child.
+- When a parameter does not map to equivalent child we don't look for it on the
+  child, preventing a `KeyError`.
+- the extra parameters dictionary is flipped when creating the constructor in a
+  reverse rule.
+- fixed the `EquivalencePathRule.constructor` method
+
+### Changed
+- When the searcher finds a specification, it will now spends 1% of the time
+  spent searching trying to find a small specification instead of just returning
+  a random one.
 
 ## [1.1.0] - 2020-06-18
 ### Added
@@ -89,5 +110,3 @@ variables.
 ## [0.1.0] - 2019-04-15
 ### Added
 - This changelog file.
-
-
