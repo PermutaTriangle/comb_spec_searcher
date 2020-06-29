@@ -2,10 +2,12 @@
 An abstract class for a CombinatorialClass.
 """
 import abc
+from functools import reduce
 from importlib import import_module
+from operator import mul
 from typing import Any, Dict, Generic, Iterator, List, Tuple, Type, TypeVar
 
-from sympy import Expr, Number
+from sympy import Expr, Number, var
 
 __all__ = ("CombinatorialClass", "CombinatorialObject")
 
@@ -106,14 +108,19 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
         Returns a list with the initial conditions to size `check` of the
         CombinatorialClass.
         """
-        if self.extra_parameters:
-            raise NotImplementedError(
-                "To get the initial conditions, you need to implement the"
-                " `initial_conditions` method to return a polynomial over the"
-                " parameters for each n."
+
+        def monomial(parameters: Dict[str, int]) -> Expr:
+            return reduce(
+                mul, [var(k) ** val for k, val in parameters.items()], Number(1)
             )
+
         return [
-            Number(sum(1 for _ in self.objects_of_size(n))) for n in range(check + 1)
+            sum(
+                sum(Number(1) for _ in self.objects_of_size(n, **parameters))
+                * monomial(parameters)
+                for parameters in self.possible_parameters(n)
+            )
+            for n in range(check + 1)
         ]
 
     def is_atom(self):

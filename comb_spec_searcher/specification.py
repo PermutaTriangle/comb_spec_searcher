@@ -261,7 +261,6 @@ class CombinatorialSpecification(
         """
         logger.info("Computing initial conditions")
         try:
-            raise NotImplementedError
             return [
                 sum(
                     Number(self.count_objects_of_size(n=n, **parameters))
