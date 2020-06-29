@@ -3,7 +3,9 @@ An abstract class for a CombinatorialClass.
 """
 import abc
 from importlib import import_module
-from typing import Any, Dict, Generic, Iterator, Tuple, Type, TypeVar
+from typing import Any, Dict, Generic, Iterator, List, Tuple, Type, TypeVar
+
+from sympy import Expr, Number
 
 __all__ = ("CombinatorialClass", "CombinatorialObject")
 
@@ -58,7 +60,7 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
             "comb_class": c.__name__,
         }
 
-    def get_genf(self, *args, **kwargs) -> Any:
+    def get_genf(self, *args, **kwargs) -> Expr:
         """Return the generating function for the combinatorial class"""
         raise NotImplementedError(
             (
@@ -66,18 +68,6 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
                 "for a proof tree then you must implement"
                 " 'get_genf' for verified combinatorial "
                 "classes."
-            )
-        )
-
-    def get_min_poly(self, *args, **kwargs) -> Any:
-        """Return the minimum polynomial for the combinatorial class
-        in terms of 'F'"""
-        raise NotImplementedError(
-            (
-                "If you want to use the 'get_min_poly' "
-                "function for a proof tree then you must "
-                "implement 'get_genf' for verified "
-                "combinatorial classes."
             )
         )
 
@@ -110,6 +100,21 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
             "To use object generation and sampling with the AtomStrategy, this"
             "must be at least implemented for every class that is an atom."
         )
+
+    def initial_conditions(self, check: int = 6) -> List[Expr]:
+        """
+        Returns a list with the initial conditions to size `check` of the
+        CombinatorialClass.
+        """
+        if self.extra_parameters:
+            raise NotImplementedError(
+                "To get the initial conditions, you need to implement the"
+                " `initial_conditions` method to return a polynomial over the"
+                " parameters for each n."
+            )
+        return [
+            Number(sum(1 for _ in self.objects_of_size(n))) for n in range(check + 1)
+        ]
 
     def is_atom(self):
         """Returns True if the combinatorial class contains a single object."""
