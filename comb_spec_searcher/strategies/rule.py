@@ -194,11 +194,17 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         def brute_force_count(
             comb_class: CombinatorialClassType, n: int, **parameters
         ) -> int:
+            assert set(comb_class.extra_parameters) == set(
+                parameters
+            ), f"{comb_class.extra_parameters, set(parameters)}"
             return len(list(comb_class.objects_of_size(n, **parameters)))
 
         def brute_force_generation(
             comb_class: CombinatorialClassType, n: int, **parameters: int
         ) -> Iterator[CombinatorialObjectType]:
+            assert set(comb_class.extra_parameters) == set(
+                parameters
+            ), f"{comb_class.extra_parameters, set(parameters)}"
             yield from comb_class.objects_of_size(n, **parameters)
 
         actual_count = brute_force_count(self.comb_class, n, **parameters)
