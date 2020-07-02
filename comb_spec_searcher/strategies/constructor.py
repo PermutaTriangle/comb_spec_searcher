@@ -268,6 +268,9 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
     variable on the parent it came from.
     If a parents variable does not map to a child, then this variable must be 0
     as the child contains no occurences.
+
+    The zeroes are a tuple of parameters for each child which must take a value
+    of zero.
     """
 
     def __init__(
@@ -275,10 +278,12 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         parent: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...],
         extra_parameters: Optional[Tuple[Dict[str, str], ...]] = None,
+        fixed_values: Optional[Tuple[Dict[str, int], ...]] = None,
     ):
         self.number_of_children = len(children)
         if extra_parameters is not None:
             self.extra_parameters = extra_parameters
+            assert len(extra_parameters) == len(children)
         else:
             assert not parent.extra_parameters
             self.extra_parameters = tuple(
@@ -289,6 +294,11 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
             frozenset(parent.extra_parameters) - frozenset(parameter.keys())
             for parameter in self.extra_parameters
         )
+        if fixed_values is not None:
+            self.fixed_values = fixed_values
+            assert len(fixed_values) == len(children)
+        else:
+            self.fixed_values = tuple({} for _ in children)
 
     @staticmethod
     def is_equivalence() -> bool:
@@ -319,8 +329,8 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         child match the parents parameters.
         """
         res: List[Optional[Dict[str, int]]] = []
-        for extra_parameters in self.extra_parameters:
-            update_params: Dict[str, int] = {}
+        for i, extra_parameters in enumerate(self.extra_parameters):
+            update_params: Dict[str, int] = {**self.fixed_values[i]}
             for parent_var, child_var in extra_parameters.items():
                 updated_value = parameters[parent_var]
                 if child_var not in update_params:
@@ -334,8 +344,6 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         return res
 
     def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
-        if not parameters:
-            return sum(rec(n) for rec in subrecs)
         res = 0
         for (idx, rec), extra_params in zip(
             enumerate(subrecs), self.get_extra_parameters(n, **parameters)
