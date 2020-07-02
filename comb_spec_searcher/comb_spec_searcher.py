@@ -312,6 +312,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
 
             cleaned_end_labels.append(child_label)
 
+        if cleaned_end_labels == [start_label]:
+            return
+
         if rule.ignore_parent:
             self._stop_yielding(start_label)
 
