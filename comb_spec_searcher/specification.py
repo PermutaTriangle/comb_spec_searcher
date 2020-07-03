@@ -21,8 +21,6 @@ from .combinatorial_class import (
 from .exception import (
     IncorrectGeneratingFunctionError,
     InvalidOperationError,
-    NoMoreClassesToExpandError,
-    SpecificationNotFound,
     TaylorExpansionError,
 )
 from .strategies import (
