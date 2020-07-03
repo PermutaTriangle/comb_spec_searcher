@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - ignore rules where the left and non-empty right hand sides are the same
 
+### Changed
+- When expanding verified nodes in a specification, the search now uses `auto_search`,
+  instead of `do_level` and `get_smallest_specification`.
+
 ## [1.2.0] - 2020-06-29
 ### Added
 - Support for maple equations in multiple variables

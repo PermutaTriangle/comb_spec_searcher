@@ -154,31 +154,34 @@ class CombinatorialSpecification(
                 ),
             )
             logger.info(css.run_information())
-            while True:
-                try:
-                    css.do_level()
-                except NoMoreClassesToExpandError:
-                    with DisableLogging(logging.INFO):
-                        new_rules = css.ruledb.get_smallest_specification(
-                            css.start_label
-                        )
-                    break
-                try:
-                    with DisableLogging(logging.INFO):
-                        new_rules = css.ruledb.get_smallest_specification(
-                            css.start_label
-                        )
-                    break
-                except SpecificationNotFound:
-                    pass
-            rules, eqv_paths = new_rules
-            comb_class_eqv_paths = tuple(
-                tuple(map(css.classdb.get_class, path)) for path in eqv_paths
-            )
-            comb_class_rules = [
-                (css.classdb.get_class(label), rule) for label, rule in rules
+            with DisableLogging(logging.INFO):
+                spec = css.auto_search()
+                assert (
+                    spec is not None
+                ), f"Expected to find a specification for {comb_class}, but did not."
+
+            rules = [
+                rule
+                for rule in spec.rules_dict.values()
+                if not isinstance(rule, EquivalencePathRule)
             ]
-            self._populate_rules_dict(comb_class_rules, comb_class_eqv_paths, True)
+            eqv_paths = []
+            for rule in spec.rules_dict.values():
+                if isinstance(rule, EquivalencePathRule):
+                    eqv_path = []
+                    for c, r in rule.eqv_path_rules():
+                        rules.append(r)
+                        eqv_path.append(c)
+                    eqv_path.append(rule.children[0])
+                    eqv_paths.append(eqv_path)
+            strategies = [
+                (rule.children[0], rule.strategy)
+                if isinstance(rule, ReverseRule)
+                else (rule.comb_class, rule.strategy)
+                for rule in rules
+            ]
+
+            self._populate_rules_dict(strategies, eqv_paths, True)
 
     def get_rule(
         self, comb_class: CombinatorialClassType
@@ -428,7 +431,6 @@ class CombinatorialSpecification(
         return res
 
     # JSON methods
-
     def to_jsonable(self) -> dict:
         """Return a JSON serializable dictionary for the specification."""
         rules = [
