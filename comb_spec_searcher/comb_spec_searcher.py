@@ -10,6 +10,7 @@ from typing import (
     Dict,
     Generic,
     Iterator,
+    List,
     Optional,
     Sequence,
     Set,
@@ -58,6 +59,8 @@ if platform.python_implementation() == "CPython":
 warnings.simplefilter("once", Warning)
 
 logzero.loglevel(logging.INFO)
+
+Specification = Tuple[List[Tuple[int, AbstractStrategy]], List[List[int]]]
 
 
 class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
@@ -540,7 +543,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             )
         logger.info(status, extra=self.logger_kwargs)
 
-    def auto_search(self, **kwargs) -> CombinatorialSpecification:
+    def auto_search(self, **kwargs) -> Union[CombinatorialSpecification, Specification]:
         """
         An automatic search function.
 
@@ -564,6 +567,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
 
         If 'expand_verified' is set to 'False' then the searcher will not
         expand verified classes.
+
+        If 'raw_rules' is set to 'True', then instead of a specification, only
+        the rules and equivalence paths will be returned.
         """
         auto_search_start = time.time()
 
@@ -585,6 +591,8 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         )
         start_string += self.run_information()
         logger.info(start_string, extra=self.logger_kwargs)
+
+        raw_rules = kwargs.get("raw_rules", False)
 
         max_expansion_time = 0
         expanding = True
@@ -614,9 +622,11 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 smallest=kwargs.get("smallest", False),
                 expand_verified=kwargs.get("expand_verified", True),
                 minimization_time_limit=0.01 * (time.time() - auto_search_start),
+                raw_rules=raw_rules,
             )
             if specification is not None:
-                self._log_spec_found(specification, auto_search_start)
+                if isinstance(specification, CombinatorialSpecification):
+                    self._log_spec_found(specification, auto_search_start)
                 return specification
             logger.debug("No specification found.", extra=self.logger_kwargs)
             if max_time is not None:
@@ -641,7 +651,8 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         minimization_time_limit: float = 10,
         smallest: bool = False,
         expand_verified: bool = True,
-    ) -> Optional[CombinatorialSpecification]:
+        raw_rules: bool = False,
+    ) -> Optional[Union[CombinatorialSpecification, Specification]]:
         """
         Return a CombinatorialSpecification if the universe contains one.
 
@@ -665,7 +676,10 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 )
         except SpecificationNotFound:
             return None
+        if raw_rules:
+            return rules, eqv_paths
         start_class = self.classdb.get_class(self.start_label)
+        comb_rules = [(self.classdb.get_class(label), rule) for label, rule in rules]
         comb_class_eqv_paths = tuple(
             tuple(map(self.classdb.get_class, path)) for path in eqv_paths
         )
@@ -674,7 +688,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         )
         return CombinatorialSpecification(
             start_class,
-            [(self.classdb.get_class(label), rule) for label, rule in rules],
+            comb_rules,
             comb_class_eqv_paths,
             expand_verified=expand_verified,
         )

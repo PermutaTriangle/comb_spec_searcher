@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - When expanding verified nodes in a specification, the search now uses `auto_search`,
   instead of `do_level` and `get_smallest_specification`.
+- `auto_search`now has an option `raw_rules` to return only the rules and equivalence
+  paths instead of a specification.
 
 ## [1.2.0] - 2020-06-29
 ### Added

@@ -6,7 +6,7 @@ import logging
 from copy import copy
 from functools import reduce
 from operator import mul
-from typing import Dict, Generic, Iterable, Iterator, List, Sequence, Tuple
+from typing import Dict, Generic, Iterable, Iterator, List, Sequence, Tuple, cast
 
 import sympy
 from logzero import logger
@@ -45,6 +45,8 @@ from .utils import (
 
 __all__ = ("CombinatorialSpecification",)
 
+Specification = Tuple[List[Tuple[int, AbstractStrategy]], List[List[int]]]
+
 
 class CombinatorialSpecification(
     Generic[CombinatorialClassType, CombinatorialObjectType]
@@ -72,6 +74,7 @@ class CombinatorialSpecification(
     ):
         self.root = root
         self.rules_dict: Dict[CombinatorialClassType, AbstractRule] = {}
+
         self._populate_rules_dict(strategies, equivalence_paths, expand_verified)
         for rule in list(
             self.rules_dict.values()
@@ -153,33 +156,15 @@ class CombinatorialSpecification(
             )
             logger.info(css.run_information())
             with DisableLogging(logging.INFO):
-                spec = css.auto_search()
-                assert (
-                    spec is not None
-                ), f"Expected to find a specification for {comb_class}, but did not."
+                rules, eqv_paths = cast(Specification, css.auto_search(raw_rules=True))
 
-            rules = [
-                rule
-                for rule in spec.rules_dict.values()
-                if not isinstance(rule, EquivalencePathRule)
+            comb_class_eqv_paths = tuple(
+                tuple(map(css.classdb.get_class, path)) for path in eqv_paths
+            )
+            comb_class_rules = [
+                (css.classdb.get_class(label), rule) for label, rule in rules
             ]
-            eqv_paths = []
-            for rule in spec.rules_dict.values():
-                if isinstance(rule, EquivalencePathRule):
-                    eqv_path = []
-                    for c, r in rule.eqv_path_rules():
-                        rules.append(r)
-                        eqv_path.append(c)
-                    eqv_path.append(rule.children[0])
-                    eqv_paths.append(eqv_path)
-            strategies = [
-                (rule.children[0], rule.strategy)
-                if isinstance(rule, ReverseRule)
-                else (rule.comb_class, rule.strategy)
-                for rule in rules
-            ]
-
-            self._populate_rules_dict(strategies, eqv_paths, True)
+            self._populate_rules_dict(comb_class_rules, comb_class_eqv_paths, True)
 
     def get_rule(
         self, comb_class: CombinatorialClassType
