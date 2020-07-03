@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- the `CartesianProduct` is now considers compositions of all parameters and
+  not just `n`.
+
 ### Fixed
 - ignore rules where the left and non-empty right hand sides are the same
 
