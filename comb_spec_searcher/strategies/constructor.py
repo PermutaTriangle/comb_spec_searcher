@@ -245,7 +245,7 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
 
     def get_extra_parameters(
         self, child_parameters: Tuple[Dict[str, int], ...]
-    ) -> List[Optional[Dict[str, int]]]:
+    ) -> Optional[List[Dict[str, int]]]:
         """
         Will return the extra parameters dictionary based on the given child
         parameters given. If there is a contradiction, that is some child
@@ -253,7 +253,7 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         then None will be returned indicating that there is a contradiction,
         and so there are no objects satisfying the child parameters.
         """
-        res: Optional[List[Dict[str, int]]] = []
+        res: List[Dict[str, int]] = []
         for params, map_params in zip(child_parameters, self.extra_parameters):
             assert all(
                 params[k] == 0
@@ -267,8 +267,7 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
                     extra_params[mapped_k] = params[k]
                 elif extra_params[mapped_k] != params[k]:
                     return None
-            else:
-                res.append(extra_params)
+            res.append(extra_params)
         return res
 
     def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:

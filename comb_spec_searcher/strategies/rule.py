@@ -25,7 +25,7 @@ from sympy import Eq, Function
 
 from ..combinatorial_class import CombinatorialClassType, CombinatorialObjectType
 from ..exception import SanityCheckFailure, StrategyDoesNotApply
-from .constructor import CartesianProduct, Constructor, DisjointUnion
+from .constructor import Constructor, DisjointUnion
 
 if TYPE_CHECKING:
     from .strategy import (
@@ -227,23 +227,23 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             # Can't sanity check generation of objects for classes with extra
             # TODO test more thoroughly
             return True
-        # actual_objects = set(
-        #     list(brute_force_generation(self.comb_class, n, **parameters))
-        # )
-        # tempgen = self.subgenerators
-        # self.subgenerators = tuple(
-        #     partial(brute_force_generation, child) for child in self.children
-        # )
-        # rule_objects = set(list(self.generate_objects_of_size(n, **parameters)))
-        # self.subgenerators = tempgen
-        # if actual_objects != rule_objects:
-        #     raise SanityCheckFailure(
-        #         f"The following rule failed sanity check:\n"
-        #         f"{self}\n"
-        #         f"Failed with parameters:\n"
-        #         f"{params_str}\n"
-        #         f"The rule generated the wrong objects."
-        #     )
+        actual_objects = set(
+            list(brute_force_generation(self.comb_class, n, **parameters))
+        )
+        tempgen = self.subgenerators
+        self.subgenerators = tuple(
+            partial(brute_force_generation, child) for child in self.children
+        )
+        rule_objects = set(list(self.generate_objects_of_size(n, **parameters)))
+        self.subgenerators = tempgen
+        if actual_objects != rule_objects:
+            raise SanityCheckFailure(
+                f"The following rule failed sanity check:\n"
+                f"{self}\n"
+                f"Failed with parameters:\n"
+                f"{params_str}\n"
+                f"The rule generated the wrong objects."
+            )
         return True
 
     def __eq__(self, other: object) -> bool:
