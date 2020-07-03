@@ -541,7 +541,7 @@ class VerificationStrategy(
         assert specification is not None, StrategyDoesNotApply(
             "Cannot find a specification"
         )
-        return specification
+        return cast("CombinatorialSpecification", specification)
 
     def get_genf(
         self,

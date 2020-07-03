@@ -36,13 +36,14 @@ with respect to factor order is given.
 9798
 """
 from itertools import product
-from typing import Iterable, Optional, Tuple, Union
+from typing import Iterable, Optional, Tuple, Union, cast
 
 from comb_spec_searcher import (
     AtomStrategy,
     CartesianProductStrategy,
     CombinatorialClass,
     CombinatorialObject,
+    CombinatorialSpecification,
     CombinatorialSpecificationSearcher,
     DisjointUnionStrategy,
     StrategyPack,
@@ -332,7 +333,7 @@ if __name__ == "__main__":
 
     start_class = AvoidingWithPrefix(Word(), example_patterns, example_alphabet)
     searcher = CombinatorialSpecificationSearcher(start_class, pack, debug=True)
-    spec = searcher.auto_search(status_update=10)
+    spec = cast(CombinatorialSpecification, searcher.auto_search(status_update=10))
     print(spec)
     print(spec.get_genf())
     import time
