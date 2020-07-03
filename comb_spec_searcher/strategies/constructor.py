@@ -243,22 +243,45 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
             parameters["n"] = n
             yield from _helper(minmaxes, **parameters)
 
+    def get_extra_parameters(
+        self, child_parameters: Tuple[Dict[str, int], ...]
+    ) -> List[Optional[Dict[str, int]]]:
+        """
+        Will return the extra parameters dictionary based on the given child
+        parameters given. If there is a contradiction, that is some child
+        parameter is given two or more different values that do not match,
+        then None will be returned indicating that there is a contradiction,
+        and so there are no objects satisfying the child parameters.
+        """
+        res: Optional[List[Dict[str, int]]] = []
+        for params, map_params in zip(child_parameters, self.extra_parameters):
+            assert all(
+                params[k] == 0
+                for k in self.parent_parameters
+                if k not in map_params and k != "n"
+            )
+            extra_params: Dict[str, int] = {"n": params["n"]}
+            for k in map_params:
+                mapped_k = map_params[k]
+                if mapped_k not in extra_params:
+                    extra_params[mapped_k] = params[k]
+                elif extra_params[mapped_k] != params[k]:
+                    return None
+            else:
+                res.append(extra_params)
+        return res
+
     def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
         # The extra parameters variable maps each of the parent parameter to
         # the unique child that it was mapped to.
         res = 0
         for child_parameters in self._valid_compositions(n, **parameters):
             tmp = 1
-            for rec, params, map_params in zip(
-                subrecs, child_parameters, self.extra_parameters
-            ):
-                extra_params = {map_params[k]: params[k] for k in map_params}
-                assert all(
-                    params[k] == 0
-                    for k in self.parent_parameters
-                    if k not in map_params and k != "n"
-                )
-                tmp *= rec(n=params["n"], **extra_params)
+            extra_parameters = self.get_extra_parameters(child_parameters)
+            if extra_parameters is None:
+                continue
+            for rec, extra_params in zip(subrecs, extra_parameters):
+                tmp *= rec(n=extra_params.pop("n"), **extra_params)
                 if tmp == 0:
                     break
             res += tmp
