@@ -269,8 +269,8 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
     If a parents variable does not map to a child, then this variable must be 0
     as the child contains no occurences.
 
-    The zeroes are a tuple of parameters for each child which must take a value
-    of zero.
+    The fixed value dictionaries passed will be used ensure that the parameter
+    of a child must take on the given value.
     """
 
     def __init__(
