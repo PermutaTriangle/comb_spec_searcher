@@ -60,6 +60,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         ] = (None)
         self.subsamplers: Optional[Tuple[Callable[..., CombinatorialObjectType], ...]]
         self._children = children
+        self._non_empty_children: Optional[Tuple[CombinatorialClassType, ...]] = None
 
     @property
     def strategy(
@@ -148,7 +149,11 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         Return the tuple of non-empty combinatorial classes that are found
         by applying the decomposition function.
         """
-        return tuple(child for child in self.children if not child.is_empty())
+        if self._non_empty_children is None:
+            self._non_empty_children = tuple(
+                child for child in self.children if not child.is_empty()
+            )
+        return self._non_empty_children
 
     @abc.abstractmethod
     def count_objects_of_size(self, n: int, **parameters: int) -> int:
@@ -337,7 +342,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         return self._constructor
 
     def is_equivalence(self):
-        return len(self.non_empty_children()) == 1 and self.constructor.is_equivalence()
+        return self.strategy.can_be_equivalent() and len(self.non_empty_children()) == 1
 
     def backward_map(
         self, objs: Tuple[Optional[CombinatorialObjectType], ...]
