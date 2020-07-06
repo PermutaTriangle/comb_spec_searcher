@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- added an optional `fixed_values` parameter to the `DisjointUnion` constructor,
+  that allows you to set a value that a child's parameter must take.
+
 ### Changed
 - the `CartesianProduct` now considers compositions of all parameters and
   not just `n`.

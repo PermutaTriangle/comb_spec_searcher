@@ -194,11 +194,17 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         def brute_force_count(
             comb_class: CombinatorialClassType, n: int, **parameters
         ) -> int:
+            assert set(comb_class.extra_parameters) == set(
+                parameters
+            ), f"{comb_class.extra_parameters, set(parameters)}"
             return len(list(comb_class.objects_of_size(n, **parameters)))
 
         def brute_force_generation(
             comb_class: CombinatorialClassType, n: int, **parameters: int
         ) -> Iterator[CombinatorialObjectType]:
+            assert set(comb_class.extra_parameters) == set(
+                parameters
+            ), f"{comb_class.extra_parameters, set(parameters)}"
             yield from comb_class.objects_of_size(n, **parameters)
 
         actual_count = brute_force_count(self.comb_class, n, **parameters)
@@ -390,7 +396,10 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
             assert (
                 self.subrecs is not None
             ), "you must call the set_subrecs function first"
-            res = self.constructor.get_recurrence(self.subrecs, n, **parameters)
+            try:
+                res = self.constructor.get_recurrence(self.subrecs, n, **parameters)
+            except AssertionError:
+                raise ValueError(f"issue with rule:\n {self}")
             self.count_cache[key] = res
             # THE FOLLOWING CODE SNIPPET IS FOR DEBUGGING PURPOSES
         #     if self.comb_class.extra_parameters:
@@ -559,8 +568,6 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
     @property
     def constructor(self) -> DisjointUnion:
         if self._constructor is None:
-            if not self.comb_class.extra_parameters:
-                return DisjointUnion(self.comb_class, self.children)
             extra_parameters: Dict[str, str] = {
                 k: k for k in self.comb_class.extra_parameters
             }
@@ -573,8 +580,13 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
                     for parent_var, child_var in extra_parameters.items()
                     if child_var in rules_parameters
                 }
+            fixed_values = {
+                k: 0
+                for k in self.children[0].extra_parameters
+                if k not in extra_parameters.values()
+            }
             self._constructor = DisjointUnion(
-                self.comb_class, self.children, (extra_parameters,)
+                self.comb_class, self.children, (extra_parameters,), (fixed_values,)
             )
         return self._constructor
 
@@ -676,8 +688,13 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
             flipped_extra_params = {
                 b: a for a, b in original_constructor.extra_parameters[0].items()
             }
+            fixed_values = {
+                k: 0
+                for k in self.children[0].extra_parameters
+                if k not in flipped_extra_params.values()
+            }
             self._constructor = DisjointUnion(
-                self.comb_class, self.children, (flipped_extra_params,)
+                self.comb_class, self.children, (flipped_extra_params,), (fixed_values,)
             )
         return self._constructor
 
