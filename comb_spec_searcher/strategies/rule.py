@@ -406,7 +406,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
             except AssertionError:
                 raise ValueError(f"issue with rule:\n {self}")
             self.count_cache[key] = res
-        #     # THE FOLLOWING CODE SNIPPET IS FOR DEBUGGING PURPOSES
+            # THE FOLLOWING CODE SNIPPET IS FOR DEBUGGING PURPOSES
         #     if self.comb_class.extra_parameters:
         #         print(self)
         #         print("n =", n, parameters)
@@ -435,6 +435,8 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         #         for string in fusion_attrs:
         #             if hasattr(self.constructor, string):
         #                 print(string + ":", getattr(self.constructor, string))
+        #         if isinstance(self.constructor, CartesianProduct):
+        #             print(list(self.constructor._valid_compositions(n, **parameters)))
         #     print("result:", res)
         # assert res == len(list(self.comb_class.objects_of_size(n, **parameters))), (
         #     "counting failed for the rule \n{}\nparameters: n = {}, {}\n"

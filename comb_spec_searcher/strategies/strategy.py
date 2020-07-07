@@ -383,7 +383,9 @@ class CartesianProductStrategy(
             if children is None:
                 raise StrategyDoesNotApply("Strategy does not apply")
         return CartesianProduct(
-            children, extra_parameters=self.extra_parameters(comb_class, children)
+            comb_class,
+            children,
+            extra_parameters=self.extra_parameters(comb_class, children),
         )
 
 
