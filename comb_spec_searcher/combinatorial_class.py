@@ -81,6 +81,17 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
         """
         return tuple()
 
+    def get_minimum_value(self, parameter: str) -> int:
+        """
+        Return the minimum value that can be taken by the parameter. This is
+        required to be implemented if to use CartesianProduct on multiple
+        variables.
+        """
+        raise NotImplementedError(
+            "You need to implement the minimum value a parameter can take on "
+            "your CombinatorialClass to use the CartesianProduct constructor."
+        )
+
     def possible_parameters(self, n: int) -> Iterator[Dict[str, int]]:
         """
         Return all the possible values the extra parameters could take for

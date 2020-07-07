@@ -6,6 +6,25 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.3.0] - 2020-07-07
+### Added
+- added an optional `fixed_values` parameter to the `DisjointUnion` constructor,
+  that allows you to set a value that a child's parameter must take.
+- add the abstract method `can_be_equivalent` to `AbstractStrategy`.
+
+### Changed
+- removed the method `is_equivalence` from `Constructor`. You should instead
+  use the `is_equivalence` method on the `Rule`.
+
+### Changed
+- the `CartesianProduct` now considers compositions of all parameters and
+  not just `n`.
+- the `RelianceProfile` type changed to work multiple parameters. It is now a
+  dictionary pointing from parameters to the values.
+
+### Fixed
+- ignore rules where the left and non-empty right hand sides are the same
+
 ## [1.2.0] - 2020-06-29
 ### Added
 - Support for maple equations in multiple variables
