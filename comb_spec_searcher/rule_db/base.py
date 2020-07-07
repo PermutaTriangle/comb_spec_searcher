@@ -49,13 +49,13 @@ class RuleDBBase(abc.ABC):
         Add a rule to the database.
 
         - start is a single integer.
-        - ends is a tuple of integers.
+        - ends is a tuple of integers, representing the non-empty children.
         - rule is a Rule that creates start -> ends.
         """
         ends = tuple(sorted(ends))
         if isinstance(rule, VerificationRule):
             self.set_verified(start)
-        is_equiv = rule.is_equivalence()
+        is_equiv = len(ends) == 1 and rule.strategy.can_be_equivalent()
         if is_equiv:
             self.set_equivalent(start, ends[0])
         if len(ends) != 1 or is_equiv or not self.are_equivalent(start, ends[0]):

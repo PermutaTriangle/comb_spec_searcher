@@ -33,13 +33,6 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
     """The constructor is akin to the 'counting function' in the comb exp paper."""
 
     @abc.abstractmethod
-    def is_equivalence(self) -> bool:
-        """
-        Return true if the constructor is the same as "=" when there is only
-        one child.
-        """
-
-    @abc.abstractmethod
     def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
         """
         Return the sympy.Eq in the form lhs_func = f(rhs_funcs).
@@ -151,10 +144,6 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
                 )
             )
         return tuple(range(min_child_size, n - self.minimum_size + min_child_size + 1))
-
-    @staticmethod
-    def is_equivalence() -> bool:
-        return True
 
     def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
         res = 1
@@ -299,10 +288,6 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
             assert len(fixed_values) == len(children)
         else:
             self.fixed_values = tuple({} for _ in children)
-
-    @staticmethod
-    def is_equivalence() -> bool:
-        return True
 
     def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
         res = 0
