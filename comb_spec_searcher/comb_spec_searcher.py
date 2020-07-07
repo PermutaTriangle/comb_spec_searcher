@@ -251,9 +251,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 )
                 try:
                     n = 4
-                    # TODO: test for multiple variable
                     for i in range(n + 1):
-                        rule.sanity_check(n=i)
+                        for parameters in rule.comb_class.possible_parameters(i):
+                            rule.sanity_check(n=i, **parameters)
                     logger.debug("Sanity checked rule to length %s.", n)
                 except NotImplementedError as e:
                     logger.debug(

@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- fixed sanity checking in `comb_spec_searcher`
 
 ## [1.3.0] - 2020-07-07
 ### Added
@@ -15,8 +17,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - removed the method `is_equivalence` from `Constructor`. You should instead
   use the `is_equivalence` method on the `Rule`.
-
-### Changed
 - the `CartesianProduct` now considers compositions of all parameters and
   not just `n`.
 - the `RelianceProfile` type changed to work multiple parameters. It is now a
