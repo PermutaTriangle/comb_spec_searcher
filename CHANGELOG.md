@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - added an optional `fixed_values` parameter to the `DisjointUnion` constructor,
   that allows you to set a value that a child's parameter must take.
-- add the abstract method `can_be_equivalent` to `AbstractStrateg`.
+- add the abstract method `can_be_equivalent` to `AbstractStrategy`.
 
 ### Changed
 - removed the method `is_equivalence` from `Constructor`. You should instead
