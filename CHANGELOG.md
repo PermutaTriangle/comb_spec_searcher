@@ -5,8 +5,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- When expanding verified nodes in a specification, the search now uses
+  `_auto_search_rules`, instead of `do_level` and `get_smallest_specification`.
+  This is a stripped back auto search method returning the equivalence paths
+  and strategies needed to create a specification.
+
 ### Fixed
 - fixed sanity checking in `comb_spec_searcher`
+
+### Removed
+- `DisableLogging` was removed from `utils` as it is no longer used.
 
 ## [1.3.0] - 2020-07-07
 ### Added
