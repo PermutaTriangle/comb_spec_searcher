@@ -2,7 +2,6 @@
 A combinatorial specification is a set rules of the form a -> b1, ..., bk
 where each of the bi appear exactly once on the left hand side of some rule.
 """
-import logging
 from copy import copy
 from functools import reduce
 from operator import mul
@@ -21,8 +20,6 @@ from .combinatorial_class import (
 from .exception import (
     IncorrectGeneratingFunctionError,
     InvalidOperationError,
-    NoMoreClassesToExpandError,
-    SpecificationNotFound,
     TaylorExpansionError,
 )
 from .strategies import (
@@ -38,7 +35,6 @@ from .strategies import (
 )
 from .strategies.rule import AbstractRule
 from .utils import (
-    DisableLogging,
     RecursionLimit,
     maple_equations,
     pretty_print_equations,
@@ -154,30 +150,8 @@ class CombinatorialSpecification(
                 ),
             )
             logger.info(css.run_information())
-            while True:
-                try:
-                    css.do_level()
-                except NoMoreClassesToExpandError:
-                    with DisableLogging(logging.INFO):
-                        new_rules = css.ruledb.get_smallest_specification(
-                            css.start_label
-                        )
-                    break
-                try:
-                    with DisableLogging(logging.INFO):
-                        new_rules = css.ruledb.get_smallest_specification(
-                            css.start_label
-                        )
-                    break
-                except SpecificationNotFound:
-                    pass
-            rules, eqv_paths = new_rules
-            comb_class_eqv_paths = tuple(
-                tuple(map(css.classdb.get_class, path)) for path in eqv_paths
-            )
-            comb_class_rules = [
-                (css.classdb.get_class(label), rule) for label, rule in rules
-            ]
+            # pylint: disable=protected-access
+            comb_class_rules, comb_class_eqv_paths = css._auto_search_rules()
             self._populate_rules_dict(comb_class_rules, comb_class_eqv_paths, True)
 
     def get_rule(

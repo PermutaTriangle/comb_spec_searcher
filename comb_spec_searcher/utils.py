@@ -76,21 +76,6 @@ class RecursionLimit:
         sys.setrecursionlimit(self.curr_limit)
 
 
-class DisableLogging:
-    """
-    Disable all logging calls of severity level and below
-    """
-
-    def __init__(self, level: int):
-        self.level = level
-
-    def __enter__(self) -> None:
-        logging.disable(self.level)
-
-    def __exit__(self, exc_type, exc_value, exc_traceback) -> None:
-        logging.disable(logging.NOTSET)
-
-
 def check_poly(min_poly, initial, root_initial=None, root_func=None):
     """Return True if this is a minimum polynomial for the generating
     function F with the given initial terms. Input is a polynomial in F,
