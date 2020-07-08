@@ -1,5 +1,4 @@
 """Some useful miscellaneous functions used througout the package."""
-import logging
 import os
 import re
 import sys
