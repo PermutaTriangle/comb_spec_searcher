@@ -69,22 +69,6 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
         """Return a randomly sampled subobjs/image of the bijection implied
         by the constructor."""
 
-    @staticmethod
-    def get_eq_symbol() -> str:
-        """
-        Return a choice for '=' in the pretty print a '=' b '+' c of rules.
-        Your choice should be a single charachter.
-        """
-        return "="
-
-    @staticmethod
-    def get_op_symbol() -> str:
-        """
-        Return a choice for '+' in the pretty print a '=' b '+' c of rules.
-        Your choice should be a single charachter.
-        """
-        return "+"
-
 
 class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     """
@@ -308,14 +292,6 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
                     subsampler(d["n"]) for d, subsampler in zip(comp, subsamplers)
                 )
 
-    @staticmethod
-    def get_eq_symbol() -> str:
-        return "="
-
-    @staticmethod
-    def get_op_symbol() -> str:
-        return "x"
-
     def __str__(self) -> str:
         return "Cartesian product"
 
@@ -445,14 +421,6 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
                     + (obj,)
                     + tuple(None for _ in range(len(subrecs) - idx - 1))
                 )
-
-    @staticmethod
-    def get_eq_symbol() -> str:
-        return "="
-
-    @staticmethod
-    def get_op_symbol() -> str:
-        return "+"
 
     def __str__(self):
         return "disjoint union"

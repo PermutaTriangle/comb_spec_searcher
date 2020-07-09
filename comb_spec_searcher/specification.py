@@ -5,7 +5,7 @@ where each of the bi appear exactly once on the left hand side of some rule.
 from copy import copy
 from functools import reduce
 from operator import mul
-from typing import Dict, Generic, Iterable, Iterator, List, Sequence, Tuple
+from typing import Callable, Dict, Generic, Iterable, Iterator, List, Sequence, Tuple
 
 import sympy
 from logzero import logger
@@ -67,15 +67,22 @@ class CombinatorialSpecification(
         ],
         equivalence_paths: Iterable[Sequence[CombinatorialClassType]],
         expand_verified: bool = True,
+        is_empty_function: Callable[[CombinatorialClassType], bool] = None,
     ):
         self.root = root
         self.rules_dict: Dict[CombinatorialClassType, AbstractRule] = {}
+        self.is_empty_function = is_empty_function
         self._populate_rules_dict(strategies, equivalence_paths, expand_verified)
         for rule in list(
             self.rules_dict.values()
         ):  # list as we lazily assign empty rules
             rule.set_subrecs(self.get_rule)
         self.labels: Dict[CombinatorialClassType, int] = {}
+
+    def _is_empty(self, comb_class: CombinatorialClassType) -> bool:
+        if self.is_empty_function is None:
+            return comb_class.is_empty()
+        return self.is_empty_function(comb_class)
 
     def _populate_rules_dict(
         self,
@@ -96,7 +103,9 @@ class CombinatorialSpecification(
             if isinstance(strategy, AlreadyVerified):
                 continue
             rule = strategy(comb_class)
-            non_empty_children = rule.non_empty_children()
+            non_empty_children = rule.non_empty_children(
+                is_empty_function=self._is_empty
+            )
             if rule.is_equivalence():
                 assert isinstance(rule, Rule)
                 equivalence_rules[(comb_class, non_empty_children[0])] = (
@@ -159,7 +168,7 @@ class CombinatorialSpecification(
     ) -> AbstractRule[CombinatorialClassType, CombinatorialObjectType]:
         """Return the rule with comb class on the left."""
         if comb_class not in self.rules_dict:
-            if comb_class.is_empty():
+            if self._is_empty(comb_class):
                 empty_strat = EmptyStrategy()
                 self.rules_dict[comb_class] = empty_strat(comb_class)
         return self.rules_dict[comb_class]

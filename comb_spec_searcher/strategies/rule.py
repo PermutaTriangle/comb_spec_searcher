@@ -144,15 +144,28 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         Returns True if the rule is an equivalence.
         """
 
-    def non_empty_children(self) -> Tuple[CombinatorialClassType, ...]:
+    def non_empty_children(
+        self, is_empty_function: Callable[[CombinatorialClassType], bool] = None
+    ) -> Tuple[CombinatorialClassType, ...]:
         """
         Return the tuple of non-empty combinatorial classes that are found
         by applying the decomposition function.
+
+        If is_empty_function is given, it will use this to filter, else it will
+        use the is_empty method on CombinatorialClass.
         """
         if self._non_empty_children is None:
-            self._non_empty_children = tuple(
-                child for child in self.children if not child.is_empty()
-            )
+            if self.possibly_empty:
+                if is_empty_function is None:
+                    self._non_empty_children = tuple(
+                        child for child in self.children if not child.is_empty()
+                    )
+                else:
+                    self._non_empty_children = tuple(
+                        child for child in self.children if not is_empty_function(child)
+                    )
+            else:
+                self._non_empty_children = self.children
         return self._non_empty_children
 
     @abc.abstractmethod
@@ -291,7 +304,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             symbol_height = 1
             eq_symbol = (
                 ["     " for i in range(symbol_height)]
-                + ["  {}  ".format(self.constructor.get_eq_symbol())]
+                + ["  {}  ".format(self.strategy.get_eq_symbol())]
                 + ["     " for i in range(symbol_height)]
             )
             join(res, eq_symbol)
@@ -299,7 +312,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             if len(children) > 1:
                 op_symbol = (
                     ["     " for i in range(symbol_height)]
-                    + ["  {}  ".format(self.constructor.get_op_symbol())]
+                    + ["  {}  ".format(self.strategy.get_op_symbol())]
                     + ["     " for i in range(symbol_height)]
                 )
                 for child in children[1:]:

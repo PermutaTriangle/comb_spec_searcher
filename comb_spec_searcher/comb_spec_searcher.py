@@ -521,7 +521,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             round(time.time() - start_time, 2)
         )
         found_string += self.status(elaborate=True)
-        found_string += str(specification)
+        # found_string += str(specification)
         logger.info(found_string, extra=self.logger_kwargs)
 
     def _log_status(self, start_time: float, status_update: int) -> None:
@@ -716,6 +716,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             strategies,
             comb_class_eqv_paths,
             expand_verified=expand_verified,
+            is_empty_function=self.classdb.is_empty,
         )
 
     @cssmethodtimer("get specification")

@@ -341,6 +341,14 @@ class Strategy(AbstractStrategy[CombinatorialClassType, CombinatorialObjectType]
                 raise StrategyDoesNotApply("Strategy does not apply")
         return tuple(dict() for _ in children)
 
+    @staticmethod
+    def get_eq_symbol() -> str:
+        return "="
+
+    @staticmethod
+    def get_op_symbol() -> str:
+        return "x"
+
 
 class CartesianProductStrategy(
     Strategy[CombinatorialClassType, CombinatorialObjectType]
@@ -459,6 +467,14 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObject
             children = self.decomposition_function(comb_class)
         idx = DisjointUnionStrategy.backward_map_index(objs)
         return cast(CombinatorialObjectType, objs[idx])
+
+    @staticmethod
+    def get_eq_symbol() -> str:
+        return "="
+
+    @staticmethod
+    def get_op_symbol() -> str:
+        return "+"
 
 
 class SymmetryStrategy(
