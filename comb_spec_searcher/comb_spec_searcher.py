@@ -326,7 +326,8 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
 
         if not cleaned_end_labels:
             # this must be a verification strategy!
-            assert isinstance(rule, VerificationRule), rule.formal_step
+            # assert isinstance(rule, VerificationRule), rule.formal_step
+            pass
         self.ruledb.add(start_label, tuple(cleaned_end_labels), rule)
 
     def _add_empty_rule(self, label: int) -> None:

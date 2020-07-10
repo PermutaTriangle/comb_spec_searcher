@@ -122,7 +122,8 @@ class CombinatorialSpecification(
                 else:
                     self.rules_dict[comb_class] = strategy(comb_class)
             else:
-                raise ValueError("Non verification rule has no children.")
+                self.rules_dict[comb_class] = EmptyStrategy()(comb_class)
+                # raise ValueError("Non verification rule has no children.")
         self._add_equivalence_path_rules(equivalence_paths, equivalence_rules)
         self._expand_verified_comb_classes(verification_packs)
 
