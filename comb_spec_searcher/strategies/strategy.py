@@ -165,6 +165,13 @@ class AbstractStrategy(
         return self._workable
 
     @abc.abstractmethod
+    def can_be_equivalent(self) -> bool:
+        """
+        Return True if every Rule returned with one non-empty child is an
+        equivalence rule.
+        """
+
+    @abc.abstractmethod
     def decomposition_function(
         self, comb_class: CombinatorialClassType
     ) -> Optional[Tuple[CombinatorialClassType, ...]]:
@@ -362,6 +369,10 @@ class CartesianProductStrategy(
             workable=workable,
         )
 
+    @staticmethod
+    def can_be_equivalent() -> bool:
+        return True
+
     def constructor(
         self,
         comb_class: CombinatorialClassType,
@@ -372,7 +383,9 @@ class CartesianProductStrategy(
             if children is None:
                 raise StrategyDoesNotApply("Strategy does not apply")
         return CartesianProduct(
-            children, extra_parameters=self.extra_parameters(comb_class, children)
+            comb_class,
+            children,
+            extra_parameters=self.extra_parameters(comb_class, children),
         )
 
 
@@ -398,6 +411,10 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObject
             possibly_empty=possibly_empty,
             workable=workable,
         )
+
+    @staticmethod
+    def can_be_equivalent() -> bool:
+        return True
 
     def constructor(
         self,
@@ -505,6 +522,10 @@ class VerificationStrategy(
         if children is None:
             children = self.decomposition_function(comb_class)
         return VerificationRule(self, comb_class, children)
+
+    @staticmethod
+    def can_be_equivalent() -> bool:
+        return False
 
     def pack(self, comb_class: CombinatorialClassType) -> "StrategyPack":
         """
@@ -633,6 +654,8 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
         """
         Verification strategies must contain a method to count the objects.
         """
+        if comb_class.extra_parameters:
+            raise NotImplementedError
         if n == comb_class.minimum_size_of_object():
             return 1
         return 0
@@ -642,6 +665,8 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
         comb_class: CombinatorialClass,
         funcs: Optional[Dict[CombinatorialClass, Function]] = None,
     ) -> Expr:
+        if comb_class.extra_parameters:
+            raise NotImplementedError
         if not self.verified(comb_class):
             raise StrategyDoesNotApply("Can't find generating functon for non-atom.")
         x = var("x")
@@ -654,6 +679,8 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
         """
         Verification strategies must contain a method to generate the objects.
         """
+        if comb_class.extra_parameters:
+            raise NotImplementedError
         if n == comb_class.minimum_size_of_object():
             yield from comb_class.objects_of_size(n)
 
@@ -661,6 +688,8 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
     def random_sample_object_of_size(
         comb_class: CombinatorialClass, n: int, **parameters: int
     ) -> CombinatorialObject:
+        if comb_class.extra_parameters:
+            raise NotImplementedError
         if n == comb_class.minimum_size_of_object():
             obj: CombinatorialObject = next(comb_class.objects_of_size(n))
             return obj
