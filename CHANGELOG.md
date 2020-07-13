@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   `_auto_search_rules`, instead of `do_level` and `get_smallest_specification`.
   This is a stripped back auto search method returning the equivalence paths
   and strategies needed to create a specification.
+- the `get_eq_symbol` and `get_op_symbol` are moved to `AbstractStrategy`
+  rather than `Constructor`
 
 ### Fixed
 - fixed sanity checking in `comb_spec_searcher`
