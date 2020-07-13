@@ -291,7 +291,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             symbol_height = 1
             eq_symbol = (
                 ["     " for i in range(symbol_height)]
-                + ["  {}  ".format(self.constructor.get_eq_symbol())]
+                + ["  {}  ".format(self.strategy.get_eq_symbol())]
                 + ["     " for i in range(symbol_height)]
             )
             join(res, eq_symbol)
@@ -299,7 +299,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             if len(children) > 1:
                 op_symbol = (
                     ["     " for i in range(symbol_height)]
-                    + ["  {}  ".format(self.constructor.get_op_symbol())]
+                    + ["  {}  ".format(self.strategy.get_op_symbol())]
                     + ["     " for i in range(symbol_height)]
                 )
                 for child in children[1:]:
