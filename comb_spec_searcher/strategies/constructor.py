@@ -69,22 +69,6 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
         """Return a randomly sampled subobjs/image of the bijection implied
         by the constructor."""
 
-    @staticmethod
-    def get_eq_symbol() -> str:
-        """
-        Return a choice for '=' in the pretty print a '=' b '+' c of rules.
-        Your choice should be a single charachter.
-        """
-        return "="
-
-    @staticmethod
-    def get_op_symbol() -> str:
-        """
-        Return a choice for '+' in the pretty print a '=' b '+' c of rules.
-        Your choice should be a single charachter.
-        """
-        return "+"
-
 
 class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     """

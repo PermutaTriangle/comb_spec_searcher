@@ -186,6 +186,22 @@ class AbstractStrategy(
         Return a short string to explain what the strategy has done.
         """
 
+    @staticmethod
+    def get_eq_symbol() -> str:
+        """
+        Return a choice for '=' in the pretty print a '=' b '+' c of rules.
+        Your choice should be a single charachter.
+        """
+        return "="
+
+    @staticmethod
+    def get_op_symbol() -> str:
+        """
+        Return a choice for '+' in the pretty print a '=' b '+' c of rules.
+        Your choice should be a single charachter.
+        """
+        return "+"
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, AbstractStrategy):
             return NotImplemented
@@ -388,6 +404,14 @@ class CartesianProductStrategy(
             extra_parameters=self.extra_parameters(comb_class, children),
         )
 
+    @staticmethod
+    def get_op_symbol() -> str:
+        """
+        Return a choice for '+' in the pretty print a '=' b '+' c of rules.
+        Your choice should be a single charachter.
+        """
+        return "x"
+
 
 class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObjectType]):
     """
@@ -459,6 +483,14 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObject
             children = self.decomposition_function(comb_class)
         idx = DisjointUnionStrategy.backward_map_index(objs)
         return cast(CombinatorialObjectType, objs[idx])
+
+    @staticmethod
+    def get_op_symbol() -> str:
+        """
+        Return a choice for '+' in the pretty print a '=' b '+' c of rules.
+        Your choice should be a single charachter.
+        """
+        return "+"
 
 
 class SymmetryStrategy(
