@@ -21,8 +21,9 @@ class SpecificationDrawer:
         self.tooltips: List[dict] = []
         self._rules_dict_copy = copy(spec.rules_dict)
 
+    @classmethod
     def rules_to_html_representation(
-        self, comb_classes: List[CombinatorialClassType]
+        cls, comb_classes: List[CombinatorialClassType]
     ) -> str:
         """
         Returns a single node containing the rules as html string
@@ -120,7 +121,7 @@ class SpecificationDrawer:
         Returns a delimiter node.
         """
         node_identifier = len(self.tooltips)  # id for tooltips to recognize
-        symbol = rule.constructor.get_op_symbol()
+        symbol = rule.strategy.get_op_symbol()
         delimiter_html = '<div class="and-gate" id={}>{}</div>'.format(
             node_identifier, symbol
         )
@@ -225,7 +226,8 @@ class SpecificationDrawer:
             ]
         )
 
-    def to_html_string(self, treant_json: str) -> str:
+    @classmethod
+    def to_html_string(cls, treant_json: str) -> str:
         """
         Returns a html string that contains the whole tree
         """
@@ -344,7 +346,8 @@ class SpecificationDrawer:
         html_string = a + b + "\n" + "let json_input =" + treant_json + c
         return html_string
 
-    def export_html(self, html: str, file_name: str = "tree") -> None:
+    @classmethod
+    def export_html(cls, html: str, file_name: str = "tree") -> None:
         """
         Creates a html file in current directory
         """
