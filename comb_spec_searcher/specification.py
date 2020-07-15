@@ -105,7 +105,7 @@ class CombinatorialSpecification(
 
     def expand_verified(self) -> None:
         """
-        Will expand all verified classes with respect to the strategy pack
+        Will expand all verified classes with respect to the strategy packs
         given by the VerificationStrategies.
         """
         verification_packs: Dict[CombinatorialClassType, StrategyPack] = {}
@@ -115,9 +115,11 @@ class CombinatorialSpecification(
                     verification_packs[comb_class] = rule.pack()
                 except InvalidOperationError:
                     logger.info("Can't expand the rule:\n%s", rule)
-        for comb_class in verification_packs:
-            self.rules_dict.pop(comb_class)
-        self._expand_verified_comb_classes(verification_packs)
+        if verification_packs:
+            for comb_class in verification_packs:
+                self.rules_dict.pop(comb_class)
+            self._expand_verified_comb_classes(verification_packs)
+            self.expand_verified()
 
     def expand_comb_class(self, comb_class: Union[int, CombinatorialClassType]) -> None:
         """
@@ -181,7 +183,7 @@ class CombinatorialSpecification(
             try:
                 comb_class = self._label_to_tiling[comb_class]
             except KeyError:
-                raise KeyError(
+                raise InvalidOperationError(
                     f"The label {comb_class} does not correspond to a tiling"
                     " in the specification."
                 )
