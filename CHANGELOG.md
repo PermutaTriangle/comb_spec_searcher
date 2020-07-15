@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- the methods `expand_verified` and `expand_comb_class` on
+  `CombinatorialSpecification`
+- the `get_rule` method on `CombinatorialSpecification` can also take a label
+  as a key
+
 ### Changed
 - When expanding verified nodes in a specification, the search now uses
   `_auto_search_rules`, instead of `do_level` and `get_smallest_specification`.
@@ -12,6 +18,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   and strategies needed to create a specification.
 - the `get_eq_symbol` and `get_op_symbol` are moved to `AbstractStrategy`
   rather than `Constructor`
+- the `expand_verified` flag on the `auto_search` method and
+  `CombinitorialSpecification.__init__` method was removed, and the
+  default is now to not expand verified classes. You should use the
+  `expand_verified` method on `CombinatorialSpecification` for the same
+  behaviour.
+  It also no longer logs the string of the specification.
 
 ### Fixed
 - fixed sanity checking in `comb_spec_searcher`
