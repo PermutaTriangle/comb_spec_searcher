@@ -33,7 +33,7 @@ from .strategies import (
     VerificationRule,
     VerificationStrategy,
 )
-from .strategies.rule import AbstractRule, EquivalencePathRule
+from .strategies.rule import AbstractRule
 from .utils import (
     RecursionLimit,
     maple_equations,
