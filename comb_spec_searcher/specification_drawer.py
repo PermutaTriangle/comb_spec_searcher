@@ -8,7 +8,8 @@ import threading
 import time
 import webbrowser
 from copy import copy
-from typing import TYPE_CHECKING, ClassVar, Dict, List, TypedDict
+from typing import TYPE_CHECKING, ClassVar, Dict, List
+from typing_extensions import TypedDict
 
 from .combinatorial_class import CombinatorialClass
 from .strategies import EquivalencePathRule, Rule, VerificationRule
