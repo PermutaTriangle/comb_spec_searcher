@@ -22,7 +22,7 @@ from .exception import (
     InvalidOperationError,
     TaylorExpansionError,
 )
-from .specification_drawer import SpecificationVisualizer
+from .specification_drawer import SpecificationDrawer
 from .strategies import (
     AbstractStrategy,
     EmptyStrategy,
@@ -348,7 +348,7 @@ class CombinatorialSpecification(
         )
 
     def show(self):
-        sd = SpecificationVisualizer(self)
+        sd = SpecificationDrawer(self)
         sd.show()
 
     def __eq__(self, other: object) -> bool:
