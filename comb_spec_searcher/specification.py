@@ -68,12 +68,17 @@ class CombinatorialSpecification(
         self.rules_dict: Dict[CombinatorialClassType, AbstractRule] = {}
         self._populate_rules_dict(strategies, equivalence_paths)
         self._remove_redundant_rules()
+        self.labels: Dict[CombinatorialClassType, int] = {}
+        self._label_to_tiling: Dict[int, CombinatorialClassType] = {}
+        self._subrules_set = False
+
+    def _set_subrules(self) -> None:
+        """Tells the subrules which children's recurrence methods it should use."""
         for rule in list(
             self.rules_dict.values()
         ):  # list as we lazily assign empty rules
             rule.set_subrecs(self.get_rule)
-        self.labels: Dict[CombinatorialClassType, int] = {}
-        self._label_to_tiling: Dict[int, CombinatorialClassType] = {}
+        self._subrules_set = True
 
     def _populate_rules_dict(
         self,
@@ -121,6 +126,7 @@ class CombinatorialSpecification(
                 self.rules_dict.pop(comb_class)
             self._expand_verified_comb_classes(verification_packs)
             self.expand_verified()
+            self._subrules_set = False
 
     def expand_comb_class(self, comb_class: Union[int, CombinatorialClassType]) -> None:
         """
@@ -266,6 +272,8 @@ class CombinatorialSpecification(
         Yield all equations on the (ordinary) generating function that the
         rules of the specification imply.
         """
+        if not self._subrules_set:
+            self._set_subrules()
         funcs: Dict[CombinatorialClass, Function] = {
             comb_class: self.get_function(comb_class)
             for comb_class, rule in self.rules_dict.items()
@@ -374,6 +382,8 @@ class CombinatorialSpecification(
         Return the number of objects with the given parameters.
         Note, 'n' is reserved for the size of the object.
         """
+        if not self._subrules_set:
+            self._set_subrules()
         limit = n * self.number_of_rules()
         with RecursionLimit(limit):
             return self.root_rule.count_objects_of_size(n, **parameters)
@@ -385,6 +395,8 @@ class CombinatorialSpecification(
         Return the objects with the given parameters.
         Note, 'n' is reserved for the size of the object.
         """
+        if not self._subrules_set:
+            self._set_subrules()
         for obj in self.root_rule.generate_objects_of_size(n, **parameters):
             yield obj
 
@@ -395,6 +407,8 @@ class CombinatorialSpecification(
         Return a uniformly random object of the given size. This is done using
         the "recursive" method.
         """
+        if not self._subrules_set:
+            self._set_subrules()
         limit = n * self.number_of_rules()
         with RecursionLimit(limit):
             return self.root_rule.random_sample_object_of_size(n, **parameters)
@@ -408,6 +422,8 @@ class CombinatorialSpecification(
 
         Raise an SanityCheckFailure error if it fails.
         """
+        if not self._subrules_set:
+            self._set_subrules()
         return all(
             all(
                 rule.sanity_check(n, **parameters)
@@ -432,7 +448,7 @@ class CombinatorialSpecification(
             try:
                 rule = rules_dict.pop(comb_class)
             except KeyError:
-                assert comb_class in self.rules_dict
+                assert comb_class in self.rules_dict or comb_class.is_empty()
                 return res
             if isinstance(rule, EquivalencePathRule):
                 child_label = self.get_label(rule.comb_class)
