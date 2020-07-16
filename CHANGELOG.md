@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   `CombinatorialSpecification`
 - the `get_rule` method on `CombinatorialSpecification` can also take a label
   as a key
+- `expand_verified` flag to the initialiser of
+  `CombinatorialSpecificationSearcher` which will expand verified classes using
+  the pack passed to the `CombinatorialSpecificationSearcher`
 
 ### Changed
 - When expanding verified nodes in a specification, the search now uses
