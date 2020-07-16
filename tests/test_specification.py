@@ -68,6 +68,10 @@ def test_generate_objects_of_length(specification):
     assert Word("aaaa") in specification.generate_objects_of_size(4)
 
 
+def test_comb_classes(specification):
+    assert len(specification.comb_classes()) >= len(specification.rules_dict)
+
+
 def test_count_object_of_length_big_value(specification):
     specification.count_objects_of_size(1000)
 

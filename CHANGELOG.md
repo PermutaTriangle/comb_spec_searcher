@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   `CombinatorialSpecification`
 - the `get_rule` method on `CombinatorialSpecification` can also take a label
   as a key
+- It is now possible to get all the combinatorial classes contained in a specification
+  with the `comb_classes` method.
 
 ### Changed
 - When expanding verified nodes in a specification, the search now uses
