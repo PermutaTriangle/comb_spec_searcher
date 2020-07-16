@@ -22,6 +22,7 @@ from .exception import (
     InvalidOperationError,
     TaylorExpansionError,
 )
+from .specification_drawer import SpecificationDrawer
 from .strategies import (
     AbstractStrategy,
     EmptyStrategy,
@@ -345,6 +346,10 @@ class CombinatorialSpecification(
             )
             for n in range(length + 1)
         )
+
+    def show(self):
+        sd = SpecificationDrawer(self)
+        sd.show()
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, CombinatorialSpecification):

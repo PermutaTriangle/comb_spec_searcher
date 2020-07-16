@@ -2,14 +2,19 @@
 A specification drawer is for visualizing combinatorial specification object
 """
 import json
+import os
+import tempfile
+import threading
+import time
+import webbrowser
 from copy import copy
-from typing import Dict, List
-
-from typing_extensions import TypedDict
+from typing import TYPE_CHECKING, ClassVar, Dict, List, TypedDict
 
 from .combinatorial_class import CombinatorialClass
-from .specification import CombinatorialSpecification
 from .strategies import EquivalencePathRule, Rule, VerificationRule
+
+if TYPE_CHECKING:
+    from .specification import CombinatorialSpecification
 
 TreantNode = TypedDict(
     "TreantNode", {"innerHTML": str, "collapsable": bool, "children": list}
@@ -25,7 +30,7 @@ class SpecificationDrawer:
     Treant library converts a json of TreantNodes to HTML code
     """
 
-    def __init__(self, spec: CombinatorialSpecification):
+    def __init__(self, spec: "CombinatorialSpecification"):
         self.spec = spec
         self.tooltips: List[Dict[str, str]] = []
         self._rules_dict_copy = copy(spec.rules_dict)
@@ -352,3 +357,39 @@ class SpecificationDrawer:
         text_file = open(file_name, "w")
         text_file.write(html)
         text_file.close()
+
+    def show(self):
+        html_string = self.to_html()
+        viewer = HTMLViewer()
+        viewer.open_html(html_string)
+
+
+class HTMLViewer:
+    """A class for opening html text in browser."""
+
+    _THREAD_WAIT_TIME: ClassVar[float] = 4  # seconds
+
+    @staticmethod
+    def _remove_file_thread(fname: str) -> None:
+        time.sleep(HTMLViewer._THREAD_WAIT_TIME)
+        if os.path.exists(fname):
+            os.remove(fname)
+
+    @staticmethod
+    def _remove_file(fname: str) -> None:
+        threading.Thread(target=HTMLViewer._remove_file_thread, args=(fname,)).start()
+
+    @staticmethod
+    def open_html(html: str) -> None:
+        """Open and render html string in browser."""
+        with tempfile.NamedTemporaryFile(
+            "r+", suffix=".html", delete=False
+        ) as html_file:
+            html_file.write(html)
+            webbrowser.open_new_tab(f"file://{html_file.name}")
+            HTMLViewer._remove_file(html_file.name)
+
+    @staticmethod
+    def open_svg(svg: str) -> None:
+        """Open and render svg image string in browser."""
+        HTMLViewer.open_html(f"<html><body>{svg}</body></html>")
