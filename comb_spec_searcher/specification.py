@@ -159,6 +159,10 @@ class CombinatorialSpecification(
                 self.rules_dict[start] = EquivalencePathRule(rules)
 
     def _remove_redundant_rules(self) -> None:
+        """
+        Any redundant rules passed to the __init__ method are removed using
+        this method.
+        """
         rules_dict = copy(self.rules_dict)
 
         def prune(comb_class: CombinatorialClassType) -> None:
@@ -197,6 +201,7 @@ class CombinatorialSpecification(
             # pylint: disable=protected-access
             comb_class_rules, comb_class_eqv_paths = css._auto_search_rules()
             self._populate_rules_dict(comb_class_rules, comb_class_eqv_paths)
+        self._remove_redundant_rules()
 
     def get_rule(
         self, comb_class: Union[int, CombinatorialClassType]
