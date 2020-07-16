@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
+- the methods `expand_verified` and `expand_comb_class` on
+  `CombinatorialSpecification`
+- the `get_rule` method on `CombinatorialSpecification` can also take a label
+  as a key
 - `rule_from_equivalence_rule_dict` to `RuleDBBase`
 - It is now possible to get all the combinatorial classes contained in a specification
   with the `comb_classes` method.
@@ -17,6 +21,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   and strategies needed to create a specification.
 - the `get_eq_symbol` and `get_op_symbol` are moved to `AbstractStrategy`
   rather than `Constructor`
+- the `expand_verified` flag on the `auto_search` method and
+  `CombinitorialSpecification.__init__` method was removed, and the
+  default is now to not expand verified classes. You should use the
+  `expand_verified` method on `CombinatorialSpecification` for the same
+  behaviour.
+  It also no longer logs the string of the specification.
 
 ### Fixed
 - fixed sanity checking in `comb_spec_searcher`
