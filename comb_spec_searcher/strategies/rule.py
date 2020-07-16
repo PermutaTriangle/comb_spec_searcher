@@ -288,7 +288,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         backpad(res)
         if isinstance(self, Rule):
             children = [str(child).split("\n") for child in self.children]
-            symbol_height = 1
+            symbol_height = min(1, len(res) - 1)
             eq_symbol = (
                 ["     " for i in range(symbol_height)]
                 + ["  {}  ".format(self.strategy.get_eq_symbol())]
@@ -657,7 +657,7 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
         res = str(self.comb_class).split("\n")
         backpad(res)
         comb_classes = [str(rule.children[0]).split("\n") for rule in self.rules]
-        symbol_height = 1
+        symbol_height = min(1, len(res) - 1)
         eq_symbol = (
             ["     " for i in range(symbol_height)]
             + ["  {}  ".format("=")]
