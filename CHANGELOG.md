@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 - fixed sanity checking in `comb_spec_searcher`
+- the initialiser of `CombinatorialSpecification` removes redundant rules
 
 ### Removed
 - `DisableLogging` was removed from `utils` as it is no longer used.
