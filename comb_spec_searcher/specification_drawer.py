@@ -18,9 +18,11 @@ from .strategies import EquivalencePathRule, Rule, VerificationRule
 if TYPE_CHECKING:
     from .specification import CombinatorialSpecification
 
-TreantNode = TypedDict(
-    "TreantNode", {"innerHTML": str, "collapsable": bool, "children": list}
-)
+
+class TreantNode(TypedDict):
+    innerHTML: str
+    collapsable: bool
+    children: list
 
 
 class SpecificationDrawer:
