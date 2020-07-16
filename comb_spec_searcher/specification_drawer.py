@@ -25,9 +25,9 @@ class TreantNode(TypedDict):
     children: list
 
 
-class SpecificationDrawer:
+class SpecificationVisualizer:
     """
-    A specification drawer is for visualizing CombinatorialSpecification by making
+    A specification visualizer is for visualizing CombinatorialSpecification by making
     HTML file that contains an interactive tree using the Treant javascript library
 
     https://fperucic.github.io/treant-js/
