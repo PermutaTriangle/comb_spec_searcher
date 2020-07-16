@@ -67,6 +67,7 @@ class CombinatorialSpecification(
         self.root = root
         self.rules_dict: Dict[CombinatorialClassType, AbstractRule] = {}
         self._populate_rules_dict(strategies, equivalence_paths)
+        self._remove_redundant_rules()
         for rule in list(
             self.rules_dict.values()
         ):  # list as we lazily assign empty rules
@@ -157,6 +158,32 @@ class CombinatorialSpecification(
                     rules.append(rule)
                 self.rules_dict[start] = EquivalencePathRule(rules)
 
+    def _remove_redundant_rules(self) -> None:
+        """
+        Any redundant rules passed to the __init__ method are removed using
+        this method.
+        """
+        rules_dict = copy(self.rules_dict)
+
+        def prune(comb_class: CombinatorialClassType) -> None:
+            try:
+                rule = rules_dict.pop(comb_class)
+            except KeyError:
+                assert comb_class in self.rules_dict or comb_class.is_empty()
+                return
+            if isinstance(rule, EquivalencePathRule):
+                try:
+                    rule = rules_dict.pop(rule.children[0])
+                except KeyError:
+                    assert comb_class in self.rules_dict
+                    return
+            for child in rule.children:
+                prune(child)
+
+        prune(self.root)
+        for rule in rules_dict.values():
+            self.rules_dict.pop(rule.comb_class)
+
     def _expand_verified_comb_classes(
         self, verification_packs: Dict[CombinatorialClassType, StrategyPack],
     ) -> None:
@@ -174,6 +201,7 @@ class CombinatorialSpecification(
             # pylint: disable=protected-access
             comb_class_rules, comb_class_eqv_paths = css._auto_search_rules()
             self._populate_rules_dict(comb_class_rules, comb_class_eqv_paths)
+        self._remove_redundant_rules()
 
     def get_rule(
         self, comb_class: Union[int, CombinatorialClassType]
@@ -429,6 +457,7 @@ class CombinatorialSpecification(
             return res
 
         res = update_res(self.root, res)
+        assert not rules_dict
         return res + "\n"
 
     def equations_string(self) -> str:
