@@ -5,7 +5,7 @@ where each of the bi appear exactly once on the left hand side of some rule.
 from copy import copy
 from functools import reduce
 from operator import mul
-from typing import Dict, Generic, Iterable, Iterator, List, Sequence, Tuple
+from typing import Dict, Generic, Iterable, Iterator, List, Sequence, Set, Tuple
 
 import sympy
 from logzero import logger
@@ -163,6 +163,19 @@ class CombinatorialSpecification(
                 empty_strat = EmptyStrategy()
                 self.rules_dict[comb_class] = empty_strat(comb_class)
         return self.rules_dict[comb_class]
+
+    def comb_classes(self) -> Set[CombinatorialClassType]:
+        """
+        Return a set containing all the combinatorial classes of the specification.
+        """
+        res: Set[CombinatorialClassType] = set()
+        for rule in self.rules_dict.values():
+            res.update(rule.children)
+            res.add(rule.comb_class)
+            if isinstance(rule, EquivalencePathRule):
+                for parent, _ in rule.eqv_path_rules():
+                    res.add(parent)
+        return res
 
     @property
     def root_rule(

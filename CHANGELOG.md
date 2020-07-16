@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- It is now possible to get all the combinatorial classes contained in a specification
+  with the `comb_classes` method.
+
 ### Changed
 - When expanding verified nodes in a specification, the search now uses
   `_auto_search_rules`, instead of `do_level` and `get_smallest_specification`.
