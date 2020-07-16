@@ -84,13 +84,20 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         """
         Initialise CombinatorialSpecificationSearcher.
 
-        INPUT:
+        OTHER INPUT:
             - `ruledb`: a string to specify the type of ruledb to use for the
             search. Default to `None` but can be changed to "forget" for a ruledb that
             saves more memory.
+            - `expand_verified`: if True, every verified combinatorial class will
+              still be expanded using the strategies in strategy pack
+            - `debug`: if True every rule found will be sanity checked and logged
+              to logging.DEBUG
+            - `function_kwargs` are passed to the call method of strategies
+            - `logger_kwargs` are passed to the logger when logging
         """
         self.strategy_pack = strategy_pack
         self.debug = kwargs.get("debug", False)
+        self.expand_verified = kwargs.get("expand_verified", False)
         if self.debug:
             logzero.loglevel(logging.DEBUG, True)
         self.kwargs = kwargs.get("function_kwargs", dict())
@@ -674,7 +681,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             if label != last_label:
                 comb_class = self.classdb.get_class(label)
                 last_label = label
-            if not self.ruledb.is_verified(label):
+            if self.expand_verified or not self.ruledb.is_verified(label):
                 self._expand(comb_class, label, strategies, inferral)
             if time.time() - expansion_start > expansion_time:
                 break
