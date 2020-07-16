@@ -46,7 +46,7 @@ setup(
         "sympy==1.6.1",
         "psutil==5.7.0",
         "pympler==0.8",
-        "typing_extensions==3.7.4.2",
+        "typing-extensions==3.7.4.2",
     ],
     # fmt: on
 )
