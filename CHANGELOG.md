@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 ### Added
 - `rule_from_equivalence_rule_dict` to `RuleDBBase`
+- It is now possible to get all the combinatorial classes contained in a specification
+  with the `comb_classes` method.
+
 ### Changed
 - When expanding verified nodes in a specification, the search now uses
   `_auto_search_rules`, instead of `do_level` and `get_smallest_specification`.
