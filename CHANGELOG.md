@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+- Improved the status update
+
 ## [2.0.0] - 2020-07-16
 ### Added
 - the methods `expand_verified` and `expand_comb_class` on

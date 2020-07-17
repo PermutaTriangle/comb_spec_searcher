@@ -105,13 +105,44 @@ class RuleDBBase(abc.ABC):
         ends = tuple(sorted(ends))
         return (start, ends) in self.rule_to_strategy
 
-    def status(self) -> str:
+    def status(self, elaborate: bool) -> str:
         """Return a string describing the status of the rule database."""
         status = "RuleDB status:\n"
-        status += "\tTotal number of combinatorial rules is {}".format(
-            len(self.rule_to_strategy)
+        status += (
+            f"\tTotal number of combinatorial rules is {len(self.rule_to_strategy)}"
         )
-        # TODO: strategy verified, verified, equivalence sets?
+        if elaborate:
+            eqv_labels = set()
+            strategy_verified_labels = set()
+            verified_labels = set()
+            eqv_rules = set()
+            for start, ends in self.rule_to_strategy:
+                if not ends:
+                    strategy_verified_labels.add(start)
+                if self.is_verified(start):
+                    verified_labels.add(start)
+                eqv_start = self.equivdb[start]
+                eqv_ends = tuple(sorted(self.equivdb[label] for label in ends))
+                eqv_labels.add(eqv_start)
+                eqv_labels.update(eqv_ends)
+                eqv_rules.add((eqv_start, eqv_ends))
+            status += (
+                "\n\tTotal number of combinatorial rules up to equivalence "
+                f"is {len(eqv_rules)}\n"
+            )
+            status += (
+                "\tTotal number of strategy verified combinatorial classes "
+                f"is {len(strategy_verified_labels)}\n"
+            )
+            status += (
+                "\tTotal number of verified combinatorial classes "
+                f"is {len(verified_labels)}\n"
+            )
+            status += (
+                f"\tTotal number combinatorial classes up "
+                f"to equivalence {len(eqv_labels)}"
+            )
+
         return status
 
     ################################################################

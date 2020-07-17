@@ -5,6 +5,7 @@ import platform
 import time
 import warnings
 from collections import defaultdict
+from datetime import timedelta
 from typing import (
     Any,
     Dict,
@@ -20,6 +21,7 @@ from typing import (
 )
 
 import logzero
+import tabulate
 from logzero import logger
 from sympy import Eq, Function, var
 
@@ -50,11 +52,12 @@ from .utils import (
     get_mem,
     nice_pypy_mem,
     size_to_readable,
-    time_to_readable,
 )
 
 if platform.python_implementation() == "CPython":
     from pympler.asizeof import asizeof
+
+__all__ = ["CombinatorialSpecificationSearcher"]
 
 warnings.simplefilter("once", Warning)
 
@@ -448,26 +451,33 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         may be slow to compute
         """
         status = "CSS status:\n"
-
         total = sum(self.func_times.values())
-        status += "\tTotal time accounted for is {} seconds.\n".format(round(total, 2))
-        total_perc: float = 0
-        for explanation in self.func_calls:
-            count = self.func_calls[explanation]
-            time_spent = self.func_times[explanation]
-            percentage = int((time_spent * 100) / total)
-            total_perc += total
-            status += (
-                f"\tApplied {explanation} {count} times."
-                f" Time spent is {round(time_spent, 2)} seconds (~{percentage}%).\n"
-            )
-
+        status += f"\tTotal time accounted for: {timedelta(seconds=int(total))}\n"
+        status += self._css_status(total)
         status += self.classdb.status() + "\n"
         status += self.classqueue.status() + "\n"
-        status += self.ruledb.status() + "\n"
+        status += self.ruledb.status(elaborate) + "\n"
         status += self.mem_status(elaborate)
-
         return status
+
+    @cssmethodtimer("status")
+    def _css_status(self, total: float) -> str:
+        table: List[Tuple[str, str, timedelta, str]] = []
+        for explanation in self.func_calls:
+            count = f"{self.func_calls[explanation]:,d}"
+            time_spent = timedelta(seconds=int(self.func_times[explanation]))
+            percentage = f"{int((self.func_times[explanation] * 100) / total)}%"
+            table.append((explanation, count, time_spent, percentage))
+        table.sort(key=lambda row: row[2], reverse=True)
+        headers = ["", "Number of \napplications", "\nTime spent", "\nPercentage"]
+        colalign = ("left", "right", "right", "right")
+        return (
+            "    "
+            + tabulate.tabulate(table, headers=headers, colalign=colalign).replace(
+                "\n", "\n    "
+            )
+            + "\n"
+        )
 
     @cssmethodtimer("status")
     def mem_status(self, elaborate: bool) -> str:
@@ -524,9 +534,8 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         found_string = "Specification found {}\n".format(
             time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime())
         )
-        found_string += "Time taken was {} seconds\n".format(
-            round(time.time() - start_time, 2)
-        )
+        time_taken = time.time() - start_time
+        found_string += f"Time taken: {timedelta(seconds=int(time_taken))}\n"
         found_string += self.status(elaborate=True)
         found_string += (
             f"Specification found has {specification.number_of_rules()} rules"
@@ -534,24 +543,21 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         logger.info(found_string, extra=self.logger_kwargs)
 
     def _log_status(self, start_time: float, status_update: int) -> None:
-        status = "\nTime taken so far is {} seconds\n".format(
-            round(time.time() - start_time, 2)
-        )
+        time_taken = time.time() - start_time
+        status = f"Time taken so far: {timedelta(seconds=int(time_taken))}\n"
         elaborate = time.time() - start_time > 100 * self.func_times["status"]
-
         status_start = time.time()
         status += self.status(elaborate=elaborate)
-
         ne_goal = 100 * self.func_times["status"] - (time.time() - start_time)
         next_elaborate = round(ne_goal - (ne_goal % status_update) + status_update)
-
         if elaborate:
             status += " -- status update took {} seconds --\n".format(
                 round(time.time() - status_start, 2)
             )
         else:
-            status += " -- next elaborate status update in {} --\n".format(
-                time_to_readable(next_elaborate)
+            status += (
+                " -- next elaborate status update in "
+                f"{timedelta(seconds=next_elaborate)} --\n"
             )
         logger.info(status, extra=self.logger_kwargs)
 
