@@ -10,6 +10,7 @@ from typing import (
     Dict,
     Generic,
     Iterator,
+    List,
     Optional,
     Sequence,
     Set,
@@ -59,6 +60,11 @@ warnings.simplefilter("once", Warning)
 
 logzero.loglevel(logging.INFO)
 
+Specification = Tuple[
+    List[Tuple[CombinatorialClassType, AbstractStrategy]],
+    List[List[CombinatorialClassType]],
+]
+
 
 class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
     """
@@ -78,13 +84,20 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         """
         Initialise CombinatorialSpecificationSearcher.
 
-        INPUT:
+        OTHER INPUT:
             - `ruledb`: a string to specify the type of ruledb to use for the
             search. Default to `None` but can be changed to "forget" for a ruledb that
             saves more memory.
+            - `expand_verified`: if True, every verified combinatorial class will
+              still be expanded using the strategies in strategy pack
+            - `debug`: if True every rule found will be sanity checked and logged
+              to logging.DEBUG
+            - `function_kwargs` are passed to the call method of strategies
+            - `logger_kwargs` are passed to the logger when logging
         """
         self.strategy_pack = strategy_pack
         self.debug = kwargs.get("debug", False)
+        self.expand_verified = kwargs.get("expand_verified", False)
         if self.debug:
             logzero.loglevel(logging.DEBUG, True)
         self.kwargs = kwargs.get("function_kwargs", dict())
@@ -251,9 +264,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 )
                 try:
                     n = 4
-                    # TODO: test for multiple variable
                     for i in range(n + 1):
-                        rule.sanity_check(n=i)
+                        for parameters in rule.comb_class.possible_parameters(i):
+                            rule.sanity_check(n=i, **parameters)
                     logger.debug("Sanity checked rule to length %s.", n)
                 except NotImplementedError as e:
                     logger.debug(
@@ -515,7 +528,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             round(time.time() - start_time, 2)
         )
         found_string += self.status(elaborate=True)
-        found_string += str(specification)
+        found_string += (
+            f"Specification found has {specification.number_of_rules()} rules"
+        )
         logger.info(found_string, extra=self.logger_kwargs)
 
     def _log_status(self, start_time: float, status_update: int) -> None:
@@ -561,9 +576,6 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
 
         If 'smallest' is set to 'True' then the searcher will return a proof
         tree that is as small as possible.
-
-        If 'expand_verified' is set to 'False' then the searcher will not
-        expand verified classes.
         """
         auto_search_start = time.time()
 
@@ -588,31 +600,16 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
 
         max_expansion_time = 0
         expanding = True
-        last_label = None
+
         while expanding:
-            expansion_start = time.time()
-            for label, strategies, inferral in self._labels_to_expand():
-                if label != last_label:
-                    comb_class = self.classdb.get_class(label)
-                    last_label = label
-                if not self.ruledb.is_verified(label):
-                    self._expand(comb_class, label, strategies, inferral)
-                if time.time() - expansion_start > max_expansion_time:
-                    break
-                if (
-                    status_update is not None
-                    and time.time() - status_start > status_update
-                ):
-                    self._log_status(auto_search_start, status_update)
-                    status_start = time.time()
-            else:
-                expanding = False
-                logger.info("No more classes to expand.", extra=self.logger_kwargs)
+            expanding, status_start = self._expand_classes_for(
+                max_expansion_time, status_update, status_start, auto_search_start
+            )
+
             spec_search_start = time.time()
             logger.debug("Searching for specification.", extra=self.logger_kwargs)
             specification = self.get_specification(
                 smallest=kwargs.get("smallest", False),
-                expand_verified=kwargs.get("expand_verified", True),
                 minimization_time_limit=0.01 * (time.time() - auto_search_start),
             )
             if specification is not None:
@@ -635,20 +632,103 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 extra=self.logger_kwargs,
             )
 
+    def _auto_search_rules(self) -> Specification:
+        """
+        A basic auto search for returning equivalence paths and rules.
+
+        This method is used by CombinatorialSpecification for expanding
+        verified classes.
+
+        Will raise SpecificationNotFound error if no specification is found
+        after running out of classes to expand.
+        """
+        status_start = time.time()
+        status_update = None  # this prevents status updates happening
+        auto_search_start = time.time()
+        max_expansion_time: float = 0
+        expanding = True
+        while expanding:
+            expanding, status_start = self._expand_classes_for(
+                max_expansion_time, status_update, status_start, auto_search_start
+            )
+            spec_search_start = time.time()
+            spec = self._get_specification_rules(
+                0.01 * (time.time() - auto_search_start)
+            )
+            if spec is not None:
+                return spec
+            max_expansion_time = min(0.01 * (time.time() - spec_search_start), 3600)
+        raise SpecificationNotFound
+
+    def _expand_classes_for(
+        self,
+        expansion_time: float,
+        status_update: Optional[int],
+        status_start: float,
+        auto_search_start: float,
+    ) -> Tuple[bool, float]:
+        """
+        Will expand classes for `expansion_time` seconds.
+
+        It will return a pair (bool, time), where the bool is True if there are
+        more classes to expand, False otherwise. The `time` is the initial time
+        for checking whether to post a status update.
+        """
+        expansion_start = time.time()
+        last_label = None
+        expanding = True
+        for label, strategies, inferral in self._labels_to_expand():
+            if label != last_label:
+                comb_class = self.classdb.get_class(label)
+                last_label = label
+            if self.expand_verified or not self.ruledb.is_verified(label):
+                self._expand(comb_class, label, strategies, inferral)
+            if time.time() - expansion_start > expansion_time:
+                break
+            if status_update is not None and time.time() - status_start > status_update:
+                self._log_status(auto_search_start, status_update)
+                status_start = time.time()
+        else:
+            expanding = False
+            logger.info("No more classes to expand.", extra=self.logger_kwargs)
+        return expanding, status_start
+
     @cssmethodtimer("get specification")
     def get_specification(
-        self,
-        minimization_time_limit: float = 10,
-        smallest: bool = False,
-        expand_verified: bool = True,
+        self, minimization_time_limit: float = 10, smallest: bool = False,
     ) -> Optional[CombinatorialSpecification]:
         """
         Return a CombinatorialSpecification if the universe contains one.
 
         The minimization_time_limit only applies when smallest is false.
 
-        The function will raise a SpecificationNotFound if no such
-        CombinatorialSpecification exists in the universe.
+        The function will return None if no such CombinatorialSpecification
+        exists in the universe.
+        """
+        spec = self._get_specification_rules(minimization_time_limit, smallest)
+        if spec is None:
+            return None
+        start_class = self.classdb.get_class(self.start_label)
+        strategies, comb_class_eqv_paths = spec
+        logger.info(
+            "Creating a specification", extra=self.logger_kwargs,
+        )
+        return CombinatorialSpecification(
+            start_class, strategies, comb_class_eqv_paths,
+        )
+
+    @cssmethodtimer("get specification")
+    def _get_specification_rules(
+        self, minimization_time_limit: float = 10, smallest: bool = False,
+    ) -> Optional[Specification]:
+        """
+        Returns the equivalence paths needed to create a
+        CombinatorialSpecification, if one exists.
+
+        The minimization_time_limit only applies when smallest is false.
+
+        The function will return None if no such CombinatorialSpecification
+        exists in the universe.
         """
         try:
             if smallest:
@@ -665,16 +745,8 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 )
         except SpecificationNotFound:
             return None
-        start_class = self.classdb.get_class(self.start_label)
-        comb_class_eqv_paths = tuple(
-            tuple(map(self.classdb.get_class, path)) for path in eqv_paths
-        )
-        logger.info(
-            "Creating a specification", extra=self.logger_kwargs,
-        )
-        return CombinatorialSpecification(
-            start_class,
-            [(self.classdb.get_class(label), rule) for label, rule in rules],
-            comb_class_eqv_paths,
-            expand_verified=expand_verified,
-        )
+        comb_class_eqv_paths = [
+            list(map(self.classdb.get_class, path)) for path in eqv_paths
+        ]
+        strategies = [(self.classdb.get_class(label), rule) for label, rule in rules]
+        return strategies, comb_class_eqv_paths

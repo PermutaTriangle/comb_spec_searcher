@@ -2,11 +2,10 @@
 A combinatorial specification is a set rules of the form a -> b1, ..., bk
 where each of the bi appear exactly once on the left hand side of some rule.
 """
-import logging
 from copy import copy
 from functools import reduce
 from operator import mul
-from typing import Dict, Generic, Iterable, Iterator, List, Sequence, Tuple
+from typing import Dict, Generic, Iterable, Iterator, List, Sequence, Set, Tuple, Union
 
 import sympy
 from logzero import logger
@@ -21,8 +20,6 @@ from .combinatorial_class import (
 from .exception import (
     IncorrectGeneratingFunctionError,
     InvalidOperationError,
-    NoMoreClassesToExpandError,
-    SpecificationNotFound,
     TaylorExpansionError,
 )
 from .strategies import (
@@ -38,7 +35,6 @@ from .strategies import (
 )
 from .strategies.rule import AbstractRule
 from .utils import (
-    DisableLogging,
     RecursionLimit,
     maple_equations,
     pretty_print_equations,
@@ -55,9 +51,6 @@ class CombinatorialSpecification(
     A combinatorial specification is a set rules of the form a -> b1, ..., bk
     where each of the bi appear exactly once on the left hand side of some
     rule.
-
-    The default is to expand verified classes, but this can be turned off by
-    setting expand_verified to False.
     """
 
     def __init__(
@@ -70,16 +63,22 @@ class CombinatorialSpecification(
             ]
         ],
         equivalence_paths: Iterable[Sequence[CombinatorialClassType]],
-        expand_verified: bool = True,
     ):
         self.root = root
         self.rules_dict: Dict[CombinatorialClassType, AbstractRule] = {}
-        self._populate_rules_dict(strategies, equivalence_paths, expand_verified)
+        self._populate_rules_dict(strategies, equivalence_paths)
+        self._remove_redundant_rules()
+        self.labels: Dict[CombinatorialClassType, int] = {}
+        self._label_to_tiling: Dict[int, CombinatorialClassType] = {}
+        self._subrules_set = False
+
+    def _set_subrules(self) -> None:
+        """Tells the subrules which children's recurrence methods it should use."""
         for rule in list(
             self.rules_dict.values()
         ):  # list as we lazily assign empty rules
             rule.set_subrecs(self.get_rule)
-        self.labels: Dict[CombinatorialClassType, int] = {}
+        self._subrules_set = True
 
     def _populate_rules_dict(
         self,
@@ -90,12 +89,10 @@ class CombinatorialSpecification(
             ]
         ],
         equivalence_paths: Iterable[Sequence[CombinatorialClassType]],
-        expand_verified: bool,
     ) -> None:
         equivalence_rules: Dict[
             Tuple[CombinatorialClassType, CombinatorialClassType], Rule
         ] = {}
-        verification_packs: Dict[CombinatorialClassType, StrategyPack] = {}
         for comb_class, strategy in strategies:
             if isinstance(strategy, AlreadyVerified):
                 continue
@@ -106,20 +103,47 @@ class CombinatorialSpecification(
                 equivalence_rules[(comb_class, non_empty_children[0])] = (
                     rule if len(rule.children) == 1 else rule.to_equivalence_rule()
                 )
-            elif non_empty_children:
+            elif non_empty_children or isinstance(rule, VerificationRule):
                 self.rules_dict[comb_class] = rule
-            elif isinstance(rule, VerificationRule):
-                if expand_verified:
-                    try:
-                        verification_packs[comb_class] = rule.pack()
-                    except InvalidOperationError:
-                        self.rules_dict[comb_class] = strategy(comb_class)
-                else:
-                    self.rules_dict[comb_class] = strategy(comb_class)
             else:
                 raise ValueError("Non verification rule has no children.")
         self._add_equivalence_path_rules(equivalence_paths, equivalence_rules)
-        self._expand_verified_comb_classes(verification_packs)
+
+    def expand_verified(self) -> None:
+        """
+        Will expand all verified classes with respect to the strategy packs
+        given by the VerificationStrategies.
+        """
+        verification_packs: Dict[CombinatorialClassType, StrategyPack] = {}
+        for comb_class, rule in self.rules_dict.items():
+            if isinstance(rule, VerificationRule):
+                try:
+                    verification_packs[comb_class] = rule.pack()
+                except InvalidOperationError:
+                    logger.info("Can't expand the rule:\n%s", rule)
+        if verification_packs:
+            for comb_class in verification_packs:
+                self.rules_dict.pop(comb_class)
+            self._expand_verified_comb_classes(verification_packs)
+            self.expand_verified()
+            self._subrules_set = False
+
+    def expand_comb_class(self, comb_class: Union[int, CombinatorialClassType]) -> None:
+        """
+        Will try to expand a particular class with respect to the strategy pack
+        that the VerificationStrategy has.
+        """
+        rule = self.get_rule(comb_class)
+        if isinstance(rule, VerificationRule):
+            try:
+                pack = rule.pack()
+            except InvalidOperationError:
+                logger.info("Can't expand the rule:\n%s", rule)
+                return
+            self.rules_dict.pop(rule.comb_class)
+            self._expand_verified_comb_classes({rule.comb_class: pack})
+        else:
+            logger.info("Can't expand the rule:\n%s", rule)
 
     def _add_equivalence_path_rules(
         self,
@@ -140,6 +164,32 @@ class CombinatorialSpecification(
                     rules.append(rule)
                 self.rules_dict[start] = EquivalencePathRule(rules)
 
+    def _remove_redundant_rules(self) -> None:
+        """
+        Any redundant rules passed to the __init__ method are removed using
+        this method.
+        """
+        rules_dict = copy(self.rules_dict)
+
+        def prune(comb_class: CombinatorialClassType) -> None:
+            try:
+                rule = rules_dict.pop(comb_class)
+            except KeyError:
+                assert comb_class in self.rules_dict or comb_class.is_empty()
+                return
+            if isinstance(rule, EquivalencePathRule):
+                try:
+                    rule = rules_dict.pop(rule.children[0])
+                except KeyError:
+                    assert comb_class in self.rules_dict
+                    return
+            for child in rule.children:
+                prune(child)
+
+        prune(self.root)
+        for rule in rules_dict.values():
+            self.rules_dict.pop(rule.comb_class)
+
     def _expand_verified_comb_classes(
         self, verification_packs: Dict[CombinatorialClassType, StrategyPack],
     ) -> None:
@@ -154,41 +204,41 @@ class CombinatorialSpecification(
                 ),
             )
             logger.info(css.run_information())
-            while True:
-                try:
-                    css.do_level()
-                except NoMoreClassesToExpandError:
-                    with DisableLogging(logging.INFO):
-                        new_rules = css.ruledb.get_smallest_specification(
-                            css.start_label
-                        )
-                    break
-                try:
-                    with DisableLogging(logging.INFO):
-                        new_rules = css.ruledb.get_smallest_specification(
-                            css.start_label
-                        )
-                    break
-                except SpecificationNotFound:
-                    pass
-            rules, eqv_paths = new_rules
-            comb_class_eqv_paths = tuple(
-                tuple(map(css.classdb.get_class, path)) for path in eqv_paths
-            )
-            comb_class_rules = [
-                (css.classdb.get_class(label), rule) for label, rule in rules
-            ]
-            self._populate_rules_dict(comb_class_rules, comb_class_eqv_paths, True)
+            # pylint: disable=protected-access
+            comb_class_rules, comb_class_eqv_paths = css._auto_search_rules()
+            self._populate_rules_dict(comb_class_rules, comb_class_eqv_paths)
+        self._remove_redundant_rules()
 
     def get_rule(
-        self, comb_class: CombinatorialClassType
+        self, comb_class: Union[int, CombinatorialClassType]
     ) -> AbstractRule[CombinatorialClassType, CombinatorialObjectType]:
         """Return the rule with comb class on the left."""
+        if isinstance(comb_class, int):
+            try:
+                comb_class = self._label_to_tiling[comb_class]
+            except KeyError:
+                raise InvalidOperationError(
+                    f"The label {comb_class} does not correspond to a tiling"
+                    " in the specification."
+                )
         if comb_class not in self.rules_dict:
-            if comb_class.is_empty():
-                empty_strat = EmptyStrategy()
-                self.rules_dict[comb_class] = empty_strat(comb_class)
+            assert comb_class.is_empty(), "rule not in the spec and not empty"
+            empty_strat = EmptyStrategy()
+            self.rules_dict[comb_class] = empty_strat(comb_class)
         return self.rules_dict[comb_class]
+
+    def comb_classes(self) -> Set[CombinatorialClassType]:
+        """
+        Return a set containing all the combinatorial classes of the specification.
+        """
+        res: Set[CombinatorialClassType] = set()
+        for rule in self.rules_dict.values():
+            res.update(rule.children)
+            res.add(rule.comb_class)
+            if isinstance(rule, EquivalencePathRule):
+                for parent, _ in rule.eqv_path_rules():
+                    res.add(parent)
+        return res
 
     @property
     def root_rule(
@@ -203,6 +253,7 @@ class CombinatorialSpecification(
         if res is None:
             res = len(self.labels)
             self.labels[comb_class] = res
+            self._label_to_tiling[res] = comb_class
         return res
 
     def get_function(self, comb_class: CombinatorialClassType) -> Function:
@@ -221,6 +272,8 @@ class CombinatorialSpecification(
         Yield all equations on the (ordinary) generating function that the
         rules of the specification imply.
         """
+        if not self._subrules_set:
+            self._set_subrules()
         funcs: Dict[CombinatorialClass, Function] = {
             comb_class: self.get_function(comb_class)
             for comb_class, rule in self.rules_dict.items()
@@ -329,6 +382,8 @@ class CombinatorialSpecification(
         Return the number of objects with the given parameters.
         Note, 'n' is reserved for the size of the object.
         """
+        if not self._subrules_set:
+            self._set_subrules()
         limit = n * self.number_of_rules()
         with RecursionLimit(limit):
             return self.root_rule.count_objects_of_size(n, **parameters)
@@ -340,6 +395,8 @@ class CombinatorialSpecification(
         Return the objects with the given parameters.
         Note, 'n' is reserved for the size of the object.
         """
+        if not self._subrules_set:
+            self._set_subrules()
         for obj in self.root_rule.generate_objects_of_size(n, **parameters):
             yield obj
 
@@ -350,6 +407,8 @@ class CombinatorialSpecification(
         Return a uniformly random object of the given size. This is done using
         the "recursive" method.
         """
+        if not self._subrules_set:
+            self._set_subrules()
         limit = n * self.number_of_rules()
         with RecursionLimit(limit):
             return self.root_rule.random_sample_object_of_size(n, **parameters)
@@ -363,6 +422,8 @@ class CombinatorialSpecification(
 
         Raise an SanityCheckFailure error if it fails.
         """
+        if not self._subrules_set:
+            self._set_subrules()
         return all(
             all(
                 rule.sanity_check(n, **parameters)
@@ -387,7 +448,7 @@ class CombinatorialSpecification(
             try:
                 rule = rules_dict.pop(comb_class)
             except KeyError:
-                assert comb_class in self.rules_dict
+                assert comb_class in self.rules_dict or comb_class.is_empty()
                 return res
             if isinstance(rule, EquivalencePathRule):
                 child_label = self.get_label(rule.comb_class)
@@ -412,6 +473,7 @@ class CombinatorialSpecification(
             return res
 
         res = update_res(self.root, res)
+        assert not rules_dict
         return res + "\n"
 
     def equations_string(self) -> str:
@@ -458,7 +520,7 @@ class CombinatorialSpecification(
         }
 
     @classmethod
-    def from_dict(cls, d, expand_verified=False):
+    def from_dict(cls, d):
         """
         Return the specification with the dictionary outputter by the
         'to_jsonable' method
@@ -476,7 +538,6 @@ class CombinatorialSpecification(
                 [CombinatorialClass.from_dict(class_dict) for class_dict in eqv_path]
                 for eqv_path in d["eqv_paths"]
             ],
-            expand_verified=expand_verified,
         )
 
 

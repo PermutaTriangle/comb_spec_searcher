@@ -238,15 +238,19 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             # Can't sanity check generation of objects for classes with extra
             # TODO test more thoroughly
             return True
-        actual_objects = set(
-            list(brute_force_generation(self.comb_class, n, **parameters))
-        )
         tempgen = self.subgenerators
         self.subgenerators = tuple(
             partial(brute_force_generation, child) for child in self.children
         )
-        rule_objects = set(list(self.generate_objects_of_size(n, **parameters)))
+        try:
+            rule_objects = set(list(self.generate_objects_of_size(n, **parameters)))
+        except NotImplementedError:
+            # Skipping testing rules that have not implemented object generation.
+            return True
         self.subgenerators = tempgen
+        actual_objects = set(
+            list(brute_force_generation(self.comb_class, n, **parameters))
+        )
         if actual_objects != rule_objects:
             raise SanityCheckFailure(
                 f"The following rule failed sanity check:\n"
@@ -288,10 +292,10 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         backpad(res)
         if isinstance(self, Rule):
             children = [str(child).split("\n") for child in self.children]
-            symbol_height = 1
+            symbol_height = min(1, len(res) - 1)
             eq_symbol = (
                 ["     " for i in range(symbol_height)]
-                + ["  {}  ".format(self.constructor.get_eq_symbol())]
+                + ["  {}  ".format(self.strategy.get_eq_symbol())]
                 + ["     " for i in range(symbol_height)]
             )
             join(res, eq_symbol)
@@ -299,7 +303,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             if len(children) > 1:
                 op_symbol = (
                     ["     " for i in range(symbol_height)]
-                    + ["  {}  ".format(self.constructor.get_op_symbol())]
+                    + ["  {}  ".format(self.strategy.get_op_symbol())]
                     + ["     " for i in range(symbol_height)]
                 )
                 for child in children[1:]:
@@ -657,7 +661,7 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
         res = str(self.comb_class).split("\n")
         backpad(res)
         comb_classes = [str(rule.children[0]).split("\n") for rule in self.rules]
-        symbol_height = 1
+        symbol_height = min(1, len(res) - 1)
         eq_symbol = (
             ["     " for i in range(symbol_height)]
             + ["  {}  ".format("=")]
