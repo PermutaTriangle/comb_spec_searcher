@@ -140,6 +140,18 @@ class RuleDBBase(abc.ABC):
                 return start, ends
         return None
 
+    def rule_from_equivalence_rule_dict(self) -> Dict[RuleKey, RuleKey]:
+        """
+        Return a dictionary pointing from an equivalence rule to an actual rule.
+        """
+        res: Dict[RuleKey, RuleKey] = {}
+        for start, ends in self.rule_to_strategy:
+            eqv_start = self.equivdb[start]
+            eqv_ends = tuple(sorted(map(self.equivdb.__getitem__, ends)))
+            eqv_key = (eqv_start, eqv_ends)
+            res[eqv_key] = (start, ends)
+        return res
+
     def find_specification(
         self, label: int, minimization_time_limit: float, iterative: bool = False
     ) -> Node:
@@ -189,12 +201,13 @@ class RuleDBBase(abc.ABC):
     ) -> Specification:
         children: Dict[int, Tuple[int, ...]] = dict()
         internal_nodes = set([label])
+        rule_from_equivalence_rules = self.rule_from_equivalence_rule_dict()
         for node in proof_tree_node.nodes():
             eqv_start, eqv_ends = (
                 node.label,
-                tuple(child.label for child in node.children),
+                tuple(sorted(child.label for child in node.children)),
             )
-            rule = self.rule_from_equivalence_rule(eqv_start, eqv_ends)
+            rule = rule_from_equivalence_rules.get((eqv_start, eqv_ends))
             if rule is not None:
                 start, ends = rule
                 children[start] = ends

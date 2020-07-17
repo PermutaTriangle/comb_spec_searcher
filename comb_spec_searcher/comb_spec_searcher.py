@@ -84,13 +84,20 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         """
         Initialise CombinatorialSpecificationSearcher.
 
-        INPUT:
+        OTHER INPUT:
             - `ruledb`: a string to specify the type of ruledb to use for the
             search. Default to `None` but can be changed to "forget" for a ruledb that
             saves more memory.
+            - `expand_verified`: if True, every verified combinatorial class will
+              still be expanded using the strategies in strategy pack
+            - `debug`: if True every rule found will be sanity checked and logged
+              to logging.DEBUG
+            - `function_kwargs` are passed to the call method of strategies
+            - `logger_kwargs` are passed to the logger when logging
         """
         self.strategy_pack = strategy_pack
         self.debug = kwargs.get("debug", False)
+        self.expand_verified = kwargs.get("expand_verified", False)
         if self.debug:
             logzero.loglevel(logging.DEBUG, True)
         self.kwargs = kwargs.get("function_kwargs", dict())
@@ -521,7 +528,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             round(time.time() - start_time, 2)
         )
         found_string += self.status(elaborate=True)
-        found_string += str(specification)
+        found_string += (
+            f"Specification found has {specification.number_of_rules()} rules"
+        )
         logger.info(found_string, extra=self.logger_kwargs)
 
     def _log_status(self, start_time: float, status_update: int) -> None:
@@ -567,9 +576,6 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
 
         If 'smallest' is set to 'True' then the searcher will return a proof
         tree that is as small as possible.
-
-        If 'expand_verified' is set to 'False' then the searcher will not
-        expand verified classes.
         """
         auto_search_start = time.time()
 
@@ -604,7 +610,6 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             logger.debug("Searching for specification.", extra=self.logger_kwargs)
             specification = self.get_specification(
                 smallest=kwargs.get("smallest", False),
-                expand_verified=kwargs.get("expand_verified", True),
                 minimization_time_limit=0.01 * (time.time() - auto_search_start),
             )
             if specification is not None:
@@ -676,7 +681,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             if label != last_label:
                 comb_class = self.classdb.get_class(label)
                 last_label = label
-            if not self.ruledb.is_verified(label):
+            if self.expand_verified or not self.ruledb.is_verified(label):
                 self._expand(comb_class, label, strategies, inferral)
             if time.time() - expansion_start > expansion_time:
                 break
@@ -690,10 +695,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
 
     @cssmethodtimer("get specification")
     def get_specification(
-        self,
-        minimization_time_limit: float = 10,
-        smallest: bool = False,
-        expand_verified: bool = True,
+        self, minimization_time_limit: float = 10, smallest: bool = False,
     ) -> Optional[CombinatorialSpecification]:
         """
         Return a CombinatorialSpecification if the universe contains one.
@@ -712,10 +714,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             "Creating a specification", extra=self.logger_kwargs,
         )
         return CombinatorialSpecification(
-            start_class,
-            strategies,
-            comb_class_eqv_paths,
-            expand_verified=expand_verified,
+            start_class, strategies, comb_class_eqv_paths,
         )
 
     @cssmethodtimer("get specification")
