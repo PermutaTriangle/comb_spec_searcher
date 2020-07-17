@@ -238,15 +238,19 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             # Can't sanity check generation of objects for classes with extra
             # TODO test more thoroughly
             return True
-        actual_objects = set(
-            list(brute_force_generation(self.comb_class, n, **parameters))
-        )
         tempgen = self.subgenerators
         self.subgenerators = tuple(
             partial(brute_force_generation, child) for child in self.children
         )
-        rule_objects = set(list(self.generate_objects_of_size(n, **parameters)))
+        try:
+            rule_objects = set(list(self.generate_objects_of_size(n, **parameters)))
+        except NotImplementedError:
+            # Skipping testing rules that have not implemented object generation.
+            return True
         self.subgenerators = tempgen
+        actual_objects = set(
+            list(brute_force_generation(self.comb_class, n, **parameters))
+        )
         if actual_objects != rule_objects:
             raise SanityCheckFailure(
                 f"The following rule failed sanity check:\n"
