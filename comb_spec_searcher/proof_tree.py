@@ -144,7 +144,7 @@ class ProofTree:
         seen: List[Rule] = list()
 
         def proof_tree_node(comb_class: CombinatorialClass) -> ProofTreeNode:
-            rule = spec.rules_dict[comb_class]
+            rule = spec.get_rule(comb_class)
             # Setting up the equivalence path
             if isinstance(rule, EquivalencePathRule):
                 eqv_path_labels: List[int] = []
