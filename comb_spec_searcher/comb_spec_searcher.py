@@ -484,22 +484,15 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         """Provide status information related to memory usage."""
 
         status = "Memory Status:\n"
-        status += "\tTotal Memory OS has Allocated: {}\n".format(
-            size_to_readable(get_mem())
-        )
+        table: List[Tuple[str, str]] = []
+        table.append(("OS Allocated", size_to_readable(get_mem())))
         if platform.python_implementation() == "CPython":
             # Warning: "asizeof" can be very slow!
             if elaborate:
-                status += "\tCSS Size: {}\n".format(size_to_readable(asizeof(self)))
-                status += "\tClassDB Size: {}\n".format(
-                    size_to_readable(asizeof(self.classdb))
-                )
-                status += "\tClassQueue Size: {}\n".format(
-                    size_to_readable(asizeof(self.classqueue))
-                )
-                status += "\tRuleDB Size: {}\n".format(
-                    size_to_readable(asizeof(self.ruledb))
-                )
+                table.append(("CSS", size_to_readable(asizeof(self))))
+                table.append(("ClassDB", size_to_readable(asizeof(self.classdb))))
+                table.append(("ClassQueue", size_to_readable(asizeof(self.classqueue))))
+                table.append(("RuleDB", size_to_readable(asizeof(self.ruledb))))
 
         elif platform.python_implementation() == "PyPy":
             gc_stats = cast(Any, gc.get_stats())
@@ -512,11 +505,16 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 ("Peak Memory Allocated Memory Used", gc_stats.peak_allocated_memory,),
             ]
             for (desc, mem) in stats:
-                status += "\t{}: {}\n".format(desc, nice_pypy_mem(mem))
+                table.append((desc, nice_pypy_mem(mem)))
+        status += "    "
+        status += tabulate.tabulate(table, colalign=("left", "right")).replace(
+            "\n", "\n    "
+        )
+        status += "\n"
+        if platform.python_implementation() == "PyPy":
             status += "\tTotal Garbage Collection Time: {} seconds\n".format(
                 round(gc_stats.total_gc_time / 1000, 2)
             )
-
         return status
 
     def run_information(self) -> str:
