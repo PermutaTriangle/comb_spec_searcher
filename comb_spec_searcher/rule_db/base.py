@@ -5,6 +5,7 @@ import abc
 from collections import defaultdict
 from typing import Dict, Iterable, Iterator, List, MutableMapping, Optional, Set, Tuple
 
+import tabulate
 from logzero import logger
 
 from comb_spec_searcher.equiv_db import EquivalenceDB
@@ -105,13 +106,48 @@ class RuleDBBase(abc.ABC):
         ends = tuple(sorted(ends))
         return (start, ends) in self.rule_to_strategy
 
-    def status(self) -> str:
+    def status(self, elaborate: bool) -> str:
         """Return a string describing the status of the rule database."""
         status = "RuleDB status:\n"
-        status += "\tTotal number of combinatorial rules is {}".format(
-            len(self.rule_to_strategy)
-        )
-        # TODO: strategy verified, verified, equivalence sets?
+        table: List[Tuple[str, str]] = []
+        table.append(("Combinatorial rules", f"{len(self.rule_to_strategy):,d}"))
+        if elaborate:
+            eqv_labels = set()
+            strategy_verified_labels = set()
+            verified_labels = set()
+            eqv_rules = set()
+            for start, ends in self.rule_to_strategy:
+                if not ends:
+                    strategy_verified_labels.add(start)
+                if self.is_verified(start):
+                    verified_labels.add(start)
+                eqv_start = self.equivdb[start]
+                eqv_ends = tuple(sorted(self.equivdb[label] for label in ends))
+                eqv_labels.add(eqv_start)
+                eqv_labels.update(eqv_ends)
+                eqv_rules.add((eqv_start, eqv_ends))
+            table.append(
+                ("Combintorial rules up to equivalence", f"{len(eqv_rules):,d}")
+            )
+            table.append(
+                (
+                    "Strategy verified combinatorial classes",
+                    f"{len(strategy_verified_labels):,d}",
+                )
+            )
+            table.append(
+                ("Verified combinatorial classes", f"{len(verified_labels):,d}",)
+            )
+            table.append(
+                (
+                    "combinatorial classes up to equivalence",
+                    f"{len(verified_labels):,d}",
+                )
+            )
+        status += "    "
+        status += tabulate.tabulate(
+            table, headers=("", "Total number"), colalign=("left", "right")
+        ).replace("\n", "\n    ")
         return status
 
     ################################################################

@@ -46,6 +46,7 @@ setup(
         "sympy==1.6.1",
         "psutil==5.7.2",
         "pympler==0.8",
+        "tabulate==0.8.7",
     ],
     # fmt: on
 )
