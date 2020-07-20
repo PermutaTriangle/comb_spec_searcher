@@ -512,8 +512,8 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         )
         status += "\n"
         if platform.python_implementation() == "PyPy":
-            status += "\tTotal Garbage Collection Time: {} seconds\n".format(
-                round(gc_stats.total_gc_time / 1000, 2)
+            status += "\tTotal Garbage Collection Time: {}\n".format(
+                timedelta(seconds=int(gc_stats.total_gc_time / 1000))
             )
         return status
 
