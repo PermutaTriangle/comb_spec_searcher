@@ -566,9 +566,7 @@ class VerificationStrategy(
 
         The pack is assumed to produce a finite universe.
         """
-        raise InvalidOperationError(
-            "can't find specification for {}".format(self.__str__)
-        )
+        raise InvalidOperationError(f"can't find specification for {self}")
 
     @abc.abstractmethod
     def verified(self, comb_class: CombinatorialClassType) -> bool:
