@@ -25,6 +25,7 @@ setup(
     package_data={"comb_spec_searcher": ["py.typed"]},
     long_description=read("README.rst"),
     python_requires=">=3.6",
+    include_package_data=True,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Education",

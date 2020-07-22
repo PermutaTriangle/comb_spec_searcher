@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 class TreantNode(TypedDict):
     innerHTML: str
     collapsable: bool
+    collapsed: bool
     children: list
 
 
@@ -34,23 +35,36 @@ class SpecificationDrawer:
     Treant library converts a json of TreantNodes to HTML code
     """
 
-    def __init__(self, spec: "CombinatorialSpecification"):
+    def __init__(
+        self,
+        spec: "CombinatorialSpecification",
+        levels_shown: int = 0,
+        levels_expand: int = 0,
+    ):
+        """
+        Initialise SpecificationDrawer.
+
+        OTHER INPUT:
+            - 'levels_shown': number of levels displayed at the start.
+            If 0 then the whole tree is displayed
+            - 'levels_expand': number of levels displayed after expanding a node.
+            If 0 then the rest of the tree is displayed
+        """
         self.spec = spec
         self.tooltips: List[Dict[str, str]] = []
         self._rules_dict_copy = copy(spec.rules_dict)
         self._current_node_id = 0
+        self.levels_shown = levels_shown
+        self.levels_expand = levels_expand
         self.tree_dict = self._to_tree_dict(spec.root)
-
-    @property
-    def rules_dict(self):
-        """Original rules_dict from CombinatorialSpecification."""
-        return self.spec.rules_dict
 
     def _get_new_node_id(self) -> int:
         self._current_node_id += 1
         return self._current_node_id
 
-    def _to_tree_dict(self, comb_class: CombinatorialClass) -> TreantNode:
+    def _to_tree_dict(
+        self, comb_class: CombinatorialClass, rec_depth: int = 0
+    ) -> TreantNode:
         """
         Create the subtree rooted in comb_class
         """
@@ -72,14 +86,13 @@ class SpecificationDrawer:
             comb_classes = [comb_class]
         treant_node = self._create_standard_node(comb_classes)
         self._create_standard_tooltip(comb_classes, self._current_node_id)
-
-        children = [self._to_tree_dict(child) for child in rule.children]
+        children = [self._to_tree_dict(child, rec_depth + 1) for child in rule.children]
 
         # If a node has children we create a delimiter node between them
         # in order to seperate tooltip describing the steps taking in the tree
 
         if children and isinstance(rule, Rule):
-            delimiter_node = self._create_delimiter_node(rule, children)
+            delimiter_node = self._create_delimiter_node(rule, children, rec_depth)
             self._create_delimiter_tooltip(rule, self._current_node_id)
             children = [delimiter_node]
 
@@ -132,12 +145,13 @@ class SpecificationDrawer:
         treant_node = TreantNode(
             innerHTML=f'<div id="node{new_id}" data-toggle="tooltip">{node_html}</div>',
             collapsable=False,
+            collapsed=False,
             children=[],
         )
         return treant_node
 
     def _create_delimiter_node(
-        self, rule: Rule, children: List[TreantNode]
+        self, rule: Rule, children: List[TreantNode], rec_depth: int
     ) -> TreantNode:
         """
         Returns delimiter node that describes
@@ -146,10 +160,21 @@ class SpecificationDrawer:
         new_id = self._get_new_node_id()
         symbol = rule.strategy.get_op_symbol()
         delimiter_html = f'<div class="and-gate" id={new_id}>{symbol}</div>'
+
+        # collapses at levels_shown and at every levels_expand after that
+        collapsed = rec_depth != 0 and (
+            rec_depth == self.levels_shown
+            or (  # collapse at every levels_expand after levels_shown
+                self.levels_expand != 0  # if 0 we don't collapse
+                and rec_depth >= self.levels_shown
+                and (rec_depth + self.levels_expand) % self.levels_expand == 0
+            )
+        )
         delimiter_node = TreantNode(
             innerHTML=f"""<div id="node{new_id}"
                 data-toggle="tooltip">{delimiter_html}</div>""",
             collapsable=True,
+            collapsed=collapsed,
             children=children,
         )
         return delimiter_node
@@ -193,7 +218,7 @@ class SpecificationDrawer:
 
     def _handle_recursion(self, comb_class: CombinatorialClass) -> TreantNode:
         """Returns standard tooltip and a TreantNode without any children"""
-        assert comb_class in self.rules_dict
+        assert self.spec.get_rule(comb_class)
         # creates node without children
         treant_node = self._create_standard_node([comb_class])
         self._create_standard_tooltip([comb_class], self._current_node_id)
@@ -207,11 +232,14 @@ class SpecificationDrawer:
             [
                 {
                     "chart": {
+                        "maxDepth": 10000,
                         "container": "#combo-tree0",
                         "connectors": {"type": "bCurve", "style": {}},
                         "nodeAlign": "BOTTOM",
                         "levelSeparation": 35,
                         "siblingSeparation": 30,
+                        "connectorsSpeed ": 10,
+                        "animation": {"nodeSpeed": 400, "connectorsSpeed": 200},
                         "callback": {
                             # can't send functions over so it
                             # is dealt with on javascript side
@@ -233,88 +261,44 @@ class SpecificationDrawer:
         return self.to_html_string(treant_json)
 
     @staticmethod
-    def to_html_string(treant_json: str) -> str:
+    def _read_file(filename):
+        with open(filename, "r", encoding="UTF8") as f:
+            return f.read()
+
+    def to_html_string(self, treant_json: str) -> str:
         """
         Returns a html string that contains the whole tree
         """
-        html_head = """
+        script_dir = os.path.dirname(__file__)
+        # Path to static files
+        psf = os.path.join(script_dir, "resources/static/")
+        treant_stylesheet = self._read_file(os.path.join(psf, "css/treant.css"))
+        combopal_stylesheet = self._read_file(os.path.join(psf, "css/combopal.css"))
+
+        jquery_min_script = self._read_file(os.path.join(psf, "js/jquery.min.js"))
+        bootstrap_min_script = self._read_file(
+            os.path.join(psf, "js/bootstrap.bundle.min.js")
+        )
+        treant_script = self._read_file(os.path.join(psf, "js/Treant.js"))
+        raphael_script = self._read_file(os.path.join(psf, "js/raphael.js"))
+
+        html_string = f"""
         <!DOCTYPE html><html><head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title>ComboPal</title>
-        <link rel="stylesheet"
-            href="https://combopal.ru.is/static/css/bootstrap.min.css">
-        <link rel="stylesheet" href="https://combopal.ru.is/static/css/Treant.css">
-        <link rel="stylesheet" href="https://combopal.ru.is/static/css/combopal.css">
         <style>
-            .node-content{
-                text-align: left;
-                border: 1px solid;
-                padding: 28px;
-                font-family: Consolas, monaco, monospace;
-                font-size: 14px; font-style: normal;
-                line-height: normal;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-            }
-            .eqv-node-content{
-                margin-right: 16px;
-                max-width: 400px;
-                border: 1px solid;
-                padding: 16px;
-            }
-            .tooltip{
-                opacity: 0.97 !important;
-            }
-            .tooltip-inner{
-                font-family: Consolas, monaco, monospace;
-                font-size: 14px;
-                font-style: normal;
-                line-height: normal;
-                max-width: none !important;
-            }
-            .tiling{
-                border: 1px solid;
-                width: 22px;
-                height: 22px;
-                text-align: center;
-            }
-            .label{
-                border: 1px solid;
-                border-bottom-style: none;
-            }
-            pre{
-                font-family: Consolas, monaco, monospace;
-                font-size: 14px; font-style: normal;
-                line-height: normal;
-            }
-            @media print {
-                body {-webkit-print-color-adjust: exact;}
-            }
+        {treant_stylesheet}
+        {combopal_stylesheet}
         </style>
-        <script
-        src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js">
-        </script>
-        <script src="https://combopal.ru.is/static/js/bootstrap.bundle.min.js"></script>
-        <script src="https://combopal.ru.is/static/js/Treant.js"></script>
-        <script src="https://combopal.ru.is/static/js/raphael.js"></script>
-        </head>
-        """
-        html_body_before_json = """
-        <div id="combotabcontent0" class="tab-pane container active">
-            <div id="combo-tree0" class="Treant Treant-loaded" style="width: 1080px;">
-        </div></div>
+        <script>{jquery_min_script}</script>
+        <script>{bootstrap_min_script}</script>
+        <script>{treant_script}</script>
+        <script>{raphael_script}</script>
+        <div id="combo-tree0" class="Treant Treant-loaded"></div>
         <script>
-            function fix_tree_size(tree_css) {
-            let tree_css_svg = tree_css + '> svg';
-            var tree_actual_width = $(tree_css_svg).width();
-            var pixels = tree_actual_width + "px";
-            $(tree_css).css("width", pixels);
-        }
-
-        function setup_tooltips_event(tooltips) {
-            for (let k = 0; k < tooltips.tooltips.length; k++) {
-                $(tooltips.tooltips[k].selector).tooltip({
+        function setup_tooltips_event(tooltips) {{
+            for (let k = 0; k < tooltips.tooltips.length; k++) {{
+                $(tooltips.tooltips[k].selector).tooltip({{
                     template: `<div class="tooltip" role="tooltip">
                         <div class="tooltip-arrow"></div>
                         <div class="tooltip-inner"></div>
@@ -325,31 +309,27 @@ class SpecificationDrawer:
                     fallbackPlacement: "flip",
                     animation: false,
                     trigger: "hover focus",
-                    viewport: {
+                    viewport: {{
                         selector: 'body',
-                    }
-                });
-            }
-        }
-        """
-        html_body_after_json = """
-            for (let i = 0; i < json_input.length; i++) {
+                    }}
+                }});
+            }}
+        }}
+        let json_input = {treant_json}
+            for (let i = 0; i < json_input.length; i++) {{
                 let chart_config = json_input[i];
-                chart_config.chart.callback.onTreeLoaded = function () {
-                    fix_tree_size(chart_config.chart.container);
-                };
+                chart_config.chart.callback.onTreeLoaded = function () {{
+
+                }};
                 let tree = new Treant(chart_config);
-                if (i == 0) {
+                if (i == 0) {{
                     setup_tooltips_event(chart_config);
-                }
-                $('#combotab' + i).on('shown.bs.tab', function (e) {
+                }}
+                $('#combotab' + i).on('shown.bs.tab', function (e) {{
                     tree.tree.reload();
                     setup_tooltips_event(chart_config);
-                });
-            }</script></body></html>"""
-        html_string = html_head + html_body_before_json
-        html_string += "\n let json_input =" + treant_json
-        html_string += html_body_after_json
+                }});
+            }}</script></body></html>"""
         return html_string
 
     @staticmethod
@@ -358,11 +338,14 @@ class SpecificationDrawer:
         Creates a html file in current directory
         """
         file_name += ".html"
-        text_file = open(file_name, "w")
+        text_file = open(file_name, "w", encoding="UFT8")
         text_file.write(html)
         text_file.close()
 
     def show(self):
+        """
+        Displays CombinatorialSpecification tree in the web browser
+        """
         html_string = self.to_html()
         viewer = HTMLViewer()
         viewer.open_html(html_string)
@@ -386,8 +369,9 @@ class HTMLViewer:
     @staticmethod
     def open_html(html: str) -> None:
         """Open and render html string in browser."""
+        print(html[237176:237245])
         with tempfile.NamedTemporaryFile(
-            "r+", suffix=".html", delete=False
+            "r+", suffix=".html", delete=False, encoding="UTF8"
         ) as html_file:
             html_file.write(html)
             webbrowser.open_new_tab(f"file://{html_file.name}")
