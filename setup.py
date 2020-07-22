@@ -47,6 +47,7 @@ setup(
         "psutil==5.7.2",
         "pympler==0.8",
         "typing-extensions==3.7.4.2",
+        "tabulate==0.8.7",
     ],
     # fmt: on
 )
