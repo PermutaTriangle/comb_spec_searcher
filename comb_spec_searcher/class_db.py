@@ -214,7 +214,6 @@ class ClassDB(Generic[CombinatorialClassType]):
         Return a string with the current status of the run.
         """
         status = "ClassDB status:\n"
-        status += "\tTotal number of combinatorial classes found is {}".format(
-            len(self.label_to_info)
-        )
+        status += "\tTotal number of combinatorial classes found is"
+        status += f" {len(self.label_to_info):,d}"
         return status

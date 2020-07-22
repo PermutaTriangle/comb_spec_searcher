@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+- Improved the status update
+
+### Fixed
+- fixed `ProofTree` handling of getting rules from spec
+- fixed printing of InvalidOperationError message
+
 ## [2.0.0] - 2020-07-16
 ### Added
 - the methods `expand_verified` and `expand_comb_class` on
