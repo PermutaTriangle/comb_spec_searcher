@@ -196,13 +196,19 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
     ) -> Iterator[AbstractRule]:
         """Yield all the rules given by a strategy/strategy generator."""
         if isinstance(strategy, AbstractStrategy):
-            yield strategy(comb_class, **self.kwargs)
+            try:
+                yield strategy(comb_class, **self.kwargs)
+            except StrategyDoesNotApply:
+                pass
         elif isinstance(strategy, StrategyFactory):
             for strat in strategy(comb_class, **self.kwargs):
                 if isinstance(strat, Rule):
                     yield strat
                 elif isinstance(strat, AbstractStrategy):
-                    yield strat(comb_class, **self.kwargs)
+                    try:
+                        yield strat(comb_class, **self.kwargs)
+                    except StrategyDoesNotApply:
+                        continue
                 else:
                     raise InvalidOperationError(
                         "Attempting to add non Rule type. A Strategy "

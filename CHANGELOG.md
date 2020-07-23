@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - a `SpecificationDrawer` for visualizing `CombinatorialSpecification`
 - `show` method to `CombinatorialSpecification`
+- `AbstractStrategy` raises `StrategyDoesNotApply` in the `__call__` method
 
 ### Changed
 - Improved the status update
