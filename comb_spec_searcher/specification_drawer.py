@@ -82,9 +82,9 @@ class SpecificationDrawer:
                 rule = self._rules_dict_copy.pop(child)
             except KeyError:
                 # rule has recurred before
-                rule = self.spec.get_rule(comb_class)
+                rule = self.spec.get_rule(child)
                 recursed = True
-            comb_classes = [comb_class, rule.comb_class]
+            comb_classes = [comb_class, child]
         else:
             comb_classes = [comb_class]
         html_node = self.comb_classes_to_html_node(comb_classes)
