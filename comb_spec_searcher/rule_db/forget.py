@@ -8,7 +8,6 @@ from comb_spec_searcher.class_db import ClassDB
 from comb_spec_searcher.equiv_db import EquivalenceDB
 from comb_spec_searcher.exception import StrategyDoesNotApply
 from comb_spec_searcher.strategies import Rule
-from comb_spec_searcher.strategies.rule import AbstractRule
 from comb_spec_searcher.strategies.strategy import AbstractStrategy, StrategyFactory
 from comb_spec_searcher.strategies.strategy_pack import StrategyPack
 
@@ -66,11 +65,14 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
                 )
             else:
                 strats_or_rules = [strat]
-            rules: Iterator[AbstractRule] = (
-                x(comb_class) if isinstance(x, AbstractStrategy) else x
-                for x in strats_or_rules
-            )
-            for rule in rules:
+            for x in strats_or_rules:
+                if isinstance(x, AbstractStrategy):
+                    try:
+                        rule = x(comb_class)
+                    except StrategyDoesNotApply:
+                        continue
+                else:
+                    rule = x
                 try:
                     start_label = self.classdb.get_label(rule.comb_class)
                     nonempty_children = tuple(
