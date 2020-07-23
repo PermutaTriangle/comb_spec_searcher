@@ -8,7 +8,7 @@ import threading
 import time
 import webbrowser
 from copy import copy
-from typing import TYPE_CHECKING, ClassVar, Dict, List
+from typing import TYPE_CHECKING, ClassVar, Dict, List, Tuple
 
 from typing_extensions import TypedDict
 
@@ -71,29 +71,40 @@ class SpecificationDrawer:
         try:
             # checks if the rule has come before
             rule = self._rules_dict_copy.pop(comb_class)
+            recursed = False
         except KeyError:
             # recursion
-            return self._handle_recursion(comb_class)
+            rule = self.spec.get_rule(comb_class)
+            recursed = True
         if isinstance(rule, EquivalencePathRule):
             child = rule.children[0]
             try:
                 rule = self._rules_dict_copy.pop(child)
             except KeyError:
                 # rule has recurred before
-                return self._handle_recursion(rule.comb_class)
+                rule = self.spec.get_rule(comb_class)
+                recursed = True
             comb_classes = [comb_class, rule.comb_class]
         else:
             comb_classes = [comb_class]
-        treant_node = self._create_standard_node(comb_classes)
-        self._create_standard_tooltip(comb_classes, self._current_node_id)
-        children = [self._to_tree_dict(child, rec_depth + 1) for child in rule.children]
+        html_node = self.comb_classes_to_html_node(comb_classes)
+        treant_node, node_id = self._create_standard_node(html_node)
+        self._create_standard_tooltip(comb_classes, node_id)
+        if recursed:
+            children = []
+        else:
+            children = [
+                self._to_tree_dict(child, rec_depth + 1) for child in rule.children
+            ]
 
         # If a node has children we create a delimiter node between them
-        # in order to seperate tooltip describing the steps taking in the tree
+        # in order to separate tooltip describing the steps taking in the tree
 
         if children and isinstance(rule, Rule):
-            delimiter_node = self._create_delimiter_node(rule, children, rec_depth)
-            self._create_delimiter_tooltip(rule, self._current_node_id)
+            delimiter_node, node_id = self._create_delimiter_node(
+                rule, children, rec_depth
+            )
+            self._create_delimiter_tooltip(rule, node_id)
             children = [delimiter_node]
 
         treant_node["children"] = children
@@ -133,29 +144,25 @@ class SpecificationDrawer:
             tooltip["content"] += f"<p>Verified: {rule.formal_step}</p>"
         self.tooltips.append(tooltip)
 
-    def _create_standard_node(
-        self, comb_classes: List[CombinatorialClass]
-    ) -> TreantNode:
+    def _create_standard_node(self, html_node: str) -> Tuple[TreantNode, int]:
         """
-        Takes in a list of comb_classes and merges them into a single node.
-        Returns a standard treant node.
+        Returns a tuple containing a standard treant node and its id.
         """
         new_id = self._get_new_node_id()
-        node_html = self.comb_classes_to_html_node(comb_classes)
         treant_node = TreantNode(
-            innerHTML=f'<div id="node{new_id}" data-toggle="tooltip">{node_html}</div>',
+            innerHTML=f'<div id="node{new_id}" data-toggle="tooltip">{html_node}</div>',
             collapsable=False,
             collapsed=False,
             children=[],
         )
-        return treant_node
+        return treant_node, new_id
 
     def _create_delimiter_node(
         self, rule: Rule, children: List[TreantNode], rec_depth: int
-    ) -> TreantNode:
+    ) -> Tuple[TreantNode, int]:
         """
-        Returns delimiter node that describes
-        the steps taken between the rule and their children
+        Returns tuple containing delimiter node that describesthe steps taken between
+        the rules and the node id
         """
         new_id = self._get_new_node_id()
         symbol = rule.strategy.get_op_symbol()
@@ -177,47 +184,51 @@ class SpecificationDrawer:
             collapsed=collapsed,
             children=children,
         )
-        return delimiter_node
+        return delimiter_node, new_id
 
-    def comb_classes_to_html_node(self, comb_classes: List[CombinatorialClass]) -> str:
+    def comb_classes_to_html_node(
+        self,
+        comb_classes: List[CombinatorialClass],
+        additional_style: str = "",
+        additional_label_style: str = "",
+    ) -> str:
         """
         Returns a representation of comb classes as a single html node string
         """
         if not comb_classes:
             raise RuntimeError("comb_classes argument should not be empty")
         html = ""
-        style = ""
+        inner_style = ""
+        if isinstance(self.spec.get_rule(comb_classes[-1]), VerificationRule):
+            additional_style += "border-color: Green; border-width: 3px;"
+            additional_label_style += "background-color: #89d75d;"
         # Check if comb_class has html representation function
         try:
             nodes = [comb_class.to_html_representation() for comb_class in comb_classes]
-            style = "border-style:none"
+            inner_style += "border-style:none;"
         except NotImplementedError:
             nodes = [
                 str(comb_class).replace("\n", "<br>") for comb_class in comb_classes
             ]
+        if len(nodes) > 1:
+            inner_style += "border: 1px solid;"
 
         for i, node_string in enumerate(nodes):
             if i == len(nodes) - 1:  # removes margin on last node
                 html += f"""<div class=inner-node-content
-                    style="margin-right:0;{style}">{node_string}</div>"""
+                    style="margin-right:0;{inner_style}">{node_string}</div>"""
             else:
-                html += f"""<div class=inner-node-content style="{style}">
+                html += f"""<div class=inner-node-content style="{inner_style}">
                     {node_string}</div>"""
 
         # add labels above the node
         labels = [str(self.spec.get_label(comb_class)) for comb_class in comb_classes]
         labels_string = ", ".join(labels)
-        labels_html = f"<div class=label>{labels_string}</div>"
+        labels_html = f"""<div class=label
+            style='{additional_style}{additional_label_style}'>{labels_string}</div>"""
         return f"""{labels_html}<div class=node-content
-            style='max-width:{300 * len(nodes)}px'>{html}</div>"""
+            style='max-width:{300 * len(nodes)}px; {additional_style}'>{html}</div>"""
 
-    def _handle_recursion(self, comb_class: CombinatorialClass) -> TreantNode:
-        """Returns standard tooltip and a TreantNode without any children"""
-        assert self.spec.get_rule(comb_class)
-        # creates node without children
-        treant_node = self._create_standard_node([comb_class])
-        self._create_standard_tooltip([comb_class], self._current_node_id)
-        return treant_node
 
     def to_treant_json(self) -> str:
         """
