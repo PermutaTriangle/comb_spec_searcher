@@ -22,6 +22,7 @@ from .exception import (
     InvalidOperationError,
     TaylorExpansionError,
 )
+from .specification_drawer import SpecificationDrawer
 from .strategies import (
     AbstractStrategy,
     EmptyStrategy,
@@ -432,6 +433,20 @@ class CombinatorialSpecification(
             )
             for n in range(length + 1)
         )
+
+    def show(self, levels_shown: int = 0, levels_expand: int = 0) -> None:
+        """
+        Displays a tree representing this object in the web browser
+        OTHER INPUT:
+            - 'levels_shown': number of levels displayed at the start.
+            If 0 then the whole tree is displayed
+            - 'levels_expand': number of levels displayed after expanding a node.
+            If 0 then the rest of the tree is displayed
+        """
+        sd = SpecificationDrawer(
+            self, levels_shown=levels_shown, levels_expand=levels_expand
+        )
+        sd.show()
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, CombinatorialSpecification):
