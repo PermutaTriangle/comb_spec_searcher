@@ -8,7 +8,6 @@ from comb_spec_searcher.class_db import ClassDB
 from comb_spec_searcher.equiv_db import EquivalenceDB
 from comb_spec_searcher.exception import StrategyDoesNotApply
 from comb_spec_searcher.strategies import Rule
-from comb_spec_searcher.strategies.rule import AbstractRule
 from comb_spec_searcher.strategies.strategy import AbstractStrategy, StrategyFactory
 from comb_spec_searcher.strategies.strategy_pack import StrategyPack
 
