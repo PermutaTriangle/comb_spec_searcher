@@ -291,6 +291,8 @@ class Strategy(AbstractStrategy[CombinatorialClassType, CombinatorialObjectType]
     ) -> Rule[CombinatorialClassType, CombinatorialObjectType]:
         if children is None:
             children = self.decomposition_function(comb_class)
+            if children is None:
+                raise StrategyDoesNotApply("Strategy does not apply")
         return Rule(self, comb_class, children=children)
 
     @abc.abstractmethod
@@ -553,6 +555,8 @@ class VerificationStrategy(
     ) -> VerificationRule[CombinatorialClassType, CombinatorialObjectType]:
         if children is None:
             children = self.decomposition_function(comb_class)
+            if children is None:
+                raise StrategyDoesNotApply("The combinatorial class is not verified")
         return VerificationRule(self, comb_class, children)
 
     @staticmethod
