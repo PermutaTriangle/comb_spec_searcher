@@ -70,7 +70,14 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
                 x(comb_class) if isinstance(x, AbstractStrategy) else x
                 for x in strats_or_rules
             )
-            for rule in rules:
+            for x in strats_or_rules:
+                if isinstance(x, AbstractStrategy):
+                    try:
+                        rule = x(comb_class)
+                    except StrategyDoesNotApply:
+                        continue
+                else:
+                    rule = x
                 try:
                     start_label = self.classdb.get_label(rule.comb_class)
                     nonempty_children = tuple(
