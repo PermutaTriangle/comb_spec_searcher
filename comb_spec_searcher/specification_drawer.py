@@ -7,6 +7,7 @@ import tempfile
 import threading
 import time
 import webbrowser
+from logzero import logger
 from copy import copy
 from typing import TYPE_CHECKING, ClassVar, Dict, List, Tuple
 
@@ -25,6 +26,9 @@ class TreantNode(TypedDict):
     collapsed: bool
     children: list
 
+
+# TODO logging
+# TODO add strips in tilings
 
 class SpecificationDrawer:
     """
@@ -205,7 +209,6 @@ class SpecificationDrawer:
         # Check if comb_class has html representation function
         try:
             nodes = [comb_class.to_html_representation() for comb_class in comb_classes]
-            inner_style += "border-style:none;"
         except NotImplementedError:
             nodes = [
                 str(comb_class).replace("\n", "<br>") for comb_class in comb_classes
@@ -290,7 +293,7 @@ class SpecificationDrawer:
         html_string = f"""
         <!DOCTYPE html><html><head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>ComboPal</title>
+        <title>Specification</title>
         <style>
         {treant_stylesheet}
         {combopal_stylesheet}
@@ -345,6 +348,7 @@ class SpecificationDrawer:
         file_name += ".html"
         text_file = open(file_name, "w", encoding="UTF8")
         text_file.write(html)
+        
         text_file.close()
 
     def show(self):
@@ -379,6 +383,7 @@ class HTMLViewer:
         ) as html_file:
             html_file.write(html)
             webbrowser.open_new_tab(f"file://{html_file.name}")
+            logger.info("Opening specification in browser")
             HTMLViewer._remove_file(html_file.name)
 
     @staticmethod
