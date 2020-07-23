@@ -139,10 +139,7 @@ class RuleDBBase(abc.ABC):
                 ("Verified combinatorial classes", f"{len(verified_labels):,d}",)
             )
             table.append(
-                (
-                    "combinatorial classes up to equivalence",
-                    f"{len(verified_labels):,d}",
-                )
+                ("combinatorial classes up to equivalence", f"{len(eqv_labels):,d}",)
             )
         status += "    "
         status += tabulate.tabulate(
