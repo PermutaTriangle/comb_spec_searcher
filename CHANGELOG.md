@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
+- a `SpecificationDrawer` for visualizing `CombinatorialSpecification`
+- `show` method to `CombinatorialSpecification`
+- `to_html_representation` method to `CombinatorialClass`
 - `AbstractStrategy` raises `StrategyDoesNotApply` in the `__call__` method
 
 ### Changed

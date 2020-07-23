@@ -157,6 +157,10 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
         'cls.from_bytes(self.to_bytes()) == self'"""
         raise NotImplementedError
 
+    def to_html_representation(self) -> str:
+        """Returns a string containing html representation for this class"""
+        raise NotImplementedError("Use string method instead")
+
     @classmethod
     def from_bytes(
         cls: Type[CombinatorialClassType], b: bytes
