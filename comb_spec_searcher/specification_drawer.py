@@ -184,7 +184,7 @@ class SpecificationDrawer:
         Returns a representation of comb classes as a single html node string
         """
         if not comb_classes:
-            raise RuntimeError("comb_classes is empty")
+            raise RuntimeError("comb_classes argument should not be empty")
         html = ""
         style = ""
         # Check if comb_class has html representation function
@@ -196,25 +196,20 @@ class SpecificationDrawer:
                 str(comb_class).replace("\n", "<br>") for comb_class in comb_classes
             ]
 
-        if len(nodes) == 1:
-            html += nodes[0]
-        elif len(nodes) > 1:
-            # eqv_rule
-            for i, node_string in enumerate(nodes):
-                if i == len(nodes) - 1:  # remove margin on last node
-                    html += f"""<div class=eqv-node-content
-                        style="margin-right:0;{style}">{node_string}</div>"""
-                else:
-                    html += f"""<div class=eqv-node-content style="{style}">
-                        {node_string}</div>"""
-        else:
-            raise ValueError("comb_classes does not contain any string ....")
+        for i, node_string in enumerate(nodes):
+            if i == len(nodes) - 1:  # removes margin on last node
+                html += f"""<div class=inner-node-content
+                    style="margin-right:0;{style}">{node_string}</div>"""
+            else:
+                html += f"""<div class=inner-node-content style="{style}">
+                    {node_string}</div>"""
 
         # add labels above the node
         labels = [str(self.spec.get_label(comb_class)) for comb_class in comb_classes]
         labels_string = ", ".join(labels)
         labels_html = f"<div class=label>{labels_string}</div>"
-        return f"{labels_html}<div class=node-content>{html}</div>"
+        return f"""{labels_html}<div class=node-content
+            style='max-width:{300 * len(nodes)}px'>{html}</div>"""
 
     def _handle_recursion(self, comb_class: CombinatorialClass) -> TreantNode:
         """Returns standard tooltip and a TreantNode without any children"""
@@ -338,7 +333,7 @@ class SpecificationDrawer:
         Creates a html file in current directory
         """
         file_name += ".html"
-        text_file = open(file_name, "w", encoding="UFT8")
+        text_file = open(file_name, "w", encoding="UTF8")
         text_file.write(html)
         text_file.close()
 
@@ -369,7 +364,6 @@ class HTMLViewer:
     @staticmethod
     def open_html(html: str) -> None:
         """Open and render html string in browser."""
-        print(html[237176:237245])
         with tempfile.NamedTemporaryFile(
             "r+", suffix=".html", delete=False, encoding="UTF8"
         ) as html_file:

@@ -434,7 +434,7 @@ class CombinatorialSpecification(
             for n in range(length + 1)
         )
 
-    def show(self, levels_shown: int, levels_expand: int) -> None:
+    def show(self, levels_shown: int = 0, levels_expand: int = 0) -> None:
         """
         Displays a tree representing this object in the web browser
         OTHER INPUT:
