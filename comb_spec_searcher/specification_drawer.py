@@ -229,7 +229,6 @@ class SpecificationDrawer:
         return f"""{labels_html}<div class=node-content
             style='max-width:{300 * len(nodes)}px; {additional_style}'>{html}</div>"""
 
-
     def to_treant_json(self) -> str:
         """
         Returns a json with a treant configuration with tooltips
