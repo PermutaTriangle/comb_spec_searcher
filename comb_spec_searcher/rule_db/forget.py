@@ -66,10 +66,6 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
                 )
             else:
                 strats_or_rules = [strat]
-            rules: Iterator[AbstractRule] = (
-                x(comb_class) if isinstance(x, AbstractStrategy) else x
-                for x in strats_or_rules
-            )
             for x in strats_or_rules:
                 if isinstance(x, AbstractStrategy):
                     try:
