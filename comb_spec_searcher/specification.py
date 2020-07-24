@@ -91,6 +91,7 @@ class CombinatorialSpecification(
         ],
         equivalence_paths: Iterable[Sequence[CombinatorialClassType]],
     ) -> None:
+        logger.info("Creating rules.")
         equivalence_rules: Dict[
             Tuple[CombinatorialClassType, CombinatorialClassType], Rule
         ] = {}
@@ -153,6 +154,7 @@ class CombinatorialSpecification(
             Tuple[CombinatorialClassType, CombinatorialClassType], Rule
         ],
     ) -> None:
+        logger.info("Creating equivalence path rules.")
         for eqv_path in equivalence_paths:
             if len(eqv_path) > 1:
                 start = eqv_path[0]
@@ -188,6 +190,8 @@ class CombinatorialSpecification(
                 prune(child)
 
         prune(self.root)
+
+        logger.info("Removed %s redundant rules.", len(rules_dict.values()))
         for rule in rules_dict.values():
             self.rules_dict.pop(rule.comb_class)
 

@@ -721,7 +721,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         start_class = self.classdb.get_class(self.start_label)
         strategies, comb_class_eqv_paths = spec
         logger.info(
-            "Creating a specification", extra=self.logger_kwargs,
+            "Creating a specification.", extra=self.logger_kwargs,
         )
         return CombinatorialSpecification(
             start_class, strategies, comb_class_eqv_paths,
