@@ -22,11 +22,18 @@ if TYPE_CHECKING:
 
 __all__ = ("SpecificationDrawer", "ForestSpecificationDrawer")
 
+
 class TreantNode(TypedDict):
     innerHTML: str
     collapsable: bool
     collapsed: bool
     children: list
+
+
+class TreantConfig(TypedDict):
+    chart: dict
+    nodeStructure: TreantNode
+    tooltips: List[Dict[str, str]]
 
 
 class SpecificationDrawer:
@@ -67,9 +74,7 @@ class SpecificationDrawer:
     def _to_tree(
         self, comb_class: CombinatorialClass, rec_depth: int = 0
     ) -> TreantNode:
-        """
-        Create the subtree rooted in comb_class
-        """
+        """Create the subtree rooted in comb_class"""
         try:
             # checks if the rule has come before
             rule = self._rules_dict_copy.pop(comb_class)
@@ -95,9 +100,7 @@ class SpecificationDrawer:
         if recursed:
             children = []
         else:
-            children = [
-                self._to_tree(child, rec_depth + 1) for child in rule.children
-            ]
+            children = [self._to_tree(child, rec_depth + 1) for child in rule.children]
 
         # If a node has children we create a delimiter node between them
         # in order to separate tooltip describing the steps taking in the tree
@@ -113,9 +116,7 @@ class SpecificationDrawer:
         return treant_node
 
     def _create_delimiter_tooltip(self, rule: Rule, node_identifier: str) -> None:
-        """
-        Creates hover over tooltip for delimiter node
-        """
+        """Creates hover over tooltip for delimiter node"""
         tooltip = {
             "content": f"<p>Formal step:<br/>{rule.formal_step}</p>",
             "selector": f"#node{node_identifier}",
@@ -125,9 +126,7 @@ class SpecificationDrawer:
     def _create_standard_tooltip(
         self, comb_classes: List[CombinatorialClass], node_identifier: str
     ) -> None:
-        """
-        Creates hover over tooltip for standard node
-        """
+        """Creates hover over tooltip for standard node"""
         rule = self.spec.get_rule(comb_classes[0])
         if isinstance(rule, EquivalencePathRule):
             # need to use the rule to be able to see the whole eqv path
@@ -147,9 +146,7 @@ class SpecificationDrawer:
         self.tooltips.append(tooltip)
 
     def _create_standard_node(self, html_node: str) -> Tuple[TreantNode, str]:
-        """
-        Returns a tuple containing a standard treant node and its id.
-        """
+        """Returns a tuple containing a standard treant node and its id."""
         new_id = self._get_new_node_id()
         treant_node = TreantNode(
             innerHTML=f'<div id="node{new_id}" data-toggle="tooltip">{html_node}</div>',
@@ -194,9 +191,7 @@ class SpecificationDrawer:
         additional_style: str = "",
         additional_label_style: str = "",
     ) -> str:
-        """
-        Returns a representation of comb classes as a single html node string
-        """
+        """Returns a representation of comb classes as a single html node string"""
         if not comb_classes:
             raise RuntimeError("comb_classes argument should not be empty")
         html = ""
@@ -230,21 +225,41 @@ class SpecificationDrawer:
         return f"""{labels_html}<div class=node-content
             style='max-width:{300 * len(nodes)}px; {additional_style}'>{html}</div>"""
 
-    def show(self):
+    def show(self) -> None:
+        """Displays the CombinatorialSpecification tree in the web browser"""
         fsd = ForestSpecificationDrawer([self])
         fsd.show()
 
+    def to_html(self) -> str:
+        """Returns a html string that contains the whole tree"""
+        fsd = ForestSpecificationDrawer([self])
+        return fsd.to_html()
+
+    def export_html(self, file_name: str) -> None:
+        """Creates a html file in current directory"""
+        fsd = ForestSpecificationDrawer([self])
+        fsd.export_html(file_name)
+
+    def to_treant_json(self) -> str:
+        """returns a json input for Treant library"""
+        fsd = ForestSpecificationDrawer([self])
+        return json.dumps(fsd.add_tree_config(0))
+
 
 class ForestSpecificationDrawer:
+    """
+    ForestSpecificationDrawer is for drawing multiple SpecificationDrawer in
+    one single HTML file by navigating them with tabs
+    """
     def __init__(self, sd_list: List[SpecificationDrawer]):
         self.sd_list = sd_list
 
-    def add_tree_config(self, sd_index: int) -> dict:
-        """
-        Returns a dict with a treant configuration and tooltips
-        """
-        return {
-            "chart": {
+    def add_tree_config(self, sd_index: int) -> TreantConfig:
+        """Returns the tree and tooltip as TreantConfig for treant library"""
+        return TreantConfig(
+            nodeStructure=self.sd_list[sd_index].tree,
+            tooltips=self.sd_list[sd_index].tooltips,
+            chart={
                 "maxDepth": 10000,
                 "container": f"#spec-tree{sd_index}",
                 "connectors": {"type": "bCurve", "style": {}},
@@ -259,16 +274,14 @@ class ForestSpecificationDrawer:
                     "onTreeLoaded": "",
                 },
             },
-            "nodeStructure": self.sd_list[sd_index].tree,
-            "tooltips": self.sd_list[sd_index].tooltips,
-        }
+        )
 
     @staticmethod
-    def _read_file(filename):
+    def _read_file(filename: str) -> str:
         with open(filename, "r", encoding="UTF8") as f:
             return f.read()
 
-    def _get_static_files(self):
+    def _get_static_files(self) -> str:
         script_dir = os.path.dirname(__file__)
         # Path to static files
         psf = os.path.join(script_dir, "resources/static/")
@@ -293,7 +306,7 @@ class ForestSpecificationDrawer:
         <script>{raphael_script}</script>"""
         return static_files
 
-    def _get_tree_content(self):
+    def _get_tree_content(self) -> Tuple[str, str, str]:
         tabs = ""
         forest = ""
         forest_input = []
@@ -317,9 +330,7 @@ class ForestSpecificationDrawer:
         return (tabs, forest, json_input)
 
     def to_html(self) -> str:
-        """
-        Returns a html string that contains the whole tree
-        """
+        """Returns a html string that contains the whole forest"""
         static_files = self._get_static_files()
         tabs, forest, json_input = self._get_tree_content()
 
@@ -380,17 +391,13 @@ class ForestSpecificationDrawer:
 
     @staticmethod
     def export_html(html: str, file_name: str = "tree.html") -> None:
-        """
-        Creates a html file in current directory
-        """
+        """Creates a html file in current directory"""
         text_file = open(file_name, "w", encoding="UTF8")
         text_file.write(html)
         text_file.close()
 
-    def show(self):
-        """
-        Displays CombinatorialSpecification tree in the web browser
-        """
+    def show(self) -> None:
+        """Displays the forest in the web browser"""
         html_string = self.to_html()
         viewer = HTMLViewer()
         viewer.open_html(html_string)
