@@ -10,6 +10,7 @@ import webbrowser
 from copy import copy
 from typing import TYPE_CHECKING, ClassVar, Dict, List, Tuple
 
+from logzero import logger
 from typing_extensions import TypedDict
 
 from .combinatorial_class import CombinatorialClass
@@ -205,7 +206,6 @@ class SpecificationDrawer:
         # Check if comb_class has html representation function
         try:
             nodes = [comb_class.to_html_representation() for comb_class in comb_classes]
-            inner_style += "border-style:none;"
         except NotImplementedError:
             nodes = [
                 str(comb_class).replace("\n", "<br>") for comb_class in comb_classes
@@ -290,7 +290,7 @@ class SpecificationDrawer:
         html_string = f"""
         <!DOCTYPE html><html><head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>ComboPal</title>
+        <title>Specification</title>
         <style>
         {treant_stylesheet}
         {combopal_stylesheet}
@@ -379,6 +379,7 @@ class HTMLViewer:
         ) as html_file:
             html_file.write(html)
             webbrowser.open_new_tab(f"file://{html_file.name}")
+            logger.info("Opening specification in browser")
             HTMLViewer._remove_file(html_file.name)
 
     @staticmethod
