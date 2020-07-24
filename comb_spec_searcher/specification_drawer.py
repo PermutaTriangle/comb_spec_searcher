@@ -6,6 +6,7 @@ import os
 import tempfile
 import threading
 import time
+import uuid
 import webbrowser
 from copy import copy
 from typing import TYPE_CHECKING, ClassVar, Dict, List, Tuple
@@ -19,6 +20,7 @@ from .strategies import EquivalencePathRule, Rule, VerificationRule
 if TYPE_CHECKING:
     from .specification import CombinatorialSpecification
 
+__all__ = ("SpecificationDrawer", "ForestSpecificationDrawer")
 
 class TreantNode(TypedDict):
     innerHTML: str
@@ -54,16 +56,15 @@ class SpecificationDrawer:
         self.spec = spec
         self.tooltips: List[Dict[str, str]] = []
         self._rules_dict_copy = copy(spec.rules_dict)
-        self._current_node_id = 0
         self.levels_shown = levels_shown
         self.levels_expand = levels_expand
-        self.tree_dict = self._to_tree_dict(spec.root)
+        self.tree = self._to_tree(spec.root)
 
-    def _get_new_node_id(self) -> int:
-        self._current_node_id += 1
-        return self._current_node_id
+    def _get_new_node_id(self) -> str:
+        new_id = uuid.uuid1()
+        return str(new_id)
 
-    def _to_tree_dict(
+    def _to_tree(
         self, comb_class: CombinatorialClass, rec_depth: int = 0
     ) -> TreantNode:
         """
@@ -95,7 +96,7 @@ class SpecificationDrawer:
             children = []
         else:
             children = [
-                self._to_tree_dict(child, rec_depth + 1) for child in rule.children
+                self._to_tree(child, rec_depth + 1) for child in rule.children
             ]
 
         # If a node has children we create a delimiter node between them
@@ -111,7 +112,7 @@ class SpecificationDrawer:
         treant_node["children"] = children
         return treant_node
 
-    def _create_delimiter_tooltip(self, rule: Rule, node_identifier: int) -> None:
+    def _create_delimiter_tooltip(self, rule: Rule, node_identifier: str) -> None:
         """
         Creates hover over tooltip for delimiter node
         """
@@ -122,7 +123,7 @@ class SpecificationDrawer:
         self.tooltips.append(tooltip)
 
     def _create_standard_tooltip(
-        self, comb_classes: List[CombinatorialClass], node_identifier: int
+        self, comb_classes: List[CombinatorialClass], node_identifier: str
     ) -> None:
         """
         Creates hover over tooltip for standard node
@@ -145,7 +146,7 @@ class SpecificationDrawer:
             tooltip["content"] += f"<p>Verified: {rule.formal_step}</p>"
         self.tooltips.append(tooltip)
 
-    def _create_standard_node(self, html_node: str) -> Tuple[TreantNode, int]:
+    def _create_standard_node(self, html_node: str) -> Tuple[TreantNode, str]:
         """
         Returns a tuple containing a standard treant node and its id.
         """
@@ -160,7 +161,7 @@ class SpecificationDrawer:
 
     def _create_delimiter_node(
         self, rule: Rule, children: List[TreantNode], rec_depth: int
-    ) -> Tuple[TreantNode, int]:
+    ) -> Tuple[TreantNode, str]:
         """
         Returns tuple containing delimiter node that describesthe steps taken between
         the rules and the node id
@@ -229,56 +230,51 @@ class SpecificationDrawer:
         return f"""{labels_html}<div class=node-content
             style='max-width:{300 * len(nodes)}px; {additional_style}'>{html}</div>"""
 
-    def to_treant_json(self) -> str:
-        """
-        Returns a json with a treant configuration with tooltips
-        """
-        return json.dumps(
-            [
-                {
-                    "chart": {
-                        "maxDepth": 10000,
-                        "container": "#combo-tree0",
-                        "connectors": {"type": "bCurve", "style": {}},
-                        "nodeAlign": "BOTTOM",
-                        "levelSeparation": 35,
-                        "siblingSeparation": 30,
-                        "connectorsSpeed ": 10,
-                        "animation": {"nodeSpeed": 400, "connectorsSpeed": 200},
-                        "callback": {
-                            # can't send functions over so it
-                            # is dealt with on javascript side
-                            "onTreeLoaded": "",
-                        },
-                    },
-                    "nodeStructure": self.tree_dict,
-                    "tooltips": self.tooltips,
-                }
-            ]
-        )
+    def show(self):
+        fsd = ForestSpecificationDrawer([self])
+        fsd.show()
 
-    def to_html(self) -> str:
+
+class ForestSpecificationDrawer:
+    def __init__(self, sd_list: List[SpecificationDrawer]):
+        self.sd_list = sd_list
+
+    def add_tree_config(self, sd_index: int) -> dict:
         """
-        Return a html file in a string format containing
-        a tree structure of this specification
+        Returns a dict with a treant configuration and tooltips
         """
-        treant_json = self.to_treant_json()
-        return self.to_html_string(treant_json)
+        return {
+            "chart": {
+                "maxDepth": 10000,
+                "container": f"#spec-tree{sd_index}",
+                "connectors": {"type": "bCurve", "style": {}},
+                "nodeAlign": "BOTTOM",
+                "levelSeparation": 35,
+                "siblingSeparation": 30,
+                "connectorsSpeed ": 10,
+                "animation": {"nodeSpeed": 400, "connectorsSpeed": 200},
+                "callback": {
+                    # can't send functions over so it
+                    # is dealt with on javascript side
+                    "onTreeLoaded": "",
+                },
+            },
+            "nodeStructure": self.sd_list[sd_index].tree,
+            "tooltips": self.sd_list[sd_index].tooltips,
+        }
 
     @staticmethod
     def _read_file(filename):
         with open(filename, "r", encoding="UTF8") as f:
             return f.read()
 
-    def to_html_string(self, treant_json: str) -> str:
-        """
-        Returns a html string that contains the whole tree
-        """
+    def _get_static_files(self):
         script_dir = os.path.dirname(__file__)
         # Path to static files
         psf = os.path.join(script_dir, "resources/static/")
         treant_stylesheet = self._read_file(os.path.join(psf, "css/treant.css"))
-        combopal_stylesheet = self._read_file(os.path.join(psf, "css/combopal.css"))
+        spec_stylesheet = self._read_file(os.path.join(psf, "css/specification.css"))
+        bootstrap_stylesheet = self._read_file(os.path.join(psf, "css/bootstrap.css"))
 
         jquery_min_script = self._read_file(os.path.join(psf, "js/jquery.min.js"))
         bootstrap_min_script = self._read_file(
@@ -286,20 +282,61 @@ class SpecificationDrawer:
         )
         treant_script = self._read_file(os.path.join(psf, "js/Treant.js"))
         raphael_script = self._read_file(os.path.join(psf, "js/raphael.js"))
+        static_files = f"""<style>
+        {bootstrap_stylesheet}
+        {treant_stylesheet}
+        {spec_stylesheet}
+        </style>
+        <script>{jquery_min_script}</script>
+        <script>{bootstrap_min_script}</script>
+        <script>{treant_script}</script>
+        <script>{raphael_script}</script>"""
+        return static_files
+
+    def _get_tree_content(self):
+        tabs = ""
+        forest = ""
+        forest_input = []
+        for i in range(len(self.sd_list)):
+            tabs += f"""
+            <li class='nav-item'>
+                <a data-toggle="tab" id='spectab{i}' href='#spectabcontent{i}'
+                    class="nav-link {"active" if i == 0 else ""}">
+                Spec {i}
+                </a>
+            </li>
+            """
+            forest += f"""
+            <div id=spectabcontent{i}
+                class='tab-pane container {"active show" if i == 0 else ""}'>
+                <div id="spec-tree{i}" class="Treant Treant-loaded"></div>
+            </div>
+            """
+            forest_input.append(self.add_tree_config(i))
+        json_input = json.dumps(forest_input)
+        return (tabs, forest, json_input)
+
+    def to_html(self) -> str:
+        """
+        Returns a html string that contains the whole tree
+        """
+        static_files = self._get_static_files()
+        tabs, forest, json_input = self._get_tree_content()
 
         html_string = f"""
         <!DOCTYPE html><html><head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title>Specification</title>
-        <style>
-        {treant_stylesheet}
-        {combopal_stylesheet}
-        </style>
-        <script>{jquery_min_script}</script>
-        <script>{bootstrap_min_script}</script>
-        <script>{treant_script}</script>
-        <script>{raphael_script}</script>
-        <div id="combo-tree0" class="Treant Treant-loaded"></div>
+        {static_files}
+        <div>
+            <ul class="nav nav-tabs">
+                {tabs}
+            </ul>
+
+            <div class='tab-content mt-2'>
+                {forest}
+            </div>
+        </div>
         <script>
         function setup_tooltips_event(tooltips) {{
             for (let k = 0; k < tooltips.tooltips.length; k++) {{
@@ -320,7 +357,8 @@ class SpecificationDrawer:
                 }});
             }}
         }}
-        let json_input = {treant_json}
+        let json_input = {json_input}
+        let first_load = true
             for (let i = 0; i < json_input.length; i++) {{
                 let chart_config = json_input[i];
                 chart_config.chart.callback.onTreeLoaded = function () {{
@@ -330,19 +368,21 @@ class SpecificationDrawer:
                 if (i == 0) {{
                     setup_tooltips_event(chart_config);
                 }}
-                $('#combotab' + i).on('shown.bs.tab', function (e) {{
+                $('#spectab' + i).on('shown.bs.tab', function (e) {{
                     tree.tree.reload();
                     setup_tooltips_event(chart_config);
+
                 }});
+            let first_load = false
+
             }}</script></body></html>"""
         return html_string
 
     @staticmethod
-    def export_html(html: str, file_name: str = "tree") -> None:
+    def export_html(html: str, file_name: str = "tree.html") -> None:
         """
         Creates a html file in current directory
         """
-        file_name += ".html"
         text_file = open(file_name, "w", encoding="UTF8")
         text_file.write(html)
         text_file.close()
@@ -370,6 +410,7 @@ class HTMLViewer:
     @staticmethod
     def _remove_file(fname: str) -> None:
         threading.Thread(target=HTMLViewer._remove_file_thread, args=(fname,)).start()
+        logger.info("specification html file removed")
 
     @staticmethod
     def open_html(html: str) -> None:
