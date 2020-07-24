@@ -7,10 +7,10 @@ import tempfile
 import threading
 import time
 import webbrowser
-from logzero import logger
 from copy import copy
 from typing import TYPE_CHECKING, ClassVar, Dict, List, Tuple
 
+from logzero import logger
 from typing_extensions import TypedDict
 
 from .combinatorial_class import CombinatorialClass
@@ -26,9 +26,6 @@ class TreantNode(TypedDict):
     collapsed: bool
     children: list
 
-
-# TODO logging
-# TODO add strips in tilings
 
 class SpecificationDrawer:
     """
@@ -348,7 +345,6 @@ class SpecificationDrawer:
         file_name += ".html"
         text_file = open(file_name, "w", encoding="UTF8")
         text_file.write(html)
-        
         text_file.close()
 
     def show(self):
