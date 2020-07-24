@@ -67,7 +67,8 @@ class SpecificationDrawer:
         self.levels_expand = levels_expand
         self.tree = self._to_tree(spec.root)
 
-    def _get_new_node_id(self) -> str:
+    @staticmethod
+    def _get_new_node_id() -> str:
         new_id = uuid.uuid1()
         return str(new_id)
 
@@ -251,6 +252,7 @@ class ForestSpecificationDrawer:
     ForestSpecificationDrawer is for drawing multiple SpecificationDrawer in
     one single HTML file by navigating them with tabs
     """
+
     def __init__(self, sd_list: List[SpecificationDrawer]):
         self.sd_list = sd_list
 
@@ -369,24 +371,24 @@ class ForestSpecificationDrawer:
             }}
         }}
         let json_input = {json_input}
-        let first_load = true
-            for (let i = 0; i < json_input.length; i++) {{
-                let chart_config = json_input[i];
-                chart_config.chart.callback.onTreeLoaded = function () {{
 
-                }};
-                let tree = new Treant(chart_config);
-                if (i == 0) {{
-                    setup_tooltips_event(chart_config);
-                }}
-                $('#spectab' + i).on('shown.bs.tab', function (e) {{
+        let has_loaded = new Array(json_input.length);
+        for (let i = 0; i < json_input.length; i++) {{
+            let chart_config = json_input[i];
+            chart_config.chart.callback.onTreeLoaded = function () {{}};
+            let tree = new Treant(chart_config);
+            if (i == 0) {{
+                setup_tooltips_event(chart_config);
+            }}
+            $('#spectab' + i).on('shown.bs.tab', function (e) {{
+                if (!has_loaded[i]) {{
                     tree.tree.reload();
                     setup_tooltips_event(chart_config);
-
-                }});
-            let first_load = false
-
-            }}</script></body></html>"""
+                }}
+                has_loaded[i] = true
+            }});
+            has_loaded[0] = true
+        }}</script></body></html>"""
         return html_string
 
     @staticmethod
