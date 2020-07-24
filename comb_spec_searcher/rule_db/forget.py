@@ -7,7 +7,7 @@ from typing import Iterable, Iterator, List, MutableMapping, Set, Tuple, Union, 
 from comb_spec_searcher.class_db import ClassDB
 from comb_spec_searcher.equiv_db import EquivalenceDB
 from comb_spec_searcher.exception import StrategyDoesNotApply
-from comb_spec_searcher.strategies import Rule
+from comb_spec_searcher.strategies.rule import AbstractRule
 from comb_spec_searcher.strategies.strategy import AbstractStrategy, StrategyFactory
 from comb_spec_searcher.strategies.strategy_pack import StrategyPack
 
@@ -60,9 +60,9 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
         for label, strat in product(possible_labels, self.pack):
             comb_class = self.classdb.get_class(label)
             if isinstance(strat, StrategyFactory):
-                strats_or_rules: Iterable[Union[Rule, AbstractStrategy]] = strat(
-                    comb_class
-                )
+                strats_or_rules: Iterable[
+                    Union[AbstractRule, AbstractStrategy]
+                ] = strat(comb_class)
             else:
                 strats_or_rules = [strat]
             for x in strats_or_rules:

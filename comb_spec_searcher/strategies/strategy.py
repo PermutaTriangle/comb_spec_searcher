@@ -838,7 +838,7 @@ class StrategyFactory(abc.ABC, Generic[CombinatorialClassType]):
     @abc.abstractmethod
     def __call__(
         self, comb_class: CombinatorialClassType, **kwargs
-    ) -> Iterator[Union[Rule, AbstractStrategy]]:
+    ) -> Iterator[Union[AbstractRule, AbstractStrategy]]:
         """
         Returns the results of the strategy on a comb_class.
         """
