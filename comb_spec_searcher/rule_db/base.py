@@ -202,14 +202,19 @@ class RuleDBBase(abc.ABC):
             self.set_verified(ver_label)
 
         if self.equivdb[label] in rules_dict:
+            logger.info("Specification detected with %s rules!", len(rules_dict))
             if iterative:
                 specification = iterative_proof_tree_finder(
                     rules_dict, root=self.equivdb[label]
                 )
             else:
+                logger.info(
+                    "Minimizing for %s seconds...", round(minimization_time_limit)
+                )
                 specification = smallish_random_proof_tree(
                     rules_dict, self.equivdb[label], minimization_time_limit
                 )
+                logger.info("Found specification with %s rules.", len(specification))
         else:
             raise SpecificationNotFound("No specification for label {}".format(label))
         return specification
@@ -234,7 +239,9 @@ class RuleDBBase(abc.ABC):
     ) -> Specification:
         children: Dict[int, Tuple[int, ...]] = dict()
         internal_nodes = set([label])
+        logger.info("Computing rule <-> equivalence rule mapping...")
         rule_from_equivalence_rules = self.rule_from_equivalence_rule_dict()
+        logger.info("Building rules...")
         for node in proof_tree_node.nodes():
             eqv_start, eqv_ends = (
                 node.label,
@@ -247,6 +254,7 @@ class RuleDBBase(abc.ABC):
                 internal_nodes.update(ends)
         res = []
         eqv_paths = []
+        logger.info("Computing strategies...")
         for start, ends in children.items():
             for eqv_label in internal_nodes:
                 if self.are_equivalent(start, eqv_label):
