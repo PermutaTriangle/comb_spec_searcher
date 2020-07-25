@@ -535,7 +535,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
     def _log_spec_found(
         self, specification: CombinatorialSpecification, start_time: float
     ):
-        found_string = "Specification found {}\n".format(
+        found_string = "Specification built {}\n".format(
             time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime())
         )
         time_taken = time.time() - start_time
@@ -721,7 +721,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         start_class = self.classdb.get_class(self.start_label)
         strategies, comb_class_eqv_paths = spec
         logger.info(
-            "Creating a specification", extra=self.logger_kwargs,
+            "Creating a specification.", extra=self.logger_kwargs,
         )
         return CombinatorialSpecification(
             start_class, strategies, comb_class_eqv_paths,
