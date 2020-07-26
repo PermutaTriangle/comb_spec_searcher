@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 - Improved the status update
+- `rule_from_equivalence_rule_dict` now takes a list of expected equivalence rules so a
+  much smaller dictionary is produced
 
 ### Fixed
 - fixed `ProofTree` handling of getting rules from spec
