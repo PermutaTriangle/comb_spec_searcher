@@ -207,8 +207,8 @@ class SpecificationDrawer:
             nodes = [
                 str(comb_class).replace("\n", "<br>") for comb_class in comb_classes
             ]
-        if len(nodes) > 1:
-            inner_style += "border: 1px solid;"
+            if len(nodes) > 1:
+                inner_style += "border: 1px solid;"
 
         for i, node_string in enumerate(nodes):
             if i == len(nodes) - 1:  # removes margin on last node
@@ -323,7 +323,7 @@ class ForestSpecificationDrawer:
             """
             forest += f"""
             <div id=spectabcontent{i}
-                class='tab-pane container {"active show" if i == 0 else ""}'>
+                class='tab-pane {"active show" if i == 0 else ""}'>
                 <div id="spec-tree{i}" class="Treant Treant-loaded"></div>
             </div>
             """
