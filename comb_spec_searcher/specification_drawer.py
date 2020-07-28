@@ -316,7 +316,8 @@ class ForestSpecificationDrawer:
             tabs += f"""
             <li class='nav-item'>
                 <a data-toggle="tab" id='spectab{i}' href='#spectabcontent{i}'
-                    class="nav-link {"active" if i == 0 else ""}">
+                    class="nav-link {"active" if i == 0 else ""}"
+                    contenteditable="true">
                 Spec {i}
                 </a>
             </li>
