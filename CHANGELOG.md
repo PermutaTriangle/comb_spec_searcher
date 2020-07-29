@@ -10,9 +10,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `show` method to `CombinatorialSpecification`
 - `to_html_representation` method to `CombinatorialClass`
 - `AbstractStrategy` raises `StrategyDoesNotApply` in the `__call__` method
+- more verbose logging during the specification creation process
 
 ### Changed
 - Improved the status update
+- `rule_from_equivalence_rule_dict` now takes a list of expected equivalence rules so a
+  much smaller dictionary is produced
 
 ### Fixed
 - fixed `ProofTree` handling of getting rules from spec
