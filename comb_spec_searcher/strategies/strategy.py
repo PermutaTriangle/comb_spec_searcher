@@ -200,7 +200,7 @@ class AbstractStrategy(
         Return a choice for '+' in the pretty print a '=' b '+' c of rules.
         Your choice should be a single charachter.
         """
-        return "+"
+        return "?"
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, AbstractStrategy):
