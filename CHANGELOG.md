@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `show` method to `CombinatorialSpecification`
 - `to_html_representation` method to `CombinatorialClass`
 - `AbstractStrategy` raises `StrategyDoesNotApply` in the `__call__` method
+- function `CombinatorialSpecification.share_spec()` which uploads the spec to a file
+  sharing site
 
 ### Changed
 - Improved the status update
