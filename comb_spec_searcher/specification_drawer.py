@@ -84,26 +84,26 @@ class SpecificationDrawer:
             # recursion
             rule = self.spec.get_rule(comb_class)
             recursed = True
+
+        # if EqvPathRule then the node and its child are put into single node
         if isinstance(rule, EquivalencePathRule):
             child = rule.children[0]
             try:
                 rule = self._rules_dict_copy.pop(child)
             except KeyError:
-                # rule has recurred before
+                # child rule has recurred before
                 rule = self.spec.get_rule(child)
                 recursed = True
             comb_classes = [comb_class, child]
         else:
             comb_classes = [comb_class]
-        html_node = self.comb_classes_to_html_node(comb_classes)
-        treant_node, node_id = self._create_standard_node(html_node)
-        self._create_standard_tooltip(comb_classes, node_id)
+
         if recursed:
             children = []
         else:
             children = [self._to_tree(child, rec_depth + 1) for child in rule.children]
 
-        # If a node has children we create a delimiter node between them
+        # if a node has children we create a delimiter node between them
         # in order to separate tooltip describing the steps taking in the tree
 
         if children and isinstance(rule, Rule):
@@ -113,7 +113,9 @@ class SpecificationDrawer:
             self._create_delimiter_tooltip(rule, node_id)
             children = [delimiter_node]
 
-        treant_node["children"] = children
+        html_node = self.comb_classes_to_html_node(comb_classes)
+        treant_node, node_id = self._create_standard_node(html_node, children)
+        self._create_standard_tooltip(comb_classes, node_id)
         return treant_node
 
     def _create_delimiter_tooltip(self, rule: Rule, node_identifier: str) -> None:
@@ -146,14 +148,16 @@ class SpecificationDrawer:
             tooltip["content"] += f"<p>Verified: {rule.formal_step}</p>"
         self.tooltips.append(tooltip)
 
-    def _create_standard_node(self, html_node: str) -> Tuple[TreantNode, str]:
+    def _create_standard_node(
+        self, html_node: str, children: List[TreantNode]
+    ) -> Tuple[TreantNode, str]:
         """Returns a tuple containing a standard treant node and its id."""
         new_id = self._get_new_node_id()
         treant_node = TreantNode(
             innerHTML=f'<div id="node{new_id}" data-toggle="tooltip">{html_node}</div>',
             collapsable=False,
             collapsed=False,
-            children=[],
+            children=children,
         )
         return treant_node, new_id
 
@@ -168,15 +172,19 @@ class SpecificationDrawer:
         symbol = rule.strategy.get_op_symbol()
         delimiter_html = f'<div class="and-gate" id={new_id}>{symbol}</div>'
 
-        # collapses at levels_shown and at every levels_expand after that
-        collapsed = rec_depth != 0 and (
-            rec_depth == self.levels_shown
-            or (  # collapse at every levels_expand after levels_shown
-                self.levels_expand != 0  # if 0 we don't collapse
-                and rec_depth >= self.levels_shown
-                and (rec_depth + self.levels_expand) % self.levels_expand == 0
-            )
+        # check if node should be collapsed or not
+
+        # True if recursion depth is same level_shown
+        is_on_levels_shown = rec_depth != 0 and rec_depth == self.levels_shown
+        # True at every levels_expand after levels_shown
+        is_on_levels_expand = (
+            self.levels_expand != 0  # if 0 we don't collapse
+            and rec_depth > self.levels_shown
+            and (rec_depth + self.levels_expand) % self.levels_expand == 0
         )
+        # collapses at levels_shown and at every levels_expand after that
+        collapsed = is_on_levels_shown or is_on_levels_expand
+
         delimiter_node = TreantNode(
             innerHTML=f"""<div id="node{new_id}"
                 data-toggle="tooltip">{delimiter_html}</div>""",
@@ -197,6 +205,7 @@ class SpecificationDrawer:
             raise RuntimeError("comb_classes argument should not be empty")
         html = ""
         inner_style = ""
+        # makes node green if instance of VerificationRule
         if isinstance(self.spec.get_rule(comb_classes[-1]), VerificationRule):
             additional_style += "border-color: Green; border-width: 3px;"
             additional_label_style += "background-color: #89d75d;"
@@ -212,17 +221,16 @@ class SpecificationDrawer:
 
         for i, node_string in enumerate(nodes):
             if i == len(nodes) - 1:  # removes margin on last node
-                html += f"""<div class=inner-node-content
-                    style="margin-right:0;{inner_style}">{node_string}</div>"""
-            else:
-                html += f"""<div class=inner-node-content style="{inner_style}">
-                    {node_string}</div>"""
+                inner_style += "margin-right:0;"
+            html += f"""<div class=inner-node-content style="{inner_style}">
+                {node_string}</div>"""
 
         # add labels above the node
         labels = [str(self.spec.get_label(comb_class)) for comb_class in comb_classes]
         labels_string = ", ".join(labels)
         labels_html = f"""<div class=label
             style='{additional_style}{additional_label_style}'>{labels_string}</div>"""
+
         return f"""{labels_html}<div class=node-content
             style='max-width:{300 * len(nodes)}px; {additional_style}'>{html}</div>"""
 
@@ -284,33 +292,34 @@ class ForestSpecificationDrawer:
             return f.read()
 
     def _get_static_files(self) -> str:
-        script_dir = os.path.dirname(__file__)
+        """returns stylesheet and js script as a single string"""
         # Path to static files
-        psf = os.path.join(script_dir, "resources/static/")
+        psf = os.path.join(os.path.dirname(__file__), "resources/static/")
+
         treant_stylesheet = self._read_file(os.path.join(psf, "css/treant.css"))
         spec_stylesheet = self._read_file(os.path.join(psf, "css/specification.css"))
         bootstrap_stylesheet = self._read_file(os.path.join(psf, "css/bootstrap.css"))
 
         jquery_min_script = self._read_file(os.path.join(psf, "js/jquery.min.js"))
-        bootstrap_min_script = self._read_file(
-            os.path.join(psf, "js/bootstrap.bundle.min.js")
-        )
+        bs_min_script = self._read_file(os.path.join(psf, "js/bootstrap.bundle.min.js"))
         treant_script = self._read_file(os.path.join(psf, "js/Treant.js"))
         raphael_script = self._read_file(os.path.join(psf, "js/raphael.js"))
+
         static_files = f"""<style>
         {bootstrap_stylesheet}
         {treant_stylesheet}
         {spec_stylesheet}
         </style>
         <script>{jquery_min_script}</script>
-        <script>{bootstrap_min_script}</script>
+        <script>{bs_min_script}</script>
         <script>{treant_script}</script>
         <script>{raphael_script}</script>"""
         return static_files
 
     def _get_tree_content(self) -> Tuple[str, str, str]:
+        """return a tuble of html string containing tabs, tab_content, json_input"""
         tabs = ""
-        forest = ""
+        tab_content = ""
         forest_input = []
         for i in range(len(self.sd_list)):
             tabs += f"""
@@ -322,7 +331,7 @@ class ForestSpecificationDrawer:
                 </a>
             </li>
             """
-            forest += f"""
+            tab_content += f"""
             <div id=spectabcontent{i}
                 class='tab-pane {"active show" if i == 0 else ""}'>
                 <div id="spec-tree{i}" class="Treant Treant-loaded"></div>
@@ -330,12 +339,12 @@ class ForestSpecificationDrawer:
             """
             forest_input.append(self.add_tree_config(i))
         json_input = json.dumps(forest_input)
-        return (tabs, forest, json_input)
+        return (tabs, tab_content, json_input)
 
     def to_html(self) -> str:
         """Returns a html string that contains the whole forest"""
         static_files = self._get_static_files()
-        tabs, forest, json_input = self._get_tree_content()
+        tabs, tab_content, json_input = self._get_tree_content()
 
         html_string = f"""
         <!DOCTYPE html><html><head>
@@ -348,7 +357,7 @@ class ForestSpecificationDrawer:
             </ul>
 
             <div class='tab-content mt-2'>
-                {forest}
+                {tab_content}
             </div>
         </div>
         <script>
