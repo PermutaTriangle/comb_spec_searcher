@@ -12,9 +12,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `AbstractStrategy` raises `StrategyDoesNotApply` in the `__call__` method
 - function `CombinatorialSpecification.share_spec()` which uploads the spec to a file
   sharing site
+- more verbose logging during the specification creation process
 
 ### Changed
 - Improved the status update
+- `rule_from_equivalence_rule_dict` now takes a list of expected equivalence rules so a
+  much smaller dictionary is produced
 
 ### Fixed
 - fixed `ProofTree` handling of getting rules from spec
