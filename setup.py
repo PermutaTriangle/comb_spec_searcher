@@ -10,7 +10,7 @@ def read(fname):
 
 setup(
     name="comb_spec_searcher",
-    version="1.0.0",
+    version="2.0.0",
     author="Permuta Triangle",
     author_email="permutatriangle@gmail.com",
     description="A library for performing combinatorial exploration.",
@@ -25,6 +25,7 @@ setup(
     package_data={"comb_spec_searcher": ["py.typed"]},
     long_description=read("README.rst"),
     python_requires=">=3.6",
+    include_package_data=True,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Education",
@@ -46,6 +47,8 @@ setup(
         "sympy==1.6.1",
         "psutil==5.7.2",
         "pympler==0.8",
+        "typing-extensions==3.7.4.2",
+        "tabulate==0.8.7",
     ],
     # fmt: on
 )

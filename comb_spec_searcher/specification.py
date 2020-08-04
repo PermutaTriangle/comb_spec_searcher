@@ -3,11 +3,13 @@ A combinatorial specification is a set rules of the form a -> b1, ..., bk
 where each of the bi appear exactly once on the left hand side of some rule.
 """
 from copy import copy
-from typing import Dict, Generic, Iterable, Iterator, Sequence, Tuple
+from functools import reduce
+from operator import mul
+from typing import Dict, Generic, Iterable, Iterator, List, Sequence, Set, Tuple, Union
 
 import sympy
 from logzero import logger
-from sympy import Eq, Expr, Function, solve, var
+from sympy import Eq, Expr, Function, Number, solve, var
 
 from .combinatorial_class import (
     CombinatorialClass,
@@ -18,10 +20,9 @@ from .combinatorial_class import (
 from .exception import (
     IncorrectGeneratingFunctionError,
     InvalidOperationError,
-    NoMoreClassesToExpandError,
-    SpecificationNotFound,
     TaylorExpansionError,
 )
+from .specification_drawer import SpecificationDrawer
 from .strategies import (
     AbstractStrategy,
     EmptyStrategy,
@@ -34,7 +35,12 @@ from .strategies import (
     VerificationStrategy,
 )
 from .strategies.rule import AbstractRule
-from .utils import RecursionLimit, maple_equations, taylor_expand
+from .utils import (
+    RecursionLimit,
+    maple_equations,
+    pretty_print_equations,
+    taylor_expand,
+)
 
 __all__ = ("CombinatorialSpecification",)
 
@@ -62,11 +68,18 @@ class CombinatorialSpecification(
         self.root = root
         self.rules_dict: Dict[CombinatorialClassType, AbstractRule] = {}
         self._populate_rules_dict(strategies, equivalence_paths)
+        self._remove_redundant_rules()
+        self.labels: Dict[CombinatorialClassType, int] = {}
+        self._label_to_tiling: Dict[int, CombinatorialClassType] = {}
+        self._subrules_set = False
+
+    def _set_subrules(self) -> None:
+        """Tells the subrules which children's recurrence methods it should use."""
         for rule in list(
             self.rules_dict.values()
         ):  # list as we lazily assign empty rules
             rule.set_subrecs(self.get_rule)
-        self.labels: Dict[CombinatorialClassType, int] = {}
+        self._subrules_set = True
 
     def _populate_rules_dict(
         self,
@@ -78,34 +91,61 @@ class CombinatorialSpecification(
         ],
         equivalence_paths: Iterable[Sequence[CombinatorialClassType]],
     ) -> None:
+        logger.info("Creating rules.")
         equivalence_rules: Dict[
             Tuple[CombinatorialClassType, CombinatorialClassType], Rule
         ] = {}
-        verification_packs: Dict[CombinatorialClassType, StrategyPack] = {}
         for comb_class, strategy in strategies:
             if isinstance(strategy, AlreadyVerified):
                 continue
             rule = strategy(comb_class)
             non_empty_children = rule.non_empty_children()
-            if (
-                isinstance(rule, Rule)
-                and len(non_empty_children) == 1
-                and rule.constructor.is_equivalence()
-            ):
+            if rule.is_equivalence():
+                assert isinstance(rule, Rule)
                 equivalence_rules[(comb_class, non_empty_children[0])] = (
                     rule if len(rule.children) == 1 else rule.to_equivalence_rule()
                 )
-            elif non_empty_children:
+            elif non_empty_children or isinstance(rule, VerificationRule):
                 self.rules_dict[comb_class] = rule
-            elif isinstance(rule, VerificationRule):
-                try:
-                    verification_packs[comb_class] = rule.pack()
-                except InvalidOperationError:
-                    self.rules_dict[comb_class] = strategy(comb_class)
             else:
                 raise ValueError("Non verification rule has no children.")
         self._add_equivalence_path_rules(equivalence_paths, equivalence_rules)
-        self._expand_verified_comb_classes(verification_packs)
+
+    def expand_verified(self) -> None:
+        """
+        Will expand all verified classes with respect to the strategy packs
+        given by the VerificationStrategies.
+        """
+        verification_packs: Dict[CombinatorialClassType, StrategyPack] = {}
+        for comb_class, rule in self.rules_dict.items():
+            if isinstance(rule, VerificationRule):
+                try:
+                    verification_packs[comb_class] = rule.pack()
+                except InvalidOperationError:
+                    logger.info("Can't expand the rule:\n%s", rule)
+        if verification_packs:
+            for comb_class in verification_packs:
+                self.rules_dict.pop(comb_class)
+            self._expand_verified_comb_classes(verification_packs)
+            self.expand_verified()
+            self._subrules_set = False
+
+    def expand_comb_class(self, comb_class: Union[int, CombinatorialClassType]) -> None:
+        """
+        Will try to expand a particular class with respect to the strategy pack
+        that the VerificationStrategy has.
+        """
+        rule = self.get_rule(comb_class)
+        if isinstance(rule, VerificationRule):
+            try:
+                pack = rule.pack()
+            except InvalidOperationError:
+                logger.info("Can't expand the rule:\n%s", rule)
+                return
+            self.rules_dict.pop(rule.comb_class)
+            self._expand_verified_comb_classes({rule.comb_class: pack})
+        else:
+            logger.info("Can't expand the rule:\n%s", rule)
 
     def _add_equivalence_path_rules(
         self,
@@ -114,6 +154,7 @@ class CombinatorialSpecification(
             Tuple[CombinatorialClassType, CombinatorialClassType], Rule
         ],
     ) -> None:
+        logger.info("Creating equivalence path rules.")
         for eqv_path in equivalence_paths:
             if len(eqv_path) > 1:
                 start = eqv_path[0]
@@ -125,6 +166,34 @@ class CombinatorialSpecification(
                         rule = equivalence_rules[(b, a)].to_reverse_rule()
                     rules.append(rule)
                 self.rules_dict[start] = EquivalencePathRule(rules)
+
+    def _remove_redundant_rules(self) -> None:
+        """
+        Any redundant rules passed to the __init__ method are removed using
+        this method.
+        """
+        rules_dict = copy(self.rules_dict)
+
+        def prune(comb_class: CombinatorialClassType) -> None:
+            try:
+                rule = rules_dict.pop(comb_class)
+            except KeyError:
+                assert comb_class in self.rules_dict or comb_class.is_empty()
+                return
+            if isinstance(rule, EquivalencePathRule):
+                try:
+                    rule = rules_dict.pop(rule.children[0])
+                except KeyError:
+                    assert comb_class in self.rules_dict
+                    return
+            for child in rule.children:
+                prune(child)
+
+        prune(self.root)
+
+        logger.info("Removed %s redundant rules.", len(rules_dict.values()))
+        for rule in rules_dict.values():
+            self.rules_dict.pop(rule.comb_class)
 
     def _expand_verified_comb_classes(
         self, verification_packs: Dict[CombinatorialClassType, StrategyPack],
@@ -139,35 +208,42 @@ class CombinatorialSpecification(
                     AlreadyVerified(self.rules_dict), apply_first=True
                 ),
             )
-            while True:
-                try:
-                    css.do_level()
-                except NoMoreClassesToExpandError:
-                    new_rules = css.ruledb.get_smallest_specification(css.start_label)
-                    break
-                try:
-                    new_rules = css.ruledb.get_smallest_specification(css.start_label)
-                    break
-                except SpecificationNotFound:
-                    pass
-            rules, eqv_paths = new_rules
-            comb_class_eqv_paths = tuple(
-                tuple(css.classdb.get_class(l) for l in path) for path in eqv_paths
-            )
-            comb_class_rules = [
-                (css.classdb.get_class(label), rule) for label, rule in rules
-            ]
+            logger.info(css.run_information())
+            # pylint: disable=protected-access
+            comb_class_rules, comb_class_eqv_paths = css._auto_search_rules()
             self._populate_rules_dict(comb_class_rules, comb_class_eqv_paths)
+        self._remove_redundant_rules()
 
     def get_rule(
-        self, comb_class: CombinatorialClassType
+        self, comb_class: Union[int, CombinatorialClassType]
     ) -> AbstractRule[CombinatorialClassType, CombinatorialObjectType]:
         """Return the rule with comb class on the left."""
+        if isinstance(comb_class, int):
+            try:
+                comb_class = self._label_to_tiling[comb_class]
+            except KeyError:
+                raise InvalidOperationError(
+                    f"The label {comb_class} does not correspond to a tiling"
+                    " in the specification."
+                )
         if comb_class not in self.rules_dict:
-            if comb_class.is_empty():
-                empty_strat = EmptyStrategy()
-                self.rules_dict[comb_class] = empty_strat(comb_class)
+            assert comb_class.is_empty(), "rule not in the spec and not empty"
+            empty_strat = EmptyStrategy()
+            self.rules_dict[comb_class] = empty_strat(comb_class)
         return self.rules_dict[comb_class]
+
+    def comb_classes(self) -> Set[CombinatorialClassType]:
+        """
+        Return a set containing all the combinatorial classes of the specification.
+        """
+        res: Set[CombinatorialClassType] = set()
+        for rule in self.rules_dict.values():
+            res.update(rule.children)
+            res.add(rule.comb_class)
+            if isinstance(rule, EquivalencePathRule):
+                for parent, _ in rule.eqv_path_rules():
+                    res.add(parent)
+        return res
 
     @property
     def root_rule(
@@ -182,6 +258,7 @@ class CombinatorialSpecification(
         if res is None:
             res = len(self.labels)
             self.labels[comb_class] = res
+            self._label_to_tiling[res] = comb_class
         return res
 
     def get_function(self, comb_class: CombinatorialClassType) -> Function:
@@ -192,13 +269,16 @@ class CombinatorialSpecification(
         TODO: call comb_class for its parameters - 'x' is reserved for size.
         """
         x = var("x")
-        return Function("F_{}".format(self.get_label(comb_class)))(x)
+        extra_parameters = [var(k) for k in comb_class.extra_parameters]
+        return Function("F_{}".format(self.get_label(comb_class)))(x, *extra_parameters)
 
     def get_equations(self) -> Iterator[Eq]:
         """
         Yield all equations on the (ordinary) generating function that the
         rules of the specification imply.
         """
+        if not self._subrules_set:
+            self._set_subrules()
         funcs: Dict[CombinatorialClass, Function] = {
             comb_class: self.get_function(comb_class)
             for comb_class, rule in self.rules_dict.items()
@@ -216,16 +296,41 @@ class CombinatorialSpecification(
                     yield eq
             except NotImplementedError:
                 logger.info(
-                    "can't find generating function label %s."
-                    " The comb class is:\n%s",
+                    "can't find generating function for the rule %s -> %s. "
+                    "The rule was:\n%s",
                     self.get_label(rule.comb_class),
-                    rule.comb_class,
+                    tuple(self.get_label(child) for child in rule.children),
+                    rule,
                 )
                 x = var("x")
                 yield Eq(
                     self.get_function(rule.comb_class),
                     sympy.Function("NOTIMPLEMENTED")(x),
                 )
+
+    def get_initial_conditions(self, check: int = 6) -> List[Expr]:
+        """
+        Compute the initial conditions of the root class. It will use the
+        `count_objects_of_size` method if implemented, else resort to
+        the method on the `initial_conditions` method on `CombinatorialClass.
+        """
+        logger.info("Computing initial conditions")
+        try:
+            return [
+                sum(
+                    Number(self.count_objects_of_size(n=n, **parameters))
+                    * reduce(mul, [var(k) ** val for k, val in parameters.items()], 1)
+                    for parameters in self.root.possible_parameters(n)
+                )
+                for n in range(check + 1)
+            ]
+        except NotImplementedError as e:
+            logger.info(
+                "Reverting to generating objects from root for initial "
+                "conditions due to:\nNotImplementedError: %s",
+                e,
+            )
+        return self.root.initial_conditions(check)
 
     def get_genf(self, check: int = 6) -> Expr:
         """
@@ -235,21 +340,9 @@ class CombinatorialSpecification(
         """
         eqs = tuple(self.get_equations())
         root_func = self.get_function(self.root)
-        try:
-            logger.info("Computing initial conditions")
-            initial_conditions = [
-                self.count_objects_of_size(n=i) for i in range(check + 1)
-            ]
-        except NotImplementedError as e:
-            logger.info(
-                "Reverting to generating objects from root for initial "
-                "conditions due to:\nNotImplementedError: %s",
-                e,
-            )
-            initial_conditions = [
-                len(list(self.root.objects_of_size(i))) for i in range(check + 1)
-            ]
-        logger.info(maple_equations(root_func, initial_conditions, eqs,),)
+        logger.info("Computing initial conditions")
+        initial_conditions = self.get_initial_conditions(check)
+        logger.info(pretty_print_equations(root_func, initial_conditions, eqs))
         logger.info("Solving...")
         solutions = solve(
             eqs,
@@ -270,32 +363,32 @@ class CombinatorialSpecification(
                 return sympy.simplify(genf)
         raise IncorrectGeneratingFunctionError
 
-    def get_maple_equations(self, check: int = 6):
+    def get_maple_equations(self, check: int = 6) -> str:
+        """
+        Convert the systems of equations to version that can be copy pasted to maple.
+        """
         eqs = tuple(self.get_equations())
         root_func = self.get_function(self.root)
-        try:
-            logger.info("Computing initial conditions")
-            initial_conditions = [
-                self.count_objects_of_size(n=i) for i in range(check + 1)
-            ]
-        except NotImplementedError as e:
-            logger.info(
-                "Reverting to generating objects from root for initial "
-                "conditions due to:\nNotImplementedError: %s",
-                e,
-            )
-            initial_conditions = [
-                len(list(self.root.objects_of_size(i))) for i in range(check + 1)
-            ]
+        initial_conditions = self.get_initial_conditions(check)
         maple_eqs = maple_equations(root_func, initial_conditions, eqs)
-        logger.info(maple_eqs)
         return maple_eqs
+
+    def get_pretty_equations(self, check: int = 6) -> str:
+        """
+        Convert the systems of equations to a more readable format.
+        """
+        eqs = tuple(self.get_equations())
+        root_func = self.get_function(self.root)
+        initial_conditions = self.get_initial_conditions(check)
+        return pretty_print_equations(root_func, initial_conditions, eqs)
 
     def count_objects_of_size(self, n: int, **parameters) -> int:
         """
         Return the number of objects with the given parameters.
         Note, 'n' is reserved for the size of the object.
         """
+        if not self._subrules_set:
+            self._set_subrules()
         limit = n * self.number_of_rules()
         with RecursionLimit(limit):
             return self.root_rule.count_objects_of_size(n, **parameters)
@@ -307,6 +400,8 @@ class CombinatorialSpecification(
         Return the objects with the given parameters.
         Note, 'n' is reserved for the size of the object.
         """
+        if not self._subrules_set:
+            self._set_subrules()
         for obj in self.root_rule.generate_objects_of_size(n, **parameters):
             yield obj
 
@@ -317,6 +412,8 @@ class CombinatorialSpecification(
         Return a uniformly random object of the given size. This is done using
         the "recursive" method.
         """
+        if not self._subrules_set:
+            self._set_subrules()
         limit = n * self.number_of_rules()
         with RecursionLimit(limit):
             return self.root_rule.random_sample_object_of_size(n, **parameters)
@@ -330,10 +427,30 @@ class CombinatorialSpecification(
 
         Raise an SanityCheckFailure error if it fails.
         """
+        if not self._subrules_set:
+            self._set_subrules()
         return all(
-            all(rule.sanity_check(n) for rule in self.rules_dict.values())
+            all(
+                rule.sanity_check(n, **parameters)
+                for rule in self.rules_dict.values()
+                for parameters in rule.comb_class.possible_parameters(n)
+            )
             for n in range(length + 1)
         )
+
+    def show(self, levels_shown: int = 0, levels_expand: int = 0) -> None:
+        """
+        Displays a tree representing this object in the web browser
+        OTHER INPUT:
+            - 'levels_shown': number of levels displayed at the start.
+            If 0 then the whole tree is displayed
+            - 'levels_expand': number of levels displayed after expanding a node.
+            If 0 then the rest of the tree is displayed
+        """
+        sd = SpecificationDrawer(
+            self, levels_shown=levels_shown, levels_expand=levels_expand
+        )
+        sd.show()
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, CombinatorialSpecification):
@@ -350,7 +467,7 @@ class CombinatorialSpecification(
             try:
                 rule = rules_dict.pop(comb_class)
             except KeyError:
-                assert comb_class in self.rules_dict
+                assert comb_class in self.rules_dict or comb_class.is_empty()
                 return res
             if isinstance(rule, EquivalencePathRule):
                 child_label = self.get_label(rule.comb_class)
@@ -375,6 +492,7 @@ class CombinatorialSpecification(
             return res
 
         res = update_res(self.root, res)
+        assert not rules_dict
         return res + "\n"
 
     def equations_string(self) -> str:
