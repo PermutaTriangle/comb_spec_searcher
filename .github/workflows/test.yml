@@ -2,13 +2,15 @@ name: tests
 
 on: [push, pull_request]
 
+all_os: [ubuntu-latest, macos-latest]
+
 jobs:
   flake8:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: all_os
     runs-on: ${{ matrix.os }}
-    steps:
+    steps:s
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
       with:
@@ -21,7 +23,7 @@ jobs:
   mypy:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: all_os
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
@@ -36,11 +38,11 @@ jobs:
   pylint:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: all_os
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v2s
       with:
         python-version: 3.8
     - name: install dependencies
@@ -51,7 +53,7 @@ jobs:
   black:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: all_os
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
@@ -66,7 +68,7 @@ jobs:
   tilescope:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: all_os
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
@@ -81,7 +83,7 @@ jobs:
   py36:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: all_os
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -97,7 +99,7 @@ jobs:
   py37:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: all_os
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -113,7 +115,7 @@ jobs:
   py38:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: all_os
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -129,7 +131,7 @@ jobs:
   py39:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: all_os
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -145,7 +147,7 @@ jobs:
   pypy36:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: all_os
 
     runs-on: ${{ matrix.os }}
     steps:
