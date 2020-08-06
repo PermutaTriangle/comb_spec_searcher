@@ -123,26 +123,26 @@ jobs:
     - name: run pytest pypy3
       run: tox -e pypy36
 
-macos-latest:
-  runs-on: macos-latest
-  steps:
-  - uses: actions/checkout@v2
-  - uses: actions/setup-python@v2
-    with:
-      python-version: 3.8
-  - name: install dependencies
-    run: python -m pip install --upgrade pip tox
-  - name: run pytest py38
-    run: tox -e py38
+  macos:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: install dependencies
+      run: python -m pip install --upgrade pip tox
+    - name: run pytest py38
+      run: tox -e py38
 
-windows-latest:
-  runs-on: windows-latest
-  steps:
-  - uses: actions/checkout@v2
-  - uses: actions/setup-python@v2
-    with:
-      python-version: 3.8
-  - name: install dependencies
-    run: python -m pip install --upgrade pip tox
-  - name: run pytest py38
-    run: tox -e py38
+  windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: install dependencies
+      run: python -m pip install --upgrade pip tox
+    - name: run pytest py38
+      run: tox -e py38
