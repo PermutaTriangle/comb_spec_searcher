@@ -2,7 +2,8 @@ name: tests
 
 on: [push, pull_request]
 
-all_os: [ubuntu-latest, macos-latest]
+env:
+  all_os: [ubuntu-latest, macos-latest]
 
 jobs:
   flake8:
