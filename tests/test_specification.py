@@ -81,7 +81,7 @@ def test_random_sample(specification):
     """
     Just test that it works and don't hit the maximum recursion depth.
     """
-    assert len(specification.random_sample_object_of_size(1000)) == 1000
+    assert len(specification.random_sample_object_of_size(100)) == 100
 
 
 def test_forget_ruledb():
