@@ -190,7 +190,7 @@ class CombinatorialSpecification(
                 prune(child)
 
         prune(self.root)
-
+        
         logger.info("Removed %s redundant rules.", len(rules_dict.values()))
         for rule in rules_dict.values():
             self.rules_dict.pop(rule.comb_class)
