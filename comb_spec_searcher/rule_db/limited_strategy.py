@@ -69,6 +69,10 @@ class LimitedStrategyRuleDB(RuleDB):
         else:
             prune(rules_dict)  # this function removes rules not in a specification.
 
+        # if the root is not in the pruned dict, then there's nothing to be done
+        if self.equivdb[label] not in rules_dict:
+            raise SpecificationNotFound("No specification for label {}".format(label))
+
         # find the rules that we want to limit, and consider only those in a spec
         rules_to_isolate = self.get_rules_up_to_equiv_using_strategies()
         rules_to_isolate = set(

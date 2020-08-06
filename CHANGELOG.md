@@ -5,12 +5,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- when using a `LimitedStrategyRuleDB`, searching is aborted much faster when the root
+  is not in the first pruned rules dictionary
+
 ### Fixed
 - use `AbstractRule` instead of `Rule` in `_rules_from_strategy`
 
 ## [2.1.1] - 2020-08-06
 ### Fixed
-- Hopefully fixed the type hints
+- fixed the type hints
 
 ## [2.1.0] - 2020-08-06
 ### Added
