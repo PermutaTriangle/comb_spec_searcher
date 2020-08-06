@@ -189,7 +189,7 @@ class AbstractStrategy(
     @staticmethod
     def get_eq_symbol() -> str:
         """
-        Return a choice for '=' in the pretty print a '=' b '+' c of rules.
+        Return a choice for '=' in the pretty print a '=' b '?' c of rules.
         Your choice should be a single charachter.
         """
         return "="
@@ -197,10 +197,10 @@ class AbstractStrategy(
     @staticmethod
     def get_op_symbol() -> str:
         """
-        Return a choice for '+' in the pretty print a '=' b '+' c of rules.
+        Return a choice for '?' in the pretty print a '=' b '?' c of rules.
         Your choice should be a single charachter.
         """
-        return "+"
+        return "?"
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, AbstractStrategy):
@@ -409,7 +409,7 @@ class CartesianProductStrategy(
     @staticmethod
     def get_op_symbol() -> str:
         """
-        Return a choice for '+' in the pretty print a '=' b '+' c of rules.
+        Return a choice for 'x' in the pretty print a '=' b 'x' c of rules.
         Your choice should be a single charachter.
         """
         return "x"

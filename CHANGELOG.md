@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [2.1.1] - 2020-08-06
+### Fixed
+- Hopefully fixed the type hints
+
+## [2.1.0] - 2020-08-06
 ### Added
 - a `SpecificationDrawer` for visualizing `CombinatorialSpecification`
 - `show` method to `CombinatorialSpecification`
@@ -21,7 +27,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 - fixed `ProofTree` handling of getting rules from spec
-- fixed printing of InvalidOperationError message
+- fixed printing of `InvalidOperationError` message
 
 ## [2.0.0] - 2020-07-16
 ### Added

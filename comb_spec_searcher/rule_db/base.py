@@ -244,7 +244,6 @@ class RuleDBBase(abc.ABC):
     ) -> Specification:
         children: Dict[int, Tuple[int, ...]] = dict()
         internal_nodes = set([label])
-
         logger.info("Computing rule <-> equivalence rule mapping.")
         eqv_rules = [
             (node.label, tuple(sorted(child.label for child in node.children)),)
