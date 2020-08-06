@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.1.1] - 2020-08-06
+### Fixed
+- Hopefully fixed the type hints
+
 ## [2.1.0] - 2020-08-06
 ### Added
 - a `SpecificationDrawer` for visualizing `CombinatorialSpecification`
