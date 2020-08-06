@@ -39,7 +39,6 @@ from .rule_db.base import RuleDBBase
 from .specification import CombinatorialSpecification
 from .strategies import (
     AbstractStrategy,
-    Rule,
     StrategyFactory,
     StrategyPack,
     VerificationRule,
