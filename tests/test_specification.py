@@ -73,7 +73,8 @@ def test_comb_classes(specification):
 
 
 def test_count_object_of_length_big_value(specification):
-    specification.count_objects_of_size(1000)
+    for i in range(1001):
+        specification.count_objects_of_size(i)
 
 
 def test_random_sample(specification):
