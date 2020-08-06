@@ -2,15 +2,9 @@ name: tests
 
 on: [push, pull_request]
 
-env:
-  all_os: [ubuntu-latest, macos-latest]
-
 jobs:
   flake8:
-    strategy:
-      matrix:
-        os: all_os
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
@@ -22,10 +16,7 @@ jobs:
       run: tox -e flake8
 
   mypy:
-    strategy:
-      matrix:
-        os: all_os
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
@@ -37,13 +28,10 @@ jobs:
       run: tox -e mypy
 
   pylint:
-    strategy:
-      matrix:
-        os: all_os
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2s
+    - uses: actions/setup-python@v2
       with:
         python-version: 3.8
     - name: install dependencies
@@ -52,10 +40,7 @@ jobs:
       run: tox -e pylint
 
   black:
-    strategy:
-      matrix:
-        os: all_os
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
@@ -67,10 +52,7 @@ jobs:
       run: tox -e black
 
   tilescope:
-    strategy:
-      matrix:
-        os: all_os
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
@@ -82,11 +64,7 @@ jobs:
       run: tox -e tilescope
 
   py36:
-    strategy:
-      matrix:
-        os: all_os
-
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
@@ -98,11 +76,7 @@ jobs:
       run: tox -e py36
 
   py37:
-    strategy:
-      matrix:
-        os: all_os
-
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
@@ -114,11 +88,7 @@ jobs:
       run: tox -e py37
 
   py38:
-    strategy:
-      matrix:
-        os: all_os
-
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
@@ -130,11 +100,7 @@ jobs:
       run: tox -e py38
 
   py39:
-    strategy:
-      matrix:
-        os: all_os
-
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
@@ -146,11 +112,7 @@ jobs:
       run: tox -e py39
 
   pypy36:
-    strategy:
-      matrix:
-        os: all_os
-
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
@@ -160,3 +122,27 @@ jobs:
       run: python -m pip install --upgrade pip tox
     - name: run pytest pypy3
       run: tox -e pypy36
+
+macos-latest:
+  runs-on: macos-latest
+  steps:
+  - uses: actions/checkout@v2
+  - uses: actions/setup-python@v2
+    with:
+      python-version: 3.8
+  - name: install dependencies
+    run: python -m pip install --upgrade pip tox
+  - name: run pytest py38
+    run: tox -e py38
+
+windows-latest:
+  runs-on: windows-latest
+  steps:
+  - uses: actions/checkout@v2
+  - uses: actions/setup-python@v2
+    with:
+      python-version: 3.8
+  - name: install dependencies
+    run: python -m pip install --upgrade pip tox
+  - name: run pytest py38
+    run: tox -e py38
