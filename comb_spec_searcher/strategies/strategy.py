@@ -189,7 +189,7 @@ class AbstractStrategy(
     @staticmethod
     def get_eq_symbol() -> str:
         """
-        Return a choice for '=' in the pretty print a '=' b '+' c of rules.
+        Return a choice for '=' in the pretty print a '=' b '?' c of rules.
         Your choice should be a single charachter.
         """
         return "="
@@ -197,10 +197,10 @@ class AbstractStrategy(
     @staticmethod
     def get_op_symbol() -> str:
         """
-        Return a choice for '+' in the pretty print a '=' b '+' c of rules.
+        Return a choice for '?' in the pretty print a '=' b '?' c of rules.
         Your choice should be a single charachter.
         """
-        return "+"
+        return "?"
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, AbstractStrategy):
@@ -291,6 +291,8 @@ class Strategy(AbstractStrategy[CombinatorialClassType, CombinatorialObjectType]
     ) -> Rule[CombinatorialClassType, CombinatorialObjectType]:
         if children is None:
             children = self.decomposition_function(comb_class)
+            if children is None:
+                raise StrategyDoesNotApply("Strategy does not apply")
         return Rule(self, comb_class, children=children)
 
     @abc.abstractmethod
@@ -407,7 +409,7 @@ class CartesianProductStrategy(
     @staticmethod
     def get_op_symbol() -> str:
         """
-        Return a choice for '+' in the pretty print a '=' b '+' c of rules.
+        Return a choice for 'x' in the pretty print a '=' b 'x' c of rules.
         Your choice should be a single charachter.
         """
         return "x"
@@ -553,6 +555,8 @@ class VerificationStrategy(
     ) -> VerificationRule[CombinatorialClassType, CombinatorialObjectType]:
         if children is None:
             children = self.decomposition_function(comb_class)
+            if children is None:
+                raise StrategyDoesNotApply("The combinatorial class is not verified")
         return VerificationRule(self, comb_class, children)
 
     @staticmethod
@@ -566,9 +570,7 @@ class VerificationStrategy(
 
         The pack is assumed to produce a finite universe.
         """
-        raise InvalidOperationError(
-            "can't find specification for {}".format(self.__str__)
-        )
+        raise InvalidOperationError(f"can't find specification for {self}")
 
     @abc.abstractmethod
     def verified(self, comb_class: CombinatorialClassType) -> bool:
@@ -836,7 +838,7 @@ class StrategyFactory(abc.ABC, Generic[CombinatorialClassType]):
     @abc.abstractmethod
     def __call__(
         self, comb_class: CombinatorialClassType, **kwargs
-    ) -> Iterator[Union[Rule, AbstractStrategy]]:
+    ) -> Iterator[Union[AbstractRule, AbstractStrategy]]:
         """
         Returns the results of the strategy on a comb_class.
         """

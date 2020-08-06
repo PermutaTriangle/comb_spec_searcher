@@ -5,6 +5,7 @@ import abc
 from collections import defaultdict
 from typing import Dict, Iterable, Iterator, List, MutableMapping, Optional, Set, Tuple
 
+import tabulate
 from logzero import logger
 
 from comb_spec_searcher.equiv_db import EquivalenceDB
@@ -105,13 +106,45 @@ class RuleDBBase(abc.ABC):
         ends = tuple(sorted(ends))
         return (start, ends) in self.rule_to_strategy
 
-    def status(self) -> str:
+    def status(self, elaborate: bool) -> str:
         """Return a string describing the status of the rule database."""
         status = "RuleDB status:\n"
-        status += "\tTotal number of combinatorial rules is {}".format(
-            len(self.rule_to_strategy)
-        )
-        # TODO: strategy verified, verified, equivalence sets?
+        table: List[Tuple[str, str]] = []
+        table.append(("Combinatorial rules", f"{len(self.rule_to_strategy):,d}"))
+        if elaborate:
+            eqv_labels = set()
+            strategy_verified_labels = set()
+            verified_labels = set()
+            eqv_rules = set()
+            for start, ends in self.rule_to_strategy:
+                if not ends:
+                    strategy_verified_labels.add(start)
+                if self.is_verified(start):
+                    verified_labels.add(start)
+                eqv_start = self.equivdb[start]
+                eqv_ends = tuple(sorted(self.equivdb[label] for label in ends))
+                eqv_labels.add(eqv_start)
+                eqv_labels.update(eqv_ends)
+                eqv_rules.add((eqv_start, eqv_ends))
+            table.append(
+                ("Combintorial rules up to equivalence", f"{len(eqv_rules):,d}")
+            )
+            table.append(
+                (
+                    "Strategy verified combinatorial classes",
+                    f"{len(strategy_verified_labels):,d}",
+                )
+            )
+            table.append(
+                ("Verified combinatorial classes", f"{len(verified_labels):,d}",)
+            )
+            table.append(
+                ("combinatorial classes up to equivalence", f"{len(eqv_labels):,d}",)
+            )
+        status += "    "
+        status += tabulate.tabulate(
+            table, headers=("", "Total number"), colalign=("left", "right")
+        ).replace("\n", "\n    ")
         return status
 
     ################################################################
@@ -140,7 +173,9 @@ class RuleDBBase(abc.ABC):
                 return start, ends
         return None
 
-    def rule_from_equivalence_rule_dict(self) -> Dict[RuleKey, RuleKey]:
+    def rule_from_equivalence_rule_dict(
+        self, eqv_rules: List[RuleKey]
+    ) -> Dict[RuleKey, RuleKey]:
         """
         Return a dictionary pointing from an equivalence rule to an actual rule.
         """
@@ -149,7 +184,8 @@ class RuleDBBase(abc.ABC):
             eqv_start = self.equivdb[start]
             eqv_ends = tuple(sorted(map(self.equivdb.__getitem__, ends)))
             eqv_key = (eqv_start, eqv_ends)
-            res[eqv_key] = (start, ends)
+            if eqv_key in eqv_rules:
+                res[eqv_key] = (start, ends)
         return res
 
     def find_specification(
@@ -169,14 +205,21 @@ class RuleDBBase(abc.ABC):
             self.set_verified(ver_label)
 
         if self.equivdb[label] in rules_dict:
+            logger.info("Specification detected.")
             if iterative:
                 specification = iterative_proof_tree_finder(
                     rules_dict, root=self.equivdb[label]
                 )
             else:
+                logger.info(
+                    "Minimizing for %s seconds.", round(minimization_time_limit)
+                )
                 specification = smallish_random_proof_tree(
                     rules_dict, self.equivdb[label], minimization_time_limit
                 )
+            logger.info(
+                "Found specification with %s rules.", len(specification.labels())
+            )
         else:
             raise SpecificationNotFound("No specification for label {}".format(label))
         return specification
@@ -201,12 +244,14 @@ class RuleDBBase(abc.ABC):
     ) -> Specification:
         children: Dict[int, Tuple[int, ...]] = dict()
         internal_nodes = set([label])
-        rule_from_equivalence_rules = self.rule_from_equivalence_rule_dict()
-        for node in proof_tree_node.nodes():
-            eqv_start, eqv_ends = (
-                node.label,
-                tuple(sorted(child.label for child in node.children)),
-            )
+        logger.info("Computing rule <-> equivalence rule mapping.")
+        eqv_rules = [
+            (node.label, tuple(sorted(child.label for child in node.children)),)
+            for node in proof_tree_node.nodes()
+        ]
+        rule_from_equivalence_rules = self.rule_from_equivalence_rule_dict(eqv_rules)
+        logger.info("Finding actual rules.")
+        for eqv_start, eqv_ends in eqv_rules:
             rule = rule_from_equivalence_rules.get((eqv_start, eqv_ends))
             if rule is not None:
                 start, ends = rule
@@ -214,6 +259,7 @@ class RuleDBBase(abc.ABC):
                 internal_nodes.update(ends)
         res = []
         eqv_paths = []
+        logger.info("Computing strategies used to create rules.")
         for start, ends in children.items():
             for eqv_label in internal_nodes:
                 if self.are_equivalent(start, eqv_label):

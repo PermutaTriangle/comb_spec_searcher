@@ -6,6 +6,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.1.0] - 2020-08-06
+### Added
+- a `SpecificationDrawer` for visualizing `CombinatorialSpecification`
+- `show` method to `CombinatorialSpecification`
+- `to_html_representation` method to `CombinatorialClass`
+- `AbstractStrategy` raises `StrategyDoesNotApply` in the `__call__` method
+- more verbose logging during the specification creation process
+
+### Changed
+- Improved the status update
+- `rule_from_equivalence_rule_dict` now takes a list of expected equivalence rules so a
+  much smaller dictionary is produced
+
+### Fixed
+- fixed `ProofTree` handling of getting rules from spec
+- fixed printing of `InvalidOperationError` message
+
 ## [2.0.0] - 2020-07-16
 ### Added
 - the methods `expand_verified` and `expand_comb_class` on

@@ -269,13 +269,3 @@ def size_to_readable(size: int) -> str:
     if size / 1024 ** 3 < 1:
         return str(round(size / 1024 ** 2, 1)) + " MiB"
     return str(round(size / 1024 ** 3, 3)) + " GiB"
-
-
-def time_to_readable(seconds: int) -> str:
-    """Convert a time in seconds to a human readable time in seconds / minutes /
-    hours"""
-    if seconds < 60:
-        return "{} seconds".format(round(seconds))
-    if seconds < 3600:
-        return "{} minutes".format(round(seconds / 60, 1))
-    return "{} hours".format(round(seconds / 60 / 60, 2))

@@ -23,11 +23,11 @@ class Node:
         self.label = n
         self.children = children
 
-    def labels(self) -> FrozenSet[int]:
+    def labels(self) -> Set[int]:
         """Return the set of all labels in the proof tree."""
-        if not self.children:
-            return frozenset([self.label])
-        return frozenset(chain.from_iterable(node.labels() for node in self.children))
+        res = set([self.label])
+        res.update(chain.from_iterable(node.labels() for node in self.children))
+        return res
 
     def nodes(self) -> Iterator["Node"]:
         """Yield all nodes in the proof tree."""
