@@ -358,7 +358,8 @@ class SpecificationDrawer:
 
     def share(self) -> None:
         """
-        Displays CombinatorialSpecification tree in the web browser
+        Upload the html of the specification on a file server and displays a link to the
+        file.
         """
         html_string = self.to_html()
 

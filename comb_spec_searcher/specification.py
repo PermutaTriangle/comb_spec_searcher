@@ -454,8 +454,10 @@ class CombinatorialSpecification(
 
     def share(self, levels_shown: int = 0, levels_expand: int = 0) -> None:
         """
-        Displays a tree representing this object in the web browser
-        OTHER INPUT:
+        Uploads the html representation of the specification to a sharing website and
+        display the link to the file.
+
+        INPUT:
             - 'levels_shown': number of levels displayed at the start.
             If 0 then the whole tree is displayed
             - 'levels_expand': number of levels displayed after expanding a node.
