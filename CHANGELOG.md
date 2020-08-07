@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - when using a `LimitedStrategyRuleDB`, searching is aborted much faster when the root
   is not in the first pruned rules dictionary
 
+### Fixed
+- use `AbstractRule` instead of `Rule` in `_rules_from_strategy`
+
 ## [2.1.1] - 2020-08-06
 ### Fixed
 - fixed the type hints
