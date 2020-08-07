@@ -155,13 +155,13 @@ class SpecificationDrawer:
                 "<br>JSON:<br>" + json.dumps(comb_class.to_jsonable())
                 for comb_class in comb_classes
             ]
-            json_string = ", ".join(comb_classes_json)
+            json_string = f'<p> {", ".join(comb_classes_json)} </p>'
 
         tooltip = {
             "content": f"""
                 <p>Labels: {labels_string}</p>
                 <pre>{rule_string}</pre>
-                <p>{json_string}</p>""",
+                {json_string}""",
             "selector": f"#node{node_identifier}",
         }
         if isinstance(rule, VerificationRule):
