@@ -2,7 +2,8 @@ name: build-and-deploy
 
 on:
   push:
-    github-actions
+    branches:
+      - github-actions
 
 jobs:
   build-and-deploy:
