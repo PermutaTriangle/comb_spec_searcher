@@ -10,26 +10,26 @@ jobs:
       matrix:
         include:
           - python: 3.8
-            env: TOXENV=flake8
+            toxenv: flake8
           - python: 3.8
-            env: TOXENV=mypy
+            toxenv: mypy
           - python: 3.8
-            env: TOXENV=pylint
+            toxenv: pylint
           - python: 3.8
-            env: TOXENV=black
+            toxenv: black
           - python: 3.8
-            env: TOXENV=tilescope
+            toxenv: tilescope
 
           - python: 3.6
-            env: TOXENV=py36
+            toxenv: py36
           - python: 3.7
-            env: TOXENV=py37
+            toxenv: py37
           - python: 3.8
-            env: TOXENV=py38
+            toxenv: py38
           - python: 3.9-dev
-            env: TOXENV=py39
+            toxenv: py39
           - python: pypy3
-            env: TOXENV=pypy36
+            toxenv: pypy36
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -38,6 +38,8 @@ jobs:
       - name: install dependencies
         run: python -m pip install --upgrade pip tox
       - name: run
+        env:
+          TOXENV: ${{ matrix.toxenv }}
         run: tox
 
 
