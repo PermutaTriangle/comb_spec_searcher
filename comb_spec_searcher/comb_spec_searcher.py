@@ -39,7 +39,6 @@ from .rule_db.base import RuleDBBase
 from .specification import CombinatorialSpecification
 from .strategies import (
     AbstractStrategy,
-    Rule,
     StrategyFactory,
     StrategyPack,
     VerificationRule,
@@ -202,7 +201,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 pass
         elif isinstance(strategy, StrategyFactory):
             for strat in strategy(comb_class, **self.kwargs):
-                if isinstance(strat, Rule):
+                if isinstance(strat, AbstractRule):
                     yield strat
                 elif isinstance(strat, AbstractStrategy):
                     try:

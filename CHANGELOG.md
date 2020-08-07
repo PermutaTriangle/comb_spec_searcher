@@ -5,11 +5,25 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- when using a `LimitedStrategyRuleDB`, searching is aborted much faster when the root
+  is not in the first pruned rules dictionary
+
+### Fixed
+- use `AbstractRule` instead of `Rule` in `_rules_from_strategy`
+
+## [2.1.1] - 2020-08-06
+### Fixed
+- fixed the type hints
+
+## [2.1.0] - 2020-08-06
 ### Added
 - a `SpecificationDrawer` for visualizing `CombinatorialSpecification`
 - `show` method to `CombinatorialSpecification`
 - `to_html_representation` method to `CombinatorialClass`
 - `AbstractStrategy` raises `StrategyDoesNotApply` in the `__call__` method
+- function `CombinatorialSpecification.share_spec()` which uploads the spec to a file
+  sharing site
 - more verbose logging during the specification creation process
 
 ### Changed
@@ -19,7 +33,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 - fixed `ProofTree` handling of getting rules from spec
-- fixed printing of InvalidOperationError message
+- fixed printing of `InvalidOperationError` message
 
 ## [2.0.0] - 2020-07-16
 ### Added
