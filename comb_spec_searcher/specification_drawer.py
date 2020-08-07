@@ -265,6 +265,14 @@ class SpecificationDrawer:
         fsd = ForestSpecificationDrawer([self])
         fsd.show()
 
+    def share(self) -> None:
+        """
+        Upload the html of the specification on a file server and displays a link to the
+        file.
+        """
+        fsd = ForestSpecificationDrawer([self])
+        fsd.share()
+
     def to_html(self) -> str:
         """Returns a html string that contains the whole tree"""
         fsd = ForestSpecificationDrawer([self])
@@ -447,7 +455,7 @@ class ForestSpecificationDrawer:
 
     def share(self) -> None:
         """
-        Upload the html of the specification on a file server and displays a link to the
+        Upload the html of the forest on a file server and displays a link to the
         file.
         """
         html_string = self.to_html()

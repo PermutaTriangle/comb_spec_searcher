@@ -5,12 +5,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- add specification sharing function to `ForestSpecificationDrawer`
+
 ### Changed
 - when using a `LimitedStrategyRuleDB`, searching is aborted much faster when the root
   is not in the first pruned rules dictionary
 
 ### Fixed
 - use `AbstractRule` instead of `Rule` in `_rules_from_strategy`
+- fix `CombinatorialSpecification.share()` which was missing
 
 ## [2.1.1] - 2020-08-06
 ### Fixed
