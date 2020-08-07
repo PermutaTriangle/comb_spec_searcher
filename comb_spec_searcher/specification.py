@@ -434,7 +434,9 @@ class CombinatorialSpecification(
             for n in range(length + 1)
         )
 
-    def show(self, levels_shown: int = 0, levels_expand: int = 0) -> None:
+    def show(
+        self, levels_shown: int = 0, levels_expand: int = 0, verbose: bool = False
+    ) -> None:
         """
         Displays a tree representing this object in the web browser
         OTHER INPUT:
@@ -442,9 +444,14 @@ class CombinatorialSpecification(
             If 0 then the whole tree is displayed
             - 'levels_expand': number of levels displayed after expanding a node.
             If 0 then the rest of the tree is displayed
+            - 'verbose': displays formal step below the node
+            and json representation in tooltips
         """
         sd = SpecificationDrawer(
-            self, levels_shown=levels_shown, levels_expand=levels_expand
+            self,
+            levels_shown=levels_shown,
+            levels_expand=levels_expand,
+            verbose=verbose,
         )
         sd.show()
 

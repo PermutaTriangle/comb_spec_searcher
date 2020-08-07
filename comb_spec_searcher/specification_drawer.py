@@ -50,6 +50,7 @@ class SpecificationDrawer:
         spec: "CombinatorialSpecification",
         levels_shown: int = 0,
         levels_expand: int = 0,
+        verbose: bool = False,
     ):
         """
         Initialise SpecificationDrawer.
@@ -59,12 +60,15 @@ class SpecificationDrawer:
             If 0 then the whole tree is displayed
             - 'levels_expand': number of levels displayed after expanding a node.
             If 0 then the rest of the tree is displayed
+            - 'verbose': displays formal step below the node
+            and json representation in tooltips
         """
         self.spec = spec
         self.tooltips: List[Dict[str, str]] = []
         self._rules_dict_copy = copy(spec.rules_dict)
         self.levels_shown = levels_shown
         self.levels_expand = levels_expand
+        self.verbose = verbose
         self.tree = self._to_tree(spec.root)
 
     @staticmethod
@@ -138,10 +142,25 @@ class SpecificationDrawer:
             rule = self.spec.get_rule(comb_classes[-1])
         else:
             rule_string = str(comb_classes[0]).replace("\n", "<br>")
+
+        # labels
         labels = [str(self.spec.get_label(comb_class)) for comb_class in comb_classes]
         labels_string = ", ".join(labels)
+
+        # comb_class json
+        json_string = ""
+        if self.verbose:
+            comb_classes_json = [
+                "<br>JSON:<br>" + json.dumps(comb_class.to_jsonable())
+                for comb_class in comb_classes
+            ]
+            json_string = ", ".join(comb_classes_json)
+
         tooltip = {
-            "content": f"<p>Labels: {labels_string}</p><pre>{rule_string}</pre>",
+            "content": f"""
+                <p>Labels: {labels_string}</p>
+                <pre>{rule_string}</pre>
+                <p>{json_string}</p>""",
             "selector": f"#node{node_identifier}",
         }
         if isinstance(rule, VerificationRule):
@@ -219,9 +238,7 @@ class SpecificationDrawer:
             if len(nodes) > 1:
                 inner_style += "border: 1px solid;"
 
-        for i, node_string in enumerate(nodes):
-            if i == len(nodes) - 1:  # removes margin on last node
-                inner_style += "margin-right:0;"
+        for node_string in nodes:
             html += f"""<div class=inner-node-content style="{inner_style}">
                 {node_string}</div>"""
 
@@ -231,8 +248,16 @@ class SpecificationDrawer:
         labels_html = f"""<div class=label
             style='{additional_style}{additional_label_style}'>{labels_string}</div>"""
 
-        return f"""{labels_html}<div class=node-content
-            style='max-width:{300 * len(nodes)}px; {additional_style}'>{html}</div>"""
+        # add verbose below the node
+        verbose_html = ""
+        if self.verbose:
+            formal_step = self.spec.get_rule(comb_classes[-1]).formal_step
+            verbose_html = f"""<div class=verbose> {formal_step}</div>"""
+
+        return f"""<div class=node-container style='{additional_style}'>{labels_html}
+            <div class=node-content
+            style='max-width:{300 * len(nodes)}px;{additional_style}'>{html}</div>
+            {verbose_html}</div>"""
 
     def show(self) -> None:
         """Displays the CombinatorialSpecification tree in the web browser"""
@@ -361,6 +386,7 @@ class ForestSpecificationDrawer:
             </div>
         </div>
         <script>
+        var tooltip_opened = ""
         function setup_tooltips_event(tooltips) {{
             for (let k = 0; k < tooltips.tooltips.length; k++) {{
                 $(tooltips.tooltips[k].selector).tooltip({{
@@ -373,11 +399,15 @@ class ForestSpecificationDrawer:
                     placement: "right",
                     fallbackPlacement: "flip",
                     animation: false,
-                    trigger: "hover focus",
+                    trigger: "click",
                     viewport: {{
                         selector: 'body',
                     }}
                 }});
+                $(tooltips.tooltips[k].selector).on('show.bs.tooltip', function() {{
+                    $(tooltip_opened).tooltip('hide')
+                    tooltip_opened = tooltips.tooltips[k].selector
+                }})
             }}
         }}
         let json_input = {json_input}
@@ -425,11 +455,11 @@ class HTMLViewer:
         time.sleep(HTMLViewer._THREAD_WAIT_TIME)
         if os.path.exists(fname):
             os.remove(fname)
+            logger.info("specification html file removed")
 
     @staticmethod
     def _remove_file(fname: str) -> None:
         threading.Thread(target=HTMLViewer._remove_file_thread, args=(fname,)).start()
-        logger.info("specification html file removed")
 
     @staticmethod
     def open_html(html: str) -> None:
