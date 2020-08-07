@@ -9,7 +9,7 @@ import time
 import uuid
 import webbrowser
 from copy import copy
-from typing import TYPE_CHECKING, ClassVar, Dict, List, Tuple
+from typing import TYPE_CHECKING, ClassVar, Dict, Iterable, List, Tuple
 
 from logzero import logger
 from typing_extensions import TypedDict
@@ -261,8 +261,8 @@ class ForestSpecificationDrawer:
     one single HTML file by navigating them with tabs
     """
 
-    def __init__(self, sd_list: List[SpecificationDrawer]):
-        self.sd_list = sd_list
+    def __init__(self, sd_list: Iterable[SpecificationDrawer]):
+        self.sd_list = list(sd_list)
 
     def add_tree_config(self, sd_index: int) -> TreantConfig:
         """Returns the tree and tooltip as TreantConfig for treant library"""
