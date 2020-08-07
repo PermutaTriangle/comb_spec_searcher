@@ -44,12 +44,12 @@ deploy:
     branch: master
 
 
-deploy:
-  provider: pypi
-  server: https://test.pypi.org/legacy/ # Remove for deployment to official PyPi repo
-  user: __token__
-  password:
-    secure: pZ3LR17s/tap3zGVrBu700LIi/tuGKDzxnLpAXlkCyPgYvd/M95cqowpbAblAzWI62vJO0xpPUfqxzOC0GHIfYvqkmXpUHNBVKx0vDZSzQW1z2actfnq/5ajRwdgeQsYdmU9+wN2NdD+i3xvEUsp5VZ7VJnHZLyU+RiuR2uOIY3Q4vbeGVp8l+SVmdjpK4q2/8DccLiiyzBOUiNXp9GBHUdG1fkOVJHSp1pHoQnBdB6Qs3Z8ICmd5DpiSo+XwoUk6Kr2NZCLj4HYmC9CPMXyrx9Xj51+M0LP0oVso6gHni04fAaon93DYcd4L/tJiqrJxOWxp2kI6tqN48n4AOwp7NOyX55v7lcP2gv9tzPBk7G2TrKBQCGCj+VlikBqyaLcUP+bySXxrbOXlXAxdGWrqeNLhbMsyPvNFqI0IK1BT4tzcn28cHu3RvjwFBQfqiQURlY/4MBTwGOLvm+4JqCQjP3pWf4QxnPYO5bwJnzYihGx4uzbwfUQS5AQPfyEzgqpQUP9E1eXDrZS/y97Xg3+9FyTIv00svCCaVZjGOiLKCbFcj3Ec/lIlKmpvlBoUn+ZAo5G8vb8VzSEJ9bLQjbofdNtCpHqNx1eMua372ndvR1HS2cnmm/aawgRUvKkOydHIj7k1I1FtnRHGxFo7op+CN4ZCQAavI85R8SIS5ePa0Y=
-  skip_existing: true
-  on:
-    branch: github-actions
+# deploy:
+#   provider: pypi
+#   server: https://test.pypi.org/legacy/ # Remove for deployment to official PyPi repo
+#   user: __token__
+#   password:
+#     secure: pZ3LR17s/tap3zGVrBu700LIi/tuGKDzxnLpAXlkCyPgYvd/M95cqowpbAblAzWI62vJO0xpPUfqxzOC0GHIfYvqkmXpUHNBVKx0vDZSzQW1z2actfnq/5ajRwdgeQsYdmU9+wN2NdD+i3xvEUsp5VZ7VJnHZLyU+RiuR2uOIY3Q4vbeGVp8l+SVmdjpK4q2/8DccLiiyzBOUiNXp9GBHUdG1fkOVJHSp1pHoQnBdB6Qs3Z8ICmd5DpiSo+XwoUk6Kr2NZCLj4HYmC9CPMXyrx9Xj51+M0LP0oVso6gHni04fAaon93DYcd4L/tJiqrJxOWxp2kI6tqN48n4AOwp7NOyX55v7lcP2gv9tzPBk7G2TrKBQCGCj+VlikBqyaLcUP+bySXxrbOXlXAxdGWrqeNLhbMsyPvNFqI0IK1BT4tzcn28cHu3RvjwFBQfqiQURlY/4MBTwGOLvm+4JqCQjP3pWf4QxnPYO5bwJnzYihGx4uzbwfUQS5AQPfyEzgqpQUP9E1eXDrZS/y97Xg3+9FyTIv00svCCaVZjGOiLKCbFcj3Ec/lIlKmpvlBoUn+ZAo5G8vb8VzSEJ9bLQjbofdNtCpHqNx1eMua372ndvR1HS2cnmm/aawgRUvKkOydHIj7k1I1FtnRHGxFo7op+CN4ZCQAavI85R8SIS5ePa0Y=
+#   skip_existing: true
+#   on:
+#     branch: github-actions
