@@ -452,6 +452,22 @@ class CombinatorialSpecification(
         )
         sd.show()
 
+    def share(self, levels_shown: int = 0, levels_expand: int = 0) -> None:
+        """
+        Uploads the html representation of the specification to a sharing website and
+        display the link to the file.
+
+        INPUT:
+            - 'levels_shown': number of levels displayed at the start.
+            If 0 then the whole tree is displayed
+            - 'levels_expand': number of levels displayed after expanding a node.
+            If 0 then the rest of the tree is displayed
+        """
+        sd = SpecificationDrawer(
+            self, levels_shown=levels_shown, levels_expand=levels_expand
+        )
+        sd.share()
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, CombinatorialSpecification):
             return NotImplemented

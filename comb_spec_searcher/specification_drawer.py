@@ -11,6 +11,7 @@ import webbrowser
 from copy import copy
 from typing import TYPE_CHECKING, ClassVar, Dict, Iterable, List, Tuple
 
+import requests
 from logzero import logger
 from typing_extensions import TypedDict
 
@@ -413,6 +414,38 @@ class ForestSpecificationDrawer:
         html_string = self.to_html()
         viewer = HTMLViewer()
         viewer.open_html(html_string)
+
+    def share(self) -> None:
+        """
+        Upload the html of the specification on a file server and displays a link to the
+        file.
+        """
+        html_string = self.to_html()
+
+        with tempfile.NamedTemporaryFile(
+            "r+", suffix=".html", delete=False, encoding="UTF8"
+        ) as html_file:
+            html_file.write(html_string)
+            file_path = html_file.name
+
+        # ask gofile.io which server it wants us to use
+        logger.info("Sending specification to file host.")
+        req1 = requests.get("https://apiv2.gofile.io/getServer")
+        server = req1.json()["data"]["server"]
+        upload_url = f"https://{server}.gofile.io/upload"
+
+        with open(file_path, "rb") as f:
+            req2 = requests.post(upload_url, files={"filesUploaded": f},)
+
+        os.remove(file_path)
+        file_code = req2.json()["data"]["code"]
+        file_name = file_path.split("/")[-1]
+
+        file_enable_url = f"https://gofile.io/d/{file_code}"
+        file_url = f"https://{server}.gofile.io/download/{file_code}/{file_name}"
+
+        print(f"First click this: {file_enable_url}")
+        print(f"Then this link will work: {file_url}")
 
 
 class HTMLViewer:
