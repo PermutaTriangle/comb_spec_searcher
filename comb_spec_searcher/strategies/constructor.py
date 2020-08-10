@@ -11,9 +11,7 @@ Currently the constructors are implemented in one variable, namely 'n' which is
 used throughout to denote size.
 """
 import abc
-from functools import partial, reduce
 from itertools import product
-from operator import add, mul
 from random import randint
 from typing import Callable, Dict, Generic, Iterable, Iterator, List, Optional, Tuple
 
@@ -24,7 +22,7 @@ from ..combinatorial_class import CombinatorialClassType, CombinatorialObjectTyp
 __all__ = ("Constructor", "CartesianProduct", "DisjointUnion")
 
 
-RelianceProfile = Tuple[Tuple[int, ...], ...]
+RelianceProfile = Tuple[Dict[str, Tuple[int, ...]], ...]
 SubGens = Tuple[Callable[..., Iterator[CombinatorialObjectType]], ...]
 SubRecs = Tuple[Callable[..., int], ...]
 SubSamplers = Tuple[Callable[..., CombinatorialObjectType], ...]
@@ -32,13 +30,6 @@ SubSamplers = Tuple[Callable[..., CombinatorialObjectType], ...]
 
 class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectType]):
     """The constructor is akin to the 'counting function' in the comb exp paper."""
-
-    @abc.abstractmethod
-    def is_equivalence(self) -> bool:
-        """
-        Return true if the constructor is the same as "=" when there is only
-        one child.
-        """
 
     @abc.abstractmethod
     def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
@@ -78,43 +69,26 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
         """Return a randomly sampled subobjs/image of the bijection implied
         by the constructor."""
 
-    @staticmethod
-    def get_eq_symbol() -> str:
-        """
-        Return a choice for '=' in the pretty print a '=' b '+' c of rules.
-        Your choice should be a single charachter.
-        """
-        return "="
-
-    @staticmethod
-    def get_op_symbol() -> str:
-        """
-        Return a choice for '+' in the pretty print a '=' b '+' c of rules.
-        Your choice should be a single charachter.
-        """
-        return "+"
-
 
 class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     """
     The CartesianProduct is initialised with the children of the rule that is
     being counted. These are needed in the reliance profile. In particular,
     the CombinatorialClass that you are counting must have implemented the
-    methods is_atom' and 'minimum_size_of_object', which are needed to ensure that the
-    recursions are productive.
+    methods is_atom', 'minimum_size_of_object', 'get_minimum_values' which are
+    needed to ensure that the recursions are productive.
 
-    This CartesianProduct constructor only considers compositions of n. If
-    other parameters are given, then these should be passed to one other factor.
-    The details of this must be given using 'parameters'. This is a tuple, where
-    the ith dictionary tells the constructor for each variable on the child which
-    variable it came from.
-    (In particular, each extra variable on the child must be a key in the dictionary,
-    and each extra variable in the parent must appear as a value in exactly one
-    dictionary.)
+    This CartesianProduct constructor considers compositions all of the
+    parameters including n. then these should be passed to one other factor.
+    The details of how the parameters map forward must be given using
+    'extra_parameters'. This is a tuple, where the ith dictionary tells the
+    constructor for each parent variable maps to on the child. If it does not
+    map to the child it should not be a key in the dictionary.
     """
 
     def __init__(
         self,
+        parent: CombinatorialClassType,
         children: Iterable[CombinatorialClassType],
         extra_parameters: Optional[Tuple[Dict[str, str], ...]] = None,
     ):
@@ -126,86 +100,160 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         else:
             self.extra_parameters = tuple(dict() for _ in children)
 
-        self.minimum_size = sum(
-            comb_class.minimum_size_of_object() for comb_class in children
+        self.minimum_sizes = {"n": parent.minimum_size_of_object()}
+        for k in parent.extra_parameters:
+            self.minimum_sizes[k] = parent.get_minimum_value(k)
+
+        self.min_child_sizes = tuple(
+            {"n": child.minimum_size_of_object()} for child in children
         )
+        self.max_child_sizes = tuple(
+            {"n": child.minimum_size_of_object()} if child.is_atom() else {}
+            for child in children
+        )
+        self.parent_parameters = ("n",) + parent.extra_parameters
 
-        reliance_profile_functions = []
-        for child in children:
-            min_child_size = child.minimum_size_of_object()
-            if child.is_atom():
-                func = partial(self.child_reliance_profile, min_child_size, atom=True)
-            else:
-                func = partial(self.child_reliance_profile, min_child_size)
-            reliance_profile_functions.append(func)
-
-        self._reliance_profile_functions = tuple(reliance_profile_functions)
-
-    def child_reliance_profile(
-        self, min_child_size: int, n: int, atom: bool = False
-    ) -> Tuple[int, ...]:
-        if atom:
-            return tuple(
-                range(
-                    min_child_size,
-                    min(n - self.minimum_size + min_child_size + 1, min_child_size + 1),
+        for (idx, child), parameters in zip(enumerate(children), self.extra_parameters):
+            for k in parent.extra_parameters:
+                self.min_child_sizes[idx][k] = (
+                    child.get_minimum_value(parameters[k]) if k in parameters else 0
                 )
+                if k not in parameters:
+                    self.max_child_sizes[idx][k] = 0
+                elif child.is_atom():
+                    self.max_child_sizes[idx][k] = child.get_minimum_value(
+                        parameters[k]
+                    )
+
+    def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
+        res = 1
+        for extra_parameters, rhs_func in zip(self.extra_parameters, rhs_funcs):
+            res *= rhs_func.subs(
+                {child: parent for parent, child in extra_parameters.items()},
+                simultaneous=True,
             )
-        return tuple(range(min_child_size, n - self.minimum_size + min_child_size + 1))
-
-    @staticmethod
-    def is_equivalence() -> bool:
-        return True
-
-    @staticmethod
-    def get_equation(lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
-        return Eq(lhs_func, reduce(mul, rhs_funcs, 1))
+        return Eq(lhs_func, res)
 
     def reliance_profile(self, n: int, **parameters: int) -> RelianceProfile:
-        # TODO: implement in multiple variables
-        assert not parameters, "only implemented in one variable, namely 'n'"
-        return tuple(f(n) for f in self._reliance_profile_functions)
+        #  TODO: consider when parameters are subsets of each other etc
+        assert all(
+            set(["n", *parameters]) == set(min_child_sizes)
+            for min_child_sizes in self.min_child_sizes
+        )
+        parameters["n"] = n
+        return tuple(
+            {
+                k: tuple(
+                    range(
+                        min_child_sizes[k],
+                        min(
+                            [
+                                parameters[k]
+                                - self.minimum_sizes[k]
+                                + min_child_sizes[k]
+                                + 1
+                            ]
+                            + (
+                                [max_child_sizes[k] + 1] if k in max_child_sizes else []
+                            ),
+                        ),
+                    )
+                )
+                for k in min_child_sizes
+            }
+            for min_child_sizes, max_child_sizes in zip(
+                self.min_child_sizes, self.max_child_sizes
+            )
+        )
 
     def _valid_compositions(
         self, n: int, **parameters: int
-    ) -> Iterator[Tuple[int, ...]]:
-        assert not parameters, "only implemented in one variable, namely 'n'"
-        reliance_profile = self.reliance_profile(n)
-        if all(reliance_profile):
-            minmax = tuple((min(p), max(p)) for p in reliance_profile)
+    ) -> Iterator[Tuple[Dict[str, int], ...]]:
+        reliance_profile = self.reliance_profile(n, **parameters)
 
-            def _helper(n, minmax):
-                if len(minmax) == 1:
-                    minval, maxval = minmax[0]
-                    if minval <= n <= maxval:
-                        yield (n,)
-                    return
-                still_to_come = sum(x for x, _ in minmax[1:])
-                max_available = sum(y for _, y in minmax[1:])
-                minval, maxval = minmax[0]
-                minval = max(minval, n - max_available)
-                maxval = min(maxval, n - still_to_come)
-                for val in range(minval, maxval + 1):
-                    for comp in _helper(n - val, minmax[1:]):
-                        yield (val,) + comp
+        def _helper(
+            minmaxes: Tuple[Dict[str, Tuple[int, int]], ...], **parameters: int
+        ):
+            if len(minmaxes) == 1:
+                minmax = minmaxes[0]
+                if all(
+                    minmax[k][0] <= parameters[k] <= minmax[k][1]
+                    for k in self.parent_parameters
+                ):
+                    yield ({**parameters},)
+                return
 
-            yield from _helper(n, minmax)
+            still_to_come = {
+                k: sum(minmax[k][0] for minmax in minmaxes[1:])
+                for k in self.parent_parameters
+            }
+            max_available = {
+                k: sum(minmax[k][1] for minmax in minmaxes[1:])
+                for k in self.parent_parameters
+            }
+            minmax = minmaxes[0]
+            for values in product(
+                *[
+                    range(
+                        max(minmax[k][0], parameters[k] - max_available[k]),
+                        min(minmax[k][1], parameters[k] - still_to_come[k]) + 1,
+                    )
+                    for k in self.parent_parameters
+                ]
+            ):
+                params = dict(zip(self.parent_parameters, values))
+                update_params = {
+                    k: parameters[k] - params[k] for k in self.parent_parameters
+                }
+                for comp in _helper(minmaxes[1:], **update_params):
+                    yield (params,) + comp
+
+        if all(all(profile.values()) for profile in reliance_profile):
+            minmaxes: Tuple[Dict[str, Tuple[int, int]], ...] = tuple(
+                {k: (min(profile[k]), max(profile[k])) for k in self.parent_parameters}
+                for profile in reliance_profile
+            )
+            parameters["n"] = n
+            yield from _helper(minmaxes, **parameters)
+
+    def get_extra_parameters(
+        self, child_parameters: Tuple[Dict[str, int], ...]
+    ) -> Optional[List[Dict[str, int]]]:
+        """
+        Will return the extra parameters dictionary based on the given child
+        parameters given. If there is a contradiction, that is some child
+        parameter is given two or more different values that do not match,
+        then None will be returned indicating that there is a contradiction,
+        and so there are no objects satisfying the child parameters.
+        """
+        res: List[Dict[str, int]] = []
+        for params, map_params in zip(child_parameters, self.extra_parameters):
+            assert all(
+                params[k] == 0
+                for k in self.parent_parameters
+                if k not in map_params and k != "n"
+            )
+            extra_params: Dict[str, int] = {"n": params["n"]}
+            for k in map_params:
+                mapped_k = map_params[k]
+                if mapped_k not in extra_params:
+                    extra_params[mapped_k] = params[k]
+                elif extra_params[mapped_k] != params[k]:
+                    return None
+            res.append(extra_params)
+        return res
 
     def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
         # The extra parameters variable maps each of the parent parameter to
         # the unique child that it was mapped to.
-        extra_params = tuple(
-            {
-                child_var: parameters[parent_var]
-                for parent_var, child_var in param.items()
-            }
-            for param in self.extra_parameters
-        )
         res = 0
-        for comp in self._valid_compositions(n):
+        for child_parameters in self._valid_compositions(n, **parameters):
             tmp = 1
-            for (i, rec), extra_param in zip(enumerate(subrecs), extra_params):
-                tmp *= rec(n=comp[i], **extra_param)
+            extra_parameters = self.get_extra_parameters(child_parameters)
+            if extra_parameters is None:
+                continue
+            for rec, extra_params in zip(subrecs, extra_parameters):
+                tmp *= rec(n=extra_params.pop("n"), **extra_params)
                 if tmp == 0:
                     break
             res += tmp
@@ -217,7 +265,7 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         assert len(parameters) == 0, "only implemented in one variable, namely 'n'"
         for comp in self._valid_compositions(n):
             for sub_objs in product(
-                *tuple(subgen(n=i) for i, subgen in zip(comp, subgens))
+                *tuple(subgen(n=d["n"]) for d, subgen in zip(comp, subgens))
             ):
                 yield tuple(sub_objs)
 
@@ -235,12 +283,14 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         for comp in self._valid_compositions(n):
             tmp = 1
             for i, rec in enumerate(subrecs):
-                tmp *= rec(n=comp[i])
+                tmp *= rec(n=comp[i]["n"])
                 if tmp == 0:
                     break
             total += tmp
             if random_choice <= total:
-                return tuple(subsampler(i) for i, subsampler in zip(comp, subsamplers))
+                return tuple(
+                    subsampler(d["n"]) for d, subsampler in zip(comp, subsamplers)
+                )
 
     @staticmethod
     def get_eq_symbol() -> str:
@@ -264,6 +314,9 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
     variable on the parent it came from.
     If a parents variable does not map to a child, then this variable must be 0
     as the child contains no occurences.
+
+    The fixed value dictionaries passed will be used ensure that the parameter
+    of a child must take on the given value.
     """
 
     def __init__(
@@ -271,10 +324,12 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         parent: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...],
         extra_parameters: Optional[Tuple[Dict[str, str], ...]] = None,
+        fixed_values: Optional[Tuple[Dict[str, int], ...]] = None,
     ):
         self.number_of_children = len(children)
         if extra_parameters is not None:
             self.extra_parameters = extra_parameters
+            assert len(extra_parameters) == len(children)
         else:
             assert not parent.extra_parameters
             self.extra_parameters = tuple(
@@ -285,19 +340,25 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
             frozenset(parent.extra_parameters) - frozenset(parameter.keys())
             for parameter in self.extra_parameters
         )
+        if fixed_values is not None:
+            self.fixed_values = fixed_values
+            assert len(fixed_values) == len(children)
+        else:
+            self.fixed_values = tuple({} for _ in children)
 
-    @staticmethod
-    def is_equivalence() -> bool:
-        return True
-
-    @staticmethod
-    def get_equation(lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
-        return Eq(lhs_func, reduce(add, rhs_funcs, 0))
+    def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
+        res = 0
+        for rhs_func, extra_parameters in zip(rhs_funcs, self.extra_parameters):
+            res += rhs_func.subs(
+                {child: parent for parent, child in extra_parameters.items()},
+                simultaneous=True,
+            )
+        return Eq(lhs_func, res)
 
     def reliance_profile(self, n: int, **parameters: int) -> RelianceProfile:
         # TODO: implement in multiple variables and use in get_recurrence
         assert not parameters, "only implemented in one variable, namely 'n'"
-        return tuple((n,) for _ in range(self.number_of_children))
+        return tuple({"n": (n,)} for _ in range(self.number_of_children))
 
     def get_extra_parameters(
         self, n: int, **parameters: int
@@ -310,8 +371,8 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         child match the parents parameters.
         """
         res: List[Optional[Dict[str, int]]] = []
-        for extra_parameters in self.extra_parameters:
-            update_params: Dict[str, int] = {}
+        for i, extra_parameters in enumerate(self.extra_parameters):
+            update_params: Dict[str, int] = {**self.fixed_values[i]}
             for parent_var, child_var in extra_parameters.items():
                 updated_value = parameters[parent_var]
                 if child_var not in update_params:
@@ -325,8 +386,6 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         return res
 
     def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
-        if not parameters:
-            return sum(rec(n) for rec in subrecs)
         res = 0
         for (idx, rec), extra_params in zip(
             enumerate(subrecs), self.get_extra_parameters(n, **parameters)
