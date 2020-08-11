@@ -4,23 +4,30 @@ body {
   "Helvetica Neue",Arial,"Noto Sans",sans-serif,"Segoe UI Symbol";
   font-size:1rem;font-weight:400;line-height:1.5;
   color:#212529;text-align:left;background-color:#fff
-  }
+}
+
 svg {
     overflow: visible !important;
 }
+
 table {
     box-sizing: border-box;
     border-collapse: collapse;
 }
+
 .label{
   width: auto;
-  border: 1px solid;
-  border-bottom-style: none;
+  border-bottom: 1px solid;
 }
+
+.verbose{
+  padding: 4px;
+  border-top: 1px solid;
+}
+
 .node-content{
   width: max-content;
   text-align: left;
-  border: 1px solid;
   padding: 14px;
   font-family: Consolas, monaco, monospace;
   font-size: 14px; font-style: normal;
@@ -28,12 +35,19 @@ table {
   display: flex;
   justify-content: center;
   align-items: center;
+  margin: auto;
 }
+
+.node-container{
+  width: min-content;
+  border: 1px solid;
+}
+
 .inner-node-content{
-  margin-right: 14px;
   max-width: 400px;
   padding: 14px;
 }
+
 pre{
   font-family: Consolas, monaco, monospace;
   font-size: 14px; font-style: normal;
@@ -104,6 +118,7 @@ pre{
 
 .tooltip {
   transform: perspective(1px) scale(1.1);
+  max-width: 800px;
   border-radius: 5px;
   border: 1px solid black;
   background-color: white;
@@ -111,6 +126,7 @@ pre{
   z-index: 1080;
   opacity: 0.97 !important;
   padding: 0 30px 0 30px;
+  pointer-events: all;
 }
 
 .tooltip-inner {
@@ -125,13 +141,6 @@ pre{
   font-style: normal;
   line-height: normal;
   max-width: none !important;
-}
-
-.tiling {
-  border: 1px solid;
-  width: 22px;
-  height: 22px;
-  text-align: center;
 }
 
 @media print {

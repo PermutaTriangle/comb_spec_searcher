@@ -75,8 +75,9 @@ from .constructor import CartesianProduct, Constructor, DisjointUnion
 from .rule import AbstractRule, Rule, VerificationRule
 
 if TYPE_CHECKING:
-    from .strategy_pack import StrategyPack
     from comb_spec_searcher import CombinatorialSpecification
+
+    from .strategy_pack import StrategyPack
 
 
 __all__ = (
