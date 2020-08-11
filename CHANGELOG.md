@@ -7,11 +7,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 ### Added
 - using Github Actions for testing and deployment
+- add specification sharing function to `ForestSpecificationDrawer`
 
+### Changed
+- when using a `LimitedStrategyRuleDB`, searching is aborted much faster when the root
+  is not in the first pruned rules dictionary
+
+### Fixed
+- use `AbstractRule` instead of `Rule` in `_rules_from_strategy`
+- fix `CombinatorialSpecification.share()` which was missing
 
 ## [2.1.1] - 2020-08-06
 ### Fixed
-- Hopefully fixed the type hints
+- fixed the type hints
 
 ## [2.1.0] - 2020-08-06
 ### Added
@@ -19,6 +27,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `show` method to `CombinatorialSpecification`
 - `to_html_representation` method to `CombinatorialClass`
 - `AbstractStrategy` raises `StrategyDoesNotApply` in the `__call__` method
+- function `CombinatorialSpecification.share_spec()` which uploads the spec to a file
+  sharing site
 - more verbose logging during the specification creation process
 
 ### Changed

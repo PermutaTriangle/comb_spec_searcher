@@ -44,9 +44,10 @@ setup(
     # Disable formatting until this is solved https://github.com/psf/black/issues/1288
     install_requires=[
         "logzero==1.5.0",
-        "sympy==1.6.1",
+        "sympy==1.6.2",
         "psutil==5.7.2",
         "pympler==0.8",
+        "requests==2.24.0",
         "typing-extensions==3.7.4.2",
         "tabulate==0.8.7",
     ],
