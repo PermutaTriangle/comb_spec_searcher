@@ -8,11 +8,11 @@ the Specification class.
 """
 import json
 import warnings
-from typing import Iterable, List
+from typing import Iterable, List, Optional
 
 from .combinatorial_class import CombinatorialClass
 from .specification import CombinatorialSpecification
-from .strategies.constructor import CartesianProduct, DisjointUnion
+from .strategies.constructor import CartesianProduct, Constructor, DisjointUnion
 from .strategies.rule import EquivalencePathRule, Rule, VerificationRule
 
 __all__ = ("ProofTree",)
@@ -144,7 +144,7 @@ class ProofTree:
         seen: List[Rule] = list()
 
         def proof_tree_node(comb_class: CombinatorialClass) -> ProofTreeNode:
-            rule = spec.rules_dict[comb_class]
+            rule = spec.get_rule(comb_class)
             # Setting up the equivalence path
             if isinstance(rule, EquivalencePathRule):
                 eqv_path_labels: List[int] = []
@@ -185,14 +185,18 @@ class ProofTree:
                     )
                 seen.append(rule)
                 children = [proof_tree_node(c) for c in rule.children]
+                try:
+                    constructor: Optional[Constructor] = rule.constructor
+                except NotImplementedError:
+                    constructor = None
                 return ProofTreeNode(
                     label=spec.get_label(rule.comb_class),
                     eqv_path_labels=eqv_path_labels,
                     eqv_path_comb_classes=eqv_path_comb_classes,
                     eqv_explanations=eqv_explanations,
                     children=children,
-                    decomposition=isinstance(rule.constructor, CartesianProduct),
-                    disjoint_union=isinstance(rule.constructor, DisjointUnion),
+                    decomposition=isinstance(constructor, CartesianProduct),
+                    disjoint_union=isinstance(constructor, DisjointUnion),
                     strategy_verified=False,
                     formal_step=rule.formal_step,
                 )
