@@ -3,7 +3,7 @@ name: build-and-deploy
 on:
   push:
     branches:
-      - github-actions
+      - master
 
 jobs:
   build-and-deploy:
@@ -23,4 +23,4 @@ jobs:
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-      run: twine upload -r testpypi dist/*
+      run: twine upload dist/*
