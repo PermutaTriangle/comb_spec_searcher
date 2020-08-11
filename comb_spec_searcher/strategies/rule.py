@@ -28,11 +28,7 @@ from ..exception import SanityCheckFailure, StrategyDoesNotApply
 from .constructor import Constructor, DisjointUnion
 
 if TYPE_CHECKING:
-    from .strategy import (
-        AbstractStrategy,
-        Strategy,
-        VerificationStrategy,
-    )
+    from .strategy import AbstractStrategy, Strategy, VerificationStrategy
     from .strategy_pack import StrategyPack
 
 
