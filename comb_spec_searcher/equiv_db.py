@@ -30,7 +30,6 @@ class EquivalenceDB:
 
     def __init__(self) -> None:
         """Create a new empty equivalent database."""
-        fake = 10
         self.parents: Dict[int, int] = {}
         self.weights: Dict[int, int] = {}
         self.verified_roots: Set[int] = set()
