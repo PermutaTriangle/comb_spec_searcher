@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
+- using Github Actions for testing and deployment
 - add specification sharing function to `ForestSpecificationDrawer`
 
 ### Changed
