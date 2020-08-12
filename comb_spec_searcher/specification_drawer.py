@@ -182,15 +182,22 @@ class SpecificationDrawer:
         return treant_node, new_id
 
     def _create_delimiter_node(
-        self, rule: Rule, children: List[TreantNode], rec_depth: int
+        self,
+        rule: Rule,
+        children: List[TreantNode],
+        rec_depth: int,
+        additional_style: str = "",
     ) -> Tuple[TreantNode, str]:
         """
-        Returns tuple containing delimiter node that describesthe steps taken between
+        Returns tuple containing delimiter node that describes the steps taken between
         the rules and the node id
         """
         new_id = self._get_new_node_id()
         symbol = rule.strategy.get_op_symbol()
-        delimiter_html = f'<div class="and-gate" id={new_id}>{symbol}</div>'
+        delimiter_html = (
+            f'<div class="and-gate" id={new_id} '
+            f'style="{additional_style}">{symbol}</div>'
+        )
 
         # check if node should be collapsed or not
 
