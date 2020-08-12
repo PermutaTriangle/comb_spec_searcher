@@ -471,7 +471,10 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         for explanation in self.func_calls:
             count = f"{self.func_calls[explanation]:,d}"
             time_spent = timedelta(seconds=int(self.func_times[explanation]))
-            percentage = f"{int((self.func_times[explanation] * 100) / total)}%"
+            if total == 0:
+                percentage = "? %"
+            else:
+                percentage = f"{int((self.func_times[explanation] * 100) / total)}%"
             table.append((explanation, count, time_spent, percentage))
         table.sort(key=lambda row: row[2], reverse=True)
         headers = ["", "Number of \napplications", "\nTime spent", "\nPercentage"]
