@@ -501,7 +501,6 @@ class HTMLViewer:
     @staticmethod
     def _remove_file(fname: str) -> None:
         threading.Thread(target=HTMLViewer._remove_file_thread, args=(fname,)).start()
-        logger.info("specification html file removed")
 
     @staticmethod
     def open_html(html: str) -> None:
