@@ -361,7 +361,9 @@ class CombinatorialSpecification(
                 continue
             if expansion == initial_conditions:
                 return sympy.simplify(genf)
-        raise IncorrectGeneratingFunctionError
+        raise IncorrectGeneratingFunctionError(
+            "Failed to compute the generating function for the specification."
+        )
 
     def get_maple_equations(self, check: int = 6) -> str:
         """
