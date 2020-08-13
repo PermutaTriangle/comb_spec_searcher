@@ -133,13 +133,14 @@ def get_solution(equation, initial):
 
 
 def taylor_expand(genf, n: int = 10):
+    """Taylor expand the given expression in x."""
     x = sympy.var("x")
     try:
         num, den = genf.as_numer_denom()
         num = num.expand()
         den = den.expand()
         genf = num / den
-        ser = sympy.Poly(genf.series(n=n + 1).removeO(), x)
+        ser = sympy.Poly(genf.series(n=n + 1, x=x).removeO(), x)
         res = ser.all_coeffs()
         res = res[::-1] + [0] * (n + 1 - len(res))
     except Exception:

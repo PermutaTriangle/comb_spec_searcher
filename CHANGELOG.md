@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Fixed
+- when passed a multivariate function, the `taylor_expand` function expands in
+  `x`.
 - A division by zero error that occurred making the status update before
   starting to run.
 
