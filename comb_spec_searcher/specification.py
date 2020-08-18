@@ -34,7 +34,7 @@ from .strategies import (
     VerificationRule,
     VerificationStrategy,
 )
-from .strategies.rule import AbstractRule
+from .strategies.rule import AbstractRule, EquivalenceRule
 from .utils import (
     RecursionLimit,
     maple_equations,
@@ -93,7 +93,8 @@ class CombinatorialSpecification(
     ) -> None:
         logger.info("Creating rules.")
         equivalence_rules: Dict[
-            Tuple[CombinatorialClassType, CombinatorialClassType], Rule
+            Tuple[CombinatorialClassType, CombinatorialClassType],
+            Union[EquivalenceRule, ReverseRule],
         ] = {}
         for comb_class, strategy in strategies:
             if isinstance(strategy, AlreadyVerified):
@@ -102,9 +103,9 @@ class CombinatorialSpecification(
             non_empty_children = rule.non_empty_children()
             if rule.is_equivalence():
                 assert isinstance(rule, Rule)
-                equivalence_rules[(comb_class, non_empty_children[0])] = (
-                    rule if len(rule.children) == 1 else rule.to_equivalence_rule()
-                )
+                equivalence_rules[
+                    (comb_class, non_empty_children[0])
+                ] = rule.to_equivalence_rule()
             elif non_empty_children or isinstance(rule, VerificationRule):
                 self.rules_dict[comb_class] = rule
             else:
@@ -151,7 +152,8 @@ class CombinatorialSpecification(
         self,
         equivalence_paths: Iterable[Sequence[CombinatorialClassType]],
         equivalence_rules: Dict[
-            Tuple[CombinatorialClassType, CombinatorialClassType], Rule
+            Tuple[CombinatorialClassType, CombinatorialClassType],
+            Union[EquivalenceRule, ReverseRule],
         ],
     ) -> None:
         logger.info("Creating equivalence path rules.")
