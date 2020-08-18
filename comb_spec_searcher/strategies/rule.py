@@ -18,6 +18,7 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
+    Union,
     cast,
 )
 
@@ -364,8 +365,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
 
     def to_equivalence_rule(self) -> "EquivalenceRule":
         """
-        Return the reverse rule. At this stage, reverse rules can only be
-        created for equivalence rules.
+        Return the equivalence rule if the rule is an equivalence.
         """
         assert (
             self.is_equivalence()
@@ -380,7 +380,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         assert (
             self.is_equivalence()
         ), "reverse rule can only be created for equivalence rules"
-        return ReverseRule(self)
+        return ReverseRule(self.to_equivalence_rule())
 
     def count_objects_of_size(self, n: int, **parameters: int) -> int:
         """
@@ -502,7 +502,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
 class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     def __init__(self, rule: Rule):
         non_empty_children = rule.non_empty_children()
-        assert rule.is_equivalence(), "not an equivalence rule: {}".format(str(rule))
+        assert rule.is_equivalence(), f"not an equivalence rule: {rule}"
         child = non_empty_children[0]
         super().__init__(rule.strategy, rule.comb_class, (child,))
         self.child_idx = rule.children.index(child)
@@ -564,8 +564,7 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
     A class for shortening a chain of equivalence rules into a single Rule.
     """
 
-    def __init__(self, rules: Sequence[Rule]):
-        assert all(rule.is_equivalence() for rule in rules)
+    def __init__(self, rules: Sequence[Union[EquivalenceRule, "ReverseRule"]]):
         super().__init__(rules[0].strategy, rules[0].comb_class, rules[-1].children)
         self.rules = rules
         self._constructor: Optional[DisjointUnion] = None
@@ -603,7 +602,9 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
     def formal_step(self) -> str:
         return ", then ".join(rule.formal_step for rule in self.rules)
 
-    def eqv_path_rules(self) -> List[Tuple[CombinatorialClassType, Rule]]:
+    def eqv_path_rules(
+        self,
+    ) -> List[Tuple[CombinatorialClassType, Union[EquivalenceRule, "ReverseRule"]]]:
         """
         Returns the list of (parent, rule) pairs that make up the equivalence
         path.
@@ -674,10 +675,7 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     A class for creating the reverse of an equivalence rule.
     """
 
-    def __init__(self, rule: Rule):
-        assert (
-            rule.is_equivalence()
-        ), "reversing a rule only works for equivalence rules"
+    def __init__(self, rule: EquivalenceRule):
         super().__init__(rule.strategy, rule.children[0], (rule.comb_class,))
         self.original_rule = rule
         self._constructor: Optional[DisjointUnion] = None
