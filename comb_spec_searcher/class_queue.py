@@ -216,9 +216,9 @@ class DefaultQueue(CSSQueue):
         while curr_level == self.levels_completed:
             try:
                 yield next(self)
-            except StopIteration:
+            except StopIteration as e:
                 if curr_level == self.levels_completed:
-                    raise NoMoreClassesToExpandError
+                    raise NoMoreClassesToExpandError from e
                 return
 
     def status(self) -> str:

@@ -221,11 +221,11 @@ class CombinatorialSpecification(
         if isinstance(comb_class, int):
             try:
                 comb_class = self._label_to_tiling[comb_class]
-            except KeyError:
+            except KeyError as e:
                 raise InvalidOperationError(
                     f"The label {comb_class} does not correspond to a tiling"
                     " in the specification."
-                )
+                ) from e
         if comb_class not in self.rules_dict:
             assert comb_class.is_empty(), "rule not in the spec and not empty"
             empty_strat = EmptyStrategy()

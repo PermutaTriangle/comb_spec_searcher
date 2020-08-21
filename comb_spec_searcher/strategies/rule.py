@@ -403,8 +403,8 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
             ), "you must call the set_subrecs function first"
             try:
                 res = self.constructor.get_recurrence(self.subrecs, n, **parameters)
-            except AssertionError:
-                raise ValueError(f"issue with rule:\n {self}")
+            except AssertionError as e:
+                raise ValueError(f"issue with rule:\n {self}") from e
             self.count_cache[key] = res
             # THE FOLLOWING CODE SNIPPET IS FOR DEBUGGING PURPOSES
         #     if self.comb_class.extra_parameters:
