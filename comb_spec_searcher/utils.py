@@ -143,8 +143,8 @@ def taylor_expand(genf, n: int = 10):
         ser = sympy.Poly(genf.series(n=n + 1, x=x).removeO(), x)
         res = ser.all_coeffs()
         res = res[::-1] + [0] * (n + 1 - len(res))
-    except Exception:
-        raise TaylorExpansionError
+    except Exception as e:
+        raise TaylorExpansionError from e
     return res
 
 
