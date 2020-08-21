@@ -6,6 +6,141 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+- when passed a multivariate function, the `taylor_expand` function expands in
+  `x`.
+- A division by zero error that occurred making the status update before
+  starting to run.
+
+## [2.2.0] - 2020-08-11
+### Added
+- using Github Actions for testing and deployment
+- add specification sharing function to `ForestSpecificationDrawer`
+
+### Changed
+- when using a `LimitedStrategyRuleDB`, searching is aborted much faster when the root
+  is not in the first pruned rules dictionary
+
+### Fixed
+- use `AbstractRule` instead of `Rule` in `_rules_from_strategy`
+- fix `CombinatorialSpecification.share()` which was missing
+
+## [2.1.1] - 2020-08-06
+### Fixed
+- fixed the type hints
+
+## [2.1.0] - 2020-08-06
+### Added
+- a `SpecificationDrawer` for visualizing `CombinatorialSpecification`
+- `show` method to `CombinatorialSpecification`
+- `to_html_representation` method to `CombinatorialClass`
+- `AbstractStrategy` raises `StrategyDoesNotApply` in the `__call__` method
+- function `CombinatorialSpecification.share_spec()` which uploads the spec to a file
+  sharing site
+- more verbose logging during the specification creation process
+
+### Changed
+- Improved the status update
+- `rule_from_equivalence_rule_dict` now takes a list of expected equivalence rules so a
+  much smaller dictionary is produced
+
+### Fixed
+- fixed `ProofTree` handling of getting rules from spec
+- fixed printing of `InvalidOperationError` message
+
+## [2.0.0] - 2020-07-16
+### Added
+- the methods `expand_verified` and `expand_comb_class` on
+  `CombinatorialSpecification`
+- the `get_rule` method on `CombinatorialSpecification` can also take a label
+  as a key
+- `expand_verified` flag to the initialiser of
+  `CombinatorialSpecificationSearcher` which will expand verified classes using
+  the pack passed to the `CombinatorialSpecificationSearcher`
+- `rule_from_equivalence_rule_dict` to `RuleDBBase`
+- It is now possible to get all the combinatorial classes contained in a specification
+  with the `comb_classes` method.
+
+### Changed
+- When expanding verified nodes in a specification, the search now uses
+  `_auto_search_rules`, instead of `do_level` and `get_smallest_specification`.
+  This is a stripped back auto search method returning the equivalence paths
+  and strategies needed to create a specification.
+- the `get_eq_symbol` and `get_op_symbol` are moved to `AbstractStrategy`
+  rather than `Constructor`
+- the `expand_verified` flag on the `auto_search` method and
+  `CombinitorialSpecification.__init__` method was removed, and the
+  default is now to not expand verified classes. You should use the
+  `expand_verified` method on `CombinatorialSpecification` for the same
+  behaviour.
+  It also no longer logs the string of the specification.
+
+### Fixed
+- fixed sanity checking in `comb_spec_searcher`
+- the initialiser of `CombinatorialSpecification` removes redundant rules
+
+### Removed
+- `DisableLogging` was removed from `utils` as it is no longer used.
+
+## [1.3.0] - 2020-07-07
+### Added
+- added an optional `fixed_values` parameter to the `DisjointUnion` constructor,
+  that allows you to set a value that a child's parameter must take.
+- add the abstract method `can_be_equivalent` to `AbstractStrategy`.
+
+### Changed
+- removed the method `is_equivalence` from `Constructor`. You should instead
+  use the `is_equivalence` method on the `Rule`.
+- the `CartesianProduct` now considers compositions of all parameters and
+  not just `n`.
+- the `RelianceProfile` type changed to work multiple parameters. It is now a
+  dictionary pointing from parameters to the values.
+
+### Fixed
+- ignore rules where the left and non-empty right hand sides are the same
+
+## [1.2.0] - 2020-06-29
+### Added
+- Support for maple equations in multiple variables
+- an option on `auto_search` to not expand verified classes
+- a `LimitedStrategyRuleDB` to find specifications with no more than a given number of
+  strategies of certain types
+- log information when expanding a verified combinatorial class.
+- added `is_equivalence` method to `Rule`
+- sanity checking in multiple variables. In order to use this one must implement
+  the method `possible_parameters` on their `CombinatorialClass`. The sanity
+  checker only checks counts, not generation of objects.
+- Added the `initial_conditions` method to `CombinatorialClass` and a
+  `get_initial_conditions` method to `CombinatorialSpecification`.
+
+### Fixed
+- when subbing parameters use simultaneous flag
+- Retrieving the rule in the forget db when the rules comes from applying a
+  strategy to a child.
+- When a parameter does not map to equivalent child we don't look for it on the
+  child, preventing a `KeyError`.
+- the extra parameters dictionary is flipped when creating the constructor in a
+  reverse rule.
+- fixed the `EquivalencePathRule.constructor` method
+- only save equivalence rules for rules a -> (b,) if a and b are equivalent.
+
+### Changed
+- When the searcher finds a specification, it will now spends 1% of the time
+  spent searching trying to find a small specification instead of just returning
+  a random one.
+
+## [1.1.0] - 2020-06-18
+### Added
+- When expanding a class with a strategy, you can now create rules where the
+  parent is not the class passed to the strategy.
+- The 'get_equations' method now handles multiple parameters
+
+
+## [1.0.1] - 2020-06-17
+### Changed
+- Removed some of the detailed timing in the queue to make status report
+  shorter.
+
 ## [1.0.0] - 2020-06-11
 ### Changed
 
@@ -72,5 +207,3 @@ variables.
 ## [0.1.0] - 2019-04-15
 ### Added
 - This changelog file.
-
-

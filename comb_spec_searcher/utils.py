@@ -1,11 +1,12 @@
 """Some useful miscellaneous functions used througout the package."""
 import os
+import re
 import sys
 import time
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
 import psutil
-from sympy import O, Poly, Symbol, solve, var
+import sympy
 
 from comb_spec_searcher.exception import TaylorExpansionError
 
@@ -78,8 +79,8 @@ def check_poly(min_poly, initial, root_initial=None, root_func=None):
     """Return True if this is a minimum polynomial for the generating
     function F with the given initial terms. Input is a polynomial in F,
     and initial terms."""
-    F = Symbol("F")
-    x = var("x")
+    F = sympy.Symbol("F")
+    x = sympy.var("x")
     init_poly = 0
     for i, coeff in enumerate(initial):
         init_poly += coeff * x ** i
@@ -92,15 +93,15 @@ def check_poly(min_poly, initial, root_initial=None, root_func=None):
         verification = verification.subs({root_func: root_poly})
     verification = verification.expand()
     verification = verification.series(x, n=len(initial)).removeO()
-    verification = (verification + O(x ** (len(initial) - 1))).removeO()
+    verification = (verification + sympy.O(x ** (len(initial) - 1))).removeO()
     return verification == 0
 
 
 def check_equation(equation, initial, root_initial=None, root_func=None):
     """Return True if an equation in terms of the generating function F and x
     is satisfied."""
-    F = Symbol("F")
-    solutions = solve(
+    F = sympy.Symbol("F")
+    solutions = sympy.solve(
         equation, F, dict=True, cubics=False, quartics=False, quintics=False
     )
     for solution in solutions:
@@ -117,8 +118,8 @@ def check_equation(equation, initial, root_initial=None, root_func=None):
 def get_solution(equation, initial):
     """Return solution of equation in F and x with the given initial
     conditions."""
-    F = Symbol("F")
-    solutions = solve(
+    F = sympy.Symbol("F")
+    solutions = sympy.solve(
         equation, F, dict=True, cubics=False, quartics=False, quintics=False
     )
     for solution in solutions:
@@ -132,13 +133,14 @@ def get_solution(equation, initial):
 
 
 def taylor_expand(genf, n: int = 10):
-    x = var("x")
+    """Taylor expand the given expression in x."""
+    x = sympy.var("x")
     try:
         num, den = genf.as_numer_denom()
         num = num.expand()
         den = den.expand()
         genf = num / den
-        ser = Poly(genf.series(n=n + 1).removeO(), x)
+        ser = sympy.Poly(genf.series(n=n + 1, x=x).removeO(), x)
         res = ser.all_coeffs()
         res = res[::-1] + [0] * (n + 1 - len(res))
     except Exception:
@@ -146,16 +148,63 @@ def taylor_expand(genf, n: int = 10):
     return res
 
 
-def maple_equations(root_func, count, eqs):
-    s = "# The system of {} equations\n".format(len(eqs))
-    s += "root_func := {}:\n".format(str(root_func)).replace("(x)", "")
+def pretty_print_equations(root_func, count, eqs) -> str:
+    s = "The system of {} equations\n".format(len(eqs))
+    s += "root_func := {}:\n".format(str(root_func))
     s += "eqs := [\n"
-    s += ",\n".join("{} = {}".format(str(eq.lhs), str(eq.rhs)) for eq in eqs).replace(
-        "(x)", ""
-    )
+    s += ",\n".join("{} = {}".format(str(eq.lhs), str(eq.rhs)) for eq in eqs)
+    s += "\n]:\n"
+    s += "count := {}:".format(list(count))
+    if all(len(eq.lhs.args) == 1 for eq in eqs):
+        s = s.replace("(x)", "")
+    return s
+
+
+def maple_equations(root_func, count, eqs) -> str:
+    """
+    Convert a systems of equations to version that can be copy pasted to maple.
+    """
+    s = f"root_func := {sympy_expr_to_maple(root_func)}:\n"
+    s += "eqs := [\n"
+    s += ",\n".join(map(sympy_expr_to_maple, eqs))
     s += "\n]:\n"
     s += "count := {}:".format(list(count))
     return s
+
+
+def sympy_expr_to_maple(expr):
+    """
+    Convert a sympy expression to a maple string.
+    """
+    if isinstance(expr, sympy.Eq):
+        return f"{sympy_expr_to_maple(expr.lhs)} = {sympy_expr_to_maple(expr.rhs)}"
+    if isinstance(expr, sympy.core.add.Add):
+        head, tail = expr.as_two_terms()
+        return f"({sympy_expr_to_maple(head)} + {sympy_expr_to_maple(tail)})"
+    if isinstance(expr, sympy.core.add.Mul):
+        head, tail = expr.as_two_terms()
+        return f"({sympy_expr_to_maple(head)} * {sympy_expr_to_maple(tail)})"
+    if isinstance(expr, sympy.core.power.Pow):
+        base, exp = expr.as_base_exp()
+        return f"({sympy_expr_to_maple(base)}**{sympy_expr_to_maple(exp)})"
+    if isinstance(expr.__class__, sympy.core.function.UndefinedFunction):
+        if "NOTIMPLEMENTED" in str(expr):
+            return "NOTIMPLEMENTED"
+        split = re.compile(r"F_([0-9]+)\((.*)\)")
+        assert split.match(repr(expr)) is not None, expr
+        label = split.match(repr(expr)).group(1)
+        args = map(sympy.sympify, split.match(repr(expr)).group(2).split(", "))
+        content = f"{label}, " + ", ".join(map(sympy_expr_to_maple, args))
+        return f"F[{content}]"
+    if isinstance(expr, sympy.core.symbol.Symbol):
+        symb = str(expr)
+        if "_" in symb:
+            var, label = symb.split("_")
+            return f"{var}[{label}]"
+        return symb
+    if expr.is_number:
+        return f"({expr})"
+    raise NotImplementedError(str(expr))
 
 
 def compositions(n, k):
@@ -221,13 +270,3 @@ def size_to_readable(size: int) -> str:
     if size / 1024 ** 3 < 1:
         return str(round(size / 1024 ** 2, 1)) + " MiB"
     return str(round(size / 1024 ** 3, 3)) + " GiB"
-
-
-def time_to_readable(seconds: int) -> str:
-    """Convert a time in seconds to a human readable time in seconds / minutes /
-    hours"""
-    if seconds < 60:
-        return "{} seconds".format(round(seconds))
-    if seconds < 3600:
-        return "{} minutes".format(round(seconds / 60, 1))
-    return "{} hours".format(round(seconds / 60 / 60, 2))
