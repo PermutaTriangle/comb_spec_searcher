@@ -1,6 +1,7 @@
 from .comb_spec_searcher import CombinatorialSpecificationSearcher
 from .combinatorial_class import CombinatorialClass, CombinatorialObject
 from .specification import CombinatorialSpecification
+from .specification_drawer import ForestSpecificationDrawer, SpecificationDrawer
 from .strategies import (
     AtomStrategy,
     CartesianProduct,
@@ -20,6 +21,8 @@ __all__ = [
     "CombinatorialClass",
     "CombinatorialObject",
     "CombinatorialSpecification",
+    "ForestSpecificationDrawer",
+    "SpecificationDrawer",
     "AtomStrategy",
     "CartesianProduct",
     "CartesianProductStrategy",
