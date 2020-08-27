@@ -130,7 +130,7 @@ class AbstractStrategy(
         self,
         comb_class: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...] = None,
-        **kwargs
+        **kwargs,
     ) -> AbstractRule[CombinatorialClassType, CombinatorialObjectType]:
         """
         Return the rule formed by using the strategy.
@@ -288,7 +288,7 @@ class Strategy(AbstractStrategy[CombinatorialClassType, CombinatorialObjectType]
         self,
         comb_class: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...] = None,
-        **kwargs
+        **kwargs,
     ) -> Rule[CombinatorialClassType, CombinatorialObjectType]:
         if children is None:
             children = self.decomposition_function(comb_class)
@@ -538,9 +538,7 @@ class VerificationStrategy(
     AtomStrategy, relying on CombinatorialClass methods.
     """
 
-    def __init__(
-        self, ignore_parent: bool = True,
-    ):
+    def __init__(self, ignore_parent: bool = True):
         super().__init__(
             ignore_parent=ignore_parent,
             inferrable=False,
@@ -552,7 +550,7 @@ class VerificationStrategy(
         self,
         comb_class: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...] = None,
-        **kwargs
+        **kwargs,
     ) -> VerificationRule[CombinatorialClassType, CombinatorialObjectType]:
         if children is None:
             children = self.decomposition_function(comb_class)

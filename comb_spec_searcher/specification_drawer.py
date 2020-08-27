@@ -480,7 +480,7 @@ class ForestSpecificationDrawer:
         upload_url = f"https://{server}.gofile.io/upload"
 
         with open(file_path, "rb") as f:
-            req2 = requests.post(upload_url, files={"filesUploaded": f},)
+            req2 = requests.post(upload_url, files={"filesUploaded": f})
 
         os.remove(file_path)
         file_code = req2.json()["data"]["code"]

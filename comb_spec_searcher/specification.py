@@ -196,7 +196,7 @@ class CombinatorialSpecification(
             self.rules_dict.pop(rule.comb_class)
 
     def _expand_verified_comb_classes(
-        self, verification_packs: Dict[CombinatorialClassType, StrategyPack],
+        self, verification_packs: Dict[CombinatorialClassType, StrategyPack]
     ) -> None:
         for comb_class, pack in verification_packs.items():
             # pylint: disable=import-outside-toplevel

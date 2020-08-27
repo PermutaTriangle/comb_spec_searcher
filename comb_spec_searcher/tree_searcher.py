@@ -246,8 +246,7 @@ def proof_tree_generator_dfs(
 
 
 def iterative_proof_tree_finder(rules_dict: RulesDict, root: int) -> Node:
-    """Finds an iterative proof tree for root, if one exists.
-    """
+    """Finds an iterative proof tree for root, if one exists."""
     trees: Dict[int, Node] = {}
 
     def get_tree(start):
