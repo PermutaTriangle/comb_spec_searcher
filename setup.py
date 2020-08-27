@@ -40,8 +40,6 @@ setup(
         "Topic :: Education",
         "Topic :: Scientific/Engineering :: Mathematics",
     ],
-    # fmt: off
-    # Disable formatting until this is solved https://github.com/psf/black/issues/1288
     install_requires=[
         "logzero==1.5.0",
         "sympy==1.6.2",
@@ -51,5 +49,4 @@ setup(
         "typing-extensions==3.7.4.2",
         "tabulate==0.8.7",
     ],
-    # fmt: on
 )
