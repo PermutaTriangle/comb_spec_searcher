@@ -101,7 +101,7 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
         """Create an instance of the class from the dictionary returned by the
         'to_jsonable' method."""
         return cls(
-            d["prefix"], d["patterns"], d["alphabet"], bool(int(d["just_prefix"])),
+            d["prefix"], d["patterns"], d["alphabet"], bool(int(d["just_prefix"]))
         )
 
     def __eq__(self, other: object) -> bool:
@@ -146,7 +146,7 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
 
     def objects_of_size(self, size):
         """Yield the words of given size that start with prefix and avoid the
-       patterns. If just_prefix, then only yield that word."""
+        patterns. If just_prefix, then only yield that word."""
 
         def possible_words():
             """Yield all words of given size over the alphabet with prefix"""

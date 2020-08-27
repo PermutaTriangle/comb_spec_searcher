@@ -36,7 +36,7 @@ class RuleDBBase(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def rule_to_strategy(self,) -> MutableMapping[RuleKey, AbstractStrategy]:
+    def rule_to_strategy(self) -> MutableMapping[RuleKey, AbstractStrategy]:
         pass
 
     def __eq__(self, other: object) -> bool:
@@ -136,10 +136,16 @@ class RuleDBBase(abc.ABC):
                 )
             )
             table.append(
-                ("Verified combinatorial classes", f"{len(verified_labels):,d}",)
+                (
+                    "Verified combinatorial classes",
+                    f"{len(verified_labels):,d}",
+                )
             )
             table.append(
-                ("combinatorial classes up to equivalence", f"{len(eqv_labels):,d}",)
+                (
+                    "combinatorial classes up to equivalence",
+                    f"{len(eqv_labels):,d}",
+                )
             )
         status += "    "
         status += tabulate.tabulate(
@@ -246,7 +252,7 @@ class RuleDBBase(abc.ABC):
         internal_nodes = set([label])
         logger.info("Computing rule <-> equivalence rule mapping.")
         eqv_rules = [
-            (node.label, tuple(sorted(child.label for child in node.children)),)
+            (node.label, tuple(sorted(child.label for child in node.children)))
             for node in proof_tree_node.nodes()
         ]
         rule_from_equivalence_rules = self.rule_from_equivalence_rule_dict(eqv_rules)
