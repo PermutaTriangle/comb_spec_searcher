@@ -75,8 +75,9 @@ from .constructor import CartesianProduct, Constructor, DisjointUnion
 from .rule import AbstractRule, Rule, VerificationRule
 
 if TYPE_CHECKING:
-    from .strategy_pack import StrategyPack
     from comb_spec_searcher import CombinatorialSpecification
+
+    from .strategy_pack import StrategyPack
 
 
 __all__ = (
@@ -129,7 +130,7 @@ class AbstractStrategy(
         self,
         comb_class: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...] = None,
-        **kwargs
+        **kwargs,
     ) -> AbstractRule[CombinatorialClassType, CombinatorialObjectType]:
         """
         Return the rule formed by using the strategy.
@@ -165,6 +166,13 @@ class AbstractStrategy(
         return self._workable
 
     @abc.abstractmethod
+    def can_be_equivalent(self) -> bool:
+        """
+        Return True if every Rule returned with one non-empty child is an
+        equivalence rule.
+        """
+
+    @abc.abstractmethod
     def decomposition_function(
         self, comb_class: CombinatorialClassType
     ) -> Optional[Tuple[CombinatorialClassType, ...]]:
@@ -178,6 +186,22 @@ class AbstractStrategy(
         """
         Return a short string to explain what the strategy has done.
         """
+
+    @staticmethod
+    def get_eq_symbol() -> str:
+        """
+        Return a choice for '=' in the pretty print a '=' b '?' c of rules.
+        Your choice should be a single charachter.
+        """
+        return "="
+
+    @staticmethod
+    def get_op_symbol() -> str:
+        """
+        Return a choice for '?' in the pretty print a '=' b '?' c of rules.
+        Your choice should be a single charachter.
+        """
+        return "?"
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, AbstractStrategy):
@@ -264,10 +288,12 @@ class Strategy(AbstractStrategy[CombinatorialClassType, CombinatorialObjectType]
         self,
         comb_class: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...] = None,
-        **kwargs
+        **kwargs,
     ) -> Rule[CombinatorialClassType, CombinatorialObjectType]:
         if children is None:
             children = self.decomposition_function(comb_class)
+            if children is None:
+                raise StrategyDoesNotApply("Strategy does not apply")
         return Rule(self, comb_class, children=children)
 
     @abc.abstractmethod
@@ -362,6 +388,10 @@ class CartesianProductStrategy(
             workable=workable,
         )
 
+    @staticmethod
+    def can_be_equivalent() -> bool:
+        return True
+
     def constructor(
         self,
         comb_class: CombinatorialClassType,
@@ -372,8 +402,18 @@ class CartesianProductStrategy(
             if children is None:
                 raise StrategyDoesNotApply("Strategy does not apply")
         return CartesianProduct(
-            children, extra_parameters=self.extra_parameters(comb_class, children)
+            comb_class,
+            children,
+            extra_parameters=self.extra_parameters(comb_class, children),
         )
+
+    @staticmethod
+    def get_op_symbol() -> str:
+        """
+        Return a choice for 'x' in the pretty print a '=' b 'x' c of rules.
+        Your choice should be a single charachter.
+        """
+        return "x"
 
 
 class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObjectType]):
@@ -398,6 +438,10 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObject
             possibly_empty=possibly_empty,
             workable=workable,
         )
+
+    @staticmethod
+    def can_be_equivalent() -> bool:
+        return True
 
     def constructor(
         self,
@@ -443,6 +487,14 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObject
         idx = DisjointUnionStrategy.backward_map_index(objs)
         return cast(CombinatorialObjectType, objs[idx])
 
+    @staticmethod
+    def get_op_symbol() -> str:
+        """
+        Return a choice for '+' in the pretty print a '=' b '+' c of rules.
+        Your choice should be a single charachter.
+        """
+        return "+"
+
 
 class SymmetryStrategy(
     DisjointUnionStrategy[CombinatorialClassType, CombinatorialObjectType]
@@ -486,9 +538,7 @@ class VerificationStrategy(
     AtomStrategy, relying on CombinatorialClass methods.
     """
 
-    def __init__(
-        self, ignore_parent: bool = True,
-    ):
+    def __init__(self, ignore_parent: bool = True):
         super().__init__(
             ignore_parent=ignore_parent,
             inferrable=False,
@@ -500,11 +550,17 @@ class VerificationStrategy(
         self,
         comb_class: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...] = None,
-        **kwargs
+        **kwargs,
     ) -> VerificationRule[CombinatorialClassType, CombinatorialObjectType]:
         if children is None:
             children = self.decomposition_function(comb_class)
+            if children is None:
+                raise StrategyDoesNotApply("The combinatorial class is not verified")
         return VerificationRule(self, comb_class, children)
+
+    @staticmethod
+    def can_be_equivalent() -> bool:
+        return False
 
     def pack(self, comb_class: CombinatorialClassType) -> "StrategyPack":
         """
@@ -513,9 +569,7 @@ class VerificationStrategy(
 
         The pack is assumed to produce a finite universe.
         """
-        raise InvalidOperationError(
-            "can't find specification for {}".format(self.__str__)
-        )
+        raise InvalidOperationError(f"can't find specification for {self}")
 
     @abc.abstractmethod
     def verified(self, comb_class: CombinatorialClassType) -> bool:
@@ -633,6 +687,8 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
         """
         Verification strategies must contain a method to count the objects.
         """
+        if comb_class.extra_parameters:
+            raise NotImplementedError
         if n == comb_class.minimum_size_of_object():
             return 1
         return 0
@@ -642,6 +698,8 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
         comb_class: CombinatorialClass,
         funcs: Optional[Dict[CombinatorialClass, Function]] = None,
     ) -> Expr:
+        if comb_class.extra_parameters:
+            raise NotImplementedError
         if not self.verified(comb_class):
             raise StrategyDoesNotApply("Can't find generating functon for non-atom.")
         x = var("x")
@@ -654,6 +712,8 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
         """
         Verification strategies must contain a method to generate the objects.
         """
+        if comb_class.extra_parameters:
+            raise NotImplementedError
         if n == comb_class.minimum_size_of_object():
             yield from comb_class.objects_of_size(n)
 
@@ -661,6 +721,8 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
     def random_sample_object_of_size(
         comb_class: CombinatorialClass, n: int, **parameters: int
     ) -> CombinatorialObject:
+        if comb_class.extra_parameters:
+            raise NotImplementedError
         if n == comb_class.minimum_size_of_object():
             obj: CombinatorialObject = next(comb_class.objects_of_size(n))
             return obj
@@ -775,7 +837,7 @@ class StrategyFactory(abc.ABC, Generic[CombinatorialClassType]):
     @abc.abstractmethod
     def __call__(
         self, comb_class: CombinatorialClassType, **kwargs
-    ) -> Iterator[Union[Rule, AbstractStrategy]]:
+    ) -> Iterator[Union[AbstractRule, AbstractStrategy]]:
         """
         Returns the results of the strategy on a comb_class.
         """

@@ -1,0 +1,148 @@
+body {
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
+  "Helvetica Neue",Arial,"Noto Sans",sans-serif,"Segoe UI Symbol";
+  font-size:1rem;font-weight:400;line-height:1.5;
+  color:#212529;text-align:left;background-color:#fff
+}
+
+svg {
+    overflow: visible !important;
+}
+
+table {
+    box-sizing: border-box;
+    border-collapse: collapse;
+}
+
+.label{
+  width: auto;
+  border-bottom: 1px solid;
+}
+
+.verbose{
+  padding: 4px;
+  border-top: 1px solid;
+}
+
+.node-content{
+  width: max-content;
+  text-align: left;
+  padding: 14px;
+  font-family: Consolas, monaco, monospace;
+  font-size: 14px; font-style: normal;
+  line-height: normal;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: auto;
+}
+
+.node-container{
+  width: min-content;
+  border: 1px solid;
+}
+
+.inner-node-content{
+  max-width: 400px;
+  padding: 14px;
+}
+
+pre{
+  font-family: Consolas, monaco, monospace;
+  font-size: 14px; font-style: normal;
+  line-height: normal;
+}
+
+.Treant-loaded {
+  margin-top: 30px !important;
+}
+
+.Treant {
+  margin: auto;
+  overflow: visible !important;
+}
+
+.Treant .node .collapse-switch {
+  text-align: center;
+  height: 20px;
+  width: 20px;
+  top: -23px;
+  right: -24px;
+  font-size: 14px;
+  color: black;
+  text-decoration: none;
+}
+
+.Treant .node .collapse-switch:hover {
+  opacity: 0.5;
+}
+
+.Treant .node .collapse-switch:after {
+  content: '-';
+}
+
+.Treant .node.collapsed .collapse-switch:after {
+  content: '+';
+}
+
+.Treant .node.collapsed .collapse-switch {
+  background-color: white;
+}
+
+.node {
+  text-align: center;
+  color: black;
+  text-decoration: none;
+}
+
+.and-gate {
+  margin-top: -11px;
+  margin-left: -1px;
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+  height: 25px;
+  width: 20px;
+  border: 1px solid black;
+  background-color: white;
+}
+
+.and-gate>span {
+  top: 50%;
+  margin: 50% auto;
+}
+
+.and-gate:empty {
+  background-image: repeating-linear-gradient(-45deg, transparent, black 2px, rgba(255, 255, 255, .5) 2px, rgba(255, 255, 255, .5) 5px);
+}
+
+.tooltip {
+  transform: perspective(1px) scale(1.1);
+  max-width: 800px;
+  border-radius: 5px;
+  border: 1px solid black;
+  background-color: white;
+  pointer-events: none;
+  z-index: 1080;
+  opacity: 0.97 !important;
+  padding: 0 30px 0 30px;
+  pointer-events: all;
+}
+
+.tooltip-inner {
+  overflow: visible;
+  background-color: white;
+  color: black;
+  z-index: 1070;
+  max-width: 1000px;
+  text-align: left;
+  font-family: Consolas, monaco, monospace;
+  font-size: 14px;
+  font-style: normal;
+  line-height: normal;
+  max-width: none !important;
+}
+
+@media print {
+  body {-webkit-print-color-adjust: exact;}
+}

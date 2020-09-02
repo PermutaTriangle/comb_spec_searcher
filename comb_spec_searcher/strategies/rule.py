@@ -28,11 +28,7 @@ from ..exception import SanityCheckFailure, StrategyDoesNotApply
 from .constructor import Constructor, DisjointUnion
 
 if TYPE_CHECKING:
-    from .strategy import (
-        AbstractStrategy,
-        Strategy,
-        VerificationStrategy,
-    )
+    from .strategy import AbstractStrategy, Strategy, VerificationStrategy
     from .strategy_pack import StrategyPack
 
 
@@ -57,9 +53,10 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         self.subrecs: Optional[Tuple[Callable[..., int], ...]] = None
         self.subgenerators: Optional[
             Tuple[Callable[..., Iterator[CombinatorialObjectType]], ...]
-        ] = (None)
+        ] = None
         self.subsamplers: Optional[Tuple[Callable[..., CombinatorialObjectType], ...]]
         self._children = children
+        self._non_empty_children: Optional[Tuple[CombinatorialClassType, ...]] = None
 
     @property
     def strategy(
@@ -137,12 +134,22 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         """
         return self._strategy.formal_step()
 
+    @abc.abstractmethod
+    def is_equivalence(self) -> bool:
+        """
+        Returns True if the rule is an equivalence.
+        """
+
     def non_empty_children(self) -> Tuple[CombinatorialClassType, ...]:
         """
         Return the tuple of non-empty combinatorial classes that are found
         by applying the decomposition function.
         """
-        return tuple(child for child in self.children if not child.is_empty())
+        if self._non_empty_children is None:
+            self._non_empty_children = tuple(
+                child for child in self.children if not child.is_empty()
+            )
+        return self._non_empty_children
 
     @abc.abstractmethod
     def count_objects_of_size(self, n: int, **parameters: int) -> int:
@@ -180,8 +187,6 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
 
         Raise a SanityCheckFailure error if the sanity_check fails.
         """
-        if self.comb_class.extra_parameters:
-            raise NotImplementedError("sanity check only implemented in one variable")
 
         if isinstance(self, VerificationRule):
             # TODO: test more thoroughly
@@ -190,11 +195,17 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         def brute_force_count(
             comb_class: CombinatorialClassType, n: int, **parameters
         ) -> int:
+            assert set(comb_class.extra_parameters) == set(
+                parameters
+            ), f"{comb_class.extra_parameters, set(parameters)}"
             return len(list(comb_class.objects_of_size(n, **parameters)))
 
         def brute_force_generation(
             comb_class: CombinatorialClassType, n: int, **parameters: int
         ) -> Iterator[CombinatorialObjectType]:
+            assert set(comb_class.extra_parameters) == set(
+                parameters
+            ), f"{comb_class.extra_parameters, set(parameters)}"
             yield from comb_class.objects_of_size(n, **parameters)
 
         actual_count = brute_force_count(self.comb_class, n, **parameters)
@@ -204,7 +215,9 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         )
         rule_count = self.count_objects_of_size(n, **parameters)
         self.subrecs = temprec
-        params_str = ", ".join([f"n = {n}"] + [f"{p} = {v}" for p, v in parameters])
+        params_str = ", ".join(
+            [f"n = {n}"] + [f"{p} = {v}" for p, v in parameters.items()]
+        )
         if actual_count != rule_count:
             raise SanityCheckFailure(
                 f"The following rule failed sanity check:\n"
@@ -214,16 +227,26 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
                 f"The actual count is {actual_count}.\n"
                 f"The rule count is {rule_count}.",
             )
-
-        actual_objects = set(
-            list(brute_force_generation(self.comb_class, n, **parameters))
-        )
+        if any(
+            comb_class.extra_parameters
+            for comb_class in [self.comb_class, *self.children]
+        ):
+            # Can't sanity check generation of objects for classes with extra
+            # TODO test more thoroughly
+            return True
         tempgen = self.subgenerators
         self.subgenerators = tuple(
             partial(brute_force_generation, child) for child in self.children
         )
-        rule_objects = set(list(self.generate_objects_of_size(n, **parameters)))
+        try:
+            rule_objects = set(list(self.generate_objects_of_size(n, **parameters)))
+        except NotImplementedError:
+            # Skipping testing rules that have not implemented object generation.
+            return True
         self.subgenerators = tempgen
+        actual_objects = set(
+            list(brute_force_generation(self.comb_class, n, **parameters))
+        )
         if actual_objects != rule_objects:
             raise SanityCheckFailure(
                 f"The following rule failed sanity check:\n"
@@ -265,10 +288,10 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         backpad(res)
         if isinstance(self, Rule):
             children = [str(child).split("\n") for child in self.children]
-            symbol_height = 1
+            symbol_height = min(1, len(res) - 1)
             eq_symbol = (
                 ["     " for i in range(symbol_height)]
-                + ["  {}  ".format(self.constructor.get_eq_symbol())]
+                + ["  {}  ".format(self.strategy.get_eq_symbol())]
                 + ["     " for i in range(symbol_height)]
             )
             join(res, eq_symbol)
@@ -276,7 +299,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             if len(children) > 1:
                 op_symbol = (
                     ["     " for i in range(symbol_height)]
-                    + ["  {}  ".format(self.constructor.get_op_symbol())]
+                    + ["  {}  ".format(self.strategy.get_op_symbol())]
                     + ["     " for i in range(symbol_height)]
                 )
                 for child in children[1:]:
@@ -318,6 +341,9 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
                 raise StrategyDoesNotApply("{} does not apply".format(self.strategy))
         return self._constructor
 
+    def is_equivalence(self):
+        return self.strategy.can_be_equivalent() and len(self.non_empty_children()) == 1
+
     def backward_map(
         self, objs: Tuple[Optional[CombinatorialObjectType], ...]
     ) -> CombinatorialObjectType:
@@ -342,8 +368,8 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         created for equivalence rules.
         """
         assert (
-            self.constructor.is_equivalence()
-        ), "EquivalenceRule can only be created for equivalence rules"
+            self.is_equivalence()
+        ), f"EquivalenceRule can only be created for equivalence rules\n{self}"
         return EquivalenceRule(self)
 
     def to_reverse_rule(self) -> "ReverseRule":
@@ -352,7 +378,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         created for equivalence rules.
         """
         assert (
-            len(self.children) == 1 and self.constructor.is_equivalence()
+            self.is_equivalence()
         ), "reverse rule can only be created for equivalence rules"
         return ReverseRule(self)
 
@@ -365,19 +391,22 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         assert sorted(["n"] + list(parameters)) == sorted(
             ("n",) + self.comb_class.extra_parameters
         ), (
-            "parameters did not match comb_class for the rule \n{}\nparameters "
-            "given: {}\n comb_class_parameters: {}".format(
-                self, list(parameters), self.comb_class.extra_parameters,
-            )
+            "parameters did not match comb_class for the rule\n"
+            f"{self}\n"
+            f"parameters given: {list(parameters)}\n"
+            f"comb_class_parameters: {self.comb_class.extra_parameters}"
         )
         res = self.count_cache.get(key)
         if res is None:
             assert (
                 self.subrecs is not None
             ), "you must call the set_subrecs function first"
-            res = self.constructor.get_recurrence(self.subrecs, n, **parameters)
+            try:
+                res = self.constructor.get_recurrence(self.subrecs, n, **parameters)
+            except AssertionError as e:
+                raise ValueError(f"issue with rule:\n {self}") from e
             self.count_cache[key] = res
-        #     # THE FOLLOWING CODE SNIPPET IS FOR DEBUGGING PURPOSES
+            # THE FOLLOWING CODE SNIPPET IS FOR DEBUGGING PURPOSES
         #     if self.comb_class.extra_parameters:
         #         print(self)
         #         print("n =", n, parameters)
@@ -406,6 +435,8 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         #         for string in fusion_attrs:
         #             if hasattr(self.constructor, string):
         #                 print(string + ":", getattr(self.constructor, string))
+        #         if isinstance(self.constructor, CartesianProduct):
+        #             print(list(self.constructor._valid_compositions(n, **parameters)))
         #     print("result:", res)
         # assert res == len(list(self.comb_class.objects_of_size(n, **parameters))), (
         #     "counting failed for the rule \n{}\nparameters: n = {}, {}\n"
@@ -471,30 +502,35 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
 class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     def __init__(self, rule: Rule):
         non_empty_children = rule.non_empty_children()
-        assert (
-            len(non_empty_children) == 1 and rule.constructor.is_equivalence()
-        ), "not an equivalence rule: {}".format(str(rule))
+        assert rule.is_equivalence(), "not an equivalence rule: {}".format(str(rule))
         child = non_empty_children[0]
         super().__init__(rule.strategy, rule.comb_class, (child,))
         self.child_idx = rule.children.index(child)
         self.actual_children = rule.children
-        self._constructor: Optional[Constructor] = None
+        self._constructor: Optional[DisjointUnion] = None
 
     @property
-    def constructor(
-        self,
-    ) -> Constructor[CombinatorialClassType, CombinatorialObjectType]:
+    def constructor(self) -> DisjointUnion:
         """
         Return the constructor, that contains all the information about how to
         count/generate objects from the rule.
         """
         if self._constructor is None:
-            self._constructor = self.strategy.constructor(
-                self.comb_class, self.actual_children
+            original_constructor = cast(
+                DisjointUnion,
+                self.strategy.constructor(self.comb_class, self.actual_children),
             )
-            if self._constructor is None:
-                raise StrategyDoesNotApply("{} does not apply".format(self.strategy))
+            assert isinstance(original_constructor, DisjointUnion)
+            self._constructor = DisjointUnion(
+                self.comb_class,
+                self.children,
+                (original_constructor.extra_parameters[self.child_idx],),
+            )
         return self._constructor
+
+    @staticmethod
+    def is_equivalence() -> bool:
+        return True
 
     @property
     def formal_step(self) -> str:
@@ -529,10 +565,7 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
     """
 
     def __init__(self, rules: Sequence[Rule]):
-        assert all(
-            len(rule.children) == 1 and rule.constructor.is_equivalence()
-            for rule in rules
-        )
+        assert all(rule.is_equivalence() for rule in rules)
         super().__init__(rules[0].strategy, rules[0].comb_class, rules[-1].children)
         self.rules = rules
         self._constructor: Optional[DisjointUnion] = None
@@ -540,36 +573,31 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
     @property
     def constructor(self) -> DisjointUnion:
         if self._constructor is None:
-            if not self.comb_class.extra_parameters:
-                return DisjointUnion(self.comb_class, self.children)
             extra_parameters: Dict[str, str] = {
                 k: k for k in self.comb_class.extra_parameters
             }
             for rule in self.rules:
-                # TODO: call extra parameters on Rule class
-                if isinstance(rule, EquivalenceRule):
-                    rules_parameters = rule.strategy.extra_parameters(
-                        rule.comb_class, rule.actual_children
-                    )[rule.child_idx]
-                elif isinstance(rule, ReverseRule):
-                    forward_rule_parameters = rule.strategy.extra_parameters(
-                        rule.children[0]
-                    )[0]
-                    rules_parameters = {
-                        b: a for a, b in forward_rule_parameters.items()
-                    }
-                else:
-                    rules_parameters = rule.strategy.extra_parameters(
-                        rule.comb_class, rule.children
-                    )[0]
+                original_constructor = rule.constructor
+                assert isinstance(original_constructor, DisjointUnion)
+                rules_parameters = original_constructor.extra_parameters[0]
                 extra_parameters = {
-                    rules_parameters[parent_var]: child_var
+                    parent_var: rules_parameters[child_var]
                     for parent_var, child_var in extra_parameters.items()
+                    if child_var in rules_parameters
                 }
+            fixed_values = {
+                k: 0
+                for k in self.children[0].extra_parameters
+                if k not in extra_parameters.values()
+            }
             self._constructor = DisjointUnion(
-                self.comb_class, self.children, (extra_parameters,)
+                self.comb_class, self.children, (extra_parameters,), (fixed_values,)
             )
         return self._constructor
+
+    @staticmethod
+    def is_equivalence() -> bool:
+        return True
 
     @property
     def formal_step(self) -> str:
@@ -629,7 +657,7 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
         res = str(self.comb_class).split("\n")
         backpad(res)
         comb_classes = [str(rule.children[0]).split("\n") for rule in self.rules]
-        symbol_height = 1
+        symbol_height = min(1, len(res) - 1)
         eq_symbol = (
             ["     " for i in range(symbol_height)]
             + ["  {}  ".format("=")]
@@ -648,14 +676,36 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
 
     def __init__(self, rule: Rule):
         assert (
-            len(rule.children) == 1 and rule.constructor.is_equivalence
+            rule.is_equivalence()
         ), "reversing a rule only works for equivalence rules"
         super().__init__(rule.strategy, rule.children[0], (rule.comb_class,))
         self.original_rule = rule
+        self._constructor: Optional[DisjointUnion] = None
 
     @property
-    def constructor(self) -> Constructor:
-        return self.strategy.constructor(self.comb_class, self.children)
+    def constructor(self) -> DisjointUnion:
+        if self._constructor is None:
+            original_constructor = self.original_rule.constructor
+            assert isinstance(original_constructor, DisjointUnion), (
+                "reverse rule coming from non disjoint union strategy - "
+                "you'll need to update the ReverseRule constructor!"
+            )
+            flipped_extra_params = {
+                b: a for a, b in original_constructor.extra_parameters[0].items()
+            }
+            fixed_values = {
+                k: 0
+                for k in self.children[0].extra_parameters
+                if k not in flipped_extra_params.values()
+            }
+            self._constructor = DisjointUnion(
+                self.comb_class, self.children, (flipped_extra_params,), (fixed_values,)
+            )
+        return self._constructor
+
+    @staticmethod
+    def is_equivalence() -> bool:
+        return True
 
     @property
     def formal_step(self) -> str:
@@ -695,6 +745,10 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
             "VerificationStrategy[CombinatorialClassType, CombinatorialObjectType]",
             super().strategy,
         )
+
+    @staticmethod
+    def is_equivalence() -> bool:
+        return False
 
     def count_objects_of_size(self, n: int, **parameters: int) -> int:
         key = (n,) + tuple(sorted(parameters.items()))
