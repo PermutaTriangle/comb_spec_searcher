@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.2.1] - 2020-08-11
 ### Fixed
 - when passed a multivariate function, the `taylor_expand` function expands in
   `x`.
