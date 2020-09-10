@@ -1,7 +1,7 @@
 """
 A database for rules.
 """
-from itertools import product
+import itertools
 from typing import Iterable, Iterator, List, MutableMapping, Set, Tuple, Union, cast
 
 from comb_spec_searcher.class_db import ClassDB
@@ -57,7 +57,7 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
             raise KeyError(key)
         expect_equiv = self._is_equiv(key)
         possible_labels = (key[0],) + key[1]
-        for label, strat in product(possible_labels, self.pack):
+        for label, strat in itertools.product(possible_labels, self.pack):
             comb_class = self.classdb.get_class(label)
             if isinstance(strat, StrategyFactory):
                 strats_or_rules: Iterable[
@@ -89,8 +89,11 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
                     pass
         err_message = (
             f"Could not recompute the strategy for the rule {key} with "
-            " any of the strategies"
+            " any of the strategies. Classes are:\n"
         )
+        for label in itertools.chain([key[0]], key[1]):
+            err_message += f"Label: {label}\n"
+            err_message += str(self.classdb.get_class(label)) + "\n"
         raise RuntimeError(err_message)
 
     def __setitem__(self, key: RuleKey, value: AbstractStrategy) -> None:

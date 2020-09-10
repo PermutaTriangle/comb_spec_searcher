@@ -53,7 +53,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         self.subrecs: Optional[Tuple[Callable[..., int], ...]] = None
         self.subgenerators: Optional[
             Tuple[Callable[..., Iterator[CombinatorialObjectType]], ...]
-        ] = (None)
+        ] = None
         self.subsamplers: Optional[Tuple[Callable[..., CombinatorialObjectType], ...]]
         self._children = children
         self._non_empty_children: Optional[Tuple[CombinatorialClassType, ...]] = None
@@ -391,10 +391,10 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         assert sorted(["n"] + list(parameters)) == sorted(
             ("n",) + self.comb_class.extra_parameters
         ), (
-            "parameters did not match comb_class for the rule \n{}\nparameters "
-            "given: {}\n comb_class_parameters: {}".format(
-                self, list(parameters), self.comb_class.extra_parameters,
-            )
+            "parameters did not match comb_class for the rule\n"
+            f"{self}\n"
+            f"parameters given: {list(parameters)}\n"
+            f"comb_class_parameters: {self.comb_class.extra_parameters}"
         )
         res = self.count_cache.get(key)
         if res is None:
@@ -403,8 +403,8 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
             ), "you must call the set_subrecs function first"
             try:
                 res = self.constructor.get_recurrence(self.subrecs, n, **parameters)
-            except AssertionError:
-                raise ValueError(f"issue with rule:\n {self}")
+            except AssertionError as e:
+                raise ValueError(f"issue with rule:\n {self}") from e
             self.count_cache[key] = res
             # THE FOLLOWING CODE SNIPPET IS FOR DEBUGGING PURPOSES
         #     if self.comb_class.extra_parameters:
@@ -510,7 +510,7 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         self._constructor: Optional[DisjointUnion] = None
 
     @property
-    def constructor(self,) -> DisjointUnion:
+    def constructor(self) -> DisjointUnion:
         """
         Return the constructor, that contains all the information about how to
         count/generate objects from the rule.

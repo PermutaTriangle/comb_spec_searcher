@@ -420,7 +420,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                     get_function(rule.comb_class),
                     rule.comb_class,
                 )
-                eq = Eq(get_function(rule.comb_class), Function("NOTIMPLEMENTED")(x),)
+                eq = Eq(get_function(rule.comb_class), Function("NOTIMPLEMENTED")(x))
             eqs.add(eq)
         return eqs
 
@@ -471,7 +471,10 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         for explanation in self.func_calls:
             count = f"{self.func_calls[explanation]:,d}"
             time_spent = timedelta(seconds=int(self.func_times[explanation]))
-            percentage = f"{int((self.func_times[explanation] * 100) / total)}%"
+            if total == 0:
+                percentage = "? %"
+            else:
+                percentage = f"{int((self.func_times[explanation] * 100) / total)}%"
             table.append((explanation, count, time_spent, percentage))
         table.sort(key=lambda row: row[2], reverse=True)
         headers = ["", "Number of \napplications", "\nTime spent", "\nPercentage"]
@@ -503,11 +506,11 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             gc_stats = cast(Any, gc.get_stats())
             stats = [
                 ("Current Memory Used", gc_stats.total_gc_memory),
-                ("Current Memory Allocated", gc_stats.total_allocated_memory,),
+                ("Current Memory Allocated", gc_stats.total_allocated_memory),
                 ("Current JIT Memory Used", gc_stats.jit_backend_used),
-                ("Current JIT Memory Allocated", gc_stats.jit_backend_allocated,),
+                ("Current JIT Memory Allocated", gc_stats.jit_backend_allocated),
                 ("Peak Memory Used", gc_stats.peak_memory),
-                ("Peak Memory Allocated Memory Used", gc_stats.peak_allocated_memory,),
+                ("Peak Memory Allocated Memory Used", gc_stats.peak_allocated_memory),
             ]
             for (desc, mem) in stats:
                 table.append((desc, nice_pypy_mem(mem)))
@@ -704,7 +707,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
 
     @cssmethodtimer("get specification")
     def get_specification(
-        self, minimization_time_limit: float = 10, smallest: bool = False,
+        self, minimization_time_limit: float = 10, smallest: bool = False
     ) -> Optional[CombinatorialSpecification]:
         """
         Return a CombinatorialSpecification if the universe contains one.
@@ -719,16 +722,12 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             return None
         start_class = self.classdb.get_class(self.start_label)
         strategies, comb_class_eqv_paths = spec
-        logger.info(
-            "Creating a specification.", extra=self.logger_kwargs,
-        )
-        return CombinatorialSpecification(
-            start_class, strategies, comb_class_eqv_paths,
-        )
+        logger.info("Creating a specification.", extra=self.logger_kwargs)
+        return CombinatorialSpecification(start_class, strategies, comb_class_eqv_paths)
 
     @cssmethodtimer("get specification")
     def _get_specification_rules(
-        self, minimization_time_limit: float = 10, smallest: bool = False,
+        self, minimization_time_limit: float = 10, smallest: bool = False
     ) -> Optional[Specification]:
         """
         Returns the equivalence paths needed to create a

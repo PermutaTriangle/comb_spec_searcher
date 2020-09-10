@@ -144,7 +144,7 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
     def minimum_size_of_object(self) -> int:
         """Return the size of the smallest object in the combinatorial class.
         Note, for productivity reasons, you must at least return 1, if this
-        should be greater than 0. """
+        should be greater than 0."""
         raise NotImplementedError(
             "To use the CartesianProduct constructor, 'is_atom' and "
             "'minimum_size_of_object' must be implemented."

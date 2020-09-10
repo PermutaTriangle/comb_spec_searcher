@@ -196,7 +196,7 @@ class CombinatorialSpecification(
             self.rules_dict.pop(rule.comb_class)
 
     def _expand_verified_comb_classes(
-        self, verification_packs: Dict[CombinatorialClassType, StrategyPack],
+        self, verification_packs: Dict[CombinatorialClassType, StrategyPack]
     ) -> None:
         for comb_class, pack in verification_packs.items():
             # pylint: disable=import-outside-toplevel
@@ -221,11 +221,11 @@ class CombinatorialSpecification(
         if isinstance(comb_class, int):
             try:
                 comb_class = self._label_to_tiling[comb_class]
-            except KeyError:
+            except KeyError as e:
                 raise InvalidOperationError(
                     f"The label {comb_class} does not correspond to a tiling"
                     " in the specification."
-                )
+                ) from e
         if comb_class not in self.rules_dict:
             assert comb_class.is_empty(), "rule not in the spec and not empty"
             empty_strat = EmptyStrategy()
@@ -361,7 +361,9 @@ class CombinatorialSpecification(
                 continue
             if expansion == initial_conditions:
                 return sympy.simplify(genf)
-        raise IncorrectGeneratingFunctionError
+        raise IncorrectGeneratingFunctionError(
+            "Failed to compute the generating function for the specification."
+        )
 
     def get_maple_equations(self, check: int = 6) -> str:
         """
