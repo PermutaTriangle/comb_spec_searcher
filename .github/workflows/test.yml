@@ -60,3 +60,5 @@ jobs:
         env:
           TOXENV: ${{ matrix.toxenv }}
         run: tox
+      - name: setup
+        run: python setup.py install
