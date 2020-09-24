@@ -149,6 +149,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         """The symmetries functions for the strategy pack."""
         return self.strategy_pack.symmetries
 
+    def valid_class(self, comb_class):
+        return True
+
     def try_verify(self, comb_class: CombinatorialClassType, label: int) -> None:
         """
         Try to verify the combinatorial class.
@@ -188,7 +191,11 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 for start_label, end_labels, rule in self._expand_class_with_strategy(
                     comb_class, strategy_generator, label
                 ):
-                    self._add_rule(start_label, end_labels, rule)
+                    if all(
+                        self.valid_class(self.classdb.get_class(end))
+                        for end in end_labels
+                    ):
+                        self._add_rule(start_label, end_labels, rule)
 
     def _rules_from_strategy(
         self, comb_class: CombinatorialClassType, strategy: CSSstrategy
