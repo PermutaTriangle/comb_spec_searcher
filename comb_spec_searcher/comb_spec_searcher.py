@@ -191,10 +191,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 for start_label, end_labels, rule in self._expand_class_with_strategy(
                     comb_class, strategy_generator, label
                 ):
-                    if all(
-                        self.valid_class(self.classdb.get_class(end))
-                        for end in end_labels
-                    ):
+                    if all(self.valid_class(child) for child in rule.children):
                         self._add_rule(start_label, end_labels, rule)
 
     def _rules_from_strategy(
