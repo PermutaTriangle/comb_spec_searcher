@@ -45,7 +45,7 @@ setup(
         "logzero==1.5.0",
         "sympy==1.6.2",
         "psutil==5.7.2",
-        "pympler==0.8",
+        "pympler==0.9",
     ],
     # fmt: on
 )
