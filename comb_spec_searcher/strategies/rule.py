@@ -622,7 +622,10 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
     ) -> Iterator[CombinatorialObjectType]:
         res = cast(Tuple[CombinatorialObjectType], objs)
         for rule in reversed(self.rules):
-            res = (next(rule.backward_map(res)),)
+            try:
+                res = (next(rule.backward_map(res)),)
+            except StopIteration:
+                return
         yield res[0]
 
     def forward_map(
