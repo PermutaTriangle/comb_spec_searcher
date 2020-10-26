@@ -282,19 +282,24 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         n: int,
         **parameters: int
     ):
-        assert not parameters, "only implemented in one variable"
         random_choice = randint(1, parent_count)
         total = 0
-        for comp in self._valid_compositions(n):
+        for child_parameters in self._valid_compositions(n, **parameters):
             tmp = 1
-            for i, rec in enumerate(subrecs):
-                tmp *= rec(n=comp[i]["n"])
+            extra_parameters = self.get_extra_parameters(child_parameters)
+            if extra_parameters is None:
+                continue
+            for rec, extra_params in zip(subrecs, extra_parameters):
+                tmp *= rec(n=extra_params.pop("n"), **extra_params)
                 if tmp == 0:
                     break
             total += tmp
             if random_choice <= total:
+                extra_parameters = self.get_extra_parameters(child_parameters)
+                assert extra_parameters is not None
                 return tuple(
-                    subsampler(d["n"]) for d, subsampler in zip(comp, subsamplers)
+                    subsampler(n=extra_params.pop("n"), **extra_params)
+                    for subsampler, extra_params in zip(subsamplers, extra_parameters)
                 )
 
     @staticmethod
@@ -419,8 +424,8 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
                     None for _ in range(len(subgens) - idx - 1)
                 )
 
-    @staticmethod
     def random_sample_sub_objects(
+        self,
         parent_count: int,
         subsamplers: SubSamplers,
         subrecs: SubRecs,
@@ -429,10 +434,18 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
     ):
         random_choice = randint(1, parent_count)
         total = 0
-        for idx, (subrec, subsampler) in enumerate(zip(subrecs, subsamplers)):
-            total += subrec(n=n, **parameters)
+        for (idx, rec), subsampler, extra_params in zip(
+            enumerate(subrecs), subsamplers, self.get_extra_parameters(n, **parameters)
+        ):
+            # if a parent parameter is not mapped to by some child parameter
+            # then it is assumed that the value of the parent parameter must be 0
+            if extra_params is None or any(
+                val != 0 and k in self.zeroes[idx] for k, val in parameters.items()
+            ):
+                continue
+            total += rec(n=n, **extra_params)
             if random_choice <= total:
-                obj = subsampler(n=n, **parameters)
+                obj = subsampler(n=n, **extra_params)
                 return (
                     tuple(None for _ in range(idx))
                     + (obj,)
