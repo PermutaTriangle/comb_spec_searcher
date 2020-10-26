@@ -54,7 +54,7 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
     @abc.abstractmethod
     def get_sub_objects(
         self, subgens: SubGens, n: int, **parameters: int
-    ) -> Iterator[Tuple[CombinatorialObjectType, ...]]:
+    ) -> Iterator[Tuple[Optional[CombinatorialObjectType], ...]]:
         """Return the subobjs/image of the bijection implied by the constructor."""
 
     @abc.abstractmethod
@@ -262,12 +262,17 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
     def get_sub_objects(
         self, subgens: SubGens, n: int, **parameters: int
     ) -> Iterator[Tuple[CombinatorialObjectType, ...]]:
-        assert len(parameters) == 0, "only implemented in one variable, namely 'n'"
-        for comp in self._valid_compositions(n):
-            for sub_objs in product(
-                *tuple(subgen(n=d["n"]) for d, subgen in zip(comp, subgens))
+        for child_parameters in self._valid_compositions(n, **parameters):
+            extra_parameters = self.get_extra_parameters(child_parameters)
+            if extra_parameters is None:
+                continue
+            for objs in product(
+                *[
+                    gen(n=extra_params.pop("n"), **extra_params)
+                    for gen, extra_params in zip(subgens, extra_parameters)
+                ]
             ):
-                yield tuple(sub_objs)
+                yield tuple(objs)
 
     def random_sample_sub_objects(
         self,
@@ -399,15 +404,19 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
             res += rec(n=n, **extra_params)
         return res
 
-    @staticmethod
     def get_sub_objects(
-        subgens: SubGens, n: int, **parameters: int
-    ) -> Iterator[Tuple[CombinatorialObjectType, ...]]:
-        assert len(parameters) == 0, "only implemented in one variable, namely 'n'"
-        for i, subgen in enumerate(subgens):
-            for gp in subgen(n, **parameters):
-                yield tuple(None for _ in range(i)) + (gp,) + tuple(
-                    None for _ in range(len(subgens) - i - 1)
+        self, subgens: SubGens, n: int, **parameters: int
+    ) -> Iterator[Tuple[Optional[CombinatorialObjectType], ...]]:
+        for (idx, subgen), extra_params in zip(
+            enumerate(subgens), self.get_extra_parameters(n, **parameters)
+        ):
+            if extra_params is None or any(
+                val != 0 and k in self.zeroes[idx] for k, val in parameters.items()
+            ):
+                continue
+            for gp in subgen(n, **extra_params):
+                yield tuple(None for _ in range(idx)) + (gp,) + tuple(
+                    None for _ in range(len(subgens) - idx - 1)
                 )
 
     @staticmethod
