@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Can sample and generate objects from specifications using multiple parameters.
+- Sanity check tests object generation for rules with multiple parameteres.
 
 ### Changed
 - Removed the processname extra from logging
