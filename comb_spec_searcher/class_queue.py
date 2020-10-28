@@ -6,6 +6,8 @@ from collections import Counter, deque
 from typing import Counter as CounterType
 from typing import Deque, Iterator, List, NamedTuple, Set, Tuple
 
+import tabulate
+
 from .exception import NoMoreClassesToExpandError
 from .strategies.strategy import CSSstrategy
 from .strategies.strategy_pack import StrategyPack
@@ -86,12 +88,13 @@ class DefaultQueue(CSSQueue):
         super().__init__(pack)
         self.working: Deque[int] = deque()
         self.next_level: CounterType[int] = Counter()
-        self.curr_level: Deque[int] = deque()
+        self.curr_level: Tuple[Deque[int], ...] = tuple(
+            deque() for _ in self.expansion_strats
+        )
+        # One extra deque to be able to set ignore
+        self.curr_level = self.curr_level + (deque(),)
         self._inferral_expanded: Set[int] = set()
         self._initial_expanded: Set[int] = set()
-        self._expansion_expanded: List[Set[int]] = [
-            set() for _ in range(len(self.expansion_strats))
-        ]
         self.ignore: Set[int] = set()
         self.queue_sizes: List[int] = []
         self.staging: Deque[WorkPacket] = deque([])
@@ -125,21 +128,11 @@ class DefaultQueue(CSSQueue):
         if label not in self.ignore:
             self._initial_expanded.add(label)
 
-    def set_expansion_expanded(self, label: int, idx: int) -> None:
-        """
-        Mark the label such that it's not expanded with expansion for the given
-        indices anymore
-        """
-        if label not in self.ignore:
-            self._expansion_expanded[idx].add(label)
-
     def set_stop_yielding(self, label: int) -> None:
         self.ignore.add(label)
         # can remove it elsewhere to keep sets "small"
         self._inferral_expanded.discard(label)
         self._initial_expanded.discard(label)
-        for s in self._expansion_expanded:
-            s.discard(label)
         self.next_level.pop(label, None)
 
     def can_do_inferral(self, label: int) -> bool:
@@ -152,11 +145,7 @@ class DefaultQueue(CSSQueue):
 
     def can_do_expansion(self, label: int, idx: int) -> bool:
         """Return true if expansion strategies can be applied."""
-        return (
-            label not in self.ignore
-            and idx < len(self.expansion_strats)
-            and label not in self._expansion_expanded[idx]
-        )
+        return label not in self.ignore and idx < len(self.expansion_strats)
 
     def _populate_staging(self) -> None:
         """
@@ -165,37 +154,38 @@ class DefaultQueue(CSSQueue):
         while not self.staging and self.working:
             self.staging.extend(self._iter_helper_working())
         while not self.staging:
-            if not self.curr_level:
+            if not any(self.curr_level):
                 self._change_level()
             self.staging.extend(self._iter_helper_curr())
 
     def _change_level(self) -> None:
         assert not self.staging, "Can't change level is staging is not empty"
         assert not self.working, "Can't change level is working is not empty"
-        assert not self.curr_level, "Can't change level is curr_level is not empty"
-        self.curr_level = deque(
-            label
-            for label, _ in sorted(self.next_level.items(), key=lambda x: -x[1])
-            if self.expansion_strats and self.can_do_expansion(label, 0)
+        assert not any(self.curr_level), "Can't change level is curr_level is not empty"
+        self.curr_level[0].extend(
+            label for label, _ in sorted(self.next_level.items(), key=lambda x: -x[1])
         )
-        if not self.curr_level:
+        if not any(self.curr_level):
             raise StopIteration
-        self.queue_sizes.append(len(self.curr_level))
+        self.queue_sizes.append(len(self.curr_level[0]))
         self.next_level = Counter()
 
     def _iter_helper_curr(self) -> Iterator[WorkPacket]:
-        label = self.curr_level.popleft()
-        for idx, strats in enumerate(self.expansion_strats):
-            if self.can_do_expansion(label, idx):
-                for strat in strats:
-                    yield WorkPacket(label, (strat,), False)
-                self.set_expansion_expanded(label, idx)
-                if self.can_do_expansion(label, idx + 1):
-                    self.curr_level.append(label)
-                break
-        else:
-            # finished applying all strategies to this label, ignore from now on
+        assert any(self.curr_level), "The current queue is empty"
+        # pylint: disable=stop-iteration-return
+        idx, label = next(
+            (
+                (idx, queue.popleft())
+                for idx, queue in enumerate(self.curr_level)
+                if queue
+            )
+        )
+        if idx == len(self.expansion_strats):
             self.set_stop_yielding(label)
+            return
+        for strat in self.expansion_strats[idx]:
+            yield WorkPacket(label, (strat,), False)
+        self.curr_level[idx + 1].append(label)
 
     def _iter_helper_working(self) -> Iterator[WorkPacket]:
         label = self.working.popleft()
@@ -226,19 +216,26 @@ class DefaultQueue(CSSQueue):
         while curr_level == self.levels_completed:
             try:
                 yield next(self)
-            except StopIteration:
+            except StopIteration as e:
                 if curr_level == self.levels_completed:
-                    raise NoMoreClassesToExpandError
+                    raise NoMoreClassesToExpandError from e
                 return
 
     def status(self) -> str:
-        status = "Queue status:\n"
-        status += "\tCurrently on 'level' {}\n".format(self.levels_completed)
-        status += "\tThe size of the working queue is {}\n".format(len(self.working))
-        status += "\tThe size of the current queue is {}\n".format(len(self.curr_level))
-        status += "\tThe size of the next queue is {}\n".format(len(self.next_level))
-        status += "\tThe number of times added to the next queue is {}\n".format(
-            sum(self.next_level.values())
+        status = f"Queue status (currently on level {self.levels_completed}):\n"
+        table: List[Tuple[str, str]] = []
+        table.append(("working", f"{len(self.working):,d}"))
+        for idx, queue in enumerate(self.curr_level[:-1]):
+            table.append((f"current (set {idx+1})", f"{len(queue):,d}"))
+        table.append(("next", f"{len(self.next_level):,d}"))
+        status += "    "
+        headers = ("Queue", "Size")
+        colalign = ("left", "right")
+        status += (
+            tabulate.tabulate(table, headers=headers, colalign=colalign).replace(
+                "\n", "\n    "
+            )
+            + "\n"
         )
         status += "\tThe size of the current queues at each level: {}".format(
             ", ".join(str(i) for i in self.queue_sizes)

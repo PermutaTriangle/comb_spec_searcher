@@ -36,7 +36,7 @@ with respect to factor order is given.
 9798
 """
 from itertools import product
-from typing import Iterable, Optional, Tuple, Union
+from typing import Iterable, Iterator, Optional, Tuple, Union
 
 from comb_spec_searcher import (
     AtomStrategy,
@@ -64,7 +64,7 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
         alphabet: Iterable[str],
         just_prefix: bool = False,
     ):
-        if not all(isinstance(l, str) and len(l) == 1 for l in alphabet):
+        if not all(isinstance(letter, str) and len(letter) == 1 for letter in alphabet):
             raise ValueError("Alphabet must be an iterable of letters.")
         self.alphabet = tuple(sorted(alphabet))
         if not self.word_over_alphabet(prefix):
@@ -78,7 +78,7 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
 
     def word_over_alphabet(self, word: str) -> bool:
         """Return True if word consists of letters from the alphabet."""
-        return isinstance(word, str) and all(l in self.alphabet for l in word)
+        return isinstance(word, str) and all(letter in self.alphabet for letter in word)
 
     # methods required for combinatorial exploration
 
@@ -101,7 +101,7 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
         """Create an instance of the class from the dictionary returned by the
         'to_jsonable' method."""
         return cls(
-            d["prefix"], d["patterns"], d["alphabet"], bool(int(d["just_prefix"])),
+            d["prefix"], d["patterns"], d["alphabet"], bool(int(d["just_prefix"]))
         )
 
     def __eq__(self, other: object) -> bool:
@@ -126,8 +126,8 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
         if self.just_prefix:
             return "The word {}".format(self.prefix)
         return "Words over {{{}}} avoiding {{{}}} with prefix {}" "".format(
-            ", ".join(l for l in self.alphabet),
-            ", ".join(p for p in self.patterns),
+            ", ".join(self.alphabet),
+            ", ".join(self.patterns),
             self.prefix if self.prefix else '""',
         )
 
@@ -146,7 +146,7 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
 
     def objects_of_size(self, size):
         """Yield the words of given size that start with prefix and avoid the
-       patterns. If just_prefix, then only yield that word."""
+        patterns. If just_prefix, then only yield that word."""
 
         def possible_words():
             """Yield all words of given size over the alphabet with prefix"""
@@ -265,7 +265,7 @@ class RemoveFrontOfPrefix(CartesianProductStrategy[AvoidingWithPrefix, Word]):
         avoiding_with_prefix: AvoidingWithPrefix,
         words: Tuple[Optional[CombinatorialObject], ...],
         children: Optional[Tuple[AvoidingWithPrefix, ...]] = None,
-    ) -> Word:
+    ) -> Iterator[Word]:
         """
         The forward direction of the underlying bijection used for object
         generation and sampling.
@@ -276,7 +276,7 @@ class RemoveFrontOfPrefix(CartesianProductStrategy[AvoidingWithPrefix, Word]):
         if children is None:
             children = self.decomposition_function(avoiding_with_prefix)
             assert children is not None
-        return Word(words[0] + words[1])
+        yield Word(words[0] + words[1])
 
     def forward_map(
         self,

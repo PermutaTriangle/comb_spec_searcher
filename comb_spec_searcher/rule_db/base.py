@@ -3,35 +3,26 @@ A database for rules.
 """
 import abc
 from collections import defaultdict
-from typing import (
-    Dict,
-    Iterable,
-    Iterator,
-    List,
-    MutableMapping,
-    Optional,
-    Set,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import Dict, Iterable, Iterator, List, MutableMapping, Optional, Set, Tuple
 
+import tabulate
 from logzero import logger
 
-from .class_db import ClassDB
-from .equiv_db import EquivalenceDB
-from .exception import SpecificationNotFound, StrategyDoesNotApply
-from .strategies import Rule, StrategyPack, VerificationRule
-from .strategies.rule import AbstractRule
-from .strategies.strategy import AbstractStrategy, StrategyFactory
-from .tree_searcher import (
+from comb_spec_searcher.equiv_db import EquivalenceDB
+from comb_spec_searcher.exception import SpecificationNotFound
+from comb_spec_searcher.strategies import AbstractStrategy, VerificationRule
+from comb_spec_searcher.strategies.rule import AbstractRule
+from comb_spec_searcher.tree_searcher import (
     Node,
     iterative_proof_tree_finder,
     iterative_prune,
     proof_tree_generator_dfs,
     prune,
     random_proof_tree,
+    smallish_random_proof_tree,
 )
+
+__all__ = ["RuleDBBase", "RuleDB"]
 
 Specification = Tuple[List[Tuple[int, AbstractStrategy]], List[List[int]]]
 RuleKey = Tuple[int, Tuple[int, ...]]
@@ -45,7 +36,7 @@ class RuleDBBase(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def rule_to_strategy(self,) -> MutableMapping[RuleKey, AbstractStrategy]:
+    def rule_to_strategy(self) -> MutableMapping[RuleKey, AbstractStrategy]:
         pass
 
     def __eq__(self, other: object) -> bool:
@@ -59,19 +50,20 @@ class RuleDBBase(abc.ABC):
         Add a rule to the database.
 
         - start is a single integer.
-        - ends is a tuple of integers.
+        - ends is a tuple of integers, representing the non-empty children.
         - rule is a Rule that creates start -> ends.
         """
         ends = tuple(sorted(ends))
         if isinstance(rule, VerificationRule):
             self.set_verified(start)
-        if (
-            isinstance(rule, Rule)
-            and len(ends) == 1
-            and rule.constructor.is_equivalence()
-        ):
+        is_equiv = len(ends) == 1 and rule.strategy.can_be_equivalent()
+        if is_equiv:
             self.set_equivalent(start, ends[0])
-        self.rule_to_strategy[(start, ends)] = rule.strategy
+        if len(ends) != 1 or is_equiv or not self.are_equivalent(start, ends[0]):
+            # to avoid overwriting an equivalence rule with a non-equivalence
+            # rule, we only save if an equivalence rule, or does not have the
+            # same start -> ends as some equivalence rule.
+            self.rule_to_strategy[(start, ends)] = rule.strategy
 
     def is_verified(self, label: int) -> bool:
         """Return True if label has been verified."""
@@ -114,13 +106,51 @@ class RuleDBBase(abc.ABC):
         ends = tuple(sorted(ends))
         return (start, ends) in self.rule_to_strategy
 
-    def status(self) -> str:
+    def status(self, elaborate: bool) -> str:
         """Return a string describing the status of the rule database."""
         status = "RuleDB status:\n"
-        status += "\tTotal number of combinatorial rules is {}".format(
-            len(self.rule_to_strategy)
-        )
-        # TODO: strategy verified, verified, equivalence sets?
+        table: List[Tuple[str, str]] = []
+        table.append(("Combinatorial rules", f"{len(self.rule_to_strategy):,d}"))
+        if elaborate:
+            eqv_labels = set()
+            strategy_verified_labels = set()
+            verified_labels = set()
+            eqv_rules = set()
+            for start, ends in self.rule_to_strategy:
+                if not ends:
+                    strategy_verified_labels.add(start)
+                if self.is_verified(start):
+                    verified_labels.add(start)
+                eqv_start = self.equivdb[start]
+                eqv_ends = tuple(sorted(self.equivdb[label] for label in ends))
+                eqv_labels.add(eqv_start)
+                eqv_labels.update(eqv_ends)
+                eqv_rules.add((eqv_start, eqv_ends))
+            table.append(
+                ("Combintorial rules up to equivalence", f"{len(eqv_rules):,d}")
+            )
+            table.append(
+                (
+                    "Strategy verified combinatorial classes",
+                    f"{len(strategy_verified_labels):,d}",
+                )
+            )
+            table.append(
+                (
+                    "Verified combinatorial classes",
+                    f"{len(verified_labels):,d}",
+                )
+            )
+            table.append(
+                (
+                    "combinatorial classes up to equivalence",
+                    f"{len(eqv_labels):,d}",
+                )
+            )
+        status += "    "
+        status += tabulate.tabulate(
+            table, headers=("", "Total number"), colalign=("left", "right")
+        ).replace("\n", "\n    ")
         return status
 
     ################################################################
@@ -140,16 +170,33 @@ class RuleDBBase(abc.ABC):
         Returns None if no such rule exists.
         """
         eqv_start = self.equivdb[eqv_start]
-        eqv_ends = tuple(sorted(self.equivdb[l] for l in eqv_ends))
+        eqv_ends = tuple(sorted(map(self.equivdb.__getitem__, eqv_ends)))
         for rule in self:
             start, ends = rule
             temp_start = self.equivdb[start]
-            temp_ends = tuple(sorted(self.equivdb[l] for l in ends))
+            temp_ends = tuple(sorted(map(self.equivdb.__getitem__, ends)))
             if eqv_start == temp_start and eqv_ends == temp_ends:
                 return start, ends
         return None
 
-    def find_specification(self, label: int, iterative: bool = False) -> Node:
+    def rule_from_equivalence_rule_dict(
+        self, eqv_rules: List[RuleKey]
+    ) -> Dict[RuleKey, RuleKey]:
+        """
+        Return a dictionary pointing from an equivalence rule to an actual rule.
+        """
+        res: Dict[RuleKey, RuleKey] = {}
+        for start, ends in self.rule_to_strategy:
+            eqv_start = self.equivdb[start]
+            eqv_ends = tuple(sorted(map(self.equivdb.__getitem__, ends)))
+            eqv_key = (eqv_start, eqv_ends)
+            if eqv_key in eqv_rules:
+                res[eqv_key] = (start, ends)
+        return res
+
+    def find_specification(
+        self, label: int, minimization_time_limit: float, iterative: bool = False
+    ) -> Node:
         """Search for a specification based on current data found."""
         rules_dict = self.rules_up_to_equivalence()
         # Prune all unverified labels (recursively)
@@ -160,29 +207,42 @@ class RuleDBBase(abc.ABC):
 
         # only verified labels in rules_dict, in particular, there is a
         # specification if a label is in the rules_dict
-        for l in rules_dict.keys():
-            self.set_verified(l)
+        for ver_label in rules_dict.keys():
+            self.set_verified(ver_label)
 
         if self.equivdb[label] in rules_dict:
+            logger.info("Specification detected.")
             if iterative:
                 specification = iterative_proof_tree_finder(
                     rules_dict, root=self.equivdb[label]
                 )
             else:
-                specification = random_proof_tree(rules_dict, root=self.equivdb[label])
+                logger.info(
+                    "Minimizing for %s seconds.", round(minimization_time_limit)
+                )
+                specification = smallish_random_proof_tree(
+                    rules_dict, self.equivdb[label], minimization_time_limit
+                )
+            logger.info(
+                "Found specification with %s rules.", len(specification.labels())
+            )
         else:
             raise SpecificationNotFound("No specification for label {}".format(label))
         return specification
 
     def get_specification_rules(
-        self, label: int, iterative: bool = False
+        self, label: int, minimization_time_limit: float, iterative: bool = False
     ) -> Specification:
         """
         Return a list of pairs (label, rule) which form a specification.
         The specification returned is random, so two calls to the function
         may result in a a different output.
         """
-        proof_tree_node = self.find_specification(label=label, iterative=iterative)
+        proof_tree_node = self.find_specification(
+            label=label,
+            iterative=iterative,
+            minimization_time_limit=minimization_time_limit,
+        )
         return self._get_specification_rules(label, proof_tree_node)
 
     def _get_specification_rules(
@@ -190,18 +250,22 @@ class RuleDBBase(abc.ABC):
     ) -> Specification:
         children: Dict[int, Tuple[int, ...]] = dict()
         internal_nodes = set([label])
-        for node in proof_tree_node.nodes():
-            eqv_start, eqv_ends = (
-                node.label,
-                tuple(child.label for child in node.children),
-            )
-            rule = self.rule_from_equivalence_rule(eqv_start, eqv_ends)
+        logger.info("Computing rule <-> equivalence rule mapping.")
+        eqv_rules = [
+            (node.label, tuple(sorted(child.label for child in node.children)))
+            for node in proof_tree_node.nodes()
+        ]
+        rule_from_equivalence_rules = self.rule_from_equivalence_rule_dict(eqv_rules)
+        logger.info("Finding actual rules.")
+        for eqv_start, eqv_ends in eqv_rules:
+            rule = rule_from_equivalence_rules.get((eqv_start, eqv_ends))
             if rule is not None:
                 start, ends = rule
                 children[start] = ends
                 internal_nodes.update(ends)
         res = []
         eqv_paths = []
+        logger.info("Computing strategies used to create rules.")
         for start, ends in children.items():
             for eqv_label in internal_nodes:
                 if self.are_equivalent(start, eqv_label):
@@ -287,83 +351,3 @@ class RuleDB(RuleDBBase):
     @property
     def rule_to_strategy(self) -> Dict[Tuple[int, Tuple[int, ...]], AbstractStrategy]:
         return self._rule_to_strategy
-
-
-class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
-    """
-    A mapping from rules to strategies that recompute the strategy every time it's
-    needed instead of storing it in order to save memory.
-
-    Also in order to save memory we store flat version of the rules, i.e. for a rule
-    (a, (b, c,...)) we store (a, b, c,...)
-    """
-
-    def __init__(self, classdb: ClassDB, strat_pack: StrategyPack) -> None:
-        self.classdb = classdb
-        self.pack = strat_pack
-        self.rules: Set[Tuple[int, ...]] = set()
-
-    @staticmethod
-    def _flatten(tuple_: RuleKey) -> Tuple[int, ...]:
-        return (tuple_[0],) + tuple_[1]
-
-    @staticmethod
-    def _unflatten(tuple_: Tuple[int, ...]) -> RuleKey:
-        return (tuple_[0], tuple_[1:])
-
-    def __getitem__(self, key: RuleKey) -> AbstractStrategy:
-        if self._flatten(key) not in self.rules:
-            raise KeyError(key)
-        parent = self.classdb.get_class(key[0])
-        for strat in self.pack:
-            if isinstance(strat, StrategyFactory):
-                strats_or_rules: Iterable[Union[Rule, AbstractStrategy]] = strat(parent)
-            else:
-                strats_or_rules = [strat]
-            rules: Iterator[AbstractRule] = (
-                x(parent) if isinstance(x, AbstractStrategy) else x
-                for x in strats_or_rules
-            )
-            for rule in rules:
-                try:
-                    nonempty_children = tuple(
-                        c for c in rule.children if not self.classdb.is_empty(c)
-                    )
-                    end_labels = tuple(
-                        sorted(map(self.classdb.get_label, nonempty_children))
-                    )
-                    if end_labels == key[1]:
-                        return rule.strategy
-                except StrategyDoesNotApply:
-                    pass
-        err_message = (
-            f"Could not recompute the strategy for the rule {key} with "
-            " any of the strategies"
-        )
-        raise RuntimeError(err_message)
-
-    def __setitem__(self, key: RuleKey, value: AbstractStrategy) -> None:
-        self.rules.add(self._flatten(key))
-
-    def __delitem__(self, key: RuleKey) -> None:
-        self.rules.remove(self._flatten(key))
-
-    def __iter__(self) -> Iterator[RuleKey]:
-        for rule in self.rules:
-            yield self._unflatten(rule)
-
-    def __len__(self) -> int:
-        return len(self.rules)
-
-    def __contains__(self, key: object) -> bool:
-        return self._flatten(cast(RuleKey, key)) in self.rules
-
-
-class RuleDBForgetStrategy(RuleDBBase):
-    def __init__(self, classdb: ClassDB, strat_pack: StrategyPack) -> None:
-        super().__init__()
-        self.rules = RecomputingDict(classdb, strat_pack)
-
-    @property
-    def rule_to_strategy(self):
-        return self.rules

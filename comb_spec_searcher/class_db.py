@@ -9,11 +9,9 @@ if is_empty has been checked.
 """
 
 import zlib
-from collections import defaultdict
 from typing import Dict, Generic, Iterator, Optional, Type, Union, cast
 
 from .combinatorial_class import CombinatorialClassType
-from .utils import cssmethodtimer
 
 ClassKey = Union[bytes, CombinatorialClassType]
 Key = Union[CombinatorialClassType, int]
@@ -27,9 +25,7 @@ class Info:
         - is it empty?
     """
 
-    def __init__(
-        self, comb_class: ClassKey, label: int, empty: Optional[bool] = None,
-    ):
+    def __init__(self, comb_class: ClassKey, label: int, empty: Optional[bool] = None):
         self.comb_class = comb_class
         self.label = label
         self.empty = empty
@@ -63,8 +59,6 @@ class ClassDB(Generic[CombinatorialClassType]):
         self.class_to_info: Dict[ClassKey, Info] = {}
         self.label_to_info: Dict[int, Info] = {}
         self.combinatorial_class = combinatorial_class
-        self.func_calls: Dict[str, int] = defaultdict(int)
-        self.func_times: Dict[str, float] = defaultdict(float)
 
     def __iter__(self) -> Iterator[int]:
         """
@@ -94,7 +88,7 @@ class ClassDB(Generic[CombinatorialClassType]):
             and self.label_to_info == other.label_to_info
         )
 
-    def add(self, comb_class: ClassKey, compressed: bool = False,) -> None:
+    def add(self, comb_class: ClassKey, compressed: bool = False) -> None:
         """
         Add a combinatorial class to the database.
         """
@@ -139,7 +133,6 @@ class ClassDB(Generic[CombinatorialClassType]):
             )
         return info
 
-    @cssmethodtimer("compress")
     def _compress(self, key: CombinatorialClassType) -> ClassKey:
         """
         Return compressed version of combinatorial class.
@@ -151,7 +144,6 @@ class ClassDB(Generic[CombinatorialClassType]):
             # to use compression you should implement a 'to_bytes' function.
             return key
 
-    @cssmethodtimer("decompress")
     def _decompress(self, key: ClassKey) -> CombinatorialClassType:
         """
         Return decompressed version of compressed combinatorial class.
@@ -169,7 +161,6 @@ class ClassDB(Generic[CombinatorialClassType]):
             ), "you must implement a 'from_bytes' function to use compression"
             return key
 
-    @cssmethodtimer("get class")
     def get_class(self, key: Key) -> CombinatorialClassType:
         """
         Return combinatorial class of key.
@@ -177,7 +168,6 @@ class ClassDB(Generic[CombinatorialClassType]):
         info = self._get_info(key)
         return self._decompress(info.comb_class)
 
-    @cssmethodtimer("get label")
     def get_label(self, key: Key) -> int:
         """
         Return label of key.
@@ -205,7 +195,6 @@ class ClassDB(Generic[CombinatorialClassType]):
             self.set_empty(label, empty)
         return bool(empty)
 
-    @cssmethodtimer("is empty")
     def _is_empty(self, comb_class: CombinatorialClassType) -> bool:
         if not isinstance(comb_class, self.combinatorial_class):
             comb_class = self.get_class(comb_class)
@@ -223,15 +212,6 @@ class ClassDB(Generic[CombinatorialClassType]):
         Return a string with the current status of the run.
         """
         status = "ClassDB status:\n"
-        status += "\tTotal number of combinatorial classes found is {}\n".format(
-            len(self.label_to_info)
-        )
-        for explanation in self.func_calls:
-            count = self.func_calls[explanation]
-            time_spent = self.func_times[explanation]
-            status += "\tApplied {} {} times. Time spent is {} seconds.\n".format(
-                explanation, count, round(time_spent, 2)
-            )
-        # TODO: empty classes?
-        status = status[:-1]
+        status += "\tTotal number of combinatorial classes found is"
+        status += f" {len(self.label_to_info):,d}"
         return status
