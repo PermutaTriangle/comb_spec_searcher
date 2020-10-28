@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
-- Can sample from specifications using multiple parameters.
+- Can sample and generate objects from specifications using multiple parameters.
+- Sanity check tests object generation for rules with multiple parameteres.
 
 ## [2.2.1] - 2020-09-10
 ### Fixed

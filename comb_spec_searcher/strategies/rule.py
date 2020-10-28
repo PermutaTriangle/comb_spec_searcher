@@ -228,13 +228,6 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
                 f"The actual count is {actual_count}.\n"
                 f"The rule count is {rule_count}.",
             )
-        if any(
-            comb_class.extra_parameters
-            for comb_class in [self.comb_class, *self.children]
-        ):
-            # Can't sanity check generation of objects for classes with extra
-            # TODO test more thoroughly
-            return True
         tempgen = self.subgenerators
         self.subgenerators = tuple(
             partial(brute_force_generation, child) for child in self.children
