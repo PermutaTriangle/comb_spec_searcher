@@ -36,7 +36,7 @@ with respect to factor order is given.
 9798
 """
 from itertools import product
-from typing import Iterable, Optional, Tuple, Union
+from typing import Iterable, Iterator, Optional, Tuple, Union
 
 from comb_spec_searcher import (
     AtomStrategy,
@@ -265,7 +265,7 @@ class RemoveFrontOfPrefix(CartesianProductStrategy[AvoidingWithPrefix, Word]):
         avoiding_with_prefix: AvoidingWithPrefix,
         words: Tuple[Optional[CombinatorialObject], ...],
         children: Optional[Tuple[AvoidingWithPrefix, ...]] = None,
-    ) -> Word:
+    ) -> Iterator[Word]:
         """
         The forward direction of the underlying bijection used for object
         generation and sampling.
@@ -276,7 +276,7 @@ class RemoveFrontOfPrefix(CartesianProductStrategy[AvoidingWithPrefix, Word]):
         if children is None:
             children = self.decomposition_function(avoiding_with_prefix)
             assert children is not None
-        return Word(words[0] + words[1])
+        yield Word(words[0] + words[1])
 
     def forward_map(
         self,

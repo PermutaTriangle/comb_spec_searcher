@@ -7,6 +7,7 @@ A CombinatorialSpecification is (more or less) a set of Rule.
 """
 import abc
 from functools import partial
+from random import randint
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -227,13 +228,6 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
                 f"The actual count is {actual_count}.\n"
                 f"The rule count is {rule_count}.",
             )
-        if any(
-            comb_class.extra_parameters
-            for comb_class in [self.comb_class, *self.children]
-        ):
-            # Can't sanity check generation of objects for classes with extra
-            # TODO test more thoroughly
-            return True
         tempgen = self.subgenerators
         self.subgenerators = tuple(
             partial(brute_force_generation, child) for child in self.children
@@ -346,12 +340,12 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
 
     def backward_map(
         self, objs: Tuple[Optional[CombinatorialObjectType], ...]
-    ) -> CombinatorialObjectType:
+    ) -> Iterator[CombinatorialObjectType]:
         """
         This encodes the backward map of the underlying bijection that the
         strategy implies.
         """
-        return self.strategy.backward_map(self.comb_class, objs, self.children)
+        yield from self.strategy.backward_map(self.comb_class, objs, self.children)
 
     def forward_map(
         self, obj: CombinatorialObjectType
@@ -479,9 +473,9 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         for subobjs in self.constructor.get_sub_objects(
             self.subgenerators, n, **parameters
         ):
-            obj = self.backward_map(subobjs)
-            yield obj
-            res.append(obj)
+            for obj in self.backward_map(subobjs):
+                yield obj
+                res.append(obj)
         self.obj_cache[key] = res
 
     def random_sample_object_of_size(
@@ -495,8 +489,9 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         subobjs = self.constructor.random_sample_sub_objects(
             total_count, self.subsamplers, self.subrecs, n, **parameters
         )
-        obj = self.backward_map(subobjs)
-        return obj
+        objs = tuple(self.backward_map(subobjs))
+        idx = randint(0, len(objs) - 1)
+        return objs[idx]
 
 
 class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
@@ -540,12 +535,12 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
 
     def backward_map(
         self, objs: Tuple[Optional[CombinatorialObjectType], ...]
-    ) -> CombinatorialObjectType:
+    ) -> Iterator[CombinatorialObjectType]:
         actual_objs = tuple(
             objs[0] if i == self.child_idx else None
             for i in range(len(self.actual_children))
         )
-        return self.strategy.backward_map(
+        yield from self.strategy.backward_map(
             self.comb_class, actual_objs, self.actual_children
         )
 
@@ -617,11 +612,14 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
 
     def backward_map(
         self, objs: Tuple[Optional[CombinatorialObjectType], ...]
-    ) -> CombinatorialObjectType:
+    ) -> Iterator[CombinatorialObjectType]:
         res = cast(Tuple[CombinatorialObjectType], objs)
         for rule in reversed(self.rules):
-            res = (rule.backward_map(res),)
-        return res[0]
+            try:
+                res = (next(rule.backward_map(res)),)
+            except StopIteration:
+                return
+        yield res[0]
 
     def forward_map(
         self, obj: CombinatorialObjectType
@@ -713,13 +711,13 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
 
     def backward_map(
         self, objs: Tuple[Optional[CombinatorialObjectType], ...]
-    ) -> CombinatorialObjectType:
-        return cast(CombinatorialObjectType, self.original_rule.forward_map(objs[0])[0])
+    ) -> Iterator[CombinatorialObjectType]:
+        yield cast(CombinatorialObjectType, self.original_rule.forward_map(objs[0])[0])
 
     def forward_map(
         self, obj: CombinatorialObjectType
     ) -> Tuple[Optional[CombinatorialObjectType], ...]:
-        return (self.original_rule.backward_map((obj,)),)
+        return (next(self.original_rule.backward_map((obj,))),)
 
 
 class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):

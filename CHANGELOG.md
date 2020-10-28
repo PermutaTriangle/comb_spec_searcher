@@ -6,7 +6,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [2.2.1] - 2020-08-11
+## [2.3.0] - 2020-10-28
+### Added
+- Can sample and generate objects from specifications using multiple parameters.
+- Sanity check tests object generation for rules with multiple parameteres.
+
+### Changed
+- Removed the processname extra from logging
+
+## [2.2.1] - 2020-09-10
 ### Fixed
 - when passed a multivariate function, the `taylor_expand` function expands in
   `x`.

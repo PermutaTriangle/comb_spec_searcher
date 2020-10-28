@@ -315,9 +315,9 @@ class Strategy(AbstractStrategy[CombinatorialClassType, CombinatorialObjectType]
         comb_class: CombinatorialClassType,
         objs: Tuple[Optional[CombinatorialObjectType], ...],
         children: Optional[Tuple[CombinatorialClassType, ...]] = None,
-    ) -> CombinatorialObjectType:
+    ) -> Iterator[CombinatorialObjectType]:
         """
-        The forward direction of the underlying bijection used for object
+        The backward direction of the underlying bijection used for object
         generation and sampling.
         """
         if children is None:
@@ -331,7 +331,7 @@ class Strategy(AbstractStrategy[CombinatorialClassType, CombinatorialObjectType]
         children: Optional[Tuple[CombinatorialClassType, ...]] = None,
     ) -> Tuple[Optional[CombinatorialObjectType], ...]:
         """
-        The backward direction of the underlying bijection used for object
+        The forward direction of the underlying bijection used for object
         generation and sampling.
         """
         if children is None:
@@ -477,7 +477,7 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObject
         comb_class: CombinatorialClassType,
         objs: Tuple[Optional[CombinatorialObjectType], ...],
         children: Optional[Tuple[CombinatorialClassType, ...]] = None,
-    ) -> CombinatorialObjectType:
+    ) -> Iterator[CombinatorialObjectType]:
         """
         This method will enable us to generate objects, and sample.
         If it is a direct bijection, the below implementation will work!
@@ -485,7 +485,7 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObject
         if children is None:
             children = self.decomposition_function(comb_class)
         idx = DisjointUnionStrategy.backward_map_index(objs)
-        return cast(CombinatorialObjectType, objs[idx])
+        yield cast(CombinatorialObjectType, objs[idx])
 
     @staticmethod
     def get_op_symbol() -> str:
