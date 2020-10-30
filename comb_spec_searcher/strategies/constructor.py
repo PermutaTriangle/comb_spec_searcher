@@ -58,14 +58,6 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
         """
 
     @abc.abstractmethod
-    def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
-        """
-        Return the count for the given parameters, assuming the children are
-        counted by the subrecs given.
-        """
-        # TODO: can this method be removed?
-
-    @abc.abstractmethod
     def get_terms(self, subterms: SubTerms, n: int) -> Terms:
         """
         Return the terms for n given the subterms of the children.
@@ -264,22 +256,22 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
             res.append(extra_params)
         return res
 
-    def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
-        # TODO: can this be removed?
-        # The extra parameters variable maps each of the parent parameter to
-        # the unique child that it was mapped to.
-        res = 0
-        for child_parameters in self._valid_compositions(n, **parameters):
-            tmp = 1
-            extra_parameters = self.get_extra_parameters(child_parameters)
-            if extra_parameters is None:
-                continue
-            for rec, extra_params in zip(subrecs, extra_parameters):
-                tmp *= rec(n=extra_params.pop("n"), **extra_params)
-                if tmp == 0:
-                    break
-            res += tmp
-        return res
+    # def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
+    #     # TODO: this can be removed
+    #     # The extra parameters variable maps each of the parent parameter to
+    #     # the unique child that it was mapped to.
+    #     res = 0
+    #     for child_parameters in self._valid_compositions(n, **parameters):
+    #         tmp = 1
+    #         extra_parameters = self.get_extra_parameters(child_parameters)
+    #         if extra_parameters is None:
+    #             continue
+    #         for rec, extra_params in zip(subrecs, extra_parameters):
+    #             tmp *= rec(n=extra_params.pop("n"), **extra_params)
+    #             if tmp == 0:
+    #                 break
+    #         res += tmp
+    #     return res
 
     def get_terms(self, subterms: SubTerms, n: int) -> Terms:
         raise NotImplementedError
@@ -420,20 +412,20 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
             res.append(None)
         return res
 
-    def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
-        # TODO: can this be removed?
-        res = 0
-        for (idx, rec), extra_params in zip(
-            enumerate(subrecs), self.get_extra_parameters(n, **parameters)
-        ):
-            # if a parent parameter is not mapped to by some child parameter
-            # then it is assumed that the value of the parent parameter must be 0
-            if extra_params is None or any(
-                val != 0 and k in self.zeroes[idx] for k, val in parameters.items()
-            ):
-                continue
-            res += rec(n=n, **extra_params)
-        return res
+    # def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
+    #     # TODO: this can be removed
+    #     res = 0
+    #     for (idx, rec), extra_params in zip(
+    #         enumerate(subrecs), self.get_extra_parameters(n, **parameters)
+    #     ):
+    #         # if a parent parameter is not mapped to by some child parameter
+    #         # then it is assumed that the value of the parent parameter must be 0
+    #         if extra_params is None or any(
+    #             val != 0 and k in self.zeroes[idx] for k, val in parameters.items()
+    #         ):
+    #             continue
+    #         res += rec(n=n, **extra_params)
+    #     return res
 
     def get_terms(self, subterms: SubTerms, n: int) -> Terms:
         raise NotImplementedError
