@@ -36,6 +36,7 @@ if TYPE_CHECKING:
 Parameters = Tuple[int, ...]
 Terms = Counter[Parameters]  # all terms for a fixed n
 TermsCache = List[Terms]  # index n contains terms for n
+SubTerms = Tuple[Callable[[int], Terms], ...]
 
 __all__ = ("Rule", "VerificationRule")
 
@@ -60,7 +61,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             Tuple[Callable[..., Iterator[CombinatorialObjectType]], ...]
         ] = None
         self.subsamplers: Optional[Tuple[Callable[..., CombinatorialObjectType], ...]]
-        self.subterms: Tuple[Callable[int, Terms], ...]
+        self.subterms: Optional[SubTerms] = None
         self._children = children
         self._non_empty_children: Optional[Tuple[CombinatorialClassType, ...]] = None
 
@@ -221,13 +222,18 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             # TODO: test more thoroughly
             return True
 
-        def brute_force_count(
-            comb_class: CombinatorialClassType, n: int, **parameters
-        ) -> int:
+        def brute_force_terms(comb_class: CombinatorialClassType, n: int) -> Terms:
             assert set(comb_class.extra_parameters) == set(
                 parameters
             ), f"{comb_class.extra_parameters, set(parameters)}"
-            return len(list(comb_class.objects_of_size(n, **parameters)))
+            terms: Terms = Counter()
+            for params in comb_class.possible_parameters(n):
+                value = len(list(comb_class.objects_of_size(n, **params)))
+                if value == 0:
+                    continue
+                params_tuple = tuple(params[k] for k in comb_class.extra_parameters)
+                terms[params_tuple] = value
+            return terms
 
         def brute_force_generation(
             comb_class: CombinatorialClassType, n: int, **parameters: int
@@ -237,24 +243,20 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             ), f"{comb_class.extra_parameters, set(parameters)}"
             yield from comb_class.objects_of_size(n, **parameters)
 
-        actual_count = brute_force_count(self.comb_class, n, **parameters)
-        temprec = self.subrecs
-        self.subrecs = tuple(
-            partial(brute_force_count, child) for child in self.children
+        actual_terms = brute_force_terms(self.comb_class, n)
+        temp_subterms = self.subterms
+        self.subterms = tuple(
+            partial(brute_force_terms, child) for child in self.children
         )
-        rule_count = self.count_objects_of_size(n, **parameters)
-        self.subrecs = temprec
-        params_str = ", ".join(
-            [f"n = {n}"] + [f"{p} = {v}" for p, v in parameters.items()]
-        )
-        if actual_count != rule_count:
+        rule_terms = self.get_terms(n)
+        self.subrecs = temp_subterms
+        if actual_terms != rule_terms:
             raise SanityCheckFailure(
                 f"The following rule failed sanity check:\n"
                 f"{self}\n"
-                f"Failed with parameters:\n"
-                f"{params_str}\n"
-                f"The actual count is {actual_count}.\n"
-                f"The rule count is {rule_count}.",
+                f"Failed for size {n}\n"
+                f"The actual count is {actual_terms}.\n"
+                f"The rule count is {rule_terms}.",
             )
         tempgen = self.subgenerators
         self.subgenerators = tuple(
@@ -268,6 +270,9 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         self.subgenerators = tempgen
         actual_objects = set(
             list(brute_force_generation(self.comb_class, n, **parameters))
+        )
+        params_str = ", ".join(
+            [f"n = {n}"] + [f"{p} = {v}" for p, v in parameters.items()]
         )
         if actual_objects != rule_objects:
             raise SanityCheckFailure(
