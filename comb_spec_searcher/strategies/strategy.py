@@ -679,7 +679,8 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
     def __init__(self):
         super().__init__(ignore_parent=True)
 
-    def get_terms(self, comb_class: CombinatorialClass, n: int) -> Terms:
+    @staticmethod
+    def get_terms(comb_class: CombinatorialClass, n: int) -> Terms:
         if comb_class.extra_parameters:
             raise NotImplementedError
         if n == comb_class.minimum_size_of_object():
