@@ -565,6 +565,7 @@ def build_param_map(
             parent_pos = child_pos_to_parent_pos[pos]
             assert new_params[parent_pos] == 0
             new_params[parent_pos] = value
+        return tuple(new_params)
 
     return param_map
 
