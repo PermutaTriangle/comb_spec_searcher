@@ -13,7 +13,17 @@ used throughout to denote size.
 import abc
 from itertools import product
 from random import randint
-from typing import Callable, Dict, Generic, Iterable, Iterator, List, Optional, Tuple
+from typing import (
+    Callable,
+    Counter,
+    Dict,
+    Generic,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+)
 
 from sympy import Eq, Function
 
@@ -22,10 +32,13 @@ from ..combinatorial_class import CombinatorialClassType, CombinatorialObjectTyp
 __all__ = ("Constructor", "CartesianProduct", "DisjointUnion")
 
 
+Parameters = Tuple[int, ...]
 RelianceProfile = Tuple[Dict[str, Tuple[int, ...]], ...]
 SubGens = Tuple[Callable[..., Iterator[CombinatorialObjectType]], ...]
 SubRecs = Tuple[Callable[..., int], ...]
 SubSamplers = Tuple[Callable[..., CombinatorialObjectType], ...]
+Terms = Counter[Parameters]  # all terms for a fixed n
+SubTerms = Tuple[Callable[[int], Terms], ...]
 
 
 class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectType]):
@@ -49,6 +62,13 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
         """
         Return the count for the given parameters, assuming the children are
         counted by the subrecs given.
+        """
+        # TODO: can this method be removed?
+
+    @abc.abstractmethod
+    def get_terms(self, subterms: SubTerms, n: int) -> Terms:
+        """
+        Return the terms for n given the subterms of the children.
         """
 
     @abc.abstractmethod
@@ -136,6 +156,7 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
 
     def reliance_profile(self, n: int, **parameters: int) -> RelianceProfile:
         #  TODO: consider when parameters are subsets of each other etc
+        # TODO: should this go back to only on n? i.e. RelianceProfile = Tuple[int, ...]
         assert all(
             set(["n", *parameters]) == set(min_child_sizes)
             for min_child_sizes in self.min_child_sizes
@@ -244,6 +265,7 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         return res
 
     def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
+        # TODO: can this be removed?
         # The extra parameters variable maps each of the parent parameter to
         # the unique child that it was mapped to.
         res = 0
@@ -258,6 +280,9 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
                     break
             res += tmp
         return res
+
+    def get_terms(self, subterms: SubTerms, n: int) -> Terms:
+        raise NotImplementedError
 
     def get_sub_objects(
         self, subgens: SubGens, n: int, **parameters: int
@@ -396,6 +421,7 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         return res
 
     def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
+        # TODO: can this be removed?
         res = 0
         for (idx, rec), extra_params in zip(
             enumerate(subrecs), self.get_extra_parameters(n, **parameters)
@@ -408,6 +434,9 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
                 continue
             res += rec(n=n, **extra_params)
         return res
+
+    def get_terms(self, subterms: SubTerms, n: int) -> Terms:
+        raise NotImplementedError
 
     def get_sub_objects(
         self, subgens: SubGens, n: int, **parameters: int

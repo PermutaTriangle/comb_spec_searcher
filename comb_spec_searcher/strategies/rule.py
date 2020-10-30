@@ -12,6 +12,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
+    Counter,
     Dict,
     Generic,
     Iterator,
@@ -32,6 +33,9 @@ if TYPE_CHECKING:
     from .strategy import AbstractStrategy, Strategy, VerificationStrategy
     from .strategy_pack import StrategyPack
 
+Parameters = Tuple[int, ...]
+Terms = Counter[Parameters]  # all terms for a fixed n
+TermsCache = List[Terms]  # index n contains terms for n
 
 __all__ = ("Rule", "VerificationRule")
 
@@ -49,13 +53,14 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
     ):
         self.comb_class = comb_class
         self._strategy = strategy
-        self.count_cache: Dict[Any, int] = {}
+        self.terms_cache: TermsCache = []
         self.obj_cache: Dict[Any, List[CombinatorialObjectType]] = {}
         self.subrecs: Optional[Tuple[Callable[..., int], ...]] = None
         self.subgenerators: Optional[
             Tuple[Callable[..., Iterator[CombinatorialObjectType]], ...]
         ] = None
         self.subsamplers: Optional[Tuple[Callable[..., CombinatorialObjectType], ...]]
+        self.subterms: Tuple[Callable[int, Terms], ...]
         self._children = children
         self._non_empty_children: Optional[Tuple[CombinatorialClassType, ...]] = None
 
@@ -115,6 +120,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         self.subsamplers = tuple(
             get_subrule(child).random_sample_object_of_size for child in self.children
         )
+        self.subterms = tuple(get_subrule(child).get_terms for child in self.children)
 
     @property
     def children(self) -> Tuple[CombinatorialClassType, ...]:
@@ -158,6 +164,28 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         The function count the objects with respect to the parameters. The
         result is cached.
         """
+
+    @abc.abstractmethod
+    def _ensure_level(self, n: int) -> None:
+        """
+        Ensures the terms are computed and in the terms_cache upto size n.
+        """
+
+    def get_terms(self, n: int) -> Terms:
+        """
+        Return the terms for the given n.
+        """
+        self._ensure_level(n)
+        return self.terms_cache[n]
+
+    def count_objects_of_size(self, n: int, **parameters: int) -> int:
+        """
+        The function count the objects with respect to the parameters. The
+        result is cached.
+        """
+        terms = self.get_terms(n)
+        key = tuple(y for _, y in sorted(parameters.keys()))
+        return terms.get(key, 0)
 
     @abc.abstractmethod
     def get_equation(
@@ -376,73 +404,10 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         ), "reverse rule can only be created for equivalence rules"
         return ReverseRule(self)
 
-    def count_objects_of_size(self, n: int, **parameters: int) -> int:
-        """
-        The function count the objects with respect to the parameters. The
-        result is cached.
-        """
-        key = (n,) + tuple(sorted(parameters.items()))
-        assert sorted(["n"] + list(parameters)) == sorted(
-            ("n",) + self.comb_class.extra_parameters
-        ), (
-            "parameters did not match comb_class for the rule\n"
-            f"{self}\n"
-            f"parameters given: {list(parameters)}\n"
-            f"comb_class_parameters: {self.comb_class.extra_parameters}"
-        )
-        res = self.count_cache.get(key)
-        if res is None:
-            assert (
-                self.subrecs is not None
-            ), "you must call the set_subrecs function first"
-            try:
-                res = self.constructor.get_recurrence(self.subrecs, n, **parameters)
-            except AssertionError as e:
-                raise ValueError(f"issue with rule:\n {self}") from e
-            self.count_cache[key] = res
-            # THE FOLLOWING CODE SNIPPET IS FOR DEBUGGING PURPOSES
-        #     if self.comb_class.extra_parameters:
-        #         print(self)
-        #         print("n =", n, parameters)
-        #         if hasattr(self.constructor, "extra_parameters"):
-        #             print("parent->child params:", self.constructor.extra_parameters)
-        #         if hasattr(self.constructor, "split_parameters"):
-        #             print("parent->child params:", self.constructor.split_parameters)
-        #         if hasattr(self.constructor, "zeroes"):
-        #             print("zeroes:", self.constructor.zeroes)
-        #         if hasattr(self.constructor, "get_extra_parameters"):
-        #             print(
-        #                 "parameters_passed:",
-        #                 self.constructor.get_extra_parameters(n, **parameters),
-        #             )
-        #         fusion_attrs = [
-        #             "extra_parameters",
-        #             "reversed_extra_parameters",
-        #             "fuse_parameter",
-        #             "left_sided_parameters",
-        #             "right_sided_parameters",
-        #             "both_sided_parameters",
-        #             "rec_function",
-        #             "fusion_type",
-        #             "predeterminable_left_right_points",
-        #         ]
-        #         for string in fusion_attrs:
-        #             if hasattr(self.constructor, string):
-        #                 print(string + ":", getattr(self.constructor, string))
-        #         if isinstance(self.constructor, CartesianProduct):
-        #             print(list(self.constructor._valid_compositions(n, **parameters)))
-        #     print("result:", res)
-        # assert res == len(list(self.comb_class.objects_of_size(n, **parameters))), (
-        #     "counting failed for the rule \n{}\nparameters: n = {}, {}\n"
-        #     "computed {}, actual {}".format(
-        #         self,
-        #         n,
-        #         parameters,
-        #         res,
-        #         len(list(self.comb_class.objects_of_size(n, **parameters))),
-        #     )
-        # )
-        return res
+    def _ensure_level(self, n: int) -> None:
+        while n >= len(self.terms_cache):
+            terms = self.constructor.get_terms(self.subterms, len(self.terms_cache))
+            self.terms_cache.append(terms)
 
     def get_equation(
         self, get_function: Callable[[CombinatorialClassType], Function]
@@ -748,25 +713,10 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
     def is_equivalence() -> bool:
         return False
 
-    def count_objects_of_size(self, n: int, **parameters: int) -> int:
-        key = (n,) + tuple(sorted(parameters.items()))
-        assert set(parameters) == set(self.comb_class.extra_parameters)
-        res = self.count_cache.get(key)
-        if res is None:
-            res = self.strategy.count_objects_of_size(self.comb_class, n, **parameters)
-            self.count_cache[key] = res
-        # # THE FOLLOWING CODE SNIPPET IS FOR DEBUGGING PURPOSES
-        # assert res == len(list(self.comb_class.objects_of_size(n, **parameters))), (
-        #     "counting failed for the rule \n{}\nparameters: n = {}, {}\n"
-        #     "computed {}, actual {}".format(
-        #         self,
-        #         n,
-        #         parameters,
-        #         res,
-        #         len(list(self.comb_class.objects_of_size(n, **parameters))),
-        #     )
-        # )
-        return res
+    def _ensure_level(self, n: int) -> None:
+        while n >= len(self.terms_cache):
+            terms = self.strategy.get_terms(self.comb_class, len(self.terms_cache))
+            self.terms_cache.append(terms)
 
     def pack(self) -> "StrategyPack":
         return self.strategy.pack(self.comb_class)
