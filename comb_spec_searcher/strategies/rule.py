@@ -160,13 +160,6 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         return self._non_empty_children
 
     @abc.abstractmethod
-    def count_objects_of_size(self, n: int, **parameters: int) -> int:
-        """
-        The function count the objects with respect to the parameters. The
-        result is cached.
-        """
-
-    @abc.abstractmethod
     def _ensure_level(self, n: int) -> None:
         """
         Ensures the terms are computed and in the terms_cache upto size n.
@@ -185,8 +178,8 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         result is cached.
         """
         terms = self.get_terms(n)
-        key = tuple(y for _, y in sorted(parameters.keys()))
-        return terms.get(key, 0)
+        params_tuple = tuple(parameters[k] for k in self.comb_class.extra_parameters)
+        return terms[params_tuple]
 
     @abc.abstractmethod
     def get_equation(
@@ -249,7 +242,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             partial(brute_force_terms, child) for child in self.children
         )
         rule_terms = self.get_terms(n)
-        self.subrecs = temp_subterms
+        self.subterms = temp_subterms
         if actual_terms != rule_terms:
             raise SanityCheckFailure(
                 f"The following rule failed sanity check:\n"
@@ -410,6 +403,8 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         return ReverseRule(self)
 
     def _ensure_level(self, n: int) -> None:
+        if self.subterms is None:
+            raise RuntimeError("set_subrecs must be set first")
         while n >= len(self.terms_cache):
             terms = self.constructor.get_terms(self.subterms, len(self.terms_cache))
             self.terms_cache.append(terms)
