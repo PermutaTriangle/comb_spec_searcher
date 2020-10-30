@@ -11,6 +11,8 @@ Currently the constructors are implemented in one variable, namely 'n' which is
 used throughout to denote size.
 """
 import abc
+import functools
+import operator
 from itertools import product
 from random import randint
 from typing import (
@@ -23,16 +25,21 @@ from typing import (
     List,
     Optional,
     Tuple,
+    cast,
 )
 
 from sympy import Eq, Function
 
-from ..combinatorial_class import CombinatorialClassType, CombinatorialObjectType
+from comb_spec_searcher.combinatorial_class import (
+    CombinatorialClassType,
+    CombinatorialObjectType,
+)
 
 __all__ = ("Constructor", "CartesianProduct", "DisjointUnion")
 
 
 Parameters = Tuple[int, ...]
+ParametersMap = Callable[[Parameters], Parameters]
 RelianceProfile = Tuple[Dict[str, Tuple[int, ...]], ...]
 SubGens = Tuple[Callable[..., Iterator[CombinatorialObjectType]], ...]
 SubRecs = Tuple[Callable[..., int], ...]
@@ -119,6 +126,9 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
             self.extra_parameters = tuple(extra_parameters)
         else:
             self.extra_parameters = tuple(dict() for _ in children)
+        self._children_param_maps = build_children_param_maps(
+            parent, children, self.extra_parameters
+        )
 
         self.minimum_sizes = {"n": parent.minimum_size_of_object()}
         for k in parent.extra_parameters:
@@ -282,7 +292,39 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         return res
 
     def get_terms(self, subterms: SubTerms, n: int) -> Terms:
-        raise NotImplementedError
+        min_sizes = tuple(d["n"] for d in self.min_child_sizes)
+        max_sizes = tuple(d.get("n", None) for d in self.max_child_sizes)
+        return self._cartesian_push(
+            n, subterms, self._children_param_maps, min_sizes, max_sizes
+        )
+
+    @staticmethod
+    def _cartesian_push(
+        n: int,
+        children_terms: SubTerms,
+        children_param_maps: Tuple[ParametersMap, ...],
+        min_sizes: Tuple[int, ...],
+        max_sizes: Tuple[Optional[int], ...],
+    ) -> Terms:
+        new_terms: Terms = Counter()
+        size_compositions = compositions(n, len(children_terms), min_sizes, max_sizes)
+        for sizes in size_compositions:
+            children_size_caches: Iterator[Terms] = (
+                st(s) for st, s in zip(children_terms, sizes)
+            )
+            param_value_pairs_combinations = cast(
+                Iterator[Tuple[Tuple[Parameters, int], ...]],
+                product(*(c.items() for c in children_size_caches)),
+            )
+            for param_value_pairs in param_value_pairs_combinations:
+                new_param = vector_add(
+                    *(
+                        pmap(p)
+                        for pmap, (p, _) in zip(children_param_maps, param_value_pairs)
+                    )
+                )
+                new_terms[new_param] += prod((v for _, v in param_value_pairs))
+        return new_terms
 
     def get_sub_objects(
         self, subgens: SubGens, n: int, **parameters: int
@@ -370,7 +412,9 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
             self.extra_parameters = tuple(
                 dict() for _ in range(self.number_of_children)
             )
-
+        self._children_param_maps = build_children_param_maps(
+            parent, children, self.extra_parameters
+        )
         self.zeroes = tuple(
             frozenset(parent.extra_parameters) - frozenset(parameter.keys())
             for parameter in self.extra_parameters
@@ -436,7 +480,24 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         return res
 
     def get_terms(self, subterms: SubTerms, n: int) -> Terms:
-        raise NotImplementedError
+        return self._union_push(n, subterms, self._children_param_maps)
+
+    @staticmethod
+    def _union_push(
+        n: int,
+        children_terms: SubTerms,
+        children_param_maps: Tuple[ParametersMap, ...],
+    ) -> Terms:
+        """
+        Uses the `children_terms` functions to and the `children_param_maps` to compute
+        the terms of size `n`.
+        """
+        assert len(children_terms) == len(children_param_maps)
+        new_terms: Terms = Counter()
+        for child_terms, param_map in zip(children_terms, children_param_maps):
+            for param, value in child_terms(n).items():
+                new_terms[param_map(param)] += value
+        return new_terms
 
     def get_sub_objects(
         self, subgens: SubGens, n: int, **parameters: int
@@ -491,3 +552,92 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
 
     def __str__(self):
         return "disjoint union"
+
+
+##############################################
+# Functions that need to be sorted somewhere #
+##############################################
+
+
+def build_param_map(
+    child_pos_to_parent_pos: Tuple[int, ...], num_parent_params: int
+) -> ParametersMap:
+    """
+    Build the ParametersMap that will map according to the given child pos to parent
+    pos map given.
+    """
+
+    def param_map(param: Parameters) -> Parameters:
+        new_params = [0 for _ in range(num_parent_params)]
+        for pos, value in enumerate(param):
+            parent_pos = child_pos_to_parent_pos[pos]
+            assert new_params[parent_pos] == 0
+            new_params[parent_pos] = value
+
+    return param_map
+
+
+def build_children_param_maps(
+    parent: CombinatorialClassType,
+    children: Tuple[CombinatorialClassType, ...],
+    child_param_to_parent_param: Tuple[Dict[str, str], ...],
+) -> Tuple[ParametersMap, ...]:
+    map_list: List[ParametersMap] = []
+    num_parent_params = len(parent.extra_parameters)
+    parent_param_to_pos = {
+        param: pos for pos, param in enumerate(parent.extra_parameters)
+    }
+    for child, extra_param in zip(children, child_param_to_parent_param):
+        child_pos_to_parent_pos = tuple(
+            parent_param_to_pos[extra_param[child_param]]
+            for child_param in child.extra_parameters
+        )
+        map_list.append(build_param_map(child_pos_to_parent_pos, num_parent_params))
+    return tuple(map_list)
+
+
+def compositions(
+    n: int, k: int, min_sizes: Tuple[int, ...], max_sizes: Tuple[Optional[int], ...]
+) -> Iterator[Tuple[int, ...]]:
+    """
+    Iterator over all composition of n in k parts with the given max_sizes and
+    min_sizes.
+    """
+    if (
+        n < 0
+        or k <= 0
+        or n < sum(min_sizes)
+        or (
+            all(s is not None for s in max_sizes)
+            and sum(cast(Tuple[int, ...], max_sizes)) < n
+        )
+    ):
+        return
+    if k == 1:
+        assert (max_sizes[0] is None or max_sizes[0] >= n) and n >= min_sizes[0]
+        yield (n,)
+        return
+    max_size = max_sizes[0] if max_sizes[0] is not None else n
+    for i in range(min_sizes[0], max_size + 1):
+        yield from map(
+            (i,).__add__, compositions(n - i, k - 1, min_sizes[1:], max_sizes[1:])
+        )
+
+
+def vector_add(*args: Tuple[int, ...]) -> Tuple[int, ...]:
+    """
+    Perform vector addition on tuples.
+
+    >>> vector_add((1,), (1,), (1,), (2,))
+    (5,)
+    >>> vector_add((1, 2), (1, 3))
+    (2, 5)
+    >>> vector_add((1, 2, 3))
+    (1, 2, 3)
+    """
+    return tuple(sum(vals) for vals in zip(*args))
+
+
+def prod(values: Iterable[int]) -> int:
+    """Compute the product of the integers."""
+    return functools.reduce(operator.mul, values)
