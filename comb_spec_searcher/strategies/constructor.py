@@ -577,6 +577,9 @@ def build_param_map(
         new_params = [0 for _ in range(num_parent_params)]
         for pos, value in enumerate(param):
             parent_pos = child_pos_to_parent_pos[pos]
+            if parent_pos is None:
+                assert value == 0
+                continue
             assert new_params[parent_pos] == 0
             new_params[parent_pos] = value
         return tuple(new_params)
@@ -598,6 +601,8 @@ def build_children_param_maps(
         reverse_extra_param = {b: a for a, b in extra_param.items()}
         child_pos_to_parent_pos = tuple(
             parent_param_to_pos[reverse_extra_param[child_param]]
+            if child_param in reverse_extra_param
+            else None
             for child_param in child.extra_parameters
         )
         map_list.append(build_param_map(child_pos_to_parent_pos, num_parent_params))
