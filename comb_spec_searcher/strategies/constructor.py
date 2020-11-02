@@ -13,6 +13,7 @@ used throughout to denote size.
 import abc
 import functools
 import operator
+from collections import defaultdict
 from itertools import product
 from random import randint
 from typing import (
@@ -118,9 +119,7 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
             self.extra_parameters = tuple(extra_parameters)
         else:
             self.extra_parameters = tuple(dict() for _ in children)
-        self._children_param_maps = build_children_param_maps(
-            parent, children, self.extra_parameters
-        )
+        self._children_param_maps = self._build_children_param_map(parent, children)
 
         self.minimum_sizes = {"n": parent.minimum_size_of_object()}
         for k in parent.extra_parameters:
@@ -317,6 +316,53 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
                 )
                 new_terms[new_param] += prod((v for _, v in param_value_pairs))
         return new_terms
+
+    def _build_children_param_map(
+        self,
+        parent: CombinatorialClassType,
+        children: Tuple[CombinatorialClassType, ...],
+    ) -> Tuple[ParametersMap, ...]:
+        map_list: List[ParametersMap] = []
+        num_parent_params = len(parent.extra_parameters)
+        parent_param_to_pos = {
+            param: pos for pos, param in enumerate(parent.extra_parameters)
+        }
+        for child, extra_param in zip(children, self.extra_parameters):
+            reversed_extra_param: Dict[str, List[str]] = defaultdict(list)
+            for parent_var, child_var in extra_param.items():
+                reversed_extra_param[child_var].append(parent_var)
+            child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...] = tuple(
+                tuple(
+                    map(
+                        parent_param_to_pos.__getitem__,
+                        reversed_extra_param[child_param],
+                    )
+                )
+                for child_param in child.extra_parameters
+            )
+            map_list.append(
+                self._build_param_map(child_pos_to_parent_pos, num_parent_params)
+            )
+        return tuple(map_list)
+
+    @staticmethod
+    def _build_param_map(
+        child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...], num_parent_params: int
+    ) -> ParametersMap:
+        """
+        Build the ParametersMap that will map according to the given child pos to parent
+        pos map given.
+        """
+
+        def param_map(param: Parameters) -> Parameters:
+            new_params = [0 for _ in range(num_parent_params)]
+            for pos, value in enumerate(param):
+                parent_pos = child_pos_to_parent_pos[pos]
+                for p in parent_pos:
+                    new_params[p] += value
+            return tuple(new_params)
+
+        return param_map
 
     def get_sub_objects(
         self, subgens: SubGens, n: int, **parameters: int
