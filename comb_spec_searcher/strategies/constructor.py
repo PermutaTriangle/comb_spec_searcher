@@ -433,9 +433,7 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
             self.extra_parameters = tuple(
                 dict() for _ in range(self.number_of_children)
             )
-        self._children_param_maps = build_children_param_maps(
-            parent, children, self.extra_parameters
-        )
+        self._children_param_maps = self._build_children_param_maps(parent, children)
         self.zeroes = tuple(
             frozenset(parent.extra_parameters) - frozenset(parameter.keys())
             for parameter in self.extra_parameters
@@ -505,6 +503,54 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
                 new_terms[param_map(param)] += value
         return new_terms
 
+    @staticmethod
+    def _build_param_map(
+        child_pos_to_parent_pos: Tuple[Optional[int], ...], num_parent_params: int
+    ) -> ParametersMap:
+        """
+        Build the ParametersMap that will map according to the given child pos to parent
+        pos map given.
+
+        If a child pos maps to None, then the value of the parameter must be 0 at all
+        times.
+        """
+
+        def param_map(param: Parameters) -> Parameters:
+            new_params = [0 for _ in range(num_parent_params)]
+            for pos, value in enumerate(param):
+                parent_pos = child_pos_to_parent_pos[pos]
+                if parent_pos is None:
+                    assert value == 0
+                    continue
+                assert new_params[parent_pos] == 0
+                new_params[parent_pos] = value
+            return tuple(new_params)
+
+        return param_map
+
+    def _build_children_param_maps(
+        self,
+        parent: CombinatorialClassType,
+        children: Tuple[CombinatorialClassType, ...],
+    ) -> Tuple[ParametersMap, ...]:
+        map_list: List[ParametersMap] = []
+        num_parent_params = len(parent.extra_parameters)
+        parent_param_to_pos = {
+            param: pos for pos, param in enumerate(parent.extra_parameters)
+        }
+        for child, extra_param in zip(children, self.extra_parameters):
+            reverse_extra_param = {b: a for a, b in extra_param.items()}
+            child_pos_to_parent_pos = tuple(
+                parent_param_to_pos[reverse_extra_param[child_param]]
+                if child_param in reverse_extra_param
+                else None
+                for child_param in child.extra_parameters
+            )
+            map_list.append(
+                self._build_param_map(child_pos_to_parent_pos, num_parent_params)
+            )
+        return tuple(map_list)
+
     def get_sub_objects(
         self, subgens: SubGens, n: int, **parameters: int
     ) -> Iterator[Tuple[Optional[CombinatorialObjectType], ...]]:
@@ -563,52 +609,6 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
 ##############################################
 # Functions that need to be sorted somewhere #
 ##############################################
-
-
-def build_param_map(
-    child_pos_to_parent_pos: Tuple[Optional[int], ...], num_parent_params: int
-) -> ParametersMap:
-    """
-    Build the ParametersMap that will map according to the given child pos to parent
-    pos map given.
-
-    If a child pos maps to None, then the value of the parameter must be 0 at all times.
-    """
-
-    def param_map(param: Parameters) -> Parameters:
-        new_params = [0 for _ in range(num_parent_params)]
-        for pos, value in enumerate(param):
-            parent_pos = child_pos_to_parent_pos[pos]
-            if parent_pos is None:
-                assert value == 0
-                continue
-            assert new_params[parent_pos] == 0
-            new_params[parent_pos] = value
-        return tuple(new_params)
-
-    return param_map
-
-
-def build_children_param_maps(
-    parent: CombinatorialClassType,
-    children: Tuple[CombinatorialClassType, ...],
-    parent_to_child_params: Tuple[Dict[str, str], ...],
-) -> Tuple[ParametersMap, ...]:
-    map_list: List[ParametersMap] = []
-    num_parent_params = len(parent.extra_parameters)
-    parent_param_to_pos = {
-        param: pos for pos, param in enumerate(parent.extra_parameters)
-    }
-    for child, extra_param in zip(children, parent_to_child_params):
-        reverse_extra_param = {b: a for a, b in extra_param.items()}
-        child_pos_to_parent_pos = tuple(
-            parent_param_to_pos[reverse_extra_param[child_param]]
-            if child_param in reverse_extra_param
-            else None
-            for child_param in child.extra_parameters
-        )
-        map_list.append(build_param_map(child_pos_to_parent_pos, num_parent_params))
-    return tuple(map_list)
 
 
 def compositions(
