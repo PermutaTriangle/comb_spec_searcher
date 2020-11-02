@@ -216,9 +216,6 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             return True
 
         def brute_force_terms(comb_class: CombinatorialClassType, n: int) -> Terms:
-            assert set(comb_class.extra_parameters) == set(
-                parameters
-            ), f"{comb_class.extra_parameters, set(parameters)}"
             terms: Terms = Counter()
             for params in comb_class.possible_parameters(n):
                 value = len(list(comb_class.objects_of_size(n, **params)))
