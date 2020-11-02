@@ -566,11 +566,13 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
 
 
 def build_param_map(
-    child_pos_to_parent_pos: Tuple[int, ...], num_parent_params: int
+    child_pos_to_parent_pos: Tuple[Optional[int], ...], num_parent_params: int
 ) -> ParametersMap:
     """
     Build the ParametersMap that will map according to the given child pos to parent
     pos map given.
+
+    If a child pos maps to None, then the value of the parameter must be 0 at all times.
     """
 
     def param_map(param: Parameters) -> Parameters:
