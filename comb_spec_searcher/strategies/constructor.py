@@ -505,7 +505,8 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
 
     @staticmethod
     def _build_param_map(
-        child_pos_to_parent_pos: Tuple[Optional[int], ...], num_parent_params: int
+        child_pos_to_parent_pos: Tuple[Optional[Tuple[int, ...]], ...],
+        num_parent_params: int,
     ) -> ParametersMap:
         """
         Build the ParametersMap that will map according to the given child pos to parent
@@ -522,8 +523,9 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
                 if parent_pos is None:
                     assert value == 0
                     continue
-                assert new_params[parent_pos] == 0
-                new_params[parent_pos] = value
+                for p in parent_pos:
+                    assert new_params[p] == 0
+                    new_params[p] = value
             return tuple(new_params)
 
         return param_map
@@ -539,10 +541,17 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
             param: pos for pos, param in enumerate(parent.extra_parameters)
         }
         for child, extra_param in zip(children, self.extra_parameters):
-            reverse_extra_param = {b: a for a, b in extra_param.items()}
-            child_pos_to_parent_pos = tuple(
-                parent_param_to_pos[reverse_extra_param[child_param]]
-                if child_param in reverse_extra_param
+            reversed_extra_param: Dict[str, List[str]] = defaultdict(list)
+            for parent_var, child_var in extra_param.items():
+                reversed_extra_param[child_var].append(parent_var)
+            child_pos_to_parent_pos: Tuple[Optional[Tuple[int, ...]], ...] = tuple(
+                tuple(
+                    map(
+                        parent_param_to_pos.__getitem__,
+                        reversed_extra_param[child_param],
+                    )
+                )
+                if child_param in reversed_extra_param
                 else None
                 for child_param in child.extra_parameters
             )
