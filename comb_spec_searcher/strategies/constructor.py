@@ -265,23 +265,6 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
             res.append(extra_params)
         return res
 
-    # def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
-    #     # TODO: this can be removed
-    #     # The extra parameters variable maps each of the parent parameter to
-    #     # the unique child that it was mapped to.
-    #     res = 0
-    #     for child_parameters in self._valid_compositions(n, **parameters):
-    #         tmp = 1
-    #         extra_parameters = self.get_extra_parameters(child_parameters)
-    #         if extra_parameters is None:
-    #             continue
-    #         for rec, extra_params in zip(subrecs, extra_parameters):
-    #             tmp *= rec(n=extra_params.pop("n"), **extra_params)
-    #             if tmp == 0:
-    #                 break
-    #         res += tmp
-    #     return res
-
     def get_terms(self, subterms: SubTerms, n: int) -> Terms:
         min_sizes = tuple(d["n"] for d in self.min_child_sizes)
         max_sizes = tuple(d.get("n", None) for d in self.max_child_sizes)
@@ -502,21 +485,6 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
             res.append(None)
         return res
 
-    # def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
-    #     # TODO: this can be removed
-    #     res = 0
-    #     for (idx, rec), extra_params in zip(
-    #         enumerate(subrecs), self.get_extra_parameters(n, **parameters)
-    #     ):
-    #         # if a parent parameter is not mapped to by some child parameter
-    #         # then it is assumed that the value of the parent parameter must be 0
-    #         if extra_params is None or any(
-    #             val != 0 and k in self.zeroes[idx] for k, val in parameters.items()
-    #         ):
-    #             continue
-    #         res += rec(n=n, **extra_params)
-    #     return res
-
     def get_terms(self, subterms: SubTerms, n: int) -> Terms:
         return self._union_push(n, subterms, self._children_param_maps)
 
@@ -619,16 +587,17 @@ def build_param_map(
 def build_children_param_maps(
     parent: CombinatorialClassType,
     children: Tuple[CombinatorialClassType, ...],
-    child_param_to_parent_param: Tuple[Dict[str, str], ...],
+    parent_to_child_params: Tuple[Dict[str, str], ...],
 ) -> Tuple[ParametersMap, ...]:
     map_list: List[ParametersMap] = []
     num_parent_params = len(parent.extra_parameters)
     parent_param_to_pos = {
         param: pos for pos, param in enumerate(parent.extra_parameters)
     }
-    for child, extra_param in zip(children, child_param_to_parent_param):
+    for child, extra_param in zip(children, parent_to_child_params):
+        reverse_extra_param = {b: a for a, b in extra_param.items()}
         child_pos_to_parent_pos = tuple(
-            parent_param_to_pos[extra_param[child_param]]
+            parent_param_to_pos[reverse_extra_param[child_param]]
             for child_param in child.extra_parameters
         )
         map_list.append(build_param_map(child_pos_to_parent_pos, num_parent_params))

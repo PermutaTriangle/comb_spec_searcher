@@ -34,7 +34,7 @@ from .strategies import (
     VerificationRule,
     VerificationStrategy,
 )
-from .strategies.rule import AbstractRule
+from .strategies.rule import AbstractRule, Terms
 from .utils import (
     RecursionLimit,
     maple_equations,
@@ -394,6 +394,14 @@ class CombinatorialSpecification(
         limit = n * self.number_of_rules()
         with RecursionLimit(limit):
             return self.root_rule.count_objects_of_size(n, **parameters)
+
+    def get_terms(self, n: int) -> Terms:
+        """
+        Return the terms for given n.
+        """
+        if not self._subrules_set:
+            self._set_subrules()
+        return self.root_rule.get_terms(n)
 
     def generate_objects_of_size(
         self, n: int, **parameters

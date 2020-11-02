@@ -634,7 +634,7 @@ class VerificationStrategy(
         """
         if not self.verified(comb_class):
             raise StrategyDoesNotApply("The combinatorial class is not verified")
-        return self.get_specification(comb_class).root_rule.get_terms(n)
+        return self.get_specification(comb_class).get_terms(n)
 
     def generate_objects_of_size(
         self, comb_class: CombinatorialClassType, n: int, **parameters: int
