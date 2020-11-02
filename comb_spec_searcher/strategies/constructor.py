@@ -19,6 +19,7 @@ from random import randint
 from typing import (
     Callable,
     Counter,
+    DefaultDict,
     Dict,
     Generic,
     Iterable,
@@ -43,6 +44,8 @@ Parameters = Tuple[int, ...]
 ParametersMap = Callable[[Parameters], Parameters]
 RelianceProfile = Tuple[Dict[str, Tuple[int, ...]], ...]
 SubGens = Tuple[Callable[..., Iterator[CombinatorialObjectType]], ...]
+Objects = DefaultDict[Parameters, List[CombinatorialObjectType]]
+SubObjects = Tuple[Callable[[int], Objects], ...]
 SubRecs = Tuple[Callable[..., int], ...]
 SubSamplers = Tuple[Callable[..., CombinatorialObjectType], ...]
 Terms = Counter[Parameters]  # all terms for a fixed n
@@ -73,9 +76,14 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
 
     @abc.abstractmethod
     def get_sub_objects(
-        self, subgens: SubGens, n: int, **parameters: int
-    ) -> Iterator[Tuple[Optional[CombinatorialObjectType], ...]]:
-        """Return the subobjs/image of the bijection implied by the constructor."""
+        self, subobjs: SubObjects, n: int
+    ) -> Iterator[
+        Tuple[Parameters, Tuple[List[Optional[CombinatorialObjectType]], ...]]
+    ]:
+        """
+        Iterate over all the possibe subobjs/image of the bijection implied by
+        the constructor together with the parameters.
+        """
 
     @abc.abstractmethod
     def random_sample_sub_objects(
@@ -347,20 +355,29 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
 
         return param_map
 
+    # def get_sub_objects(
+    #     self, subgens: SubGens, n: int, **parameters: int
+    # ) -> Iterator[Tuple[CombinatorialObjectType, ...]]:
+    #     for child_parameters in self._valid_compositions(n, **parameters):
+    #         extra_parameters = self.get_extra_parameters(child_parameters)
+    #         if extra_parameters is None:
+    #             continue
+    #         for objs in product(
+    #             *[
+    #                 gen(n=extra_params.pop("n"), **extra_params)
+    #                 for gen, extra_params in zip(subgens, extra_parameters)
+    #             ]
+    #         ):
+    #             yield tuple(objs)
+
     def get_sub_objects(
-        self, subgens: SubGens, n: int, **parameters: int
-    ) -> Iterator[Tuple[CombinatorialObjectType, ...]]:
-        for child_parameters in self._valid_compositions(n, **parameters):
-            extra_parameters = self.get_extra_parameters(child_parameters)
-            if extra_parameters is None:
-                continue
-            for objs in product(
-                *[
-                    gen(n=extra_params.pop("n"), **extra_params)
-                    for gen, extra_params in zip(subgens, extra_parameters)
-                ]
-            ):
-                yield tuple(objs)
+        self, subobjs: SubObjects, n: int
+    ) -> Iterator[
+        Tuple[Parameters, Tuple[List[Optional[CombinatorialObjectType]], ...]]
+    ]:
+        raise NotImplementedError
+        # cartesian_push_objects?
+        #  TODO: once new version implemented, delete above commented out old function
 
     def random_sample_sub_objects(
         self,
@@ -560,20 +577,29 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
             )
         return tuple(map_list)
 
+    # def get_sub_objects(
+    #     self, subgens: SubGens, n: int, **parameters: int
+    # ) -> Iterator[Tuple[Optional[CombinatorialObjectType], ...]]:
+    #     for (idx, subgen), extra_params in zip(
+    #         enumerate(subgens), self.get_extra_parameters(n, **parameters)
+    #     ):
+    #         if extra_params is None or any(
+    #             val != 0 and k in self.zeroes[idx] for k, val in parameters.items()
+    #         ):
+    #             continue
+    #         for gp in subgen(n, **extra_params):
+    #             yield tuple(None for _ in range(idx)) + (gp,) + tuple(
+    #                 None for _ in range(len(subgens) - idx - 1)
+    #             )
+
     def get_sub_objects(
-        self, subgens: SubGens, n: int, **parameters: int
-    ) -> Iterator[Tuple[Optional[CombinatorialObjectType], ...]]:
-        for (idx, subgen), extra_params in zip(
-            enumerate(subgens), self.get_extra_parameters(n, **parameters)
-        ):
-            if extra_params is None or any(
-                val != 0 and k in self.zeroes[idx] for k, val in parameters.items()
-            ):
-                continue
-            for gp in subgen(n, **extra_params):
-                yield tuple(None for _ in range(idx)) + (gp,) + tuple(
-                    None for _ in range(len(subgens) - idx - 1)
-                )
+        self, subobjs: SubObjects, n: int
+    ) -> Iterator[
+        Tuple[Parameters, Tuple[List[Optional[CombinatorialObjectType]], ...]]
+    ]:
+        raise NotImplementedError
+        # disjoint_push_objects?
+        #  TODO: once new version implemented, delete above commented out old function
 
     def random_sample_sub_objects(
         self,

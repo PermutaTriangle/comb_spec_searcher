@@ -6,13 +6,15 @@ calling the Strategy class and storing its results.
 A CombinatorialSpecification is (more or less) a set of Rule.
 """
 import abc
+from collections import defaultdict
 from functools import partial
+from itertools import product
 from random import randint
 from typing import (
     TYPE_CHECKING,
-    Any,
     Callable,
     Counter,
+    DefaultDict,
     Dict,
     Generic,
     Iterator,
@@ -34,8 +36,11 @@ if TYPE_CHECKING:
     from .strategy_pack import StrategyPack
 
 Parameters = Tuple[int, ...]
+Objects = DefaultDict[Parameters, List[CombinatorialObjectType]]
+ObjectsCache = List[Objects]
 Terms = Counter[Parameters]  # all terms for a fixed n
 TermsCache = List[Terms]  # index n contains terms for n
+SubObjects = Tuple[Callable[[int], Objects], ...]
 SubTerms = Tuple[Callable[[int], Terms], ...]
 
 __all__ = ("Rule", "VerificationRule")
@@ -55,13 +60,14 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         self.comb_class = comb_class
         self._strategy = strategy
         self.terms_cache: TermsCache = []
-        self.obj_cache: Dict[Any, List[CombinatorialObjectType]] = {}
+        self.objects_cache: ObjectsCache = []
         self.subrecs: Optional[Tuple[Callable[..., int], ...]] = None
         self.subgenerators: Optional[
             Tuple[Callable[..., Iterator[CombinatorialObjectType]], ...]
         ] = None
         self.subsamplers: Optional[Tuple[Callable[..., CombinatorialObjectType], ...]]
         self.subterms: Optional[SubTerms] = None
+        self.subobjects: Optional[SubObjects] = None
         self._children = children
         self._non_empty_children: Optional[Tuple[CombinatorialClassType, ...]] = None
 
@@ -115,11 +121,11 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         self.subrecs = tuple(
             get_subrule(child).count_objects_of_size for child in self.children
         )
-        self.subgenerators = tuple(
-            get_subrule(child).generate_objects_of_size for child in self.children
-        )
         self.subsamplers = tuple(
             get_subrule(child).random_sample_object_of_size for child in self.children
+        )
+        self.subobjects = tuple(
+            get_subrule(child).get_objects for child in self.children
         )
         self.subterms = tuple(get_subrule(child).get_terms for child in self.children)
 
@@ -190,6 +196,18 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         """
 
     @abc.abstractmethod
+    def _ensure_level_objects(self, n: int) -> None:
+        """
+        Ensures the objects are computed and in the objects cache upto size n.
+        """
+
+    def get_objects(self, n: int) -> Objects:
+        """
+        Return the objects for the given n.
+        """
+        self._ensure_level_objects(n)
+        return self.objects_cache[n]
+
     def generate_objects_of_size(
         self, n: int, **parameters: int
     ) -> Iterator[CombinatorialObjectType]:
@@ -197,6 +215,9 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         Generate the objects by using the underlying bijection between the
         parent and children.
         """
+        objects = self.get_objects(n)
+        params_tuple = tuple(parameters[k] for k in self.comb_class.extra_parameters)
+        yield from objects[params_tuple]
 
     @abc.abstractmethod
     def random_sample_object_of_size(
@@ -204,7 +225,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
     ) -> CombinatorialObjectType:
         """Return a random objects of the give size."""
 
-    def sanity_check(self, n: int, **parameters: int) -> bool:
+    def sanity_check(self, n: int) -> bool:
         """
         Sanity check that this is a valid rule.
 
@@ -225,13 +246,12 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
                 terms[params_tuple] = value
             return terms
 
-        def brute_force_generation(
-            comb_class: CombinatorialClassType, n: int, **parameters: int
-        ) -> Iterator[CombinatorialObjectType]:
-            assert set(comb_class.extra_parameters) == set(
-                parameters
-            ), f"{comb_class.extra_parameters, set(parameters)}"
-            yield from comb_class.objects_of_size(n, **parameters)
+        def brute_force_objects(comb_class: CombinatorialClassType, n: int) -> Objects:
+            objects: Objects = defaultdict(list)
+            for params in comb_class.possible_parameters(n):
+                params_tuple = tuple(params[k] for k in comb_class.extra_parameters)
+                objects[params_tuple].extend(comb_class.objects_of_size(n, **params))
+            return objects
 
         actual_terms = brute_force_terms(self.comb_class, n)
         temp_subterms = self.subterms
@@ -248,29 +268,24 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
                 f"The actual count is {actual_terms}.\n"
                 f"The rule count is {rule_terms}.",
             )
-        tempgen = self.subgenerators
-        self.subgenerators = tuple(
-            partial(brute_force_generation, child) for child in self.children
+        tempobjects = self.subobjects
+        self.subobjects = tuple(
+            partial(brute_force_objects, child) for child in self.children
         )
         try:
-            rule_objects = set(list(self.generate_objects_of_size(n, **parameters)))
+            rule_objects = self.get_objects(n)
         except NotImplementedError:
             # Skipping testing rules that have not implemented object generation.
             return True
-        self.subgenerators = tempgen
-        actual_objects = set(
-            list(brute_force_generation(self.comb_class, n, **parameters))
-        )
-        params_str = ", ".join(
-            [f"n = {n}"] + [f"{p} = {v}" for p, v in parameters.items()]
-        )
+        self.subobjects = tempobjects
+        actual_objects = brute_force_objects(self.comb_class, n)
         if actual_objects != rule_objects:
             raise SanityCheckFailure(
                 f"The following rule failed sanity check:\n"
                 f"{self}\n"
-                f"Failed with parameters:\n"
-                f"{params_str}\n"
-                f"The rule generated the wrong objects."
+                f"Failed for size {n}:\n"
+                f"The actual objects are {actual_objects}\n"
+                f"The rule generated objects {rule_objects}."
             )
         return True
 
@@ -416,29 +431,17 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         rhs_funcs = tuple(get_function(comb_class) for comb_class in self.children)
         return self.constructor.get_equation(lhs_func, rhs_funcs)
 
-    def generate_objects_of_size(
-        self, n: int, **parameters: int
-    ) -> Iterator[CombinatorialObjectType]:
-        """
-        Generate the objects by using the underlying bijection between the
-        parent and children.
-        """
-        key = (n,) + tuple(sorted(parameters.items()))
-        res = self.obj_cache.get(key)
-        if res is not None:
-            yield from res
-            return
-        assert (
-            self.subgenerators is not None
-        ), "you must call the set_subrecs function first"
-        res = []
-        for subobjs in self.constructor.get_sub_objects(
-            self.subgenerators, n, **parameters
-        ):
-            for obj in self.backward_map(subobjs):
-                yield obj
-                res.append(obj)
-        self.obj_cache[key] = res
+    def _ensure_level_objects(self, n: int) -> None:
+        if self.subobjects is None:
+            raise RuntimeError("set_subrecs must be set first")
+        while n >= len(self.objects_cache):
+            objects: Objects = defaultdict(list)
+            for parameters, subobjects in self.constructor.get_sub_objects(
+                self.subobjects, len(self.objects_cache)
+            ):
+                for sub_objs in product(*subobjects):
+                    objects[parameters].extend(self.backward_map(sub_objs))
+            self.objects_cache.append(objects)
 
     def random_sample_object_of_size(
         self, n: int, **parameters: int
@@ -715,6 +718,15 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
             terms = self.strategy.get_terms(self.comb_class, len(self.terms_cache))
             self.terms_cache.append(terms)
 
+    def _ensure_level_objects(self, n: int) -> None:
+        if self.subobjects is None:
+            raise RuntimeError("set_subrecs must be set first")
+        while n >= len(self.objects_cache):
+            objects = self.strategy.get_objects(
+                self.comb_class, len(self.objects_cache)
+            )
+            self.objects_cache.append(objects)
+
     def pack(self) -> "StrategyPack":
         return self.strategy.pack(self.comb_class)
 
@@ -725,22 +737,6 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
     ) -> Eq:
         lhs_func = get_function(self.comb_class)
         return Eq(lhs_func, self.strategy.get_genf(self.comb_class, funcs))
-
-    def generate_objects_of_size(
-        self, n: int, **parameters: int
-    ) -> Iterator[CombinatorialObjectType]:
-        key = (n,) + tuple(sorted(parameters.items()))
-        res = self.obj_cache.get(key)
-        if res is not None:
-            yield from res
-            return
-        res = []
-        for obj in self.strategy.generate_objects_of_size(
-            self.comb_class, n, **parameters
-        ):
-            yield obj
-            res.append(obj)
-        self.obj_cache[key] = res
 
     def random_sample_object_of_size(
         self, n: int, **parameters: int

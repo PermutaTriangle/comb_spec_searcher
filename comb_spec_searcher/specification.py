@@ -34,7 +34,7 @@ from .strategies import (
     VerificationRule,
     VerificationStrategy,
 )
-from .strategies.rule import AbstractRule, Terms
+from .strategies.rule import AbstractRule, Objects, Terms
 from .utils import (
     RecursionLimit,
     maple_equations,
@@ -403,6 +403,14 @@ class CombinatorialSpecification(
             self._set_subrules()
         return self.root_rule.get_terms(n)
 
+    def get_objects(self, n: int) -> Objects:
+        """
+        Return the objects for given n.
+        """
+        if not self._subrules_set:
+            self._set_subrules()
+        return self.root_rule.get_objects(n)
+
     def generate_objects_of_size(
         self, n: int, **parameters
     ) -> Iterator[CombinatorialObjectType]:
@@ -440,11 +448,7 @@ class CombinatorialSpecification(
         if not self._subrules_set:
             self._set_subrules()
         return all(
-            all(
-                rule.sanity_check(n, **parameters)
-                for rule in self.rules_dict.values()
-                for parameters in rule.comb_class.possible_parameters(n)
-            )
+            all(rule.sanity_check(n) for rule in self.rules_dict.values())
             for n in range(length + 1)
         )
 
