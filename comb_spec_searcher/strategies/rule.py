@@ -251,6 +251,8 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             for params in comb_class.possible_parameters(n):
                 params_tuple = tuple(params[k] for k in comb_class.extra_parameters)
                 objects[params_tuple].extend(comb_class.objects_of_size(n, **params))
+                if not objects[params_tuple]:
+                    objects.pop(params_tuple)
             return objects
 
         actual_terms = brute_force_terms(self.comb_class, n)
