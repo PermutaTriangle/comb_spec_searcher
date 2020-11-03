@@ -721,8 +721,6 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
             self.terms_cache.append(terms)
 
     def _ensure_level_objects(self, n: int) -> None:
-        if self.subobjects is None:
-            raise RuntimeError("set_subrecs must be set first")
         while n >= len(self.objects_cache):
             objects = self.strategy.get_objects(
                 self.comb_class, len(self.objects_cache)
