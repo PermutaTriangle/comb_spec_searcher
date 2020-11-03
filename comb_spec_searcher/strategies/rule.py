@@ -8,7 +8,7 @@ A CombinatorialSpecification is (more or less) a set of Rule.
 import abc
 from collections import defaultdict
 from functools import partial
-from itertools import product
+from itertools import chain, product
 from random import randint
 from typing import (
     TYPE_CHECKING,
@@ -281,6 +281,8 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             return True
         self.subobjects = tempobjects
         actual_objects = brute_force_objects(self.comb_class, n)
+        for obj_list in chain(rule_objects.values(), actual_objects.values()):
+            obj_list.sort()
         if actual_objects != rule_objects:
             raise SanityCheckFailure(
                 f"The following rule failed sanity check:\n"
