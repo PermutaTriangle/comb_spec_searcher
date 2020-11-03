@@ -380,7 +380,11 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
                         )
                     )
                 )
-                yield (new_param, tuple(objs for _, objs in param_objs_pairs))
+                children_objs = cast(
+                    Iterator[List[Optional[CombinatorialObjectType]]],
+                    (objs for _, objs in param_objs_pairs),
+                )
+                yield (new_param, tuple(children_objs))
 
     def random_sample_sub_objects(
         self,
