@@ -355,29 +355,32 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
 
         return param_map
 
-    # def get_sub_objects(
-    #     self, subgens: SubGens, n: int, **parameters: int
-    # ) -> Iterator[Tuple[CombinatorialObjectType, ...]]:
-    #     for child_parameters in self._valid_compositions(n, **parameters):
-    #         extra_parameters = self.get_extra_parameters(child_parameters)
-    #         if extra_parameters is None:
-    #             continue
-    #         for objs in product(
-    #             *[
-    #                 gen(n=extra_params.pop("n"), **extra_params)
-    #                 for gen, extra_params in zip(subgens, extra_parameters)
-    #             ]
-    #         ):
-    #             yield tuple(objs)
-
     def get_sub_objects(
         self, subobjs: SubObjects, n: int
     ) -> Iterator[
         Tuple[Parameters, Tuple[List[Optional[CombinatorialObjectType]], ...]]
     ]:
-        raise NotImplementedError
-        # cartesian_push_objects?
-        #  TODO: once new version implemented, delete above commented out old function
+        min_sizes = tuple(d["n"] for d in self.min_child_sizes)
+        max_sizes = tuple(d.get("n", None) for d in self.max_child_sizes)
+        size_compositions = compositions(n, len(subobjs), min_sizes, max_sizes)
+        for sizes in size_compositions:
+            children_objs_caches: Iterator[Objects] = (
+                sobj(s) for sobj, s in zip(subobjs, sizes)
+            )
+            param_objs_pairs_combinations = cast(
+                Iterator[Tuple[Tuple[Parameters, List[CombinatorialObjectType]], ...]],
+                product(*(c.items() for c in children_objs_caches)),
+            )
+            for param_objs_pairs in param_objs_pairs_combinations:
+                new_param = vector_add(
+                    *(
+                        pmap(p)
+                        for pmap, (p, _) in zip(
+                            self._children_param_maps, param_objs_pairs
+                        )
+                    )
+                )
+                yield (new_param, tuple(objs for _, objs in param_objs_pairs))
 
     def random_sample_sub_objects(
         self,
@@ -577,29 +580,19 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
             )
         return tuple(map_list)
 
-    # def get_sub_objects(
-    #     self, subgens: SubGens, n: int, **parameters: int
-    # ) -> Iterator[Tuple[Optional[CombinatorialObjectType], ...]]:
-    #     for (idx, subgen), extra_params in zip(
-    #         enumerate(subgens), self.get_extra_parameters(n, **parameters)
-    #     ):
-    #         if extra_params is None or any(
-    #             val != 0 and k in self.zeroes[idx] for k, val in parameters.items()
-    #         ):
-    #             continue
-    #         for gp in subgen(n, **extra_params):
-    #             yield tuple(None for _ in range(idx)) + (gp,) + tuple(
-    #                 None for _ in range(len(subgens) - idx - 1)
-    #             )
-
     def get_sub_objects(
         self, subobjs: SubObjects, n: int
     ) -> Iterator[
         Tuple[Parameters, Tuple[List[Optional[CombinatorialObjectType]], ...]]
     ]:
-        raise NotImplementedError
-        # disjoint_push_objects?
-        #  TODO: once new version implemented, delete above commented out old function
+        res: List[List[Optional[CombinatorialObjectType]]]
+        res = [[None] for _ in range(self.number_of_children)]
+        for i, subobj in enumerate(subobjs):
+            param_map = self._children_param_maps[i]
+            for param, comb_objs in subobj(n).items():
+                res[i] = comb_objs
+                yield (param_map(param), tuple(res))
+            res[i] = [None]
 
     def random_sample_sub_objects(
         self,
