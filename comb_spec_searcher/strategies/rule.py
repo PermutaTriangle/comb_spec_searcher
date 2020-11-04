@@ -450,13 +450,14 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
     def random_sample_object_of_size(
         self, n: int, **parameters: int
     ) -> CombinatorialObjectType:
-        assert self.subrecs is not None, "you must call the set_subrecs function first"
+        assert self.subterms is not None, "you must call the set_subrecs function first"
         assert (
             self.subsamplers is not None
         ), "you must call the set_subrecs function first"
         total_count = self.count_objects_of_size(n=n, **parameters)
+        params = tuple(parameters[k] for k in self.comb_class.extra_parameters)
         subobjs = self.constructor.random_sample_sub_objects(
-            total_count, self.subsamplers, self.subrecs, n, **parameters
+            total_count, self.subsamplers, self.subterms, n, *params
         )
         objs = tuple(self.backward_map(subobjs))
         idx = randint(0, len(objs) - 1)

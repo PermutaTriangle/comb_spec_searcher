@@ -90,9 +90,9 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
         self,
         parent_count: int,
         subsamplers: SubSamplers,
-        subrecs: SubRecs,
+        subterms: SubTerms,
         n: int,
-        **parameters: int
+        *parameters: int
     ):
         """Return a randomly sampled subobjs/image of the bijection implied
         by the constructor."""
@@ -390,29 +390,44 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         self,
         parent_count: int,
         subsamplers: SubSamplers,
-        subrecs: SubRecs,
+        subterms: SubTerms,
         n: int,
-        **parameters: int
+        *parameters: int
     ):
+        min_sizes = tuple(d["n"] for d in self.min_child_sizes)
+        max_sizes = tuple(d.get("n", None) for d in self.max_child_sizes)
         random_choice = randint(1, parent_count)
         total = 0
-        for child_parameters in self._valid_compositions(n, **parameters):
-            tmp = 1
-            extra_parameters = self.get_extra_parameters(child_parameters)
-            if extra_parameters is None:
-                continue
-            for rec, extra_params in zip(subrecs, extra_parameters):
-                tmp *= rec(n=extra_params.pop("n"), **extra_params)
-                if tmp == 0:
-                    break
-            total += tmp
-            if random_choice <= total:
-                extra_parameters = self.get_extra_parameters(child_parameters)
-                assert extra_parameters is not None
-                return tuple(
-                    subsampler(n=extra_params.pop("n"), **extra_params)
-                    for subsampler, extra_params in zip(subsamplers, extra_parameters)
+        size_compositions = compositions(n, len(subterms), min_sizes, max_sizes)
+        for sizes in size_compositions:
+            children_size_caches: Iterator[Terms] = (
+                st(s) for st, s in zip(subterms, sizes)
+            )
+            param_value_pairs_combinations = cast(
+                Iterator[Tuple[Tuple[Parameters, int], ...]],
+                product(*(c.items() for c in children_size_caches)),
+            )
+            for param_value_pairs in param_value_pairs_combinations:
+                new_param = vector_add(
+                    *(
+                        pmap(p)
+                        for pmap, (p, _) in zip(
+                            self._children_param_maps, param_value_pairs
+                        )
+                    )
                 )
+                if new_param == parameters:
+                    total += prod((v for _, v in param_value_pairs))
+                if random_choice <= total:
+                    break
+            else:
+                continue
+            break
+        children_params = (p for p, _ in param_value_pairs)
+        return tuple(
+            subsampler(n=size, *params)
+            for subsampler, size, params in zip(subsamplers, sizes, children_params)
+        )
 
     @staticmethod
     def get_eq_symbol() -> str:
@@ -602,29 +617,26 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         self,
         parent_count: int,
         subsamplers: SubSamplers,
-        subrecs: SubRecs,
+        subterms: SubTerms,
         n: int,
-        **parameters: int
+        *parameters: int
     ):
         random_choice = randint(1, parent_count)
         total = 0
-        for (idx, rec), subsampler, extra_params in zip(
-            enumerate(subrecs), subsamplers, self.get_extra_parameters(n, **parameters)
-        ):
-            # if a parent parameter is not mapped to by some child parameter
-            # then it is assumed that the value of the parent parameter must be 0
-            if extra_params is None or any(
-                val != 0 and k in self.zeroes[idx] for k, val in parameters.items()
-            ):
+        for i, child_terms in enumerate(subterms):
+            param_map = self._children_param_maps[i]
+            for param, value in child_terms(n).items():
+                if param_map(param) == parameters:
+                    total += value
+                if random_choice <= total:
+                    break
+            else:
                 continue
-            total += rec(n=n, **extra_params)
-            if random_choice <= total:
-                obj = subsampler(n=n, **extra_params)
-                return (
-                    tuple(None for _ in range(idx))
-                    + (obj,)
-                    + tuple(None for _ in range(len(subrecs) - idx - 1))
-                )
+            break
+        res: List[Optional[CombinatorialClassType]]
+        res = [None for _ in range(self.number_of_children)]
+        res[i] = subsamplers[i](n=n, *param)
+        return tuple(res)
 
     @staticmethod
     def get_eq_symbol() -> str:
