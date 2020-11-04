@@ -93,7 +93,7 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
         subterms: SubTerms,
         n: int,
         *parameters: int
-    ):
+    ) -> Tuple[Optional[CombinatorialObjectType], ...]:
         """Return a randomly sampled subobjs/image of the bijection implied
         by the constructor."""
 
@@ -393,7 +393,7 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         subterms: SubTerms,
         n: int,
         *parameters: int
-    ):
+    ) -> Tuple[Optional[CombinatorialObjectType], ...]:
         min_sizes = tuple(d["n"] for d in self.min_child_sizes)
         max_sizes = tuple(d.get("n", None) for d in self.max_child_sizes)
         random_choice = randint(1, parent_count)
@@ -425,7 +425,7 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
             break
         children_params = (p for p, _ in param_value_pairs)
         return tuple(
-            subsampler(n=size, *params)
+            subsampler(size, *params)
             for subsampler, size, params in zip(subsamplers, sizes, children_params)
         )
 
@@ -620,7 +620,7 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         subterms: SubTerms,
         n: int,
         *parameters: int
-    ):
+    ) -> Tuple[Optional[CombinatorialObjectType], ...]:
         random_choice = randint(1, parent_count)
         total = 0
         for i, child_terms in enumerate(subterms):
@@ -633,9 +633,9 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
             else:
                 continue
             break
-        res: List[Optional[CombinatorialClassType]]
+        res: List[Optional[CombinatorialObjectType]]
         res = [None for _ in range(self.number_of_children)]
-        res[i] = subsamplers[i](n=n, *param)
+        res[i] = subsamplers[i](n, *param)
         return tuple(res)
 
     @staticmethod

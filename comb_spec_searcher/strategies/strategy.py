@@ -649,7 +649,7 @@ class VerificationStrategy(
         return self.get_specification(comb_class).get_objects(n)
 
     def random_sample_object_of_size(
-        self, comb_class: CombinatorialClassType, n: int, **parameters: int
+        self, comb_class: CombinatorialClassType, n: int, *parameters: int
     ) -> CombinatorialObjectType:
         """
         A method to sample uniformly at random from a verified combinatorial class.
@@ -658,7 +658,7 @@ class VerificationStrategy(
         if not self.verified(comb_class):
             raise StrategyDoesNotApply("The combinatorial class is not verified")
         return self.get_specification(comb_class).random_sample_object_of_size(
-            n, **parameters
+            n, *parameters
         )
 
     def to_jsonable(self) -> dict:
@@ -709,7 +709,7 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
 
     @staticmethod
     def random_sample_object_of_size(
-        comb_class: CombinatorialClass, n: int, **parameters: int
+        comb_class: CombinatorialClass, n: int, *parameters: int
     ) -> CombinatorialObject:
         if comb_class.extra_parameters:
             raise NotImplementedError
@@ -775,7 +775,7 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject
 
     @staticmethod
     def random_sample_object_of_size(
-        comb_class: CombinatorialClass, n: int, **parameters: int
+        comb_class: CombinatorialClass, n: int, *parameters: int
     ) -> CombinatorialObject:
         raise StrategyDoesNotApply("Can't sample from empty set.")
 
