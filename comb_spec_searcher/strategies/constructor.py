@@ -27,6 +27,7 @@ from typing import (
     List,
     Optional,
     Tuple,
+    TypeVar,
     cast,
 )
 
@@ -39,7 +40,7 @@ from comb_spec_searcher.combinatorial_class import (
 
 __all__ = ("Constructor", "CartesianProduct", "DisjointUnion")
 
-
+T = TypeVar("T")
 Parameters = Tuple[int, ...]
 ParametersMap = Callable[[Parameters], Parameters]
 RelianceProfile = Tuple[Dict[str, Tuple[int, ...]], ...]
@@ -153,6 +154,53 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
                     self.max_child_sizes[idx][k] = child.get_minimum_value(
                         parameters[k]
                     )
+
+    def _build_children_param_map(
+        self,
+        parent: CombinatorialClassType,
+        children: Tuple[CombinatorialClassType, ...],
+    ) -> Tuple[ParametersMap, ...]:
+        map_list: List[ParametersMap] = []
+        num_parent_params = len(parent.extra_parameters)
+        parent_param_to_pos = {
+            param: pos for pos, param in enumerate(parent.extra_parameters)
+        }
+        for child, extra_param in zip(children, self.extra_parameters):
+            reversed_extra_param: Dict[str, List[str]] = defaultdict(list)
+            for parent_var, child_var in extra_param.items():
+                reversed_extra_param[child_var].append(parent_var)
+            child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...] = tuple(
+                tuple(
+                    map(
+                        parent_param_to_pos.__getitem__,
+                        reversed_extra_param[child_param],
+                    )
+                )
+                for child_param in child.extra_parameters
+            )
+            map_list.append(
+                self._build_param_map(child_pos_to_parent_pos, num_parent_params)
+            )
+        return tuple(map_list)
+
+    @staticmethod
+    def _build_param_map(
+        child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...], num_parent_params: int
+    ) -> ParametersMap:
+        """
+        Build the ParametersMap that will map according to the given child pos to parent
+        pos map given.
+        """
+
+        def param_map(param: Parameters) -> Parameters:
+            new_params = [0 for _ in range(num_parent_params)]
+            for pos, value in enumerate(param):
+                parent_pos = child_pos_to_parent_pos[pos]
+                for p in parent_pos:
+                    new_params[p] += value
+            return tuple(new_params)
+
+        return param_map
 
     def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
         res = 1
@@ -276,84 +324,43 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
     def get_terms(self, subterms: SubTerms, n: int) -> Terms:
         min_sizes = tuple(d["n"] for d in self.min_child_sizes)
         max_sizes = tuple(d.get("n", None) for d in self.max_child_sizes)
-        return self._cartesian_push(
-            n, subterms, self._children_param_maps, min_sizes, max_sizes
-        )
+        return self._cartesian_push(n, subterms, min_sizes, max_sizes)
 
-    @staticmethod
+    def _new_param(self, *children_params: Parameters) -> Parameters:
+        """
+        Computes the parameter values on the parent that the given children parameters
+        contribute to.
+        """
+        mapped_params = (
+            pmap(p) for pmap, p in zip(self._children_param_maps, children_params)
+        )
+        return tuple(sum(vals) for vals in zip(*mapped_params))
+
+    def _params_value_pairs_combinations(
+        self,
+        sizes: Tuple[int, ...],
+        sub_getters: Tuple[Callable[[int], Dict[Parameters, T]], ...],
+    ) -> Iterator[Tuple[Tuple[Parameters, T], ...]]:
+        """"""
+        children_values = (sg(s) for sg, s in zip(sub_getters, sizes))
+        return product(*(c.items() for c in children_values))
+
     def _cartesian_push(
+        self,
         n: int,
         children_terms: SubTerms,
-        children_param_maps: Tuple[ParametersMap, ...],
         min_sizes: Tuple[int, ...],
         max_sizes: Tuple[Optional[int], ...],
     ) -> Terms:
         new_terms: Terms = Counter()
         size_compositions = compositions(n, len(children_terms), min_sizes, max_sizes)
         for sizes in size_compositions:
-            children_size_caches: Iterator[Terms] = (
-                st(s) for st, s in zip(children_terms, sizes)
-            )
-            param_value_pairs_combinations = cast(
-                Iterator[Tuple[Tuple[Parameters, int], ...]],
-                product(*(c.items() for c in children_size_caches)),
-            )
-            for param_value_pairs in param_value_pairs_combinations:
-                new_param = vector_add(
-                    *(
-                        pmap(p)
-                        for pmap, (p, _) in zip(children_param_maps, param_value_pairs)
-                    )
-                )
+            for param_value_pairs in self._params_value_pairs_combinations(
+                sizes, children_terms
+            ):
+                new_param = self._new_param(*(p for p, _ in param_value_pairs))
                 new_terms[new_param] += prod((v for _, v in param_value_pairs))
         return new_terms
-
-    def _build_children_param_map(
-        self,
-        parent: CombinatorialClassType,
-        children: Tuple[CombinatorialClassType, ...],
-    ) -> Tuple[ParametersMap, ...]:
-        map_list: List[ParametersMap] = []
-        num_parent_params = len(parent.extra_parameters)
-        parent_param_to_pos = {
-            param: pos for pos, param in enumerate(parent.extra_parameters)
-        }
-        for child, extra_param in zip(children, self.extra_parameters):
-            reversed_extra_param: Dict[str, List[str]] = defaultdict(list)
-            for parent_var, child_var in extra_param.items():
-                reversed_extra_param[child_var].append(parent_var)
-            child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...] = tuple(
-                tuple(
-                    map(
-                        parent_param_to_pos.__getitem__,
-                        reversed_extra_param[child_param],
-                    )
-                )
-                for child_param in child.extra_parameters
-            )
-            map_list.append(
-                self._build_param_map(child_pos_to_parent_pos, num_parent_params)
-            )
-        return tuple(map_list)
-
-    @staticmethod
-    def _build_param_map(
-        child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...], num_parent_params: int
-    ) -> ParametersMap:
-        """
-        Build the ParametersMap that will map according to the given child pos to parent
-        pos map given.
-        """
-
-        def param_map(param: Parameters) -> Parameters:
-            new_params = [0 for _ in range(num_parent_params)]
-            for pos, value in enumerate(param):
-                parent_pos = child_pos_to_parent_pos[pos]
-                for p in parent_pos:
-                    new_params[p] += value
-            return tuple(new_params)
-
-        return param_map
 
     def get_sub_objects(
         self, subobjs: SubObjects, n: int
@@ -364,22 +371,10 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         max_sizes = tuple(d.get("n", None) for d in self.max_child_sizes)
         size_compositions = compositions(n, len(subobjs), min_sizes, max_sizes)
         for sizes in size_compositions:
-            children_objs_caches: Iterator[Objects] = (
-                sobj(s) for sobj, s in zip(subobjs, sizes)
-            )
-            param_objs_pairs_combinations = cast(
-                Iterator[Tuple[Tuple[Parameters, List[CombinatorialObjectType]], ...]],
-                product(*(c.items() for c in children_objs_caches)),
-            )
-            for param_objs_pairs in param_objs_pairs_combinations:
-                new_param = vector_add(
-                    *(
-                        pmap(p)
-                        for pmap, (p, _) in zip(
-                            self._children_param_maps, param_objs_pairs
-                        )
-                    )
-                )
+            for param_objs_pairs in self._params_value_pairs_combinations(
+                sizes, subobjs
+            ):
+                new_param = self._new_param(*(p for p, _ in param_objs_pairs))
                 children_objs = cast(
                     Iterator[List[Optional[CombinatorialObjectType]]],
                     (objs for _, objs in param_objs_pairs),
@@ -669,20 +664,6 @@ def compositions(
         yield from map(
             (i,).__add__, compositions(n - i, k - 1, min_sizes[1:], max_sizes[1:])
         )
-
-
-def vector_add(*args: Tuple[int, ...]) -> Tuple[int, ...]:
-    """
-    Perform vector addition on tuples.
-
-    >>> vector_add((1,), (1,), (1,), (2,))
-    (5,)
-    >>> vector_add((1, 2), (1, 3))
-    (2, 5)
-    >>> vector_add((1, 2, 3))
-    (1, 2, 3)
-    """
-    return tuple(sum(vals) for vals in zip(*args))
 
 
 def prod(values: Iterable[int]) -> int:
