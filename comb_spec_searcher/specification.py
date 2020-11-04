@@ -433,8 +433,9 @@ class CombinatorialSpecification(
         if not self._subrules_set:
             self._set_subrules()
         limit = n * self.number_of_rules()
+        params = tuple(parameters[k] for k in self.root.extra_parameters)
         with RecursionLimit(limit):
-            return self.root_rule.random_sample_object_of_size(n, **parameters)
+            return self.root_rule.random_sample_object_of_size(n, *params)
 
     def number_of_rules(self) -> int:
         return len(self.rules_dict)
