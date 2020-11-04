@@ -221,7 +221,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
 
     @abc.abstractmethod
     def random_sample_object_of_size(
-        self, n: int, *parameters: int
+        self, n: int, **parameters: int
     ) -> CombinatorialObjectType:
         """Return a random objects of the give size."""
 
@@ -448,15 +448,16 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
             self.objects_cache.append(objects)
 
     def random_sample_object_of_size(
-        self, n: int, *parameters: int
+        self, n: int, **parameters: int
     ) -> CombinatorialObjectType:
         assert self.subterms is not None, "you must call the set_subrecs function first"
         assert (
             self.subsamplers is not None
         ), "you must call the set_subrecs function first"
-        total_count = self.get_terms(n=n)[parameters]
+        total_count = self.count_objects_of_size(n=n, **parameters)
+        params = tuple(parameters[k] for k in self.comb_class.extra_parameters)
         subobjs = self.constructor.random_sample_sub_objects(
-            total_count, self.subsamplers, self.subterms, n, *parameters
+            total_count, self.subsamplers, self.subterms, n, *params
         )
         objs = tuple(self.backward_map(subobjs))
         idx = randint(0, len(objs) - 1)
@@ -741,8 +742,8 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
         return Eq(lhs_func, self.strategy.get_genf(self.comb_class, funcs))
 
     def random_sample_object_of_size(
-        self, n: int, *parameters: int
+        self, n: int, **parameters: int
     ) -> CombinatorialObjectType:
         return self.strategy.random_sample_object_of_size(
-            self.comb_class, n, *parameters
+            self.comb_class, n, **parameters
         )
