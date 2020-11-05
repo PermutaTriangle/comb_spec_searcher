@@ -1,9 +1,21 @@
 """Some useful miscellaneous functions used througout the package."""
+import functools
+import operator
 import os
 import re
 import sys
 import time
-from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Iterable,
+    Iterator,
+    Optional,
+    Tuple,
+    TypeVar,
+    cast,
+)
 
 import psutil
 import sympy
@@ -207,46 +219,37 @@ def sympy_expr_to_maple(expr):
     raise NotImplementedError(str(expr))
 
 
-def compositions(n, k):
-    # Credit to:
-    # https://pythonhosted.org/combalg-py/_modules/combalg/combalg.html
+def compositions(
+    n: int, k: int, min_sizes: Tuple[int, ...], max_sizes: Tuple[Optional[int], ...]
+) -> Iterator[Tuple[int, ...]]:
     """
-    Iterator over all the composition of n into k parts.
-
-    Composition of are tuple of k integers that are greater of equals to 0 such
-    that the sum of the k integers is n.
-
-    >>> sorted(compositions(2,3))
-    [(0, 0, 2), (0, 1, 1), (0, 2, 0), (1, 0, 1), (1, 1, 0), (2, 0, 0)]
-    >>> sorted(compositions(2,2))
-    [(0, 2), (1, 1), (2, 0)]
-    >>> list(compositions(2, 1))
-    [(2,)]
-    >>> list(compositions(0, 1))
-    [(0,)]
-    >>> list(compositions(-1, 1))
-    []
-    >>> list(compositions(1, -1))
-    []
-    >>> list(compositions(1, -1))
-    []
+    Iterator over all composition of n in k parts with the given max_sizes and
+    min_sizes.
     """
-    if n < 0 or k < 0 or k == 0:
+    if (
+        n < 0
+        or k <= 0
+        or n < sum(min_sizes)
+        or (
+            all(s is not None for s in max_sizes)
+            and sum(cast(Tuple[int, ...], max_sizes)) < n
+        )
+    ):
         return
-    t = n
-    h = 0
-    a = [0] * k
-    a[0] = n
-    yield tuple(a)
-    while a[k - 1] != n:
-        if t != 1:
-            h = 0
-        t = a[h]
-        a[h] = 0
-        a[0] = t - 1
-        a[h + 1] += 1
-        h += 1
-        yield tuple(a)
+    if k == 1:
+        assert (max_sizes[0] is None or max_sizes[0] >= n) and n >= min_sizes[0]
+        yield (n,)
+        return
+    max_size = max_sizes[0] if max_sizes[0] is not None else n
+    for i in range(min_sizes[0], max_size + 1):
+        yield from map(
+            (i,).__add__, compositions(n - i, k - 1, min_sizes[1:], max_sizes[1:])
+        )
+
+
+def prod(values: Iterable[int]) -> int:
+    """Compute the product of the integers."""
+    return functools.reduce(operator.mul, values)
 
 
 def nice_pypy_mem(mem: str) -> str:

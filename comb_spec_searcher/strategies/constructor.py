@@ -11,8 +11,6 @@ Currently the constructors are implemented in one variable, namely 'n' which is
 used throughout to denote size.
 """
 import abc
-import functools
-import operator
 from collections import defaultdict
 from itertools import product
 from random import randint
@@ -33,6 +31,7 @@ from typing import (
 
 from sympy import Eq, Function
 
+from comb_spec_searcher import utils
 from comb_spec_searcher.combinatorial_class import (
     CombinatorialClassType,
     CombinatorialObjectType,
@@ -353,13 +352,15 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         max_sizes: Tuple[Optional[int], ...],
     ) -> Terms:
         new_terms: Terms = Counter()
-        size_compositions = compositions(n, len(children_terms), min_sizes, max_sizes)
+        size_compositions = utils.compositions(
+            n, len(children_terms), min_sizes, max_sizes
+        )
         for sizes in size_compositions:
             for param_value_pairs in self._params_value_pairs_combinations(
                 sizes, children_terms
             ):
                 new_param = self._new_param(*(p for p, _ in param_value_pairs))
-                new_terms[new_param] += prod((v for _, v in param_value_pairs))
+                new_terms[new_param] += utils.prod((v for _, v in param_value_pairs))
         return new_terms
 
     def get_sub_objects(
@@ -369,7 +370,7 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
     ]:
         min_sizes = tuple(d["n"] for d in self.min_child_sizes)
         max_sizes = tuple(d.get("n", None) for d in self.max_child_sizes)
-        size_compositions = compositions(n, len(subobjs), min_sizes, max_sizes)
+        size_compositions = utils.compositions(n, len(subobjs), min_sizes, max_sizes)
         for sizes in size_compositions:
             for param_objs_pairs in self._params_value_pairs_combinations(
                 sizes, subobjs
@@ -631,41 +632,3 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
 
     def __str__(self):
         return "disjoint union"
-
-
-##############################################
-# Functions that need to be sorted somewhere #
-##############################################
-
-
-def compositions(
-    n: int, k: int, min_sizes: Tuple[int, ...], max_sizes: Tuple[Optional[int], ...]
-) -> Iterator[Tuple[int, ...]]:
-    """
-    Iterator over all composition of n in k parts with the given max_sizes and
-    min_sizes.
-    """
-    if (
-        n < 0
-        or k <= 0
-        or n < sum(min_sizes)
-        or (
-            all(s is not None for s in max_sizes)
-            and sum(cast(Tuple[int, ...], max_sizes)) < n
-        )
-    ):
-        return
-    if k == 1:
-        assert (max_sizes[0] is None or max_sizes[0] >= n) and n >= min_sizes[0]
-        yield (n,)
-        return
-    max_size = max_sizes[0] if max_sizes[0] is not None else n
-    for i in range(min_sizes[0], max_size + 1):
-        yield from map(
-            (i,).__add__, compositions(n - i, k - 1, min_sizes[1:], max_sizes[1:])
-        )
-
-
-def prod(values: Iterable[int]) -> int:
-    """Compute the product of the integers."""
-    return functools.reduce(operator.mul, values)
