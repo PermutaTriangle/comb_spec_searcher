@@ -1,5 +1,4 @@
-"""
-The rule class is used for a specific application of a strategy on a tiling.
+""" The rule class is used for a specific application of a strategy on a tiling.
 This is not something the user should implement, as it is just a wrapper for
 calling the Strategy class and storing its results.
 
@@ -225,73 +224,14 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
     ) -> CombinatorialObjectType:
         """Return a random objects of the give size."""
 
+    @abc.abstractmethod
     def sanity_check(self, n: int) -> bool:
         """
         Sanity check that this is a valid rule.
 
         Raise a SanityCheckFailure error if the sanity_check fails.
         """
-
-        if isinstance(self, VerificationRule):
-            # TODO: test more thoroughly
-            return True
-
-        def brute_force_terms(comb_class: CombinatorialClassType, n: int) -> Terms:
-            terms: Terms = Counter()
-            for params in comb_class.possible_parameters(n):
-                value = len(list(comb_class.objects_of_size(n, **params)))
-                if value == 0:
-                    continue
-                params_tuple = tuple(params[k] for k in comb_class.extra_parameters)
-                terms[params_tuple] = value
-            return terms
-
-        def brute_force_objects(comb_class: CombinatorialClassType, n: int) -> Objects:
-            objects: Objects = defaultdict(list)
-            for params in comb_class.possible_parameters(n):
-                params_tuple = tuple(params[k] for k in comb_class.extra_parameters)
-                objects[params_tuple].extend(comb_class.objects_of_size(n, **params))
-                if not objects[params_tuple]:
-                    objects.pop(params_tuple)
-            return objects
-
-        actual_terms = brute_force_terms(self.comb_class, n)
-        temp_subterms = self.subterms
-        self.subterms = tuple(
-            partial(brute_force_terms, child) for child in self.children
-        )
-        rule_terms = self.get_terms(n)
-        self.subterms = temp_subterms
-        if actual_terms != rule_terms:
-            raise SanityCheckFailure(
-                f"The following rule failed sanity check:\n"
-                f"{self}\n"
-                f"Failed for size {n}\n"
-                f"The actual count is {actual_terms}.\n"
-                f"The rule count is {rule_terms}.",
-            )
-        tempobjects = self.subobjects
-        self.subobjects = tuple(
-            partial(brute_force_objects, child) for child in self.children
-        )
-        try:
-            rule_objects = self.get_objects(n)
-        except NotImplementedError:
-            # Skipping testing rules that have not implemented object generation.
-            return True
-        self.subobjects = tempobjects
-        actual_objects = brute_force_objects(self.comb_class, n)
-        for obj_list in chain(rule_objects.values(), actual_objects.values()):
-            obj_list.sort()
-        if actual_objects != rule_objects:
-            raise SanityCheckFailure(
-                f"The following rule failed sanity check:\n"
-                f"{self}\n"
-                f"Failed for size {n}:\n"
-                f"The actual objects are {actual_objects}\n"
-                f"The rule generated objects {rule_objects}."
-            )
-        return True
+        raise NotImplementedError
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, AbstractRule):
@@ -461,6 +401,82 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         objs = tuple(self.backward_map(subobjs))
         idx = randint(0, len(objs) - 1)
         return objs[idx]
+
+    def sanity_check(self, n: int) -> bool:
+        try:
+            return self._sanity_check_count(n) and self._sanity_check_objects(n)
+        except SanityCheckFailure as e:
+            raise e
+
+    def _sanity_check_count(self, n: int) -> bool:
+        """
+        Sanity check that the count given by the rule matches the brute force count.
+        """
+
+        def brute_force_terms(comb_class: CombinatorialClassType, n: int) -> Terms:
+            terms: Terms = Counter()
+            for params in comb_class.possible_parameters(n):
+                value = len(list(comb_class.objects_of_size(n, **params)))
+                if value == 0:
+                    continue
+                params_tuple = tuple(params[k] for k in comb_class.extra_parameters)
+                terms[params_tuple] = value
+            return terms
+
+        actual_terms = brute_force_terms(self.comb_class, n)
+        temp_subterms = self.subterms
+        self.subterms = tuple(
+            partial(brute_force_terms, child) for child in self.children
+        )
+        rule_terms = self.get_terms(n)
+        self.subterms = temp_subterms
+        if actual_terms != rule_terms:
+            raise SanityCheckFailure(
+                f"The following rule failed sanity check:\n"
+                f"{self}\n"
+                f"Failed for size {n}\n"
+                f"The actual count is {actual_terms}.\n"
+                f"The rule count is {rule_terms}.",
+            )
+        return True
+
+    def _sanity_check_objects(self, n: int) -> bool:
+        """
+        Sanity check that the object given by the rule matches the brute force
+        generated objects.
+        """
+
+        def brute_force_objects(comb_class: CombinatorialClassType, n: int) -> Objects:
+            objects: Objects = defaultdict(list)
+            for params in comb_class.possible_parameters(n):
+                params_tuple = tuple(params[k] for k in comb_class.extra_parameters)
+                objects[params_tuple].extend(comb_class.objects_of_size(n, **params))
+                if not objects[params_tuple]:
+                    objects.pop(params_tuple)
+            return objects
+
+        tempobjects = self.subobjects
+        self.subobjects = tuple(
+            partial(brute_force_objects, child) for child in self.children
+        )
+        try:
+            rule_objects = self.get_objects(n)
+        except NotImplementedError:
+            # Skipping testing rules that have not implemented object generation.
+            return True
+        self.subobjects = tempobjects
+        actual_objects = brute_force_objects(self.comb_class, n)
+        for obj_list in chain(rule_objects.values(), actual_objects.values()):
+            obj_list.sort()
+        if actual_objects != rule_objects:
+            raise SanityCheckFailure(
+                f"The following rule failed sanity check:\n"
+                f"{self}\n"
+                f"Failed for size {n}:\n"
+                f"The actual objects are {actual_objects}\n"
+                f"The rule generated objects {rule_objects}."
+            )
+        return True
 
 
 class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
@@ -746,3 +762,7 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
         return self.strategy.random_sample_object_of_size(
             self.comb_class, n, **parameters
         )
+
+    def sanity_check(self, n: int) -> bool:
+        # TODO: test more thoroughly
+        return True
