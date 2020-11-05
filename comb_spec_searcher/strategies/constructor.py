@@ -154,6 +154,22 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
                         parameters[k]
                     )
 
+    @property
+    def min_sizes(self) -> Tuple[int, ...]:
+        """
+        Lower bound on the sizes of combinatorial object on the children.
+        """
+        return tuple(d["n"] for d in self.min_child_sizes)
+
+    @property
+    def max_sizes(self) -> Tuple[Optional[int], ...]:
+        """
+        Upper bounds on the size of object on the children.
+
+        None means no upper bound.
+        """
+        return tuple(d.get("n", None) for d in self.max_child_sizes)
+
     def _build_children_param_map(
         self,
         parent: CombinatorialClassType,
@@ -321,9 +337,17 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         return res
 
     def get_terms(self, subterms: SubTerms, n: int) -> Terms:
-        min_sizes = tuple(d["n"] for d in self.min_child_sizes)
-        max_sizes = tuple(d.get("n", None) for d in self.max_child_sizes)
-        return self._cartesian_push(n, subterms, min_sizes, max_sizes)
+        new_terms: Terms = Counter()
+        size_compositions = utils.compositions(
+            n, len(subterms), self.min_sizes, self.max_sizes
+        )
+        for sizes in size_compositions:
+            for param_value_pairs in self._params_value_pairs_combinations(
+                sizes, subterms
+            ):
+                new_param = self._new_param(*(p for p, _ in param_value_pairs))
+                new_terms[new_param] += utils.prod((v for _, v in param_value_pairs))
+        return new_terms
 
     def _new_param(self, *children_params: Parameters) -> Parameters:
         """
@@ -344,33 +368,14 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         children_values = (sg(s) for sg, s in zip(sub_getters, sizes))
         return product(*(c.items() for c in children_values))
 
-    def _cartesian_push(
-        self,
-        n: int,
-        children_terms: SubTerms,
-        min_sizes: Tuple[int, ...],
-        max_sizes: Tuple[Optional[int], ...],
-    ) -> Terms:
-        new_terms: Terms = Counter()
-        size_compositions = utils.compositions(
-            n, len(children_terms), min_sizes, max_sizes
-        )
-        for sizes in size_compositions:
-            for param_value_pairs in self._params_value_pairs_combinations(
-                sizes, children_terms
-            ):
-                new_param = self._new_param(*(p for p, _ in param_value_pairs))
-                new_terms[new_param] += utils.prod((v for _, v in param_value_pairs))
-        return new_terms
-
     def get_sub_objects(
         self, subobjs: SubObjects, n: int
     ) -> Iterator[
         Tuple[Parameters, Tuple[List[Optional[CombinatorialObjectType]], ...]]
     ]:
-        min_sizes = tuple(d["n"] for d in self.min_child_sizes)
-        max_sizes = tuple(d.get("n", None) for d in self.max_child_sizes)
-        size_compositions = utils.compositions(n, len(subobjs), min_sizes, max_sizes)
+        size_compositions = utils.compositions(
+            n, len(subobjs), self.min_sizes, self.max_sizes
+        )
         for sizes in size_compositions:
             for param_objs_pairs in self._params_value_pairs_combinations(
                 sizes, subobjs
@@ -504,21 +509,8 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         return res
 
     def get_terms(self, subterms: SubTerms, n: int) -> Terms:
-        return self._union_push(n, subterms, self._children_param_maps)
-
-    @staticmethod
-    def _union_push(
-        n: int,
-        children_terms: SubTerms,
-        children_param_maps: Tuple[ParametersMap, ...],
-    ) -> Terms:
-        """
-        Uses the `children_terms` functions to and the `children_param_maps` to compute
-        the terms of size `n`.
-        """
-        assert len(children_terms) == len(children_param_maps)
         new_terms: Terms = Counter()
-        for child_terms, param_map in zip(children_terms, children_param_maps):
+        for child_terms, param_map in zip(subterms, self._children_param_maps):
             for param, value in child_terms(n).items():
                 new_terms[param_map(param)] += value
         return new_terms
