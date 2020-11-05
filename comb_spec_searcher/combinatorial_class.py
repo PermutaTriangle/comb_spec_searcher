@@ -2,7 +2,6 @@
 An abstract class for a CombinatorialClass.
 """
 import abc
-from collections import defaultdict
 from functools import reduce
 from importlib import import_module
 from operator import mul
@@ -119,32 +118,39 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
             )
         yield dict()
 
+    def get_parameters(self, obj: CombinatorialObjectType) -> Parameters:
+        """
+        Returns the appropriate parameter tuple of the given object.
+        """
+        if self.extra_parameters:
+            raise NotImplementedError(
+                "You need to implement this method for combclass with extra parameters"
+            )
+        return tuple()
+
     def objects_of_size(
         self, n: int, **parameters: int
     ) -> Iterator[CombinatorialObjectType]:
-        """Returns an iterable of combinatorial objects of a given size."""
-        raise NotImplementedError(
-            "To use object generation and sampling with the AtomStrategy, this"
-            "must be at least implemented for every class that is an atom."
-        )
+        """
+        Returns an iterable of combinatorial objects of a given size.
+
+        If the combinatorial class has extra parameters and None are given, the iterator
+        should go over all objects of size n.
+        """
+        raise NotImplementedError
 
     def get_terms(self, n: int) -> Terms:
         terms: Terms = Counter()
-        for params in self.possible_parameters(n):
-            value = sum(1 for _ in self.objects_of_size(n, **params))
-            if value == 0:
-                continue
-            params_tuple = tuple(params[k] for k in self.extra_parameters)
-            terms[params_tuple] = value
+        for obj in self.objects_of_size(n):
+            param = self.get_parameters(obj)
+            terms[param] += 1
         return terms
 
     def get_objects(self, n: int) -> Objects:
-        objects: Objects = defaultdict(list)
-        for params in self.possible_parameters(n):
-            params_tuple = tuple(params[k] for k in self.extra_parameters)
-            objects[params_tuple].extend(self.objects_of_size(n, **params))
-            if not objects[params_tuple]:
-                objects.pop(params_tuple)
+        objects: Objects = DefaultDict(list)
+        for obj in self.objects_of_size(n):
+            param = self.get_parameters(obj)
+            objects[param].append(obj)
         return objects
 
     def initial_conditions(self, check: int = 6) -> List[Expr]:
