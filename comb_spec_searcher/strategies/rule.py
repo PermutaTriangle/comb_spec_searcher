@@ -6,7 +6,6 @@ A CombinatorialSpecification is (more or less) a set of Rule.
 """
 import abc
 from collections import defaultdict
-from functools import partial
 from itertools import chain, product
 from random import randint
 from typing import (
@@ -412,22 +411,9 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         """
         Sanity check that the count given by the rule matches the brute force count.
         """
-
-        def brute_force_terms(comb_class: CombinatorialClassType, n: int) -> Terms:
-            terms: Terms = Counter()
-            for params in comb_class.possible_parameters(n):
-                value = len(list(comb_class.objects_of_size(n, **params)))
-                if value == 0:
-                    continue
-                params_tuple = tuple(params[k] for k in comb_class.extra_parameters)
-                terms[params_tuple] = value
-            return terms
-
-        actual_terms = brute_force_terms(self.comb_class, n)
+        actual_terms = self.comb_class.get_terms(n)
         temp_subterms = self.subterms
-        self.subterms = tuple(
-            partial(brute_force_terms, child) for child in self.children
-        )
+        self.subterms = tuple(child.get_terms for child in self.children)
         rule_terms = self.get_terms(n)
         self.subterms = temp_subterms
         if actual_terms != rule_terms:
@@ -445,27 +431,15 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         Sanity check that the object given by the rule matches the brute force
         generated objects.
         """
-
-        def brute_force_objects(comb_class: CombinatorialClassType, n: int) -> Objects:
-            objects: Objects = defaultdict(list)
-            for params in comb_class.possible_parameters(n):
-                params_tuple = tuple(params[k] for k in comb_class.extra_parameters)
-                objects[params_tuple].extend(comb_class.objects_of_size(n, **params))
-                if not objects[params_tuple]:
-                    objects.pop(params_tuple)
-            return objects
-
         tempobjects = self.subobjects
-        self.subobjects = tuple(
-            partial(brute_force_objects, child) for child in self.children
-        )
+        self.subobjects = tuple(child.get_objects for child in self.children)
         try:
             rule_objects = self.get_objects(n)
         except NotImplementedError:
             # Skipping testing rules that have not implemented object generation.
             return True
         self.subobjects = tempobjects
-        actual_objects = brute_force_objects(self.comb_class, n)
+        actual_objects = self.comb_class.get_objects(n)
         for obj_list in chain(rule_objects.values(), actual_objects.values()):
             obj_list.sort()
         if actual_objects != rule_objects:
