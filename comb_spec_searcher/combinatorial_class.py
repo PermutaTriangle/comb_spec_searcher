@@ -5,7 +5,17 @@ import abc
 from functools import reduce
 from importlib import import_module
 from operator import mul
-from typing import Dict, Generic, Iterator, List, Tuple, Type, TypeVar
+from typing import (
+    Counter,
+    DefaultDict,
+    Dict,
+    Generic,
+    Iterator,
+    List,
+    Tuple,
+    Type,
+    TypeVar,
+)
 
 from sympy import Expr, Number, var
 
@@ -15,6 +25,9 @@ CombinatorialObjectType = TypeVar(
     "CombinatorialObjectType", bound="CombinatorialObject"
 )
 CombinatorialClassType = TypeVar("CombinatorialClassType", bound="CombinatorialClass")
+Parameters = Tuple[int, ...]
+Objects = DefaultDict[Parameters, List[CombinatorialObjectType]]
+Terms = Counter[Parameters]  # all terms for a fixed n
 
 
 class CombinatorialObject(abc.ABC):
@@ -76,8 +89,8 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
     @property
     def extra_parameters(self) -> Tuple[str, ...]:
         """
-        Return a the parameters used to get the enumeration of the
-        class. It is assumed we are always aware of 'n' which counts size.
+        Return the parameters used to get the enumeration of the
+        class. It is assumed that the order is consistent for a combinatorial class.
         """
         return tuple()
 
@@ -105,14 +118,40 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
             )
         yield dict()
 
+    def get_parameters(self, obj: CombinatorialObjectType) -> Parameters:
+        """
+        Returns the appropriate parameter tuple of the given object.
+        """
+        if self.extra_parameters:
+            raise NotImplementedError(
+                "You need to implement this method for combclass with extra parameters"
+            )
+        return tuple()
+
     def objects_of_size(
         self, n: int, **parameters: int
     ) -> Iterator[CombinatorialObjectType]:
-        """Returns an iterable of combinatorial objects of a given size."""
-        raise NotImplementedError(
-            "To use object generation and sampling with the AtomStrategy, this"
-            "must be at least implemented for every class that is an atom."
-        )
+        """
+        Returns an iterable of combinatorial objects of a given size.
+
+        If the combinatorial class has extra parameters and None are given, the iterator
+        should go over all objects of size n.
+        """
+        raise NotImplementedError
+
+    def get_terms(self, n: int) -> Terms:
+        terms: Terms = Counter()
+        for obj in self.objects_of_size(n):
+            param = self.get_parameters(obj)
+            terms[param] += 1
+        return terms
+
+    def get_objects(self, n: int) -> Objects:
+        objects: Objects = DefaultDict(list)
+        for obj in self.objects_of_size(n):
+            param = self.get_parameters(obj)
+            objects[param].append(obj)  # pylint: disable=invalid-sequence-index
+        return objects
 
     def initial_conditions(self, check: int = 6) -> List[Expr]:
         """

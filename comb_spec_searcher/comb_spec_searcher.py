@@ -267,8 +267,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 try:
                     n = 4
                     for i in range(n + 1):
-                        for parameters in rule.comb_class.possible_parameters(i):
-                            rule.sanity_check(n=i, **parameters)
+                        rule.sanity_check(n=i)
                     logger.debug("Sanity checked rule to length %s.", n)
                 except NotImplementedError as e:
                     logger.debug(
