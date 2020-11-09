@@ -10,7 +10,7 @@ from comb_spec_searcher.exception import StrategyDoesNotApply
 from comb_spec_searcher.strategies.rule import AbstractRule
 from comb_spec_searcher.strategies.strategy import AbstractStrategy, StrategyFactory
 from comb_spec_searcher.strategies.strategy_pack import StrategyPack
-from comb_spec_searcher.typing import RuleKey
+from comb_spec_searcher.typing import Label, RuleKey
 
 from .base import RuleDBBase
 
@@ -32,14 +32,14 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
         self.classdb = classdb
         self.equivdb = equivdb
         self.pack = strat_pack
-        self.rules: Set[Tuple[int, ...]] = set()
+        self.rules: Set[Tuple[Label, ...]] = set()
 
     @staticmethod
-    def _flatten(tuple_: RuleKey) -> Tuple[int, ...]:
+    def _flatten(tuple_: RuleKey) -> Tuple[Label, ...]:
         return (tuple_[0],) + tuple_[1]
 
     @staticmethod
-    def _unflatten(tuple_: Tuple[int, ...]) -> RuleKey:
+    def _unflatten(tuple_: Tuple[Label, ...]) -> RuleKey:
         return (tuple_[0], tuple_[1:])
 
     def _is_equiv(self, key: RuleKey) -> bool:

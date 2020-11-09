@@ -11,7 +11,7 @@ if is_empty has been checked.
 import zlib
 from typing import Dict, Generic, Iterator, Optional, Type, cast
 
-from comb_spec_searcher.typing import ClassKey, CombinatorialClassType, Key
+from comb_spec_searcher.typing import ClassKey, CombinatorialClassType, Key, Label
 
 
 class Info:
@@ -22,7 +22,9 @@ class Info:
         - is it empty?
     """
 
-    def __init__(self, comb_class: ClassKey, label: int, empty: Optional[bool] = None):
+    def __init__(
+        self, comb_class: ClassKey, label: Label, empty: Optional[bool] = None
+    ):
         self.comb_class = comb_class
         self.label = label
         self.empty = empty
@@ -54,10 +56,10 @@ class ClassDB(Generic[CombinatorialClassType]):
 
     def __init__(self, combinatorial_class: Type[CombinatorialClassType]):
         self.class_to_info: Dict[ClassKey, Info] = {}
-        self.label_to_info: Dict[int, Info] = {}
+        self.label_to_info: Dict[Label, Info] = {}
         self.combinatorial_class = combinatorial_class
 
-    def __iter__(self) -> Iterator[int]:
+    def __iter__(self) -> Iterator[Label]:
         """
         Iterator of labels.
         """
@@ -72,7 +74,7 @@ class ClassDB(Generic[CombinatorialClassType]):
             comb_class = self._compress(key)
             info = self.class_to_info.get(comb_class)
         elif isinstance(key, int):
-            info = self.label_to_info.get(key)
+            info = self.label_to_info.get(Label(key))
         else:
             raise ValueError("Invalid key")
         return info is not None
@@ -101,7 +103,7 @@ class ClassDB(Generic[CombinatorialClassType]):
         else:
             compressed_class = comb_class
         if compressed_class not in self.class_to_info:
-            label = len(self.class_to_info)
+            label = Label(len(self.class_to_info))
             info = Info(compressed_class, label)
             self.class_to_info[compressed_class] = info
             self.label_to_info[label] = info
@@ -119,7 +121,7 @@ class ClassDB(Generic[CombinatorialClassType]):
                 self.add(compressed_key, compressed=True)
                 info = self.class_to_info[compressed_key]
         elif isinstance(key, int):
-            info = self.label_to_info.get(key)
+            info = self.label_to_info.get(Label(key))
             if info is None:
                 raise KeyError("Key not in ClassDB.")
         else:
@@ -165,7 +167,7 @@ class ClassDB(Generic[CombinatorialClassType]):
         info = self._get_info(key)
         return self._decompress(info.comb_class)
 
-    def get_label(self, key: Key) -> int:
+    def get_label(self, key: Key) -> Label:
         """
         Return label of key.
         """
@@ -173,7 +175,7 @@ class ClassDB(Generic[CombinatorialClassType]):
         return info.label
 
     def is_empty(
-        self, comb_class: CombinatorialClassType, label: Optional[int] = None
+        self, comb_class: CombinatorialClassType, label: Optional[Label] = None
     ) -> bool:
         """
         Return True if combinatorial class is empty set, False if not.

@@ -6,6 +6,7 @@ from typing import (
     Dict,
     List,
     NamedTuple,
+    NewType,
     Set,
     Tuple,
     TypeVar,
@@ -17,40 +18,37 @@ if TYPE_CHECKING:
     from comb_spec_searcher.combinatorial_class import CombinatorialObject  # noqa: F401
     from comb_spec_searcher.strategies.strategy import AbstractStrategy, StrategyFactory
 
-__all__ = [
-    "CombinatorialObjectType",
-    "CombinatorialClassType",
-    "SpecificationClassesAndStrats",
-]
+Label = NewType("Label", int)
 
 CombinatorialObjectType = TypeVar(
     "CombinatorialObjectType", bound="CombinatorialObject"
 )
-
 CombinatorialClassType = TypeVar("CombinatorialClassType", bound="CombinatorialClass")
-
+CSSstrategy = Union["AbstractStrategy", "StrategyFactory"]
 
 SpecificationClassesAndStrats = Tuple[
     List[Tuple[CombinatorialClassType, "AbstractStrategy"]],
     List[List[CombinatorialClassType]],
 ]
-ClassKey = Union[bytes, CombinatorialClassType]
-Key = Union["CombinatorialClassType", int]
 
-CSSstrategy = Union["AbstractStrategy", "StrategyFactory"]
-RulesDict = Dict[int, Set[Tuple[int, ...]]]
+RulesDict = Dict[Label, Set[Tuple[Label, ...]]]
 
 
 class WorkPacket(NamedTuple):
-    label: int
+    label: Label
     strategies: Tuple[CSSstrategy, ...]
     inferral: bool
 
 
+# From classdb
+ClassKey = Union[bytes, CombinatorialClassType]
+Key = Union[CombinatorialClassType, Label]
+
+# From ruledb
 SpecificationLabelsAndStrats = Tuple[
-    List[Tuple[int, "AbstractStrategy"]], List[List[int]]
+    List[Tuple[Label, "AbstractStrategy"]], List[List[Label]]
 ]
-RuleKey = Tuple[int, Tuple[int, ...]]
+RuleKey = Tuple[Label, Tuple[Label, ...]]
 
 # From constructor
 Parameters = Tuple[int, ...]

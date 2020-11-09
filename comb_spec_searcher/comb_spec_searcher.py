@@ -28,6 +28,7 @@ from sympy import Eq, Function, var
 from comb_spec_searcher.typing import (
     CombinatorialClassType,
     CSSstrategy,
+    Label,
     SpecificationClassesAndStrats,
     WorkPacket,
 )
@@ -125,8 +126,8 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         # initialise the run with start_class
         self.start_label = self.classdb.get_label(start_class)
         self._add_to_queue(self.start_label)
-        self.tried_to_verify: Set[int] = set()
-        self.symmetry_expanded: Set[int] = set()
+        self.tried_to_verify: Set[Label] = set()
+        self.symmetry_expanded: Set[Label] = set()
         self.try_verify(start_class, self.start_label)
         if self.symmetries:
             self._symmetry_expand(start_class, self.start_label)
@@ -146,7 +147,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         """The symmetries functions for the strategy pack."""
         return self.strategy_pack.symmetries
 
-    def try_verify(self, comb_class: CombinatorialClassType, label: int) -> None:
+    def try_verify(self, comb_class: CombinatorialClassType, label: Label) -> None:
         """
         Try to verify the combinatorial class.
         """
@@ -161,7 +162,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             self.tried_to_verify.add(label)
 
     @cssmethodtimer("is empty")
-    def is_empty(self, comb_class: CombinatorialClassType, label: int) -> bool:
+    def is_empty(self, comb_class: CombinatorialClassType, label: Label) -> bool:
         """Return True if a combinatorial class contains no objects, False
         otherwise."""
         empty = self.classdb.is_empty(comb_class, label)
@@ -170,7 +171,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
     def _expand(
         self,
         comb_class: CombinatorialClassType,
-        label: int,
+        label: Label,
         strategies: Tuple[CSSstrategy, ...],
         inferral: bool,
     ) -> None:
@@ -222,9 +223,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         self,
         comb_class: CombinatorialClassType,
         strategy_generator: CSSstrategy,
-        label: Optional[int] = None,
+        label: Optional[Label] = None,
         initial: bool = False,
-    ) -> Iterator[Tuple[int, Tuple[int, ...], AbstractRule]]:
+    ) -> Iterator[Tuple[Label, Tuple[Label, ...], AbstractRule]]:
         """
         Will expand the class with given strategy. Return time taken.
         """
@@ -291,7 +292,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             yield start_label, tuple(end_labels), rule
 
     def _add_rule(
-        self, start_label: int, end_labels: Tuple[int, ...], rule: AbstractRule
+        self, start_label: Label, end_labels: Tuple[Label, ...], rule: AbstractRule
     ) -> None:
         """
         Add the cleaned rules labels.
@@ -335,11 +336,13 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             assert isinstance(rule, VerificationRule), rule.formal_step
         self.ruledb.add(start_label, tuple(cleaned_end_labels), rule)
 
-    def _add_empty_rule(self, label: int) -> None:
+    def _add_empty_rule(self, label: Label) -> None:
         """Mark label as empty. Treated as verified as can count empty set."""
         self.classdb.set_empty(label, empty=True)
 
-    def _symmetry_expand(self, comb_class: CombinatorialClassType, label: int) -> None:
+    def _symmetry_expand(
+        self, comb_class: CombinatorialClassType, label: Label
+    ) -> None:
         """Add symmetries of combinatorial class to the database."""
         sym_labels = set([label])
         for strategy_generator in self.symmetries:
@@ -355,7 +358,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
     def _inferral_expand(
         self,
         comb_class: CombinatorialClassType,
-        label: int,
+        label: Label,
         inferral_strategies: Tuple[CSSstrategy, ...],
         skip: Optional[CSSstrategy] = None,
     ):
@@ -425,13 +428,13 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
     def _labels_to_expand(self) -> Iterator[WorkPacket]:
         yield from self.classqueue
 
-    def _add_to_queue(self, label: int):
+    def _add_to_queue(self, label: Label):
         self.classqueue.add(label)
 
-    def _not_inferrable(self, label: int):
+    def _not_inferrable(self, label: Label):
         self.classqueue.set_not_inferrable(label)
 
-    def _stop_yielding(self, label: int):
+    def _stop_yielding(self, label: Label):
         self.classqueue.set_stop_yielding(label)
 
     @cssmethodtimer("status")

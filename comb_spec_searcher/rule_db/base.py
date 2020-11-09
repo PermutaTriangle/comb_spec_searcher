@@ -21,7 +21,7 @@ from comb_spec_searcher.tree_searcher import (
     random_proof_tree,
     smallish_random_proof_tree,
 )
-from comb_spec_searcher.typing import RuleKey, SpecificationLabelsAndStrats
+from comb_spec_searcher.typing import Label, RuleKey, SpecificationLabelsAndStrats
 
 __all__ = ["RuleDBBase", "RuleDB"]
 
@@ -43,7 +43,7 @@ class RuleDBBase(abc.ABC):
             return NotImplemented
         return bool(self.rule_to_strategy == other.rule_to_strategy)
 
-    def add(self, start: int, ends: Iterable[int], rule: AbstractRule) -> None:
+    def add(self, start: Label, ends: Iterable[Label], rule: AbstractRule) -> None:
         """
         Add a rule to the database.
 
@@ -63,43 +63,43 @@ class RuleDBBase(abc.ABC):
             # same start -> ends as some equivalence rule.
             self.rule_to_strategy[(start, ends)] = rule.strategy
 
-    def is_verified(self, label: int) -> bool:
+    def is_verified(self, label: Label) -> bool:
         """Return True if label has been verified."""
         return bool(self.equivdb.is_verified(label))
 
-    def set_verified(self, label: int) -> None:
+    def set_verified(self, label: Label) -> None:
         """Mark label as verified."""
         self.equivdb.set_verified(label)
 
-    def are_equivalent(self, label: int, other: int) -> bool:
+    def are_equivalent(self, label: Label, other: Label) -> bool:
         """Return true if label and other are equivalent."""
         return bool(self.equivdb.equivalent(label, other))
 
-    def set_equivalent(self, label: int, other: int) -> None:
+    def set_equivalent(self, label: Label, other: Label) -> None:
         """Mark label and other as equivalent."""
         self.equivdb.union(label, other)
 
-    def rules_up_to_equivalence(self) -> Dict[int, Set[Tuple[int, ...]]]:
+    def rules_up_to_equivalence(self) -> Dict[Label, Set[Tuple[Label, ...]]]:
         """Return a defaultdict containing all rules up to the equivalence."""
-        rules_dict: Dict[int, Set[Tuple[int, ...]]] = defaultdict(set)
+        rules_dict: Dict[Label, Set[Tuple[Label, ...]]] = defaultdict(set)
         for start, ends in self:
             rules_dict[self.equivdb[start]].add(
                 tuple(sorted(self.equivdb[e] for e in ends))
             )
         return rules_dict
 
-    def all_rules(self) -> Iterator[Tuple[int, Tuple[int, ...], AbstractStrategy]]:
+    def all_rules(self) -> Iterator[Tuple[Label, Tuple[Label, ...], AbstractStrategy]]:
         """Yield all the rules found so far."""
         for start, ends in self:
             yield start, ends, self.rule_to_strategy[(start, ends)]
 
-    def __iter__(self) -> Iterator[Tuple[int, Tuple[int, ...]]]:
+    def __iter__(self) -> Iterator[Tuple[Label, Tuple[Label, ...]]]:
         """Iterate through rules as the pairs (start, end)."""
         for start, ends in self.rule_to_strategy:
             if len(ends) != 1 or not self.are_equivalent(start, ends[0]):
                 yield start, ends
 
-    def contains(self, start: int, ends: Tuple[int, ...]) -> bool:
+    def contains(self, start: Label, ends: Tuple[Label, ...]) -> bool:
         """Return true if the rule start -> ends is in the database."""
         ends = tuple(sorted(ends))
         return (start, ends) in self.rule_to_strategy
@@ -155,13 +155,13 @@ class RuleDBBase(abc.ABC):
     # Below are methods for finding a combinatorial specification. #
     ################################################################
 
-    def has_specification(self, label: int) -> bool:
+    def has_specification(self, label: Label) -> bool:
         """Return True if a specification has been found, false otherwise."""
         return self.is_verified(label)
 
     def rule_from_equivalence_rule(
-        self, eqv_start: int, eqv_ends: Iterable[int]
-    ) -> Optional[Tuple[int, Tuple[int, ...]]]:
+        self, eqv_start: Label, eqv_ends: Iterable[Label]
+    ) -> Optional[Tuple[Label, Tuple[Label, ...]]]:
         """
         Return a rule that satisfies the equivalence rule.
 
@@ -193,7 +193,7 @@ class RuleDBBase(abc.ABC):
         return res
 
     def find_specification(
-        self, label: int, minimization_time_limit: float, iterative: bool = False
+        self, label: Label, minimization_time_limit: float, iterative: bool = False
     ) -> Node:
         """Search for a specification based on current data found."""
         rules_dict = self.rules_up_to_equivalence()
@@ -229,7 +229,7 @@ class RuleDBBase(abc.ABC):
         return specification
 
     def get_specification_rules(
-        self, label: int, minimization_time_limit: float, iterative: bool = False
+        self, label: Label, minimization_time_limit: float, iterative: bool = False
     ) -> SpecificationLabelsAndStrats:
         """
         Return a list of pairs (label, rule) which form a specification.
@@ -244,9 +244,9 @@ class RuleDBBase(abc.ABC):
         return self._get_specification_rules(label, proof_tree_node)
 
     def _get_specification_rules(
-        self, label: int, proof_tree_node: Node
+        self, label: Label, proof_tree_node: Node
     ) -> SpecificationLabelsAndStrats:
-        children: Dict[int, Tuple[int, ...]] = dict()
+        children: Dict[Label, Tuple[Label, ...]] = dict()
         internal_nodes = set([label])
         logger.info("Computing rule <-> equivalence rule mapping.")
         eqv_rules = [
@@ -282,7 +282,7 @@ class RuleDBBase(abc.ABC):
         return res, eqv_paths
 
     def all_specifications(
-        self, label: int, iterative: bool = False
+        self, label: Label, iterative: bool = False
     ) -> Iterator[SpecificationLabelsAndStrats]:
         """
         A generator that yields all specifications in the universe for
@@ -302,7 +302,7 @@ class RuleDBBase(abc.ABC):
             yield self._get_specification_rules(label, proof_tree_node)
 
     def get_smallest_specification(
-        self, label: int, iterative: bool = False
+        self, label: Label, iterative: bool = False
     ) -> SpecificationLabelsAndStrats:
         """
         Return the smallest specification in the universe for label. It uses
@@ -344,8 +344,12 @@ class RuleDBBase(abc.ABC):
 class RuleDB(RuleDBBase):
     def __init__(self) -> None:
         super().__init__()
-        self._rule_to_strategy: Dict[Tuple[int, Tuple[int, ...]], AbstractStrategy] = {}
+        self._rule_to_strategy: Dict[
+            Tuple[Label, Tuple[Label, ...]], AbstractStrategy
+        ] = {}
 
     @property
-    def rule_to_strategy(self) -> Dict[Tuple[int, Tuple[int, ...]], AbstractStrategy]:
+    def rule_to_strategy(
+        self,
+    ) -> Dict[Tuple[Label, Tuple[Label, ...]], AbstractStrategy]:
         return self._rule_to_strategy

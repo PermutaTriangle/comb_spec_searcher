@@ -18,7 +18,7 @@ from comb_spec_searcher.tree_searcher import (
     prune,
     smallish_random_proof_tree,
 )
-from comb_spec_searcher.typing import RuleKey
+from comb_spec_searcher.typing import Label, RuleKey
 
 
 class LimitedStrategyRuleDB(RuleDB):
@@ -56,7 +56,7 @@ class LimitedStrategyRuleDB(RuleDB):
         return eqv_rules_using_strategies
 
     def find_specification(
-        self, label: int, minimization_time_limit: float, iterative: bool = False
+        self, label: Label, minimization_time_limit: float, iterative: bool = False
     ) -> Node:
         """Search for a specification based on current data found."""
         rules_dict = self.rules_up_to_equivalence()

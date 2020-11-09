@@ -10,7 +10,7 @@ import tabulate
 
 from comb_spec_searcher.exception import NoMoreClassesToExpandError
 from comb_spec_searcher.strategies.strategy_pack import StrategyPack
-from comb_spec_searcher.typing import WorkPacket
+from comb_spec_searcher.typing import Label, WorkPacket
 
 
 class CSSQueue(abc.ABC):
@@ -29,19 +29,19 @@ class CSSQueue(abc.ABC):
         return self.__class__ == other.__class__ and self.__dict__ == other.__dict__
 
     @abc.abstractmethod
-    def add(self, label: int) -> None:
+    def add(self, label: Label) -> None:
         """Add a label to the queue."""
 
     @abc.abstractmethod
-    def set_not_inferrable(self, label: int) -> None:
+    def set_not_inferrable(self, label: Label) -> None:
         """You should avoid yielding label with an inferral strategy in future."""
 
     @abc.abstractmethod
-    def set_verified(self, label: int) -> None:
+    def set_verified(self, label: Label) -> None:
         """Label was verified, how should the queue react?"""
 
     @abc.abstractmethod
-    def set_stop_yielding(self, label: int) -> None:
+    def set_stop_yielding(self, label: Label) -> None:
         """You should stop yielding label. CSS indicated that this label should
         no longer be yielded, e.g., expanding another symmetry or expanding
         only children"""
@@ -80,16 +80,16 @@ class DefaultQueue(CSSQueue):
 
     def __init__(self, pack: StrategyPack):
         super().__init__(pack)
-        self.working: Deque[int] = deque()
-        self.next_level: CounterType[int] = Counter()
-        self.curr_level: Tuple[Deque[int], ...] = tuple(
+        self.working: Deque[Label] = deque()
+        self.next_level: CounterType[Label] = Counter()
+        self.curr_level: Tuple[Deque[Label], ...] = tuple(
             deque() for _ in self.expansion_strats
         )
         # One extra deque to be able to set ignore
         self.curr_level = self.curr_level + (deque(),)
-        self._inferral_expanded: Set[int] = set()
-        self._initial_expanded: Set[int] = set()
-        self.ignore: Set[int] = set()
+        self._inferral_expanded: Set[Label] = set()
+        self._initial_expanded: Set[Label] = set()
+        self.ignore: Set[Label] = set()
         self.queue_sizes: List[int] = []
         self.staging: Deque[WorkPacket] = deque([])
 
@@ -103,7 +103,7 @@ class DefaultQueue(CSSQueue):
         """Return the number of times swapped from curr to next."""
         return len(self.queue_sizes)
 
-    def add(self, label: int) -> None:
+    def add(self, label: Label) -> None:
         if self.can_do_inferral(label) or self.can_do_initial(label):
             self.working.append(label)
         elif label not in self.ignore:
@@ -112,32 +112,32 @@ class DefaultQueue(CSSQueue):
     def set_verified(self, label) -> None:
         self.set_stop_yielding(label)
 
-    def set_not_inferrable(self, label: int) -> None:
+    def set_not_inferrable(self, label: Label) -> None:
         """Mark the label such that it's not expanded with inferral anymore"""
         if label not in self.ignore:
             self._inferral_expanded.add(label)
 
-    def set_not_initial(self, label: int) -> None:
+    def set_not_initial(self, label: Label) -> None:
         """Mark the label such that it's not expanded with initial anymore"""
         if label not in self.ignore:
             self._initial_expanded.add(label)
 
-    def set_stop_yielding(self, label: int) -> None:
+    def set_stop_yielding(self, label: Label) -> None:
         self.ignore.add(label)
         # can remove it elsewhere to keep sets "small"
         self._inferral_expanded.discard(label)
         self._initial_expanded.discard(label)
         self.next_level.pop(label, None)
 
-    def can_do_inferral(self, label: int) -> bool:
+    def can_do_inferral(self, label: Label) -> bool:
         """Return true if inferral strategies can be applied."""
         return bool(self.inferral_strategies) and label not in self._inferral_expanded
 
-    def can_do_initial(self, label: int) -> bool:
+    def can_do_initial(self, label: Label) -> bool:
         """Return true if initial strategies can be applied."""
         return bool(self.initial_strategies) and label not in self._initial_expanded
 
-    def can_do_expansion(self, label: int, idx: int) -> bool:
+    def can_do_expansion(self, label: Label, idx: int) -> bool:
         """Return true if expansion strategies can be applied."""
         return label not in self.ignore and idx < len(self.expansion_strats)
 
