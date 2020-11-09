@@ -12,8 +12,6 @@ from random import randint
 from typing import (
     TYPE_CHECKING,
     Callable,
-    Counter,
-    DefaultDict,
     Dict,
     Generic,
     Iterator,
@@ -26,6 +24,15 @@ from typing import (
 
 from sympy import Eq, Function
 
+from comb_spec_searcher.typing import (
+    Objects,
+    ObjectsCache,
+    SubObjects,
+    SubTerms,
+    Terms,
+    TermsCache,
+)
+
 from ..combinatorial_class import CombinatorialClassType, CombinatorialObjectType
 from ..exception import SanityCheckFailure, StrategyDoesNotApply
 from .constructor import Constructor, DisjointUnion
@@ -33,14 +40,6 @@ from .constructor import Constructor, DisjointUnion
 if TYPE_CHECKING:
     from .strategy import AbstractStrategy, Strategy, VerificationStrategy
     from .strategy_pack import StrategyPack
-
-Parameters = Tuple[int, ...]
-Objects = DefaultDict[Parameters, List[CombinatorialObjectType]]
-ObjectsCache = List[Objects]
-Terms = Counter[Parameters]  # all terms for a fixed n
-TermsCache = List[Terms]  # index n contains terms for n
-SubObjects = Tuple[Callable[[int], Objects], ...]
-SubTerms = Tuple[Callable[[int], Terms], ...]
 
 __all__ = ("Rule", "VerificationRule")
 
