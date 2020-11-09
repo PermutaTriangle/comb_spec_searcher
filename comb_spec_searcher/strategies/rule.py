@@ -411,6 +411,8 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         """
         Sanity check that the count given by the rule matches the brute force count.
         """
+        # pylint: disable=access-member-before-definition
+        # pylint: disable=attribute-defined-outside-init
         actual_terms = self.comb_class.get_terms(n)
         temp_subterms = self.subterms
         self.subterms = tuple(child.get_terms for child in self.children)
@@ -431,6 +433,8 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         Sanity check that the object given by the rule matches the brute force
         generated objects.
         """
+        # pylint: disable=access-member-before-definition
+        # pylint: disable=attribute-defined-outside-init
         tempobjects = self.subobjects
         self.subobjects = tuple(child.get_objects for child in self.children)
         try:
@@ -737,6 +741,7 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
             self.comb_class, n, **parameters
         )
 
-    def sanity_check(self, n: int) -> bool:
+    @staticmethod
+    def sanity_check(n: int) -> bool:
         # TODO: test more thoroughly
         return True

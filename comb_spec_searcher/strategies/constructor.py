@@ -359,8 +359,8 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         )
         return tuple(sum(vals) for vals in zip(*mapped_params))
 
+    @staticmethod
     def _params_value_pairs_combinations(
-        self,
         sizes: Tuple[int, ...],
         sub_getters: Tuple[Callable[[int], Dict[Parameters, T]], ...],
     ) -> Iterator[Tuple[Tuple[Parameters, T], ...]]:

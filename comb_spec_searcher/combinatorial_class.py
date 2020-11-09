@@ -150,7 +150,7 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
         objects: Objects = DefaultDict(list)
         for obj in self.objects_of_size(n):
             param = self.get_parameters(obj)
-            objects[param].append(obj)
+            objects[param].append(obj)  # pylint: disable=invalid-sequence-index
         return objects
 
     def initial_conditions(self, check: int = 6) -> List[Expr]:
