@@ -228,7 +228,6 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
 
     def reliance_profile(self, n: int, **parameters: int) -> RelianceProfile:
         #  TODO: consider when parameters are subsets of each other etc
-        # TODO: should this go back to only on n? i.e. RelianceProfile = Tuple[int, ...]
         assert all(
             set(["n", *parameters]) == set(min_child_sizes)
             for min_child_sizes in self.min_child_sizes

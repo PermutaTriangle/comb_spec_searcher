@@ -89,7 +89,7 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
     @property
     def extra_parameters(self) -> Tuple[str, ...]:
         """
-        Return a the parameters used to get the enumeration of the
+        Return the parameters used to get the enumeration of the
         class. It is assumed that the order is consistent for a combinatorial class.
         """
         return tuple()

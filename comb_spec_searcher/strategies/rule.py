@@ -1,5 +1,6 @@
-""" The rule class is used for a specific application of a strategy on a tiling.
-This is not something the user should implement, as it is just a wrapper for
+"""
+The rule class is used for a specific application of a strategy on a combinatorial
+class. This is not something the user should implement, as it is just a wrapper for
 calling the Strategy class and storing its results.
 
 A CombinatorialSpecification is (more or less) a set of Rule.
@@ -741,7 +742,5 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
             self.comb_class, n, **parameters
         )
 
-    @staticmethod
-    def sanity_check(n: int) -> bool:
-        # TODO: test more thoroughly
-        return True
+    def sanity_check(self, n: int) -> bool:
+        return self.get_terms(n) == self.comb_class.get_terms(n)
