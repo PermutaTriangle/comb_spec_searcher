@@ -41,12 +41,12 @@ setup(
         "Topic :: Scientific/Engineering :: Mathematics",
     ],
     install_requires=[
-        "logzero==1.5.0",
+        "logzero==1.6.2",
         "sympy==1.6.2",
         "psutil==5.7.3",
         "pympler==0.9",
         "requests==2.24.0",
-        "typing-extensions==3.7.4.2",
+        "typing-extensions==3.7.4.3",
         "tabulate==0.8.7",
     ],
 )
