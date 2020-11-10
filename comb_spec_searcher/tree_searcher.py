@@ -8,7 +8,7 @@ from itertools import chain, product
 from random import choice, shuffle
 from typing import Dict, FrozenSet, Iterator, List, Optional, Sequence, Set, Tuple
 
-from comb_spec_searcher.typing import Label, RulesDict
+from comb_spec_searcher.typing import RulesDict
 
 __all__ = ("prune", "proof_tree_generator_dfs", "proof_tree_generator_bfs")
 
@@ -16,13 +16,13 @@ __all__ = ("prune", "proof_tree_generator_dfs", "proof_tree_generator_bfs")
 class Node:
     """A node for a proof tree."""
 
-    def __init__(self, n: Label, children: Optional[List["Node"]] = None):
+    def __init__(self, n: int, children: Optional[List["Node"]] = None):
         if children is None:
             children = []
         self.label = n
         self.children = children
 
-    def labels(self) -> Set[Label]:
+    def labels(self) -> Set[int]:
         """Return the set of all labels in the proof tree."""
         res = set([self.label])
         res.update(chain.from_iterable(node.labels() for node in self.children))
@@ -59,9 +59,9 @@ def prune(rdict: RulesDict) -> None:
                     del rdict[k]
 
 
-def iterative_prune(rules_dict: RulesDict, root: Optional[Label] = None) -> RulesDict:
+def iterative_prune(rules_dict: RulesDict, root: Optional[int] = None) -> RulesDict:
     """Prune all nodes not iteratively verifiable."""
-    verified_labels: Set[Label] = set()
+    verified_labels: Set[int] = set()
     if root is not None:
         verified_labels.add(root)
     rdict = deepcopy(rules_dict)
@@ -82,9 +82,7 @@ def iterative_prune(rules_dict: RulesDict, root: Optional[Label] = None) -> Rule
     return new_rules_dict
 
 
-def proof_tree_dfs(
-    rules_dict: RulesDict, root: Label, seen: Optional[Set[Label]] = None
-):
+def proof_tree_dfs(rules_dict: RulesDict, root: int, seen: Optional[Set[int]] = None):
     """Return random proof tree found by depth first search."""
     if seen is None:
         seen = set()
@@ -103,8 +101,8 @@ def proof_tree_dfs(
 
 
 def all_proof_trees_dfs(
-    rules_dict: RulesDict, roots: Sequence[Label], seen: Optional[Set[Label]] = None
-) -> Tuple[Set[Label], List[Node]]:
+    rules_dict: RulesDict, roots: Sequence[int], seen: Optional[Set[int]] = None
+) -> Tuple[Set[int], List[Node]]:
     """Return all labels which have been seen, together with all of the trees
     using the given roots.."""
     if seen is None:
@@ -117,7 +115,7 @@ def all_proof_trees_dfs(
     return seen1.union(seen2), [tree] + trees
 
 
-def iterative_proof_tree_bfs(rules_dict: RulesDict, root: Label) -> Node:
+def iterative_proof_tree_bfs(rules_dict: RulesDict, root: int) -> Node:
     """Takes in a iterative pruned rules_dict and returns iterative proof
     tree."""
     root_node = Node(root)
@@ -132,9 +130,9 @@ def iterative_proof_tree_bfs(rules_dict: RulesDict, root: Label) -> Node:
     return root_node
 
 
-def random_proof_tree(rules_dict: RulesDict, root: Label) -> Node:
+def random_proof_tree(rules_dict: RulesDict, root: int) -> Node:
     """Return random tree found by breadth first search."""
-    seen: Set[Label] = set()
+    seen: Set[int] = set()
     root_node = Node(root)
     queue = deque([root_node])
     while queue:
@@ -150,7 +148,7 @@ def random_proof_tree(rules_dict: RulesDict, root: Label) -> Node:
 
 
 def smallish_random_proof_tree(
-    rules_dict: RulesDict, root: Label, minimization_time_limit: float
+    rules_dict: RulesDict, root: int, minimization_time_limit: float
 ) -> Node:
     """
     Searches a rule_dict known to contain at least one specification for a
@@ -168,12 +166,12 @@ def smallish_random_proof_tree(
     return smallest_so_far
 
 
-def proof_tree_generator_bfs(rules_dict: RulesDict, root: Label) -> Iterator[Node]:
+def proof_tree_generator_bfs(rules_dict: RulesDict, root: int) -> Iterator[Node]:
     """A generator for all proof trees using breadth first search.
     N.B. The rules_dict is assumed to be pruned.
     """
 
-    def _bfs_helper(root_label: Label, seen: FrozenSet[Label]):
+    def _bfs_helper(root_label: int, seen: FrozenSet[int]):
         if root_label in seen:
             yield Node(root_label)
             return
@@ -195,15 +193,15 @@ def proof_tree_generator_bfs(rules_dict: RulesDict, root: Label) -> Iterator[Nod
 
 
 def proof_tree_generator_dfs(
-    rules_dict: RulesDict, root: Label, maximum: Optional[int] = None
+    rules_dict: RulesDict, root: int, maximum: Optional[int] = None
 ) -> Iterator[Node]:
     """A generator for all proof trees using depth first search.
     N.B. The rules_dict is assumed to be pruned.
     """
 
     def _dfs_tree(
-        root_label: Label, seen: FrozenSet[Label], maximum: int = None
-    ) -> Iterator[Tuple[FrozenSet[Label], Node]]:
+        root_label: int, seen: FrozenSet[int], maximum: int = None
+    ) -> Iterator[Tuple[FrozenSet[int], Node]]:
         if maximum is not None and maximum <= 0:
             return
         if root_label in seen:
@@ -220,10 +218,8 @@ def proof_tree_generator_dfs(
                     yield new_seen, root_node
 
     def _dfs_forest(
-        root_labels: Sequence[Label],
-        seen: FrozenSet[Label],
-        maximum: Optional[int] = None,
-    ) -> Iterator[Tuple[FrozenSet[Label], List[Node]]]:
+        root_labels: Sequence[int], seen: FrozenSet[int], maximum: Optional[int] = None
+    ) -> Iterator[Tuple[FrozenSet[int], List[Node]]]:
         if maximum is not None and maximum <= 0:
             return
         if not root_labels:
@@ -248,9 +244,9 @@ def proof_tree_generator_dfs(
             yield tree
 
 
-def iterative_proof_tree_finder(rules_dict: RulesDict, root: Label) -> Node:
+def iterative_proof_tree_finder(rules_dict: RulesDict, root: int) -> Node:
     """Finds an iterative proof tree for root, if one exists."""
-    trees: Dict[Label, Node] = {}
+    trees: Dict[int, Node] = {}
 
     def get_tree(start):
         if start == root:

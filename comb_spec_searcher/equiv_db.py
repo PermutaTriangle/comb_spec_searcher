@@ -13,8 +13,6 @@ integer, that the classdb gives.
 from collections import deque
 from typing import Deque, Dict, FrozenSet, List, Set, Union
 
-from comb_spec_searcher.typing import Label
-
 
 class EquivalenceDB:
     """
@@ -32,10 +30,10 @@ class EquivalenceDB:
 
     def __init__(self) -> None:
         """Create a new empty equivalent database."""
-        self.parents: Dict[Label, Label] = {}
-        self.weights: Dict[Label, int] = {}
-        self.verified_roots: Set[Label] = set()
-        self.vertices: Set[FrozenSet[Label]] = set()
+        self.parents: Dict[int, int] = {}
+        self.weights: Dict[int, int] = {}
+        self.verified_roots: Set[int] = set()
+        self.vertices: Set[FrozenSet[int]] = set()
 
     def __eq__(self, other: object) -> bool:
         """Check if all information stored is the same."""
@@ -48,7 +46,7 @@ class EquivalenceDB:
             and self.vertices == other.vertices
         )
 
-    def __getitem__(self, comb_class: Label) -> Label:
+    def __getitem__(self, comb_class: int) -> int:
         """Find and return root combinatorial class for the set containing
         comb_class."""
         root = self.parents.get(comb_class)
@@ -68,7 +66,7 @@ class EquivalenceDB:
             self.parents[ancestor] = root
         return root
 
-    def union(self, t1: Label, t2: Label) -> None:
+    def union(self, t1: int, t2: int) -> None:
         """Find sets containing t1 and t2 and merge them."""
         if t1 == t2:
             return
@@ -83,21 +81,21 @@ class EquivalenceDB:
         if verified:
             self.set_verified(t1)
 
-    def equivalent(self, t1: Label, t2: Label) -> bool:
+    def equivalent(self, t1: int, t2: int) -> bool:
         """Return True if t1 and t2 are equivalent, False otherwise."""
         return self[t1] == self[t2]
 
-    def set_verified(self, comb_class: Label) -> None:
+    def set_verified(self, comb_class: int) -> None:
         """Update database that combinatorial classes equivalent to comb_class
         are verified."""
         if not self.is_verified(comb_class):
             self.verified_roots.add(self[comb_class])
 
-    def is_verified(self, comb_class: Label) -> bool:
+    def is_verified(self, comb_class: int) -> bool:
         """Return true if any equivalent combinatorial class is verified."""
         return self[comb_class] in self.verified_roots
 
-    def equivalent_set(self, comb_class: Label) -> Set[Label]:
+    def equivalent_set(self, comb_class: int) -> Set[int]:
         """Return all of the classes equivalent to comb_class."""
         equivalent_classes = set()
         for t in self.parents:
@@ -105,7 +103,7 @@ class EquivalenceDB:
                 equivalent_classes.add(t)
         return equivalent_classes
 
-    def find_path(self, comb_class: Label, other_comb_class: Label) -> List[Label]:
+    def find_path(self, comb_class: int, other_comb_class: int) -> List[int]:
         """
         BFS for shortest path.
 
@@ -115,16 +113,16 @@ class EquivalenceDB:
             raise KeyError("The classes given are not equivalent.")
         if comb_class == other_comb_class:
             return [comb_class]
-        equivalent_comb_classes: Dict[Label, Label] = {}
-        reverse_map: Dict[Label, Label] = {}
+        equivalent_comb_classes: Dict[int, int] = {}
+        reverse_map: Dict[int, int] = {}
 
         for x in self.parents:
-            n = Label(len(equivalent_comb_classes))
+            n = len(equivalent_comb_classes)
             if self.equivalent(comb_class, x):
                 equivalent_comb_classes[x] = n
                 reverse_map[n] = x
 
-        adjacency_list: List[List[Label]] = [
+        adjacency_list: List[List[int]] = [
             [] for i in range(len(equivalent_comb_classes))
         ]
         for (t1, t2) in self.vertices:
@@ -134,16 +132,16 @@ class EquivalenceDB:
                 adjacency_list[u].append(v)
                 adjacency_list[v].append(u)
 
-        dequeue: Deque[Label] = deque()
+        dequeue: Deque[int] = deque()
 
         start = equivalent_comb_classes[comb_class]
         end = equivalent_comb_classes[other_comb_class]
 
-        n = Label(len(equivalent_comb_classes))
+        n = len(equivalent_comb_classes)
 
         dequeue.append(start)
         visited = [False for i in range(n)]
-        neighbour: List[Union[Label, None]] = [None for i in range(n)]
+        neighbour: List[Union[int, None]] = [None for i in range(n)]
         while dequeue:
             u = dequeue.popleft()
             if u == end:
