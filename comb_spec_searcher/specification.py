@@ -11,12 +11,14 @@ import sympy
 from logzero import logger
 from sympy import Eq, Expr, Function, Number, solve, var
 
-from .combinatorial_class import (
-    CombinatorialClass,
+from comb_spec_searcher.typing import (
     CombinatorialClassType,
-    CombinatorialObject,
     CombinatorialObjectType,
+    Objects,
+    Terms,
 )
+
+from .combinatorial_class import CombinatorialClass, CombinatorialObject
 from .exception import (
     IncorrectGeneratingFunctionError,
     InvalidOperationError,
@@ -71,7 +73,7 @@ class CombinatorialSpecification(
         self._remove_redundant_rules()
         self.labels: Dict[CombinatorialClassType, int] = {}
         self._label_to_tiling: Dict[int, CombinatorialClassType] = {}
-        self._subrules_set = False
+        self._set_subrules()
 
     def _set_subrules(self) -> None:
         """Tells the subrules which children's recurrence methods it should use."""
@@ -79,7 +81,6 @@ class CombinatorialSpecification(
             self.rules_dict.values()
         ):  # list as we lazily assign empty rules
             rule.set_subrecs(self.get_rule)
-        self._subrules_set = True
 
     def _populate_rules_dict(
         self,
@@ -128,7 +129,7 @@ class CombinatorialSpecification(
                 self.rules_dict.pop(comb_class)
             self._expand_verified_comb_classes(verification_packs)
             self.expand_verified()
-            self._subrules_set = False
+            self._set_subrules()
 
     def expand_comb_class(self, comb_class: Union[int, CombinatorialClassType]) -> None:
         """
@@ -277,8 +278,6 @@ class CombinatorialSpecification(
         Yield all equations on the (ordinary) generating function that the
         rules of the specification imply.
         """
-        if not self._subrules_set:
-            self._set_subrules()
         funcs: Dict[CombinatorialClass, Function] = {
             comb_class: self.get_function(comb_class)
             for comb_class, rule in self.rules_dict.items()
@@ -389,11 +388,21 @@ class CombinatorialSpecification(
         Return the number of objects with the given parameters.
         Note, 'n' is reserved for the size of the object.
         """
-        if not self._subrules_set:
-            self._set_subrules()
         limit = n * self.number_of_rules()
         with RecursionLimit(limit):
             return self.root_rule.count_objects_of_size(n, **parameters)
+
+    def get_terms(self, n: int) -> Terms:
+        """
+        Return the terms for given n.
+        """
+        return self.root_rule.get_terms(n)
+
+    def get_objects(self, n: int) -> Objects:
+        """
+        Return the objects for given n.
+        """
+        return self.root_rule.get_objects(n)
 
     def generate_objects_of_size(
         self, n: int, **parameters
@@ -402,8 +411,6 @@ class CombinatorialSpecification(
         Return the objects with the given parameters.
         Note, 'n' is reserved for the size of the object.
         """
-        if not self._subrules_set:
-            self._set_subrules()
         for obj in self.root_rule.generate_objects_of_size(n, **parameters):
             yield obj
 
@@ -414,8 +421,6 @@ class CombinatorialSpecification(
         Return a uniformly random object of the given size. This is done using
         the "recursive" method.
         """
-        if not self._subrules_set:
-            self._set_subrules()
         limit = n * self.number_of_rules()
         with RecursionLimit(limit):
             return self.root_rule.random_sample_object_of_size(n, **parameters)
@@ -429,14 +434,8 @@ class CombinatorialSpecification(
 
         Raise an SanityCheckFailure error if it fails.
         """
-        if not self._subrules_set:
-            self._set_subrules()
         return all(
-            all(
-                rule.sanity_check(n, **parameters)
-                for rule in self.rules_dict.values()
-                for parameters in rule.comb_class.possible_parameters(n)
-            )
+            all(rule.sanity_check(n) for rule in self.rules_dict.values())
             for n in range(length + 1)
         )
 

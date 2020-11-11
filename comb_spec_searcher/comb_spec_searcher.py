@@ -25,9 +25,15 @@ import tabulate
 from logzero import logger
 from sympy import Eq, Function, var
 
+from comb_spec_searcher.typing import (
+    CombinatorialClassType,
+    CSSstrategy,
+    SpecificationClassesAndStrats,
+    WorkPacket,
+)
+
 from .class_db import ClassDB
-from .class_queue import DefaultQueue, WorkPacket
-from .combinatorial_class import CombinatorialClassType
+from .class_queue import DefaultQueue
 from .exception import (
     ExceededMaxtimeError,
     InvalidOperationError,
@@ -44,7 +50,6 @@ from .strategies import (
     VerificationRule,
 )
 from .strategies.rule import AbstractRule
-from .strategies.strategy import CSSstrategy
 from .utils import (
     cssiteratortimer,
     cssmethodtimer,
@@ -61,11 +66,6 @@ __all__ = ["CombinatorialSpecificationSearcher"]
 warnings.simplefilter("once", Warning)
 
 logzero.loglevel(logging.INFO)
-
-Specification = Tuple[
-    List[Tuple[CombinatorialClassType, AbstractStrategy]],
-    List[List[CombinatorialClassType]],
-]
 
 
 class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
@@ -267,8 +267,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 try:
                     n = 4
                     for i in range(n + 1):
-                        for parameters in rule.comb_class.possible_parameters(i):
-                            rule.sanity_check(n=i, **parameters)
+                        rule.sanity_check(n=i)
                     logger.debug("Sanity checked rule to length %s.", n)
                 except NotImplementedError as e:
                     logger.debug(
@@ -634,7 +633,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 round(max_expansion_time, 2),
             )
 
-    def _auto_search_rules(self) -> Specification:
+    def _auto_search_rules(self) -> SpecificationClassesAndStrats:
         """
         A basic auto search for returning equivalence paths and rules.
 
@@ -718,7 +717,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
     @cssmethodtimer("get specification")
     def _get_specification_rules(
         self, minimization_time_limit: float = 10, smallest: bool = False
-    ) -> Optional[Specification]:
+    ) -> Optional[SpecificationClassesAndStrats]:
         """
         Returns the equivalence paths needed to create a
         CombinatorialSpecification, if one exists.

@@ -2,7 +2,7 @@
 A database for rules.
 """
 import itertools
-from typing import Iterable, Iterator, List, MutableMapping, Set, Tuple, Union, cast
+from typing import Iterable, Iterator, MutableMapping, Set, Tuple, Union, cast
 
 from comb_spec_searcher.class_db import ClassDB
 from comb_spec_searcher.equiv_db import EquivalenceDB
@@ -10,13 +10,11 @@ from comb_spec_searcher.exception import StrategyDoesNotApply
 from comb_spec_searcher.strategies.rule import AbstractRule
 from comb_spec_searcher.strategies.strategy import AbstractStrategy, StrategyFactory
 from comb_spec_searcher.strategies.strategy_pack import StrategyPack
+from comb_spec_searcher.typing import RuleKey
 
 from .base import RuleDBBase
 
 __all__ = ["RuleDBForgetStrategy"]
-
-Specification = Tuple[List[Tuple[int, AbstractStrategy]], List[List[int]]]
-RuleKey = Tuple[int, Tuple[int, ...]]
 
 
 class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):

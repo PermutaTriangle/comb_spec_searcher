@@ -38,8 +38,8 @@ For a VerificationStrategy you must implement the methods:
                                 objects. If the strategy doesn't have a CSS
                                 strategy pack that can be used to enumerate
                                 verified combinatorial classes, then you need
-                                to implement the methods count_objects_of_size,
-                                generate_objects_of_size, and get_genf.
+                                to implement the methods get_terms,
+                                get_objects, and get_genf.
     - __repr__ and __str__:     This is mostly for printing purposes!
     - from_dict:                A method that can recreate the class. The dict
                                 passed is empty. If your strategy needs extra
@@ -49,9 +49,11 @@ If your verification strategy is for the atoms, consider using the
 AtomStrategy, relying on CombinatorialClass methods.
 """
 import abc
+from collections import defaultdict
 from importlib import import_module
 from typing import (
     TYPE_CHECKING,
+    Counter,
     Dict,
     Generic,
     Iterator,
@@ -63,6 +65,8 @@ from typing import (
 )
 
 from sympy import Expr, Function, Integer, var
+
+from comb_spec_searcher.typing import CSSstrategy, Objects, Terms
 
 from ..combinatorial_class import (
     CombinatorialClass,
@@ -79,7 +83,6 @@ if TYPE_CHECKING:
 
     from .strategy_pack import StrategyPack
 
-
 __all__ = (
     "AbstractStrategy",
     "CartesianProductStrategy",
@@ -89,8 +92,6 @@ __all__ = (
     "SymmetryStrategy",
     "VerificationStrategy",
 )
-
-CSSstrategy = Union["Strategy", "StrategyFactory", "VerificationStrategy"]
 
 
 def strategy_from_dict(d) -> CSSstrategy:
@@ -527,8 +528,8 @@ class VerificationStrategy(
                                     objects. If the strategy doesn't have a CSS
                                     strategy pack that can be used to enumerate
                                     verified combinatorial classes, then you need
-                                    to implement the methods count_objects_of_size,
-                                    generate_objects_of_size, and get_genf.
+                                    to implement the methods get_terms,
+                                    get_objects, and get_genf.
         - __repr__ and __str__:     This is mostly for printing purposes!
         - from_dict:                A method that can recreate the class. The dict
                                     passed is empty. If your strategy needs extra
@@ -624,31 +625,22 @@ class VerificationStrategy(
             return tuple()
         return None
 
-    def count_objects_of_size(
-        self, comb_class: CombinatorialClassType, n: int, **parameters: int
-    ) -> int:
+    def get_terms(self, comb_class: CombinatorialClassType, n: int) -> Terms:
         """
-        A method to count the objects.
-        Raises an StrategyDoesNotApply if the combinatorial class is not verified.
+        Return the terms for n given the subterms of the children.
         """
         if not self.verified(comb_class):
             raise StrategyDoesNotApply("The combinatorial class is not verified")
-        return int(
-            self.get_specification(comb_class).count_objects_of_size(n, **parameters)
-        )
+        return self.get_specification(comb_class).get_terms(n)
 
-    def generate_objects_of_size(
-        self, comb_class: CombinatorialClassType, n: int, **parameters: int
-    ) -> Iterator[CombinatorialObjectType]:
+    def get_objects(self, comb_class: CombinatorialClassType, n: int) -> Objects:
         """
-        A method to generate the objects.
+        A method to get all the objects of a given size n partitioned by parameters.
         Raises an StrategyDoesNotApply if the combinatorial class is not verified.
         """
         if not self.verified(comb_class):
             raise StrategyDoesNotApply("The combinatorial class is not verified")
-        yield from self.get_specification(comb_class).generate_objects_of_size(
-            n, **parameters
-        )
+        return self.get_specification(comb_class).get_objects(n)
 
     def random_sample_object_of_size(
         self, comb_class: CombinatorialClassType, n: int, **parameters: int
@@ -681,17 +673,21 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
         super().__init__(ignore_parent=True)
 
     @staticmethod
-    def count_objects_of_size(
-        comb_class: CombinatorialClass, n: int, **parameters: int
-    ) -> int:
-        """
-        Verification strategies must contain a method to count the objects.
-        """
+    def get_terms(comb_class: CombinatorialClass, n: int) -> Terms:
         if comb_class.extra_parameters:
             raise NotImplementedError
         if n == comb_class.minimum_size_of_object():
-            return 1
-        return 0
+            return Counter([tuple()])
+        return Counter()
+
+    @staticmethod
+    def get_objects(comb_class: CombinatorialClass, n: int) -> Objects:
+        if comb_class.extra_parameters:
+            raise NotImplementedError
+        res: Objects = defaultdict(list)
+        if n == comb_class.minimum_size_of_object():
+            res[tuple()].append(next(comb_class.objects_of_size(n)))
+        return res
 
     def get_genf(
         self,
@@ -704,18 +700,6 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
             raise StrategyDoesNotApply("Can't find generating functon for non-atom.")
         x = var("x")
         return x ** comb_class.minimum_size_of_object()
-
-    @staticmethod
-    def generate_objects_of_size(
-        comb_class: CombinatorialClass, n: int, **parameters: int
-    ) -> Iterator[CombinatorialObject]:
-        """
-        Verification strategies must contain a method to generate the objects.
-        """
-        if comb_class.extra_parameters:
-            raise NotImplementedError
-        if n == comb_class.minimum_size_of_object():
-            yield from comb_class.objects_of_size(n)
 
     @staticmethod
     def random_sample_object_of_size(
@@ -765,13 +749,12 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject
         super().__init__(ignore_parent=True)
 
     @staticmethod
-    def count_objects_of_size(
-        comb_class: CombinatorialClass, n: int, **parameters: int
-    ) -> int:
-        """
-        Verification strategies must contain a method to count the objects.
-        """
-        return 0
+    def get_terms(comb_class: CombinatorialClass, n: int) -> Terms:
+        return Counter()
+
+    @staticmethod
+    def get_objects(comb_class: CombinatorialClass, n: int) -> Objects:
+        return defaultdict(list)
 
     def get_genf(
         self,
@@ -783,15 +766,6 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject
                 "can't find generating functon for non-empty class."
             )
         return Integer(0)
-
-    @staticmethod
-    def generate_objects_of_size(
-        comb_class: CombinatorialClass, n: int, **parameters: int
-    ) -> Iterator[CombinatorialObject]:
-        """
-        Verification strategies must contain a method to generate the objects.
-        """
-        return iter([])
 
     @staticmethod
     def random_sample_object_of_size(
