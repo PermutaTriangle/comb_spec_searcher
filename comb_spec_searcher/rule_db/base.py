@@ -21,11 +21,9 @@ from comb_spec_searcher.tree_searcher import (
     random_proof_tree,
     smallish_random_proof_tree,
 )
+from comb_spec_searcher.typing import RuleKey, SpecificationLabelsAndStrats
 
 __all__ = ["RuleDBBase", "RuleDB"]
-
-Specification = Tuple[List[Tuple[int, AbstractStrategy]], List[List[int]]]
-RuleKey = Tuple[int, Tuple[int, ...]]
 
 
 class RuleDBBase(abc.ABC):
@@ -232,7 +230,7 @@ class RuleDBBase(abc.ABC):
 
     def get_specification_rules(
         self, label: int, minimization_time_limit: float, iterative: bool = False
-    ) -> Specification:
+    ) -> SpecificationLabelsAndStrats:
         """
         Return a list of pairs (label, rule) which form a specification.
         The specification returned is random, so two calls to the function
@@ -247,7 +245,7 @@ class RuleDBBase(abc.ABC):
 
     def _get_specification_rules(
         self, label: int, proof_tree_node: Node
-    ) -> Specification:
+    ) -> SpecificationLabelsAndStrats:
         children: Dict[int, Tuple[int, ...]] = dict()
         internal_nodes = set([label])
         logger.info("Computing rule <-> equivalence rule mapping.")
@@ -285,7 +283,7 @@ class RuleDBBase(abc.ABC):
 
     def all_specifications(
         self, label: int, iterative: bool = False
-    ) -> Iterator[Specification]:
+    ) -> Iterator[SpecificationLabelsAndStrats]:
         """
         A generator that yields all specifications in the universe for
         the given label.
@@ -305,7 +303,7 @@ class RuleDBBase(abc.ABC):
 
     def get_smallest_specification(
         self, label: int, iterative: bool = False
-    ) -> Specification:
+    ) -> SpecificationLabelsAndStrats:
         """
         Return the smallest specification in the universe for label. It uses
         exponential search to find it.

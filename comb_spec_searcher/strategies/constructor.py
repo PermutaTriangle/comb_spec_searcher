@@ -17,7 +17,6 @@ from random import randint
 from typing import (
     Callable,
     Counter,
-    DefaultDict,
     Dict,
     Generic,
     Iterable,
@@ -32,24 +31,22 @@ from typing import (
 from sympy import Eq, Function
 
 from comb_spec_searcher import utils
-from comb_spec_searcher.combinatorial_class import (
+from comb_spec_searcher.typing import (
     CombinatorialClassType,
     CombinatorialObjectType,
+    Parameters,
+    ParametersMap,
+    RelianceProfile,
+    SubObjects,
+    SubRecs,
+    SubSamplers,
+    SubTerms,
+    Terms,
 )
 
 __all__ = ("Constructor", "CartesianProduct", "DisjointUnion")
 
 T = TypeVar("T")
-Parameters = Tuple[int, ...]
-ParametersMap = Callable[[Parameters], Parameters]
-RelianceProfile = Tuple[Dict[str, Tuple[int, ...]], ...]
-SubGens = Tuple[Callable[..., Iterator[CombinatorialObjectType]], ...]
-Objects = DefaultDict[Parameters, List[CombinatorialObjectType]]
-SubObjects = Tuple[Callable[[int], Objects], ...]
-SubRecs = Tuple[Callable[..., int], ...]
-SubSamplers = Tuple[Callable[..., CombinatorialObjectType], ...]
-Terms = Counter[Parameters]  # all terms for a fixed n
-SubTerms = Tuple[Callable[[int], Terms], ...]
 
 
 class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectType]):

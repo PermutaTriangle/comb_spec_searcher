@@ -54,7 +54,6 @@ from importlib import import_module
 from typing import (
     TYPE_CHECKING,
     Counter,
-    DefaultDict,
     Dict,
     Generic,
     Iterator,
@@ -66,6 +65,8 @@ from typing import (
 )
 
 from sympy import Expr, Function, Integer, var
+
+from comb_spec_searcher.typing import CSSstrategy, Objects, Terms
 
 from ..combinatorial_class import (
     CombinatorialClass,
@@ -82,11 +83,6 @@ if TYPE_CHECKING:
 
     from .strategy_pack import StrategyPack
 
-Parameters = Tuple[int, ...]
-Objects = DefaultDict[Parameters, CombinatorialObjectType]
-Terms = Counter[Parameters]  # all terms for a fixed n
-
-
 __all__ = (
     "AbstractStrategy",
     "CartesianProductStrategy",
@@ -96,8 +92,6 @@ __all__ = (
     "SymmetryStrategy",
     "VerificationStrategy",
 )
-
-CSSstrategy = Union["Strategy", "StrategyFactory", "VerificationStrategy"]
 
 
 def strategy_from_dict(d) -> CSSstrategy:
