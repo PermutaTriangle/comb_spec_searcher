@@ -60,7 +60,7 @@ found. This package can be used to perform this process automatically.
 See the `Combinatorial Exploration
 project <https://permutatriangle.github.io/papers/2019-02-27-combex.html>`__
 and `Christian Bean’s PhD
-thesis <https://skemman.is/handle/1946/31663>`__ for more details.
+thesis <https://opinvisindi.is/handle/20.500.11815/1184>`__ for more details.
 
 The remainder of this README will be an example of how to use this
 package for performing combinatorial exploration on a specific class,

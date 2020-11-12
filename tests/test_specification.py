@@ -81,6 +81,7 @@ def test_random_sample(specification):
     """
     Just test that it works and don't hit the maximum recursion depth.
     """
+    assert specification.random_sample_object_of_size(0) == ""
     assert len(specification.random_sample_object_of_size(100)) == 100
 
 

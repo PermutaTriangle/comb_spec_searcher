@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.4.0] - 2020-11-11
+### Changed
+- Computation of terms in the constructor is now on a per size basis. The value for each possible paratemeters is computed at once in the new `get_terms` function of constructor. If you do not implement your own constructor this should have no effect on your code. The old `generate_object_of_size` method of the constructor is also replaced by a `get_objects` method that returns the objects for each possible combination of parameters.
+
+## [2.3.0] - 2020-10-28
+### Added
+- Can sample and generate objects from specifications using multiple parameters.
+- Sanity check tests object generation for rules with multiple parameteres.
+
+### Changed
+- Removed the processname extra from logging
+
 ## [2.2.1] - 2020-09-10
 ### Fixed
 - when passed a multivariate function, the `taylor_expand` function expands in

@@ -11,21 +11,42 @@ Currently the constructors are implemented in one variable, namely 'n' which is
 used throughout to denote size.
 """
 import abc
+from collections import defaultdict
 from itertools import product
 from random import randint
-from typing import Callable, Dict, Generic, Iterable, Iterator, List, Optional, Tuple
+from typing import (
+    Callable,
+    Counter,
+    Dict,
+    Generic,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    TypeVar,
+    cast,
+)
 
 from sympy import Eq, Function
 
-from ..combinatorial_class import CombinatorialClassType, CombinatorialObjectType
+from comb_spec_searcher import utils
+from comb_spec_searcher.typing import (
+    CombinatorialClassType,
+    CombinatorialObjectType,
+    Parameters,
+    ParametersMap,
+    RelianceProfile,
+    SubObjects,
+    SubRecs,
+    SubSamplers,
+    SubTerms,
+    Terms,
+)
 
 __all__ = ("Constructor", "CartesianProduct", "DisjointUnion")
 
-
-RelianceProfile = Tuple[Dict[str, Tuple[int, ...]], ...]
-SubGens = Tuple[Callable[..., Iterator[CombinatorialObjectType]], ...]
-SubRecs = Tuple[Callable[..., int], ...]
-SubSamplers = Tuple[Callable[..., CombinatorialObjectType], ...]
+T = TypeVar("T")
 
 
 class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectType]):
@@ -45,17 +66,21 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
         """
 
     @abc.abstractmethod
-    def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
+    def get_terms(self, subterms: SubTerms, n: int) -> Terms:
         """
-        Return the count for the given parameters, assuming the children are
-        counted by the subrecs given.
+        Return the terms for n given the subterms of the children.
         """
 
     @abc.abstractmethod
     def get_sub_objects(
-        self, subgens: SubGens, n: int, **parameters: int
-    ) -> Iterator[Tuple[CombinatorialObjectType, ...]]:
-        """Return the subobjs/image of the bijection implied by the constructor."""
+        self, subobjs: SubObjects, n: int
+    ) -> Iterator[
+        Tuple[Parameters, Tuple[List[Optional[CombinatorialObjectType]], ...]]
+    ]:
+        """
+        Iterate over all the possibe subobjs/image of the bijection implied by
+        the constructor together with the parameters.
+        """
 
     @abc.abstractmethod
     def random_sample_sub_objects(
@@ -99,6 +124,7 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
             self.extra_parameters = tuple(extra_parameters)
         else:
             self.extra_parameters = tuple(dict() for _ in children)
+        self._children_param_maps = self._build_children_param_map(parent, children)
 
         self.minimum_sizes = {"n": parent.minimum_size_of_object()}
         for k in parent.extra_parameters:
@@ -124,6 +150,69 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
                     self.max_child_sizes[idx][k] = child.get_minimum_value(
                         parameters[k]
                     )
+
+    @property
+    def min_sizes(self) -> Tuple[int, ...]:
+        """
+        Lower bound on the sizes of combinatorial object on the children.
+        """
+        return tuple(d["n"] for d in self.min_child_sizes)
+
+    @property
+    def max_sizes(self) -> Tuple[Optional[int], ...]:
+        """
+        Upper bounds on the size of object on the children.
+
+        None means no upper bound.
+        """
+        return tuple(d.get("n", None) for d in self.max_child_sizes)
+
+    def _build_children_param_map(
+        self,
+        parent: CombinatorialClassType,
+        children: Tuple[CombinatorialClassType, ...],
+    ) -> Tuple[ParametersMap, ...]:
+        map_list: List[ParametersMap] = []
+        num_parent_params = len(parent.extra_parameters)
+        parent_param_to_pos = {
+            param: pos for pos, param in enumerate(parent.extra_parameters)
+        }
+        for child, extra_param in zip(children, self.extra_parameters):
+            reversed_extra_param: Dict[str, List[str]] = defaultdict(list)
+            for parent_var, child_var in extra_param.items():
+                reversed_extra_param[child_var].append(parent_var)
+            child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...] = tuple(
+                tuple(
+                    map(
+                        parent_param_to_pos.__getitem__,
+                        reversed_extra_param[child_param],
+                    )
+                )
+                for child_param in child.extra_parameters
+            )
+            map_list.append(
+                self._build_param_map(child_pos_to_parent_pos, num_parent_params)
+            )
+        return tuple(map_list)
+
+    @staticmethod
+    def _build_param_map(
+        child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...], num_parent_params: int
+    ) -> ParametersMap:
+        """
+        Build the ParametersMap that will map according to the given child pos to parent
+        pos map given.
+        """
+
+        def param_map(param: Parameters) -> Parameters:
+            new_params = [0 for _ in range(num_parent_params)]
+            for pos, value in enumerate(param):
+                parent_pos = child_pos_to_parent_pos[pos]
+                for p in parent_pos:
+                    new_params[p] += value
+            return tuple(new_params)
+
+        return param_map
 
     def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
         res = 1
@@ -243,31 +332,56 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
             res.append(extra_params)
         return res
 
-    def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
-        # The extra parameters variable maps each of the parent parameter to
-        # the unique child that it was mapped to.
-        res = 0
-        for child_parameters in self._valid_compositions(n, **parameters):
-            tmp = 1
-            extra_parameters = self.get_extra_parameters(child_parameters)
-            if extra_parameters is None:
-                continue
-            for rec, extra_params in zip(subrecs, extra_parameters):
-                tmp *= rec(n=extra_params.pop("n"), **extra_params)
-                if tmp == 0:
-                    break
-            res += tmp
-        return res
+    def get_terms(self, subterms: SubTerms, n: int) -> Terms:
+        new_terms: Terms = Counter()
+        size_compositions = utils.compositions(
+            n, len(subterms), self.min_sizes, self.max_sizes
+        )
+        for sizes in size_compositions:
+            for param_value_pairs in self._params_value_pairs_combinations(
+                sizes, subterms
+            ):
+                new_param = self._new_param(*(p for p, _ in param_value_pairs))
+                new_terms[new_param] += utils.prod((v for _, v in param_value_pairs))
+        return new_terms
+
+    def _new_param(self, *children_params: Parameters) -> Parameters:
+        """
+        Computes the parameter values on the parent that the given children parameters
+        contribute to.
+        """
+        mapped_params = (
+            pmap(p) for pmap, p in zip(self._children_param_maps, children_params)
+        )
+        return tuple(sum(vals) for vals in zip(*mapped_params))
+
+    @staticmethod
+    def _params_value_pairs_combinations(
+        sizes: Tuple[int, ...],
+        sub_getters: Tuple[Callable[[int], Dict[Parameters, T]], ...],
+    ) -> Iterator[Tuple[Tuple[Parameters, T], ...]]:
+        """"""
+        children_values = (sg(s) for sg, s in zip(sub_getters, sizes))
+        return product(*(c.items() for c in children_values))
 
     def get_sub_objects(
-        self, subgens: SubGens, n: int, **parameters: int
-    ) -> Iterator[Tuple[CombinatorialObjectType, ...]]:
-        assert len(parameters) == 0, "only implemented in one variable, namely 'n'"
-        for comp in self._valid_compositions(n):
-            for sub_objs in product(
-                *tuple(subgen(n=d["n"]) for d, subgen in zip(comp, subgens))
+        self, subobjs: SubObjects, n: int
+    ) -> Iterator[
+        Tuple[Parameters, Tuple[List[Optional[CombinatorialObjectType]], ...]]
+    ]:
+        size_compositions = utils.compositions(
+            n, len(subobjs), self.min_sizes, self.max_sizes
+        )
+        for sizes in size_compositions:
+            for param_objs_pairs in self._params_value_pairs_combinations(
+                sizes, subobjs
             ):
-                yield tuple(sub_objs)
+                new_param = self._new_param(*(p for p, _ in param_objs_pairs))
+                children_objs = cast(
+                    Iterator[List[Optional[CombinatorialObjectType]]],
+                    (objs for _, objs in param_objs_pairs),
+                )
+                yield (new_param, tuple(children_objs))
 
     def random_sample_sub_objects(
         self,
@@ -277,19 +391,24 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         n: int,
         **parameters: int
     ):
-        assert not parameters, "only implemented in one variable"
         random_choice = randint(1, parent_count)
         total = 0
-        for comp in self._valid_compositions(n):
+        for child_parameters in self._valid_compositions(n, **parameters):
             tmp = 1
-            for i, rec in enumerate(subrecs):
-                tmp *= rec(n=comp[i]["n"])
+            extra_parameters = self.get_extra_parameters(child_parameters)
+            if extra_parameters is None:
+                continue
+            for rec, extra_params in zip(subrecs, extra_parameters):
+                tmp *= rec(n=extra_params.pop("n"), **extra_params)
                 if tmp == 0:
                     break
             total += tmp
             if random_choice <= total:
+                extra_parameters = self.get_extra_parameters(child_parameters)
+                assert extra_parameters is not None
                 return tuple(
-                    subsampler(d["n"]) for d, subsampler in zip(comp, subsamplers)
+                    subsampler(n=extra_params.pop("n"), **extra_params)
+                    for subsampler, extra_params in zip(subsamplers, extra_parameters)
                 )
 
     @staticmethod
@@ -335,7 +454,7 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
             self.extra_parameters = tuple(
                 dict() for _ in range(self.number_of_children)
             )
-
+        self._children_param_maps = self._build_children_param_maps(parent, children)
         self.zeroes = tuple(
             frozenset(parent.extra_parameters) - frozenset(parameter.keys())
             for parameter in self.extra_parameters
@@ -385,33 +504,86 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
             res.append(None)
         return res
 
-    def get_recurrence(self, subrecs: SubRecs, n: int, **parameters: int) -> int:
-        res = 0
-        for (idx, rec), extra_params in zip(
-            enumerate(subrecs), self.get_extra_parameters(n, **parameters)
-        ):
-            # if a parent parameter is not mapped to by some child parameter
-            # then it is assumed that the value of the parent parameter must be 0
-            if extra_params is None or any(
-                val != 0 and k in self.zeroes[idx] for k, val in parameters.items()
-            ):
-                continue
-            res += rec(n=n, **extra_params)
-        return res
+    def get_terms(self, subterms: SubTerms, n: int) -> Terms:
+        new_terms: Terms = Counter()
+        for child_terms, param_map in zip(subterms, self._children_param_maps):
+            for param, value in child_terms(n).items():
+                new_terms[param_map(param)] += value
+        return new_terms
 
     @staticmethod
-    def get_sub_objects(
-        subgens: SubGens, n: int, **parameters: int
-    ) -> Iterator[Tuple[CombinatorialObjectType, ...]]:
-        assert len(parameters) == 0, "only implemented in one variable, namely 'n'"
-        for i, subgen in enumerate(subgens):
-            for gp in subgen(n, **parameters):
-                yield tuple(None for _ in range(i)) + (gp,) + tuple(
-                    None for _ in range(len(subgens) - i - 1)
+    def _build_param_map(
+        child_pos_to_parent_pos: Tuple[Optional[Tuple[int, ...]], ...],
+        num_parent_params: int,
+    ) -> ParametersMap:
+        """
+        Build the ParametersMap that will map according to the given child pos to parent
+        pos map given.
+
+        If a child pos maps to None, then the value of the parameter must be 0 at all
+        times.
+        """
+
+        def param_map(param: Parameters) -> Parameters:
+            new_params = [0 for _ in range(num_parent_params)]
+            for pos, value in enumerate(param):
+                parent_pos = child_pos_to_parent_pos[pos]
+                if parent_pos is None:
+                    assert value == 0
+                    continue
+                for p in parent_pos:
+                    assert new_params[p] == 0
+                    new_params[p] = value
+            return tuple(new_params)
+
+        return param_map
+
+    def _build_children_param_maps(
+        self,
+        parent: CombinatorialClassType,
+        children: Tuple[CombinatorialClassType, ...],
+    ) -> Tuple[ParametersMap, ...]:
+        map_list: List[ParametersMap] = []
+        num_parent_params = len(parent.extra_parameters)
+        parent_param_to_pos = {
+            param: pos for pos, param in enumerate(parent.extra_parameters)
+        }
+        for child, extra_param in zip(children, self.extra_parameters):
+            reversed_extra_param: Dict[str, List[str]] = defaultdict(list)
+            for parent_var, child_var in extra_param.items():
+                reversed_extra_param[child_var].append(parent_var)
+            child_pos_to_parent_pos: Tuple[Optional[Tuple[int, ...]], ...] = tuple(
+                tuple(
+                    map(
+                        parent_param_to_pos.__getitem__,
+                        reversed_extra_param[child_param],
+                    )
                 )
+                if child_param in reversed_extra_param
+                else None
+                for child_param in child.extra_parameters
+            )
+            map_list.append(
+                self._build_param_map(child_pos_to_parent_pos, num_parent_params)
+            )
+        return tuple(map_list)
 
-    @staticmethod
+    def get_sub_objects(
+        self, subobjs: SubObjects, n: int
+    ) -> Iterator[
+        Tuple[Parameters, Tuple[List[Optional[CombinatorialObjectType]], ...]]
+    ]:
+        res: List[List[Optional[CombinatorialObjectType]]]
+        res = [[None] for _ in range(self.number_of_children)]
+        for i, subobj in enumerate(subobjs):
+            param_map = self._children_param_maps[i]
+            for param, comb_objs in subobj(n).items():
+                res[i] = comb_objs
+                yield (param_map(param), tuple(res))
+            res[i] = [None]
+
     def random_sample_sub_objects(
+        self,
         parent_count: int,
         subsamplers: SubSamplers,
         subrecs: SubRecs,
@@ -420,10 +592,18 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
     ):
         random_choice = randint(1, parent_count)
         total = 0
-        for idx, (subrec, subsampler) in enumerate(zip(subrecs, subsamplers)):
-            total += subrec(n=n, **parameters)
+        for (idx, rec), subsampler, extra_params in zip(
+            enumerate(subrecs), subsamplers, self.get_extra_parameters(n, **parameters)
+        ):
+            # if a parent parameter is not mapped to by some child parameter
+            # then it is assumed that the value of the parent parameter must be 0
+            if extra_params is None or any(
+                val != 0 and k in self.zeroes[idx] for k, val in parameters.items()
+            ):
+                continue
+            total += rec(n=n, **extra_params)
             if random_choice <= total:
-                obj = subsampler(n=n, **parameters)
+                obj = subsampler(n=n, **extra_params)
                 return (
                     tuple(None for _ in range(idx))
                     + (obj,)
