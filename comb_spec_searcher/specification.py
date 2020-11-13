@@ -11,12 +11,14 @@ import sympy
 from logzero import logger
 from sympy import Eq, Expr, Function, Number, solve, var
 
-from .combinatorial_class import (
-    CombinatorialClass,
+from comb_spec_searcher.typing import (
     CombinatorialClassType,
-    CombinatorialObject,
     CombinatorialObjectType,
+    Objects,
+    Terms,
 )
+
+from .combinatorial_class import CombinatorialClass, CombinatorialObject
 from .exception import (
     IncorrectGeneratingFunctionError,
     InvalidOperationError,
@@ -34,7 +36,7 @@ from .strategies import (
     VerificationRule,
     VerificationStrategy,
 )
-from .strategies.rule import AbstractRule, Objects, Terms
+from .strategies.rule import AbstractRule
 from .utils import (
     RecursionLimit,
     maple_equations,

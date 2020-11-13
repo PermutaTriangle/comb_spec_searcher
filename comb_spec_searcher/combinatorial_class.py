@@ -5,29 +5,19 @@ import abc
 from functools import reduce
 from importlib import import_module
 from operator import mul
-from typing import (
-    Counter,
-    DefaultDict,
-    Dict,
-    Generic,
-    Iterator,
-    List,
-    Tuple,
-    Type,
-    TypeVar,
-)
+from typing import Counter, DefaultDict, Dict, Generic, Iterator, List, Tuple, Type
 
 from sympy import Expr, Number, var
 
-__all__ = ("CombinatorialClass", "CombinatorialObject")
-
-CombinatorialObjectType = TypeVar(
-    "CombinatorialObjectType", bound="CombinatorialObject"
+from comb_spec_searcher.typing import (
+    CombinatorialClassType,
+    CombinatorialObjectType,
+    Objects,
+    Parameters,
+    Terms,
 )
-CombinatorialClassType = TypeVar("CombinatorialClassType", bound="CombinatorialClass")
-Parameters = Tuple[int, ...]
-Objects = DefaultDict[Parameters, List[CombinatorialObjectType]]
-Terms = Counter[Parameters]  # all terms for a fixed n
+
+__all__ = ("CombinatorialClass", "CombinatorialObject")
 
 
 class CombinatorialObject(abc.ABC):

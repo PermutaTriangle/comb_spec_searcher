@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [2.4.0] - 2020-11-11
 ### Changed
 - Computation of terms in the constructor is now on a per size basis. The value for each possible paratemeters is computed at once in the new `get_terms` function of constructor. If you do not implement your own constructor this should have no effect on your code. The old `generate_object_of_size` method of the constructor is also replaced by a `get_objects` method that returns the objects for each possible combination of parameters.
 

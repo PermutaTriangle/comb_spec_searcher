@@ -8,10 +8,9 @@ from itertools import chain, product
 from random import choice, shuffle
 from typing import Dict, FrozenSet, Iterator, List, Optional, Sequence, Set, Tuple
 
+from comb_spec_searcher.typing import RulesDict
+
 __all__ = ("prune", "proof_tree_generator_dfs", "proof_tree_generator_bfs")
-
-
-RulesDict = Dict[int, Set[Tuple[int, ...]]]
 
 
 class Node:

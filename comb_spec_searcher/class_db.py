@@ -9,12 +9,9 @@ if is_empty has been checked.
 """
 
 import zlib
-from typing import Dict, Generic, Iterator, Optional, Type, Union, cast
+from typing import Dict, Generic, Iterator, Optional, Type, cast
 
-from .combinatorial_class import CombinatorialClassType
-
-ClassKey = Union[bytes, CombinatorialClassType]
-Key = Union[CombinatorialClassType, int]
+from comb_spec_searcher.typing import ClassKey, CombinatorialClassType, Key
 
 
 class Info:
