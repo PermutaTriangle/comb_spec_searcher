@@ -10,7 +10,7 @@ def read(fname):
 
 setup(
     name="comb_spec_searcher",
-    version="2.4.0",
+    version="2.3.0",
     author="Permuta Triangle",
     author_email="permutatriangle@gmail.com",
     description="A library for performing combinatorial exploration.",
@@ -41,7 +41,7 @@ setup(
         "Topic :: Scientific/Engineering :: Mathematics",
     ],
     install_requires=[
-        "logzero==1.6.2",
+        "logzero==1.6.3",
         "sympy==1.6.2",
         "psutil==5.7.3",
         "pympler==0.9",
