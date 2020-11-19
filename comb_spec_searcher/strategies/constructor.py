@@ -107,7 +107,7 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
             for pos, value in enumerate(param):
                 parent_pos = child_pos_to_parent_pos[pos]
                 for p in parent_pos:
-                    new_params[p] = value
+                    new_params[p] += value
             return tuple(new_params)
 
         return param_map
