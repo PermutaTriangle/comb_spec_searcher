@@ -94,6 +94,24 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
         """Return a randomly sampled subobjs/image of the bijection implied
         by the constructor."""
 
+    @staticmethod
+    def _build_param_map(
+        child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...], num_parent_params: int
+    ) -> ParametersMap:
+        """
+        Return a parameters map according to the given pos map.
+        """
+
+        def param_map(param: Parameters) -> Parameters:
+            new_params = [0 for _ in range(num_parent_params)]
+            for pos, value in enumerate(param):
+                parent_pos = child_pos_to_parent_pos[pos]
+                for p in parent_pos:
+                    new_params[p] = value
+            return tuple(new_params)
+
+        return param_map
+
 
 class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     """
@@ -194,25 +212,6 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
                 self._build_param_map(child_pos_to_parent_pos, num_parent_params)
             )
         return tuple(map_list)
-
-    @staticmethod
-    def _build_param_map(
-        child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...], num_parent_params: int
-    ) -> ParametersMap:
-        """
-        Build the ParametersMap that will map according to the given child pos to parent
-        pos map given.
-        """
-
-        def param_map(param: Parameters) -> Parameters:
-            new_params = [0 for _ in range(num_parent_params)]
-            for pos, value in enumerate(param):
-                parent_pos = child_pos_to_parent_pos[pos]
-                for p in parent_pos:
-                    new_params[p] += value
-            return tuple(new_params)
-
-        return param_map
 
     def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
         res = 1
@@ -511,33 +510,6 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
                 new_terms[param_map(param)] += value
         return new_terms
 
-    @staticmethod
-    def _build_param_map(
-        child_pos_to_parent_pos: Tuple[Optional[Tuple[int, ...]], ...],
-        num_parent_params: int,
-    ) -> ParametersMap:
-        """
-        Build the ParametersMap that will map according to the given child pos to parent
-        pos map given.
-
-        If a child pos maps to None, then the value of the parameter must be 0 at all
-        times.
-        """
-
-        def param_map(param: Parameters) -> Parameters:
-            new_params = [0 for _ in range(num_parent_params)]
-            for pos, value in enumerate(param):
-                parent_pos = child_pos_to_parent_pos[pos]
-                if parent_pos is None:
-                    assert value == 0
-                    continue
-                for p in parent_pos:
-                    assert new_params[p] == 0
-                    new_params[p] = value
-            return tuple(new_params)
-
-        return param_map
-
     def _build_children_param_maps(
         self,
         parent: CombinatorialClassType,
@@ -552,7 +524,7 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
             reversed_extra_param: Dict[str, List[str]] = defaultdict(list)
             for parent_var, child_var in extra_param.items():
                 reversed_extra_param[child_var].append(parent_var)
-            child_pos_to_parent_pos: Tuple[Optional[Tuple[int, ...]], ...] = tuple(
+            child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...] = tuple(
                 tuple(
                     map(
                         parent_param_to_pos.__getitem__,
@@ -560,7 +532,7 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
                     )
                 )
                 if child_param in reversed_extra_param
-                else None
+                else tuple()
                 for child_param in child.extra_parameters
             )
             map_list.append(
