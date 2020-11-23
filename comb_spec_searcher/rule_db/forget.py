@@ -80,7 +80,7 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
                         sorted(map(self.classdb.get_label, nonempty_children))
                     )
                     if (start_label, end_labels) == key:
-                        if expect_equiv and not rule.strategy.can_be_equivalent():
+                        if expect_equiv and not rule.is_two_way():
                             continue
                         return rule.strategy
                 except StrategyDoesNotApply:

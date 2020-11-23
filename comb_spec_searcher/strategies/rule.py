@@ -152,6 +152,12 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         Returns True if the rule is an equivalence.
         """
 
+    def is_two_way(self) -> bool:
+        """
+        Returns True if it is a two way rule.
+        """
+        return self.strategy.is_two_way(self.comb_class)
+
     def non_empty_children(self) -> Tuple[CombinatorialClassType, ...]:
         """
         Return the tuple of non-empty combinatorial classes that are found
@@ -317,7 +323,10 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         return self._constructor
 
     def is_equivalence(self):
-        return self.strategy.can_be_equivalent() and len(self.non_empty_children()) == 1
+        return (
+            isinstance(self.constructor, DisjointUnion)
+            and len(self.non_empty_children()) == 1
+        )
 
     def backward_map(
         self, objs: Tuple[Optional[CombinatorialObjectType], ...]
@@ -354,7 +363,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         """
         assert (
             self.is_equivalence()
-        ), "reverse rule can only be created for equivalence rules"
+        ), "reverse rule can only be created for equivalence rules currently"
         return ReverseRule(self)
 
     def _ensure_level(self, n: int) -> None:
@@ -519,7 +528,7 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
 
 class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     """
-    A class for shortening a chain of equivalence rules into a single Rule.
+    A class for shortening a chain of disjoint union unary rules into a single Rule.
     """
 
     def __init__(self, rules: Sequence[Rule]):
