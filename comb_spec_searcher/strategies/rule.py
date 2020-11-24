@@ -247,6 +247,12 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             and self._strategy == other._strategy
         )
 
+    def get_eq_symbol(self):
+        return self.strategy.get_eq_symbol()
+
+    def get_op_symbol(self):
+        return self.strategy.get_op_symbol()
+
     def __str__(self) -> str:
         def frontpad(res, height):
             n = max(len(s) for s in res)
@@ -272,7 +278,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             symbol_height = min(1, len(res) - 1)
             eq_symbol = (
                 ["     " for i in range(symbol_height)]
-                + ["  {}  ".format(self.strategy.get_eq_symbol())]
+                + ["  {}  ".format(self.get_eq_symbol())]
                 + ["     " for i in range(symbol_height)]
             )
             join(res, eq_symbol)
@@ -280,7 +286,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             if len(children) > 1:
                 op_symbol = (
                     ["     " for i in range(symbol_height)]
-                    + ["  {}  ".format(self.strategy.get_op_symbol())]
+                    + ["  {}  ".format(self.get_op_symbol())]
                     + ["     " for i in range(symbol_height)]
                 )
                 for child in children[1:]:
