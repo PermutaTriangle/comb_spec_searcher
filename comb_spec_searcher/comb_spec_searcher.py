@@ -276,7 +276,8 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                         e,
                     )
             # if any(
-            #     self.ruledb.are_equivalent(start_label, elabel) for elabel in end_labels
+            #     self.ruledb.are_equivalent(start_label, elabel)
+            #     for elabel in end_labels
             # ):
             #     # This says comb_class = comb_class, so we skip it, but mark
             #     # every other class as empty.

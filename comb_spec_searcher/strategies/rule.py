@@ -35,7 +35,7 @@ from comb_spec_searcher.typing import (
 
 from ..combinatorial_class import CombinatorialClassType, CombinatorialObjectType
 from ..exception import SanityCheckFailure, StrategyDoesNotApply
-from .constructor import Constructor, DisjointUnion
+from .constructor import Complement, Constructor, DisjointUnion
 
 if TYPE_CHECKING:
     from .strategy import AbstractStrategy, Strategy, VerificationStrategy
@@ -356,15 +356,15 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         ), f"EquivalenceRule can only be created for equivalence rules\n{self}"
         return EquivalenceRule(self)
 
-    def to_reverse_rule(self) -> "ReverseRule":
+    def to_reverse_rule(self, idx: int) -> "ReverseDisjointUnionRule":
         """
         Return the reverse rule. At this stage, reverse rules can only be
         created for equivalence rules.
         """
-        assert (
-            self.is_equivalence()
-        ), "reverse rule can only be created for equivalence rules currently"
-        return ReverseRule(self)
+        assert isinstance(
+            self.constructor, DisjointUnion
+        ), "reverse rule can only be created for disjoint union rules currently"
+        return ReverseDisjointUnionRule(self, idx)
 
     def _ensure_level(self, n: int) -> None:
         if self.subterms is None:
@@ -639,57 +639,60 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
         return "{}\n".format(self.formal_step) + "\n".join(x for x in res)
 
 
-class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
+class ReverseDisjointUnionRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     """
-    A class for creating the reverse of an equivalence rule.
+    A class for creating the reverse of an equivalence rule. Init
     """
 
-    def __init__(self, rule: Rule):
+    def __init__(self, rule: Rule, idx: int):
         assert (
             rule.is_equivalence()
         ), "reversing a rule only works for equivalence rules"
-        super().__init__(rule.strategy, rule.children[0], (rule.comb_class,))
+        assert isinstance(rule.constructor, DisjointUnion)
+        super().__init__(
+            rule.strategy,
+            rule.children[idx],
+            (rule.comb_class, *rule.children[:idx], *rule.children[idx + 1 :]),
+        )
         self.original_rule = rule
+        self.idx = idx  # the idx of the child to be counted.
         self._constructor: Optional[DisjointUnion] = None
 
     @property
-    def constructor(self) -> DisjointUnion:
-        if self._constructor is None:
-            original_constructor = self.original_rule.constructor
-            assert isinstance(original_constructor, DisjointUnion), (
-                "reverse rule coming from non disjoint union strategy - "
-                "you'll need to update the ReverseRule constructor!"
-            )
-            flipped_extra_params = {
-                b: a for a, b in original_constructor.extra_parameters[0].items()
-            }
-            fixed_values = {
-                k: 0
-                for k in self.children[0].extra_parameters
-                if k not in flipped_extra_params.values()
-            }
-            self._constructor = DisjointUnion(
-                self.comb_class, self.children, (flipped_extra_params,), (fixed_values,)
-            )
-        return self._constructor
+    def constructor(self) -> Complement:
+        return Complement(
+            self.comb_class,
+            self.children,
+            self.idx,
+            self.strategy.extra_parameters(self.comb_class, self.children),
+        )
 
-    @staticmethod
-    def is_equivalence() -> bool:
-        return True
+    def is_equivalence(self) -> bool:
+        return len(self.children) == 1
 
     @property
     def formal_step(self) -> str:
-        return "reverse of '{}'".format(self.strategy.formal_step())
+        if self.is_equivalence():
+            return "reverse of '{}'".format(self.strategy.formal_step())
+        return f"reverse of '{self.strategy.formal_step()}', counting child {self.idx}"
 
     def backward_map(
         self, objs: Tuple[Optional[CombinatorialObjectType], ...]
     ) -> Iterator[CombinatorialObjectType]:
-        yield cast(CombinatorialObjectType, self.original_rule.forward_map(objs[0])[0])
+        # We expect the object to be in only the first and in particular when
+        # mapped should be in the idx child.
+        yield cast(
+            CombinatorialObjectType, self.original_rule.forward_map(objs[0])[self.idx]
+        )
 
     def forward_map(
         self, obj: CombinatorialObjectType
     ) -> Tuple[Optional[CombinatorialObjectType], ...]:
-        return (next(self.original_rule.backward_map((obj,))),)
+        # We map forward to the first child.
+        # It is assumed that obj is ONLY on this child
+        return (next(self.original_rule.backward_map((obj,))),) + tuple(
+            None for _ in range(len(self.children) - 1)
+        )
 
 
 class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):

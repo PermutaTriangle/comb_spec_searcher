@@ -1,5 +1,5 @@
 from .constructor import CartesianProduct, Constructor, DisjointUnion
-from .rule import EquivalencePathRule, ReverseRule, Rule, VerificationRule
+from .rule import EquivalencePathRule, ReverseDisjointUnionRule, Rule, VerificationRule
 from .strategy import (
     AbstractStrategy,
     AtomStrategy,
@@ -18,7 +18,7 @@ __all__ = [
     "Constructor",
     "DisjointUnion",
     "EquivalencePathRule",
-    "ReverseRule",
+    "ReverseDisjointUnionRule",
     "Rule",
     "VerificationRule",
     "AbstractStrategy",

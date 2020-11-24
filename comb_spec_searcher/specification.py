@@ -30,7 +30,7 @@ from .strategies import (
     DisjointUnion,
     EmptyStrategy,
     EquivalencePathRule,
-    ReverseRule,
+    ReverseDisjointUnionRule,
     Rule,
     Strategy,
     StrategyPack,
@@ -166,7 +166,7 @@ class CombinatorialSpecification(
                     try:
                         rule = equivalence_rules[(a, b)]
                     except KeyError:
-                        rule = equivalence_rules[(b, a)].to_reverse_rule()
+                        rule = equivalence_rules[(b, a)].to_reverse_rule(0)
                     if isinstance(rule.constructor, DisjointUnion):
                         rules.append(rule)
                     else:
@@ -581,7 +581,7 @@ class CombinatorialSpecification(
                 eqv_paths.append(eqv_path)
         strategies = [
             (rule.children[0].to_jsonable(), rule.strategy.to_jsonable())
-            if isinstance(rule, ReverseRule)
+            if isinstance(rule, ReverseDisjointUnionRule)
             else (rule.comb_class.to_jsonable(), rule.strategy.to_jsonable())
             for rule in rules
         ]

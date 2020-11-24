@@ -592,3 +592,165 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
 
     def __str__(self):
         return "disjoint union"
+
+
+class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
+    """
+    This constructor implements the complement operation. A rule A -> (B, C, D)
+    should be read as A = B - C - D.
+
+    This comes from a disjoint union rule B = A + C + D
+
+    The initialiser should be made using the original disjoint union rule.
+
+    The parent is B, idx is the index of the child the rule is being rearranged
+    for and the extra parameters maps from parent to children.
+    """
+
+    def __init__(
+        self,
+        parent: CombinatorialClassType,
+        children: Tuple[CombinatorialClassType, ...],
+        idx: int,
+        extra_parameters: Optional[Tuple[Dict[str, str], ...]] = None,
+    ):
+        self.number_of_children = len(children)
+        if extra_parameters is not None:
+            self.extra_parameters = extra_parameters
+            assert len(extra_parameters) == len(children)
+        else:
+            assert not parent.extra_parameters
+            self.extra_parameters = tuple(
+                dict() for _ in range(self.number_of_children)
+            )
+        self.idx = idx
+        self._children_param_maps = self._build_children_param_maps(parent, children)
+        self._parent_param_map = self._build_parent_param_map(parent, children, idx)
+
+    def _build_children_param_maps(
+        self,
+        parent: CombinatorialClassType,
+        children: Tuple[CombinatorialClassType, ...],
+    ) -> Tuple[ParametersMap, ...]:
+        # TODO: this method has been tidied up in another branch
+        map_list: List[ParametersMap] = []
+        num_parent_params = len(parent.extra_parameters)
+        parent_param_to_pos = {
+            param: pos for pos, param in enumerate(parent.extra_parameters)
+        }
+        for child, extra_param in zip(children, self.extra_parameters):
+            reversed_extra_param: Dict[str, List[str]] = defaultdict(list)
+            for parent_var, child_var in extra_param.items():
+                reversed_extra_param[child_var].append(parent_var)
+            child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...] = tuple(
+                tuple(
+                    map(
+                        parent_param_to_pos.__getitem__,
+                        reversed_extra_param[child_param],
+                    )
+                )
+                if child_param in reversed_extra_param
+                else tuple()
+                for child_param in child.extra_parameters
+            )
+            map_list.append(
+                self._build_param_map(child_pos_to_parent_pos, num_parent_params)
+            )
+        return tuple(map_list)
+
+    def _build_parent_param_map(
+        self,
+        parent: CombinatorialClassType,
+        children: Tuple[CombinatorialClassType, ...],
+        idx: int,
+    ):
+        extra_param = self.extra_parameters[idx]
+        child = children[self.idx]
+        child_param_to_pos = {
+            param: pos for pos, param in enumerate(child.extra_parameters)
+        }
+        parent_pos_to_child_pos: Tuple[Tuple[int, ...], ...] = tuple(
+            (child_param_to_pos[extra_param[parent_var]],)
+            if parent_var in extra_param
+            else tuple()
+            for parent_var in parent.extra_parameters
+        )
+        return self._build_param_map(
+            parent_pos_to_child_pos, len(child.extra_parameters)
+        )
+
+    def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
+        res = lhs_func.subs(self.extra_parameters[self.idx])
+        for (idx, rhs_func), extra_parameters in zip(
+            enumerate(rhs_funcs), self.extra_parameters
+        ):
+            if self.idx != idx:
+                res -= rhs_func.subs(
+                    {child: parent for parent, child in extra_parameters.items()},
+                    simultaneous=True,
+                ).subs(self.extra_parameters[self.idx], simultaneous=True)
+        return Eq(lhs_func, res)
+
+    def reliance_profile(self, n: int, **parameters: int) -> RelianceProfile:
+        raise NotImplementedError
+
+    def get_terms(self, subterms: SubTerms, n: int) -> Terms:
+        parent_terms_mapped: Terms = Counter()
+        for param, value in subterms[0](n).items():
+            if value:
+                parent_terms_mapped[self._parent_param_map(param)] += value
+
+        children_terms = subterms[1:]
+        for (idx, child_terms), param_map in zip(
+            enumerate(children_terms), self._children_param_maps
+        ):
+            if self.idx != idx:
+                # we subtract from total
+                for param, value in child_terms(n).items():
+                    mapped_param = self._parent_param_map(param_map(param))
+                    parent_terms_mapped[mapped_param] -= value
+                    assert parent_terms_mapped[mapped_param] >= 0
+                    if parent_terms_mapped[mapped_param] == 0:
+                        parent_terms_mapped.pop(mapped_param)
+
+        return parent_terms_mapped
+
+    def get_sub_objects(
+        self, subobjs: SubObjects, n: int
+    ) -> Iterator[
+        Tuple[Parameters, Tuple[List[Optional[CombinatorialObjectType]], ...]]
+    ]:
+        """
+        TODO: this needs to be implemented on the Rule level as it needs access
+        to the forward and backward maps.
+        """
+        raise NotImplementedError
+
+    def random_sample_sub_objects(
+        self,
+        parent_count: int,
+        subsamplers: SubSamplers,
+        subrecs: SubRecs,
+        n: int,
+        **parameters: int
+    ):
+        raise NotImplementedError
+
+    @staticmethod
+    def _build_param_map(
+        child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...], num_parent_params: int
+    ) -> ParametersMap:
+        """
+        Return a parameters map according to the given pos map.
+        # TODO: this is on every constructor class
+        """
+
+        def param_map(param: Parameters) -> Parameters:
+            new_params = [0 for _ in range(num_parent_params)]
+            for pos, value in enumerate(param):
+                parent_pos = child_pos_to_parent_pos[pos]
+                for p in parent_pos:
+                    new_params[p] += value
+            return tuple(new_params)
+
+        return param_map
