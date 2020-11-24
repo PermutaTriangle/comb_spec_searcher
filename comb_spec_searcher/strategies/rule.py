@@ -474,6 +474,7 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         super().__init__(rule.strategy, rule.comb_class, (child,))
         self.child_idx = rule.children.index(child)
         self.actual_children = rule.children
+        self.original_rule = rule
         self._constructor: Optional[DisjointUnion] = None
 
     @property
@@ -494,6 +495,10 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
                 (original_constructor.extra_parameters[self.child_idx],),
             )
         return self._constructor
+
+    def to_reverse_rule(self, idx: int) -> "ReverseDisjointUnionRule":
+        assert idx == 0
+        return self.original_rule.to_reverse_rule(self.child_idx)
 
     @staticmethod
     def is_equivalence() -> bool:
@@ -645,14 +650,11 @@ class ReverseDisjointUnionRule(Rule[CombinatorialClassType, CombinatorialObjectT
     """
 
     def __init__(self, rule: Rule, idx: int):
-        assert (
-            rule.is_equivalence()
-        ), "reversing a rule only works for equivalence rules"
         assert isinstance(rule.constructor, DisjointUnion)
         super().__init__(
             rule.strategy,
             rule.children[idx],
-            (rule.comb_class, *rule.children[:idx], *rule.children[idx + 1 :]),
+            (rule.comb_class, *rule.children[:idx], *rule.children[idx + 2 :]),
         )
         self.original_rule = rule
         self.idx = idx  # the idx of the child to be counted.
@@ -661,10 +663,12 @@ class ReverseDisjointUnionRule(Rule[CombinatorialClassType, CombinatorialObjectT
     @property
     def constructor(self) -> Complement:
         return Complement(
-            self.comb_class,
-            self.children,
+            self.original_rule.comb_class,
+            self.original_rule.children,
             self.idx,
-            self.strategy.extra_parameters(self.comb_class, self.children),
+            self.strategy.extra_parameters(
+                self.original_rule.comb_class, self.original_rule.children
+            ),
         )
 
     def is_equivalence(self) -> bool:
@@ -693,6 +697,10 @@ class ReverseDisjointUnionRule(Rule[CombinatorialClassType, CombinatorialObjectT
         return (next(self.original_rule.backward_map((obj,))),) + tuple(
             None for _ in range(len(self.children) - 1)
         )
+
+    @staticmethod
+    def get_op_symbol():
+        return "-"
 
 
 class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):

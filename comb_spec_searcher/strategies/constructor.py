@@ -680,6 +680,7 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         )
 
     def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
+        # TODO: alternatively, could return equation of the original rule?
         res = lhs_func.subs(self.extra_parameters[self.idx])
         for (idx, rhs_func), extra_parameters in zip(
             enumerate(rhs_funcs), self.extra_parameters
