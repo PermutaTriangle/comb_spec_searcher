@@ -80,7 +80,7 @@ from .constructor import (
     Complement,
     Constructor,
     DisjointUnion,
-    # Quotient,
+    Quotient,
 )
 from .rule import AbstractRule, Rule, VerificationRule
 
