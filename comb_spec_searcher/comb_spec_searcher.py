@@ -33,7 +33,7 @@ from comb_spec_searcher.typing import (
 )
 
 from .class_db import ClassDB
-from .class_queue import DefaultQueue
+from .class_queue import EntropyQueue
 from .exception import (
     ExceededMaxtimeError,
     InvalidOperationError,
@@ -109,7 +109,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         self.kwargs["symmetry"] = bool(strategy_pack.symmetries)
 
         self.classdb = ClassDB[CombinatorialClassType](type(start_class))
-        self.classqueue = DefaultQueue(strategy_pack)
+        self.classqueue = EntropyQueue(strategy_pack)
 
         if ruledb is None:
             self.ruledb: RuleDBBase = RuleDB()
@@ -124,7 +124,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
 
         # initialise the run with start_class
         self.start_label = self.classdb.get_label(start_class)
-        self._add_to_queue(self.start_label)
+        self._add_to_queue(self.start_label, 0)
         self.tried_to_verify: Set[int] = set()
         self.symmetry_expanded: Set[int] = set()
         self.try_verify(start_class, self.start_label)
@@ -229,9 +229,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         Will expand the class with given strategy. Return time taken.
         """
         logger.debug(
-            "Expanding label %s with %s",
-            label,
-            strategy_generator,
+            "Expanding label %s with %s", label, strategy_generator,
         )
         if label is None:
             label = self.classdb.get_label(comb_class)
@@ -314,7 +312,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 logger.debug("Label %s is empty.", child_label)
                 continue
             if rule.workable:
-                self._add_to_queue(child_label)
+                self._add_to_queue(child_label, len(comb_class.active_cells))
             if not rule.inferrable:
                 self._not_inferrable(child_label)
             if not rule.possibly_empty:
@@ -425,8 +423,8 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
     def _labels_to_expand(self) -> Iterator[WorkPacket]:
         yield from self.classqueue
 
-    def _add_to_queue(self, label: int):
-        self.classqueue.add(label)
+    def _add_to_queue(self, label: int, entropy: int):
+        self.classqueue.add(label, entropy)
 
     def _not_inferrable(self, label: int):
         self.classqueue.set_not_inferrable(label)
@@ -629,8 +627,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 multiplier * (time.time() - spec_search_start), 3600
             )
             logger.debug(
-                "Will expand for %s seconds.",
-                round(max_expansion_time, 2),
+                "Will expand for %s seconds.", round(max_expansion_time, 2),
             )
 
     def _auto_search_rules(self) -> SpecificationClassesAndStrats:
