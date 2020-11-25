@@ -66,7 +66,9 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
         """
 
     @abc.abstractmethod
-    def get_terms(self, subterms: SubTerms, n: int) -> Terms:
+    def get_terms(
+        self, parent_terms: Callable[[int], Terms], subterms: SubTerms, n: int
+    ) -> Terms:
         """
         Return the terms for n given the subterms of the children.
         """
@@ -331,7 +333,9 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
             res.append(extra_params)
         return res
 
-    def get_terms(self, subterms: SubTerms, n: int) -> Terms:
+    def get_terms(
+        self, parent_terms: Callable[[int], Terms], subterms: SubTerms, n: int
+    ) -> Terms:
         new_terms: Terms = Counter()
         size_compositions = utils.compositions(
             n, len(subterms), self.min_sizes, self.max_sizes
@@ -503,7 +507,9 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
             res.append(None)
         return res
 
-    def get_terms(self, subterms: SubTerms, n: int) -> Terms:
+    def get_terms(
+        self, parent_terms: Callable[[int], Terms], subterms: SubTerms, n: int
+    ) -> Terms:
         new_terms: Terms = Counter()
         for child_terms, param_map in zip(subterms, self._children_param_maps):
             for param, value in child_terms(n).items():
@@ -695,7 +701,9 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     def reliance_profile(self, n: int, **parameters: int) -> RelianceProfile:
         raise NotImplementedError
 
-    def get_terms(self, subterms: SubTerms, n: int) -> Terms:
+    def get_terms(
+        self, parent_terms: Callable[[int], Terms], subterms: SubTerms, n: int
+    ) -> Terms:
         parent_terms_mapped: Terms = Counter()
         for param, value in subterms[0](n).items():
             if value:

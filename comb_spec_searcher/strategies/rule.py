@@ -376,7 +376,9 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         if self.subterms is None:
             raise RuntimeError("set_subrecs must be set first")
         while n >= len(self.terms_cache):
-            terms = self.constructor.get_terms(self.subterms, len(self.terms_cache))
+            terms = self.constructor.get_terms(
+                self.get_terms, self.subterms, len(self.terms_cache)
+            )
             self.terms_cache.append(terms)
 
     def get_equation(
