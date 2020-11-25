@@ -75,7 +75,13 @@ from ..combinatorial_class import (
     CombinatorialObjectType,
 )
 from ..exception import InvalidOperationError, ObjectMappingError, StrategyDoesNotApply
-from .constructor import CartesianProduct, Constructor, DisjointUnion
+from .constructor import (
+    CartesianProduct,
+    Complement,
+    Constructor,
+    DisjointUnion,
+    # Quotient,
+)
 from .rule import AbstractRule, Rule, VerificationRule
 
 if TYPE_CHECKING:
@@ -205,6 +211,10 @@ class AbstractStrategy(
         """
         return "?"
 
+    @staticmethod
+    def get_reverse_op_symbol() -> str:
+        return "?"
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, AbstractStrategy):
             return NotImplemented
@@ -301,6 +311,20 @@ class Strategy(AbstractStrategy[CombinatorialClassType, CombinatorialObjectType]
     @abc.abstractmethod
     def constructor(
         self,
+        comb_class: CombinatorialClassType,
+        children: Optional[Tuple[CombinatorialClassType, ...]] = None,
+    ) -> Constructor:
+        """
+        This is where the details of the 'reliance profile' and 'counting'
+        functions are hidden.
+        """
+        if children is None:
+            children = self.decomposition_function(comb_class)
+
+    @abc.abstractmethod
+    def reverse_constructor(
+        self,
+        idx: int,
         comb_class: CombinatorialClassType,
         children: Optional[Tuple[CombinatorialClassType, ...]] = None,
     ) -> Constructor:
@@ -409,6 +433,20 @@ class CartesianProductStrategy(
             extra_parameters=self.extra_parameters(comb_class, children),
         )
 
+    def reverse_constructor(
+        self,
+        idx: int,
+        comb_class: CombinatorialClassType,
+        children: Optional[Tuple[CombinatorialClassType, ...]] = None,
+    ):
+        if children is None:
+            children = self.decomposition_function(comb_class)
+            if children is None:
+                raise StrategyDoesNotApply("Strategy does not apply")
+        return Quotient(
+            comb_class, children, idx, self.extra_parameters(comb_class, children)
+        )
+
     @staticmethod
     def get_op_symbol() -> str:
         """
@@ -416,6 +454,10 @@ class CartesianProductStrategy(
         Your choice should be a single charachter.
         """
         return "x"
+
+    @staticmethod
+    def get_reverse_op_symbol() -> str:
+        return "/"
 
 
 class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObjectType]):
@@ -460,6 +502,20 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObject
             extra_parameters=self.extra_parameters(comb_class, children),
         )
 
+    def reverse_constructor(
+        self,
+        idx: int,
+        comb_class: CombinatorialClassType,
+        children: Optional[Tuple[CombinatorialClassType, ...]] = None,
+    ):
+        if children is None:
+            children = self.decomposition_function(comb_class)
+            if children is None:
+                raise StrategyDoesNotApply("Strategy does not apply")
+        return Complement(
+            comb_class, children, idx, self.extra_parameters(comb_class, children)
+        )
+
     @staticmethod
     def backward_map_index(objs: Tuple[Optional[CombinatorialObjectType], ...]) -> int:
         """
@@ -496,6 +552,10 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObject
         Your choice should be a single charachter.
         """
         return "+"
+
+    @staticmethod
+    def get_reverse_op_symbol() -> str:
+        return "-"
 
 
 class SymmetryStrategy(
