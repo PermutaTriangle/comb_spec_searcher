@@ -132,12 +132,13 @@ if the same class appears multiple times.
    ...                     hash(self.alphabet) + hash(self.just_prefix))
    ...
    ...     def __str__(self):
+   ...         prefix = self.prefix if self.prefix else '""'
    ...         if self.just_prefix:
-   ...             return "The word {}".format(self.prefix)
+   ...             return "The word {}".format(prefix)
    ...         return ("Words over {{{}}} avoiding {{{}}} with prefix {}"
    ...                 "".format(", ".join(l for l in self.alphabet),
    ...                           ", ".join(p for p in self.patterns),
-   ...                           self.prefix if self.prefix else '""'))
+   ...                           prefix))
    ...
    ...     def __repr__(self):
    ...         return "AvoidingWithPrefix({}, {}, {}".format(repr(self.prefix),
