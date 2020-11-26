@@ -22,8 +22,7 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
     A mapping from rules to strategies that recompute the strategy every time it's
     needed instead of storing it in order to save memory.
 
-    The recomputing dict will only return a stratey if it it's `two_way()` method
-    matches the `two_way` argument.
+    If only equiv is set to true the returned strategy will only create two way rules.
 
     Also in order to save memory we store flat version of the rules, i.e. for a rule
     (a, (b, c,...)) we store (a, b, c,...)
@@ -34,13 +33,13 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
         classdb: ClassDB,
         strat_pack: StrategyPack,
         equivdb: EquivalenceDB,
-        two_ways: bool,
+        only_equiv: bool,
     ) -> None:
         self.classdb = classdb
         self.equivdb = equivdb
         self.pack = strat_pack
         self.rules: Set[Tuple[int, ...]] = set()
-        self.two_ways: bool = two_ways
+        self.only_equiv: bool = only_equiv
 
     @staticmethod
     def _flatten(tuple_: RuleKey) -> Tuple[int, ...]:
@@ -79,7 +78,7 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
                         sorted(map(self.classdb.get_label, nonempty_children))
                     )
                     if (start_label, end_labels) == key:
-                        if rule.is_two_way() != self.two_ways:
+                        if self.only_equiv and not rule.is_two_way():
                             continue
                         return rule.strategy
                 except StrategyDoesNotApply:
@@ -94,6 +93,7 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
         raise RuntimeError(err_message)
 
     def __setitem__(self, key: RuleKey, value: AbstractStrategy) -> None:
+        assert not self.only_equiv or len(key[1]) == 1
         self.rules.add(self._flatten(key))
 
     def __delitem__(self, key: RuleKey) -> None:
@@ -114,10 +114,10 @@ class RuleDBForgetStrategy(RuleDBBase):
     def __init__(self, classdb: ClassDB, strat_pack: StrategyPack) -> None:
         super().__init__()
         self._rule_to_strategy = RecomputingDict(
-            classdb, strat_pack, self.equivdb, False
+            classdb, strat_pack, self.equivdb, only_equiv=False
         )
         self._eqv_rule_to_strategy = RecomputingDict(
-            classdb, strat_pack, self.equivdb, True
+            classdb, strat_pack, self.equivdb, only_equiv=True
         )
 
     @property
