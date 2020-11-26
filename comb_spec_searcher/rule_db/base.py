@@ -68,7 +68,7 @@ class RuleDBBase(abc.ABC):
             self.eqv_rule_to_strategy[(start, ends)] = rule.strategy
             self.rule_to_strategy.pop((start, ends), None)
             self.rule_to_strategy.pop((ends[0], (start,)), None)
-        else:
+        elif len(ends) != 1 or not self.are_equivalent(start, ends[0]):
             self.rule_to_strategy[(start, ends)] = rule.strategy
 
     def is_verified(self, label: int) -> bool:
@@ -257,11 +257,6 @@ class RuleDBBase(abc.ABC):
     def _get_specification_rules(
         self, label: int, proof_tree_node: Node
     ) -> SpecificationLabelsAndStrats:
-        # for k, v in self.eqv_rule_to_strategy.items():
-        #     print(k, v)
-        # print("="*80)
-        # for k, v in self.rule_to_strategy.items():
-        #     print(k, v)
         children: Dict[int, Tuple[int, ...]] = dict()
         internal_nodes = set([label])
         logger.info("Computing rule <-> equivalence rule mapping.")
@@ -361,8 +356,9 @@ class RuleDB(RuleDBBase):
     def __init__(self) -> None:
         super().__init__()
         self._rule_to_strategy: Dict[Tuple[int, Tuple[int, ...]], AbstractStrategy] = {}
-        self._eqv_rule_to_strategy: Dict[Tuple[int, Tuple[int, ...]], AbstractStrategy]
-        self._eqv_rule_to_strategy = {}
+        self._eqv_rule_to_strategy: Dict[
+            Tuple[int, Tuple[int, ...]], AbstractStrategy
+        ] = {}
 
     @property
     def rule_to_strategy(self) -> Dict[Tuple[int, Tuple[int, ...]], AbstractStrategy]:
