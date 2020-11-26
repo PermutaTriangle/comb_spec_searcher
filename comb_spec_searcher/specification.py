@@ -24,6 +24,7 @@ from .exception import (
     InvalidOperationError,
     TaylorExpansionError,
 )
+from .isomorphism import Isomorphism
 from .specification_drawer import SpecificationDrawer
 from .strategies import (
     AbstractStrategy,
@@ -438,6 +439,10 @@ class CombinatorialSpecification(
             all(rule.sanity_check(n) for rule in self.rules_dict.values())
             for n in range(length + 1)
         )
+
+    def is_isomorphic_to(self, other: "CombinatorialSpecification") -> bool:
+        """Check if specifications are isomorphic."""
+        return Isomorphism(self, other).are_isomorphic()
 
     def show(
         self, levels_shown: int = 0, levels_expand: int = 0, verbose: bool = False
