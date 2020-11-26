@@ -37,11 +37,19 @@ class RuleDBBase(abc.ABC):
     def rule_to_strategy(self) -> MutableMapping[RuleKey, AbstractStrategy]:
         pass
 
+    @property
+    @abc.abstractmethod
+    def eqv_rule_to_strategy(self) -> MutableMapping[RuleKey, AbstractStrategy]:
+        pass
+
     def __eq__(self, other: object) -> bool:
         """Check if all stored information is the same."""
         if not isinstance(other, self.__class__):
             return NotImplemented
-        return bool(self.rule_to_strategy == other.rule_to_strategy)
+        return (
+            self.rule_to_strategy == other.rule_to_strategy
+            and self.eqv_rule_to_strategy == other.eqv_rule_to_strategy
+        )
 
     def add(self, start: int, ends: Iterable[int], rule: AbstractRule) -> None:
         """
@@ -57,10 +65,10 @@ class RuleDBBase(abc.ABC):
         is_equiv = len(ends) == 1 and rule.is_two_way()
         if is_equiv:
             self.set_equivalent(start, ends[0])
-        if len(ends) != 1 or is_equiv or not self.are_equivalent(start, ends[0]):
-            # to avoid overwriting an equivalence rule with a non-equivalence
-            # rule, we only save if an equivalence rule, or does not have the
-            # # same start -> ends as some equivalence rule.
+            self.eqv_rule_to_strategy[(start, ends)] = rule.strategy
+            self.rule_to_strategy.pop((start, ends), None)
+            self.rule_to_strategy.pop((ends[0], (start,)), None)
+        elif len(ends) != 1 or not self.are_equivalent(start, ends[0]):
             self.rule_to_strategy[(start, ends)] = rule.strategy
 
     def is_verified(self, label: int) -> bool:
@@ -96,19 +104,22 @@ class RuleDBBase(abc.ABC):
     def __iter__(self) -> Iterator[Tuple[int, Tuple[int, ...]]]:
         """Iterate through rules as the pairs (start, end)."""
         for start, ends in self.rule_to_strategy:
-            if len(ends) != 1 or not self.are_equivalent(start, ends[0]):
-                yield start, ends
+            yield start, ends
 
     def contains(self, start: int, ends: Tuple[int, ...]) -> bool:
         """Return true if the rule start -> ends is in the database."""
         ends = tuple(sorted(ends))
-        return (start, ends) in self.rule_to_strategy
+        return (start, ends) in self.rule_to_strategy or (
+            start,
+            ends,
+        ) in self.eqv_rule_to_strategy
 
     def status(self, elaborate: bool) -> str:
         """Return a string describing the status of the rule database."""
         status = "RuleDB status:\n"
         table: List[Tuple[str, str]] = []
         table.append(("Combinatorial rules", f"{len(self.rule_to_strategy):,d}"))
+        table.append(("Equivalence rules", f"{len(self.eqv_rule_to_strategy):,d}"))
         if elaborate:
             eqv_labels = set()
             strategy_verified_labels = set()
@@ -270,10 +281,10 @@ class RuleDBBase(abc.ABC):
                     path = self.equivdb.find_path(eqv_label, start)
                     for a, b in zip(path[:-1], path[1:]):
                         try:
-                            strategy = self.rule_to_strategy[(a, (b,))]
+                            strategy = self.eqv_rule_to_strategy[(a, (b,))]
                             res.append((a, strategy))
                         except KeyError:
-                            strategy = self.rule_to_strategy[(b, (a,))]
+                            strategy = self.eqv_rule_to_strategy[(b, (a,))]
                             res.append((b, strategy))
                     if len(path) > 1:
                         eqv_paths.append(path)
@@ -345,7 +356,16 @@ class RuleDB(RuleDBBase):
     def __init__(self) -> None:
         super().__init__()
         self._rule_to_strategy: Dict[Tuple[int, Tuple[int, ...]], AbstractStrategy] = {}
+        self._eqv_rule_to_strategy: Dict[
+            Tuple[int, Tuple[int, ...]], AbstractStrategy
+        ] = {}
 
     @property
     def rule_to_strategy(self) -> Dict[Tuple[int, Tuple[int, ...]], AbstractStrategy]:
         return self._rule_to_strategy
+
+    @property
+    def eqv_rule_to_strategy(
+        self,
+    ) -> Dict[Tuple[int, Tuple[int, ...]], AbstractStrategy]:
+        return self._eqv_rule_to_strategy
