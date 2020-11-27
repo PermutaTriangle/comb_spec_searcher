@@ -588,7 +588,7 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
         self, obj: CombinatorialObjectType
     ) -> Tuple[Optional[CombinatorialObjectType], ...]:
         res = cast(CombinatorialObjectType, obj)
-        for rule in reversed(self.rules):
+        for rule in self.rules:
             res = cast(CombinatorialObjectType, rule.forward_map(res)[0])
         return (res,)
 

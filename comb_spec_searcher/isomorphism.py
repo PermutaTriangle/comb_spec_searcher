@@ -55,9 +55,9 @@ class Isomorphism:
         # Check all matches of children, if any are valid then trees are isomorphic
         n = len(rule1.children)
         if n > 1:
-            if node2 not in self.child_order:
-                self.child_order[node2] = [0] * n
-            child_order: List[int] = self.child_order[node2]
+            if node1 not in self.child_order:
+                self.child_order[node1] = [0] * n
+            child_order: List[int] = self.child_order[node1]
         stack = [(0, i, {i}) for i in range(n - 1, -1, -1)]
         while stack:
             i1, i2, in_use = stack.pop()
@@ -91,7 +91,7 @@ class Isomorphism:
             node1 = rule1.children[0]
         if rule2.is_equivalence():
             node2 = rule2.children[0]
-            eq_maps[1][node2] = rule2
+            eq_maps[1][node1] = rule2
         return node1, node2
 
     def _base_cases(
