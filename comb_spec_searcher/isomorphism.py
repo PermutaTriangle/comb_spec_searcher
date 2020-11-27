@@ -86,12 +86,15 @@ class Isomorphism:
         ],
     ) -> Tuple[CombinatorialClass, CombinatorialClass]:
         rule1, rule2 = rules1[node1], rules2[node2]
-        if rule1.is_equivalence():
-            eq_maps[0][node1] = rule1
-            node1 = rule1.children[0]
+
         if rule2.is_equivalence():
             node2 = rule2.children[0]
             eq_maps[1][node1] = rule2
+
+        if rule1.is_equivalence():
+            eq_maps[0][node1] = rule1
+            node1 = rule1.children[0]
+
         return node1, node2
 
     def _base_cases(
