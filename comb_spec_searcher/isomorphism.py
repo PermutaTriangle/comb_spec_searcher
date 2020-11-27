@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Dict, List, Set, Tuple
+from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple
 
 from .combinatorial_class import CombinatorialClass
 from .strategies.rule import AbstractRule
@@ -12,6 +12,16 @@ class Isomorphism:
 
     _INVALID, _UNKNOWN, _VALID = range(-1, 2)
 
+    @classmethod
+    def children_order(
+        cls, spec1: "CombinatorialSpecification", spec2: "CombinatorialSpecification"
+    ) -> Optional[Dict[CombinatorialClass, List[int]]]:
+        """If the two specs are isomorphic, returns the order of children in the second
+        spec that matches the first. If not, None is returned."""
+        iso = cls(spec1, spec2)
+        if iso.are_isomorphic():
+            return iso.child_order
+
     def __init__(
         self, spec1: "CombinatorialSpecification", spec2: "CombinatorialSpecification"
     ) -> None:
@@ -22,6 +32,7 @@ class Isomorphism:
         self.root2: CombinatorialClass = spec2.root
         self.rules2: Dict[CombinatorialClass, AbstractRule] = spec2.rules_dict
         self.ancestors2: Dict[CombinatorialClass, int] = {}
+        self.child_order: Dict[CombinatorialClass, List[int]] = {}
 
     def are_isomorphic(self) -> bool:
         """Check if the two specs are isomorphic."""
@@ -44,11 +55,17 @@ class Isomorphism:
 
         # Check all matches of children, if any are valid then trees are isomorphic
         n = len(rule1.children)
+        if n > 1:
+            if node2 not in self.child_order:
+                self.child_order[node2] = [0] * n
+            child_order: List[int] = self.child_order[node2]
         stack = [(0, i, {i}) for i in range(n - 1, -1, -1)]
         while stack:
             i1, i2, in_use = stack.pop()
             if not self._are_isomorphic(rule1.children[i1], rule2.children[i2]):
                 continue
+            if n > 1:
+                child_order[i1] = i2
             if i1 == n - 1:
                 self._cleanup(node1, node2)
                 return True

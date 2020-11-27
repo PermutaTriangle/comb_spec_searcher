@@ -5,7 +5,18 @@ where each of the bi appear exactly once on the left hand side of some rule.
 from copy import copy
 from functools import reduce
 from operator import mul
-from typing import Dict, Generic, Iterable, Iterator, List, Sequence, Set, Tuple, Union
+from typing import (
+    Dict,
+    Generic,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Union,
+)
 
 import sympy
 from logzero import logger
@@ -440,9 +451,11 @@ class CombinatorialSpecification(
             for n in range(length + 1)
         )
 
-    def is_isomorphic_to(self, other: "CombinatorialSpecification") -> bool:
+    def bijective_order(
+        self, other: "CombinatorialSpecification"
+    ) -> Optional[Dict[CombinatorialClass, List[int]]]:
         """Check if specifications are isomorphic."""
-        return Isomorphism(self, other).are_isomorphic()
+        return Isomorphism.children_order(self, other)
 
     def show(
         self, levels_shown: int = 0, levels_expand: int = 0, verbose: bool = False
