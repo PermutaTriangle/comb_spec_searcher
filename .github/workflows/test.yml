@@ -45,10 +45,10 @@ jobs:
             os: ubuntu-latest
 
           - python: 3.9
-            toxenv: py38
+            toxenv: py39
             os: macos-latest
           - python: 3.9
-            toxenv: py38
+            toxenv: py39
             os: windows-latest
 
     runs-on: ${{ matrix.os }}
