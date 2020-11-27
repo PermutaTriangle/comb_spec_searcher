@@ -24,6 +24,10 @@ class Isomorphism:
         self._ancestors2: Dict[CombinatorialClass, int] = {}
         self.child_order: Dict[CombinatorialClass, List[int]] = {}
         self.rule_map: Dict[CombinatorialClass, AbstractRule] = {}
+        self.eq_map: Tuple[
+            Dict[CombinatorialClass, AbstractRule],
+            Dict[CombinatorialClass, AbstractRule],
+        ] = ({}, {})
 
     def are_isomorphic(self) -> bool:
         """Check if the two specs are isomorphic."""
@@ -33,8 +37,8 @@ class Isomorphism:
         self, node1: CombinatorialClass, node2: CombinatorialClass
     ) -> bool:
         # If there are equivilances, we use the 'latest' one
-        node1 = Isomorphism._get_eq_descendant(node1, self._rules1)
-        node2 = Isomorphism._get_eq_descendant(node2, self._rules2)
+        node1 = Isomorphism._get_eq_descendant(node1, self._rules1, self.eq_map[0])
+        node2 = Isomorphism._get_eq_descendant(node2, self._rules2, self.eq_map[1])
         rule1, rule2 = self._rules1[node1], self._rules2[node2]
 
         is_base_case = self._base_cases(node1, rule1, node2, rule2)
@@ -73,9 +77,11 @@ class Isomorphism:
     def _get_eq_descendant(
         node: CombinatorialClass,
         rules: Dict[CombinatorialClass, AbstractRule],
+        eq_map: Dict[CombinatorialClass, AbstractRule],
     ) -> CombinatorialClass:
         rule = rules[node]
         while rule.is_equivalence():
+            eq_map[node] = rule
             node = rule.children[0]
             rule = rules[node]
         return node
