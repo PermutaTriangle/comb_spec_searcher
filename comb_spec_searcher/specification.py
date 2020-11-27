@@ -451,11 +451,11 @@ class CombinatorialSpecification(
             for n in range(length + 1)
         )
 
-    def bijective_order(
-        self, other: "CombinatorialSpecification"
-    ) -> Optional[Dict[CombinatorialClass, List[int]]]:
+    def isomorphic(self, other: "CombinatorialSpecification") -> Optional[Isomorphism]:
         """Check if specifications are isomorphic."""
-        return Isomorphism.children_order(self, other)
+        iso = Isomorphism(self, other)
+        if iso.are_isomorphic():
+            return iso
 
     def show(
         self, levels_shown: int = 0, levels_expand: int = 0, verbose: bool = False
