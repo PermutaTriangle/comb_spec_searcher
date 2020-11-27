@@ -42,6 +42,7 @@ RulesDict = Dict[int, Set[Tuple[int, ...]]]
 
 
 class WorkPacket(NamedTuple):
+    # pylint: disable=inherit-non-class
     label: int
     strategies: Tuple[CSSstrategy, ...]
     inferral: bool
