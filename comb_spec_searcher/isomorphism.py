@@ -22,12 +22,10 @@ class Isomorphism:
         self._root2: CombinatorialClass = spec2.root
         self._rules2: Dict[CombinatorialClass, AbstractRule] = spec2.rules_dict
         self._ancestors2: Dict[CombinatorialClass, int] = {}
-        self.child_order: Dict[CombinatorialClass, List[int]] = {}
-        self.rule_map: Dict[CombinatorialClass, AbstractRule] = {}
-        self.eq_maps: Tuple[
-            Dict[CombinatorialClass, AbstractRule],
-            Dict[CombinatorialClass, AbstractRule],
-        ] = ({}, {})
+        self.eq_map: Dict[CombinatorialClass, AbstractRule] = {}
+        self.child_map: Dict[
+            Tuple[CombinatorialClass, ...], Tuple[AbstractRule, ...]
+        ] = {}
 
     def are_isomorphic(self) -> bool:
         """Check if the two specs are isomorphic."""
@@ -38,7 +36,7 @@ class Isomorphism:
     ) -> bool:
         # If there are equivilances, we use the 'latest' one
         node1, node2 = Isomorphism._get_eq_descendant(
-            node1, self._rules1, node2, self._rules2, self.eq_maps
+            node1, self._rules1, node2, self._rules2, self.eq_map
         )
         rule1, rule2 = self._rules1[node1], self._rules2[node2]
 
@@ -54,20 +52,21 @@ class Isomorphism:
 
         # Check all matches of children, if any are valid then trees are isomorphic
         n = len(rule1.children)
-        if n > 1:
-            if node1 not in self.child_order:
-                self.child_order[node1] = [0] * n
-            child_order: List[int] = self.child_order[node1]
+        child_rules: List[AbstractRule] = [
+            self._rules2[child] for child in rule2.children
+        ]
+        child_order: List[int] = [0] * n
         stack = [(0, i, {i}) for i in range(n - 1, -1, -1)]
         while stack:
             i1, i2, in_use = stack.pop()
             if not self._are_isomorphic(rule1.children[i1], rule2.children[i2]):
                 continue
-            if n > 1:
-                child_order[i1] = i2
+            child_order[i1] = i2
             if i1 == n - 1:
+                self.child_map[rule1.children] = Isomorphism._order_by(
+                    child_rules, child_order
+                )
                 self._cleanup(node1, node2)
-                self.rule_map[node1] = rule2
                 return True
             Isomorphism._extend_stack(i1, n, in_use, stack)
 
@@ -80,19 +79,15 @@ class Isomorphism:
         rules1: Dict[CombinatorialClass, AbstractRule],
         node2: CombinatorialClass,
         rules2: Dict[CombinatorialClass, AbstractRule],
-        eq_maps: Tuple[
-            Dict[CombinatorialClass, AbstractRule],
-            Dict[CombinatorialClass, AbstractRule],
-        ],
+        eq_map: Dict[CombinatorialClass, AbstractRule],
     ) -> Tuple[CombinatorialClass, CombinatorialClass]:
         rule1, rule2 = rules1[node1], rules2[node2]
 
         if rule2.is_equivalence():
             node2 = rule2.children[0]
-            eq_maps[1][node1] = rule2
+            eq_map[node1] = rule2
 
         if rule1.is_equivalence():
-            eq_maps[0][node1] = rule1
             node1 = rule1.children[0]
 
         return node1, node2
@@ -116,7 +111,6 @@ class Isomorphism:
         if not rule1.children and not rule2.children:
             # If one is atom, both should be and should also be equal
             if node1.is_atom() and node2.is_atom() and node1 == node2:
-                self.rule_map[node1] = rule2
                 return Isomorphism._VALID
             return Isomorphism._INVALID
 
@@ -133,6 +127,12 @@ class Isomorphism:
             return Isomorphism._VALID
 
         return Isomorphism._UNKNOWN
+
+    @staticmethod
+    def _order_by(
+        rule_list: List[AbstractRule], order_list: List[int]
+    ) -> Tuple[AbstractRule, ...]:
+        return tuple(rule_list[index] for index in order_list)
 
     def _cleanup(self, node1: CombinatorialClass, node2: CombinatorialClass) -> None:
         self._index[0] -= 1
