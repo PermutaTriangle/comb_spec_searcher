@@ -24,7 +24,7 @@ class Isomorphism:
         self._ancestors2: Dict[CombinatorialClass, int] = {}
         self.eq_map: Dict[CombinatorialClass, AbstractRule] = {}
         self.child_map: Dict[
-            Tuple[CombinatorialClass, ...], Tuple[AbstractRule, ...]
+            Tuple[CombinatorialClass, ...], Tuple[AbstractRule, List[int]]
         ] = {}
 
     def are_isomorphic(self) -> bool:
@@ -52,9 +52,6 @@ class Isomorphism:
 
         # Check all matches of children, if any are valid then trees are isomorphic
         n = len(rule1.children)
-        child_rules: List[AbstractRule] = [
-            self._rules2[child] for child in rule2.children
-        ]
         child_order: List[int] = [0] * n
         stack = [(0, i, {i}) for i in range(n - 1, -1, -1)]
         while stack:
@@ -63,9 +60,7 @@ class Isomorphism:
                 continue
             child_order[i1] = i2
             if i1 == n - 1:
-                self.child_map[rule1.children] = Isomorphism._order_by(
-                    child_rules, child_order
-                )
+                self.child_map[rule1.children] = (rule2, child_order)
                 self._cleanup(node1, node2)
                 return True
             Isomorphism._extend_stack(i1, n, in_use, stack)
@@ -127,12 +122,6 @@ class Isomorphism:
             return Isomorphism._VALID
 
         return Isomorphism._UNKNOWN
-
-    @staticmethod
-    def _order_by(
-        rule_list: List[AbstractRule], order_list: List[int]
-    ) -> Tuple[AbstractRule, ...]:
-        return tuple(rule_list[index] for index in order_list)
 
     def _cleanup(self, node1: CombinatorialClass, node2: CombinatorialClass) -> None:
         self._index[0] -= 1
