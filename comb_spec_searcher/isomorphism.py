@@ -34,8 +34,8 @@ class Isomorphism:
         self, node1: CombinatorialClass, node2: CombinatorialClass, iso_label: int
     ) -> bool:
         # If there are equivilances, we use the 'latest' one
-        node1, node2 = Isomorphism._get_eq_descendant(
-            node1, self._rules1, node2, self._rules2, self.eq_map
+        node1, node2, iso_label = self._get_eq_descendant(
+            node1, self._rules1, node2, self._rules2, self.eq_map, iso_label
         )
         rule1, rule2 = self._rules1[node1], self._rules2[node2]
 
@@ -69,14 +69,15 @@ class Isomorphism:
         self._cleanup(node1, node2)
         return False
 
-    @staticmethod
     def _get_eq_descendant(
+        self,
         node1: CombinatorialClass,
         rules1: Dict[CombinatorialClass, AbstractRule],
         node2: CombinatorialClass,
         rules2: Dict[CombinatorialClass, AbstractRule],
         eq_map: Dict[CombinatorialClass, AbstractRule],
-    ) -> Tuple[CombinatorialClass, CombinatorialClass]:
+        iso_label: int,
+    ) -> Tuple[CombinatorialClass, CombinatorialClass, int]:
         rule1, rule2 = rules1[node1], rules2[node2]
 
         if rule2.is_equivalence():
@@ -84,9 +85,10 @@ class Isomorphism:
             eq_map[node1] = rule2
 
         if rule1.is_equivalence():
+            iso_label = self.get_label[node1][0]
             node1 = rule1.children[0]
 
-        return node1, node2
+        return node1, node2, iso_label
 
     def _base_cases(
         self,
