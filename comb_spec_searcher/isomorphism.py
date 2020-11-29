@@ -15,7 +15,7 @@ class Isomorphism:
     def __init__(
         self, spec1: "CombinatorialSpecification", spec2: "CombinatorialSpecification"
     ) -> None:
-        self._index: List[int] = [0]
+        self._index = 0
         self._root1: CombinatorialClass = spec1.root
         self._rules1: Dict[CombinatorialClass, AbstractRule] = spec1.rules_dict
         self._ancestors1: Dict[CombinatorialClass, int] = {}
@@ -23,16 +23,16 @@ class Isomorphism:
         self._rules2: Dict[CombinatorialClass, AbstractRule] = spec2.rules_dict
         self._ancestors2: Dict[CombinatorialClass, int] = {}
         self.eq_map: Dict[CombinatorialClass, AbstractRule] = {}
-        self.child_map: Dict[
-            Tuple[CombinatorialClass, ...], Tuple[AbstractRule, List[int]]
-        ] = {}
+        self._iso_label: int = 1
+        self.iso_labels: Dict[CombinatorialClass, List[int]] = {}
+        self.iso_labels_to_rules: Dict[int, Tuple[AbstractRule, List[int]]] = {}
 
     def are_isomorphic(self) -> bool:
         """Check if the two specs are isomorphic."""
-        return self._are_isomorphic(self._root1, self._root2)
+        return self._are_isomorphic(self._root1, self._root2, 0)
 
     def _are_isomorphic(
-        self, node1: CombinatorialClass, node2: CombinatorialClass
+        self, node1: CombinatorialClass, node2: CombinatorialClass, iso_label: int
     ) -> bool:
         # If there are equivilances, we use the 'latest' one
         node1, node2 = Isomorphism._get_eq_descendant(
@@ -44,23 +44,29 @@ class Isomorphism:
         if is_base_case:
             return bool(is_base_case + 1)
 
-        self._index[0] += 1
-        self._ancestors1[node1], self._ancestors2[node2] = (
-            self._index[0],
-            self._index[0],
-        )
+        self._index += 1
+        self._ancestors1[node1], self._ancestors2[node2] = (self._index, self._index)
 
         # Check all matches of children, if any are valid then trees are isomorphic
         n = len(rule1.children)
         child_order: List[int] = [0] * n
         stack = [(0, i, {i}) for i in range(n - 1, -1, -1)]
+
+        child_labels = self.iso_labels.get(node1, None)
+        if child_labels is None:
+            child_labels = [self._iso_label + i for i in range(n)]
+            self.iso_labels[node1] = child_labels
+            self._iso_label += n
+
         while stack:
             i1, i2, in_use = stack.pop()
-            if not self._are_isomorphic(rule1.children[i1], rule2.children[i2]):
+            if not self._are_isomorphic(
+                rule1.children[i1], rule2.children[i2], child_labels[i1]
+            ):
                 continue
             child_order[i1] = i2
             if i1 == n - 1:
-                self.child_map[rule1.children] = (rule2, child_order)
+                self.iso_labels_to_rules[iso_label] = (rule2, child_order)
                 self._cleanup(node1, node2)
                 return True
             Isomorphism._extend_stack(i1, n, in_use, stack)
@@ -124,7 +130,7 @@ class Isomorphism:
         return Isomorphism._UNKNOWN
 
     def _cleanup(self, node1: CombinatorialClass, node2: CombinatorialClass) -> None:
-        self._index[0] -= 1
+        self._index -= 1
         del self._ancestors1[node1]
         del self._ancestors2[node2]
 
