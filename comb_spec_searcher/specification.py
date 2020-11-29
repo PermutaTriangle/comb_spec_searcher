@@ -100,8 +100,11 @@ class CombinatorialSpecification(
                 label_counter += 1
             self._iso_labels[rule.comb_class] = tuple(labels)
 
-    def get_iso_labels(self, comb_class):
+    def get_iso_labels(self, comb_class: CombinatorialClass) -> Tuple[int, ...]:
         return self._iso_labels[comb_class]
+
+    def get_iso_rule(self, iso_label: int) -> AbstractRule:
+        return self._iso_label_to_rule[iso_label]
 
     def _set_subrules(self) -> None:
         """Tells the subrules which children's recurrence methods it should use."""
@@ -158,6 +161,9 @@ class CombinatorialSpecification(
             self._expand_verified_comb_classes(verification_packs)
             self.expand_verified()
             self._set_subrules()
+            self._iso_labels = {}
+            self._iso_label_to_rule = {}
+            self._set_iso_labels()
 
     def expand_comb_class(self, comb_class: Union[int, CombinatorialClassType]) -> None:
         """
