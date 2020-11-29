@@ -122,13 +122,12 @@ class Isomorphism:
         # If one is found and the other not or if
         # they occured in different places before
         if ind1 != ind2:
-            self.iso_label_map[iso_label] = self.anco_label_map[ind1]
-            self.iso_labels_to_rules[iso_label] = (rule2, [])
             return Isomorphism._INVALID
 
         # If they have occured before and that occurrence matches in both trees
         if ind1 == ind2 != -1:
-
+            self.iso_label_map[iso_label] = self.anco_label_map[ind1]
+            # self.iso_labels_to_rules[iso_label] = (rule2, [])
             return Isomorphism._VALID
 
         return Isomorphism._UNKNOWN
