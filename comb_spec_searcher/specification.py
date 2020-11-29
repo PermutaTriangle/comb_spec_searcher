@@ -86,6 +86,22 @@ class CombinatorialSpecification(
         self.labels: Dict[CombinatorialClassType, int] = {}
         self._label_to_tiling: Dict[int, CombinatorialClassType] = {}
         self._set_subrules()
+        self._iso_labels: Dict[CombinatorialClass, int] = {}
+        self._iso_label_to_rule: Dict[int, AbstractRule] = {}
+        self._set_iso_labels()
+
+    def _set_iso_labels(self):
+        label_counter = 0
+        for rule in self.rules_dict.values():
+            labels = []
+            for child in rule.children:
+                labels.append(label_counter)
+                self._iso_label_to_rule[label_counter] = self.rules_dict[child]
+                label_counter += 1
+            self._iso_labels[rule.comb_class] = tuple(labels)
+
+    def get_iso_labels(self, comb_class):
+        return self._iso_labels[comb_class]
 
     def _set_subrules(self) -> None:
         """Tells the subrules which children's recurrence methods it should use."""
