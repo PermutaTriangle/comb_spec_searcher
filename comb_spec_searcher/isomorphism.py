@@ -23,9 +23,8 @@ class Isomorphism:
         self._rules2: Dict[CombinatorialClass, AbstractRule] = spec2.rules_dict
         self._ancestors2: Dict[CombinatorialClass, int] = {}
         self.eq_map: Dict[CombinatorialClass, AbstractRule] = {}
-        self._iso_label: int = 1
-        self.iso_labels: Dict[CombinatorialClass, List[int]] = {}
         self.iso_labels_to_rules: Dict[int, Tuple[AbstractRule, List[int]]] = {}
+        self.get_label = spec1._iso_labels  # TODO: store function and not private var
 
     def are_isomorphic(self) -> bool:
         """Check if the two specs are isomorphic."""
@@ -52,11 +51,7 @@ class Isomorphism:
         child_order: List[int] = [0] * n
         stack = [(0, i, {i}) for i in range(n - 1, -1, -1)]
 
-        child_labels = self.iso_labels.get(node1, None)
-        if child_labels is None:
-            child_labels = [self._iso_label + i for i in range(n)]
-            self.iso_labels[node1] = child_labels
-            self._iso_label += n
+        child_labels = self.get_label[node1]
 
         while stack:
             i1, i2, in_use = stack.pop()

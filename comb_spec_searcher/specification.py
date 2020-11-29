@@ -86,7 +86,7 @@ class CombinatorialSpecification(
         self.labels: Dict[CombinatorialClassType, int] = {}
         self._label_to_tiling: Dict[int, CombinatorialClassType] = {}
         self._set_subrules()
-        self._iso_labels: Dict[CombinatorialClass, int] = {}
+        self._iso_labels: Dict[CombinatorialClass, Tuple[int, ...]] = {}
         self._iso_label_to_rule: Dict[int, AbstractRule] = {}
         self._set_iso_labels()
 
