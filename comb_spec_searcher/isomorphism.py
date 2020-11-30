@@ -7,6 +7,13 @@ if TYPE_CHECKING:
     from .specification import CombinatorialSpecification
 
 
+AtomEquals = Callable[["CombinatorialClass", "CombinatorialClass"], bool]
+
+
+def _default_equals(c1: CombinatorialClass, c2: CombinatorialClass) -> bool:
+    return c1 == c2
+
+
 class Isomorphism:
     """Isomorphism checker."""
 
@@ -14,14 +21,21 @@ class Isomorphism:
 
     @classmethod
     def check(
-        cls, spec1: "CombinatorialSpecification", spec2: "CombinatorialSpecification"
+        cls,
+        spec1: "CombinatorialSpecification",
+        spec2: "CombinatorialSpecification",
+        eq: AtomEquals = _default_equals,
     ) -> bool:
         """Check if two specs are isomorphic."""
-        return cls(spec1, spec2).are_isomorphic()
+        return cls(spec1, spec2, eq).are_isomorphic()
 
     def __init__(
-        self, spec1: "CombinatorialSpecification", spec2: "CombinatorialSpecification"
+        self,
+        spec1: "CombinatorialSpecification",
+        spec2: "CombinatorialSpecification",
+        eq: AtomEquals = _default_equals,
     ) -> None:
+        self._eq = eq
         self._index = 0
         self._root1: CombinatorialClass = spec1.root
         self._rules1: Dict[CombinatorialClass, AbstractRule] = spec1.rules_dict
@@ -100,10 +114,6 @@ class Isomorphism:
         node2: CombinatorialClass,
         rule2: AbstractRule,
     ) -> int:
-        # If different type of rules are applied, the trees are not isomorphic
-        if rule1.strategy.get_op_symbol() != rule2.strategy.get_op_symbol():
-            return Isomorphism._INVALID
-
         # If different number of children
         if len(rule1.children) != len(rule2.children):
             return Isomorphism._INVALID
@@ -111,8 +121,14 @@ class Isomorphism:
         # If leaf that has no equal-ancestors
         if not rule1.children and not rule2.children:
             # If one is atom, both should be and should also be equal
-            if node1.is_atom() and node2.is_atom() and node1 == node2:
+            if node1.is_atom() and node2.is_atom() and self._eq(node1, node2):
                 return Isomorphism._VALID
+            return Isomorphism._INVALID
+
+        # If different type of rules are applied, the trees are not isomorphic
+        # TODO: Use == when implemented
+        assert isinstance(rule1, Rule) and isinstance(rule2, Rule)
+        if rule1.constructor.__class__ != rule2.constructor.__class__:
             return Isomorphism._INVALID
 
         # Check if we have seen this node before
@@ -223,23 +239,29 @@ class Bijection:
 
     @classmethod
     def construct(
-        cls, spec: "CombinatorialSpecification", other: "CombinatorialSpecification"
+        cls,
+        spec: "CombinatorialSpecification",
+        other: "CombinatorialSpecification",
+        eq: AtomEquals = _default_equals,
     ) -> Optional["Bijection"]:
         """Create a bijection object between two specifications if possible.
 
         raises: ValueError if specifications are not isomorphic.
         """
         try:
-            return cls(spec, other)
+            return cls(spec, other, eq)
         except ValueError:
             return None
 
     def __init__(
-        self, spec: "CombinatorialSpecification", other: "CombinatorialSpecification"
+        self,
+        spec: "CombinatorialSpecification",
+        other: "CombinatorialSpecification",
+        eq: AtomEquals = _default_equals,
     ):
         self.spec = spec
         self.other = other
-        self.iso = Isomorphism(spec, other)
+        self.iso = Isomorphism(spec, other, eq)
         if not self.iso.are_isomorphic():
             raise ValueError("Specifications are not isomorphic")
 
