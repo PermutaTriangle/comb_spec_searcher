@@ -1,7 +1,7 @@
-from typing import TYPE_CHECKING, Dict, List, Set, Tuple
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Set, Tuple
 
-from .combinatorial_class import CombinatorialClass
-from .strategies.rule import AbstractRule
+from .combinatorial_class import CombinatorialClass, CombinatorialObject
+from .strategies.rule import AbstractRule, Rule
 
 if TYPE_CHECKING:
     from .specification import CombinatorialSpecification
@@ -11,6 +11,13 @@ class Isomorphism:
     """Isomorphism checker."""
 
     _INVALID, _UNKNOWN, _VALID = range(-1, 2)
+
+    @classmethod
+    def check(
+        cls, spec1: "CombinatorialSpecification", spec2: "CombinatorialSpecification"
+    ) -> bool:
+        """Check if two specs are isomorphic."""
+        return cls(spec1, spec2).are_isomorphic()
 
     def __init__(
         self, spec1: "CombinatorialSpecification", spec2: "CombinatorialSpecification"
@@ -22,16 +29,18 @@ class Isomorphism:
         self._root2: CombinatorialClass = spec2.root
         self._rules2: Dict[CombinatorialClass, AbstractRule] = spec2.rules_dict
         self._ancestors2: Dict[CombinatorialClass, int] = {}
-        self.pair_map: Dict[
+        self._order_map: Dict[
             Tuple[CombinatorialClass, CombinatorialClass], List[int]
         ] = {}
+        self._isomorphic = self._are_isomorphic(self._root1, self._root2)
 
     def are_isomorphic(self) -> bool:
         """Check if the two specs are isomorphic."""
-        return self._are_isomorphic(self._root1, self._root2)
+        return self._isomorphic
 
     def get_order(self, c1: CombinatorialClass, c2: CombinatorialClass) -> List[int]:
-        return self.pair_map[(c1, c2)]
+        """Get order map of corresponding nodes."""
+        return self._order_map[(c1, c2)]
 
     def _are_isomorphic(
         self, node1: CombinatorialClass, node2: CombinatorialClass
@@ -59,7 +68,7 @@ class Isomorphism:
                 continue
             child_order[i1] = i2
             if i1 == n - 1:
-                self.pair_map[(node1, node2)] = child_order
+                self._order_map[(node1, node2)] = child_order
                 self._cleanup(node1, node2)
                 return True
             Isomorphism._extend_stack(i1, n, in_use, stack)
@@ -133,3 +142,110 @@ class Isomorphism:
             if i in in_use:
                 continue
             stack.append((i1 + 1, i, in_use.union({i})))
+
+
+class Node:
+    """Parse tree node."""
+
+    def __init__(
+        self,
+        rule: AbstractRule,
+        obj: CombinatorialObject,
+        get_rule: Callable[[CombinatorialClass], AbstractRule],
+    ):
+        self.rule = rule
+        self.obj = obj
+        if not rule.children:
+            self.children: Tuple[Optional["Node"], ...] = tuple()
+        else:
+            assert isinstance(rule, Rule)
+            self.children = (
+                tuple(
+                    type(self)(get_rule(child), child_obj, get_rule)
+                    if child_obj is not None
+                    else None
+                    for child, child_obj in zip(rule.children, rule.forward_map(obj))
+                )
+                if rule.children
+                else tuple()
+            )
+
+    def build_obj(
+        self,
+        rule: AbstractRule,
+        get_order: Callable[[CombinatorialClass, CombinatorialClass], List[int]],
+        get_rule: Callable[[CombinatorialClass], AbstractRule],
+    ) -> CombinatorialObject:
+        """Parse tree's recursive build object function."""
+        if not self.children:
+            # TODO: stop special casing verification rules!
+            return self.obj
+        if rule.is_equivalence():
+            if not self.rule.is_equivalence():
+                return self.build_obj(get_rule(rule.children[0]), get_order, get_rule)
+            order = [0]
+        elif self.rule.is_equivalence():
+            assert self.children[0] is not None
+            return self.children[0].build_obj(rule, get_order, get_rule)
+        else:
+            order = get_order(self.rule.comb_class, rule.comb_class)
+        children = tuple(self.children[idx] for idx in order)
+        child_objs = tuple(
+            None
+            if child is None
+            else child.build_obj(get_rule(child_class), get_order, get_rule)
+            for child, child_class in zip(children, rule.children)
+        )
+        assert isinstance(rule, Rule)
+        val: CombinatorialObject = next(rule.backward_map(child_objs))
+        return val
+
+
+class ParseTree:
+    """Parse tree that parses an object and can reconstruct it for the other
+    specification."""
+
+    def __init__(self, obj: CombinatorialObject, spec: "CombinatorialSpecification"):
+        self.root = Node(spec.root_rule, obj, spec.get_rule)
+
+    def build_obj(
+        self,
+        root: AbstractRule,
+        get_order: Callable[[CombinatorialClass, CombinatorialClass], List[int]],
+        get_rule: Callable[[CombinatorialClass], AbstractRule],
+    ) -> CombinatorialObject:
+        """Build object from the other specification."""
+        return self.root.build_obj(root, get_order, get_rule)
+
+
+class Bijection:
+    """A bijection object that contains a map between two specifications."""
+
+    @classmethod
+    def construct(
+        cls, spec: "CombinatorialSpecification", other: "CombinatorialSpecification"
+    ) -> Optional["Bijection"]:
+        """Create a bijection object between two specifications if possible.
+
+        raises: ValueError if specifications are not isomorphic.
+        """
+        try:
+            return cls(spec, other)
+        except ValueError:
+            return None
+
+    def __init__(
+        self, spec: "CombinatorialSpecification", other: "CombinatorialSpecification"
+    ):
+        self.spec = spec
+        self.other = other
+        self.iso = Isomorphism(spec, other)
+        if not self.iso.are_isomorphic():
+            raise ValueError("Specifications are not isomorphic")
+
+    def map(self, obj: CombinatorialObject) -> CombinatorialObject:
+        """Map an object of the root of one specification to the root of the other."""
+        parse_tree = ParseTree(obj, self.spec)
+        return parse_tree.build_obj(
+            self.other.root_rule, self.iso.get_order, self.other.get_rule
+        )

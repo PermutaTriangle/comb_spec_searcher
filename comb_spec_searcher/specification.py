@@ -35,7 +35,7 @@ from .exception import (
     InvalidOperationError,
     TaylorExpansionError,
 )
-from .isomorphism import Isomorphism
+from .isomorphism import Bijection, Isomorphism
 from .specification_drawer import SpecificationDrawer
 from .strategies import (
     AbstractStrategy,
@@ -451,11 +451,15 @@ class CombinatorialSpecification(
             for n in range(length + 1)
         )
 
-    def isomorphic(self, other: "CombinatorialSpecification") -> Optional[Isomorphism]:
-        """Check if specifications are isomorphic."""
-        iso = Isomorphism(self, other)
-        if iso.are_isomorphic():
-            return iso
+    def get_bijection_to(
+        self, other: "CombinatorialSpecification"
+    ) -> Optional[Bijection]:
+        """Get bijection from self to other."""
+        return Bijection.construct(self, other)
+
+    def are_isomorphic(self, other: "CombinatorialSpecification") -> bool:
+        """Check if self is isomorphic to other."""
+        return Isomorphism.check(self, other)
 
     def show(
         self, levels_shown: int = 0, levels_expand: int = 0, verbose: bool = False
