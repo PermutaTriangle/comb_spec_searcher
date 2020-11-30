@@ -27,6 +27,9 @@ class Isomorphism:
         self.get_label = spec1._iso_labels  # TODO: store function and not private var
         self.iso_label_map: Dict[int, int] = {}
         self.anco_label_map: Dict[int, int] = {}
+        self.pair_map: Dict[
+            Tuple[CombinatorialClass, CombinatorialClass], List[int]
+        ] = {}
 
     def are_isomorphic(self) -> bool:
         """Check if the two specs are isomorphic."""
@@ -64,6 +67,7 @@ class Isomorphism:
                 continue
             child_order[i1] = i2
             if i1 == n - 1:
+                self.pair_map[(node1, node2)] = child_order
                 self.iso_labels_to_rules[iso_label] = (rule2, child_order)
                 self._cleanup(node1, node2)
                 return True

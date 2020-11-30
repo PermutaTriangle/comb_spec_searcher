@@ -95,6 +95,9 @@ class CombinatorialSpecification(
         for rule in self.rules_dict.values():
             labels = []
             for child in rule.children:
+                if label_counter == 11:
+                    print(rule.comb_class)
+                    print(child)
                 labels.append(label_counter)
                 self._iso_label_to_rule[label_counter] = self.rules_dict[child]
                 label_counter += 1
