@@ -22,53 +22,44 @@ class Isomorphism:
         self._root2: CombinatorialClass = spec2.root
         self._rules2: Dict[CombinatorialClass, AbstractRule] = spec2.rules_dict
         self._ancestors2: Dict[CombinatorialClass, int] = {}
-        self.eq_map: Dict[CombinatorialClass, AbstractRule] = {}
-        self.iso_labels_to_rules: Dict[int, Tuple[AbstractRule, List[int]]] = {}
-        self.get_label = spec1._iso_labels  # TODO: store function and not private var
-        self.iso_label_map: Dict[int, int] = {}
-        self.anco_label_map: Dict[int, int] = {}
         self.pair_map: Dict[
             Tuple[CombinatorialClass, CombinatorialClass], List[int]
         ] = {}
 
     def are_isomorphic(self) -> bool:
         """Check if the two specs are isomorphic."""
-        return self._are_isomorphic(self._root1, self._root2, -1)
+        return self._are_isomorphic(self._root1, self._root2)
+
+    def get_order(self, c1: CombinatorialClass, c2: CombinatorialClass) -> List[int]:
+        return self.pair_map[(c1, c2)]
 
     def _are_isomorphic(
-        self, node1: CombinatorialClass, node2: CombinatorialClass, iso_label: int
+        self, node1: CombinatorialClass, node2: CombinatorialClass
     ) -> bool:
         # If there are equivilances, we use the 'latest' one
-        node1, node2, iso_label = self._get_eq_descendant(
-            node1, self._rules1, node2, self._rules2, self.eq_map, iso_label
+        node1, node2 = Isomorphism._get_eq_descendant(
+            node1, self._rules1, node2, self._rules2
         )
         rule1, rule2 = self._rules1[node1], self._rules2[node2]
 
-        is_base_case = self._base_cases(node1, rule1, node2, rule2, iso_label)
+        is_base_case = self._base_cases(node1, rule1, node2, rule2)
         if is_base_case:
             return bool(is_base_case + 1)
 
         self._index += 1
         self._ancestors1[node1], self._ancestors2[node2] = (self._index, self._index)
-        self.anco_label_map[self._index] = iso_label
 
         # Check all matches of children, if any are valid then trees are isomorphic
         n = len(rule1.children)
         child_order: List[int] = [0] * n
         stack = [(0, i, {i}) for i in range(n - 1, -1, -1)]
-
-        child_labels = self.get_label[node1]
-
         while stack:
             i1, i2, in_use = stack.pop()
-            if not self._are_isomorphic(
-                rule1.children[i1], rule2.children[i2], child_labels[i1]
-            ):
+            if not self._are_isomorphic(rule1.children[i1], rule2.children[i2]):
                 continue
             child_order[i1] = i2
             if i1 == n - 1:
                 self.pair_map[(node1, node2)] = child_order
-                self.iso_labels_to_rules[iso_label] = (rule2, child_order)
                 self._cleanup(node1, node2)
                 return True
             Isomorphism._extend_stack(i1, n, in_use, stack)
@@ -76,26 +67,22 @@ class Isomorphism:
         self._cleanup(node1, node2)
         return False
 
+    @staticmethod
     def _get_eq_descendant(
-        self,
         node1: CombinatorialClass,
         rules1: Dict[CombinatorialClass, AbstractRule],
         node2: CombinatorialClass,
         rules2: Dict[CombinatorialClass, AbstractRule],
-        eq_map: Dict[CombinatorialClass, AbstractRule],
-        iso_label: int,
-    ) -> Tuple[CombinatorialClass, CombinatorialClass, int]:
+    ) -> Tuple[CombinatorialClass, CombinatorialClass]:
         rule1, rule2 = rules1[node1], rules2[node2]
 
         if rule2.is_equivalence():
             node2 = rule2.children[0]
-            eq_map[node1] = rule2
 
         if rule1.is_equivalence():
-            iso_label = self.get_label[node1][0]
             node1 = rule1.children[0]
 
-        return node1, node2, iso_label
+        return node1, node2
 
     def _base_cases(
         self,
@@ -103,7 +90,6 @@ class Isomorphism:
         rule1: AbstractRule,
         node2: CombinatorialClass,
         rule2: AbstractRule,
-        iso_label: int,
     ) -> int:
         # If different type of rules are applied, the trees are not isomorphic
         if rule1.strategy.get_op_symbol() != rule2.strategy.get_op_symbol():
@@ -130,8 +116,6 @@ class Isomorphism:
 
         # If they have occured before and that occurrence matches in both trees
         if ind1 == ind2 != -1:
-            self.iso_label_map[iso_label] = self.anco_label_map[ind1]
-            # self.iso_labels_to_rules[iso_label] = (rule2, [])
             return Isomorphism._VALID
 
         return Isomorphism._UNKNOWN
