@@ -114,11 +114,12 @@ class CombinatorialSpecification(
                 continue
             rule = strategy(comb_class)
             non_empty_children = rule.non_empty_children()
-            if rule.is_equivalence():
+            if len(non_empty_children) == 1:
                 assert isinstance(rule, Rule)
                 equivalence_rules[(comb_class, non_empty_children[0])] = (
                     rule if len(rule.children) == 1 else rule.to_equivalence_rule()
                 )
+                self.rules_dict[comb_class] = rule
             elif non_empty_children or isinstance(rule, VerificationRule):
                 self.rules_dict[comb_class] = rule
             else:
@@ -170,16 +171,25 @@ class CombinatorialSpecification(
     ) -> None:
         logger.info("Creating equivalence path rules.")
         for eqv_path in equivalence_paths:
-            if len(eqv_path) > 1:
+            while len(eqv_path) > 1:
                 start = eqv_path[0]
                 rules = []
-                for a, b in zip(eqv_path[:-1], eqv_path[1:]):
+                for i in range(len(eqv_path) - 1):
+                    a, b = eqv_path[i], eqv_path[i + 1]
                     try:
                         rule = equivalence_rules[(a, b)]
                     except KeyError:
                         rule = equivalence_rules[(b, a)].to_reverse_rule(0)
-                    rules.append(rule)
-                self.rules_dict[start] = EquivalencePathRule(rules)
+                    if isinstance(rule.constructor, DisjointUnion):
+                        rules.append(rule)
+                    else:
+                        self.rules_dict[a] = rule
+                        eqv_path = eqv_path[i + 1 :]
+                        break
+                else:
+                    eqv_path = []
+                if rules:
+                    self.rules_dict[start] = EquivalencePathRule(rules)
 
     def _remove_redundant_rules(self) -> None:
         """

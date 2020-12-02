@@ -62,13 +62,16 @@ class RuleDBBase(abc.ABC):
         ends = tuple(sorted(ends))
         if isinstance(rule, VerificationRule):
             self.set_verified(start)
-        is_equiv = len(ends) == 1 and rule.strategy.can_be_equivalent()
-        if is_equiv:
-            self.set_equivalent(start, ends[0])
-            self.eqv_rule_to_strategy[(start, ends)] = rule.strategy
-            self.rule_to_strategy.pop((start, ends), None)
-            self.rule_to_strategy.pop((ends[0], (start,)), None)
-        elif len(ends) != 1 or not self.are_equivalent(start, ends[0]):
+        if len(ends) == 1:
+            if rule.strategy.can_be_equivalent():
+                self.set_equivalent(start, ends[0])
+                self.eqv_rule_to_strategy[(start, ends)] = rule.strategy
+                self.rule_to_strategy.pop((start, ends), None)
+                self.rule_to_strategy.pop((ends[0], (start,)), None)
+            else:
+                self.equivdb.add_edge(start, ends[0])
+                self.rule_to_strategy[(start, ends)] = rule.strategy
+        else:
             self.rule_to_strategy[(start, ends)] = rule.strategy
 
     def is_verified(self, label: int) -> bool:
@@ -92,6 +95,8 @@ class RuleDBBase(abc.ABC):
         """Return a defaultdict containing all rules up to the equivalence."""
         rules_dict: Dict[int, Set[Tuple[int, ...]]] = defaultdict(set)
         for start, ends in self:
+            if len(ends) == 1 and self.are_equivalent(start, ends[0]):
+                continue
             rules_dict[self.equivdb[start]].add(
                 tuple(sorted(self.equivdb[e] for e in ends))
             )
@@ -285,8 +290,12 @@ class RuleDBBase(abc.ABC):
                             strategy = self.eqv_rule_to_strategy[(a, (b,))]
                             res.append((a, strategy))
                         except KeyError:
-                            strategy = self.eqv_rule_to_strategy[(b, (a,))]
-                            res.append((b, strategy))
+                            try:
+                                strategy = self.eqv_rule_to_strategy[(b, (a,))]
+                                res.append((b, strategy))
+                            except KeyError:
+                                strategy = self.rule_to_strategy[(a, (b,))]
+                                res.append((a, strategy))
                     if len(path) > 1:
                         eqv_paths.append(path)
             strategy = self.rule_to_strategy[(start, ends)]

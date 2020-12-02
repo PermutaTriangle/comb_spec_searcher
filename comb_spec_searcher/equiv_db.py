@@ -11,7 +11,7 @@ integer, that the classdb gives.
 """
 
 from collections import defaultdict, deque
-from typing import Deque, Dict, FrozenSet, List, Tuple, Set, Union
+from typing import Deque, Dict, FrozenSet, Iterator, List, Tuple, Set, Union
 
 
 class EquivalenceDB:
@@ -72,15 +72,35 @@ class EquivalenceDB:
             return
         self.vertices[label].add(other_label)
         if label in self.vertices[other_label]:
-            verified = self.is_verified(label) or self.is_verified(other_label)
-            roots = [self[label], self[other_label]]
-            heaviest = max([(self.weights[r], r) for r in roots])[1]
-            for r in roots:
-                if r != heaviest:
-                    self.weights[heaviest] += self.weights[r]
-                    self.parents[r] = heaviest
-            if verified:
-                self.set_verified(label)
+            self._set_equivalent(label, other_label)
+
+    def find_paths(self, label: int, other_label: int) -> Iterator[Tuple[int, ...]]:
+        """Return the list of path starting at other_label and ending at label."""
+        dequeue: Deque[Tuple[int, ...]] = deque()
+        dequeue.append((other_label,))
+        while dequeue:
+            path = dequeue.popleft()
+            end = path[-1]
+            if self.equivalent(end, label):
+                yield path
+                continue
+            for new_end in self.vertices[end]:
+                if new_end in path:
+                    continue
+                dequeue.append(path + (new_end,))
+        return path
+
+    def _set_equivalent(self, label: int, other_label: int) -> None:
+        """Set the two labels as equivalent in UnionFind"""
+        verified = self.is_verified(label) or self.is_verified(other_label)
+        roots = [self[label], self[other_label]]
+        heaviest = max([(self.weights[r], r) for r in roots])[1]
+        for r in roots:
+            if r != heaviest:
+                self.weights[heaviest] += self.weights[r]
+                self.parents[r] = heaviest
+        if verified:
+            self.set_verified(label)
 
     def equivalent(self, label: int, other_label: int) -> bool:
         """Return True if label and other_label are equivalent, False otherwise."""
