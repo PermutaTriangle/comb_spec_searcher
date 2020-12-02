@@ -367,9 +367,6 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         Return the reverse rule. At this stage, reverse rules can only be
         created for equivalence rules.
         """
-        assert isinstance(
-            self.constructor, (CartesianProduct, DisjointUnion)
-        ), "reverse rule can only be created for cartesain and disjoint union rules currently"
         return ReverseRule(self, idx)
 
     def _ensure_level(self, n: int) -> None:
@@ -682,7 +679,7 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         return self._constructor
 
     def is_equivalence(self) -> bool:
-        return len(self.children) == 1 and isinstance(self.constructor, DisjointUnion)
+        return len(self.children) == 1 and self.strategy.can_be_equivalent()
 
     @property
     def formal_step(self) -> str:

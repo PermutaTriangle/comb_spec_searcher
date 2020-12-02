@@ -172,6 +172,12 @@ class AbstractStrategy(
         """
         return self._workable
 
+    def can_be_equivalent(self) -> bool:
+        """
+        Return True if every Rule returned with one non-empty child is an
+        equivalence rule.
+        """
+
     @abc.abstractmethod
     def is_two_way(self, comb_class: CombinatorialClassType) -> bool:
         """
@@ -415,6 +421,10 @@ class CartesianProductStrategy(
         )
 
     @staticmethod
+    def can_be_equivalent() -> bool:
+        return True
+
+    @staticmethod
     def is_two_way(comb_class: CombinatorialClassType) -> bool:
         return True
 
@@ -482,6 +492,10 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObject
             possibly_empty=possibly_empty,
             workable=workable,
         )
+
+    @staticmethod
+    def can_be_equivalent() -> bool:
+        return True
 
     @staticmethod
     def is_two_way(comb_class: CombinatorialClassType) -> bool:
@@ -619,6 +633,10 @@ class VerificationStrategy(
             if children is None:
                 raise StrategyDoesNotApply("The combinatorial class is not verified")
         return VerificationRule(self, comb_class, children)
+
+    @staticmethod
+    def can_be_equivalent() -> bool:
+        return False
 
     @staticmethod
     def is_two_way(comb_class: CombinatorialClassType) -> bool:

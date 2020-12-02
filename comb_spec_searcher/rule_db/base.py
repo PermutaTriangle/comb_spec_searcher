@@ -62,7 +62,7 @@ class RuleDBBase(abc.ABC):
         ends = tuple(sorted(ends))
         if isinstance(rule, VerificationRule):
             self.set_verified(start)
-        is_equiv = len(ends) == 1 and rule.is_two_way()
+        is_equiv = len(ends) == 1 and rule.strategy.can_be_equivalent()
         if is_equiv:
             self.set_equivalent(start, ends[0])
             self.eqv_rule_to_strategy[(start, ends)] = rule.strategy
@@ -85,7 +85,8 @@ class RuleDBBase(abc.ABC):
 
     def set_equivalent(self, label: int, other: int) -> None:
         """Mark label and other as equivalent."""
-        self.equivdb.union(label, other)
+        self.equivdb.add_edge(label, other)
+        self.equivdb.add_edge(other, label)
 
     def rules_up_to_equivalence(self) -> Dict[int, Set[Tuple[int, ...]]]:
         """Return a defaultdict containing all rules up to the equivalence."""
