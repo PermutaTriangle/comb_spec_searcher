@@ -166,6 +166,12 @@ class RuleDBBase(abc.ABC):
         status += tabulate.tabulate(
             table, headers=("", "Total number"), colalign=("left", "right")
         ).replace("\n", "\n    ")
+        time_taken = round(self.equivdb.func_times["find_paths"], 2)
+        status += (
+            f"\n\tCalled find equiv path {self.equivdb.func_calls['find_paths']}"
+            + f" times, for total time of {time_taken}"
+            + " seconds.\n"
+        )
         return status
 
     ################################################################

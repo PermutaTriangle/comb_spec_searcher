@@ -13,6 +13,8 @@ integer, that the classdb gives.
 from collections import defaultdict, deque
 from typing import Deque, Dict, FrozenSet, Iterator, List, Tuple, Set, Union
 
+from .utils import cssmethodtimer
+
 
 class EquivalenceDB:
     """
@@ -34,6 +36,8 @@ class EquivalenceDB:
         self.weights: Dict[int, int] = {}
         self.verified_roots: Set[int] = set()
         self.vertices: Dict[int, Set[int]] = defaultdict(set)
+        self.func_times: Dict[str, float] = defaultdict(float)
+        self.func_calls: Dict[str, int] = defaultdict(int)
 
     def __eq__(self, other: object) -> bool:
         """Check if all information stored is the same."""
@@ -71,9 +75,11 @@ class EquivalenceDB:
         if label == other_label:
             return
         self.vertices[label].add(other_label)
-        if label in self.vertices[other_label]:
-            self._set_equivalent(label, other_label)
+        for path in self.find_paths(label, other_label):
+            for x in path[:-1]:
+                self._set_equivalent(x, label)
 
+    @cssmethodtimer("find_paths")
     def find_paths(self, label: int, other_label: int) -> Iterator[Tuple[int, ...]]:
         """Return the list of path starting at other_label and ending at label."""
         dequeue: Deque[Tuple[int, ...]] = deque()
