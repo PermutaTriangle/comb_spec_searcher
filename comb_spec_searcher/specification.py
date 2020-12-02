@@ -5,7 +5,18 @@ where each of the bi appear exactly once on the left hand side of some rule.
 from copy import copy
 from functools import reduce
 from operator import mul
-from typing import Dict, Generic, Iterable, Iterator, List, Sequence, Set, Tuple, Union
+from typing import (
+    Dict,
+    Generic,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Union,
+)
 
 import sympy
 from logzero import logger
@@ -24,6 +35,7 @@ from .exception import (
     InvalidOperationError,
     TaylorExpansionError,
 )
+from .isomorphism import AtomEquals, Bijection, Isomorphism
 from .specification_drawer import SpecificationDrawer
 from .strategies import (
     AbstractStrategy,
@@ -460,6 +472,22 @@ class CombinatorialSpecification(
             all(rule.sanity_check(n) for rule in self.rules_dict.values())
             for n in range(length + 1)
         )
+
+    def get_bijection_to(
+        self, other: "CombinatorialSpecification", eq: Optional[AtomEquals] = None
+    ) -> Optional[Bijection]:
+        """Get bijection from self to other."""
+        if eq is None:
+            return Bijection.construct(self, other)
+        return Bijection.construct(self, other, eq)
+
+    def are_isomorphic(
+        self, other: "CombinatorialSpecification", eq: Optional[AtomEquals] = None
+    ) -> bool:
+        """Check if self is isomorphic to other."""
+        if eq is None:
+            return Isomorphism.check(self, other)
+        return Isomorphism.check(self, other, eq)
 
     def show(
         self, levels_shown: int = 0, levels_expand: int = 0, verbose: bool = False
