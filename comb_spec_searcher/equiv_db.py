@@ -13,7 +13,7 @@ integer, that the classdb gives.
 from collections import defaultdict, deque
 from typing import Deque, Dict, FrozenSet, Iterator, List, Tuple, Set, Union
 
-from .utils import cssmethodtimer
+from .utils import cssiteratortimer
 
 
 class EquivalenceDB:
@@ -79,7 +79,7 @@ class EquivalenceDB:
             for x in path[:-1]:
                 self._set_equivalent(x, label)
 
-    @cssmethodtimer("find_paths")
+    @cssiteratortimer("find_paths")
     def find_paths(self, label: int, other_label: int) -> Iterator[Tuple[int, ...]]:
         """Return the list of path starting at other_label and ending at label."""
         dequeue: Deque[Tuple[int, ...]] = deque()
@@ -94,7 +94,6 @@ class EquivalenceDB:
                 if new_end in path:
                     continue
                 dequeue.append(path + (new_end,))
-        return path
 
     def _set_equivalent(self, label: int, other_label: int) -> None:
         """Set the two labels as equivalent in UnionFind"""
