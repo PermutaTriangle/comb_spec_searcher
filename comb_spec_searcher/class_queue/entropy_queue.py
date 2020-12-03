@@ -195,8 +195,13 @@ class EntropyQueue(CSSQueue):
     def do_level(self) -> Iterator[WorkPacket]:
         raise NotImplementedError
 
+    def peek(self):
+        to_show = []
+        while len(self.curr) > 0 and len(to_show) < 10:
+            to_show.append(heappop(self.curr))
+        for put_back in to_show:
+            heappush(self.curr, put_back)
+        return to_show
+
     def status(self) -> str:
-        e_sizes = [
-            self.entropy_sizes[i] for i in range(max(self.entropy_sizes.keys()) + 1)
-        ]
-        return str(e_sizes)
+        return str(sorted(list(self.entropy_sizes.items())))

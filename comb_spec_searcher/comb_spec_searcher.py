@@ -312,7 +312,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 logger.debug("Label %s is empty.", child_label)
                 continue
             if rule.workable:
-                self._add_to_queue(child_label, len(comb_class.active_cells))
+                self._add_to_queue(child_label, comb_class.entropy)
             if not rule.inferrable:
                 self._not_inferrable(child_label)
             if not rule.possibly_empty:
@@ -450,6 +450,11 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         status += self._css_status(total)
         status += self.classdb.status() + "\n"
         status += self.classqueue.status() + "\n"
+        peek = self.classqueue.peek()
+        for c, p in enumerate(peek):
+            status += (
+                f"Peek #{c+1} with entropy {p[0]}\n{self.classdb.get_class(p[1])}\n\n"
+            )
         status += self.ruledb.status(elaborate) + "\n"
         status += self.mem_status(elaborate)
         return status
@@ -678,6 +683,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         for label, strategies, inferral in self._labels_to_expand():
             if label != last_label:
                 comb_class = self.classdb.get_class(label)
+                print(comb_class)
                 last_label = label
             if self.expand_verified or not self.ruledb.is_verified(label):
                 self._expand(comb_class, label, strategies, inferral)
