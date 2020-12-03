@@ -232,7 +232,9 @@ def proof_tree_generator_dfs(
                 new_maximum = maximum - length if maximum is not None else None
                 for seen2, trees in _dfs_forest(roots, seen1, new_maximum):
                     actual_length = length + sum(len(t) for t in trees)
-                    if maximum is not None and actual_length < maximum:
+                    if maximum is None or (
+                        maximum is not None and actual_length < maximum
+                    ):
                         yield seen1.union(seen2), [tree] + trees
 
     sorted_rules_dict = {
