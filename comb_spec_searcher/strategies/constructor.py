@@ -94,7 +94,7 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
         subrecs: SubRecs,
         n: int,
         **parameters: int,
-    ):
+    ) -> Tuple[Optional[CombinatorialObjectType], ...]:
         """Return a randomly sampled subobjs/image of the bijection implied
         by the constructor."""
 
@@ -399,7 +399,7 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         subrecs: SubRecs,
         n: int,
         **parameters: int,
-    ):
+    ) -> Tuple[Optional[CombinatorialObjectType], ...]:
         random_choice = randint(1, parent_count)
         total = 0
         for child_parameters in self._valid_compositions(n, **parameters):
@@ -665,7 +665,7 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         subrecs: SubRecs,
         n: int,
         **parameters: int,
-    ):
+    ) -> Tuple[Optional[CombinatorialObjectType], ...]:
         raise NotImplementedError
 
 
@@ -810,7 +810,7 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         subrecs: SubRecs,
         n: int,
         **parameters: int,
-    ):
+    ) -> Tuple[Optional[CombinatorialObjectType], ...]:
         random_choice = randint(1, parent_count)
         total = 0
         for (idx, rec), subsampler, extra_params in zip(
@@ -985,7 +985,7 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         subrecs: SubRecs,
         n: int,
         **parameters: int,
-    ):
+    ) -> Tuple[Optional[CombinatorialObjectType], ...]:
         raise NotImplementedError
 
     @staticmethod
