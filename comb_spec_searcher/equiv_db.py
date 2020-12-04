@@ -13,7 +13,7 @@ integer, that the classdb gives.
 from collections import defaultdict, deque
 from typing import Deque, Dict, FrozenSet, Iterator, List, Tuple, Set, Union
 
-from .utils import cssiteratortimer
+from .utils import cssmethodtimer
 
 
 class EquivalenceDB:
@@ -36,6 +36,7 @@ class EquivalenceDB:
         self.weights: Dict[int, int] = {}
         self.verified_roots: Set[int] = set()
         self.vertices: Dict[int, Set[int]] = defaultdict(set)
+        self._one_way_vertices: Dict[int, Set[int]] = defaultdict(set)
         self.func_times: Dict[str, float] = defaultdict(float)
         self.func_calls: Dict[str, int] = defaultdict(int)
 
@@ -70,16 +71,60 @@ class EquivalenceDB:
             self.parents[ancestor] = root
         return root
 
-    def add_edge(self, label: int, other_label: int) -> None:
+    def get_one_way_vertices(self) -> Dict[int, Set[int]]:
+        res: Dict[int, Set[int]] = defaultdict(set)
+        for start, ends in self._one_way_vertices.items():
+            start = self[start]
+            for end in ends:
+                end = self[end]
+                if start != end:
+                    res[start].add(end)
+        self._one_way_vertices = res
+        return res
+
+    def add_one_way_edge(self, label: int, other_label: int) -> None:
+        self._add_edge(label, other_label)
+        self._one_way_vertices[self[label]].add(self[other_label])
+
+    @cssmethodtimer("find_paths")
+    def connect_cycles(self):
+        """Look for cycles using one way edges that have been added."""
+        one_way_vertices = self.get_one_way_vertices()
+        dequeue: Deque[Tuple[int, ...]] = deque()
+        dequeue.extend([(label,) for label in one_way_vertices.keys()])
+        visited = set()
+        while dequeue:
+            path = dequeue.popleft()
+            end = path[-1]
+            if end in visited:
+                continue
+            visited.add(end)
+            for new_end in one_way_vertices[end]:
+                for i, vertex in enumerate(path[:-1]):
+                    if self.equivalent(vertex, new_end):
+                        # we've detected a cycle!
+                        print("CYCLE", path, new_end)
+                        for vertex in path[i:]:
+                            self._set_equivalent(vertex, new_end)
+                        break
+                if new_end not in path:
+                    # new end is not in the path, so we haven't tried looking for
+                    # cycles from here.
+                    dequeue.appendleft(
+                        path + (new_end,)
+                    )  # appending left makes this a depth first search
+
+    def add_two_way_edge(self, label: int, other_label: int) -> None:
+        self._add_edge(label, other_label)
+        self._add_edge(other_label, label)
+        self._set_equivalent(label, other_label)
+
+    def _add_edge(self, label: int, other_label: int) -> None:
         """Add an edge from label to other_label."""
         if label == other_label:
             return
         self.vertices[label].add(other_label)
-        for path in self.find_paths(label, other_label):
-            for x in path[:-1]:
-                self._set_equivalent(x, label)
 
-    @cssiteratortimer("find_paths")
     def find_paths(self, label: int, other_label: int) -> Iterator[Tuple[int, ...]]:
         """Return the list of path starting at other_label and ending at label."""
         dequeue: Deque[Tuple[int, ...]] = deque()
