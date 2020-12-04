@@ -472,22 +472,24 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         if not possible_parameters:
             return True
 
-        def fake_subsampler(comb_class):
-            objs_cache: Dict[n, Objects] = {}
+        def fake_subsampler(
+            comb_class: CombinatorialClassType,
+        ) -> Callable[..., CombinatorialObjectType]:
+            objs_cache: Dict[int, Objects] = {}
 
-            def sampler(n, **parameters):
+            def sampler(n: int, **parameters: int) -> CombinatorialObjectType:
                 if n not in objs_cache:
                     objs_cache[n] = comb_class.get_objects(n)
                 objs = objs_cache[n]
                 param_tuple = tuple(parameters[p] for p in comb_class.extra_parameters)
-                return random.choice(objs[param_tuple])
+                return cast(CombinatorialObjectType, random.choice(objs[param_tuple]))
 
             return sampler
 
-        def fake_subrec(comb_class):
-            terms_cache: Dict[n, Terms] = {}
+        def fake_subrec(comb_class: CombinatorialClassType) -> Callable[..., int]:
+            terms_cache: Dict[int, Terms] = {}
 
-            def subrec(n, **parameters):
+            def subrec(n: int, **parameters: int) -> int:
                 if n not in terms_cache:
                     terms_cache[n] = comb_class.get_terms(n)
                 terms = terms_cache[n]
