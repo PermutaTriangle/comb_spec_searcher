@@ -6,9 +6,9 @@ calling the Strategy class and storing its results.
 A CombinatorialSpecification is (more or less) a set of Rule.
 """
 import abc
+import random
 from collections import defaultdict
 from itertools import chain, product
-from random import randint
 from typing import (
     TYPE_CHECKING,
     Callable,
@@ -63,7 +63,9 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         self.subgenerators: Optional[
             Tuple[Callable[..., Iterator[CombinatorialObjectType]], ...]
         ] = None
-        self.subsamplers: Optional[Tuple[Callable[..., CombinatorialObjectType], ...]]
+        self.subsamplers: Optional[
+            Tuple[Callable[..., CombinatorialObjectType], ...]
+        ] = None
         self.subterms: Optional[SubTerms] = None
         self.subobjects: Optional[SubObjects] = None
         self._children = children
@@ -398,12 +400,15 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
             total_count, self.subsamplers, self.subrecs, n, **parameters
         )
         objs = tuple(self.backward_map(subobjs))
-        idx = randint(0, len(objs) - 1)
-        return objs[idx]
+        return random.choice(objs)
 
     def sanity_check(self, n: int) -> bool:
         try:
-            return self._sanity_check_count(n) and self._sanity_check_objects(n)
+            return (
+                self._sanity_check_count(n)
+                and self._sanity_check_objects(n)
+                and self._sanity_check_random_sample(n)
+            )
         except SanityCheckFailure as e:
             raise e
 
@@ -454,6 +459,75 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
                 f"The actual objects are {actual_objects}\n"
                 f"The rule generated objects {rule_objects}."
             )
+        return True
+
+    def _sanity_check_random_sample(self, n: int) -> bool:
+        # pylint: disable=access-member-before-definition
+        # pylint: disable=attribute-defined-outside-init
+        actual_objects = self.comb_class.get_objects(n)
+        possible_parameters = [
+            (dict(zip(self.comb_class.extra_parameters, param)), param)
+            for param in actual_objects
+        ]
+        if not possible_parameters:
+            return True
+
+        def fake_subsampler(
+            comb_class: CombinatorialClassType,
+        ) -> Callable[..., CombinatorialObjectType]:
+            objs_cache: Dict[int, Objects] = {}
+
+            def sampler(n: int, **parameters: int) -> CombinatorialObjectType:
+                if n not in objs_cache:
+                    objs_cache[n] = comb_class.get_objects(n)
+                objs = objs_cache[n]
+                param_tuple = tuple(parameters[p] for p in comb_class.extra_parameters)
+                return cast(CombinatorialObjectType, random.choice(objs[param_tuple]))
+
+            return sampler
+
+        def fake_subrec(comb_class: CombinatorialClassType) -> Callable[..., int]:
+            terms_cache: Dict[int, Terms] = {}
+
+            def subrec(n: int, **parameters: int) -> int:
+                if n not in terms_cache:
+                    terms_cache[n] = comb_class.get_terms(n)
+                terms = terms_cache[n]
+                param_tuple = tuple(parameters[p] for p in comb_class.extra_parameters)
+                return terms[param_tuple]
+
+            return subrec
+
+        tmpsamplers = self.subsamplers
+        tmpsubrec = self.subrecs
+        tmpsubterms = self.subterms
+        self.subsamplers = tuple(fake_subsampler(child) for child in self.children)
+        self.subrecs = tuple(fake_subrec(child) for child in self.children)
+        self.subterms = tuple(child.get_terms for child in self.children)
+        try:
+            self.random_sample_object_of_size(n, **possible_parameters[0][0])
+        except NotImplementedError:
+            # Skipping testing rules that have not implemented random_sampling.
+            self.subsamplers = tmpsamplers
+            self.subrecs = tmpsubrec
+            self.subterms = tmpsubterms
+            return True
+
+        for paramd, paramt in possible_parameters:
+            obj = self.random_sample_object_of_size(n, **paramd)
+            if obj not in actual_objects[paramt]:
+                self.subsamplers = tmpsamplers
+                self.subrecs = tmpsubrec
+                self.subterms = tmpsubterms
+                raise SanityCheckFailure(
+                    f"The following rule failed sanity check:\n"
+                    f"{self}\n"
+                    f"Failed for size {n}:\n"
+                    f"Sampled the object {obj} for the parameters {paramd}\n"
+                )
+        self.subsamplers = tmpsamplers
+        self.subrecs = tmpsubrec
+        self.subterms = tmpsubterms
         return True
 
 
