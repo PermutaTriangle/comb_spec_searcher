@@ -72,6 +72,14 @@ class EquivalenceDB:
         return root
 
     def get_one_way_vertices(self) -> Dict[int, Set[int]]:
+        """
+        Return the adjacency table where vertices are strong components,
+        and edges are those that connect some vertex in a strong component
+        to the other.
+
+        Note: this might not be accurate, you should use the connect_cycle
+        method first if needed.
+        """
         res: Dict[int, Set[int]] = defaultdict(set)
         for start, ends in self._one_way_vertices.items():
             start = self[start]
@@ -83,6 +91,7 @@ class EquivalenceDB:
         return res
 
     def add_one_way_edge(self, label: int, other_label: int) -> None:
+        """Add an edge from label to other label in the directed graph."""
         self._add_edge(label, other_label)
         self._one_way_vertices[self[label]].add(self[other_label])
 
@@ -90,11 +99,11 @@ class EquivalenceDB:
     def connect_cycles(self):
         """Look for cycles using one way edges that have been added."""
         one_way_vertices = self.get_one_way_vertices()
-        dequeue: Deque[Tuple[int, ...]] = deque()
-        dequeue.extend([(label,) for label in one_way_vertices.keys()])
+        stack: List[Tuple[int, ...]] = list()
+        stack.extend([(label,) for label in one_way_vertices.keys()])
         visited = set()
-        while dequeue:
-            path = dequeue.popleft()
+        while stack:
+            path = stack.pop()
             end = path[-1]
             if end in visited:
                 continue
@@ -110,11 +119,12 @@ class EquivalenceDB:
                 if new_end not in path:
                     # new end is not in the path, so we haven't tried looking for
                     # cycles from here.
-                    dequeue.appendleft(
+                    stack.append(
                         path + (new_end,)
                     )  # appending left makes this a depth first search
 
     def add_two_way_edge(self, label: int, other_label: int) -> None:
+        """Add a two way edge to the directed graph."""
         self._add_edge(label, other_label)
         self._add_edge(other_label, label)
         self._set_equivalent(label, other_label)
