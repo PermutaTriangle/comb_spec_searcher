@@ -11,7 +11,7 @@ integer, that the classdb gives.
 """
 
 from collections import defaultdict, deque
-from typing import Deque, Dict, FrozenSet, Iterator, List, Tuple, Set, Union
+from typing import Deque, Dict, Iterator, List, Tuple, Set
 
 from .utils import cssmethodtimer
 
@@ -113,8 +113,8 @@ class EquivalenceDB:
                     if self.equivalent(vertex, new_end):
                         # we've detected a cycle!
                         print("CYCLE", path, new_end)
-                        for vertex in path[i:]:
-                            self._set_equivalent(vertex, new_end)
+                        for eqv_vertix in path[i:]:
+                            self._set_equivalent(eqv_vertix, new_end)
                         break
                 if new_end not in path:
                     # new end is not in the path, so we haven't tried looking for
