@@ -72,18 +72,10 @@ class CombinatorialSpecification(
     def __init__(
         self,
         root: CombinatorialClassType,
-        strategies: Iterable[
-            Tuple[
-                CombinatorialClassType,
-                AbstractStrategy[CombinatorialClassType, CombinatorialObjectType],
-            ]
-        ],
-        equivalence_paths: Iterable[Sequence[CombinatorialClassType]],
+        rules: Iterable[AbstractRule[CombinatorialClassType, CombinatorialObjectType]],
     ):
         self.root = root
-        self.rules_dict: Dict[CombinatorialClassType, AbstractRule] = {}
-        self._populate_rules_dict(strategies, equivalence_paths)
-        self._remove_redundant_rules()
+        self.rules_dict = {rule.comb_class: rule for rule in rules}
         self.labels: Dict[CombinatorialClassType, int] = {}
         self._label_to_tiling: Dict[int, CombinatorialClassType] = {}
         self._set_subrules()
