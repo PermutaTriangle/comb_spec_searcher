@@ -43,6 +43,7 @@ from .exception import (
 from .rule_db import RuleDB, RuleDBForgetStrategy
 from .rule_db.base import RuleDBBase
 from .specification import CombinatorialSpecification
+from .specification_extrator import SpecificationRuleExtractor
 from .strategies import (
     AbstractStrategy,
     StrategyFactory,
@@ -50,6 +51,7 @@ from .strategies import (
     VerificationRule,
 )
 from .strategies.rule import AbstractRule
+from .tree_searcher import Node
 from .utils import (
     cssiteratortimer,
     cssmethodtimer,
@@ -706,44 +708,32 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         The function will return None if no such CombinatorialSpecification
         exists in the universe.
         """
-        spec = self._get_specification_rules(minimization_time_limit, smallest)
-        if spec is None:
+        node = self._get_specification_node(minimization_time_limit, smallest)
+        if node is None:
             return None
+        spec_extractor = SpecificationRuleExtractor(node, self.ruledb, self.classdb)
         start_class = self.classdb.get_class(self.start_label)
-        strategies, comb_class_eqv_paths = spec
         logger.info("Creating a specification.")
-        return CombinatorialSpecification(start_class, strategies, comb_class_eqv_paths)
+        return CombinatorialSpecification(start_class, spec_extractor.rules())
 
     @cssmethodtimer("get specification")
-    def _get_specification_rules(
+    def _get_specification_node(
         self, minimization_time_limit: float = 10, smallest: bool = False
-    ) -> Optional[SpecificationClassesAndStrats]:
+    ) -> Optional[Node]:
         """
-        Returns the equivalence paths needed to create a
-        CombinatorialSpecification, if one exists.
-
-        The minimization_time_limit only applies when smallest is false.
-
-        The function will return None if no such CombinatorialSpecification
-        exists in the universe.
+        Return the a specification node if one exists.
         """
         try:
             if smallest:
                 if self.iterative:
                     raise InvalidOperationError("can't use iterative and smallest")
-                rules, eqv_paths = self.ruledb.get_smallest_specification(
-                    self.start_label
-                )
+                node = self.ruledb.get_smallest_specification(self.start_label)
             else:
-                rules, eqv_paths = self.ruledb.get_specification_rules(
+                node = self.ruledb.find_specification(
                     self.start_label,
                     minimization_time_limit=minimization_time_limit,
                     iterative=self.iterative,
                 )
         except SpecificationNotFound:
             return None
-        comb_class_eqv_paths = [
-            list(map(self.classdb.get_class, path)) for path in eqv_paths
-        ]
-        strategies = [(self.classdb.get_class(label), rule) for label, rule in rules]
-        return strategies, comb_class_eqv_paths
+        return node
