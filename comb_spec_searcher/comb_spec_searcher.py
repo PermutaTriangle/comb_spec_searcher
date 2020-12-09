@@ -695,6 +695,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             logger.info("No more classes to expand.")
         return expanding, status_start
 
+    @cssmethodtimer("get specification")
     def get_specification(
         self, minimization_time_limit: float = 10, smallest: bool = False
     ) -> Optional[CombinatorialSpecification]:
@@ -714,7 +715,6 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         logger.info("Creating a specification.")
         return CombinatorialSpecification(start_class, strategies, comb_class_eqv_paths)
 
-    @cssmethodtimer("get specification")
     def _get_specification_rules(
         self, minimization_time_limit: float = 10, smallest: bool = False
     ) -> Optional[SpecificationClassesAndStrats]:
