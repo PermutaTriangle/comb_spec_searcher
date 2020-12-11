@@ -819,7 +819,9 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
         return "verify atoms"
 
 
-class EmptyStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]):
+class EmptyStrategy(
+    VerificationStrategy[CombinatorialClassType, CombinatorialObjectType]
+):
     """
     A subclass for when a combinatorial class is equal to the empty set.
     """
@@ -837,8 +839,8 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject
 
     def get_genf(
         self,
-        comb_class: CombinatorialClass,
-        funcs: Optional[Dict[CombinatorialClass, Function]] = None,
+        comb_class: CombinatorialClassType,
+        funcs: Optional[Dict[CombinatorialClassType, Function]] = None,
     ) -> Integer:
         if not self.verified(comb_class):
             raise StrategyDoesNotApply(
@@ -848,8 +850,8 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject
 
     @staticmethod
     def random_sample_object_of_size(
-        comb_class: CombinatorialClass, n: int, **parameters: int
-    ) -> CombinatorialObject:
+        comb_class: CombinatorialClassType, n: int, **parameters: int
+    ) -> CombinatorialObjectType:
         raise StrategyDoesNotApply("Can't sample from empty set.")
 
     @staticmethod

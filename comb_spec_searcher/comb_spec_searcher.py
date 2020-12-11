@@ -636,7 +636,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 round(max_expansion_time, 2),
             )
 
-    def _auto_search_rules(self) -> SpecificationClassesAndStrats:
+    def _auto_search_rules(self) -> Iterator[AbstractRule]:
         """
         A basic auto search for returning equivalence paths and rules.
 

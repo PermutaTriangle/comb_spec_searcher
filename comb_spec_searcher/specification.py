@@ -13,9 +13,7 @@ from typing import (
     Iterator,
     List,
     Optional,
-    Sequence,
     Set,
-    Tuple,
     Union,
 )
 
@@ -39,13 +37,9 @@ from .exception import (
 from .isomorphism import AtomEquals, Bijection, Isomorphism
 from .specification_drawer import SpecificationDrawer
 from .strategies import (
-    AbstractStrategy,
-    DisjointUnion,
     EmptyStrategy,
     EquivalencePathRule,
-    ReverseRule,
     Rule,
-    Strategy,
     StrategyPack,
     VerificationRule,
     VerificationStrategy,
@@ -198,7 +192,9 @@ class CombinatorialSpecification(
                 ) from e
         if comb_class not in self.rules_dict:
             assert comb_class.is_empty(), "rule not in the spec and not empty"
-            empty_strat = EmptyStrategy()
+            empty_strat = EmptyStrategy[
+                CombinatorialClassType, CombinatorialObjectType
+            ]()
             self.rules_dict[comb_class] = empty_strat(comb_class)
         return self.rules_dict[comb_class]
 
