@@ -25,11 +25,7 @@ import tabulate
 from logzero import logger
 from sympy import Eq, Function, var
 
-from comb_spec_searcher.typing import (
-    CombinatorialClassType,
-    CSSstrategy,
-    WorkPacket,
-)
+from comb_spec_searcher.typing import CombinatorialClassType, CSSstrategy, WorkPacket
 
 from .class_db import ClassDB
 from .class_queue import DefaultQueue

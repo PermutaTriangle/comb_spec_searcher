@@ -11,7 +11,7 @@ integer, that the classdb gives.
 """
 
 from collections import defaultdict, deque
-from typing import Deque, Dict, FrozenSet, Iterator, List, Tuple, Set, Union
+from typing import Deque, Dict, Iterator, Set, Tuple
 
 from .utils import cssiteratortimer
 
