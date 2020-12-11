@@ -6,6 +6,7 @@ from copy import copy
 from functools import reduce
 from operator import mul
 from typing import (
+    TYPE_CHECKING,
     Dict,
     Generic,
     Iterable,
@@ -57,6 +58,9 @@ from .utils import (
     taylor_expand,
 )
 
+if TYPE_CHECKING:
+    from comb_spec_searcher.comb_spec_searcher import CombinatorialSpecificationSearcher
+
 __all__ = ("CombinatorialSpecification",)
 
 
@@ -87,37 +91,6 @@ class CombinatorialSpecification(
         ):  # list as we lazily assign empty rules
             rule.set_subrecs(self.get_rule)
 
-    def _populate_rules_dict(
-        self,
-        strategies: Iterable[
-            Tuple[
-                CombinatorialClassType,
-                AbstractStrategy[CombinatorialClassType, CombinatorialObjectType],
-            ]
-        ],
-        equivalence_paths: Iterable[Sequence[CombinatorialClassType]],
-    ) -> None:
-        logger.info("Creating rules.")
-        equivalence_rules: Dict[
-            Tuple[CombinatorialClassType, CombinatorialClassType], Rule
-        ] = {}
-        for comb_class, strategy in strategies:
-            if isinstance(strategy, AlreadyVerified):
-                continue
-            rule = strategy(comb_class)
-            non_empty_children = rule.non_empty_children()
-            if len(non_empty_children) == 1:
-                assert isinstance(rule, Rule)
-                equivalence_rules[(comb_class, non_empty_children[0])] = (
-                    rule if len(rule.children) == 1 else rule.to_equivalence_rule()
-                )
-                self.rules_dict[comb_class] = rule
-            elif non_empty_children or isinstance(rule, VerificationRule):
-                self.rules_dict[comb_class] = rule
-            else:
-                raise ValueError("Non verification rule has no children.")
-        self._add_equivalence_path_rules(equivalence_paths, equivalence_rules)
-
     def expand_verified(self) -> None:
         """
         Will expand all verified classes with respect to the strategy packs
@@ -131,93 +104,39 @@ class CombinatorialSpecification(
                 except InvalidOperationError:
                     logger.info("Can't expand the rule:\n%s", rule)
         if verification_packs:
-            for comb_class in verification_packs:
-                self.rules_dict.pop(comb_class)
-            self._expand_verified_comb_classes(verification_packs)
+            for comb_class, pack in verification_packs.items():
+                self.expand_comb_class(comb_class, pack)
             self.expand_verified()
             self._set_subrules()
 
-    def expand_comb_class(self, comb_class: Union[int, CombinatorialClassType]) -> None:
+    def expand_comb_class(
+        self, comb_class: Union[int, CombinatorialClassType], pack: StrategyPack
+    ) -> None:
         """
         Will try to expand a particular class with respect to the strategy pack
         that the VerificationStrategy has.
         """
+        # pylint: disable=import-outside-toplevel
+        from .comb_spec_searcher import CombinatorialSpecificationSearcher
+
         rule = self.get_rule(comb_class)
-        if isinstance(rule, VerificationRule):
-            try:
-                pack = rule.pack()
-            except InvalidOperationError:
-                logger.info("Can't expand the rule:\n%s", rule)
-                return
-            self.rules_dict.pop(rule.comb_class)
-            self._expand_verified_comb_classes({rule.comb_class: pack})
-        else:
-            logger.info("Can't expand the rule:\n%s", rule)
+        self.rules_dict.pop(rule.comb_class)
+        pack = pack.add_verification(AlreadyVerified(self.rules_dict), apply_first=True)
+        css = CombinatorialSpecificationSearcher(rule.comb_class, pack)
+        # logger.info(css.run_information())
+        spec = css.auto_search()
+        for rule in spec.rules_dict.values():
+            if not isinstance(rule.strategy, AlreadyVerified):
+                assert (
+                    rule.comb_class not in self.rules_dict or rule.comb_class.is_empty()
+                )
+                self.rules_dict[rule.comb_class] = rule
 
-    def _add_equivalence_path_rules(
-        self,
-        equivalence_paths: Iterable[Sequence[CombinatorialClassType]],
-        equivalence_rules: Dict[
-            Tuple[CombinatorialClassType, CombinatorialClassType], Rule
-        ],
-    ) -> None:
-        logger.info("Creating equivalence path rules.")
-        for eqv_path in equivalence_paths:
-            while len(eqv_path) > 1:
-                start = eqv_path[0]
-                rules = []
-                for i in range(len(eqv_path) - 1):
-                    a, b = eqv_path[i], eqv_path[i + 1]
-                    try:
-                        rule = equivalence_rules[(a, b)]
-                    except KeyError:
-                        rule = equivalence_rules[(b, a)].to_reverse_rule(0)
-                    if isinstance(rule.constructor, DisjointUnion):
-                        rules.append(rule)
-                    else:
-                        self.rules_dict[a] = rule
-                        eqv_path = eqv_path[i + 1 :]
-                        break
-                else:
-                    eqv_path = []
-                if rules:
-                    self.rules_dict[start] = EquivalencePathRule(rules)
-
-    def _remove_redundant_rules(self) -> None:
-        """
-        Any redundant rules passed to the __init__ method are removed using
-        this method.
-        """
-        rules_dict = copy(self.rules_dict)
-
-        def prune(comb_class: CombinatorialClassType) -> None:
-            try:
-                rule = rules_dict.pop(comb_class)
-            except KeyError:
-                assert comb_class in self.rules_dict or comb_class.is_empty()
-                return
-            if isinstance(rule, EquivalencePathRule):
-                try:
-                    rule = rules_dict.pop(rule.children[0])
-                except KeyError:
-                    assert comb_class in self.rules_dict
-                    return
-            for child in rule.children:
-                prune(child)
-
-        prune(self.root)
-
-        logger.info("Removed %s redundant rules.", len(rules_dict.values()))
-        for rule in rules_dict.values():
-            self.rules_dict.pop(rule.comb_class)
-
-    def _expand_verified_comb_classes(
+    def _expand_verified_comb_classes_(
         self, verification_packs: Dict[CombinatorialClassType, StrategyPack]
     ) -> None:
-        for comb_class, pack in verification_packs.items():
-            # pylint: disable=import-outside-toplevel
-            from .comb_spec_searcher import CombinatorialSpecificationSearcher
 
+        for comb_class, pack in verification_packs.items():
             css = CombinatorialSpecificationSearcher(
                 comb_class,
                 pack.add_verification(
@@ -225,10 +144,20 @@ class CombinatorialSpecification(
                 ),
             )
             logger.info(css.run_information())
-            # pylint: disable=protected-access
-            comb_class_rules, comb_class_eqv_paths = css._auto_search_rules()
-            self._populate_rules_dict(comb_class_rules, comb_class_eqv_paths)
-        self._remove_redundant_rules()
+            spec = css.auto_search()
+            for rule in spec.rules_dict.values():
+                if not isinstance(rule.strategy, AlreadyVerified):
+                    self.rules_dict[rule.comb_class] = rule
+
+    def _is_valid_spec(self) -> bool:
+        """Checks that each class is on a left hand side."""
+        comb_classes = set()
+        for rule in self.rules_dict.values():
+            comb_classes.add(rule.comb_class)
+            comb_classes.update(rule.children)
+        return self.root in comb_classes and all(
+            c in self.rules_dict or c.is_empty() for c in comb_classes
+        )
 
     def get_rule(
         self, comb_class: Union[int, CombinatorialClassType]
@@ -449,7 +378,7 @@ class CombinatorialSpecification(
 
         Raise an SanityCheckFailure error if it fails.
         """
-        return all(
+        return self._is_valid_spec() and all(
             all(rule.sanity_check(n) for rule in self.rules_dict.values())
             for n in range(length + 1)
         )
