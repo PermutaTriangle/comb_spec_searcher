@@ -9,9 +9,12 @@ from comb_spec_searcher.typing import RuleKey
 
 
 class SpecificationRuleExtractor:
-    def __init__(self, root_node: Node, ruledb: RuleDBBase, classdb: ClassDB):
+    def __init__(
+        self, root_label: int, root_node: Node, ruledb: RuleDBBase, classdb: ClassDB
+    ):
         self.ruledb = ruledb
         self.classdb = classdb
+        self.root_label = root_label
         self.eqv_rulekeys: List[RuleKey] = [
             (node.label, tuple(sorted(child.label for child in node.children)))
             for node in root_node.nodes()
@@ -45,6 +48,8 @@ class SpecificationRuleExtractor:
         no_lhs_labels = set(
             itertools.filterfalse(self.rules_dict.__contains__, all_rhs)
         )
+        if self.root_label not in self.rules_dict:
+            no_lhs_labels.add(self.root_label)
         for label in no_lhs_labels:
             eqv_label = self.ruledb.equivdb[label]
             path = self.ruledb.equivdb.find_path(

@@ -711,7 +711,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         node = self._get_specification_node(minimization_time_limit, smallest)
         if node is None:
             return None
-        spec_extractor = SpecificationRuleExtractor(node, self.ruledb, self.classdb)
+        spec_extractor = SpecificationRuleExtractor(
+            self.start_label, node, self.ruledb, self.classdb
+        )
         start_class = self.classdb.get_class(self.start_label)
         logger.info("Creating a specification.")
         return CombinatorialSpecification(start_class, spec_extractor.rules())
