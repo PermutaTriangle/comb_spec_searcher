@@ -528,30 +528,9 @@ class CombinatorialSpecification(
 
     def to_jsonable(self) -> dict:
         """Return a JSON serializable dictionary for the specification."""
-        rules = [
-            rule
-            for rule in self.rules_dict.values()
-            if not isinstance(rule, EquivalencePathRule)
-        ]
-        eqv_paths = []
-        for rule in self.rules_dict.values():
-            if isinstance(rule, EquivalencePathRule):
-                eqv_path = []
-                for c, r in rule.eqv_path_rules():
-                    rules.append(r)
-                    eqv_path.append(c.to_jsonable())
-                eqv_path.append(rule.children[0].to_jsonable())
-                eqv_paths.append(eqv_path)
-        strategies = [
-            (rule.children[0].to_jsonable(), rule.strategy.to_jsonable())
-            if isinstance(rule, ReverseRule)
-            else (rule.comb_class.to_jsonable(), rule.strategy.to_jsonable())
-            for rule in rules
-        ]
         return {
             "root": self.root.to_jsonable(),
-            "strategies": strategies,
-            "eqv_paths": eqv_paths,
+            "rules": [rule.to_jsonable() for rule in self.rules_dict.values()],
         }
 
     @classmethod
@@ -560,20 +539,9 @@ class CombinatorialSpecification(
         Return the specification with the dictionary outputter by the
         'to_jsonable' method
         """
-        strategies = []
-        for comb_class_dict, strategy_dict in d["strategies"]:
-            comb_class = CombinatorialClass.from_dict(comb_class_dict)
-            strategy = Strategy.from_dict(strategy_dict)
-            assert isinstance(strategy, (Strategy, VerificationStrategy))
-            strategies.append((comb_class, strategy))
-        return cls(
-            root=CombinatorialClass.from_dict(d["root"]),
-            strategies=strategies,
-            equivalence_paths=[
-                [CombinatorialClass.from_dict(class_dict) for class_dict in eqv_path]
-                for eqv_path in d["eqv_paths"]
-            ],
-        )
+        root = CombinatorialClass.from_dict(d.pop("root"))
+        rules = [AbstractRule.from_dict(rule_dict) for rule_dict in d.pop("rules")]
+        return CombinatorialSpecification(root, rules)
 
 
 class AlreadyVerified(VerificationStrategy[CombinatorialClass, CombinatorialObject]):
