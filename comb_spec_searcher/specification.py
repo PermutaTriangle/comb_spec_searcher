@@ -106,7 +106,7 @@ class CombinatorialSpecification(
             visited.add(comb_class)
             rule = self.get_rule(comb_class)
             comb_class_stack.extend(rule.children)
-            if rule.is_equivalence():
+            if rule.is_equivalence() and not isinstance(rule, EquivalencePathRule):
                 self.rules_dict.pop(comb_class)
                 assert isinstance(rule, Rule)
                 path_rules.append(rule)
