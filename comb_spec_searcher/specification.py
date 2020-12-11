@@ -82,6 +82,7 @@ class CombinatorialSpecification(
         self.rules_dict = {rule.comb_class: rule for rule in rules}
         self.labels: Dict[CombinatorialClassType, int] = {}
         self._label_to_tiling: Dict[int, CombinatorialClassType] = {}
+        self._group_equiv_in_path()
         self._set_subrules()
 
     def _set_subrules(self) -> None:
@@ -90,6 +91,30 @@ class CombinatorialSpecification(
             self.rules_dict.values()
         ):  # list as we lazily assign empty rules
             rule.set_subrecs(self.get_rule)
+
+    def _group_equiv_in_path(self) -> None:
+        """
+        Group chain of equivalence rules of the specification into equivalence paths.
+        """
+        comb_class_stack = [self.root]
+        visited: Set[CombinatorialClassType] = set()
+        path_rules: List[Rule] = []
+        while comb_class_stack:
+            comb_class = comb_class_stack.pop()
+            if comb_class in visited:
+                continue
+            visited.add(comb_class)
+            rule = self.get_rule(comb_class)
+            comb_class_stack.extend(rule.children)
+            if rule.is_equivalence():
+                self.rules_dict.pop(comb_class)
+                assert isinstance(rule, Rule)
+                path_rules.append(rule)
+            elif path_rules:
+                eqv_path_rule: EquivalencePathRule = EquivalencePathRule(path_rules)
+                self.rules_dict[eqv_path_rule.comb_class] = eqv_path_rule
+                path_rules.clear()
+        assert self._is_valid_spec()
 
     def expand_verified(self) -> None:
         """
