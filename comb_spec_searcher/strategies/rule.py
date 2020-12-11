@@ -327,6 +327,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
     def to_jsonable(self) -> dict:
         d = super().to_jsonable()
         d["comb_class"] = self.comb_class.to_jsonable()
+        d["children"] = [child.to_jsonable() for child in self.children]
         d["strategy"] = self.strategy.to_jsonable()
         return d
 
@@ -339,6 +340,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         assert isinstance(strategy, Strategy)
         comb_class = CombinatorialClass.from_dict(d.pop("comb_class"))
         comb_class = cast(CombinatorialClassType, comb_class)
+        d.pop("children")
         assert not d
         return cls(strategy, comb_class)
 
@@ -523,6 +525,7 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         d = super().to_jsonable()
         d.pop("comb_class")
         d.pop("strategy")
+        d.pop("children")
         d["original_rule"] = self.original_rule.to_jsonable()
         return d
 
@@ -602,6 +605,7 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
         d = super().to_jsonable()
         d.pop("comb_class")
         d.pop("strategy")
+        d.pop("children")
         d["rules"] = [r.to_jsonable() for r in self.rules]
         return d
 
@@ -737,6 +741,7 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         d = super().to_jsonable()
         d.pop("comb_class")
         d.pop("strategy")
+        d.pop("children")
         d["original_rule"] = self.original_rule.to_jsonable()
         d["idx"] = self.idx
         return d
