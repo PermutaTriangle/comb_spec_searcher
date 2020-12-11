@@ -99,7 +99,7 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
         by the constructor."""
 
     @staticmethod
-    def _build_param_map(
+    def build_param_map(
         child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...], num_parent_params: int
     ) -> ParametersMap:
         """
@@ -216,7 +216,7 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
                 for child_param in child.extra_parameters
             )
             map_list.append(
-                Constructor._build_param_map(child_pos_to_parent_pos, num_parent_params)
+                Constructor.build_param_map(child_pos_to_parent_pos, num_parent_params)
             )
         return tuple(map_list)
 
@@ -230,7 +230,6 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         return Eq(lhs_func, res)
 
     def reliance_profile(self, n: int, **parameters: int) -> RelianceProfile:
-        #  TODO: consider when parameters are subsets of each other etc
         assert all(
             set(["n", *parameters]) == set(min_child_sizes)
             for min_child_sizes in self.min_child_sizes
@@ -346,7 +345,7 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
             n, len(subterms), self.min_sizes, self.max_sizes
         )
         for sizes in size_compositions:
-            for param_value_pairs in self._params_value_pairs_combinations(
+            for param_value_pairs in self.params_value_pairs_combinations(
                 sizes, subterms
             ):
                 new_param = self._new_param(*(p for p, _ in param_value_pairs))
@@ -364,11 +363,10 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         return tuple(sum(vals) for vals in zip(*mapped_params))
 
     @staticmethod
-    def _params_value_pairs_combinations(
+    def params_value_pairs_combinations(
         sizes: Tuple[int, ...],
         sub_getters: Tuple[Callable[[int], Dict[Parameters, T]], ...],
     ) -> Iterator[Tuple[Tuple[Parameters, T], ...]]:
-        """"""
         assert len(sizes) == len(sub_getters), sub_getters
         children_values = (sg(s) for sg, s in zip(sub_getters, sizes))
         return product(*(c.items() for c in children_values))
@@ -382,7 +380,7 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
             n, len(subobjs), self.min_sizes, self.max_sizes
         )
         for sizes in size_compositions:
-            for param_objs_pairs in self._params_value_pairs_combinations(
+            for param_objs_pairs in self.params_value_pairs_combinations(
                 sizes, subobjs
             ):
                 new_param = self._new_param(*(p for p, _ in param_objs_pairs))
@@ -471,13 +469,9 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         self._num_parent_params = len(parent.extra_parameters)
 
     @staticmethod
-    def _build_param_map(
+    def build_param_map(
         child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...], num_parent_params: int
     ) -> ParametersMap:
-        """
-        Return a parameters map according to the given pos map.
-        """
-
         def param_map(param: Parameters) -> Parameters:
             new_params: List[Optional[int]] = [None for _ in range(num_parent_params)]
             for pos, value in enumerate(param):
@@ -506,7 +500,7 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
             else tuple()
             for parent_var in parent.extra_parameters
         )
-        return self._build_param_map(
+        return self.build_param_map(
             parent_pos_to_child_pos, len(child.extra_parameters)
         )
 
@@ -548,7 +542,7 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         )
         res: Terms = Counter(parent_subterm(n + self._parent_shift))
         for sizes in possible_sizes:
-            for param_value_pairs in CartesianProduct._params_value_pairs_combinations(
+            for param_value_pairs in CartesianProduct.params_value_pairs_combinations(
                 sizes, children_subterms
             ):
                 new_param = self._new_param(*(p for p, _ in param_value_pairs))
@@ -570,7 +564,7 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         )
         res: Terms = Counter()
         for sizes in possible_sizes:
-            for param_value_pairs in CartesianProduct._params_value_pairs_combinations(
+            for param_value_pairs in CartesianProduct.params_value_pairs_combinations(
                 sizes, other_children_subterms
             ):
                 new_param = self._other_new_param(*(p for p, _ in param_value_pairs))
@@ -593,7 +587,8 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
                 )
         return res
 
-    def _poly_to_terms(self, poly: Union[sympy.Poly, int]) -> Terms:
+    @staticmethod
+    def _poly_to_terms(poly: Union[sympy.Poly, int]) -> Terms:
         if isinstance(poly, int):
             if poly == 0:
                 return Counter()
@@ -632,7 +627,6 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         return new_terms
 
     def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
-        # TODO: alternatively, could return equation of the original rule?
         res = lhs_func.subs(self.extra_parameters[self.idx])
         for (idx, rhs_func), extra_parameters in zip(
             enumerate(rhs_funcs), self.extra_parameters
@@ -652,10 +646,6 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     ) -> Iterator[
         Tuple[Parameters, Tuple[List[Optional[CombinatorialObjectType]], ...]]
     ]:
-        """
-        TODO: this needs to be implemented on the Rule level as it needs access
-        to the forward and backward maps.
-        """
         raise NotImplementedError
 
     def random_sample_sub_objects(
@@ -721,7 +711,6 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         return Eq(lhs_func, res)
 
     def reliance_profile(self, n: int, **parameters: int) -> RelianceProfile:
-        # TODO: implement in multiple variables and use in get_recurrence
         assert not parameters, "only implemented in one variable, namely 'n'"
         return tuple({"n": (n,)} for _ in range(self.number_of_children))
 
@@ -785,7 +774,7 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
                 for child_param in child.extra_parameters
             )
             map_list.append(
-                self._build_param_map(child_pos_to_parent_pos, num_parent_params)
+                self.build_param_map(child_pos_to_parent_pos, num_parent_params)
             )
         return tuple(map_list)
 
@@ -903,7 +892,7 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
                 for child_param in child.extra_parameters
             )
             map_list.append(
-                self._build_param_map(child_pos_to_parent_pos, num_parent_params)
+                self.build_param_map(child_pos_to_parent_pos, num_parent_params)
             )
         return tuple(map_list)
 
@@ -924,7 +913,7 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
             else tuple()
             for parent_var in parent.extra_parameters
         )
-        return self._build_param_map(
+        return self.build_param_map(
             parent_pos_to_child_pos, len(child.extra_parameters)
         )
 
@@ -989,7 +978,7 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         raise NotImplementedError
 
     @staticmethod
-    def _build_param_map(
+    def build_param_map(
         child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...], num_parent_params: int
     ) -> ParametersMap:
         """

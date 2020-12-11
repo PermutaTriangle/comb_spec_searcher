@@ -51,7 +51,7 @@ class RuleDBBase(abc.ABC):
             and self.eqv_rule_to_strategy == other.eqv_rule_to_strategy
         )
 
-    def add(self, start: int, ends: Iterable[int], rule: AbstractRule) -> None:
+    def add(self, start: int, ends: Tuple[int, ...], rule: AbstractRule) -> None:
         """
         Add a rule to the database.
 

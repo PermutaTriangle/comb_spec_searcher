@@ -35,7 +35,7 @@ from comb_spec_searcher.typing import (
 
 from ..combinatorial_class import CombinatorialClassType, CombinatorialObjectType
 from ..exception import SanityCheckFailure, StrategyDoesNotApply
-from .constructor import Complement, Constructor, CartesianProduct, DisjointUnion
+from .constructor import Constructor, DisjointUnion
 
 if TYPE_CHECKING:
     from .strategy import AbstractStrategy, Strategy, VerificationStrategy
