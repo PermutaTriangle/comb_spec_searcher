@@ -272,20 +272,6 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                         "NotImplementedError: %s",
                         e,
                     )
-            # if any(
-            #     self.ruledb.are_equivalent(start_label, elabel)
-            #     for elabel in end_labels
-            # ):
-            #     # This says comb_class = comb_class, so we skip it, but mark
-            #     # every other class as empty.
-            #     for elabel in end_labels:
-            #         if not self.ruledb.are_equivalent(start_label, elabel):
-            #             self._add_empty_rule(elabel)
-            #     if self.debug:
-            #         for elabel, child in zip(end_labels, children):
-            #             if not self.ruledb.are_equivalent(start_label, elabel):
-            #                 assert child.is_empty()
-
             yield start_label, tuple(end_labels), rule
 
     def _add_rule(
