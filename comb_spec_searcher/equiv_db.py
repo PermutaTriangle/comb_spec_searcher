@@ -11,7 +11,7 @@ integer, that the classdb gives.
 """
 
 from collections import defaultdict, deque
-from typing import Deque, Dict, Iterator, List, Tuple, Set
+from typing import Deque, Dict, Iterator, List, Set, Tuple
 
 from .utils import cssmethodtimer
 
@@ -136,7 +136,7 @@ class EquivalenceDB:
         self.vertices[label].add(other_label)
 
     def find_paths(self, label: int, other_label: int) -> Iterator[Tuple[int, ...]]:
-        """Return the list of path starting at other_label and ending at label."""
+        """Return an iterator of paths starting at other_label and ending at label."""
         dequeue: Deque[Tuple[int, ...]] = deque()
         dequeue.append((other_label,))
         while dequeue:
@@ -186,7 +186,7 @@ class EquivalenceDB:
 
     def find_path(self, comb_class: int, other_comb_class: int) -> Tuple[int, ...]:
         """
-        BFS for shortest path.
+        BFS for shortest path from comb_class to other_comb_class.
 
         Used to find shortest explanation of why things are equivalent.
         """

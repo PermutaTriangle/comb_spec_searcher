@@ -441,6 +441,10 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
 
     The parent is B, idx is the index of the child the rule is being rearranged
     for and the extra parameters maps from parent to children.
+
+    To get terms we compute a polynomial equation for a fixed size a_n(x,...) =
+    b_n(x,...) * c(x, ...) where b_n is the terms for the flipped child of length n and
+    then make the division.
     """
 
     def __init__(
@@ -534,6 +538,11 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         parent_subterm: Callable[[int], Terms],
         children_subterms: SubTerms,
     ) -> Terms:
+        """
+        A terms dict representing the polynomial for the rule parent terms minus the
+        contribution of the childs when the size of the flipped child in the composition
+        is smaller than n.
+        """
         max_sizes = (
             self._max_sizes[: self.idx] + (n - 1,) + self._max_sizes[self.idx + 1 :]
         )
@@ -554,6 +563,10 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         self,
         children_subterms: SubTerms,
     ) -> Terms:
+        """
+        Dict representing the polynomial that multiply the polynomial of the
+        flipped child for length n.
+        """
         min_sizes = self._min_sizes[: self.idx] + self._min_sizes[self.idx + 1 :]
         max_sizes = self._max_sizes[: self.idx] + self._max_sizes[self.idx + 1 :]
         possible_sizes = utils.compositions(
@@ -601,6 +614,9 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         parent_subterm: Callable[[int], Terms],
         children_subterms: SubTerms,
     ) -> Terms:
+        """
+        The terms of length n for the flipped child.
+        """
         a = self._a(n, parent_subterm, children_subterms)
         c = self._c(children_subterms)
         a_poly = self._terms_to_poly(a)

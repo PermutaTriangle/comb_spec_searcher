@@ -692,7 +692,8 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     ) -> Iterator[CombinatorialObjectType]:
         # We expect the object to be in only the first and in particular when
         # mapped should be in the idx child.
-        assert isinstance(self.constructor, DisjointUnion)
+        if not isinstance(self.constructor, DisjointUnion) and len(self.children) != 1:
+            raise NotImplementedError("Cannot map for non equivalence rule.")
         yield cast(
             CombinatorialObjectType, self.original_rule.forward_map(objs[0])[self.idx]
         )
@@ -702,7 +703,8 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     ) -> Tuple[Optional[CombinatorialObjectType], ...]:
         # We map forward to the first child.
         # It is assumed that obj is ONLY on this child
-        assert isinstance(self.constructor, DisjointUnion)
+        if not isinstance(self.constructor, DisjointUnion) and len(self.children) != 1:
+            raise NotImplementedError("Cannot map for non equivalence rule.")
         return (next(self.original_rule.backward_map((obj,))),) + tuple(
             None for _ in range(len(self.children) - 1)
         )
