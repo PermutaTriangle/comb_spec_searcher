@@ -35,7 +35,7 @@ from comb_spec_searcher.typing import (
 
 from ..combinatorial_class import CombinatorialClassType, CombinatorialObjectType
 from ..exception import SanityCheckFailure, StrategyDoesNotApply
-from .constructor import Constructor, DisjointUnion
+from .constructor import Complement, Constructor, DisjointUnion
 
 if TYPE_CHECKING:
     from .strategy import AbstractStrategy, Strategy, VerificationStrategy
@@ -555,7 +555,7 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
             }
             for rule in self.rules:
                 original_constructor = rule.constructor
-                assert isinstance(original_constructor, DisjointUnion)
+                assert isinstance(original_constructor, (DisjointUnion, Complement))
                 rules_parameters = original_constructor.extra_parameters[0]
                 extra_parameters = {
                     parent_var: rules_parameters[child_var]

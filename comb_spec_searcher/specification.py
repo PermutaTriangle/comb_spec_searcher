@@ -40,6 +40,7 @@ from .specification_drawer import SpecificationDrawer
 from .strategies import (
     AbstractStrategy,
     DisjointUnion,
+    Complement,
     EmptyStrategy,
     EquivalencePathRule,
     ReverseRule,
@@ -180,7 +181,7 @@ class CombinatorialSpecification(
                         rule = equivalence_rules[(a, b)]
                     except KeyError:
                         rule = equivalence_rules[(b, a)].to_reverse_rule(0)
-                    if isinstance(rule.constructor, DisjointUnion):
+                    if isinstance(rule.constructor, (DisjointUnion, Complement)):
                         rules.append(rule)
                     else:
                         self.rules_dict[a] = rule
