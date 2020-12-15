@@ -542,6 +542,9 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
     """
 
     def __init__(self, rules: Sequence[Rule]):
+        print("=" * 60)
+        for r in rules:
+            print(r)
         assert all(rule.is_equivalence() for rule in rules)
         super().__init__(rules[0].strategy, rules[0].comb_class, rules[-1].children)
         self.rules = rules
