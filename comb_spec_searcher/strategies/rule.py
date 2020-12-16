@@ -767,9 +767,8 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         assert not d
         return cls(rule, idx)
 
-      def to_reverse_rule(self, idx: int) -> "Rule":
+    def to_reverse_rule(self, idx: int) -> "Rule":
         raise NotImplementedError("You don't want to do that! I promise")
-
 
     @property
     def constructor(
