@@ -39,8 +39,8 @@ from .isomorphism import AtomEquals, Bijection, Isomorphism
 from .specification_drawer import SpecificationDrawer
 from .strategies import (
     AbstractStrategy,
-    DisjointUnion,
     Complement,
+    DisjointUnion,
     EmptyStrategy,
     EquivalencePathRule,
     ReverseRule,
