@@ -48,7 +48,7 @@ class WorkPacket(NamedTuple):
 
 
 SpecificationLabelsAndStrats = Tuple[
-    List[Tuple[int, "AbstractStrategy"]], List[List[int]]
+    List[Tuple[int, "AbstractStrategy"]], List[Tuple[int, ...]]
 ]
 RuleKey = Tuple[int, Tuple[int, ...]]
 

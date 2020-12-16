@@ -5,7 +5,18 @@ where each of the bi appear exactly once on the left hand side of some rule.
 from copy import copy
 from functools import reduce
 from operator import mul
-from typing import Dict, Generic, Iterable, Iterator, List, Sequence, Set, Tuple, Union
+from typing import (
+    Dict,
+    Generic,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Union,
+)
 
 import sympy
 from logzero import logger
@@ -24,9 +35,12 @@ from .exception import (
     InvalidOperationError,
     TaylorExpansionError,
 )
+from .isomorphism import AtomEquals, Bijection, Isomorphism
 from .specification_drawer import SpecificationDrawer
 from .strategies import (
     AbstractStrategy,
+    Complement,
+    DisjointUnion,
     EmptyStrategy,
     EquivalencePathRule,
     ReverseRule,
@@ -101,11 +115,12 @@ class CombinatorialSpecification(
                 continue
             rule = strategy(comb_class)
             non_empty_children = rule.non_empty_children()
-            if rule.is_equivalence():
+            if len(non_empty_children) == 1:
                 assert isinstance(rule, Rule)
                 equivalence_rules[(comb_class, non_empty_children[0])] = (
                     rule if len(rule.children) == 1 else rule.to_equivalence_rule()
                 )
+                self.rules_dict[comb_class] = rule
             elif non_empty_children or isinstance(rule, VerificationRule):
                 self.rules_dict[comb_class] = rule
             else:
@@ -157,16 +172,25 @@ class CombinatorialSpecification(
     ) -> None:
         logger.info("Creating equivalence path rules.")
         for eqv_path in equivalence_paths:
-            if len(eqv_path) > 1:
+            while len(eqv_path) > 1:
                 start = eqv_path[0]
                 rules = []
-                for a, b in zip(eqv_path[:-1], eqv_path[1:]):
+                for i in range(len(eqv_path) - 1):
+                    a, b = eqv_path[i], eqv_path[i + 1]
                     try:
                         rule = equivalence_rules[(a, b)]
                     except KeyError:
-                        rule = equivalence_rules[(b, a)].to_reverse_rule()
-                    rules.append(rule)
-                self.rules_dict[start] = EquivalencePathRule(rules)
+                        rule = equivalence_rules[(b, a)].to_reverse_rule(0)
+                    if isinstance(rule.constructor, (DisjointUnion, Complement)):
+                        rules.append(rule)
+                    else:
+                        self.rules_dict[a] = rule
+                        eqv_path = eqv_path[i + 1 :]
+                        break
+                else:
+                    eqv_path = []
+                if rules:
+                    self.rules_dict[start] = EquivalencePathRule(rules)
 
     def _remove_redundant_rules(self) -> None:
         """
@@ -438,6 +462,22 @@ class CombinatorialSpecification(
             all(rule.sanity_check(n) for rule in self.rules_dict.values())
             for n in range(length + 1)
         )
+
+    def get_bijection_to(
+        self, other: "CombinatorialSpecification", eq: Optional[AtomEquals] = None
+    ) -> Optional[Bijection]:
+        """Get bijection from self to other."""
+        if eq is None:
+            return Bijection.construct(self, other)
+        return Bijection.construct(self, other, eq)
+
+    def are_isomorphic(
+        self, other: "CombinatorialSpecification", eq: Optional[AtomEquals] = None
+    ) -> bool:
+        """Check if self is isomorphic to other."""
+        if eq is None:
+            return Isomorphism.check(self, other)
+        return Isomorphism.check(self, other, eq)
 
     def show(
         self, levels_shown: int = 0, levels_expand: int = 0, verbose: bool = False

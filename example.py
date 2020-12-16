@@ -123,12 +123,13 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
         )
 
     def __str__(self) -> str:
+        prefix = self.prefix if self.prefix else '""'
         if self.just_prefix:
-            return "The word {}".format(self.prefix)
+            return "The word {}".format(prefix)
         return "Words over {{{}}} avoiding {{{}}} with prefix {}" "".format(
             ", ".join(self.alphabet),
             ", ".join(self.patterns),
-            self.prefix if self.prefix else '""',
+            prefix,
         )
 
     def __repr__(self) -> str:
