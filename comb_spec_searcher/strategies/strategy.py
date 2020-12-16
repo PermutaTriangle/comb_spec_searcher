@@ -338,8 +338,6 @@ class Strategy(AbstractStrategy[CombinatorialClassType, CombinatorialObjectType]
         This is where the details of the 'reliance profile' and 'counting'
         functions are hidden.
         """
-        if children is None:
-            children = self.decomposition_function(comb_class)
 
     @abc.abstractmethod
     def backward_map(
