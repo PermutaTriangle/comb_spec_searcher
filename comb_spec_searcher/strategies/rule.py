@@ -550,7 +550,8 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
 
 class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     """
-    A class for shortening a chain of disjoint union unary rules into a single Rule.
+    A class for shortening a chain of disjoint union  or complement unary rules into a
+    single Rule.
     """
 
     def __init__(self, rules: Sequence[Rule]):

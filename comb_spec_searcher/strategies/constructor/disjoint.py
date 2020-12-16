@@ -233,7 +233,6 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         parent: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...],
     ) -> Tuple[ParametersMap, ...]:
-        # TODO: this method has been tidied up in another branch
         map_list: List[ParametersMap] = []
         num_parent_params = len(parent.extra_parameters)
         parent_param_to_pos = {
@@ -283,7 +282,6 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     def get_equation(
         self, lhs_func: sympy.Function, rhs_funcs: Tuple[sympy.Function, ...]
     ) -> sympy.Eq:
-        # TODO: alternatively, could return equation of the original rule?
         res = lhs_func.subs(self.extra_parameters[self.idx])
         for (idx, rhs_func), extra_parameters in zip(
             enumerate(rhs_funcs), self.extra_parameters
@@ -326,10 +324,6 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     ) -> Iterator[
         Tuple[Parameters, Tuple[List[Optional[CombinatorialObjectType]], ...]]
     ]:
-        """
-        TODO: this needs to be implemented on the Rule level as it needs access
-        to the forward and backward maps.
-        """
         raise NotImplementedError
 
     def random_sample_sub_objects(
@@ -341,22 +335,3 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         **parameters: int,
     ) -> Tuple[Optional[CombinatorialObjectType], ...]:
         raise NotImplementedError
-
-    @staticmethod
-    def build_param_map(
-        child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...], num_parent_params: int
-    ) -> ParametersMap:
-        """
-        Return a parameters map according to the given pos map.
-        # TODO: this is on every constructor class
-        """
-
-        def param_map(param: Parameters) -> Parameters:
-            new_params = [0 for _ in range(num_parent_params)]
-            for pos, value in enumerate(param):
-                parent_pos = child_pos_to_parent_pos[pos]
-                for p in parent_pos:
-                    new_params[p] += value
-            return tuple(new_params)
-
-        return param_map
