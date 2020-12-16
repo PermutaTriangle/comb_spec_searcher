@@ -330,7 +330,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
 
     def is_equivalence(self):
         return (
-            isinstance(self.constructor, DisjointUnion)
+            isinstance(self.constructor, (DisjointUnion, Complement))
             and len(self.non_empty_children()) == 1
         )
 
@@ -500,10 +500,6 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
                 (original_constructor.extra_parameters[self.child_idx],),
             )
         return self._constructor
-
-    def to_reverse_rule(self, idx: int) -> "ReverseRule":
-        assert idx == 0
-        return self.original_rule.to_reverse_rule(self.child_idx)
 
     @staticmethod
     def is_equivalence() -> bool:
@@ -677,9 +673,6 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
             )
 
         return self._constructor
-
-    def is_equivalence(self) -> bool:
-        return len(self.children) == 1 and self.strategy.can_be_equivalent()
 
     @property
     def formal_step(self) -> str:
