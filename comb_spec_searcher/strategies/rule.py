@@ -19,6 +19,7 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
+    Union,
     cast,
 )
 
@@ -362,7 +363,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         ), f"EquivalenceRule can only be created for equivalence rules\n{self}"
         return EquivalenceRule(self)
 
-    def to_reverse_rule(self, idx: int) -> "ReverseRule":
+    def to_reverse_rule(self, idx: int) -> "Rule":
         """
         Return the reverse rule. At this stage, reverse rules can only be
         created for equivalence rules.
@@ -480,30 +481,45 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         self.child_idx = rule.children.index(child)
         self.actual_children = rule.children
         self.original_rule = rule
-        self._constructor: Optional[DisjointUnion] = None
+        self._constructor: Optional[Union[DisjointUnion, Complement]] = None
 
     @property
-    def constructor(self) -> DisjointUnion:
+    def constructor(self) -> Union[DisjointUnion, Complement]:
         """
         Return the constructor, that contains all the information about how to
         count/generate objects from the rule.
         """
         if self._constructor is None:
-            original_constructor = cast(
-                DisjointUnion,
-                self.strategy.constructor(self.comb_class, self.actual_children),
-            )
-            assert isinstance(original_constructor, DisjointUnion)
-            self._constructor = DisjointUnion(
-                self.comb_class,
-                self.children,
-                (original_constructor.extra_parameters[self.child_idx],),
-            )
+            original_constructor = self.original_rule.constructor
+            if isinstance(original_constructor, DisjointUnion):
+                self._constructor = DisjointUnion(
+                    self.comb_class,
+                    self.children,
+                    (original_constructor.extra_parameters[self.child_idx],),
+                )
+            elif isinstance(original_constructor, Complement):
+                assert isinstance(self.original_rule, ReverseRule)
+                original_original_constructor = (
+                    self.original_rule.original_rule.constructor
+                )
+                assert isinstance(original_original_constructor, DisjointUnion)
+                self._constructor = Complement(
+                    self.original_rule.original_rule.comb_class,
+                    self.original_rule.original_rule.children,
+                    self.original_rule.idx,
+                    original_original_constructor.extra_parameters,
+                )
+            else:
+                raise NotImplementedError
         return self._constructor
 
     @staticmethod
     def is_equivalence() -> bool:
         return True
+
+    def to_reverse_rule(self, idx: int) -> "EquivalenceRule":
+        assert idx == 0
+        return self.original_rule.to_reverse_rule(self.child_idx).to_equivalence_rule()
 
     @property
     def formal_step(self) -> str:
@@ -660,6 +676,9 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         self.original_rule = rule
         self.idx = idx  # the idx of the child to be counted.
         self._constructor: Optional[Constructor] = None
+
+    def to_reverse_rule(self, idx: int) -> "Rule":
+        raise NotImplementedError("You don't want to do that! I promise")
 
     @property
     def constructor(
