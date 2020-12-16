@@ -10,8 +10,10 @@ In this file a combinatorial class is represented by a label, which is an
 integer, that the classdb gives.
 """
 
-from collections import deque
-from typing import Deque, Dict, FrozenSet, List, Set, Union
+from collections import defaultdict, deque
+from typing import Deque, Dict, Iterator, List, Set, Tuple
+
+from .utils import cssmethodtimer
 
 
 class EquivalenceDB:
@@ -33,7 +35,10 @@ class EquivalenceDB:
         self.parents: Dict[int, int] = {}
         self.weights: Dict[int, int] = {}
         self.verified_roots: Set[int] = set()
-        self.vertices: Set[FrozenSet[int]] = set()
+        self.vertices: Dict[int, Set[int]] = defaultdict(set)
+        self._one_way_vertices: Dict[int, Set[int]] = defaultdict(set)
+        self.func_times: Dict[str, float] = defaultdict(float)
+        self.func_calls: Dict[str, int] = defaultdict(int)
 
     def __eq__(self, other: object) -> bool:
         """Check if all information stored is the same."""
@@ -66,24 +71,100 @@ class EquivalenceDB:
             self.parents[ancestor] = root
         return root
 
-    def union(self, t1: int, t2: int) -> None:
-        """Find sets containing t1 and t2 and merge them."""
-        if t1 == t2:
+    def get_one_way_vertices(self) -> Dict[int, Set[int]]:
+        """
+        Return the adjacency table where vertices are strong components,
+        and edges are those that connect some vertex in a strong component
+        to the other.
+
+        Note: this might not be accurate, you should use the connect_cycle
+        method first if needed.
+        """
+        res: Dict[int, Set[int]] = defaultdict(set)
+        for start, ends in self._one_way_vertices.items():
+            start = self[start]
+            for end in ends:
+                end = self[end]
+                if start != end:
+                    res[start].add(end)
+        self._one_way_vertices = res
+        return res
+
+    def add_one_way_edge(self, label: int, other_label: int) -> None:
+        """Add an edge from label to other label in the directed graph."""
+        self._add_edge(label, other_label)
+        self._one_way_vertices[self[label]].add(self[other_label])
+
+    @cssmethodtimer("find_paths")
+    def connect_cycles(self):
+        """Look for cycles using one way edges that have been added."""
+        one_way_vertices = self.get_one_way_vertices()
+        stack: List[Tuple[int, ...]] = list()
+        stack.extend([(label,) for label in one_way_vertices.keys()])
+        visited = set()
+        while stack:
+            path = stack.pop()
+            end = path[-1]
+            if end in visited:
+                continue
+            visited.add(end)
+            for new_end in one_way_vertices[end]:
+                for i, vertex in enumerate(path[:-1]):
+                    if self.equivalent(vertex, new_end):
+                        # we've detected a cycle!
+                        print("CYCLE", path, new_end)
+                        for eqv_vertix in path[i:]:
+                            self._set_equivalent(eqv_vertix, new_end)
+                        break
+                if new_end not in path:
+                    # new end is not in the path, so we haven't tried looking for
+                    # cycles from here.
+                    stack.append(
+                        path + (new_end,)
+                    )  # appending left makes this a depth first search
+
+    def add_two_way_edge(self, label: int, other_label: int) -> None:
+        """Add a two way edge to the directed graph."""
+        self._add_edge(label, other_label)
+        self._add_edge(other_label, label)
+        self._set_equivalent(label, other_label)
+
+    def _add_edge(self, label: int, other_label: int) -> None:
+        """Add an edge from label to other_label."""
+        if label == other_label:
             return
-        self.vertices.add(frozenset((t1, t2)))
-        verified = self.is_verified(t1) or self.is_verified(t2)
-        roots = [self[t1], self[t2]]
+        self.vertices[label].add(other_label)
+
+    def find_paths(self, label: int, other_label: int) -> Iterator[Tuple[int, ...]]:
+        """Return an iterator of paths starting at other_label and ending at label."""
+        dequeue: Deque[Tuple[int, ...]] = deque()
+        dequeue.append((other_label,))
+        while dequeue:
+            path = dequeue.popleft()
+            end = path[-1]
+            if self.equivalent(end, label):
+                yield path
+                continue
+            for new_end in self.vertices[end]:
+                if new_end in path:
+                    continue
+                dequeue.append(path + (new_end,))
+
+    def _set_equivalent(self, label: int, other_label: int) -> None:
+        """Set the two labels as equivalent in UnionFind"""
+        verified = self.is_verified(label) or self.is_verified(other_label)
+        roots = [self[label], self[other_label]]
         heaviest = max([(self.weights[r], r) for r in roots])[1]
         for r in roots:
             if r != heaviest:
                 self.weights[heaviest] += self.weights[r]
                 self.parents[r] = heaviest
         if verified:
-            self.set_verified(t1)
+            self.set_verified(label)
 
-    def equivalent(self, t1: int, t2: int) -> bool:
-        """Return True if t1 and t2 are equivalent, False otherwise."""
-        return self[t1] == self[t2]
+    def equivalent(self, label: int, other_label: int) -> bool:
+        """Return True if label and other_label are equivalent, False otherwise."""
+        return self[label] == self[other_label]
 
     def set_verified(self, comb_class: int) -> None:
         """Update database that combinatorial classes equivalent to comb_class
@@ -103,65 +184,28 @@ class EquivalenceDB:
                 equivalent_classes.add(t)
         return equivalent_classes
 
-    def find_path(self, comb_class: int, other_comb_class: int) -> List[int]:
+    def find_path(self, comb_class: int, other_comb_class: int) -> Tuple[int, ...]:
         """
-        BFS for shortest path.
+        BFS for shortest path from comb_class to other_comb_class.
 
         Used to find shortest explanation of why things are equivalent.
         """
         if not self.equivalent(comb_class, other_comb_class):
             raise KeyError("The classes given are not equivalent.")
-        if comb_class == other_comb_class:
-            return [comb_class]
-        equivalent_comb_classes: Dict[int, int] = {}
-        reverse_map: Dict[int, int] = {}
 
-        for x in self.parents:
-            n = len(equivalent_comb_classes)
-            if self.equivalent(comb_class, x):
-                equivalent_comb_classes[x] = n
-                reverse_map[n] = x
-
-        adjacency_list: List[List[int]] = [
-            [] for i in range(len(equivalent_comb_classes))
-        ]
-        for (t1, t2) in self.vertices:
-            if self.equivalent(t1, comb_class):
-                u = equivalent_comb_classes[t1]
-                v = equivalent_comb_classes[t2]
-                adjacency_list[u].append(v)
-                adjacency_list[v].append(u)
-
-        dequeue: Deque[int] = deque()
-
-        start = equivalent_comb_classes[comb_class]
-        end = equivalent_comb_classes[other_comb_class]
-
-        n = len(equivalent_comb_classes)
-
-        dequeue.append(start)
-        visited = [False for i in range(n)]
-        neighbour: List[Union[int, None]] = [None for i in range(n)]
+        dequeue: Deque[Tuple[int, ...]] = deque()
+        dequeue.append((comb_class,))
+        visited: Set[int] = set()
         while dequeue:
-            u = dequeue.popleft()
-            if u == end:
+            path = dequeue.popleft()
+            end = path[-1]
+            if end == other_comb_class:
                 break
-            if visited[u]:
+            if end in visited:
                 continue
-            visited[u] = True
-
-            for v in adjacency_list[u]:
-                if not visited[v]:
-                    dequeue.append(v)
-                    neighbour[v] = u
-
-        path = [reverse_map[end]]
-        while neighbour[end] is not None:
-            assert isinstance(end, int), "something went wrong"
-            a = neighbour[end]
-            assert isinstance(a, int), "something went wrong"
-            t = reverse_map[a]
-            path.append(t)
-            end = a
-
-        return path[::-1]
+            for new_end in self.vertices[end]:
+                if new_end in path:
+                    continue
+                dequeue.append(path + (new_end,))
+            visited.add(path[-1])
+        return path

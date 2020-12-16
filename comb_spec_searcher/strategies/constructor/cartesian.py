@@ -1,34 +1,21 @@
-"""
-The constructor class contains all the method, and logic, needed to get the
-enumeration, generate objects, and sample objects.
-
-The default constructors implemented are:
-- CartesianProduct
-- DisjointUnion
-- Empty
-
-Currently the constructors are implemented in one variable, namely 'n' which is
-used throughout to denote size.
-"""
-import abc
+import random
 from collections import defaultdict
 from itertools import product
-from random import randint
 from typing import (
     Callable,
     Counter,
     Dict,
-    Generic,
     Iterable,
     Iterator,
     List,
     Optional,
     Tuple,
     TypeVar,
+    Union,
     cast,
 )
 
-from sympy import Eq, Function
+import sympy
 
 from comb_spec_searcher import utils
 from comb_spec_searcher.typing import (
@@ -44,73 +31,9 @@ from comb_spec_searcher.typing import (
     Terms,
 )
 
-__all__ = ("Constructor", "CartesianProduct", "DisjointUnion")
+from .base import Constructor
 
 T = TypeVar("T")
-
-
-class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectType]):
-    """The constructor is akin to the 'counting function' in the comb exp paper."""
-
-    @abc.abstractmethod
-    def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
-        """
-        Return the sympy.Eq in the form lhs_func = f(rhs_funcs).
-        """
-
-    @abc.abstractmethod
-    def reliance_profile(self, n: int, **parameters: int) -> RelianceProfile:
-        """
-        Return the reliance profile. That is for the parameters given,
-        which parameters of each individual subclass are required.
-        """
-
-    @abc.abstractmethod
-    def get_terms(self, subterms: SubTerms, n: int) -> Terms:
-        """
-        Return the terms for n given the subterms of the children.
-        """
-
-    @abc.abstractmethod
-    def get_sub_objects(
-        self, subobjs: SubObjects, n: int
-    ) -> Iterator[
-        Tuple[Parameters, Tuple[List[Optional[CombinatorialObjectType]], ...]]
-    ]:
-        """
-        Iterate over all the possibe subobjs/image of the bijection implied by
-        the constructor together with the parameters.
-        """
-
-    @abc.abstractmethod
-    def random_sample_sub_objects(
-        self,
-        parent_count: int,
-        subsamplers: SubSamplers,
-        subrecs: SubRecs,
-        n: int,
-        **parameters: int
-    ):
-        """Return a randomly sampled subobjs/image of the bijection implied
-        by the constructor."""
-
-    @staticmethod
-    def _build_param_map(
-        child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...], num_parent_params: int
-    ) -> ParametersMap:
-        """
-        Return a parameters map according to the given pos map.
-        """
-
-        def param_map(param: Parameters) -> Parameters:
-            new_params = [0 for _ in range(num_parent_params)]
-            for pos, value in enumerate(param):
-                parent_pos = child_pos_to_parent_pos[pos]
-                for p in parent_pos:
-                    new_params[p] += value
-            return tuple(new_params)
-
-        return param_map
 
 
 class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectType]):
@@ -142,7 +65,9 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
             self.extra_parameters = tuple(extra_parameters)
         else:
             self.extra_parameters = tuple(dict() for _ in children)
-        self._children_param_maps = self._build_children_param_map(parent, children)
+        self._children_param_maps = self._build_children_param_map(
+            parent, children, self.extra_parameters
+        )
 
         self.minimum_sizes = {"n": parent.minimum_size_of_object()}
         for k in parent.extra_parameters:
@@ -185,17 +110,18 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         """
         return tuple(d.get("n", None) for d in self.max_child_sizes)
 
+    @staticmethod
     def _build_children_param_map(
-        self,
         parent: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...],
+        extra_parameters: Tuple[Dict[str, str], ...],
     ) -> Tuple[ParametersMap, ...]:
         map_list: List[ParametersMap] = []
         num_parent_params = len(parent.extra_parameters)
         parent_param_to_pos = {
             param: pos for pos, param in enumerate(parent.extra_parameters)
         }
-        for child, extra_param in zip(children, self.extra_parameters):
+        for child, extra_param in zip(children, extra_parameters):
             reversed_extra_param: Dict[str, List[str]] = defaultdict(list)
             for parent_var, child_var in extra_param.items():
                 reversed_extra_param[child_var].append(parent_var)
@@ -209,21 +135,22 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
                 for child_param in child.extra_parameters
             )
             map_list.append(
-                self._build_param_map(child_pos_to_parent_pos, num_parent_params)
+                Constructor.build_param_map(child_pos_to_parent_pos, num_parent_params)
             )
         return tuple(map_list)
 
-    def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
+    def get_equation(
+        self, lhs_func: sympy.Function, rhs_funcs: Tuple[sympy.Function, ...]
+    ) -> sympy.Eq:
         res = 1
         for extra_parameters, rhs_func in zip(self.extra_parameters, rhs_funcs):
             res *= rhs_func.subs(
                 {child: parent for parent, child in extra_parameters.items()},
                 simultaneous=True,
             )
-        return Eq(lhs_func, res)
+        return sympy.Eq(lhs_func, res)
 
     def reliance_profile(self, n: int, **parameters: int) -> RelianceProfile:
-        #  TODO: consider when parameters are subsets of each other etc
         assert all(
             set(["n", *parameters]) == set(min_child_sizes)
             for min_child_sizes in self.min_child_sizes
@@ -331,13 +258,15 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
             res.append(extra_params)
         return res
 
-    def get_terms(self, subterms: SubTerms, n: int) -> Terms:
+    def get_terms(
+        self, parent_terms: Callable[[int], Terms], subterms: SubTerms, n: int
+    ) -> Terms:
         new_terms: Terms = Counter()
         size_compositions = utils.compositions(
             n, len(subterms), self.min_sizes, self.max_sizes
         )
         for sizes in size_compositions:
-            for param_value_pairs in self._params_value_pairs_combinations(
+            for param_value_pairs in self.params_value_pairs_combinations(
                 sizes, subterms
             ):
                 new_param = self._new_param(*(p for p, _ in param_value_pairs))
@@ -355,11 +284,11 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         return tuple(sum(vals) for vals in zip(*mapped_params))
 
     @staticmethod
-    def _params_value_pairs_combinations(
+    def params_value_pairs_combinations(
         sizes: Tuple[int, ...],
         sub_getters: Tuple[Callable[[int], Dict[Parameters, T]], ...],
     ) -> Iterator[Tuple[Tuple[Parameters, T], ...]]:
-        """"""
+        assert len(sizes) == len(sub_getters), sub_getters
         children_values = (sg(s) for sg, s in zip(sub_getters, sizes))
         return product(*(c.items() for c in children_values))
 
@@ -372,7 +301,7 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
             n, len(subobjs), self.min_sizes, self.max_sizes
         )
         for sizes in size_compositions:
-            for param_objs_pairs in self._params_value_pairs_combinations(
+            for param_objs_pairs in self.params_value_pairs_combinations(
                 sizes, subobjs
             ):
                 new_param = self._new_param(*(p for p, _ in param_objs_pairs))
@@ -388,9 +317,9 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         subsamplers: SubSamplers,
         subrecs: SubRecs,
         n: int,
-        **parameters: int
-    ):
-        random_choice = randint(1, parent_count)
+        **parameters: int,
+    ) -> Tuple[Optional[CombinatorialObjectType], ...]:
+        random_choice = random.randint(1, parent_count)
         total = 0
         for child_parameters in self._valid_compositions(n, **parameters):
             tmp = 1
@@ -422,137 +351,241 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         return "Cartesian product"
 
 
-class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]):
+class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     """
-    The DisjointUnion constructor takes as input the children. Each constructor
-    is unique up to the length of the children being used to count.
+    This constructor implements the quotient operation. A rule A -> (B, C, D)
+    should be read as A = B / (C * D).
 
-    Extra parameters are passed on using the parameters dictionaries. Each
-    dictionary's keys should be the extra variable of the child pointing the
-    variable on the parent it came from.
-    If a parents variable does not map to a child, then this variable must be 0
-    as the child contains no occurences.
+    This comes from a cartesian product rule B = A * C * D
 
-    The fixed value dictionaries passed will be used ensure that the parameter
-    of a child must take on the given value.
+    The initialiser should be made using the original cartesian product rule.
+
+    The parent is B, idx is the index of the child the rule is being rearranged
+    for and the extra parameters maps from parent to children.
+
+    To get terms we compute a polynomial equation for a fixed size a_n(x,...) =
+    b_n(x,...) * c(x, ...) where b_n is the terms for the flipped child of length n and
+    then make the division.
     """
 
     def __init__(
         self,
         parent: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...],
+        idx: int,
         extra_parameters: Optional[Tuple[Dict[str, str], ...]] = None,
-        fixed_values: Optional[Tuple[Dict[str, int], ...]] = None,
     ):
         self.number_of_children = len(children)
         if extra_parameters is not None:
-            self.extra_parameters = extra_parameters
-            assert len(extra_parameters) == len(children)
+            self.extra_parameters = tuple(extra_parameters)
         else:
-            assert not parent.extra_parameters
-            self.extra_parameters = tuple(
-                dict() for _ in range(self.number_of_children)
-            )
-        self._children_param_maps = self._build_children_param_maps(parent, children)
-        self.zeroes = tuple(
-            frozenset(parent.extra_parameters) - frozenset(parameter.keys())
-            for parameter in self.extra_parameters
+            self.extra_parameters = tuple(dict() for _ in children)
+        self.idx = idx
+        self._children_param_maps = CartesianProduct._build_children_param_map(
+            parent, children, self.extra_parameters
         )
-        if fixed_values is not None:
-            self.fixed_values = fixed_values
-            assert len(fixed_values) == len(children)
-        else:
-            self.fixed_values = tuple({} for _ in children)
+        self._min_sizes = tuple(child.minimum_size_of_object() for child in children)
+        self._max_sizes = tuple(
+            child.minimum_size_of_object() if child.is_atom() else None
+            for child in children
+        )
+        self._parent_param_map = self._build_parent_param_map(parent, children)
+        self._parent_shift = sum(self._min_sizes) - self._min_sizes[self.idx]
+        self._num_parent_params = len(parent.extra_parameters)
 
-    def get_equation(self, lhs_func: Function, rhs_funcs: Tuple[Function, ...]) -> Eq:
-        res = 0
-        for rhs_func, extra_parameters in zip(rhs_funcs, self.extra_parameters):
-            res += rhs_func.subs(
-                {child: parent for parent, child in extra_parameters.items()},
-                simultaneous=True,
-            )
-        return Eq(lhs_func, res)
+    @staticmethod
+    def build_param_map(
+        child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...], num_parent_params: int
+    ) -> ParametersMap:
+        def param_map(param: Parameters) -> Parameters:
+            new_params: List[Optional[int]] = [None for _ in range(num_parent_params)]
+            for pos, value in enumerate(param):
+                parent_pos = child_pos_to_parent_pos[pos]
+                for p in parent_pos:
+                    assert new_params[p] is None or new_params[p] == value
+                    new_params[p] = value
+            assert all(p is not None for p in new_params)
+            return cast(Parameters, tuple(new_params))
 
-    def reliance_profile(self, n: int, **parameters: int) -> RelianceProfile:
-        # TODO: implement in multiple variables and use in get_recurrence
-        assert not parameters, "only implemented in one variable, namely 'n'"
-        return tuple({"n": (n,)} for _ in range(self.number_of_children))
+        return param_map
 
-    def get_extra_parameters(
-        self, n: int, **parameters: int
-    ) -> List[Optional[Dict[str, int]]]:
-        """
-        Will return the extra parameters dictionary based on the parent's
-        parameters. If there is a contradiction, that is some child parameter
-        is given two or more different values that do not match, then None
-        will be returned for that child, indicating that 0 objects on the
-        child match the parents parameters.
-        """
-        res: List[Optional[Dict[str, int]]] = []
-        for i, extra_parameters in enumerate(self.extra_parameters):
-            update_params: Dict[str, int] = {**self.fixed_values[i]}
-            for parent_var, child_var in extra_parameters.items():
-                updated_value = parameters[parent_var]
-                if child_var not in update_params:
-                    update_params[child_var] = updated_value
-                elif update_params[child_var] != updated_value:
-                    break
-            else:
-                res.append(update_params)
-                continue
-            res.append(None)
-        return res
-
-    def get_terms(self, subterms: SubTerms, n: int) -> Terms:
-        new_terms: Terms = Counter()
-        for child_terms, param_map in zip(subterms, self._children_param_maps):
-            for param, value in child_terms(n).items():
-                new_terms[param_map(param)] += value
-        return new_terms
-
-    def _build_children_param_maps(
+    def _build_parent_param_map(
         self,
         parent: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...],
-    ) -> Tuple[ParametersMap, ...]:
-        map_list: List[ParametersMap] = []
-        num_parent_params = len(parent.extra_parameters)
-        parent_param_to_pos = {
-            param: pos for pos, param in enumerate(parent.extra_parameters)
+    ) -> ParametersMap:
+        extra_param = self.extra_parameters[self.idx]
+        child = children[self.idx]
+        child_param_to_pos = {
+            param: pos for pos, param in enumerate(child.extra_parameters)
         }
-        for child, extra_param in zip(children, self.extra_parameters):
-            reversed_extra_param: Dict[str, List[str]] = defaultdict(list)
-            for parent_var, child_var in extra_param.items():
-                reversed_extra_param[child_var].append(parent_var)
-            child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...] = tuple(
-                tuple(
-                    map(
-                        parent_param_to_pos.__getitem__,
-                        reversed_extra_param[child_param],
-                    )
+        parent_pos_to_child_pos: Tuple[Tuple[int, ...], ...] = tuple(
+            (child_param_to_pos[extra_param[parent_var]],)
+            if parent_var in extra_param
+            else tuple()
+            for parent_var in parent.extra_parameters
+        )
+        return self.build_param_map(
+            parent_pos_to_child_pos, len(child.extra_parameters)
+        )
+
+    def _new_param(self, *children_params: Parameters) -> Parameters:
+        """
+        Computes the parameter values on the parent that the given children parameters
+        contribute to.
+        """
+        mapped_params = (
+            pmap(p) for pmap, p in zip(self._children_param_maps, children_params)
+        )
+        return tuple(sum(vals) for vals in zip(*mapped_params))
+
+    def _other_new_param(self, *children_params: Parameters) -> Parameters:
+        """
+        Computes the parameter values on the parent that the given children parameters
+        contribute to.
+        """
+        mapped_params = (
+            pmap(p)
+            for pmap, p in zip(
+                (m for i, m in enumerate(self._children_param_maps) if i != self.idx),
+                children_params,
+            )
+        )
+        return tuple(sum(vals) for vals in zip(*mapped_params))
+
+    def _a(
+        self,
+        n: int,
+        parent_subterm: Callable[[int], Terms],
+        children_subterms: SubTerms,
+    ) -> Terms:
+        """
+        A terms dict representing the polynomial for the rule parent terms minus the
+        contribution of the childs when the size of the flipped child in the composition
+        is smaller than n.
+        """
+        max_sizes = (
+            self._max_sizes[: self.idx] + (n - 1,) + self._max_sizes[self.idx + 1 :]
+        )
+        possible_sizes = utils.compositions(
+            n + self._parent_shift, self.number_of_children, self._min_sizes, max_sizes
+        )
+        res: Terms = Counter(parent_subterm(n + self._parent_shift))
+        for sizes in possible_sizes:
+            for param_value_pairs in CartesianProduct.params_value_pairs_combinations(
+                sizes, children_subterms
+            ):
+                new_param = self._new_param(*(p for p, _ in param_value_pairs))
+                res[new_param] -= utils.prod((v for _, v in param_value_pairs))
+                assert res[new_param] >= 0
+        return res
+
+    def _c(
+        self,
+        children_subterms: SubTerms,
+    ) -> Terms:
+        """
+        Dict representing the polynomial that multiply the polynomial of the
+        flipped child for length n.
+        """
+        min_sizes = self._min_sizes[: self.idx] + self._min_sizes[self.idx + 1 :]
+        max_sizes = self._max_sizes[: self.idx] + self._max_sizes[self.idx + 1 :]
+        possible_sizes = utils.compositions(
+            self._parent_shift, self.number_of_children - 1, min_sizes, max_sizes
+        )
+        other_children_subterms = (
+            children_subterms[: self.idx] + children_subterms[self.idx + 1 :]
+        )
+        res: Terms = Counter()
+        for sizes in possible_sizes:
+            for param_value_pairs in CartesianProduct.params_value_pairs_combinations(
+                sizes, other_children_subterms
+            ):
+                new_param = self._other_new_param(*(p for p, _ in param_value_pairs))
+                res[new_param] += utils.prod((v for _, v in param_value_pairs))
+                assert res[new_param] >= 0
+        return res
+
+    def _terms_to_poly(self, terms: Terms) -> Union[sympy.Poly, int]:
+        variables = tuple(sympy.var(f"k_{i}") for i in range(self._num_parent_params))
+        if variables:
+            res = sympy.Poly(sympy.sympify("0"), *variables)
+        else:
+            res = 0
+        for param, value in terms.items():
+            if not variables:
+                res += value
+            else:
+                res += value * utils.prod(
+                    var ** power for var, power in zip(variables, param)
                 )
-                if child_param in reversed_extra_param
-                else tuple()
-                for child_param in child.extra_parameters
-            )
-            map_list.append(
-                self._build_param_map(child_pos_to_parent_pos, num_parent_params)
-            )
-        return tuple(map_list)
+        return res
+
+    @staticmethod
+    def _poly_to_terms(poly: Union[sympy.Poly, int]) -> Terms:
+        if isinstance(poly, int):
+            if poly == 0:
+                return Counter()
+            return Counter({tuple(): poly})
+        return Counter(poly.as_dict())
+
+    def _b(
+        self,
+        n: int,
+        parent_subterm: Callable[[int], Terms],
+        children_subterms: SubTerms,
+    ) -> Terms:
+        """
+        The terms of length n for the flipped child.
+        """
+        a = self._a(n, parent_subterm, children_subterms)
+        c = self._c(children_subterms)
+        a_poly = self._terms_to_poly(a)
+        c_poly = self._terms_to_poly(c)
+        if self._num_parent_params > 0:
+            b_poly, remainder = sympy.div(a_poly, c_poly, domain="ZZ")
+            assert remainder == 0
+        else:
+            b_poly = a_poly // c_poly
+            assert a_poly % c_poly == 0
+        return self._poly_to_terms(b_poly)
+
+    def get_terms(
+        self, parent_terms: Callable[[int], Terms], subterms: SubTerms, n: int
+    ) -> Terms:
+        new_terms: Terms = Counter()
+        children_subterms = (
+            subterms[1 : self.idx + 1] + (parent_terms,) + subterms[self.idx + 1 :]
+        )
+        for param, value in self._b(n, subterms[0], children_subterms).items():
+            mapped_params = self._parent_param_map(param)
+            assert mapped_params not in new_terms or new_terms[mapped_params] == value
+            new_terms[mapped_params] = value
+        return new_terms
+
+    def get_equation(
+        self, lhs_func: sympy.Function, rhs_funcs: Tuple[sympy.Function, ...]
+    ) -> sympy.Eq:
+        res = lhs_func.subs(self.extra_parameters[self.idx])
+        for (idx, rhs_func), extra_parameters in zip(
+            enumerate(rhs_funcs), self.extra_parameters
+        ):
+            if self.idx != idx:
+                res /= rhs_func.subs(
+                    {child: parent for parent, child in extra_parameters.items()},
+                    simultaneous=True,
+                ).subs(self.extra_parameters[self.idx], simultaneous=True)
+        return sympy.Eq(rhs_funcs[self.idx], res)
+
+    def reliance_profile(self, n: int, **parameters: int) -> RelianceProfile:
+        raise NotImplementedError
 
     def get_sub_objects(
         self, subobjs: SubObjects, n: int
     ) -> Iterator[
         Tuple[Parameters, Tuple[List[Optional[CombinatorialObjectType]], ...]]
     ]:
-        res: List[List[Optional[CombinatorialObjectType]]]
-        res = [[None] for _ in range(self.number_of_children)]
-        for i, subobj in enumerate(subobjs):
-            param_map = self._children_param_maps[i]
-            for param, comb_objs in subobj(n).items():
-                res[i] = comb_objs
-                yield (param_map(param), tuple(res))
-            res[i] = [None]
+        raise NotImplementedError
 
     def random_sample_sub_objects(
         self,
@@ -560,35 +593,6 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         subsamplers: SubSamplers,
         subrecs: SubRecs,
         n: int,
-        **parameters: int
-    ):
-        random_choice = randint(1, parent_count)
-        total = 0
-        for (idx, rec), subsampler, extra_params in zip(
-            enumerate(subrecs), subsamplers, self.get_extra_parameters(n, **parameters)
-        ):
-            # if a parent parameter is not mapped to by some child parameter
-            # then it is assumed that the value of the parent parameter must be 0
-            if extra_params is None or any(
-                val != 0 and k in self.zeroes[idx] for k, val in parameters.items()
-            ):
-                continue
-            total += rec(n=n, **extra_params)
-            if random_choice <= total:
-                obj = subsampler(n=n, **extra_params)
-                return (
-                    tuple(None for _ in range(idx))
-                    + (obj,)
-                    + tuple(None for _ in range(len(subrecs) - idx - 1))
-                )
-
-    @staticmethod
-    def get_eq_symbol() -> str:
-        return "="
-
-    @staticmethod
-    def get_op_symbol() -> str:
-        return "+"
-
-    def __str__(self):
-        return "disjoint union"
+        **parameters: int,
+    ) -> Tuple[Optional[CombinatorialObjectType], ...]:
+        raise NotImplementedError
