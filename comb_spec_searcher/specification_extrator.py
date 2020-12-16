@@ -73,9 +73,9 @@ class SpecificationRuleExtractor:
     def _find_rule(self, parent: int, children: Tuple[int, ...]) -> AbstractRule:
         try:
             strategy = self.ruledb.rule_to_strategy[(parent, children)]
-        except KeyError:
+        except KeyError as e:
             if len(children) != 1:
-                raise self._missing_rule_error(parent, children)
+                raise self._missing_rule_error(parent, children) from e
         else:
             return strategy(self.classdb.get_class(parent))
         # From now on we are looking for a two way strategy

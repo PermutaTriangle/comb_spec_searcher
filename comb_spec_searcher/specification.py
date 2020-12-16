@@ -5,17 +5,7 @@ where each of the bi appear exactly once on the left hand side of some rule.
 from copy import copy
 from functools import reduce
 from operator import mul
-from typing import (
-    TYPE_CHECKING,
-    Dict,
-    Generic,
-    Iterable,
-    Iterator,
-    List,
-    Optional,
-    Set,
-    Union,
-)
+from typing import Dict, Generic, Iterable, Iterator, List, Optional, Set, Union
 
 import sympy
 from logzero import logger
@@ -51,9 +41,6 @@ from .utils import (
     pretty_print_equations,
     taylor_expand,
 )
-
-if TYPE_CHECKING:
-    from comb_spec_searcher.comb_spec_searcher import CombinatorialSpecificationSearcher
 
 __all__ = ("CombinatorialSpecification",)
 
@@ -150,23 +137,6 @@ class CombinatorialSpecification(
                     rule.comb_class not in self.rules_dict or rule.comb_class.is_empty()
                 )
                 self.rules_dict[rule.comb_class] = rule
-
-    def _expand_verified_comb_classes_(
-        self, verification_packs: Dict[CombinatorialClassType, StrategyPack]
-    ) -> None:
-
-        for comb_class, pack in verification_packs.items():
-            css = CombinatorialSpecificationSearcher(
-                comb_class,
-                pack.add_verification(
-                    AlreadyVerified(self.rules_dict), apply_first=True
-                ),
-            )
-            logger.info(css.run_information())
-            spec = css.auto_search()
-            for rule in spec.rules_dict.values():
-                if not isinstance(rule.strategy, AlreadyVerified):
-                    self.rules_dict[rule.comb_class] = rule
 
     def _is_valid_spec(self) -> bool:
         """Checks that each class is on a left hand side."""
