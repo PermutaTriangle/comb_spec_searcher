@@ -77,25 +77,53 @@ class CombinatorialSpecification(
         """
         Group chain of equivalence rules of the specification into equivalence paths.
         """
+        self._ungroup_equiv_path()
+        not_hidden_classes = {self.root}
+        for rule in self.rules_dict.values():
+            if rule.is_equivalence():
+                continue
+            not_hidden_classes.add(rule.comb_class)
+            not_hidden_classes.update(rule.children)
+        # Creating paths
         comb_class_stack = [self.root]
         visited: Set[CombinatorialClassType] = set()
         path_rules: List[Rule] = []
+        eqv_path_rules: Dict[CombinatorialClassType, EquivalencePathRule] = {}
         while comb_class_stack:
+            if path_rules and path_rules[-1].children[0] in not_hidden_classes:
+                new_rule: EquivalencePathRule = EquivalencePathRule(path_rules)
+                eqv_path_rules[new_rule.comb_class] = new_rule
+                path_rules.clear()
             comb_class = comb_class_stack.pop()
-            if comb_class in visited:
+            if comb_class in not_hidden_classes and comb_class in visited:
                 continue
             visited.add(comb_class)
             rule = self.get_rule(comb_class)
             comb_class_stack.extend(rule.children)
             if rule.is_equivalence() and not isinstance(rule, EquivalencePathRule):
-                self.rules_dict.pop(comb_class)
                 assert isinstance(rule, Rule)
+                assert not path_rules or path_rules[-1].children[0] == rule.comb_class
                 path_rules.append(rule)
-            elif path_rules:
-                eqv_path_rule: EquivalencePathRule = EquivalencePathRule(path_rules)
-                self.rules_dict[eqv_path_rule.comb_class] = eqv_path_rule
-                path_rules.clear()
+        # Clearing the equivalences and replacing by paths
+        self.rules_dict = {
+            comb_class: rule
+            for comb_class, rule in self.rules_dict.items()
+            if comb_class in not_hidden_classes
+        }
+        self.rules_dict.update(eqv_path_rules)
         assert self._is_valid_spec()
+
+    def _ungroup_equiv_path(self) -> None:
+        """
+        Remove the equiv path and replacing only with normal rules.
+        """
+        new_rules: Dict[CombinatorialClassType, Rule] = {}
+        for rule in self.rules_dict.values():
+            if not isinstance(rule, EquivalencePathRule):
+                continue
+            for r in rule.rules:
+                new_rules[r.comb_class] = r
+        self.rules_dict.update(new_rules)
 
     def expand_verified(self) -> None:
         """
@@ -113,6 +141,7 @@ class CombinatorialSpecification(
             for comb_class, pack in verification_packs.items():
                 self.expand_comb_class(comb_class, pack)
             self.expand_verified()
+            self._group_equiv_in_path()
             self._set_subrules()
 
     def expand_comb_class(
@@ -129,9 +158,9 @@ class CombinatorialSpecification(
         self.rules_dict.pop(rule.comb_class)
         pack = pack.add_verification(AlreadyVerified(self.rules_dict), apply_first=True)
         css = CombinatorialSpecificationSearcher(rule.comb_class, pack)
-        # logger.info(css.run_information())
-        spec = css.auto_search()
-        for rule in spec.rules_dict.values():
+        logger.info(css.run_information())
+        rules = css._auto_search_rules()
+        for rule in rules:
             if not isinstance(rule.strategy, AlreadyVerified):
                 assert (
                     rule.comb_class not in self.rules_dict or rule.comb_class.is_empty()
