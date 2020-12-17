@@ -56,7 +56,9 @@ class SpecificationRuleExtractor:
                 label, self.eqvparent_to_parent[eqv_label]
             )
             for parent, child in zip(path[:-1], path[1:]):
-                assert parent not in self.rules_dict
+                assert parent not in self.rules_dict or self.rules_dict[parent] == (
+                    child,
+                ), (parent, child, self.rules_dict[parent])
                 self.rules_dict[parent] = (child,)
 
     def _check(self):
