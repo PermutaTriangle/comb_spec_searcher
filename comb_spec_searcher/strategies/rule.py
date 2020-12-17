@@ -337,9 +337,9 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
     @classmethod
     def from_dict(cls, d: dict) -> "Rule":
         # pylint: disable=import-outside-toplevel
-        from comb_spec_searcher.strategies.strategy import Strategy
+        from comb_spec_searcher.strategies.strategy import AbstractStrategy, Strategy
 
-        strategy = Strategy.from_dict(d.pop("strategy"))
+        strategy = AbstractStrategy.from_dict(d.pop("strategy"))
         assert isinstance(strategy, Strategy)
         comb_class = CombinatorialClass.from_dict(d.pop("comb_class"))
         comb_class = cast(CombinatorialClassType, comb_class)
@@ -914,11 +914,11 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
     def from_dict(cls, d: dict) -> "VerificationRule":
         # pylint: disable=import-outside-toplevel
         from comb_spec_searcher.strategies.strategy import (
-            Strategy,
+            AbstractStrategy,
             VerificationStrategy,
         )
 
-        strategy = Strategy.from_dict(d.pop("strategy"))
+        strategy = AbstractStrategy.from_dict(d.pop("strategy"))
         assert isinstance(strategy, VerificationStrategy)
         comb_class = CombinatorialClass.from_dict(d.pop("comb_class"))
         comb_class = cast(CombinatorialClassType, comb_class)

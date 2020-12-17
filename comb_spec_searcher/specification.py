@@ -159,7 +159,7 @@ class CombinatorialSpecification(
         pack = pack.add_verification(AlreadyVerified(self.rules_dict), apply_first=True)
         css = CombinatorialSpecificationSearcher(rule.comb_class, pack)
         logger.info(css.run_information())
-        rules = css._auto_search_rules()
+        rules = css._auto_search_rules()  # pylint: disable=protected-access
         for rule in rules:
             if not isinstance(rule.strategy, AlreadyVerified):
                 assert (
