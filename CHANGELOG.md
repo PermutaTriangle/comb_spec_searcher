@@ -6,8 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
-- Automatic bijection between equivalent specifications through the functions `get_bijection_to` and `are_isomorphic` of the specifications class. The bijiection object holds a `map` function that performs the actual mapping.
+- Automatic bijection between equivalent specifications through the functions `get_bijection_to` and `are_isomorphic` of the specifications class. The bijection object holds a `map` function that performs the actual mapping.
 - Sanity check for random sampling on rule
+
+### Changed
+- Specification are now built using a set of rules
+- The json format of a spec is based storing the json format of its rule
+- Streamlined the extraction of a specification from a searcher.
 
 ### Fixed
 - `forward_map` of `EquivalencePathRule`
@@ -15,7 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [2.4.0] - 2020-11-11
 ### Changed
-- Computation of terms in the constructor is now on a per size basis. The value for each possible paratemeters is computed at once in the new `get_terms` function of constructor. If you do not implement your own constructor this should have no effect on your code. The old `generate_object_of_size` method of the constructor is also replaced by a `get_objects` method that returns the objects for each possible combination of parameters.
+- Computation of terms in the constructor is now on a per size basis. The value for each possible parameters is computed at once in the new `get_terms` function of constructor. If you do not implement your own constructor this should have no effect on your code. The old `generate_object_of_size` method of the constructor is also replaced by a `get_objects` method that returns the objects for each possible combination of parameters.
 
 ## [2.3.0] - 2020-10-28
 ### Added
