@@ -4,9 +4,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [2.4.0]
+## [3.0.0] - 2021-01-04
+### Added
+- Automatic bijection between equivalent specifications through the functions `get_bijection_to` and `are_isomorphic` of the specifications class. The bijection object holds a `map` function that performs the actual mapping.
+- Sanity check for random sampling on rule
+- Strategy must not define a `is_two_way` method in order to decide if they can
+  be used to find the count of a children knowing the parent's and other
+  children' count. If so the constructor returned by the new method
+  `reverse_constructor` is used.
+
 ### Changed
-- Computation of terms in the constructor is now on a per size basis. The value for each possible paratemeters is computed at once in the new `get_terms` function of constructor. If you do not implement your own constructor this should have no effect on your code. The old `generate_object_of_size` method of the constructor is also replaced by a `get_objects` method that returns the objects for each possible combination of parameters.
+- Specification are now built using a set of rules
+- The json format of a spec is based storing the json format of its rule
+- Streamlined the extraction of a specification from a searcher.
+- All unary strategy are now store at the level of the equivalence database in
+  order to avoid some productivity issue with catalytic variables.
+
+### Fixed
+- `forward_map` of `EquivalencePathRule`
+- `all_specifications` method of `RuleDB`
+
+## [2.4.0] - 2020-11-11
+### Changed
+- Computation of terms in the constructor is now on a per size basis. The value for each possible parameters is computed at once in the new `get_terms` function of constructor. If you do not implement your own constructor this should have no effect on your code. The old `generate_object_of_size` method of the constructor is also replaced by a `get_objects` method that returns the objects for each possible combination of parameters.
 
 ## [2.3.0] - 2020-10-28
 ### Added

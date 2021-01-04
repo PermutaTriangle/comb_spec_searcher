@@ -20,7 +20,23 @@ if TYPE_CHECKING:
 __all__ = [
     "CombinatorialObjectType",
     "CombinatorialClassType",
-    "SpecificationClassesAndStrats",
+    "ClassKey",
+    "Key",
+    "CSSstrategy",
+    "RulesDict",
+    "WorkPacket",
+    "RuleKey",
+    "Parameters",
+    "ParametersMap",
+    "RelianceProfile",
+    "Objects",
+    "ObjectsCache",
+    "Terms",
+    "TermsCache",
+    "SubObjects",
+    "SubRecs",
+    "SubSamplers",
+    "SubTerms",
 ]
 
 CombinatorialObjectType = TypeVar(
@@ -30,12 +46,8 @@ CombinatorialObjectType = TypeVar(
 CombinatorialClassType = TypeVar("CombinatorialClassType", bound="CombinatorialClass")
 
 
-SpecificationClassesAndStrats = Tuple[
-    List[Tuple[CombinatorialClassType, "AbstractStrategy"]],
-    List[List[CombinatorialClassType]],
-]
 ClassKey = Union[bytes, CombinatorialClassType]
-Key = Union["CombinatorialClassType", int]
+Key = Union[CombinatorialClassType, int]
 
 CSSstrategy = Union["AbstractStrategy", "StrategyFactory"]
 RulesDict = Dict[int, Set[Tuple[int, ...]]]
@@ -47,9 +59,6 @@ class WorkPacket(NamedTuple):
     inferral: bool
 
 
-SpecificationLabelsAndStrats = Tuple[
-    List[Tuple[int, "AbstractStrategy"]], List[List[int]]
-]
 RuleKey = Tuple[int, Tuple[int, ...]]
 
 # From constructor
