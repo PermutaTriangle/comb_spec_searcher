@@ -8,6 +8,7 @@ A CombinatorialSpecification is (more or less) a set of Rule.
 import abc
 import random
 from collections import defaultdict
+from importlib import import_module
 from itertools import chain, product
 from typing import (
     TYPE_CHECKING,
@@ -19,12 +20,14 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
+    Type,
     Union,
     cast,
 )
 
 from sympy import Eq, Function
 
+from comb_spec_searcher.combinatorial_class import CombinatorialClass
 from comb_spec_searcher.typing import (
     Objects,
     ObjectsCache,
@@ -71,6 +74,22 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         self.subobjects: Optional[SubObjects] = None
         self._children = children
         self._non_empty_children: Optional[Tuple[CombinatorialClassType, ...]] = None
+
+    def to_jsonable(self) -> dict:
+        d = {
+            "class_module": self.__class__.__module__,
+            "rule_class": self.__class__.__name__,
+        }
+        return d
+
+    @classmethod
+    @abc.abstractmethod
+    def from_dict(cls, d: dict) -> "AbstractRule":
+        module = import_module(d.pop("class_module"))
+        RuleClass: Type["AbstractRule"] = getattr(module, d.pop("rule_class"))
+        if not issubclass(RuleClass, AbstractRule):
+            raise ValueError("Not a valid rule class")
+        return RuleClass.from_dict(d)
 
     @property
     def strategy(
@@ -307,6 +326,26 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
     ):
         super().__init__(strategy, comb_class, children)
         self._constructor: Optional[Constructor] = None
+
+    def to_jsonable(self) -> dict:
+        d = super().to_jsonable()
+        d["comb_class"] = self.comb_class.to_jsonable()
+        d["children"] = [child.to_jsonable() for child in self.children]
+        d["strategy"] = self.strategy.to_jsonable()
+        return d
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "Rule":
+        # pylint: disable=import-outside-toplevel
+        from comb_spec_searcher.strategies.strategy import AbstractStrategy, Strategy
+
+        strategy = AbstractStrategy.from_dict(d.pop("strategy"))
+        assert isinstance(strategy, Strategy)
+        comb_class = CombinatorialClass.from_dict(d.pop("comb_class"))
+        comb_class = cast(CombinatorialClassType, comb_class)
+        d.pop("children")
+        assert not d
+        return cls(strategy, comb_class)
 
     @property
     def strategy(self) -> "Strategy[CombinatorialClassType, CombinatorialObjectType]":
@@ -557,6 +596,21 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         self.original_rule = rule
         self._constructor: Optional[Union[DisjointUnion, Complement]] = None
 
+    def to_jsonable(self) -> dict:
+        d = super().to_jsonable()
+        d.pop("comb_class")
+        d.pop("strategy")
+        d.pop("children")
+        d["original_rule"] = self.original_rule.to_jsonable()
+        return d
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "EquivalenceRule":
+        rule = AbstractRule.from_dict(d.pop("original_rule"))
+        assert isinstance(rule, Rule)
+        assert not d, d.keys()
+        return cls(rule)
+
     @property
     def constructor(self) -> Union[DisjointUnion, Complement]:
         """
@@ -631,8 +685,26 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
     def __init__(self, rules: Sequence[Rule]):
         assert all(rule.is_equivalence() for rule in rules)
         super().__init__(rules[0].strategy, rules[0].comb_class, rules[-1].children)
-        self.rules = rules
+        self.rules = tuple(rules)
         self._constructor: Optional[DisjointUnion] = None
+
+    def to_jsonable(self) -> dict:
+        d = super().to_jsonable()
+        d.pop("comb_class")
+        d.pop("strategy")
+        d.pop("children")
+        d["rules"] = [r.to_jsonable() for r in self.rules]
+        return d
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "EquivalencePathRule":
+        rules: List[Rule] = []
+        for rule_dict in d.pop("rules"):
+            rule = AbstractRule.from_dict(rule_dict)
+            assert isinstance(rule, Rule)
+            rules.append(rule)
+        assert not d
+        return cls(rules)
 
     @property
     def constructor(self) -> DisjointUnion:
@@ -752,6 +824,23 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         self.idx = idx  # the idx of the child to be counted.
         self._constructor: Optional[Constructor] = None
 
+    def to_jsonable(self) -> dict:
+        d = super().to_jsonable()
+        d.pop("comb_class")
+        d.pop("strategy")
+        d.pop("children")
+        d["original_rule"] = self.original_rule.to_jsonable()
+        d["idx"] = self.idx
+        return d
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "ReverseRule":
+        rule = AbstractRule.from_dict(d.pop("original_rule"))
+        assert isinstance(rule, Rule)
+        idx = d.pop("idx")
+        assert not d
+        return cls(rule, idx)
+
     def to_reverse_rule(self, idx: int) -> "Rule":
         raise NotImplementedError("You don't want to do that! I promise")
 
@@ -814,6 +903,27 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
     ):
         assert not children
         super().__init__(strat, comb_class, children)
+
+    def to_jsonable(self) -> dict:
+        d = super().to_jsonable()
+        d["comb_class"] = self.comb_class.to_jsonable()
+        d["strategy"] = self.strategy.to_jsonable()
+        return d
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "VerificationRule":
+        # pylint: disable=import-outside-toplevel
+        from comb_spec_searcher.strategies.strategy import (
+            AbstractStrategy,
+            VerificationStrategy,
+        )
+
+        strategy = AbstractStrategy.from_dict(d.pop("strategy"))
+        assert isinstance(strategy, VerificationStrategy)
+        comb_class = CombinatorialClass.from_dict(d.pop("comb_class"))
+        comb_class = cast(CombinatorialClassType, comb_class)
+        assert not d
+        return cls(strategy, comb_class)
 
     @property
     def strategy(

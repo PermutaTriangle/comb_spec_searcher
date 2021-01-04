@@ -21,7 +21,7 @@ from comb_spec_searcher.tree_searcher import (
     random_proof_tree,
     smallish_random_proof_tree,
 )
-from comb_spec_searcher.typing import RuleKey, SpecificationLabelsAndStrats
+from comb_spec_searcher.typing import RuleKey
 
 __all__ = ["RuleDBBase", "RuleDB"]
 
@@ -251,66 +251,7 @@ class RuleDBBase(abc.ABC):
             raise SpecificationNotFound("No specification for label {}".format(label))
         return specification
 
-    def get_specification_rules(
-        self, label: int, minimization_time_limit: float, iterative: bool = False
-    ) -> SpecificationLabelsAndStrats:
-        """
-        Return a list of pairs (label, rule) which form a specification.
-        The specification returned is random, so two calls to the function
-        may result in a a different output.
-        """
-        proof_tree_node = self.find_specification(
-            label=label,
-            iterative=iterative,
-            minimization_time_limit=minimization_time_limit,
-        )
-        return self._get_specification_rules(label, proof_tree_node)
-
-    def _get_specification_rules(
-        self, label: int, proof_tree_node: Node
-    ) -> SpecificationLabelsAndStrats:
-        children: Dict[int, Tuple[int, ...]] = dict()
-        internal_nodes = set([label])
-        logger.info("Computing rule <-> equivalence rule mapping.")
-        eqv_rules = [
-            (node.label, tuple(sorted(child.label for child in node.children)))
-            for node in proof_tree_node.nodes()
-        ]
-        rule_from_equivalence_rules = self.rule_from_equivalence_rule_dict(eqv_rules)
-        logger.info("Finding actual rules.")
-        for eqv_start, eqv_ends in eqv_rules:
-            rule = rule_from_equivalence_rules.get((eqv_start, eqv_ends))
-            if rule is not None:
-                start, ends = rule
-                children[start] = ends
-                internal_nodes.update(ends)
-        res = []
-        eqv_paths = []
-        logger.info("Computing strategies used to create rules.")
-        for start, ends in children.items():
-            for eqv_label in internal_nodes:
-                if self.are_equivalent(start, eqv_label):
-                    path = self.equivdb.find_path(eqv_label, start)
-                    for a, b in zip(path[:-1], path[1:]):
-                        try:
-                            strategy = self.eqv_rule_to_strategy[(a, (b,))]
-                            res.append((a, strategy))
-                        except KeyError:
-                            try:
-                                strategy = self.eqv_rule_to_strategy[(b, (a,))]
-                                res.append((b, strategy))
-                            except KeyError:
-                                strategy = self.rule_to_strategy[(a, (b,))]
-                                res.append((a, strategy))
-                    if len(path) > 1:
-                        eqv_paths.append(path)
-            strategy = self.rule_to_strategy[(start, ends)]
-            res.append((start, strategy))
-        return res, eqv_paths
-
-    def all_specifications(
-        self, label: int, iterative: bool = False
-    ) -> Iterator[SpecificationLabelsAndStrats]:
+    def all_specifications(self, label: int, iterative: bool = False) -> Iterator[Node]:
         """
         A generator that yields all specifications in the universe for
         the given label.
@@ -324,13 +265,9 @@ class RuleDBBase(abc.ABC):
         prune(rules_dict)
 
         if self.equivdb[label] in rules_dict:
-            proof_trees = proof_tree_generator_dfs(rules_dict, root=self.equivdb[label])
-        for proof_tree_node in proof_trees:
-            yield self._get_specification_rules(label, proof_tree_node)
+            yield from proof_tree_generator_dfs(rules_dict, root=self.equivdb[label])
 
-    def get_smallest_specification(
-        self, label: int, iterative: bool = False
-    ) -> SpecificationLabelsAndStrats:
+    def get_smallest_specification(self, label: int, iterative: bool = False) -> Node:
         """
         Return the smallest specification in the universe for label. It uses
         exponential search to find it.
@@ -365,7 +302,7 @@ class RuleDBBase(abc.ABC):
             except StopIteration:
                 minimum = middle + 1
         logger.info("The smallest specification is of size %s.", len(tree))
-        return self._get_specification_rules(label, tree)
+        return tree
 
 
 class RuleDB(RuleDBBase):
