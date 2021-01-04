@@ -4,15 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.0.0] - 2021-01-04
 ### Added
 - Automatic bijection between equivalent specifications through the functions `get_bijection_to` and `are_isomorphic` of the specifications class. The bijection object holds a `map` function that performs the actual mapping.
 - Sanity check for random sampling on rule
+- Strategy must not define a `is_two_way` method in order to decide if they can
+  be used to find the count of a children knowing the parent's and other
+  children' count. If so the constructor returned by the new method
+  `reverse_constructor` is used.
 
 ### Changed
 - Specification are now built using a set of rules
 - The json format of a spec is based storing the json format of its rule
 - Streamlined the extraction of a specification from a searcher.
+- All unary strategy are now store at the level of the equivalence database in
+  order to avoid some productivity issue with catalytic variables.
 
 ### Fixed
 - `forward_map` of `EquivalencePathRule`
