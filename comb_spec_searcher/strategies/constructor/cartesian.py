@@ -596,3 +596,6 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         **parameters: int,
     ) -> Tuple[Optional[CombinatorialObjectType], ...]:
         raise NotImplementedError
+
+    def __str__(self):
+        return "quotient"
