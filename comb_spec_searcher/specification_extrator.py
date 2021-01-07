@@ -56,9 +56,16 @@ class SpecificationRuleExtractor:
                 label, self.eqvparent_to_parent[eqv_label]
             )
             for parent, child in zip(path[:-1], path[1:]):
-                assert parent not in self.rules_dict or self.rules_dict[parent] == (
-                    child,
-                ), (parent, child, self.rules_dict[parent])
+                if parent in self.rules_dict and self.rules_dict[parent] != (child,):
+                    parent_class = self.classdb.get_class(parent)
+                    print(f"Parent (label {parent}):\n{parent_class}")
+                    print("Current rule")
+                    print(f"Child labels: {self.rules_dict[parent]}")
+                    print(self._find_rule(parent, self.rules_dict[parent]))
+                    print("New rule")
+                    print(f"Child label: {child}")
+                    print(self._find_rule(parent, (child,)))
+                    raise RuntimeError("Noooooooo!!!")
                 self.rules_dict[parent] = (child,)
 
     def _check(self):
