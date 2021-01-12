@@ -8,10 +8,9 @@ from itertools import chain, product
 from random import choice, shuffle
 from typing import Dict, FrozenSet, Iterator, List, Optional, Sequence, Set, Tuple
 
+from comb_spec_searcher.typing import RulesDict
+
 __all__ = ("prune", "proof_tree_generator_dfs", "proof_tree_generator_bfs")
-
-
-RulesDict = Dict[int, Set[Tuple[int, ...]]]
 
 
 class Node:
@@ -233,7 +232,7 @@ def proof_tree_generator_dfs(
                 new_maximum = maximum - length if maximum is not None else None
                 for seen2, trees in _dfs_forest(roots, seen1, new_maximum):
                     actual_length = length + sum(len(t) for t in trees)
-                    if maximum is not None and actual_length < maximum:
+                    if maximum is None or actual_length < maximum:
                         yield seen1.union(seen2), [tree] + trees
 
     sorted_rules_dict = {

@@ -6,14 +6,13 @@ calling the Strategy class and storing its results.
 A CombinatorialSpecification is (more or less) a set of Rule.
 """
 import abc
+import random
 from collections import defaultdict
+from importlib import import_module
 from itertools import chain, product
-from random import randint
 from typing import (
     TYPE_CHECKING,
     Callable,
-    Counter,
-    DefaultDict,
     Dict,
     Generic,
     Iterator,
@@ -21,26 +20,30 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
+    Type,
+    Union,
     cast,
 )
 
 from sympy import Eq, Function
 
+from comb_spec_searcher.combinatorial_class import CombinatorialClass
+from comb_spec_searcher.typing import (
+    Objects,
+    ObjectsCache,
+    SubObjects,
+    SubTerms,
+    Terms,
+    TermsCache,
+)
+
 from ..combinatorial_class import CombinatorialClassType, CombinatorialObjectType
 from ..exception import SanityCheckFailure, StrategyDoesNotApply
-from .constructor import Constructor, DisjointUnion
+from .constructor import Complement, Constructor, DisjointUnion
 
 if TYPE_CHECKING:
     from .strategy import AbstractStrategy, Strategy, VerificationStrategy
     from .strategy_pack import StrategyPack
-
-Parameters = Tuple[int, ...]
-Objects = DefaultDict[Parameters, List[CombinatorialObjectType]]
-ObjectsCache = List[Objects]
-Terms = Counter[Parameters]  # all terms for a fixed n
-TermsCache = List[Terms]  # index n contains terms for n
-SubObjects = Tuple[Callable[[int], Objects], ...]
-SubTerms = Tuple[Callable[[int], Terms], ...]
 
 __all__ = ("Rule", "VerificationRule")
 
@@ -64,11 +67,29 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         self.subgenerators: Optional[
             Tuple[Callable[..., Iterator[CombinatorialObjectType]], ...]
         ] = None
-        self.subsamplers: Optional[Tuple[Callable[..., CombinatorialObjectType], ...]]
+        self.subsamplers: Optional[
+            Tuple[Callable[..., CombinatorialObjectType], ...]
+        ] = None
         self.subterms: Optional[SubTerms] = None
         self.subobjects: Optional[SubObjects] = None
         self._children = children
         self._non_empty_children: Optional[Tuple[CombinatorialClassType, ...]] = None
+
+    def to_jsonable(self) -> dict:
+        d = {
+            "class_module": self.__class__.__module__,
+            "rule_class": self.__class__.__name__,
+        }
+        return d
+
+    @classmethod
+    @abc.abstractmethod
+    def from_dict(cls, d: dict) -> "AbstractRule":
+        module = import_module(d.pop("class_module"))
+        RuleClass: Type["AbstractRule"] = getattr(module, d.pop("rule_class"))
+        if not issubclass(RuleClass, AbstractRule):
+            raise ValueError("Not a valid rule class")
+        return RuleClass.from_dict(d)
 
     @property
     def strategy(
@@ -152,6 +173,12 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         """
         Returns True if the rule is an equivalence.
         """
+
+    def is_two_way(self) -> bool:
+        """
+        Returns True if it is a two way rule.
+        """
+        return self.strategy.is_two_way(self.comb_class)
 
     def non_empty_children(self) -> Tuple[CombinatorialClassType, ...]:
         """
@@ -242,6 +269,12 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             and self._strategy == other._strategy
         )
 
+    def get_eq_symbol(self):
+        return self.strategy.get_eq_symbol()
+
+    def get_op_symbol(self):
+        return self.strategy.get_op_symbol()
+
     def __str__(self) -> str:
         def frontpad(res, height):
             n = max(len(s) for s in res)
@@ -267,7 +300,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             symbol_height = min(1, len(res) - 1)
             eq_symbol = (
                 ["     " for i in range(symbol_height)]
-                + ["  {}  ".format(self.strategy.get_eq_symbol())]
+                + ["  {}  ".format(self.get_eq_symbol())]
                 + ["     " for i in range(symbol_height)]
             )
             join(res, eq_symbol)
@@ -275,7 +308,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             if len(children) > 1:
                 op_symbol = (
                     ["     " for i in range(symbol_height)]
-                    + ["  {}  ".format(self.strategy.get_op_symbol())]
+                    + ["  {}  ".format(self.get_op_symbol())]
                     + ["     " for i in range(symbol_height)]
                 )
                 for child in children[1:]:
@@ -293,6 +326,26 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
     ):
         super().__init__(strategy, comb_class, children)
         self._constructor: Optional[Constructor] = None
+
+    def to_jsonable(self) -> dict:
+        d = super().to_jsonable()
+        d["comb_class"] = self.comb_class.to_jsonable()
+        d["children"] = [child.to_jsonable() for child in self.children]
+        d["strategy"] = self.strategy.to_jsonable()
+        return d
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "Rule":
+        # pylint: disable=import-outside-toplevel
+        from comb_spec_searcher.strategies.strategy import AbstractStrategy, Strategy
+
+        strategy = AbstractStrategy.from_dict(d.pop("strategy"))
+        assert isinstance(strategy, Strategy)
+        comb_class = CombinatorialClass.from_dict(d.pop("comb_class"))
+        comb_class = cast(CombinatorialClassType, comb_class)
+        d.pop("children")
+        assert not d
+        return cls(strategy, comb_class)
 
     @property
     def strategy(self) -> "Strategy[CombinatorialClassType, CombinatorialObjectType]":
@@ -318,7 +371,10 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         return self._constructor
 
     def is_equivalence(self):
-        return self.strategy.can_be_equivalent() and len(self.non_empty_children()) == 1
+        return (
+            isinstance(self.constructor, (DisjointUnion, Complement))
+            and len(self.non_empty_children()) == 1
+        )
 
     def backward_map(
         self, objs: Tuple[Optional[CombinatorialObjectType], ...]
@@ -348,21 +404,20 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         ), f"EquivalenceRule can only be created for equivalence rules\n{self}"
         return EquivalenceRule(self)
 
-    def to_reverse_rule(self) -> "ReverseRule":
+    def to_reverse_rule(self, idx: int) -> "Rule":
         """
         Return the reverse rule. At this stage, reverse rules can only be
         created for equivalence rules.
         """
-        assert (
-            self.is_equivalence()
-        ), "reverse rule can only be created for equivalence rules"
-        return ReverseRule(self)
+        return ReverseRule(self, idx)
 
     def _ensure_level(self, n: int) -> None:
         if self.subterms is None:
             raise RuntimeError("set_subrecs must be set first")
         while n >= len(self.terms_cache):
-            terms = self.constructor.get_terms(self.subterms, len(self.terms_cache))
+            terms = self.constructor.get_terms(
+                self.get_terms, self.subterms, len(self.terms_cache)
+            )
             self.terms_cache.append(terms)
 
     def get_equation(
@@ -399,12 +454,15 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
             total_count, self.subsamplers, self.subrecs, n, **parameters
         )
         objs = tuple(self.backward_map(subobjs))
-        idx = randint(0, len(objs) - 1)
-        return objs[idx]
+        return random.choice(objs)
 
     def sanity_check(self, n: int) -> bool:
         try:
-            return self._sanity_check_count(n) and self._sanity_check_objects(n)
+            return (
+                self._sanity_check_count(n)
+                and self._sanity_check_objects(n)
+                and self._sanity_check_random_sample(n)
+            )
         except SanityCheckFailure as e:
             raise e
 
@@ -457,6 +515,75 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
             )
         return True
 
+    def _sanity_check_random_sample(self, n: int) -> bool:
+        # pylint: disable=access-member-before-definition
+        # pylint: disable=attribute-defined-outside-init
+        actual_objects = self.comb_class.get_objects(n)
+        possible_parameters = [
+            (dict(zip(self.comb_class.extra_parameters, param)), param)
+            for param in actual_objects
+        ]
+        if not possible_parameters:
+            return True
+
+        def fake_subsampler(
+            comb_class: CombinatorialClassType,
+        ) -> Callable[..., CombinatorialObjectType]:
+            objs_cache: Dict[int, Objects] = {}
+
+            def sampler(n: int, **parameters: int) -> CombinatorialObjectType:
+                if n not in objs_cache:
+                    objs_cache[n] = comb_class.get_objects(n)
+                objs = objs_cache[n]
+                param_tuple = tuple(parameters[p] for p in comb_class.extra_parameters)
+                return cast(CombinatorialObjectType, random.choice(objs[param_tuple]))
+
+            return sampler
+
+        def fake_subrec(comb_class: CombinatorialClassType) -> Callable[..., int]:
+            terms_cache: Dict[int, Terms] = {}
+
+            def subrec(n: int, **parameters: int) -> int:
+                if n not in terms_cache:
+                    terms_cache[n] = comb_class.get_terms(n)
+                terms = terms_cache[n]
+                param_tuple = tuple(parameters[p] for p in comb_class.extra_parameters)
+                return terms[param_tuple]
+
+            return subrec
+
+        tmpsamplers = self.subsamplers
+        tmpsubrec = self.subrecs
+        tmpsubterms = self.subterms
+        self.subsamplers = tuple(fake_subsampler(child) for child in self.children)
+        self.subrecs = tuple(fake_subrec(child) for child in self.children)
+        self.subterms = tuple(child.get_terms for child in self.children)
+        try:
+            self.random_sample_object_of_size(n, **possible_parameters[0][0])
+        except NotImplementedError:
+            # Skipping testing rules that have not implemented random_sampling.
+            self.subsamplers = tmpsamplers
+            self.subrecs = tmpsubrec
+            self.subterms = tmpsubterms
+            return True
+
+        for paramd, paramt in possible_parameters:
+            obj = self.random_sample_object_of_size(n, **paramd)
+            if obj not in actual_objects[paramt]:
+                self.subsamplers = tmpsamplers
+                self.subrecs = tmpsubrec
+                self.subterms = tmpsubterms
+                raise SanityCheckFailure(
+                    f"The following rule failed sanity check:\n"
+                    f"{self}\n"
+                    f"Failed for size {n}:\n"
+                    f"Sampled the object {obj} for the parameters {paramd}\n"
+                )
+        self.subsamplers = tmpsamplers
+        self.subrecs = tmpsubrec
+        self.subterms = tmpsubterms
+        return True
+
 
 class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     def __init__(self, rule: Rule):
@@ -466,30 +593,61 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         super().__init__(rule.strategy, rule.comb_class, (child,))
         self.child_idx = rule.children.index(child)
         self.actual_children = rule.children
-        self._constructor: Optional[DisjointUnion] = None
+        self.original_rule = rule
+        self._constructor: Optional[Union[DisjointUnion, Complement]] = None
+
+    def to_jsonable(self) -> dict:
+        d = super().to_jsonable()
+        d.pop("comb_class")
+        d.pop("strategy")
+        d.pop("children")
+        d["original_rule"] = self.original_rule.to_jsonable()
+        return d
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "EquivalenceRule":
+        rule = AbstractRule.from_dict(d.pop("original_rule"))
+        assert isinstance(rule, Rule)
+        assert not d, d.keys()
+        return cls(rule)
 
     @property
-    def constructor(self) -> DisjointUnion:
+    def constructor(self) -> Union[DisjointUnion, Complement]:
         """
         Return the constructor, that contains all the information about how to
         count/generate objects from the rule.
         """
         if self._constructor is None:
-            original_constructor = cast(
-                DisjointUnion,
-                self.strategy.constructor(self.comb_class, self.actual_children),
-            )
-            assert isinstance(original_constructor, DisjointUnion)
-            self._constructor = DisjointUnion(
-                self.comb_class,
-                self.children,
-                (original_constructor.extra_parameters[self.child_idx],),
-            )
+            original_constructor = self.original_rule.constructor
+            if isinstance(original_constructor, DisjointUnion):
+                self._constructor = DisjointUnion(
+                    self.comb_class,
+                    self.children,
+                    (original_constructor.extra_parameters[self.child_idx],),
+                )
+            elif isinstance(original_constructor, Complement):
+                assert isinstance(self.original_rule, ReverseRule)
+                original_original_constructor = (
+                    self.original_rule.original_rule.constructor
+                )
+                assert isinstance(original_original_constructor, DisjointUnion)
+                self._constructor = Complement(
+                    self.original_rule.original_rule.comb_class,
+                    self.original_rule.original_rule.children,
+                    self.original_rule.idx,
+                    original_original_constructor.extra_parameters,
+                )
+            else:
+                raise NotImplementedError
         return self._constructor
 
     @staticmethod
     def is_equivalence() -> bool:
         return True
+
+    def to_reverse_rule(self, idx: int) -> "EquivalenceRule":
+        assert idx == 0
+        return self.original_rule.to_reverse_rule(self.child_idx).to_equivalence_rule()
 
     @property
     def formal_step(self) -> str:
@@ -520,14 +678,33 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
 
 class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     """
-    A class for shortening a chain of equivalence rules into a single Rule.
+    A class for shortening a chain of disjoint union  or complement unary rules into a
+    single Rule.
     """
 
     def __init__(self, rules: Sequence[Rule]):
         assert all(rule.is_equivalence() for rule in rules)
         super().__init__(rules[0].strategy, rules[0].comb_class, rules[-1].children)
-        self.rules = rules
+        self.rules = tuple(rules)
         self._constructor: Optional[DisjointUnion] = None
+
+    def to_jsonable(self) -> dict:
+        d = super().to_jsonable()
+        d.pop("comb_class")
+        d.pop("strategy")
+        d.pop("children")
+        d["rules"] = [r.to_jsonable() for r in self.rules]
+        return d
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "EquivalencePathRule":
+        rules: List[Rule] = []
+        for rule_dict in d.pop("rules"):
+            rule = AbstractRule.from_dict(rule_dict)
+            assert isinstance(rule, Rule)
+            rules.append(rule)
+        assert not d
+        return cls(rules)
 
     @property
     def constructor(self) -> DisjointUnion:
@@ -537,7 +714,7 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
             }
             for rule in self.rules:
                 original_constructor = rule.constructor
-                assert isinstance(original_constructor, DisjointUnion)
+                assert isinstance(original_constructor, (DisjointUnion, Complement))
                 rules_parameters = original_constructor.extra_parameters[0]
                 extra_parameters = {
                     parent_var: rules_parameters[child_var]
@@ -589,7 +766,7 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
         self, obj: CombinatorialObjectType
     ) -> Tuple[Optional[CombinatorialObjectType], ...]:
         res = cast(CombinatorialObjectType, obj)
-        for rule in reversed(self.rules):
+        for rule in self.rules:
             res = cast(CombinatorialObjectType, rule.forward_map(res)[0])
         return (res,)
 
@@ -633,55 +810,83 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
 
 class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     """
-    A class for creating the reverse of an equivalence rule.
+    A class for creating a reverse equivalence rule.
     """
 
-    def __init__(self, rule: Rule):
-        assert (
-            rule.is_equivalence()
-        ), "reversing a rule only works for equivalence rules"
-        super().__init__(rule.strategy, rule.children[0], (rule.comb_class,))
+    def __init__(self, rule: Rule, idx: int):
+        assert rule.is_two_way()
+        super().__init__(
+            rule.strategy,
+            rule.children[idx],
+            (rule.comb_class, *rule.children[:idx], *rule.children[idx + 1 :]),
+        )
         self.original_rule = rule
-        self._constructor: Optional[DisjointUnion] = None
+        self.idx = idx  # the idx of the child to be counted.
+        self._constructor: Optional[Constructor] = None
+
+    def to_jsonable(self) -> dict:
+        d = super().to_jsonable()
+        d.pop("comb_class")
+        d.pop("strategy")
+        d.pop("children")
+        d["original_rule"] = self.original_rule.to_jsonable()
+        d["idx"] = self.idx
+        return d
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "ReverseRule":
+        rule = AbstractRule.from_dict(d.pop("original_rule"))
+        assert isinstance(rule, Rule)
+        idx = d.pop("idx")
+        assert not d
+        return cls(rule, idx)
+
+    def to_reverse_rule(self, idx: int) -> "Rule":
+        raise NotImplementedError("You don't want to do that! I promise")
 
     @property
-    def constructor(self) -> DisjointUnion:
+    def constructor(
+        self,
+    ) -> Constructor:
         if self._constructor is None:
-            original_constructor = self.original_rule.constructor
-            assert isinstance(original_constructor, DisjointUnion), (
-                "reverse rule coming from non disjoint union strategy - "
-                "you'll need to update the ReverseRule constructor!"
+            self._constructor = self.strategy.reverse_constructor(
+                self.idx,
+                self.original_rule.comb_class,
+                self.original_rule.children,
             )
-            flipped_extra_params = {
-                b: a for a, b in original_constructor.extra_parameters[0].items()
-            }
-            fixed_values = {
-                k: 0
-                for k in self.children[0].extra_parameters
-                if k not in flipped_extra_params.values()
-            }
-            self._constructor = DisjointUnion(
-                self.comb_class, self.children, (flipped_extra_params,), (fixed_values,)
-            )
-        return self._constructor
 
-    @staticmethod
-    def is_equivalence() -> bool:
-        return True
+        return self._constructor
 
     @property
     def formal_step(self) -> str:
-        return "reverse of '{}'".format(self.strategy.formal_step())
+        if len(self.children) == 1:
+            return "reverse of '{}'".format(self.strategy.formal_step())
+        return f"reverse of '{self.strategy.formal_step()}', counting child {self.idx}"
 
     def backward_map(
         self, objs: Tuple[Optional[CombinatorialObjectType], ...]
     ) -> Iterator[CombinatorialObjectType]:
-        yield cast(CombinatorialObjectType, self.original_rule.forward_map(objs[0])[0])
+        # We expect the object to be in only the first and in particular when
+        # mapped should be in the idx child.
+        if not isinstance(self.constructor, DisjointUnion) and len(self.children) != 1:
+            raise NotImplementedError("Cannot map for non equivalence rule.")
+        yield cast(
+            CombinatorialObjectType, self.original_rule.forward_map(objs[0])[self.idx]
+        )
 
     def forward_map(
         self, obj: CombinatorialObjectType
     ) -> Tuple[Optional[CombinatorialObjectType], ...]:
-        return (next(self.original_rule.backward_map((obj,))),)
+        # We map forward to the first child.
+        # It is assumed that obj is ONLY on this child
+        if not isinstance(self.constructor, DisjointUnion) and len(self.children) != 1:
+            raise NotImplementedError("Cannot map for non equivalence rule.")
+        return (next(self.original_rule.backward_map((obj,))),) + tuple(
+            None for _ in range(len(self.children) - 1)
+        )
+
+    def get_op_symbol(self):
+        return self.strategy.get_reverse_op_symbol()
 
 
 class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
@@ -698,6 +903,27 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
     ):
         assert not children
         super().__init__(strat, comb_class, children)
+
+    def to_jsonable(self) -> dict:
+        d = super().to_jsonable()
+        d["comb_class"] = self.comb_class.to_jsonable()
+        d["strategy"] = self.strategy.to_jsonable()
+        return d
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "VerificationRule":
+        # pylint: disable=import-outside-toplevel
+        from comb_spec_searcher.strategies.strategy import (
+            AbstractStrategy,
+            VerificationStrategy,
+        )
+
+        strategy = AbstractStrategy.from_dict(d.pop("strategy"))
+        assert isinstance(strategy, VerificationStrategy)
+        comb_class = CombinatorialClass.from_dict(d.pop("comb_class"))
+        comb_class = cast(CombinatorialClassType, comb_class)
+        assert not d
+        return cls(strategy, comb_class)
 
     @property
     def strategy(
