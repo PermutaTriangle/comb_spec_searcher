@@ -4,6 +4,7 @@ from typing import Dict, Iterator, List, Tuple
 from comb_spec_searcher.class_db import ClassDB
 from comb_spec_searcher.rule_db.base import RuleDBBase
 from comb_spec_searcher.strategies.rule import AbstractRule, Rule
+from comb_spec_searcher.strategies.strategy import VerificationStrategy
 from comb_spec_searcher.tree_searcher import Node
 from comb_spec_searcher.typing import RuleKey
 
@@ -86,7 +87,8 @@ class SpecificationRuleExtractor:
             if len(children) != 1:
                 raise self._missing_rule_error(parent, children) from e
         else:
-            assert strategy(self.classdb.get_class(parent)).sanity_check(4)
+            if not isinstance(strategy, VerificationStrategy):
+                assert strategy(self.classdb.get_class(parent)).sanity_check(4)
             return strategy(self.classdb.get_class(parent))
         # From now on we are looking for a two way strategy
         assert len(children) == 1
@@ -98,7 +100,7 @@ class SpecificationRuleExtractor:
             rule = strategy(self.classdb.get_class(parent))
             assert isinstance(rule, Rule)
             assert rule.sanity_check(4)
-            if len(rule.children) == 1:
+            if len(rule.children) != 1:
                 # I suspect the bug is here
                 assert rule.to_equivalence_rule().sanity_check(4)
             return rule if len(rule.children) == 1 else rule.to_equivalence_rule()
