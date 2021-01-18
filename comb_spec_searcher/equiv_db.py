@@ -112,7 +112,6 @@ class EquivalenceDB:
                 for i, vertex in enumerate(path[:-1]):
                     if self.equivalent(vertex, new_end):
                         # we've detected a cycle!
-                        print("CYCLE", path, new_end)
                         for eqv_vertix in path[i:]:
                             self._set_equivalent(eqv_vertix, new_end)
                         break
