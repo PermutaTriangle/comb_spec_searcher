@@ -88,7 +88,7 @@ class SpecificationRuleExtractor:
                 raise self._missing_rule_error(parent, children) from e
         else:
             if not isinstance(strategy, VerificationStrategy):
-                assert strategy(self.classdb.get_class(parent)).sanity_check(4)
+                assert strategy(self.classdb.get_class(parent)).sanity_check(2)
             return strategy(self.classdb.get_class(parent))
         # From now on we are looking for a two way strategy
         assert len(children) == 1
@@ -99,10 +99,10 @@ class SpecificationRuleExtractor:
         else:
             rule = strategy(self.classdb.get_class(parent))
             assert isinstance(rule, Rule)
-            assert rule.sanity_check(4)
+            assert rule.sanity_check(2)
             if len(rule.children) != 1:
                 # I suspect the bug is here
-                assert rule.to_equivalence_rule().sanity_check(4)
+                assert rule.to_equivalence_rule().sanity_check(2)
             return rule if len(rule.children) == 1 else rule.to_equivalence_rule()
         # Now trying a reverse rule
         try:
@@ -113,7 +113,7 @@ class SpecificationRuleExtractor:
             rule = strategy(self.classdb.get_class(children[0]))
             assert isinstance(rule, Rule)
             rule = rule if len(rule.children) == 1 else rule.to_equivalence_rule()
-            assert rule.to_reverse_rule(0).sanity_check(4)
+            assert rule.to_reverse_rule(0).sanity_check(2)
             return rule.to_reverse_rule(0)
         raise self._missing_rule_error(parent, children)
 

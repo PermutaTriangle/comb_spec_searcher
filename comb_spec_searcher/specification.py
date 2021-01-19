@@ -63,7 +63,13 @@ class CombinatorialSpecification(
         self.rules_dict = {rule.comb_class: rule for rule in rules}
         self.labels: Dict[CombinatorialClassType, int] = {}
         self._label_to_tiling: Dict[int, CombinatorialClassType] = {}
+        for rule in self.rules_dict.values():
+            # Should pass
+            rule.sanity_check(2)
         self._group_equiv_in_path()
+        for rule in self.rules_dict.values():
+            # Hopefully fails
+            rule.sanity_check(2)
         self._set_subrules()
 
     def _set_subrules(self) -> None:
