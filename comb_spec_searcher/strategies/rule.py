@@ -684,6 +684,7 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
 
     def __init__(self, rules: Sequence[Rule]):
         assert all(rule.is_equivalence() for rule in rules)
+        assert all(len(rule.children) == 1 for rule in rules)
         super().__init__(rules[0].strategy, rules[0].comb_class, rules[-1].children)
         self.rules = tuple(rules)
         self._constructor: Optional[DisjointUnion] = None
