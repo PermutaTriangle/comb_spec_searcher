@@ -8,6 +8,7 @@ from operator import mul
 from typing import Dict, Generic, Iterable, Iterator, List, Optional, Set, Union
 
 import sympy
+import tqdm
 from logzero import logger
 from sympy import Eq, Expr, Function, Number, solve, var
 
@@ -58,18 +59,20 @@ class CombinatorialSpecification(
         self,
         root: CombinatorialClassType,
         rules: Iterable[AbstractRule[CombinatorialClassType, CombinatorialObjectType]],
+        no_asserts: bool = False,
     ):
         self.root = root
         self.rules_dict = {rule.comb_class: rule for rule in rules}
+        self.no_asserts = no_asserts
         self.labels: Dict[CombinatorialClassType, int] = {}
         self._label_to_tiling: Dict[int, CombinatorialClassType] = {}
-        for rule in self.rules_dict.values():
+        for rule in tqdm.tqdm(self.rules_dict.values(), desc="Before path"):
             # Should pass
-            rule.sanity_check(2)
+            assert self.no_asserts or rule.sanity_check(2)
         self._group_equiv_in_path()
-        for rule in self.rules_dict.values():
+        for rule in tqdm.tqdm(self.rules_dict.values(), desc="After path"):
             # Hopefully fails
-            rule.sanity_check(2)
+            assert self.no_asserts or rule.sanity_check(2)
         self._set_subrules()
 
     def _set_subrules(self) -> None:
@@ -541,8 +544,11 @@ class CombinatorialSpecification(
         'to_jsonable' method
         """
         root = CombinatorialClass.from_dict(d.pop("root"))
-        rules = [AbstractRule.from_dict(rule_dict) for rule_dict in d.pop("rules")]
-        return CombinatorialSpecification(root, rules)
+        rules = [
+            AbstractRule.from_dict(rule_dict)
+            for rule_dict in tqdm.tqdm(d.pop("rules"), desc="Building the rules")
+        ]
+        return CombinatorialSpecification(root, rules, no_asserts=True)
 
 
 class AlreadyVerified(VerificationStrategy[CombinatorialClass, CombinatorialObject]):
