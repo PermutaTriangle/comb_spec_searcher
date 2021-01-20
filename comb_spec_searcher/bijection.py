@@ -1,5 +1,5 @@
 from collections import defaultdict, deque
-from typing import DefaultDict, Dict, List, Optional, Set, Tuple
+from typing import Callable, DefaultDict, Dict, List, Optional, Set, Tuple
 
 from comb_spec_searcher.comb_spec_searcher import CombinatorialSpecificationSearcher
 from comb_spec_searcher.combinatorial_class import CombinatorialClass
@@ -73,12 +73,14 @@ class ParallelSpecFinder:
         self,
         searcher1: CombinatorialSpecificationSearcher,
         searcher2: CombinatorialSpecificationSearcher,
+        atom_equals: Callable[[CombinatorialClass, CombinatorialClass], bool],
     ):
         self.pi1 = ParallelInfo(searcher1)
         self.pi2 = ParallelInfo(searcher2)
         self.a_label: int = 0
         self.a1: Dict[int, int] = {}
         self.a2: Dict[int, int] = {}
+        self.atom_equals = atom_equals
 
     def find(
         self,
@@ -114,8 +116,7 @@ class ParallelSpecFinder:
                 continue
             # If rule type has no constructor we compare atoms
             if rule_type == NO_CONSTRUCTOR:
-                # TODO: add optional custom atom comparison
-                if self.pi1.atom_map[id1] == self.pi2.atom_map[id2]:
+                if self.atom_equals(self.pi1.atom_map[id1], self.pi2.atom_map[id2]):
                     matching_info[(id1, id2)] = ((), ())
                     return True
                 continue
@@ -207,3 +208,17 @@ class ParallelSpecFinder:
             pi.root_eq_label, root_node, pi.r_db, pi.searcher.classdb
         ).rules()
         return CombinatorialSpecification(pi.root_class, rules)
+
+
+def _default_equals(c1: CombinatorialClass, c2: CombinatorialClass) -> bool:
+    return c1 == c2
+
+
+def find_bijection_between(
+    searcher1: CombinatorialSpecificationSearcher,
+    searcher2: CombinatorialSpecificationSearcher,
+    atom_equals: Callable[
+        [CombinatorialClass, CombinatorialClass], bool
+    ] = _default_equals,
+) -> Optional[Tuple[CombinatorialSpecification, CombinatorialSpecification]]:
+    return ParallelSpecFinder(searcher1, searcher2, atom_equals).find()
