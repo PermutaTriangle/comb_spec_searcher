@@ -3,6 +3,7 @@ from typing import Callable, DefaultDict, Dict, List, Optional, Set, Tuple
 
 from comb_spec_searcher.comb_spec_searcher import CombinatorialSpecificationSearcher
 from comb_spec_searcher.combinatorial_class import CombinatorialClass
+from comb_spec_searcher.exception import NoMoreClassesToExpandError
 from comb_spec_searcher.rule_db.base import RuleDBBase
 from comb_spec_searcher.specification import CombinatorialSpecification
 from comb_spec_searcher.specification_extrator import SpecificationRuleExtractor
@@ -14,10 +15,13 @@ NO_CONSTRUCTOR = None.__class__
 
 
 class ParallelInfo:
+    """Information from searcher essential to finding bijection with another and then
+    to create specifications.
+    """
+
     def __init__(self, searcher: CombinatorialSpecificationSearcher):
         self.searcher: CombinatorialSpecificationSearcher = searcher
-        while searcher.get_specification(minimization_time_limit=0) is None:
-            searcher.do_level()
+        self._expand()
         self.r_db: RuleDBBase = self.searcher.ruledb
         self.rule_dict: Dict[
             int, Set[Tuple[int, ...]]
@@ -31,20 +35,23 @@ class ParallelInfo:
             int, DefaultDict[type, DefaultDict[int, Set[Tuple[int, ...]]]]
         ] = self._construct_eq_label_rules()
 
+    def _expand(self):
+        try:
+            while self.searcher.get_specification(minimization_time_limit=0) is None:
+                self.searcher.do_level()
+        except NoMoreClassesToExpandError:
+            pass
+
     def _construct_eq_label_rules(
         self,
     ) -> DefaultDict[int, DefaultDict[type, DefaultDict[int, Set[Tuple[int, ...]]]]]:
-        # TODO: From how this is used in css, this should rly be a set
-        # but currently a list is expected.
-        lis: List[Tuple[int, Tuple[int, ...]]] = [
-            (k, c) for k, v in self.rule_dict.items() for c in v
-        ]
-        rule_dict: Dict[RuleKey, RuleKey] = self.r_db.rule_from_equivalence_rule_dict(
-            lis
-        )
-        eq_label_rules: DefaultDict[
-            int, DefaultDict[type, DefaultDict[int, Set[Tuple[int, ...]]]]
-        ] = defaultdict(lambda: defaultdict(lambda: defaultdict(set)))
+        """
+        Creates a dictionary d such that
+            d[label][rule_type][number_of_children]
+        is a set of possible resulting children ids (grouped into tuples of length
+        number_of_children) by applying rule_type to label.
+        """
+        lis, rule_dict, eq_label_rules = self._construct_eq_labels_init()
 
         for eq_par, eq_chi in lis:
             actual_par, actual_children = rule_dict[(eq_par, eq_chi)]
@@ -64,8 +71,25 @@ class ParallelInfo:
                 )
         return eq_label_rules
 
+    def _construct_eq_labels_init(
+        self,
+    ) -> Tuple[
+        List[Tuple[int, Tuple[int, ...]]],
+        Dict[RuleKey, RuleKey],
+        DefaultDict[int, DefaultDict[type, DefaultDict[int, Set[Tuple[int, ...]]]]],
+    ]:
+        # TODO: From how this is used in css, this should rly be a set
+        # but currently a list is expected.
+        lis = [(k, c) for k, v in self.rule_dict.items() for c in v]
+        rule_dict = self.r_db.rule_from_equivalence_rule_dict(lis)
+        eq_label_rules: DefaultDict[
+            int, DefaultDict[type, DefaultDict[int, Set[Tuple[int, ...]]]]
+        ] = defaultdict(lambda: defaultdict(lambda: defaultdict(set)))
+        return lis, rule_dict, eq_label_rules
+
 
 class ParallelSpecFinder:
+    """Finder for paralell specs."""
 
     _INVALID, _UNKNOWN, _VALID = range(-1, 2)
 
@@ -85,6 +109,7 @@ class ParallelSpecFinder:
     def find(
         self,
     ) -> Optional[Tuple[CombinatorialSpecification, CombinatorialSpecification]]:
+        """Find bijections between the two universes."""
         matching_info: Dict[
             Tuple[int, int], Tuple[Tuple[int, ...], Tuple[int, ...]]
         ] = {}
@@ -180,10 +205,8 @@ class ParallelSpecFinder:
             return None
         sp1, sp2 = {}, {}
         for k, v in matching_info.items():
-            a, b = k
-            c, d = v
-            sp1[a] = c
-            sp2[b] = d
+            (a, b), (c, d) = k, v
+            sp1[a], sp2[b] = c, d
         return (
             ParallelSpecFinder._create_spec(sp1, self.pi1),
             ParallelSpecFinder._create_spec(sp2, self.pi2),
@@ -221,4 +244,6 @@ def find_bijection_between(
         [CombinatorialClass, CombinatorialClass], bool
     ] = _default_equals,
 ) -> Optional[Tuple[CombinatorialSpecification, CombinatorialSpecification]]:
+    """Find bijections between two universes. If they are not of the same type, a
+    custom atom comparator is needed."""
     return ParallelSpecFinder(searcher1, searcher2, atom_equals).find()
