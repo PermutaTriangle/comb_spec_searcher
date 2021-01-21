@@ -67,12 +67,16 @@ class CombinatorialSpecification(
         self.labels: Dict[CombinatorialClassType, int] = {}
         self._label_to_tiling: Dict[int, CombinatorialClassType] = {}
         for rule in tqdm.tqdm(self.rules_dict.values(), desc="Before path"):
-            # Should pass
-            assert self.no_asserts or rule.sanity_check(2)
+            try:
+                assert self.no_asserts or rule.sanity_check(2)
+            except NotImplementedError:
+                logger.warn(f"Not implemented for:\n{rule}")
         self._group_equiv_in_path()
         for rule in tqdm.tqdm(self.rules_dict.values(), desc="After path"):
-            # Hopefully fails
-            assert self.no_asserts or rule.sanity_check(2)
+            try:
+                assert self.no_asserts or rule.sanity_check(2)
+            except NotImplementedError:
+                logger.warn(f"Not implemented for:\n{rule}")
         self._set_subrules()
 
     def _set_subrules(self) -> None:
