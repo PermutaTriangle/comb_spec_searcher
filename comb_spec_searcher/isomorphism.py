@@ -195,7 +195,12 @@ class Node:
         """Parse tree's recursive build object function."""
         if not self.children:
             # TODO: stop special casing verification rules!
-            return self.obj
+            obj: CombinatorialObject = next(
+                rule.comb_class.objects_of_size(
+                    rule.comb_class.minimum_size_of_object()
+                )
+            )
+            return obj
         if rule.is_equivalence():
             if not self.rule.is_equivalence():
                 return self.build_obj(get_rule(rule.children[0]), get_order, get_rule)

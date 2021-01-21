@@ -207,7 +207,7 @@ class ExpansionStrategy(DisjointUnionStrategy[AvoidingWithPrefix, Word]):
             if word[: len(child.prefix)] == child.prefix:
                 return (
                     tuple(None for _ in range(idx + 1))
-                    + (child,)
+                    + (word,)
                     + tuple(None for _ in range(len(children) - idx - 1))
                 )
 
