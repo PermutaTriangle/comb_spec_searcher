@@ -40,7 +40,9 @@ class ParallelInfo:
             while self.searcher.get_specification(minimization_time_limit=0) is None:
                 self.searcher.do_level()
         except NoMoreClassesToExpandError:
-            pass
+            assert (
+                self.searcher.get_specification(minimization_time_limit=0) is not None
+            )
 
     def _construct_eq_label_rules(
         self,
@@ -128,7 +130,6 @@ class ParallelSpecFinder:
         visited: Set[Tuple[int, int]],
     ) -> bool:
         # pylint: disable=too-many-nested-blocks
-
         known = self._base_case(id1, id2, matching_info, visited)
         if known:
             return bool(known + 1)
@@ -138,12 +139,6 @@ class ParallelSpecFinder:
         for rule_type, child_cnt_map in self.pi1.eq_label_rules[id1].items():
             # If attempted match has no rule of this type they won't match
             if rule_type not in self.pi2.eq_label_rules[id2]:
-                continue
-            # If rule type has no constructor we compare atoms
-            if rule_type == NO_CONSTRUCTOR:
-                if self.atom_equals(self.pi1.atom_map[id1], self.pi2.atom_map[id2]):
-                    matching_info[(id1, id2)] = ((), ())
-                    return True
                 continue
 
             # Try matching of all children with the children in the other spec.
@@ -176,6 +171,17 @@ class ParallelSpecFinder:
         matching_info: Dict[Tuple[int, int], Tuple[Tuple[int, ...], Tuple[int, ...]]],
         visited: Set[Tuple[int, int]],
     ) -> int:
+        # If rule type has no constructor we compare atoms
+        if NO_CONSTRUCTOR in self.pi1.eq_label_rules[id1]:
+            if NO_CONSTRUCTOR in self.pi2.eq_label_rules[id2]:
+                if self.atom_equals(self.pi1.atom_map[id1], self.pi2.atom_map[id2]):
+                    matching_info[(id1, id2)] = ((), ())
+                    return ParallelSpecFinder._VALID
+                if len(self.pi2.eq_label_rules[id2]) == 1:
+                    return ParallelSpecFinder._INVALID
+            if len(self.pi1.eq_label_rules[id1]) == 1:
+                return ParallelSpecFinder._INVALID
+
         if (id1, id2) in matching_info:
             return ParallelSpecFinder._VALID
         if (id1, id2) in visited:
