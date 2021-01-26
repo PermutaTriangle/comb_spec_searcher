@@ -649,6 +649,9 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         assert idx == 0
         return self.original_rule.to_reverse_rule(self.child_idx).to_equivalence_rule()
 
+    def to_equivalence_rule(self) -> "EquivalenceRule":
+        raise NotImplementedError("You don't want to do that! I promise")
+
     @property
     def formal_step(self) -> str:
         return "{} but only the child at index {} is non-empty".format(
@@ -750,6 +753,12 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
             eqv_path_rules.append((curr, rule))
             curr = rule.children[0]
         return eqv_path_rules
+
+    def to_equivalence_rule(self) -> "EquivalenceRule":
+        raise NotImplementedError("You don't want to do that! I promise")
+
+    def to_reverse_rule(self) -> "Rule":
+        raise NotImplementedError("You don't want to do that! I promise")
 
     def backward_map(
         self, objs: Tuple[Optional[CombinatorialObjectType], ...]
