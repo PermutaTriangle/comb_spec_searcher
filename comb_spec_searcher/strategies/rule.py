@@ -757,7 +757,7 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
     def to_equivalence_rule(self) -> "EquivalenceRule":
         raise NotImplementedError("You don't want to do that! I promise")
 
-    def to_reverse_rule(self) -> "Rule":
+    def to_reverse_rule(self, idx: int) -> "Rule":
         raise NotImplementedError("You don't want to do that! I promise")
 
     def backward_map(
