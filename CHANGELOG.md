@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Reverse rule default back to the equation of the original rule in case
+  `NotImplementedError`
+
 ## [3.0.0] - 2021-01-04
 ### Added
 - Automatic bijection between equivalent specifications through the functions `get_bijection_to` and `are_isomorphic` of the specifications class. The bijection object holds a `map` function that performs the actual mapping.
