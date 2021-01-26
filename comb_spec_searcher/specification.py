@@ -11,6 +11,7 @@ import sympy
 from logzero import logger
 from sympy import Eq, Expr, Function, Number, solve, var
 
+from comb_spec_searcher.exception import SpecificationNotFound
 from comb_spec_searcher.typing import (
     CombinatorialClassType,
     CombinatorialObjectType,
@@ -132,7 +133,9 @@ class CombinatorialSpecification(
         """
         verification_packs: Dict[CombinatorialClassType, StrategyPack] = {}
         for comb_class, rule in self.rules_dict.items():
-            if isinstance(rule, VerificationRule):
+            if isinstance(rule, VerificationRule) and not isinstance(
+                rule.strategy, EmptyStrategy
+            ):
                 try:
                     verification_packs[comb_class] = rule.pack()
                 except InvalidOperationError:
@@ -144,8 +147,38 @@ class CombinatorialSpecification(
             self._group_equiv_in_path()
             self._set_subrules()
 
+    def unexpanded_verified_classes(self) -> Set[CombinatorialClassType]:
+        """
+        Returns the set of verified classes so you can determine which classes still
+        need to be expanded.
+        """
+        return set(
+            comb_class
+            for comb_class, rule in self.rules_dict.items()
+            if isinstance(rule, VerificationRule)
+            and not isinstance(rule.strategy, EmptyStrategy)
+        )
+
+    def expand_all_verified_with_pack(
+        self, pack: StrategyPack, max_expansion_time: float = 0
+    ) -> None:
+        """
+        Will attempt to expand all verified class with the given strategy pack, limiting
+        expansion to a particular time limit if max_expansion_time is specified.
+        """
+        for comb_class, rule in self.rules_dict.items():
+            if isinstance(rule, VerificationRule) and not isinstance(
+                rule.strategy, EmptyStrategy
+            ):
+                self.expand_comb_class(comb_class, pack, max_expansion_time)
+        self._group_equiv_in_path()
+        self._set_subrules()
+
     def expand_comb_class(
-        self, comb_class: Union[int, CombinatorialClassType], pack: StrategyPack
+        self,
+        comb_class: Union[int, CombinatorialClassType],
+        pack: StrategyPack,
+        max_expansion_time: float = 0,
     ) -> None:
         """
         Will try to expand a particular class with respect to the strategy pack
@@ -155,17 +188,25 @@ class CombinatorialSpecification(
         from .comb_spec_searcher import CombinatorialSpecificationSearcher
 
         rule = self.get_rule(comb_class)
-        self.rules_dict.pop(rule.comb_class)
+
+        removed_rule = self.rules_dict.pop(rule.comb_class)
+
         pack = pack.add_verification(AlreadyVerified(self.rules_dict), apply_first=True)
         css = CombinatorialSpecificationSearcher(rule.comb_class, pack)
         logger.info(css.run_information())
-        rules = css._auto_search_rules()  # pylint: disable=protected-access
-        for rule in rules:
-            if not isinstance(rule.strategy, AlreadyVerified):
-                assert (
-                    rule.comb_class not in self.rules_dict or rule.comb_class.is_empty()
-                )
-                self.rules_dict[rule.comb_class] = rule
+        try:
+            rules = css._auto_search_rules(  # pylint: disable=protected-access
+                max_expansion_time=max_expansion_time
+            )
+            for rule in rules:
+                if not isinstance(rule.strategy, AlreadyVerified):
+                    assert (
+                        rule.comb_class not in self.rules_dict
+                        or rule.comb_class.is_empty()
+                    )
+                    self.rules_dict[rule.comb_class] = rule
+        except SpecificationNotFound:
+            self.rules_dict[rule.comb_class] = removed_rule
 
     def _is_valid_spec(self) -> bool:
         """Checks that each class is on a left hand side."""
