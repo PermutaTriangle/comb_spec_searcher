@@ -233,7 +233,9 @@ class CombinatorialSpecification(
                     " in the specification."
                 ) from e
         if comb_class not in self.rules_dict:
-            assert comb_class.is_empty(), "rule not in the spec and not empty"
+            assert (
+                comb_class.is_empty()
+            ), f"rule not in the spec and not empty\n{comb_class}"
             empty_strat = EmptyStrategy[
                 CombinatorialClassType, CombinatorialObjectType
             ]()
