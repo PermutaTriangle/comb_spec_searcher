@@ -168,7 +168,7 @@ class CombinatorialSpecification(
         Will attempt to expand all verified class with the given strategy pack, limiting
         expansion to a particular time limit if max_expansion_time is specified.
         """
-        for comb_class, rule in copy(self.rules_dict.items()):
+        for comb_class, rule in list(self.rules_dict.items()):
             if isinstance(rule, VerificationRule) and not isinstance(
                 rule.strategy, EmptyStrategy
             ):
