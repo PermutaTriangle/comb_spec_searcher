@@ -59,12 +59,14 @@ class CombinatorialSpecification(
         self,
         root: CombinatorialClassType,
         rules: Iterable[AbstractRule[CombinatorialClassType, CombinatorialObjectType]],
+        group_equiv: bool = True,
     ):
         self.root = root
         self.rules_dict = {rule.comb_class: rule for rule in rules}
         self.labels: Dict[CombinatorialClassType, int] = {}
         self._label_to_tiling: Dict[int, CombinatorialClassType] = {}
-        self._group_equiv_in_path()
+        if group_equiv:
+            self._group_equiv_in_path()
         self._set_subrules()
 
     def _set_subrules(self) -> None:
@@ -577,7 +579,7 @@ class CombinatorialSpecification(
         """
         root = CombinatorialClass.from_dict(d.pop("root"))
         rules = [AbstractRule.from_dict(rule_dict) for rule_dict in d.pop("rules")]
-        return CombinatorialSpecification(root, rules)
+        return CombinatorialSpecification(root, rules, group_equiv=False)
 
 
 class AlreadyVerified(VerificationStrategy[CombinatorialClass, CombinatorialObject]):
