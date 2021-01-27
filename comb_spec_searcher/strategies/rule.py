@@ -854,6 +854,14 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     def to_reverse_rule(self, idx: int) -> "Rule":
         raise NotImplementedError("You don't want to do that! I promise")
 
+    def get_equation(
+        self, get_function: Callable[[CombinatorialClassType], Function]
+    ) -> Eq:
+        try:
+            return super().get_equation(get_function)
+        except NotImplementedError:
+            return self.original_rule.get_equation(get_function)
+
     @property
     def constructor(
         self,
