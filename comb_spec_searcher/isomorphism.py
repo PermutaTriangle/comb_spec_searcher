@@ -64,8 +64,12 @@ class Isomorphism:
             node1, self._rules1, node2, self._rules2
         )
         rule1, rule2 = self._rules1[node1], self._rules2[node2]
+        children1 = tuple(c for c in rule1.children if not c.is_empty())
+        children2 = tuple(c for c in rule2.children if not c.is_empty())
 
-        is_base_case = self._base_cases(node1, rule1, node2, rule2)
+        is_base_case = self._base_cases(
+            node1, rule1, children1, node2, rule2, children2
+        )
         if is_base_case:
             return bool(is_base_case + 1)
 
@@ -73,12 +77,12 @@ class Isomorphism:
         self._ancestors1[node1], self._ancestors2[node2] = (self._index, self._index)
 
         # Check all matches of children, if any are valid then trees are isomorphic
-        n = len(rule1.children)
+        n = len(children1)
         child_order: List[int] = [0] * n
         stack = [(0, i, {i}) for i in range(n - 1, -1, -1)]
         while stack:
             i1, i2, in_use = stack.pop()
-            if not self._are_isomorphic(rule1.children[i1], rule2.children[i2]):
+            if not self._are_isomorphic(children1[i1], children2[i2]):
                 continue
             child_order[i1] = i2
             if i1 == n - 1:
@@ -111,15 +115,17 @@ class Isomorphism:
         self,
         node1: CombinatorialClass,
         rule1: AbstractRule,
+        children1: Tuple[CombinatorialClass, ...],
         node2: CombinatorialClass,
         rule2: AbstractRule,
+        children2: Tuple[CombinatorialClass, ...],
     ) -> int:
         # If different number of children
-        if len(rule1.children) != len(rule2.children):
+        if len(children1) != len(children2):
             return Isomorphism._INVALID
 
         # If leaf that has no equal-ancestors
-        if not rule1.children and not rule2.children:
+        if not children1 and not children2:
             # If one is atom, both should be and should also be equal
             if node1.is_atom() and node2.is_atom() and self._eq(node1, node2):
                 return Isomorphism._VALID

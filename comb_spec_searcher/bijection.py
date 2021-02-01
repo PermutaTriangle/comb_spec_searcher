@@ -68,9 +68,12 @@ class ParallelInfo:
                 self.atom_map[eq_par] = parent
             else:
                 assert isinstance(rule, Rule)
-                eq_label_rules[eq_par][rule.constructor.__class__][len(children)].add(
-                    eq_chi
+                non_empty_children = tuple(
+                    eq_chi[i] for i, c in enumerate(children) if not c.is_empty()
                 )
+                eq_label_rules[eq_par][rule.constructor.__class__][
+                    len(non_empty_children)
+                ].add(non_empty_children)
         return eq_label_rules
 
     def _construct_eq_labels_init(
@@ -227,7 +230,7 @@ class ParallelSpecFinder:
         queue = deque([root_node])
         while queue:
             v = queue.popleft()
-            rule = d[v.label]
+            rule = d.get(v.label, ())
             if not (v.label in visited or rule == ()):
                 children = [Node(i) for i in rule]
                 queue.extend(children)
