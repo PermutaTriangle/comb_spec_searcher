@@ -265,7 +265,7 @@ create multiple rules, and as such should be implemented as generators.
    ...           if word[: len(child.prefix)] == child.prefix:
    ...                 return (
    ...                    tuple(None for _ in range(idx + 1))
-   ...                    + (child,)
+   ...                    + (word,)
    ...                    + tuple(None for _ in range(len(children) - idx - 1))
    ...                 )
    ...
