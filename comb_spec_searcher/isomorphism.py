@@ -64,11 +64,14 @@ class Isomorphism:
             node1, self._rules1, node2, self._rules2
         )
         rule1, rule2 = self._rules1[node1], self._rules2[node2]
-        children1 = tuple(c for c in rule1.children if not c.is_empty())
-        children2 = tuple(c for c in rule2.children if not c.is_empty())
+
+        non_empty_ind1, non_empty_ind2 = (
+            tuple(i for i, c in enumerate(rule1.children) if not c.is_empty()),
+            tuple(i for i, c in enumerate(rule2.children) if not c.is_empty()),
+        )
 
         is_base_case = self._base_cases(
-            node1, rule1, children1, node2, rule2, children2
+            node1, rule1, non_empty_ind1, node2, rule2, non_empty_ind2
         )
         if is_base_case:
             return bool(is_base_case + 1)
@@ -77,12 +80,14 @@ class Isomorphism:
         self._ancestors1[node1], self._ancestors2[node2] = (self._index, self._index)
 
         # Check all matches of children, if any are valid then trees are isomorphic
-        n = len(children1)
-        child_order: List[int] = [0] * n
+        n = len(non_empty_ind1)
+        child_order: List[int] = [-1] * n
         stack = [(0, i, {i}) for i in range(n - 1, -1, -1)]
         while stack:
             i1, i2, in_use = stack.pop()
-            if not self._are_isomorphic(children1[i1], children2[i2]):
+            if not self._are_isomorphic(
+                rule1.children[non_empty_ind1[i1]], rule2.children[non_empty_ind2[i2]]
+            ):
                 continue
             child_order[i1] = i2
             if i1 == n - 1:
@@ -115,17 +120,17 @@ class Isomorphism:
         self,
         node1: CombinatorialClass,
         rule1: AbstractRule,
-        children1: Tuple[CombinatorialClass, ...],
+        nec1: Tuple[int, ...],
         node2: CombinatorialClass,
         rule2: AbstractRule,
-        children2: Tuple[CombinatorialClass, ...],
+        nec2: Tuple[int, ...],
     ) -> int:
         # If different number of children
-        if len(children1) != len(children2):
+        if len(nec1) != len(nec2):
             return Isomorphism._INVALID
 
         # If leaf that has no equal-ancestors
-        if not children1 and not children2:
+        if not rule1.children and not rule2.children:
             # If one is atom, both should be and should also be equal
             if node1.is_atom() and node2.is_atom() and self._eq(node1, node2):
                 return Isomorphism._VALID
@@ -187,6 +192,7 @@ class Node:
                     if child_obj is not None
                     else None
                     for child, child_obj in zip(rule.children, rule.forward_map(obj))
+                    if not child.is_empty()
                 )
                 if rule.children
                 else tuple()
@@ -221,7 +227,9 @@ class Node:
             None
             if child is None
             else child.build_obj(get_rule(child_class), get_order, get_rule)
-            for child, child_class in zip(children, rule.children)
+            for child, child_class in zip(
+                children, (c for c in rule.children if not c.is_empty())
+            )
         )
         assert isinstance(rule, Rule)
         val: CombinatorialObject = next(rule.backward_map(child_objs))

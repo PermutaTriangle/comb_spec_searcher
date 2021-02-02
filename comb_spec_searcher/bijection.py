@@ -83,8 +83,6 @@ class ParallelInfo:
         Dict[RuleKey, RuleKey],
         DefaultDict[int, DefaultDict[type, DefaultDict[int, Set[Tuple[int, ...]]]]],
     ]:
-        # TODO: From how this is used in css, this should rly be a set
-        # but currently a list is expected.
         lis = [(k, c) for k, v in self.rule_dict.items() for c in v]
         rule_dict = self.r_db.rule_from_equivalence_rule_dict(lis)
         eq_label_rules: DefaultDict[
@@ -119,7 +117,6 @@ class ParallelSpecFinder:
             Tuple[int, int], Tuple[Tuple[int, ...], Tuple[int, ...]]
         ] = {}
         visited: Set[Tuple[int, int]] = set()
-        print("Starting search", flush=True)
         found = self._find(
             self.pi1.root_eq_label, self.pi2.root_eq_label, matching_info, visited
         )
