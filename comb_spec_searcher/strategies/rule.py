@@ -649,6 +649,9 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         assert idx == 0
         return self.original_rule.to_reverse_rule(self.child_idx).to_equivalence_rule()
 
+    def to_equivalence_rule(self) -> "EquivalenceRule":
+        raise NotImplementedError("You don't want to do that! I promise")
+
     @property
     def formal_step(self) -> str:
         return "{} but only the child at index {} is non-empty".format(
@@ -684,6 +687,7 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
 
     def __init__(self, rules: Sequence[Rule]):
         assert all(rule.is_equivalence() for rule in rules)
+        assert all(len(rule.children) == 1 for rule in rules)
         super().__init__(rules[0].strategy, rules[0].comb_class, rules[-1].children)
         self.rules = tuple(rules)
         self._constructor: Optional[DisjointUnion] = None
@@ -750,6 +754,12 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
             eqv_path_rules.append((curr, rule))
             curr = rule.children[0]
         return eqv_path_rules
+
+    def to_equivalence_rule(self) -> "EquivalenceRule":
+        raise NotImplementedError("You don't want to do that! I promise")
+
+    def to_reverse_rule(self, idx: int) -> "Rule":
+        raise NotImplementedError("You don't want to do that! I promise")
 
     def backward_map(
         self, objs: Tuple[Optional[CombinatorialObjectType], ...]
@@ -843,6 +853,14 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
 
     def to_reverse_rule(self, idx: int) -> "Rule":
         raise NotImplementedError("You don't want to do that! I promise")
+
+    def get_equation(
+        self, get_function: Callable[[CombinatorialClassType], Function]
+    ) -> Eq:
+        try:
+            return super().get_equation(get_function)
+        except NotImplementedError:
+            return self.original_rule.get_equation(get_function)
 
     @property
     def constructor(

@@ -617,7 +617,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 round(max_expansion_time, 2),
             )
 
-    def _auto_search_rules(self) -> Iterator[AbstractRule]:
+    def _auto_search_rules(
+        self, max_expansion_time: float = 0
+    ) -> Iterator[AbstractRule]:
         """
         A basic auto search for returning equivalence paths and rules.
 
@@ -630,7 +632,6 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         status_start = time.time()
         status_update = None  # this prevents status updates happening
         auto_search_start = time.time()
-        max_expansion_time: float = 0
         expanding = True
         while expanding:
             expanding, status_start = self._expand_classes_for(
