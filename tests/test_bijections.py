@@ -64,26 +64,3 @@ def test_finding_bijection_and_map_in_words3():
 def test_non_equal_classes():
     specs = get_specs(["0", "1"], ["00"], ["0", "1"], ["101"])
     assert specs is None
-
-
-import random
-
-
-def test_foo():
-    def rand_str():
-        return f"{random.randint(0,1)}{random.randint(0,1)}{random.randint(0,1)}"
-
-    for _ in range(1000):
-        while True:
-            s1 = set()
-            s2 = set()
-            while len(s1) < 2:
-                s1.add(rand_str())
-            while len(s2) < 2:
-                s2.add(rand_str())
-            if s1 != s2:
-                break
-
-    specs = get_specs(["0", "1"], list(s1), ["0", "1"], list(s2))
-    if specs is not None:
-        print(s1, s2)
