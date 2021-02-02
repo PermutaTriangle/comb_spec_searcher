@@ -318,7 +318,8 @@ constructor is cartesian product a ``DecompositionRule``.
    ...        )
    ...        # safe will be the index of the prefix in which we can remove upto without
    ...        # affecting the avoidance conditions
-   ...        safe = max(0, len(prefix) - max(len(p) for p in patterns) + 1)
+   ...        m = max(len(p) for p in patterns) if patterns else 1
+   ...        safe = max(0, len(prefix) - m + 1)
    ...        for i in range(safe, len(prefix)):
    ...           end = prefix[i:]
    ...           if any(end == patt[: len(end)] for patt in patterns):
