@@ -265,7 +265,7 @@ create multiple rules, and as such should be implemented as generators.
    ...           if word[: len(child.prefix)] == child.prefix:
    ...                 return (
    ...                    tuple(None for _ in range(idx + 1))
-   ...                    + (child,)
+   ...                    + (word,)
    ...                    + tuple(None for _ in range(len(children) - idx - 1))
    ...                 )
    ...
@@ -298,7 +298,8 @@ constructor is cartesian product a ``DecompositionRule``.
    ...        occurrence using indices further to the right of the prefix can use at
    ...        most the last k - 1 letters in the prefix."""
    ...        if not avoiding_with_prefix.just_prefix:
-   ...           safe = self.index_safe_to_remove_up_to(avoiding_with_prefix)
+   ...           m = max(len(p) for p in patterns) if patterns else 1
+   ...           safe = max(0, len(prefix) - m + 1)
    ...           if safe > 0:
    ...                 prefix, patterns, alphabet = (
    ...                    avoiding_with_prefix.prefix,
