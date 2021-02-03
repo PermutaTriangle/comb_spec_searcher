@@ -468,11 +468,11 @@ We start by defining our two classes that we wish to find a bijection between.
 .. code:: python
 
    >>> prefix1 = ''
-   >>> pattern1 = ["00"]
+   >>> patterns1 = ["00"]
    >>> alphabet1 = ['0', '1']
    >>> class1 = AvoidingWithPrefix(prefix1, patterns1, alphabet1)
    >>> prefix = ''
-   >>> pattern2 = ["bb"]
+   >>> patterns2 = ["bb"]
    >>> alphabet2 = ['a', 'b']
    >>> class2 = AvoidingWithPrefix(prefix2, patterns2, alphabet2)
 
@@ -507,3 +507,4 @@ from the sepcifications.
    ...     for w in spec2.generate_objects_of_size(i):
    ...         assert w == bijection.map(bijection.inverse_map(w))
    ...
+
