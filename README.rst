@@ -78,8 +78,13 @@ using ``in``.
 
 .. code:: python
 
-   >>> w = "acbabcabbb"
-   >>> p = "abcab"
+   >>> from comb_spec_searcher import CombinatorialObject
+   
+   >>> class Word(str, CombinatorialObject):
+   ...     pass
+
+   >>> w = Word("acbabcabbb")
+   >>> p = Word("abcab")
    >>> p in w
    True
 
@@ -500,13 +505,12 @@ from the sepcifications.
 
 .. code:: python
 
-   >>> for i in range(5):
+   >>> for i in range(10):
    ...     for w in spec1.generate_objects_of_size(i):
    ...         assert w == bijection.inverse_map(bijection.map(w))
    ...     for w in spec2.generate_objects_of_size(i):
    ...         assert w == bijection.map(bijection.inverse_map(w))
    ...
-   >>> 
 
 Whether we find a bijection or not (when one exists) is highly 
 dependent on the packs chosen.
