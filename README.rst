@@ -478,7 +478,7 @@ We start by defining our two classes that we wish to find a bijection between.
 
 To find a bijection we expand the universe given a pack for both classes
 and try to construct specifications that are parallel. If the atoms can not
-be compared with `==` we will need to supply our own equals function.
+be compared with ``==`` we will need to supply our own equals function.
 
 .. code:: python
 
@@ -487,7 +487,7 @@ be compared with `==` we will need to supply our own equals function.
    >>> searcher1 = CombinatorialSpecificationSearcher(class1, pack)
    >>> searcher2 = CombinatorialSpecificationSearcher(class2, pack)
 
-We get two parallel specs if successful, `None` otherwise
+We get two parallel specs if successful, ``None`` otherwise
 
 .. code:: python
 
