@@ -106,7 +106,7 @@ create a new python ``class`` representing this that inherits from
    >>> from comb_spec_searcher import CombinatorialClass
 
 
-   >>> class AvoidingWithPrefix(CombinatorialClass):
+   >>> class AvoidingWithPrefix(CombinatorialClass[Word]):
    ...     def __init__(self, prefix, patterns, alphabet, just_prefix=False):
    ...         self.alphabet = frozenset(alphabet)
    ...         self.prefix = Word(prefix)
@@ -238,7 +238,7 @@ create multiple rules, and as such should be implemented as generators.
    >>> from comb_spec_searcher import DisjointUnionStrategy
 
 
-   >>> class ExpansionStrategy(DisjointUnionStrategy):
+   >>> class ExpansionStrategy(DisjointUnionStrategy[AvoidingWithPrefix, Word]):
    ...     def decomposition_function(self, avoiding_with_prefix):
    ...        if not avoiding_with_prefix.just_prefix:
    ...           alphabet, prefix, patterns = (
