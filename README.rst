@@ -110,7 +110,7 @@ create a new python ``class`` representing this that inherits from
    ...     def __init__(self, prefix, patterns, alphabet, just_prefix=False):
    ...         self.alphabet = frozenset(alphabet)
    ...         self.prefix = Word(prefix)
-   ...         self.patterns = frozenset(patterns)
+   ...         self.patterns = frozenset(map(Word, patterns))
    ...         self.just_prefix = just_prefix # this will be needed later
 
 Inheriting from ``CombinatorialClass`` requires you to implement a few
