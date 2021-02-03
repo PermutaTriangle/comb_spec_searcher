@@ -297,7 +297,7 @@ constructor is cartesian product a ``DecompositionRule``.
    >>> from comb_spec_searcher import CartesianProductStrategy
 
 
-   >>> class RemoveFrontOfPrefix(CartesianProductStrategy):
+   >>> class RemoveFrontOfPrefix(CartesianProductStrategy[AvoidingWithPrefix, Word]):
    ...     def decomposition_function(self, avoiding_with_prefix):
    ...        """If the k is the maximum size of a pattern to be avoided, then any
    ...        occurrence using indices further to the right of the prefix can use at
