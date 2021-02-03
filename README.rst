@@ -487,12 +487,11 @@ be compared with ``==`` we will need to supply our own equals function.
    >>> searcher1 = CombinatorialSpecificationSearcher(class1, pack)
    >>> searcher2 = CombinatorialSpecificationSearcher(class2, pack)
 
-We get two parallel specs if successful, ``None`` otherwise
+We get two parallel specs if successful, ``None`` otherwise.
 
 .. code:: python
 
    >>> specs = find_bijection_between(searcher1, searcher2, atom_cmp)
-   >>> assert specs is not None
    >>> spec1, spec2 = specs
    >>> bijection = Bijection.construct(spec1, spec2, atom_cmp)
 
@@ -507,3 +506,6 @@ from the sepcifications.
    ...     for w in spec2.generate_objects_of_size(i):
    ...         assert w == bijection.map(bijection.inverse_map(w))
    ...
+
+Generally whether we find a bijection or not (when one exists) is 
+highly dependent on the packs chosen.
