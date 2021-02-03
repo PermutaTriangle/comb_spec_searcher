@@ -500,7 +500,7 @@ from the sepcifications.
 
 .. code:: python
 
-   >>> for i in range(10):
+   >>> for i in range(5):
    ...     for w in spec1.generate_objects_of_size(i):
    ...         assert w == bijection.inverse_map(bijection.map(w))
    ...     for w in spec2.generate_objects_of_size(i):
