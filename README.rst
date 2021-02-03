@@ -346,7 +346,7 @@ constructor is cartesian product a ``DecompositionRule``.
    ...        if children is None:
    ...           children = self.decomposition_function(avoiding_with_prefix)
    ...           assert children is not None
-   ...        return Word(words[0] + words[1])
+   ...        yield Word(words[0] + words[1])
    ...
    ...     def forward_map(self, comb_class, word, children=None):
    ...        """
