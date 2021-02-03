@@ -400,6 +400,7 @@ will).
 
    >>> searcher = CombinatorialSpecificationSearcher(start_class, pack)
    >>> spec = searcher.auto_search()
+   >>> # spec.show() will display the specification in your browser
 
 Now that we have a ``CombinatorialSpecification``, the obvious
 thing we want to do is find the generating function for the class that
@@ -454,3 +455,54 @@ Moreover, we can get directly the number of objects by size with the method
 
 You can now try this yourself using the file ``example.py``, which can
 count any set of words avoiding consecutive patterns.
+
+Now we will demonstrate how a bijection can be found between classes.
+We will first need a couple of imports.
+
+.. code:: python
+
+   >>> from comb_spec_searcher import find_bijection_between, Bijection
+
+We start by defining our two classes that we wish to find a bijection between.
+
+.. code:: python
+
+   >>> prefix1 = ''
+   >>> pattern1 = ["00"]
+   >>> alphabet1 = ['0', '1']
+   >>> class1 = AvoidingWithPrefix(prefix1, patterns1, alphabet1)
+   >>> prefix = ''
+   >>> pattern2 = ["bb"]
+   >>> alphabet2 = ['a', 'b']
+   >>> class2 = AvoidingWithPrefix(prefix2, patterns2, alphabet2)
+
+To find a bijection we expaned the universe given a pack for both classes
+and try to construct specifications that are parallel. If the atoms can not
+be compared with `==` we will need to supply our own equals function.
+
+.. code:: python
+
+   >>> def atom_cmp(class1, class2):
+   ...     return len(class1.prefix) == len(class2.prefix)
+   >>> searcher1 = CombinatorialSpecificationSearcher(class1, pack)
+   >>> searcher2 = CombinatorialSpecificationSearcher(class2, pack)
+
+We get two parallel specs if successful, `None` otherwise
+
+.. code:: python
+
+   >>> specs = find_bijection_between(searcher1, searcher2, atom_cmp)
+   >>> assert specs is not None
+   >>> spec1, spec2 = specs
+   >>> bijection = Bijection.construct(spec1, spec2, atom_cmp)
+
+We can use the `Bijection` object to map (either way) sampled objects
+from the sepcifications.
+
+... code:: python
+
+   >>> for i in range(10):
+   ...     for w in spec1.generate_objects_of_size(i):
+   ...         assert w == bijection.inverse_map(bijection.map(w))
+   ...     for w in spec2.generate_objects_of_size(i):
+   ...         assert w == bijection.map(bijection.inverse_map(w))
