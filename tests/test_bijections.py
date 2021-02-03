@@ -1,3 +1,5 @@
+import json
+
 from comb_spec_searcher import (
     AtomStrategy,
     CombinatorialClass,
@@ -33,12 +35,15 @@ def get_specs(alphabet1, avoid1, alphabet2, avoid2):
     return find_bijection_between(s1, s2, atom_cmp)
 
 
-def assert_mappings(spec1, spec2):
-    bijection = Bijection.construct(spec1, spec2, atom_cmp)
+def assert_mappings(bijection):
     assert bijection is not None
     assert all(
-        set(bijection.map(w) for w in spec1.generate_objects_of_size(i))
-        == set(spec2.generate_objects_of_size(i))
+        set(bijection.map(w) for w in bijection.spec.generate_objects_of_size(i))
+        == set(bijection.other.generate_objects_of_size(i))
+        and all(
+            w == bijection.inverse_map(bijection.map(w))
+            for w in bijection.spec.generate_objects_of_size(i)
+        )
         for i in range(10)
     )
 
@@ -46,21 +51,42 @@ def assert_mappings(spec1, spec2):
 def test_finding_bijection_and_map_in_words():
     specs = get_specs(["0", "1"], ["00"], ["0", "1"], ["11"])
     assert specs is not None
-    assert_mappings(*specs)
+    assert_mappings(Bijection.construct(*specs, atom_cmp))
 
 
 def test_finding_bijection_and_map_in_words2():
     specs = get_specs(["a", "b"], ["aa"], ["0", "1"], ["11"])
     assert specs is not None
-    assert_mappings(*specs)
+    assert_mappings(Bijection.construct(*specs, atom_cmp))
 
 
 def test_finding_bijection_and_map_in_words3():
     specs = get_specs(["0", "1"], ["1011", "101"], ["0", "1"], ["010", "0101"])
     assert specs is not None
-    assert_mappings(*specs)
+    assert_mappings(Bijection.construct(*specs, atom_cmp))
 
 
 def test_non_equal_classes():
     specs = get_specs(["0", "1"], ["00"], ["0", "1"], ["101"])
     assert specs is None
+
+
+def test_constructing_bijection_non_eq_classes():
+    assert (
+        Bijection.construct(
+            get_word_searcher(["00"], ["0", "1"]).auto_search(),
+            get_word_searcher(["101"], ["0", "1"]).auto_search(),
+            atom_cmp,
+        )
+        is None
+    )
+
+
+def test_bijection_jsonable():
+    specs = get_specs(["0", "1"], ["1011", "101"], ["0", "1"], ["010", "0101"])
+    assert specs is not None
+    assert_mappings(
+        Bijection.from_dict(
+            json.loads(json.dumps(Bijection.construct(*specs, atom_cmp).to_jsonable()))
+        )
+    )
