@@ -505,6 +505,8 @@ from the sepcifications.
    ...         assert w == bijection.inverse_map(bijection.map(w))
    ...     for w in spec2.generate_objects_of_size(i):
    ...         assert w == bijection.map(bijection.inverse_map(w))
+   ...
+   >>>
 
 Whether we find a bijection or not (when one exists) is highly 
 dependent on the packs chosen.
