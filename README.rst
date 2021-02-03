@@ -498,7 +498,7 @@ We get two parallel specs if successful, ``None`` otherwise.
 We can use the `Bijection` object to map (either way) sampled objects
 from the sepcifications.
 
-... code:: python
+.. code:: python
 
    >>> for i in range(10):
    ...     for w in spec1.generate_objects_of_size(i):
@@ -506,7 +506,6 @@ from the sepcifications.
    ...     for w in spec2.generate_objects_of_size(i):
    ...         assert w == bijection.map(bijection.inverse_map(w))
    ...
-   >>>
 
 Whether we find a bijection or not (when one exists) is highly 
 dependent on the packs chosen.
