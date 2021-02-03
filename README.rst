@@ -109,7 +109,7 @@ create a new python ``class`` representing this that inherits from
    >>> class AvoidingWithPrefix(CombinatorialClass):
    ...     def __init__(self, prefix, patterns, alphabet, just_prefix=False):
    ...         self.alphabet = frozenset(alphabet)
-   ...         self.prefix = prefix
+   ...         self.prefix = Word(prefix)
    ...         self.patterns = frozenset(patterns)
    ...         self.just_prefix = just_prefix # this will be needed later
 
@@ -429,11 +429,11 @@ of a given size in the class.
    ...            return
    ...         for letters in product(self.alphabet,
    ...                                 repeat=size - len(self.prefix)):
-   ...             yield self.prefix + "".join(a for a in letters)
+   ...             yield Word(self.prefix + "".join(a for a in letters))
    ...
    ...     if self.just_prefix:
    ...         if size == len(self.prefix) and not self.is_empty():
-   ...             yield self.prefix
+   ...             yield Word(self.prefix)
    ...         return
    ...     for word in possible_words():
    ...         if all(patt not in word for patt in self.patterns):
