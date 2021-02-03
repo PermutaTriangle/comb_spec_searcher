@@ -476,7 +476,7 @@ We start by defining our two classes that we wish to find a bijection between.
    >>> alphabet2 = ['a', 'b']
    >>> class2 = AvoidingWithPrefix(prefix2, patterns2, alphabet2)
 
-To find a bijection we expaned the universe given a pack for both classes
+To find a bijection we expand the universe given a pack for both classes
 and try to construct specifications that are parallel. If the atoms can not
 be compared with `==` we will need to supply our own equals function.
 
@@ -506,3 +506,4 @@ from the sepcifications.
    ...         assert w == bijection.inverse_map(bijection.map(w))
    ...     for w in spec2.generate_objects_of_size(i):
    ...         assert w == bijection.map(bijection.inverse_map(w))
+
