@@ -506,4 +506,4 @@ from the sepcifications.
    ...         assert w == bijection.inverse_map(bijection.map(w))
    ...     for w in spec2.generate_objects_of_size(i):
    ...         assert w == bijection.map(bijection.inverse_map(w))
-
+   ...
