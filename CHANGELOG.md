@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - Reverse rule default back to the equation of the original rule in case
   `NotImplementedError`
+- `find_bijection_between` tries to find a bijection between classes given
+  a `CombinatorialSpecificationSearcher` object for both.
 
 ### Fixed
 - Removed a debug print
