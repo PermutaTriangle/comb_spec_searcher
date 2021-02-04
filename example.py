@@ -40,12 +40,14 @@ from typing import Iterable, Iterator, Optional, Tuple, Union
 
 from comb_spec_searcher import (
     AtomStrategy,
+    Bijection,
     CartesianProductStrategy,
     CombinatorialClass,
     CombinatorialObject,
     CombinatorialSpecificationSearcher,
     DisjointUnionStrategy,
     StrategyPack,
+    find_bijection_between,
 )
 
 
@@ -207,7 +209,7 @@ class ExpansionStrategy(DisjointUnionStrategy[AvoidingWithPrefix, Word]):
             if word[: len(child.prefix)] == child.prefix:
                 return (
                     tuple(None for _ in range(idx + 1))
-                    + (child,)
+                    + (word,)
                     + tuple(None for _ in range(len(children) - idx - 1))
                 )
 
@@ -250,7 +252,8 @@ class RemoveFrontOfPrefix(CartesianProductStrategy[AvoidingWithPrefix, Word]):
         )
         # safe will be the index of the prefix in which we can remove upto without
         # affecting the avoidance conditions
-        safe = max(0, len(prefix) - max(len(p) for p in patterns) + 1)
+        m = max(len(p) for p in patterns) if patterns else 1
+        safe = max(0, len(prefix) - m + 1)
         for i in range(safe, len(prefix)):
             end = prefix[i:]
             if any(end == patt[: len(end)] for patt in patterns):
@@ -356,3 +359,32 @@ if __name__ == "__main__":
         random_word = spec.random_sample_object_of_size(n)
         print(random_word)
         print("Time to sample:", round(time.time() - start_time, 2), "seconds")
+
+    input(
+        '\nBijection example between "00" and "11" avoiding binary strings '
+        "(press any key to continue)"
+    )
+
+    def atom_cmp(class1, class2):
+        return len(class1.prefix) == len(class2.prefix)
+
+    specs = find_bijection_between(
+        CombinatorialSpecificationSearcher(
+            AvoidingWithPrefix(Word(), ["00"], ["0", "1"]), pack
+        ),
+        CombinatorialSpecificationSearcher(
+            AvoidingWithPrefix(Word(), ["11"], ["0", "1"]), pack
+        ),
+        atom_cmp,
+    )
+    if specs is None:
+        print("No bijection found")
+    else:
+        spec1, spec2 = specs
+        bijection = Bijection.construct(spec1, spec2, atom_cmp)
+        assert bijection is not None
+        for i in range(5):
+            for word in bijection.spec.generate_objects_of_size(i):
+                mapped_to = bijection.map(word)
+                assert bijection.inverse_map(mapped_to) == word
+                print(f"{word} -> {mapped_to}")
