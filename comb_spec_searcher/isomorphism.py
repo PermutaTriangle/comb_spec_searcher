@@ -97,7 +97,6 @@ class Isomorphism:
                 self._cleanup(node1, node2)
                 return True
             Isomorphism._extend_stack(i1, n, in_use, stack)
-
         self._cleanup(node1, node2)
         return False
 
@@ -127,6 +126,10 @@ class Isomorphism:
         rule2: AbstractRule,
         nec2: Tuple[int, ...],
     ) -> int:
+        # Already matched
+        if (node1, node2) in self._order_map:
+            return True
+
         # If different number of children
         if len(nec1) != len(nec2):
             return Isomorphism._INVALID

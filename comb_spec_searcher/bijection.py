@@ -155,6 +155,7 @@ class ParallelSpecFinder:
                                 continue
                             if i1 == n - 1:
                                 matching_info[(id1, id2)] = (children1, children2)
+                                self._clean_labels(id1, id2)
                                 return True
                             for i in range(n - 1, -1, -1):
                                 if i in in_use:
