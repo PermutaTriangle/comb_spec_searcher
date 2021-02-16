@@ -272,11 +272,15 @@ class ParallelSpecFinder:
                     ids_set2.add(id2)
                     return True
                 for i in to_clean_1:
-                    del sp1[i]
+                    if i in sp1:
+                        del sp1[i]
                 for i in to_clean_2:
-                    del sp2[i]
-                del sp1[id1]
-                del sp2[id2]
+                    if i in sp2:
+                        del sp2[i]
+                if id1 in sp1:
+                    del sp1[id1]
+                if id2 in sp2:
+                    del sp2[id2]
 
             return False
 
