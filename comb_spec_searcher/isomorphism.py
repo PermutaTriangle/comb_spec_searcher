@@ -39,10 +39,9 @@ class Isomorphism:
         self._index = 0
         self._root1: CombinatorialClass = spec1.root
         self._rules1: Dict[CombinatorialClass, AbstractRule] = spec1.rules_dict
-        self._ancestors1: Dict[CombinatorialClass, int] = {}
         self._root2: CombinatorialClass = spec2.root
         self._rules2: Dict[CombinatorialClass, AbstractRule] = spec2.rules_dict
-        self._ancestors2: Dict[CombinatorialClass, int] = {}
+        self._ancestors: Set[Tuple[CombinatorialClass, CombinatorialClass]] = set()
         self._order_map: Dict[
             Tuple[CombinatorialClass, CombinatorialClass], List[int]
         ] = {}
@@ -78,8 +77,7 @@ class Isomorphism:
         if is_base_case:
             return bool(is_base_case + 1)
 
-        self._index += 1
-        self._ancestors1[node1], self._ancestors2[node2] = (self._index, self._index)
+        self._ancestors.add((node1, node2))
 
         # Check all matches of children, if any are valid then trees are isomorphic
         n = len(non_empty_ind1)
@@ -94,10 +92,10 @@ class Isomorphism:
             child_order[i1] = i2
             if i1 == n - 1:
                 self._order_map[(node1, node2)] = child_order
-                self._cleanup(node1, node2)
+                self._ancestors.remove((node1, node2))
                 return True
             Isomorphism._extend_stack(i1, n, in_use, stack)
-        self._cleanup(node1, node2)
+        self._ancestors.remove((node1, node2))
         return False
 
     @staticmethod
@@ -147,24 +145,11 @@ class Isomorphism:
         if rule1.constructor.__class__ != rule2.constructor.__class__:
             return Isomorphism._INVALID
 
-        # Check if we have seen this node before
-        ind1, ind2 = self._ancestors1.get(node1, -1), self._ancestors2.get(node2, -1)
-
-        # If one is found and the other not or if
-        # they occured in different places before
-        if ind1 != ind2:
-            return Isomorphism._INVALID
-
-        # If they have occured before and that occurrence matches in both trees
-        if ind1 == ind2 != -1:
+        # Check for recursive match
+        if (node1, node2) in self._ancestors:
             return Isomorphism._VALID
 
         return Isomorphism._UNKNOWN
-
-    def _cleanup(self, node1: CombinatorialClass, node2: CombinatorialClass) -> None:
-        self._index -= 1
-        del self._ancestors1[node1]
-        del self._ancestors2[node2]
 
     @staticmethod
     def _extend_stack(
