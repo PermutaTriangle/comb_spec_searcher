@@ -195,6 +195,7 @@ class Node:
         get_rule: Callable[[CombinatorialClass], AbstractRule],
     ) -> CombinatorialObject:
         """Parse tree's recursive build object function."""
+
         if not self.children:
             # TODO: stop special casing verification rules!
             obj: CombinatorialObject = next(
@@ -212,6 +213,7 @@ class Node:
             return self.children[0].build_obj(rule, get_order, get_rule)
         else:
             order = get_order[(self.rule.comb_class, rule.comb_class)]
+            order = Bijection._perm_inv(order)  # TODO: do this in one place, not here
         children = tuple(self.children[idx] for idx in order)
         child_objs = tuple(
             None

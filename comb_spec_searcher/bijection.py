@@ -1,4 +1,5 @@
 from collections import defaultdict, deque
+from itertools import product
 from typing import Callable, DefaultDict, Dict, List, Optional, Set, Tuple
 
 from comb_spec_searcher.comb_spec_searcher import CombinatorialSpecificationSearcher
@@ -12,6 +13,7 @@ from comb_spec_searcher.tree_searcher import Node, prune
 from comb_spec_searcher.typing import RuleKey
 
 NO_CONSTRUCTOR = None.__class__
+MATCHING_INFO = Dict[Tuple[int, int], Set[Tuple[Tuple[int, ...], Tuple[int, ...]]]]
 
 
 class ParallelInfo:
@@ -31,6 +33,10 @@ class ParallelInfo:
         self.root_eq_label: int = self.r_db.equivdb[self.root_label]
         self.atom_map: Dict[int, CombinatorialClass] = {}
         self.root_class: Optional[CombinatorialClass] = None
+        self.debug_map: Dict[
+            Tuple[int, Tuple[int, ...]],
+            Tuple[CombinatorialClass, Tuple[CombinatorialClass, ...]],
+        ] = {}
         self.eq_label_rules: DefaultDict[
             int, DefaultDict[type, DefaultDict[int, Set[Tuple[int, ...]]]]
         ] = self._construct_eq_label_rules()
@@ -60,6 +66,7 @@ class ParallelInfo:
             strategy = self.r_db.rule_to_strategy[(actual_par, actual_children)]
             parent = self.searcher.classdb.get_class(actual_par)
             children = tuple(map(self.searcher.classdb.get_class, actual_children))
+            self.debug_map[(eq_par, eq_chi)] = (parent, children)
             rule = strategy(parent, children)
             if eq_par == self.root_eq_label and self.root_class is None:
                 self.root_class = parent
@@ -104,18 +111,14 @@ class ParallelSpecFinder:
     ):
         self.pi1 = ParallelInfo(searcher1)
         self.pi2 = ParallelInfo(searcher2)
-        self.a_label: int = 0
-        self.a1: Dict[int, int] = {}
-        self.a2: Dict[int, int] = {}
+        self._ancestors: Set[Tuple[int, int]] = set()
         self.atom_equals = atom_equals
 
     def find(
         self,
     ) -> Optional[Tuple[CombinatorialSpecification, CombinatorialSpecification]]:
         """Find bijections between the two universes."""
-        matching_info: Dict[
-            Tuple[int, int], Tuple[Tuple[int, ...], Tuple[int, ...]]
-        ] = {}
+        matching_info: MATCHING_INFO = {}
         visited: Set[Tuple[int, int]] = set()
         found = self._find(
             self.pi1.root_eq_label, self.pi2.root_eq_label, matching_info, visited
@@ -126,7 +129,7 @@ class ParallelSpecFinder:
         self,
         id1: int,
         id2: int,
-        matching_info: Dict[Tuple[int, int], Tuple[Tuple[int, ...], Tuple[int, ...]]],
+        matching_info: MATCHING_INFO,
         visited: Set[Tuple[int, int]],
     ) -> bool:
         # pylint: disable=too-many-nested-blocks
@@ -134,8 +137,9 @@ class ParallelSpecFinder:
         if known:
             return bool(known + 1)
 
-        self._set_labels(id1, id2)
+        self._ancestors.add((id1, id2))
 
+        found = False
         for rule_type, child_cnt_map in self.pi1.eq_label_rules[id1].items():
             # If attempted match has no rule of this type they won't match
             if rule_type not in self.pi2.eq_label_rules[id2]:
@@ -154,29 +158,31 @@ class ParallelSpecFinder:
                             ):
                                 continue
                             if i1 == n - 1:
-                                matching_info[(id1, id2)] = (children1, children2)
-                                self._clean_labels(id1, id2)
-                                return True
+                                if (id1, id2) not in matching_info:
+                                    matching_info[(id1, id2)] = set()
+                                matching_info[(id1, id2)].add((children1, children2))
+                                found = True
+                                break
                             for i in range(n - 1, -1, -1):
                                 if i in in_use:
                                     continue
                                 stack.append((i1 + 1, i, in_use.union({i})))
-        self._clean_labels(id1, id2)
+        self._ancestors.remove((id1, id2))
         visited.add((id1, id2))
-        return False
+        return found
 
     def _base_case(
         self,
         id1: int,
         id2: int,
-        matching_info: Dict[Tuple[int, int], Tuple[Tuple[int, ...], Tuple[int, ...]]],
+        matching_info: MATCHING_INFO,
         visited: Set[Tuple[int, int]],
     ) -> int:
         # If rule type has no constructor we compare atoms
         if NO_CONSTRUCTOR in self.pi1.eq_label_rules[id1]:
             if NO_CONSTRUCTOR in self.pi2.eq_label_rules[id2]:
                 if self.atom_equals(self.pi1.atom_map[id1], self.pi2.atom_map[id2]):
-                    matching_info[(id1, id2)] = ((), ())
+                    matching_info[(id1, id2)] = {((), ())}
                     return ParallelSpecFinder._VALID
                 if len(self.pi2.eq_label_rules[id2]) == 1:
                     return ParallelSpecFinder._INVALID
@@ -187,37 +193,97 @@ class ParallelSpecFinder:
             return ParallelSpecFinder._VALID
         if (id1, id2) in visited:
             return ParallelSpecFinder._INVALID
-        a1, a2 = self.a1.get(id1, -1), self.a2.get(id2, -1)
-        if a1 == a2 == -1:
-            return ParallelSpecFinder._UNKNOWN
-        if a1 == a2:
+        if (id1, id2) in self._ancestors:
             return ParallelSpecFinder._VALID
-        return ParallelSpecFinder._INVALID
-
-    def _set_labels(self, id1: int, id2: int):
-        self.a_label += 1
-        self.a1[id1], self.a2[id2] = (self.a_label, self.a_label)
-
-    def _clean_labels(self, id1: int, id2: int):
-        del self.a1[id1]
-        del self.a2[id2]
-        self.a_label -= 1
+        return ParallelSpecFinder._UNKNOWN
 
     def _matching_info_to_specs(
         self,
         found: bool,
-        matching_info: Dict[Tuple[int, int], Tuple[Tuple[int, ...], Tuple[int, ...]]],
+        matching_info: MATCHING_INFO,
     ) -> Optional[Tuple[CombinatorialSpecification, CombinatorialSpecification]]:
         if not found:
             return None
-        sp1, sp2 = {}, {}
+        spec_rules = self._search_matching_info(matching_info)
+        if spec_rules is None:
+            return None
+
+        """sp1: Dict[int, Tuple[int, ...]] = {}
+        sp2: Dict[int, Tuple[int, ...]] = {}
         for k, v in matching_info.items():
             (a, b), (c, d) = k, v
-            sp1[a], sp2[b] = c, d
+            sp1[a], sp2[b] = c, d"""
         return (
-            ParallelSpecFinder._create_spec(sp1, self.pi1),
-            ParallelSpecFinder._create_spec(sp2, self.pi2),
+            ParallelSpecFinder._create_spec(spec_rules[0], self.pi1),
+            ParallelSpecFinder._create_spec(spec_rules[1], self.pi2),
         )
+
+    def _search_matching_info(
+        self, matching_info: MATCHING_INFO
+    ) -> Optional[Tuple[Dict[int, Tuple[int, ...]], Dict[int, Tuple[int, ...]]]]:
+        matching_info_1 = {}
+        matching_info_2 = {}
+        for (p1, p2), children in matching_info.items():
+            if p1 not in matching_info_1:
+                matching_info_1[p1] = {}
+            if p2 not in matching_info_2:
+                matching_info_2[p2] = {}
+            matching_info_1[p1][p2] = set()
+            matching_info_2[p2][p1] = set()
+            for ch1, ch2 in children:
+                matching_info_1[p1][p2].add(ch1)
+                matching_info_2[p2][p1].add(ch2)
+
+        sp1: Dict[int, Tuple[int, ...]] = {}
+        sp2: Dict[int, Tuple[int, ...]] = {}
+
+        # visisted: Set[Tuple[int, int, Tuple[int, ...], Tuple[int, ...]]] = set()
+
+        def _rec(id1: int, id2: int, ids_set1: Set[int], ids_set2: Set[int]) -> bool:
+            if (id1, id2) not in matching_info:
+                return False
+            if matching_info[(id1, id2)] == {((), ())}:
+                sp1[id1] = ()  # TODO: Not needed as we default to () from this dict
+                sp2[id2] = ()
+                return True
+            if id1 in sp1 and id2 in sp2:
+                return True
+            if id1 in sp1 and sp1[id1] not in matching_info_1[id1][id2]:
+                return False
+            if id2 in sp2 and sp2[id2] not in matching_info_2[id2][id1]:
+                return False
+            # if one id is in sp, we only want the matching children
+            # TODO: do that more efficiently
+            for children1, children2 in matching_info[(id1, id2)]:
+                if id1 in sp1 and children1 != sp1[id1]:
+                    continue
+                if id2 in sp2 and children2 != sp2[id2]:
+                    continue
+                sp1[id1] = children1
+                sp2[id2] = children2
+                to_clean_1, to_clean_2 = set(), set()
+                if all(
+                    _rec(child1, child2, to_clean_1, to_clean_2)
+                    for child1, child2 in filter(
+                        lambda m: m in matching_info, product(children1, children2)
+                    )
+                ):
+                    ids_set1.add(id1)
+                    ids_set2.add(id2)
+                    return True
+                for i in to_clean_1:
+                    del sp1[i]
+                for i in to_clean_2:
+                    del sp2[i]
+                del sp1[id1]
+                del sp2[id2]
+
+            return False
+
+        if _rec(self.pi1.root_eq_label, self.pi1.root_eq_label, set(), set()):
+            return sp1, sp2
+
+        return None
 
     @staticmethod
     def _create_spec(
