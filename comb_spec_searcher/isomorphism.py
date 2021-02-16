@@ -206,7 +206,17 @@ class Node:
             return obj
         if rule.is_equivalence():
             if not self.rule.is_equivalence():
-                return self.build_obj(get_rule(rule.children[0]), get_order, get_rule)
+                assert isinstance(rule, Rule)
+                val: CombinatorialObject = next(
+                    rule.backward_map(
+                        (
+                            self.build_obj(
+                                get_rule(rule.children[0]), get_order, get_rule
+                            ),
+                        )
+                    )
+                )
+                return val
             order = [0]
         elif self.rule.is_equivalence():
             assert self.children[0] is not None
@@ -224,7 +234,7 @@ class Node:
             )
         )
         assert isinstance(rule, Rule)
-        val: CombinatorialObject = next(rule.backward_map(child_objs))
+        val = next(rule.backward_map(child_objs))
         return val
 
 
