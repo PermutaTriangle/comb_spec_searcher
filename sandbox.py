@@ -1,5 +1,3 @@
-from random import shuffle
-
 from tilings import GriddedPerm, Tiling
 from tilings import strategies as strat
 from tilings.strategies import BasicVerificationStrategy
@@ -7,11 +5,7 @@ from tilings.tilescope import TileScope, TileScopePack
 
 from comb_spec_searcher import (
     AtomStrategy,
-    CartesianProductStrategy,
-    CombinatorialClass,
-    CombinatorialObject,
     CombinatorialSpecificationSearcher,
-    DisjointUnionStrategy,
     StrategyPack,
 )
 from comb_spec_searcher.bijection import find_bijection_between
@@ -35,10 +29,15 @@ def tester(basis1: str, basis2: str):
     spec1, spec2 = specs
     bi = Bijection.construct(spec1, spec2)
     assert bi is not None
-    for i in range(5):
+    for i in range(10):
         assert {bi.map(gp) for gp in spec1.generate_objects_of_size(i)} == set(
             spec2.generate_objects_of_size(i)
         )
+        assert {bi.inverse_map(gp) for gp in spec2.generate_objects_of_size(i)} == set(
+            spec1.generate_objects_of_size(i)
+        )
+        for gp in spec1.generate_objects_of_size(i):
+            assert bi.inverse_map(bi.map(gp)) == gp
     print("Passed")
 
 
