@@ -176,6 +176,11 @@ class Node:
             self.children: Tuple[Optional["Node"], ...] = tuple()
         else:
             assert isinstance(rule, Rule)
+            try:
+                x = rule.forward_map(obj)
+            except:
+                print(repr(self.rule.comb_class))
+                exit(0)
             self.children = (
                 tuple(
                     type(self)(get_rule(child), child_obj, get_rule)
@@ -218,6 +223,8 @@ class Node:
                 )
                 return val
             order = [0]
+            # self.children[0].build_obj(rule, get_order, get_rule)
+            # TODO: do we need that spec2 eq case here too?
         elif self.rule.is_equivalence():
             assert self.children[0] is not None
             return self.children[0].build_obj(rule, get_order, get_rule)
