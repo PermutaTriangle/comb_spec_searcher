@@ -12,7 +12,6 @@ from comb_spec_searcher import (
 )
 from comb_spec_searcher.bijection import find_bijection_between
 from comb_spec_searcher.isomorphism import Bijection
-from comb_spec_searcher.rule_db import base
 from example import AvoidingWithPrefix, ExpansionStrategy, RemoveFrontOfPrefix
 
 
@@ -461,6 +460,17 @@ def test11():
         tester(basis1, basis2)
 
 
+def test12():
+    pack = TileScopePack.point_and_row_and_col_placements(row_only=True)
+    pack = pack.add_verification(BasicVerificationStrategy(), replace=True)
+    searcher1 = TileScope("0132_0213_0231_0321_1032_1320_2031_2301_3021_3120", pack)
+    searcher2 = TileScope("0132_0213_0231_0312_0321_1302_1320_2031_2301_3120", pack)
+    specs = find_bijection_between(searcher1, searcher2)
+    assert specs is not None
+    spec1, spec2 = specs
+    bijection_asserter(spec1, spec2)
+
+
 def main():
     # test1()
     # test2()
@@ -472,61 +482,10 @@ def main():
     # test8()
     # test9()
     # test10()
-    # test11()
+    test11()
+    # test12()
     pass
 
 
 if __name__ == "__main__":
     main()
-
-pack = TileScopePack.point_and_row_and_col_placements(row_only=True)
-pack = pack.add_verification(BasicVerificationStrategy(), replace=True)
-searcher1 = TileScope("0132_0213_0231_0321_1032_1320_2031_2301_3021_3120", pack)
-searcher2 = TileScope("0132_0213_0231_0312_0321_1302_1320_2031_2301_3120", pack)
-specs = find_bijection_between(searcher1, searcher2)
-assert specs is not None
-spec1, spec2 = specs
-# spec1.show()
-# spec2.show()
-# bijection_asserter(spec1, spec2)
-
-rule = spec1.get_rule(
-    Tiling(
-        obstructions=(
-            GriddedPerm((0, 1), ((1, 0), (1, 0))),
-            GriddedPerm((1, 0), ((0, 1), (2, 1))),
-            GriddedPerm((1, 0), ((1, 0), (1, 0))),
-            GriddedPerm((1, 0), ((2, 1), (2, 1))),
-            GriddedPerm((0, 2, 1), ((0, 1), (0, 1), (0, 1))),
-            GriddedPerm((2, 0, 1), ((0, 1), (0, 1), (0, 1))),
-        ),
-        requirements=((GriddedPerm((0,), ((1, 0),)),),),
-        assumptions=(),
-    )
-)
-print(rule)
-gp = GriddedPerm((0,), ((1, 0),))
-print("--- STRAT ---", rule.rules[0].strategy)
-rule.rules[0].forward_map(gp)
-
-bi = Bijection.construct(spec1, spec2)
-bi.map(
-    GriddedPerm(
-        (8, 7, 6, 9, 5, 4, 3, 2, 1, 0),
-        (
-            (0, 0),
-            (0, 0),
-            (0, 0),
-            (0, 0),
-            (0, 0),
-            (0, 0),
-            (0, 0),
-            (0, 0),
-            (0, 0),
-            (0, 0),
-        ),
-    )
-)
-
-# 012 og 201 mappast í 201
-# enginn mappast í 012

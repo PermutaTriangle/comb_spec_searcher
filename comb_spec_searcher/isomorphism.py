@@ -36,16 +36,13 @@ class Isomorphism:
         eq: AtomEquals = _default_equals,
     ) -> None:
         self._eq = eq
-        self._index = 0
-        self._root1: CombinatorialClass = spec1.root
         self._rules1: Dict[CombinatorialClass, AbstractRule] = spec1.rules_dict
-        self._root2: CombinatorialClass = spec2.root
         self._rules2: Dict[CombinatorialClass, AbstractRule] = spec2.rules_dict
         self._ancestors: Set[Tuple[CombinatorialClass, CombinatorialClass]] = set()
         self._order_map: Dict[
             Tuple[CombinatorialClass, CombinatorialClass], List[int]
         ] = {}
-        self._isomorphic = self._are_isomorphic(self._root1, self._root2)
+        self._isomorphic = self._are_isomorphic(spec1.root, spec2.root)
 
     def are_isomorphic(self) -> bool:
         """Check if the two specs are isomorphic."""
@@ -89,7 +86,7 @@ class Isomorphism:
                 rule1.children[non_empty_ind1[i1]], rule2.children[non_empty_ind2[i2]]
             ):
                 continue
-            child_order[i1] = i2
+            child_order[i2] = i1
             if i1 == n - 1:
                 self._order_map[(node1, node2)] = child_order
                 self._ancestors.remove((node1, node2))
@@ -119,22 +116,21 @@ class Isomorphism:
         self,
         node1: CombinatorialClass,
         rule1: AbstractRule,
-        nec1: Tuple[int, ...],
+        non_empty_children1: Tuple[int, ...],
         node2: CombinatorialClass,
         rule2: AbstractRule,
-        nec2: Tuple[int, ...],
+        non_empty_children2: Tuple[int, ...],
     ) -> int:
         # Already matched
         if (node1, node2) in self._order_map:
             return True
 
-        # If different number of children
-        if len(nec1) != len(nec2):
+        # If different number of non-empty children
+        if len(non_empty_children1) != len(non_empty_children2):
             return Isomorphism._INVALID
 
-        # If leaf that has no equal-ancestors
+        # Atoms
         if not rule1.children and not rule2.children:
-            # If one is atom, both should be and should also be equal
             if node1.is_atom() and node2.is_atom() and self._eq(node1, node2):
                 return Isomorphism._VALID
             return Isomorphism._INVALID
@@ -176,21 +172,12 @@ class Node:
             self.children: Tuple[Optional["Node"], ...] = tuple()
         else:
             assert isinstance(rule, Rule)
-            try:
-                x = rule.forward_map(obj)
-            except:
-                print(repr(self.rule.comb_class))
-                exit(0)
-            self.children = (
-                tuple(
-                    type(self)(get_rule(child), child_obj, get_rule)
-                    if child_obj is not None
-                    else None
-                    for child, child_obj in zip(rule.children, rule.forward_map(obj))
-                    if not child.is_empty()
-                )
-                if rule.children
-                else tuple()
+            self.children = tuple(
+                type(self)(get_rule(child), child_obj, get_rule)
+                if child_obj is not None
+                else None
+                for child, child_obj in zip(rule.children, rule.forward_map(obj))
+                if not child.is_empty()
             )
 
     def build_obj(
@@ -223,14 +210,11 @@ class Node:
                 )
                 return val
             order = [0]
-            # self.children[0].build_obj(rule, get_order, get_rule)
-            # TODO: do we need that spec2 eq case here too?
         elif self.rule.is_equivalence():
             assert self.children[0] is not None
             return self.children[0].build_obj(rule, get_order, get_rule)
         else:
             order = get_order[(self.rule.comb_class, rule.comb_class)]
-            order = Bijection._perm_inv(order)  # TODO: do this in one place, not here
         children = tuple(self.children[idx] for idx in order)
         child_objs = tuple(
             None
@@ -272,10 +256,7 @@ class Bijection:
         other: "CombinatorialSpecification",
         eq: AtomEquals = _default_equals,
     ) -> Optional["Bijection"]:
-        """Create a bijection object between two specifications if possible.
-
-        raises: ValueError if specifications are not isomorphic.
-        """
+        """Create a bijection object between two specifications if possible."""
         iso = Isomorphism(spec, other, eq)
         if not iso.are_isomorphic():
             return None
@@ -291,8 +272,7 @@ class Bijection:
         self.other = other
         self.get_order = get_order
         self.get_inverse_order = {
-            (c2, c1): Bijection._perm_inv(lis)
-            for ((c1, c2), lis) in self.get_order.items()
+            (c2, c1): Bijection._perm_inv(lis) for ((c1, c2), lis) in get_order.items()
         }
 
     @staticmethod
