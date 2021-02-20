@@ -8,6 +8,7 @@ if TYPE_CHECKING:
 
 
 AtomEquals = Callable[["CombinatorialClass", "CombinatorialClass"], bool]
+OrderMap = Dict[Tuple[CombinatorialClass, CombinatorialClass], List[int]]
 
 
 def _default_equals(c1: CombinatorialClass, c2: CombinatorialClass) -> bool:
@@ -50,7 +51,7 @@ class Isomorphism:
 
     def get_order(
         self,
-    ) -> Dict[Tuple[CombinatorialClass, CombinatorialClass], List[int]]:
+    ) -> OrderMap:
         """Get order map of corresponding nodes."""
         return self._order_map
 
@@ -166,13 +167,12 @@ class Node:
         obj: CombinatorialObject,
         get_rule: Callable[[CombinatorialClass], AbstractRule],
     ):
-        self.rule = rule
-        self.obj = obj
+        self._rule = rule
         if not rule.children:
-            self.children: Tuple[Optional["Node"], ...] = tuple()
+            self._children: Tuple[Optional["Node"], ...] = tuple()
         else:
             assert isinstance(rule, Rule)
-            self.children = tuple(
+            self._children = tuple(
                 type(self)(get_rule(child), child_obj, get_rule)
                 if child_obj is not None
                 else None
@@ -183,12 +183,12 @@ class Node:
     def build_obj(
         self,
         rule: AbstractRule,
-        get_order: Dict[Tuple[CombinatorialClass, CombinatorialClass], List[int]],
+        get_order: OrderMap,
         get_rule: Callable[[CombinatorialClass], AbstractRule],
     ) -> CombinatorialObject:
         """Parse tree's recursive build object function."""
 
-        if not self.children:
+        if not self._children:
             # TODO: stop special casing verification rules!
             obj: CombinatorialObject = next(
                 rule.comb_class.objects_of_size(
@@ -197,7 +197,7 @@ class Node:
             )
             return obj
         if rule.is_equivalence():
-            if not self.rule.is_equivalence():
+            if not self._rule.is_equivalence():
                 assert isinstance(rule, Rule)
                 val: CombinatorialObject = next(
                     rule.backward_map(
@@ -210,12 +210,12 @@ class Node:
                 )
                 return val
             order = [0]
-        elif self.rule.is_equivalence():
-            assert self.children[0] is not None
-            return self.children[0].build_obj(rule, get_order, get_rule)
+        elif self._rule.is_equivalence():
+            assert self._children[0] is not None
+            return self._children[0].build_obj(rule, get_order, get_rule)
         else:
-            order = get_order[(self.rule.comb_class, rule.comb_class)]
-        children = tuple(self.children[idx] for idx in order)
+            order = get_order[(self._rule.comb_class, rule.comb_class)]
+        children = tuple(self._children[idx] for idx in order)
         child_objs = tuple(
             None
             if child is None
@@ -234,16 +234,16 @@ class ParseTree:
     specification."""
 
     def __init__(self, obj: CombinatorialObject, spec: "CombinatorialSpecification"):
-        self.root = Node(spec.root_rule, obj, spec.get_rule)
+        self._root = Node(spec.root_rule, obj, spec.get_rule)
 
     def build_obj(
         self,
         root: AbstractRule,
-        get_order: Dict[Tuple[CombinatorialClass, CombinatorialClass], List[int]],
+        get_order: OrderMap,
         get_rule: Callable[[CombinatorialClass], AbstractRule],
     ) -> CombinatorialObject:
         """Build object from the other specification."""
-        return self.root.build_obj(root, get_order, get_rule)
+        return self._root.build_obj(root, get_order, get_rule)
 
 
 class Bijection:
@@ -266,14 +266,22 @@ class Bijection:
         self,
         spec: "CombinatorialSpecification",
         other: "CombinatorialSpecification",
-        get_order: Dict[Tuple[CombinatorialClass, CombinatorialClass], List[int]],
+        get_order: OrderMap,
     ):
-        self.spec = spec
-        self.other = other
-        self.get_order = get_order
-        self.get_inverse_order = {
+        self._spec = spec
+        self._other = other
+        self._get_order = get_order
+        self._get_inverse_order = {
             (c2, c1): Bijection._perm_inv(lis) for ((c1, c2), lis) in get_order.items()
         }
+
+    @property
+    def domain(self) -> "CombinatorialSpecification":
+        return self._spec
+
+    @property
+    def codomain(self) -> "CombinatorialSpecification":
+        return self._other
 
     @staticmethod
     def _perm_inv(perm: List[int]) -> List[int]:
@@ -284,22 +292,22 @@ class Bijection:
 
     def map(self, obj: CombinatorialObject) -> CombinatorialObject:
         """Map an object of the root of one specification to the root of the other."""
-        parse_tree = ParseTree(obj, self.spec)
+        parse_tree = ParseTree(obj, self._spec)
         return parse_tree.build_obj(
-            self.other.root_rule, self.get_order, self.other.get_rule
+            self._other.root_rule, self._get_order, self._other.get_rule
         )
 
     def inverse_map(self, obj: CombinatorialObject) -> CombinatorialObject:
-        parse_tree = ParseTree(obj, self.other)
+        parse_tree = ParseTree(obj, self._other)
         return parse_tree.build_obj(
-            self.spec.root_rule, self.get_inverse_order, self.spec.get_rule
+            self._spec.root_rule, self._get_inverse_order, self._spec.get_rule
         )
 
     def to_jsonable(self) -> dict:
         """Return a JSON serializable dictionary for the bijection."""
         id_map: Dict[CombinatorialClass, str] = {}
         classes: List[dict] = []
-        for c1, c2 in self.get_order.keys():
+        for c1, c2 in self._get_order.keys():
             if c1 not in id_map:
                 id_map[c1] = f"{len(classes)}"
                 classes.append(c1.to_jsonable())
@@ -308,15 +316,15 @@ class Bijection:
                 classes.append(c2.to_jsonable())
 
         reconstructed_map: Dict[str, Dict[str, List[int]]] = {}
-        for (c1, c2), lis in self.get_order.items():
+        for (c1, c2), lis in self._get_order.items():
             i1, i2 = id_map[c1], id_map[c2]
             if i1 not in reconstructed_map:
                 reconstructed_map[i1] = {i2: lis}
             else:
                 reconstructed_map[i1][i2] = lis
         return {
-            "spec": self.spec.to_jsonable(),
-            "other": self.other.to_jsonable(),
+            "spec": self._spec.to_jsonable(),
+            "other": self._other.to_jsonable(),
             "order": reconstructed_map,
             "classes": classes,
         }
