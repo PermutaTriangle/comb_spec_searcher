@@ -167,6 +167,7 @@ class Node:
         obj: CombinatorialObject,
         get_rule: Callable[[CombinatorialClass], AbstractRule],
     ):
+        self.obj = obj
         self._rule = rule
         if not rule.children:
             self._children: Tuple[Optional["Node"], ...] = tuple()
@@ -215,17 +216,21 @@ class Node:
             return self._children[0].build_obj(rule, get_order, get_rule)
         else:
             order = get_order[(self._rule.comb_class, rule.comb_class)]
-        children = tuple(self._children[idx] for idx in order)
-        child_objs = tuple(
-            None
-            if child is None
-            else child.build_obj(get_rule(child_class), get_order, get_rule)
-            for child, child_class in zip(
-                children, (c for c in rule.children if not c.is_empty())
+        children = (self._children[idx] for idx in order)
+        assert isinstance(rule, Rule)
+        val = next(
+            rule.backward_map(
+                tuple(
+                    c[0].build_obj(get_rule(c[1]), get_order, get_rule)
+                    if c is not None and c[0] is not None
+                    else None
+                    for c in (
+                        None if child.is_empty() else (next(children), child)
+                        for child in rule.children
+                    )
+                )
             )
         )
-        assert isinstance(rule, Rule)
-        val = next(rule.backward_map(child_objs))
         return val
 
 
