@@ -586,7 +586,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
 
 
 class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
-    def __init__(self, rule: Rule):
+    def __init__(self, rule: Rule[CombinatorialClassType, CombinatorialObjectType]):
         non_empty_children = rule.non_empty_children()
         assert rule.is_equivalence(), "not an equivalence rule: {}".format(str(rule))
         child = non_empty_children[0]
@@ -665,18 +665,12 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
             objs[0] if i == self.child_idx else None
             for i in range(len(self.actual_children))
         )
-        yield from self.strategy.backward_map(
-            self.comb_class, actual_objs, self.actual_children
-        )
+        yield from self.original_rule.backward_map(actual_objs)
 
     def forward_map(
         self, obj: CombinatorialObjectType
     ) -> Tuple[Optional[CombinatorialObjectType], ...]:
-        return (
-            self.strategy.forward_map(self.comb_class, obj, self.actual_children)[
-                self.child_idx
-            ],
-        )
+        return (self.original_rule.forward_map(obj)[self.child_idx],)
 
 
 class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
@@ -685,7 +679,9 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
     single Rule.
     """
 
-    def __init__(self, rules: Sequence[Rule]):
+    def __init__(
+        self, rules: Sequence[Rule[CombinatorialClassType, CombinatorialObjectType]]
+    ):
         assert all(rule.is_equivalence() for rule in rules)
         assert all(len(rule.children) == 1 for rule in rules)
         super().__init__(rules[0].strategy, rules[0].comb_class, rules[-1].children)
@@ -823,7 +819,9 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     A class for creating a reverse equivalence rule.
     """
 
-    def __init__(self, rule: Rule, idx: int):
+    def __init__(
+        self, rule: Rule[CombinatorialClassType, CombinatorialObjectType], idx: int
+    ):
         assert rule.is_two_way()
         super().__init__(
             rule.strategy,
@@ -872,7 +870,6 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
                 self.original_rule.comb_class,
                 self.original_rule.children,
             )
-
         return self._constructor
 
     @property
@@ -884,24 +881,26 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     def backward_map(
         self, objs: Tuple[Optional[CombinatorialObjectType], ...]
     ) -> Iterator[CombinatorialObjectType]:
-        # We expect the object to be in only the first and in particular when
-        # mapped should be in the idx child.
-        if not isinstance(self.constructor, DisjointUnion) and len(self.children) != 1:
-            raise NotImplementedError("Cannot map for non equivalence rule.")
-        yield cast(
-            CombinatorialObjectType, self.original_rule.forward_map(objs[0])[self.idx]
-        )
+        if not len(self.original_rule.non_empty_children()) == 1:
+            raise NotImplementedError("Cannot map forward for non equivalence rule.")
+        assert all(obj is None for obj in objs[1:])
+        assert objs[0] is not None
+        res = self.original_rule.forward_map(objs[0])[self.idx]
+        assert res is not None
+        yield res
 
     def forward_map(
         self, obj: CombinatorialObjectType
     ) -> Tuple[Optional[CombinatorialObjectType], ...]:
-        # We map forward to the first child.
-        # It is assumed that obj is ONLY on this child
-        if not isinstance(self.constructor, DisjointUnion) and len(self.children) != 1:
-            raise NotImplementedError("Cannot map for non equivalence rule.")
-        return (next(self.original_rule.backward_map((obj,))),) + tuple(
-            None for _ in range(len(self.children) - 1)
-        )
+        if not len(self.original_rule.non_empty_children()) == 1:
+            raise NotImplementedError("Cannot map forward for non equivalence rule.")
+        objs: List[Optional[CombinatorialObjectType]] = [
+            None for _ in self.original_rule.children
+        ]
+        objs[self.idx] = obj
+        orig_res = list(self.original_rule.backward_map(tuple(objs)))
+        assert len(orig_res) == 1, "More than one results from back map"
+        return tuple(orig_res) + tuple(None for _ in range(len(self.children) - 1))
 
     def get_op_symbol(self):
         return self.strategy.get_reverse_op_symbol()
