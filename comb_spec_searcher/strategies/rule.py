@@ -586,7 +586,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
 
 
 class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
-    def __init__(self, rule: Rule):
+    def __init__(self, rule: Rule[CombinatorialClassType, CombinatorialObjectType]):
         non_empty_children = rule.non_empty_children()
         assert rule.is_equivalence(), "not an equivalence rule: {}".format(str(rule))
         child = non_empty_children[0]
@@ -679,7 +679,9 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
     single Rule.
     """
 
-    def __init__(self, rules: Sequence[Rule]):
+    def __init__(
+        self, rules: Sequence[Rule[CombinatorialClassType, CombinatorialObjectType]]
+    ):
         assert all(rule.is_equivalence() for rule in rules)
         assert all(len(rule.children) == 1 for rule in rules)
         super().__init__(rules[0].strategy, rules[0].comb_class, rules[-1].children)
@@ -817,7 +819,9 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     A class for creating a reverse equivalence rule.
     """
 
-    def __init__(self, rule: Rule, idx: int):
+    def __init__(
+        self, rule: Rule[CombinatorialClassType, CombinatorialObjectType], idx: int
+    ):
         assert rule.is_two_way()
         super().__init__(
             rule.strategy,
