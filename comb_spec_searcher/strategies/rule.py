@@ -881,24 +881,26 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     def backward_map(
         self, objs: Tuple[Optional[CombinatorialObjectType], ...]
     ) -> Iterator[CombinatorialObjectType]:
-        # We expect the object to be in only the first and in particular when
-        # mapped should be in the idx child.
-        if not isinstance(self.constructor, DisjointUnion) and len(self.children) != 1:
-            raise NotImplementedError("Cannot map for non equivalence rule.")
-        yield cast(
-            CombinatorialObjectType, self.original_rule.forward_map(objs[0])[self.idx]
-        )
+        if not len(self.original_rule.non_empty_children()) == 1:
+            raise NotImplementedError("Cannot map forward for non equivalence rule.")
+        assert all(obj is None for obj in objs[1:])
+        assert objs[0] is not None
+        res = self.original_rule.forward_map(objs[0])[self.idx]
+        assert res is not None
+        yield res
 
     def forward_map(
         self, obj: CombinatorialObjectType
     ) -> Tuple[Optional[CombinatorialObjectType], ...]:
-        # We map forward to the first child.
-        # It is assumed that obj is ONLY on this child
-        if not isinstance(self.constructor, DisjointUnion) and len(self.children) != 1:
-            raise NotImplementedError("Cannot map for non equivalence rule.")
-        return (next(self.original_rule.backward_map((obj,))),) + tuple(
-            None for _ in range(len(self.children) - 1)
-        )
+        if not len(self.original_rule.non_empty_children()) == 1:
+            raise NotImplementedError("Cannot map forward for non equivalence rule.")
+        objs: List[Optional[CombinatorialObjectType]] = [
+            None for _ in self.original_rule.children
+        ]
+        objs[self.idx] = obj
+        orig_res = list(self.original_rule.backward_map(tuple(objs)))
+        assert len(orig_res) == 1, "More than one results from back map"
+        return tuple(orig_res) + tuple(None for _ in range(len(self.children) - 1))
 
     def get_op_symbol(self):
         return self.strategy.get_reverse_op_symbol()
