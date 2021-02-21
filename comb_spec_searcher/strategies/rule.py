@@ -665,18 +665,12 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
             objs[0] if i == self.child_idx else None
             for i in range(len(self.actual_children))
         )
-        yield from self.strategy.backward_map(
-            self.comb_class, actual_objs, self.actual_children
-        )
+        yield from self.original_rule.backward_map(actual_objs)
 
     def forward_map(
         self, obj: CombinatorialObjectType
     ) -> Tuple[Optional[CombinatorialObjectType], ...]:
-        return (
-            self.strategy.forward_map(self.comb_class, obj, self.actual_children)[
-                self.child_idx
-            ],
-        )
+        return (self.original_rule.forward_map(obj)[self.child_idx],)
 
 
 class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
@@ -872,7 +866,6 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
                 self.original_rule.comb_class,
                 self.original_rule.children,
             )
-
         return self._constructor
 
     @property
