@@ -384,7 +384,7 @@ if __name__ == "__main__":
         bijection = Bijection.construct(spec1, spec2, atom_cmp)
         assert bijection is not None
         for i in range(5):
-            for word in bijection.spec.generate_objects_of_size(i):
+            for word in bijection.domain.generate_objects_of_size(i):
                 mapped_to = bijection.map(word)
                 assert bijection.inverse_map(mapped_to) == word
                 print(f"{word} -> {mapped_to}")

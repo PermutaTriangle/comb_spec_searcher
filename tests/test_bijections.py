@@ -38,11 +38,16 @@ def get_specs(alphabet1, avoid1, alphabet2, avoid2):
 def assert_mappings(bijection):
     assert bijection is not None
     assert all(
-        set(bijection.map(w) for w in bijection.spec.generate_objects_of_size(i))
-        == set(bijection.other.generate_objects_of_size(i))
+        set(bijection.map(w) for w in bijection.domain.generate_objects_of_size(i))
+        == set(bijection.codomain.generate_objects_of_size(i))
+        and set(
+            bijection.inverse_map(w)
+            for w in bijection.codomain.generate_objects_of_size(i)
+        )
+        == set(bijection.domain.generate_objects_of_size(i))
         and all(
             w == bijection.inverse_map(bijection.map(w))
-            for w in bijection.spec.generate_objects_of_size(i)
+            for w in bijection.domain.generate_objects_of_size(i)
         )
         for i in range(10)
     )
