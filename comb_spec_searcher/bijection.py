@@ -32,10 +32,6 @@ class ParallelInfo:
         self.root_eq_label: int = self.r_db.equivdb[self.searcher.start_label]
         self.atom_map: Dict[int, CombinatorialClass] = {}
         self.root_class: Optional[CombinatorialClass] = None
-        self.debug_map: Dict[
-            Tuple[int, Tuple[int, ...]],
-            Tuple[CombinatorialClass, Tuple[CombinatorialClass, ...]],
-        ] = {}  # TODO: Remove
         self.eq_label_rules: DefaultDict[
             int, DefaultDict[type, DefaultDict[int, Set[Tuple[int, ...]]]]
         ] = self._construct_eq_label_rules()
@@ -65,7 +61,6 @@ class ParallelInfo:
             strategy = self.r_db.rule_to_strategy[(actual_par, actual_children)]
             parent = self.searcher.classdb.get_class(actual_par)
             children = tuple(map(self.searcher.classdb.get_class, actual_children))
-            self.debug_map[(eq_par, eq_chi)] = (parent, children)
             rule = strategy(parent, children)
             if eq_par == self.root_eq_label and self.root_class is None:
                 self.root_class = parent
