@@ -2,7 +2,6 @@ import json
 
 from comb_spec_searcher import (
     AtomStrategy,
-    CombinatorialClass,
     CombinatorialSpecificationSearcher,
     StrategyPack,
 )
