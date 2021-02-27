@@ -81,7 +81,8 @@ using ``in``.
    >>> from comb_spec_searcher import CombinatorialObject
    
    >>> class Word(str, CombinatorialObject):
-   ...     pass
+   ...     def size(self):
+   ...         return str.__len__(self)
 
    >>> w = Word("acbabcabbb")
    >>> p = Word("abcab")
@@ -482,13 +483,10 @@ We start by defining our two classes that we wish to find a bijection between.
    >>> class2 = AvoidingWithPrefix(prefix2, patterns2, alphabet2)
 
 To find a bijection we expand the universe given a pack for both classes
-and try to construct specifications that are parallel. If the atoms can not
-be compared with ``==`` we will need to supply our own equals function.
+and try to construct specifications that are parallel.
 
 .. code:: python
 
-   >>> def atom_cmp(class1, class2):
-   ...     return len(class1.prefix) == len(class2.prefix)
    >>> searcher1 = CombinatorialSpecificationSearcher(class1, pack)
    >>> searcher2 = CombinatorialSpecificationSearcher(class2, pack)
 
@@ -496,9 +494,9 @@ We get two parallel specs if successful, ``None`` otherwise.
 
 .. code:: python
 
-   >>> specs = find_bijection_between(searcher1, searcher2, atom_cmp)
+   >>> specs = find_bijection_between(searcher1, searcher2)
    >>> spec1, spec2 = specs
-   >>> bijection = Bijection.construct(spec1, spec2, atom_cmp)
+   >>> bijection = Bijection.construct(spec1, spec2)
 
 We can use the `Bijection` object to map (either way) sampled objects
 from the sepcifications.

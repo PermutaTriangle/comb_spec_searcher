@@ -52,7 +52,8 @@ from comb_spec_searcher import (
 
 
 class Word(str, CombinatorialObject):
-    pass
+    def size(self):
+        return str.__len__(self)
 
 
 class AvoidingWithPrefix(CombinatorialClass[Word]):
