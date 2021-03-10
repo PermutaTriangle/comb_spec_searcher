@@ -118,6 +118,14 @@ class Function:
                 return last_non_zero + 1
         return last_non_zero + 1
 
+    def preimage(self, value: Optional[int]) -> Iterator[int]:
+        """
+        Return the preimage of the function for the given value.
+        """
+        if value == 0:
+            raise ValueError("The preimage of 0 is infinite.")
+        return (k for k, v in enumerate(self._value) if v == value)
+
     def __str__(self) -> str:
         parts = [
             f"{i} -> {v if v is not None else '∞'}" for i, v in enumerate(self._value)
@@ -137,7 +145,7 @@ class ForestRuleDB:
         self._rule_holding_extra_terms: Set[int] = set()
         self._current_gap: Tuple[int, int] = (1, 1)
 
-    def _add_rule(self, rule_key: RuleKey, shifts_for_zero: Tuple[int, ...]):
+    def add_rule(self, rule_key: RuleKey, shifts_for_zero: Tuple[int, ...]):
         """
         Add the rule key and update all the attributes accordingly.
 
@@ -157,6 +165,23 @@ class ForestRuleDB:
         if max_gap > self._gap_size:
             self._gap_size = max_gap
             self._correct_gap()
+        self._process_queue()
+
+    def is_pumping(self, comb_class: int) -> bool:
+        """
+        Determine if the comb_class is pumping in the current universe.
+        """
+        assert not self._processing_queue and not self._rule_holding_extra_terms
+        return self._function[comb_class] is None
+
+    def pumping_subuniverse(self) -> Iterator[RuleKey]:
+        """
+        Iterator over all the rules that contain only pumping combinatorial classes.
+        """
+        stable_subset = set(self._function.preimage(None))
+        for rule_key in self._rules:
+            if rule_key[0] in stable_subset and stable_subset.issuperset(rule_key[1]):
+                yield rule_key
 
     def _compute_shift(
         self,
