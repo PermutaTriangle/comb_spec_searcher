@@ -1,6 +1,7 @@
 from typing import (
     Callable,
     Deque,
+    Dict,
     Generic,
     Iterator,
     List,
@@ -126,6 +127,12 @@ class Function:
             raise ValueError("The preimage of 0 is infinite.")
         return (k for k, v in enumerate(self._value) if v == value)
 
+    def to_dict(self) -> Dict[int, Optional[int]]:
+        """
+        Return a dictionary view of the function with only the non-zero value.
+        """
+        return {i: v for i, v in enumerate(self._value) if v != 0}
+
     def __str__(self) -> str:
         parts = [
             f"{i} -> {v if v is not None else '∞'}" for i, v in enumerate(self._value)
@@ -144,6 +151,14 @@ class ForestRuleDB:
         self._processing_queue: Deque[int] = Deque()
         self._rule_holding_extra_terms: Set[int] = set()
         self._current_gap: Tuple[int, int] = (1, 1)
+
+    @property
+    def function(self) -> Dict[int, Optional[int]]:
+        """
+        Return a dict representing the function of the ruledb with only the non-zero
+        values.
+        """
+        return self._function.to_dict()
 
     def add_rule(self, rule_key: RuleKey, shifts_for_zero: Tuple[int, ...]):
         """
