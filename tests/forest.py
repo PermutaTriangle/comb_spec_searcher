@@ -7,27 +7,18 @@ from comb_spec_searcher.rule_db.forest import ForestRuleDB, Function
 
 
 def assert_function_values(
-    function: Function, values: Union[Dict[int, int], List[int]], gap: Tuple[int, int]
+    function: Function, values: Union[Dict[int, int], List[int]]
 ):
     """
     Check that the function values matches the given values.
     """
     if isinstance(values, dict):
         values = [values[i] if i in values else 0 for i in range(max(values) + 1)]
-    gap_size = gap[1] - gap[0] + 1
-    gap_start = function.preimage_gap(gap_size)
-    gap_end = function.preimage_gap(gap_size) + gap_size - 1
-    if gap != (gap_start, gap_end):
-        m = "The gap doesn't match:\n"
-        m += f"The expected gap was {gap}, but the gap found is {(gap_start, gap_end)}.\n"
-        m += f"The function values are:\n{function._value}\n"
-        m += f"The expected values are:\n{values}"
-        raise AssertionError(m)
     failing_index = []
     for n, (fv, gv) in enumerate(
         itertools.zip_longest(function._value, values, fillvalue=0)
     ):
-        if not (fv == gv or fv > gv > gap_end):
+        if not (fv == gv):
             failing_index.append(n)
 
     if failing_index:
@@ -54,6 +45,19 @@ class TestFunction:
         assert f[4] == 1
         assert f[5] == 0
         assert f[6] == 0
+
+    def test_infinity(self):
+        f = Function()
+        f.increase_value(0)
+        f.increase_value(3)
+        f.increase_value(4)
+        f.set_infinite(3)
+        assert f[0] == 1
+        assert f[1] == 0
+        assert f[2] == 0
+        assert f[3] is None
+        assert f[4] == 1
+        assert f.preimage_gap(100) == 2
 
     def test_find_gap(self):
         f = Function()
@@ -113,7 +117,7 @@ def test_132_universe_pumping():
     ruledb._add_rule((5, tuple()), tuple())  # point verif
     ruledb._add_rule((2, (6,)), (2,))  # dumb rule
     ruledb._process_queue()
-    assert_function_values(ruledb._function, [3, 5, 3, 3, 3, 5], (1, 2))
+    assert_function_values(ruledb._function, {i: None for i in range(6)})
 
 
 def test_132_universe_pumping_progressive():
@@ -126,37 +130,37 @@ def test_132_universe_pumping_progressive():
     ruledb = ForestRuleDB()
     ruledb._add_rule((0, (1, 2)), (0, 0))  # Point insertion
     ruledb._process_queue()
-    assert_function_values(ruledb._function, [], (1, 1))
+    assert_function_values(ruledb._function, [])
 
     ruledb._add_rule((1, tuple()), tuple())  # Empty verif
     ruledb._process_queue()
-    assert_function_values(ruledb._function, [0, 2], (1, 1))
+    assert_function_values(ruledb._function, [0, None])
 
     ruledb._add_rule((2, (3,)), (0,))  # point placement
     ruledb._process_queue()
-    assert_function_values(ruledb._function, [0, 2], (1, 1))
+    assert_function_values(ruledb._function, [0, None])
 
     ruledb._add_rule((3, (4,)), (0,))  # row col sep
     ruledb._process_queue()
-    assert_function_values(ruledb._function, [0, 2], (1, 1))
+    assert_function_values(ruledb._function, [0, None])
 
     ruledb._add_rule((5, tuple()), tuple())  # point verif
     ruledb._process_queue()
-    assert_function_values(ruledb._function, [0, 2, 0, 0, 0, 2], (1, 1))
+    assert_function_values(ruledb._function, [0, None, 0, 0, 0, None])
 
     # The rule increase the size of the gap needed. The verified things should bump.
     ruledb._add_rule((2, (6,)), (-2,))  # dumb rule
     ruledb._process_queue()
-    assert_function_values(ruledb._function, [0, 3, 0, 0, 0, 3], (1, 2))
+    assert_function_values(ruledb._function, [0, None, 0, 0, 0, None])
 
     # This will pump to and 0 a little bit
     ruledb._add_rule((2, (7,)), (2,))  # dumb rule
     ruledb._process_queue()
-    assert_function_values(ruledb._function, [2, 5, 2, 0, 0, 5], (3, 4))
+    assert_function_values(ruledb._function, [2, None, 2, 0, 0, None])
 
     ruledb._add_rule((4, (5, 0, 0)), (0, 1, 1))  # factor
     ruledb._process_queue()
-    assert_function_values(ruledb._function, [3, 5, 3, 3, 3, 5], (1, 2))
+    assert_function_values(ruledb._function, {i: None for i in range(6)})
 
 
 def test_universe_not_pumping():
@@ -167,7 +171,7 @@ def test_universe_not_pumping():
     ruledb._add_rule((3, (4,)), (0,))  # row col sep
     ruledb._add_rule((4, (5, 0, 0)), (0, 1, 1))  # factor
     ruledb._process_queue()
-    assert_function_values(ruledb._function, [0, 0, 1, 1, 1, 3], (2, 2))
+    assert_function_values(ruledb._function, [0, 0, 1, 1, 1, None])
 
 
 def test_segmented():
@@ -177,30 +181,30 @@ def test_segmented():
     ruledb._add_rule((1, (4, 14)), (0, 0))
     ruledb._add_rule((2, tuple()), tuple())
     ruledb._process_queue()
-    assert_function_values(ruledb._function, {2: 2}, (1, 1))
+    assert_function_values(ruledb._function, {2: None})
 
     ruledb._add_rule((3, (16, 5)), (1, 0))
     ruledb._add_rule((4, tuple()), tuple())
     ruledb._add_rule((5, tuple()), tuple())
     ruledb._process_queue()
-    assert_function_values(ruledb._function, {2: 3, 3: 1, 4: 3, 5: 3}, (2, 2))
+    assert_function_values(ruledb._function, {2: None, 3: 1, 4: None, 5: None})
 
     # Induced a gap size change
     ruledb._add_rule((6, (7, 5, 17)), (2, 1, 1))
     ruledb._process_queue()
-    assert_function_values(ruledb._function, {2: 4, 3: 1, 4: 4, 5: 4, 6: 1}, (2, 3))
+    assert_function_values(ruledb._function, {2: None, 3: 1, 4: None, 5: None, 6: 1})
 
     ruledb._add_rule((16, (6,)), (0,))
     ruledb._process_queue()
     assert_function_values(
-        ruledb._function, {2: 5, 3: 2, 4: 5, 5: 5, 6: 1, 16: 1}, (3, 4)
+        ruledb._function, {2: None, 3: 2, 4: None, 5: None, 6: 1, 16: 1}
     )
 
     ruledb._add_rule((7, tuple()), tuple())
     ruledb._add_rule((8, (9, 5)), (1, 0))
     ruledb._process_queue()
     assert_function_values(
-        ruledb._function, {2: 5, 3: 2, 4: 5, 5: 5, 6: 1, 7: 5, 8: 1, 16: 1}, (3, 4)
+        ruledb._function, {2: None, 3: 2, 4: None, 5: None, 6: 1, 7: None, 8: 1, 16: 1}
     )
 
     ruledb._add_rule((12, (20, 5)), (-1, 0))
@@ -214,12 +218,12 @@ def test_segmented():
         {
             0: 2,
             1: 2,
-            2: 5,
+            2: None,
             3: 2,
-            4: 5,
-            5: 5,
+            4: None,
+            5: None,
             6: 1,
-            7: 5,
+            7: None,
             8: 1,
             13: 1,
             14: 2,
@@ -227,7 +231,6 @@ def test_segmented():
             16: 1,
             20: 1,
         },
-        (3, 4),
     )
 
     ruledb._add_rule((18, (8,)), (0,))
@@ -238,12 +241,12 @@ def test_segmented():
         {
             0: 2,
             1: 2,
-            2: 5,
+            2: None,
             3: 2,
-            4: 5,
-            5: 5,
+            4: None,
+            5: None,
             6: 1,
-            7: 5,
+            7: None,
             8: 1,
             13: 1,
             14: 2,
@@ -252,7 +255,6 @@ def test_segmented():
             18: 1,
             20: 1,
         },
-        (3, 4),
     )
 
     ruledb._add_rule((17, (8,)), (0,))
@@ -262,12 +264,12 @@ def test_segmented():
         {
             0: 3,
             1: 3,
-            2: 6,
+            2: None,
             3: 3,
-            4: 6,
-            5: 6,
+            4: None,
+            5: None,
             6: 2,
-            7: 6,
+            7: None,
             8: 1,
             11: 1,
             12: 1,
@@ -279,7 +281,6 @@ def test_segmented():
             18: 1,
             20: 2,
         },
-        (4, 5),
     )
 
     ruledb._add_rule((9, (0, 19)), (0, 0))
@@ -290,12 +291,12 @@ def test_segmented():
         {
             0: 3,
             1: 3,
-            2: 6,
+            2: None,
             3: 3,
-            4: 6,
-            5: 6,
+            4: None,
+            5: None,
             6: 2,
-            7: 6,
+            7: None,
             8: 1,
             10: 2,
             11: 1,
@@ -308,9 +309,8 @@ def test_segmented():
             18: 1,
             20: 2,
         },
-        (4, 5),
     )
 
     ruledb._add_rule((19, (10,)), (0,))
     ruledb._process_queue()
-    assert_function_values(ruledb._function, {i: 2 for i in range(21)}, (0, 1))
+    assert_function_values(ruledb._function, {i: None for i in range(21)})
