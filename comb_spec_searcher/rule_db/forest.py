@@ -158,7 +158,8 @@ class ForestRuleDB:
         rule_idx = len(self._rules) - 1
         self._rules_pumping_class[rule_key[0]].append(rule_idx)
         for child_idx, child in enumerate(rule_key[1]):
-            self._rules_using_class[child].append((rule_idx, child_idx))
+            if self._function[child] is not None:
+                self._rules_using_class[child].append((rule_idx, child_idx))
         self._shifts.append(self._compute_shift(rule_key, shifts_for_zero))
         max_gap = max((abs(s) for s in shifts_for_zero), default=0)
         self._processing_queue.append(rule_idx)
@@ -260,7 +261,8 @@ class ForestRuleDB:
         for rule_idx, class_idx in self._rules_using_class[comb_class]:
             shifts = self._shifts[rule_idx]
             current_shift = shifts[class_idx]
-            shifts[class_idx] = current_shift + 1 if current_shift is not None else None
+            assert current_shift is not None
+            shifts[class_idx] = current_shift + 1
             if self._can_give_terms(shifts):
                 self._processing_queue.append(rule_idx)
 
@@ -284,6 +286,7 @@ class ForestRuleDB:
             shifts[class_idx] = None
             if self._can_give_terms(shifts):
                 self._processing_queue.append(rule_idx)
+        self._rules_using_class[comb_class].clear()
 
     def rule_info(self, rule_idx: int) -> str:
         """
