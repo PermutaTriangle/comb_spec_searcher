@@ -1,3 +1,4 @@
+from itertools import product
 from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Set, Tuple
 
 from .combinatorial_class import CombinatorialClass, CombinatorialObject
@@ -11,10 +12,6 @@ AtomEquals = Callable[["CombinatorialClass", "CombinatorialClass"], bool]
 OrderMap = Dict[Tuple[CombinatorialClass, CombinatorialClass], List[int]]
 
 
-def _default_equals(c1: CombinatorialClass, c2: CombinatorialClass) -> bool:
-    return c1 == c2
-
-
 class Isomorphism:
     """Isomorphism checker."""
 
@@ -22,27 +19,21 @@ class Isomorphism:
 
     @classmethod
     def check(
-        cls,
-        spec1: "CombinatorialSpecification",
-        spec2: "CombinatorialSpecification",
-        eq: AtomEquals = _default_equals,
+        cls, spec1: "CombinatorialSpecification", spec2: "CombinatorialSpecification"
     ) -> bool:
         """Check if two specs are isomorphic."""
-        return cls(spec1, spec2, eq).are_isomorphic()
+        return cls(spec1, spec2).are_isomorphic()
 
     def __init__(
-        self,
-        spec1: "CombinatorialSpecification",
-        spec2: "CombinatorialSpecification",
-        eq: AtomEquals = _default_equals,
+        self, spec1: "CombinatorialSpecification", spec2: "CombinatorialSpecification"
     ) -> None:
-        self._eq = eq
         self._rules1: Dict[CombinatorialClass, AbstractRule] = spec1.rules_dict
         self._rules2: Dict[CombinatorialClass, AbstractRule] = spec2.rules_dict
         self._ancestors: Set[Tuple[CombinatorialClass, CombinatorialClass]] = set()
         self._order_map: Dict[
             Tuple[CombinatorialClass, CombinatorialClass], List[int]
         ] = {}
+        self._failed: Set[Tuple[CombinatorialClass, CombinatorialClass]] = set()
         self._isomorphic = self._are_isomorphic(spec1.root, spec2.root)
 
     def are_isomorphic(self) -> bool:
@@ -59,10 +50,12 @@ class Isomorphism:
         self, node1: CombinatorialClass, node2: CombinatorialClass
     ) -> bool:
         # If there are equivilances, we use the 'latest' one
-        node1, node2 = Isomorphism._get_eq_descendant(
+        # but we check for recursion for any possible pairing
+        eq_path1, eq_path2 = Isomorphism._get_eq_descendant(
             node1, self._rules1, node2, self._rules2
         )
-        rule1, rule2 = self._rules1[node1], self._rules2[node2]
+        curr1, curr2 = eq_path1[-1], eq_path2[-1]
+        rule1, rule2 = self._rules1[curr1], self._rules2[curr2]
 
         non_empty_ind1, non_empty_ind2 = (
             tuple(i for i, c in enumerate(rule1.children) if not c.is_empty()),
@@ -70,30 +63,35 @@ class Isomorphism:
         )
 
         is_base_case = self._base_cases(
-            node1, rule1, non_empty_ind1, node2, rule2, non_empty_ind2
+            eq_path1, rule1, non_empty_ind1, eq_path2, rule2, non_empty_ind2
         )
         if is_base_case:
             return bool(is_base_case + 1)
 
-        self._ancestors.add((node1, node2))
+        self._ancestors.update(product(eq_path1, eq_path2))
 
         # Check all matches of children, if any are valid then trees are isomorphic
         n = len(non_empty_ind1)
         child_order: List[int] = [-1] * n
         stack = [(0, i, {i}) for i in range(n - 1, -1, -1)]
+        blacklist: Set[Tuple[int, int]] = set()
         while stack:
             i1, i2, in_use = stack.pop()
+            if (i1, i2) in blacklist:
+                continue
             if not self._are_isomorphic(
                 rule1.children[non_empty_ind1[i1]], rule2.children[non_empty_ind2[i2]]
             ):
+                blacklist.add((i1, i2))
                 continue
             child_order[i2] = i1
             if i1 == n - 1:
-                self._order_map[(node1, node2)] = child_order
-                self._ancestors.remove((node1, node2))
+                self._order_map[(curr1, curr2)] = child_order
+                self._ancestors.difference_update(product(eq_path1, eq_path2))
                 return True
             Isomorphism._extend_stack(i1, n, in_use, stack)
-        self._ancestors.remove((node1, node2))
+        self._ancestors.difference_update(product(eq_path1, eq_path2))
+        self._failed.add((curr1, curr2))
         return False
 
     @staticmethod
@@ -102,29 +100,33 @@ class Isomorphism:
         rules1: Dict[CombinatorialClass, AbstractRule],
         node2: CombinatorialClass,
         rules2: Dict[CombinatorialClass, AbstractRule],
-    ) -> Tuple[CombinatorialClass, CombinatorialClass]:
+    ) -> Tuple[List[CombinatorialClass], List[CombinatorialClass]]:
         rule1, rule2 = rules1[node1], rules2[node2]
-
-        if rule2.is_equivalence():
-            node2 = rule2.children[0]
-
+        nodes1, nodes2 = [node1], [node2]
         if rule1.is_equivalence():
-            node1 = rule1.children[0]
-
-        return node1, node2
+            nodes1.append(rule1.children[0])
+        if rule2.is_equivalence():
+            nodes2.append(rule2.children[0])
+        return nodes1, nodes2
 
     def _base_cases(
         self,
-        node1: CombinatorialClass,
+        eq_nodes1: List[CombinatorialClass],
         rule1: AbstractRule,
         non_empty_children1: Tuple[int, ...],
-        node2: CombinatorialClass,
+        eq_nodes2: List[CombinatorialClass],
         rule2: AbstractRule,
         non_empty_children2: Tuple[int, ...],
     ) -> int:
+        curr1, curr2 = eq_nodes1[-1], eq_nodes2[-1]
+
         # Already matched
-        if (node1, node2) in self._order_map:
-            return True
+        if (curr1, curr2) in self._order_map:
+            return Isomorphism._VALID
+
+        # Already failed
+        if (curr1, curr2) in self._failed:
+            return Isomorphism._INVALID
 
         # If different number of non-empty children
         if len(non_empty_children1) != len(non_empty_children2):
@@ -132,8 +134,11 @@ class Isomorphism:
 
         # Atoms
         if not rule1.children and not rule2.children:
-            if node1.is_atom() and node2.is_atom() and self._eq(node1, node2):
-                return Isomorphism._VALID
+            if curr1.is_atom() and curr2.is_atom():
+                atom1 = next(curr1.objects_of_size(curr1.minimum_size_of_object()))
+                atom2 = next(curr2.objects_of_size(curr2.minimum_size_of_object()))
+                if atom1.size() == atom2.size():
+                    return Isomorphism._VALID
             return Isomorphism._INVALID
 
         # If different type of rules are applied, the trees are not isomorphic
@@ -143,7 +148,7 @@ class Isomorphism:
             return Isomorphism._INVALID
 
         # Check for recursive match
-        if (node1, node2) in self._ancestors:
+        if any((n1, n2) in self._ancestors for n1, n2 in product(eq_nodes1, eq_nodes2)):
             return Isomorphism._VALID
 
         return Isomorphism._UNKNOWN
@@ -259,10 +264,9 @@ class Bijection:
         cls,
         spec: "CombinatorialSpecification",
         other: "CombinatorialSpecification",
-        eq: AtomEquals = _default_equals,
     ) -> Optional["Bijection"]:
         """Create a bijection object between two specifications if possible."""
-        iso = Isomorphism(spec, other, eq)
+        iso = Isomorphism(spec, other)
         if not iso.are_isomorphic():
             return None
         return cls(spec, other, iso.get_order())

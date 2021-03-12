@@ -52,7 +52,8 @@ from comb_spec_searcher import (
 
 
 class Word(str, CombinatorialObject):
-    pass
+    def size(self):
+        return str.__len__(self)
 
 
 class AvoidingWithPrefix(CombinatorialClass[Word]):
@@ -365,9 +366,6 @@ if __name__ == "__main__":
         "(press any key to continue)"
     )
 
-    def atom_cmp(class1, class2):
-        return len(class1.prefix) == len(class2.prefix)
-
     specs = find_bijection_between(
         CombinatorialSpecificationSearcher(
             AvoidingWithPrefix(Word(), ["00"], ["0", "1"]), pack
@@ -375,13 +373,12 @@ if __name__ == "__main__":
         CombinatorialSpecificationSearcher(
             AvoidingWithPrefix(Word(), ["11"], ["0", "1"]), pack
         ),
-        atom_cmp,
     )
     if specs is None:
         print("No bijection found")
     else:
         spec1, spec2 = specs
-        bijection = Bijection.construct(spec1, spec2, atom_cmp)
+        bijection = Bijection.construct(spec1, spec2)
         assert bijection is not None
         for i in range(5):
             for word in bijection.domain.generate_objects_of_size(i):

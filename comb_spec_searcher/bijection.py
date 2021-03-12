@@ -1,6 +1,6 @@
 from collections import defaultdict, deque
 from itertools import product
-from typing import Callable, DefaultDict, Dict, List, Optional, Set, Tuple
+from typing import DefaultDict, Dict, List, Optional, Set, Tuple
 
 from comb_spec_searcher.comb_spec_searcher import CombinatorialSpecificationSearcher
 from comb_spec_searcher.combinatorial_class import CombinatorialClass
@@ -103,12 +103,10 @@ class ParallelSpecFinder:
         self,
         searcher1: CombinatorialSpecificationSearcher,
         searcher2: CombinatorialSpecificationSearcher,
-        atom_equals: Callable[[CombinatorialClass, CombinatorialClass], bool],
     ):
         self._pi1 = ParallelInfo(searcher1)
         self._pi2 = ParallelInfo(searcher2)
         self._ancestors: Set[Tuple[int, int]] = set()
-        self._atom_equals = atom_equals
 
     def find(
         self,
@@ -135,9 +133,13 @@ class ParallelSpecFinder:
         found = False
         for children1, children2, n in self._potential_children(id1, id2):
             stack = [(0, i, {i}) for i in range(n - 1, -1, -1)]
+            blacklist: Set[Tuple[int, int]] = set()
             while stack:
                 i1, i2, in_use = stack.pop()
+                if (i1, i2) in blacklist:
+                    continue
                 if not self._find(children1[i1], children2[i2], matching_info, visited):
+                    blacklist.add((i1, i2))
                     continue
                 if i1 == n - 1:
                     matching_info[(id1, id2)].add((children1, children2))
@@ -158,7 +160,10 @@ class ParallelSpecFinder:
         # If rule type has no constructor we compare atoms
         if NO_CONSTRUCTOR in self._pi1.eq_label_rules[id1]:
             if NO_CONSTRUCTOR in self._pi2.eq_label_rules[id2]:
-                if self._atom_equals(self._pi1.atom_map[id1], self._pi2.atom_map[id2]):
+                atomic1, atomic2 = self._pi1.atom_map[id1], self._pi2.atom_map[id2]
+                atom1 = next(atomic1.objects_of_size(atomic1.minimum_size_of_object()))
+                atom2 = next(atomic2.objects_of_size(atomic2.minimum_size_of_object()))
+                if atom1.size() == atom2.size():
                     matching_info[(id1, id2)] = {((), ())}
                     return ParallelSpecFinder._VALID
                 if len(self._pi2.eq_label_rules[id2]) == 1:
@@ -329,17 +334,10 @@ class ParallelSpecFinder:
         return CombinatorialSpecification(pi.root_class, rules)
 
 
-def _default_equals(c1: CombinatorialClass, c2: CombinatorialClass) -> bool:
-    return c1 == c2
-
-
 def find_bijection_between(
     searcher1: CombinatorialSpecificationSearcher,
     searcher2: CombinatorialSpecificationSearcher,
-    atom_equals: Callable[
-        [CombinatorialClass, CombinatorialClass], bool
-    ] = _default_equals,
 ) -> Optional[Tuple[CombinatorialSpecification, CombinatorialSpecification]]:
     """Find bijections between two universes. If they are not of the same type, a
     custom atom comparator is needed."""
-    return ParallelSpecFinder(searcher1, searcher2, atom_equals).find()
+    return ParallelSpecFinder(searcher1, searcher2).find()
