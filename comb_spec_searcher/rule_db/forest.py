@@ -170,17 +170,18 @@ class ForestRuleDB:
             the rule where at 0.
         """
         self._rules.append(rule_key)
-        rule_idx = len(self._rules) - 1
-        self._rules_pumping_class[rule_key[0]].append(rule_idx)
-        for child_idx, child in enumerate(rule_key[1]):
-            if self._function[child] is not None:
-                self._rules_using_class[child].append((rule_idx, child_idx))
         self._shifts.append(self._compute_shift(rule_key, shifts_for_zero))
         max_gap = max((abs(s) for s in shifts_for_zero), default=0)
-        self._processing_queue.append(rule_idx)
         if max_gap > self._gap_size:
             self._gap_size = max_gap
             self._correct_gap()
+        if self._function[rule_key[0]] is not None:
+            rule_idx = len(self._rules) - 1
+            self._rules_pumping_class[rule_key[0]].append(rule_idx)
+            for child_idx, child in enumerate(rule_key[1]):
+                if self._function[child] is not None:
+                    self._rules_using_class[child].append((rule_idx, child_idx))
+            self._processing_queue.append(rule_idx)
         self._process_queue()
 
     def is_pumping(self, comb_class: int) -> bool:
@@ -293,7 +294,14 @@ class ForestRuleDB:
         assert current_value > self._current_gap[1]
         assert not self._processing_queue
         self._function.set_infinite(comb_class)
-        # Correction of the shifts for rule pumping comb_class
+        # Cleaning the class pumping this comb_class
+        for rule_idx in self._rules_pumping_class[comb_class]:
+            for child in self._rules[rule_idx][1]:
+                self._rules_using_class[child] = [
+                    (ri, ci)
+                    for ri, ci in self._rules_using_class[child]
+                    if ri != rule_idx
+                ]
         self._rules_pumping_class[comb_class].clear()
         # Correction of the shifts for rules using comb_class to pump
         for rule_idx, class_idx in self._rules_using_class[comb_class]:
@@ -308,5 +316,26 @@ class ForestRuleDB:
         Return a string with information about a particular rule.
         Mostly intended for debugging.
         """
+
+        def v_to_str(v: Optional[int]) -> str:
+            """Return a string for the in and inifinit if None"""
+            if v is None:
+                return "∞"
+            return str(v)
+
         rule_key = self._rules[rule_idx]
-        return str(rule_key)
+        shifts = map(v_to_str, self._shifts[rule_idx])
+        current_value = f"{v_to_str(self._function[rule_key[0]])} -> " + ", ".join(
+            map(v_to_str, (self._function[c] for c in rule_key[1]))
+        )
+        child_with_shift = ", ".join(f"({c}, {s})" for c, s in zip(rule_key[1], shifts))
+        s = f"{rule_key[0]} -> {child_with_shift} || {current_value}"
+        return s
+
+    def status(self):
+        """
+        Print the rule_info for tall the rules.
+        Mostly intended for debugging.
+        """
+        for i in range(len(self._rules)):
+            print(self.rule_info(i))
