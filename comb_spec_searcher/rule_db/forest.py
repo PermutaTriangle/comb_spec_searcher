@@ -290,7 +290,8 @@ class ForestRuleDB:
         gap.
         """
         current_value = self._function[comb_class]
-        assert current_value is not None
+        if current_value is None:
+            return
         assert current_value > self._current_gap[1]
         assert not self._processing_queue
         self._function.set_infinite(comb_class)
