@@ -17,13 +17,21 @@ T = TypeVar("T")
 
 
 class DefaultList(Generic[T]):
+    """
+    A list data structure get automatically gets longer if an index not existing is
+    requested.
+
+    When getting longer the list is filled by calling the provied `default_factory`.
+    This is similar to the `collections.defaultdict` data structure.
+    """
+
     def __init__(self, default_factory: Callable[[], T]):
         self._default_factory = default_factory
         self._list: List[T] = []
 
     def _increase_list_len(self, key: int) -> None:
         """
-        Increase the length of the list to the give key.
+        Increase the length of the list so that the given is valid.
         """
         num_new_entry = key - len(self._list) + 1
         self._list.extend((self._default_factory() for _ in range(num_new_entry)))
@@ -42,13 +50,14 @@ class DefaultList(Generic[T]):
         return iter(self._list)
 
     def __str__(self) -> str:
-        return repr(self._list)
+        return str(self._list)
 
 
 class Function:
     """
     A python representation of a function.
-    The function maps natural number to n to a natural number or infinity (represented
+
+    The function maps natural number to a natural number or infinity (represented
     by the use of None)
 
     The default value of the function is 0.
@@ -91,7 +100,7 @@ class Function:
 
     def set_infinite(self, key: int) -> None:
         """
-        Set the value of the given key to infinity.
+        Set the value of function for the given key to infinity.
         """
         try:
             old_value = self._value[key]
@@ -106,8 +115,8 @@ class Function:
 
     def preimage_gap(self, length: int) -> int:
         """
-        Return the smallest k such that the preimage of [k, k+length-1]
-        is empty.
+        Return the smallest k such that the preimage of the interval
+        [k, k+length-1] is empty.
         """
         if length <= 0:
             raise ValueError("length argument must be positive")
@@ -134,13 +143,18 @@ class Function:
         return {i: v for i, v in enumerate(self._value) if v != 0}
 
     def __str__(self) -> str:
-        parts = [
+        parts = (
             f"{i} -> {v if v is not None else '∞'}" for i, v in enumerate(self._value)
-        ]
+        )
         return "\n".join(parts)
 
 
 class ForestRuleDB:
+    """
+    The rule database that provides live information on which class are pumping with the
+    current rule in the database.
+    """
+
     def __init__(self) -> None:
         self._rules: List[RuleKey] = []
         self._rules_using_class: DefaultList[List[Tuple[int, int]]] = DefaultList(list)
@@ -155,20 +169,24 @@ class ForestRuleDB:
     @property
     def function(self) -> Dict[int, Optional[int]]:
         """
-        Return a dict representing the function of the ruledb with only the non-zero
-        values.
+        Return a dict representing the number of term that are computable for each
+        class.
+
+        Only the class where it can get at least a term are included. If a class is map
+        to None, then all the terms of the enumeration are computable.
         """
         return self._function.to_dict()
 
     def add_rule(self, rule_key: RuleKey, shifts_for_zero: Tuple[int, ...]):
         """
-        Add the rule key and update all the attributes accordingly.
+        Add the rule to the database.
 
         INPUTS:
           - `rule_key`
-          - `shifts_for_zero`: The values of the shifts if all the classes of
-            the rule where at 0.
+          - `shifts_for_zero`: The values of the shifts if no information was known
+          about any of the classes.
         """
+        assert len(shifts_for_zero) == len(rule_key[1])
         self._rules.append(rule_key)
         self._shifts.append(self._compute_shift(rule_key, shifts_for_zero))
         max_gap = max((abs(s) for s in shifts_for_zero), default=0)
@@ -238,9 +256,17 @@ class ForestRuleDB:
                     self._increase_value(parent, rule_idx)
             if self._rule_holding_extra_terms:
                 rule_idx = self._rule_holding_extra_terms.pop()
-                self._set_infinite(self._rules[rule_idx][0])
+                parent = self._rules[rule_idx][0]
+                self._set_infinite(parent)
 
     def _correct_gap(self) -> None:
+        """
+        Correct the gap and if needed queue rules for the classes that were previously
+        on the right hand  side of the gap.
+
+        This should be toggled every time the gap changes whether the size changes or
+        the some value changes of the function caused the gap to change.
+        """
         k = self._function.preimage_gap(self._gap_size)
         new_gap = (k, k + self._gap_size - 1)
         if new_gap[1] > self._current_gap[1]:
@@ -286,8 +312,8 @@ class ForestRuleDB:
         """
         Set the value if the class to infinity.
 
-        This should happen when we know that we can move anything on the left of the
-        gap.
+        This should happen when we know that we cannot pump anything on the left side
+        of the gap.
         """
         current_value = self._function[comb_class]
         if current_value is None:
@@ -295,7 +321,9 @@ class ForestRuleDB:
         assert current_value > self._current_gap[1]
         assert not self._processing_queue
         self._function.set_infinite(comb_class)
-        # Cleaning the class pumping this comb_class
+        # This class will never be increased again so we remove any occurrence
+        # of the rule of any rule for that class from _rules_using_class and
+        # _rules_pumping_class
         for rule_idx in self._rules_pumping_class[comb_class]:
             for child in self._rules[rule_idx][1]:
                 self._rules_using_class[child] = [
@@ -319,23 +347,22 @@ class ForestRuleDB:
         """
 
         def v_to_str(v: Optional[int]) -> str:
-            """Return a string for the in and inifinit if None"""
+            """Return a string for the integer and infinity if None"""
             if v is None:
                 return "∞"
             return str(v)
 
         rule_key = self._rules[rule_idx]
-        shifts = map(v_to_str, self._shifts[rule_idx])
         current_value = f"{v_to_str(self._function[rule_key[0]])} -> " + ", ".join(
             map(v_to_str, (self._function[c] for c in rule_key[1]))
         )
+        shifts = map(v_to_str, self._shifts[rule_idx])
         child_with_shift = ", ".join(f"({c}, {s})" for c, s in zip(rule_key[1], shifts))
-        s = f"{rule_key[0]} -> {child_with_shift} || {current_value}"
-        return s
+        return f"{rule_key[0]} -> {child_with_shift} || {current_value}"
 
     def status(self):
         """
-        Print the rule_info for tall the rules.
+        Print the rule_info for all the rules.
         Mostly intended for debugging.
         """
         for i in range(len(self._rules)):
