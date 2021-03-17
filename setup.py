@@ -41,7 +41,7 @@ setup(
         "Topic :: Scientific/Engineering :: Mathematics",
     ],
     install_requires=[
-        "logzero==1.6.3",
+        "logzero==1.7.0",
         "sympy==1.7.1",
         "psutil==5.8.0",
         "pympler==0.9",
