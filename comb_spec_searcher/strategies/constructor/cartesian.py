@@ -523,10 +523,10 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
 
     @staticmethod
     def _poly_to_terms(poly: Union[sympy.Poly, int]) -> Terms:
-        if isinstance(poly, int):
+        if isinstance(poly, (int, sympy.core.numbers.Integer)):
             if poly == 0:
                 return Counter()
-            return Counter({tuple(): poly})
+            return Counter({tuple(): int(poly)})
         return Counter(poly.as_dict())
 
     def _b(
