@@ -350,6 +350,12 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
     def __str__(self) -> str:
         return "Cartesian product"
 
+    def __eq__(self, obj: object) -> bool:
+        return isinstance(obj, type(self))
+
+    def __hash__(self) -> int:
+        return hash(type(self))
+
 
 class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     """
@@ -599,3 +605,9 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
 
     def __str__(self):
         return "quotient"
+
+    def __eq__(self, obj: object) -> bool:
+        return isinstance(obj, type(self))
+
+    def __hash__(self) -> int:
+        return hash(type(self))

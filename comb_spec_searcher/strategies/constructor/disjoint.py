@@ -194,6 +194,12 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
     def __str__(self):
         return "disjoint union"
 
+    def __eq__(self, obj: object) -> bool:
+        return isinstance(obj, type(self))
+
+    def __hash__(self) -> int:
+        return hash(type(self))
+
 
 class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     """
@@ -338,3 +344,9 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
 
     def __str__(self):
         return "complement"
+
+    def __eq__(self, obj: object) -> bool:
+        return isinstance(obj, type(self))
+
+    def __hash__(self) -> int:
+        return hash(type(self))

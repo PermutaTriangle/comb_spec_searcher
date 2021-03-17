@@ -87,3 +87,14 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
             return tuple(new_params)
 
         return param_map
+
+    @abc.abstractmethod
+    def __eq__(self, obj: object) -> bool:
+        """Two constructors are equal if A <self> B and C <obj> D are isomorphic for any
+        combinatorial classes A, B, C and D where A and C are isomorphic and B and D.
+        This must be implemented for bijections.
+        """
+
+    @abc.abstractmethod
+    def __hash__(self) -> int:
+        """Hash for constructor. This must be implemented for bijection searching."""
