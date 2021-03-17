@@ -213,10 +213,13 @@ class ForestRuleDB:
         """
         Iterator over all the rules that contain only pumping combinatorial classes.
         """
-        stable_subset = set(self._function.preimage(None))
+        stable_subset = set(self.stable_subset())
         for rule_key in self._rules:
             if rule_key[0] in stable_subset and stable_subset.issuperset(rule_key[1]):
                 yield rule_key
+
+    def stable_subset(self) -> Iterator[int]:
+        return self._function.preimage(None)
 
     def _compute_shift(
         self,
