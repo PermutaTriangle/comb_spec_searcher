@@ -463,11 +463,11 @@ You can now try this yourself using the file ``example.py``, which can
 count any set of words avoiding consecutive patterns.
 
 Now we will demonstrate how a bijection can be found between classes.
-We will first need a couple of imports.
+We will first need to import the `find_bijection_between` function.
 
 .. code:: python
 
-   >>> from comb_spec_searcher import find_bijection_between, Bijection
+   >>> from comb_spec_searcher import find_bijection_between
 
 We start by defining our two classes that we wish to find a bijection between.
 
@@ -502,9 +502,9 @@ from the sepcifications.
 .. code:: python
 
    >>> for i in range(10):
-   ...     for w in spec1.generate_objects_of_size(i):
+   ...     for w in bijection.domain.generate_objects_of_size(i):
    ...         assert w == bijection.inverse_map(bijection.map(w))
-   ...     for w in spec2.generate_objects_of_size(i):
+   ...     for w in bijection.codomain.generate_objects_of_size(i):
    ...         assert w == bijection.map(bijection.inverse_map(w))
    ...
 
