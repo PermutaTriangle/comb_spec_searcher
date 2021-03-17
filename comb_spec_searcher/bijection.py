@@ -332,12 +332,3 @@ class ParallelSpecFinder:
             pi.root_eq_label, root_node, pi.r_db, pi.searcher.classdb
         ).rules()
         return CombinatorialSpecification(pi.root_class, rules)
-
-
-def find_bijection_between(
-    searcher1: CombinatorialSpecificationSearcher,
-    searcher2: CombinatorialSpecificationSearcher,
-) -> Optional[Tuple[CombinatorialSpecification, CombinatorialSpecification]]:
-    """Find bijections between two universes. If they are not of the same type, a
-    custom atom comparator is needed."""
-    return ParallelSpecFinder(searcher1, searcher2).find()

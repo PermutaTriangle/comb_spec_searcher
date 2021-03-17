@@ -1,4 +1,6 @@
-from .bijection import find_bijection_between
+from typing import Optional
+
+from .bijection import ParallelSpecFinder
 from .comb_spec_searcher import CombinatorialSpecificationSearcher
 from .combinatorial_class import CombinatorialClass, CombinatorialObject
 from .isomorphism import Bijection
@@ -17,6 +19,17 @@ from .strategies import (
     SymmetryStrategy,
     VerificationStrategy,
 )
+
+
+def find_bijection_between(
+    searcher1: CombinatorialSpecificationSearcher,
+    searcher2: CombinatorialSpecificationSearcher,
+) -> Optional[Bijection]:
+    """Find bijections between two universes. If they are not of the same type, a
+    custom atom comparator is needed."""
+    specs = ParallelSpecFinder(searcher1, searcher2).find()
+    return Bijection.construct(*specs) if specs else None
+
 
 __all__ = [
     "CombinatorialSpecificationSearcher",
@@ -37,5 +50,4 @@ __all__ = [
     "SymmetryStrategy",
     "VerificationStrategy",
     "find_bijection_between",
-    "Bijection",
 ]

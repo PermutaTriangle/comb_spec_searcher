@@ -490,13 +490,11 @@ and try to construct specifications that are parallel.
    >>> searcher1 = CombinatorialSpecificationSearcher(class1, pack)
    >>> searcher2 = CombinatorialSpecificationSearcher(class2, pack)
 
-We get two parallel specs if successful, ``None`` otherwise.
+We get a bijection object if successful, ``None`` otherwise.
 
 .. code:: python
 
-   >>> specs = find_bijection_between(searcher1, searcher2)
-   >>> spec1, spec2 = specs
-   >>> bijection = Bijection.construct(spec1, spec2)
+   >>> bijection = find_bijection_between(searcher1, searcher2)
 
 We can use the `Bijection` object to map (either way) sampled objects
 from the sepcifications.

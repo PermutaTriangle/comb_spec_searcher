@@ -4,8 +4,8 @@ from comb_spec_searcher import (
     AtomStrategy,
     CombinatorialSpecificationSearcher,
     StrategyPack,
+    find_bijection_between,
 )
-from comb_spec_searcher.bijection import find_bijection_between
 from comb_spec_searcher.isomorphism import Bijection
 from example import AvoidingWithPrefix, ExpansionStrategy, RemoveFrontOfPrefix
 
@@ -23,7 +23,7 @@ def get_word_searcher(avoid, alphabet):
     return searcher
 
 
-def get_specs(alphabet1, avoid1, alphabet2, avoid2):
+def get_bijection(alphabet1, avoid1, alphabet2, avoid2):
     s1, s2 = get_word_searcher(avoid1, alphabet1), get_word_searcher(avoid2, alphabet2)
     return find_bijection_between(s1, s2)
 
@@ -47,26 +47,26 @@ def assert_mappings(bijection):
 
 
 def test_finding_bijection_and_map_in_words():
-    specs = get_specs(["0", "1"], ["00"], ["0", "1"], ["11"])
-    assert specs is not None
-    assert_mappings(Bijection.construct(*specs))
+    bijection = get_bijection(["0", "1"], ["00"], ["0", "1"], ["11"])
+    assert bijection is not None
+    assert_mappings(bijection)
 
 
 def test_finding_bijection_and_map_in_words2():
-    specs = get_specs(["a", "b"], ["aa"], ["0", "1"], ["11"])
-    assert specs is not None
-    assert_mappings(Bijection.construct(*specs))
+    bijection = get_bijection(["a", "b"], ["aa"], ["0", "1"], ["11"])
+    assert bijection is not None
+    assert_mappings(bijection)
 
 
 def test_finding_bijection_and_map_in_words3():
-    specs = get_specs(["0", "1"], ["1011", "101"], ["0", "1"], ["010", "0101"])
-    assert specs is not None
-    assert_mappings(Bijection.construct(*specs))
+    bijection = get_bijection(["0", "1"], ["1011", "101"], ["0", "1"], ["010", "0101"])
+    assert bijection is not None
+    assert_mappings(bijection)
 
 
 def test_non_equal_classes():
-    specs = get_specs(["0", "1"], ["00"], ["0", "1"], ["101"])
-    assert specs is None
+    bijection = get_bijection(["0", "1"], ["00"], ["0", "1"], ["101"])
+    assert bijection is None
 
 
 def test_constructing_bijection_non_eq_classes():
@@ -80,10 +80,8 @@ def test_constructing_bijection_non_eq_classes():
 
 
 def test_bijection_jsonable():
-    specs = get_specs(["0", "1"], ["1011", "101"], ["0", "1"], ["010", "0101"])
-    assert specs is not None
+    bijection = get_bijection(["0", "1"], ["1011", "101"], ["0", "1"], ["010", "0101"])
+    assert bijection is not None
     assert_mappings(
-        Bijection.from_dict(
-            json.loads(json.dumps(Bijection.construct(*specs).to_jsonable()))
-        )
+        Bijection.from_dict(json.loads(json.dumps(bijection.to_jsonable())))
     )
