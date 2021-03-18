@@ -282,16 +282,15 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     def get_equation(
         self, lhs_func: sympy.Function, rhs_funcs: Tuple[sympy.Function, ...]
     ) -> sympy.Eq:
-        res = lhs_func.subs(self.extra_parameters[self.idx])
-        for (idx, rhs_func), extra_parameters in zip(
-            enumerate(rhs_funcs), self.extra_parameters
-        ):
-            if self.idx != idx:
-                res -= rhs_func.subs(
-                    {child: parent for parent, child in extra_parameters.items()},
-                    simultaneous=True,
-                ).subs(self.extra_parameters[self.idx], simultaneous=True)
-        return sympy.Eq(rhs_funcs[self.idx], res)
+        if any(self.extra_parameters):
+            raise NotImplementedError(
+                "Complement equation is not implemented with extra parameters. "
+                "You can fall back on the union equations."
+            )
+        res = rhs_funcs[0]
+        for rhs_func in rhs_funcs[1:]:
+            res -= rhs_func
+        return sympy.Eq(lhs_func, res)
 
     def reliance_profile(self, n: int, **parameters: int) -> RelianceProfile:
         raise NotImplementedError
