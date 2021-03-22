@@ -1,6 +1,6 @@
 from collections import defaultdict, deque
 from itertools import product
-from typing import DefaultDict, Dict, List, Optional, Set, Tuple
+from typing import DefaultDict, Dict, List, Optional, Set, Tuple, Union
 
 from comb_spec_searcher.comb_spec_searcher import CombinatorialSpecificationSearcher
 from comb_spec_searcher.combinatorial_class import CombinatorialClass
@@ -8,6 +8,7 @@ from comb_spec_searcher.exception import NoMoreClassesToExpandError
 from comb_spec_searcher.rule_db.base import RuleDBBase
 from comb_spec_searcher.specification import CombinatorialSpecification
 from comb_spec_searcher.specification_extrator import SpecificationRuleExtractor
+from comb_spec_searcher.strategies.constructor.base import Constructor
 from comb_spec_searcher.strategies.rule import Rule
 from comb_spec_searcher.tree_searcher import Node, prune
 from comb_spec_searcher.typing import RuleKey
@@ -18,6 +19,9 @@ MatchingInfo = DefaultDict[
 ]
 MatchingInfoSingle = DefaultDict[int, DefaultDict[int, Set[Tuple[int, ...]]]]
 SpecMap = Dict[int, Tuple[int, ...]]
+RuleClassification = DefaultDict[
+    int, DefaultDict[Union[type, Constructor], DefaultDict[int, Set[Tuple[int, ...]]]]
+]
 
 
 class ParallelInfo:
@@ -32,9 +36,7 @@ class ParallelInfo:
         self.root_eq_label: int = self.r_db.equivdb[self.searcher.start_label]
         self.atom_map: Dict[int, CombinatorialClass] = {}
         self.root_class: Optional[CombinatorialClass] = None
-        self.eq_label_rules: DefaultDict[
-            int, DefaultDict[type, DefaultDict[int, Set[Tuple[int, ...]]]]
-        ] = self._construct_eq_label_rules()
+        self.eq_label_rules: RuleClassification = self._construct_eq_label_rules()
 
     def _expand(self):
         try:
@@ -47,7 +49,7 @@ class ParallelInfo:
 
     def _construct_eq_label_rules(
         self,
-    ) -> DefaultDict[int, DefaultDict[type, DefaultDict[int, Set[Tuple[int, ...]]]]]:
+    ) -> RuleClassification:
         """
         Creates a dictionary d such that
             d[label][rule_type][number_of_children]
@@ -72,9 +74,9 @@ class ParallelInfo:
                 non_empty_children = tuple(
                     eq_chi[i] for i, c in enumerate(children) if not c.is_empty()
                 )
-                eq_label_rules[eq_par][rule.constructor.__class__][
-                    len(non_empty_children)
-                ].add(non_empty_children)
+                eq_label_rules[eq_par][rule.constructor][len(non_empty_children)].add(
+                    non_empty_children
+                )
         return eq_label_rules
 
     def _construct_eq_labels_init(
@@ -82,15 +84,15 @@ class ParallelInfo:
     ) -> Tuple[
         List[Tuple[int, Tuple[int, ...]]],
         Dict[RuleKey, RuleKey],
-        DefaultDict[int, DefaultDict[type, DefaultDict[int, Set[Tuple[int, ...]]]]],
+        RuleClassification,
     ]:
         rules_up_to_eq = self.r_db.rules_up_to_equivalence()
         prune(rules_up_to_eq)
         lis = [(k, c) for k, v in rules_up_to_eq.items() for c in v]
         rule_dict = self.r_db.rule_from_equivalence_rule_dict(lis)
-        eq_label_rules: DefaultDict[
-            int, DefaultDict[type, DefaultDict[int, Set[Tuple[int, ...]]]]
-        ] = defaultdict(lambda: defaultdict(lambda: defaultdict(set)))
+        eq_label_rules: RuleClassification = defaultdict(
+            lambda: defaultdict(lambda: defaultdict(set))
+        )
         return lis, rule_dict, eq_label_rules
 
 

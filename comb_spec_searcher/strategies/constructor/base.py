@@ -95,6 +95,9 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
         This must be implemented for bijections.
         """
 
+    def __ne__(self, o: object) -> bool:
+        return not self == o
+
     @abc.abstractmethod
     def __hash__(self) -> int:
         """Hash for constructor. This must be implemented for bijection searching."""

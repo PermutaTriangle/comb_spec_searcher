@@ -142,9 +142,8 @@ class Isomorphism:
             return Isomorphism._INVALID
 
         # If different type of rules are applied, the trees are not isomorphic
-        # TODO: Use == when implemented
         assert isinstance(rule1, Rule) and isinstance(rule2, Rule)
-        if rule1.constructor.__class__ != rule2.constructor.__class__:
+        if rule1.constructor != rule2.constructor:
             return Isomorphism._INVALID
 
         # Check for recursive match
