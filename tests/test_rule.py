@@ -1,6 +1,6 @@
 import sympy
 
-from example import AvoidingWithPrefix, ExpansionStrategy
+from example import AvoidingWithPrefix, ExpansionStrategy, RemoveFrontOfPrefix
 
 
 def test_reverse_equivalence():
@@ -51,4 +51,28 @@ def test_complement_rule():
     )
     assert reverse3.get_equation(get_function) == sympy.sympify(
         "Eq(F_4(x), F_0(x) - F_1(x) - F_2(x) - F_3(x))"
+    )
+
+
+def test_quotient_rule():
+    comb_class = AvoidingWithPrefix("aaa", ["aa"], "a", False)
+    rule = RemoveFrontOfPrefix()(comb_class)
+
+    all_comb_classes = (rule.comb_class,) + rule.children
+    x = sympy.var("x")
+
+    def get_function(w):
+        i = all_comb_classes.index(w)
+        return sympy.Function(f"F_{i}")(x)
+
+    reverse0 = rule.to_reverse_rule(0)
+    reverse1 = rule.to_reverse_rule(1)
+    assert rule.get_equation(get_function) == sympy.sympify(
+        "Eq(F_0(x), F_1(x) * F_2(x))"
+    )
+    assert reverse0.get_equation(get_function) == sympy.sympify(
+        "Eq(F_1(x), F_0(x) / F_2(x))"
+    )
+    assert reverse1.get_equation(get_function) == sympy.sympify(
+        "Eq(F_2(x), F_0(x) / F_1(x))"
     )
