@@ -106,6 +106,8 @@ class RuleDBBase(abc.ABC):
         """Yield all the rules found so far."""
         for start, ends in self:
             yield start, ends, self.rule_to_strategy[(start, ends)]
+        for start, ends in self.eqv_rule_to_strategy:
+            yield start, ends, self.eqv_rule_to_strategy[(start, ends)]
 
     def __iter__(self) -> Iterator[Tuple[int, Tuple[int, ...]]]:
         """Iterate through rules as the pairs (start, end)."""
