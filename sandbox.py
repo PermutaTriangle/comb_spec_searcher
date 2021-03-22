@@ -13,6 +13,7 @@ from tilings.tilescope import TileScope, TileScopePack
 
 from comb_spec_searcher import rule_and_flip
 from comb_spec_searcher.rule_db.forest import ForestRuleDB
+from comb_spec_searcher.specification import CombinatorialSpecification
 from comb_spec_searcher.specification_extrator import ForestRuleExtractor
 from comb_spec_searcher.strategies.rule import AbstractRule
 
@@ -38,7 +39,28 @@ class SpecialSearcher(TileScope):
             self.forestdb.add_rule(rule_key, shifts)
         self.time_forest += time.time() - start
         if self.forestdb.is_pumping(self.start_label):
-            raise ForestFoundError
+            self.spec_found()
+
+    def spec_found(self) -> None:
+        print(self.status(True))
+        print("Forest found!")
+        extractor = ForestRuleExtractor(
+            self.start_label, self.forestdb, self.classdb, self.strategy_pack
+        )
+        spec = CombinatorialSpecification(
+            self.classdb.get_class(self.start_label), extractor.rules()
+        )
+        import json
+
+        with open("spec.json", "w") as fp:
+            json.dump(spec.to_jsonable(), fp)
+        json.dump
+        spec.expand_verified()
+        spec.sanity_check(4)
+        spec.show()
+        for n in range(10):
+            print(spec.count_objects_of_size(n))
+        raise ForestFoundError
 
     def status(self, elaborate: bool) -> str:
         s = f"Added from {self.num_rules} normal rules\n"
@@ -46,8 +68,8 @@ class SpecialSearcher(TileScope):
         s += f"Size of the gap: {self.forestdb._gap_size}\n"
         s += f"Size of the stable subset: {self.forestdb._function._infinity_count}\n"
         s += f"Sizes of the pre-images: {self.forestdb._function._preimage_count}\n"
-        s += self.classdb.status()
-        s += self.classqueue.status()
+        s += self.classdb.status() + "\n"
+        s += self.classqueue.status() + "\n"
         return s
 
     def get_function(self, comb_class: Tiling) -> sympy.Function:
@@ -62,18 +84,18 @@ class SpecialSearcher(TileScope):
         )
 
 
-pack = TileScopePack.point_placements()
-pack = pack.add_verification(BasicVerificationStrategy(), replace=True)
-basis = "132"
+# pack = TileScopePack.point_placements()
+# pack = pack.add_verification(BasicVerificationStrategy(), replace=True)
+# basis = "132"
 
 # Segmented
 # pack = forest_pack
 # basis = "0123_0132_0213_0231_1023_2013"
 
-# pack = TileScopePack.point_and_row_and_col_placements(row_only=True).make_fusion(
-#     isolation_level="isolated"
-# )
-# basis = "1423"
+pack = TileScopePack.point_and_row_and_col_placements(row_only=True).make_fusion(
+    isolation_level="isolated"
+)
+basis = "1423"
 
 
 css = SpecialSearcher(basis, pack)
@@ -82,7 +104,4 @@ try:
 except ForestFoundError:
     print(css.status(True))
     print(f"Forest found for root label {css.start_label}")
-    for start_label, end_labels, strat in css.ruledb.all_rules():
-        rule = strat(css.classdb.get_class(start_label))
-        print(sympy_to_pumping_maple(rule.get_equation(css.get_function)))
     assert css.get_specification is not None
