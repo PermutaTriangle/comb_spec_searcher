@@ -9,14 +9,14 @@ import time
 import uuid
 import webbrowser
 from copy import copy
-from typing import TYPE_CHECKING, ClassVar, Dict, Iterable, List, Tuple
+from typing import TYPE_CHECKING, ClassVar, Dict, Iterable, List, Tuple, cast
 
 import requests
 from logzero import logger
 from typing_extensions import TypedDict
 
 from .combinatorial_class import CombinatorialClass
-from .strategies import EquivalencePathRule, Rule, VerificationRule
+from .strategies import EquivalencePathRule, ReverseRule, Rule, VerificationRule
 
 if TYPE_CHECKING:
     from .specification import CombinatorialSpecification
@@ -78,7 +78,7 @@ class SpecificationDrawer:
         return str(new_id)
 
     def _to_tree(
-        self, comb_class: CombinatorialClass, rec_depth: int = 0
+        self, comb_class: CombinatorialClass, flipped: bool = False, rec_depth: int = 0
     ) -> TreantNode:
         """Create the subtree rooted in comb_class"""
         try:
@@ -103,22 +103,44 @@ class SpecificationDrawer:
         else:
             comb_classes = [comb_class]
 
+        is_flip_rule = isinstance(rule, ReverseRule)
         if recursed:
             children = []
         else:
-            children = [self._to_tree(child, rec_depth + 1) for child in rule.children]
+            children = [
+                self._to_tree(
+                    child,
+                    is_flip_rule
+                    and child == cast(ReverseRule, rule).original_rule.comb_class,
+                    rec_depth + 1,
+                )
+                for child in rule.children
+            ]
 
         # if a node has children we create a delimiter node between them
         # in order to separate tooltip describing the steps taking in the tree
 
         if children and isinstance(rule, Rule):
+            delimiter_additional_style = ""
+            if is_flip_rule:
+                delimiter_additional_style += "background-color: #ff8080;"
+                delimiter_additional_style += "border-color: red;"
+                delimiter_additional_style += "border-width: 2px; "
             delimiter_node, node_id = self._create_delimiter_node(
-                rule, children, rec_depth
+                rule, children, rec_depth, delimiter_additional_style
             )
             self._create_delimiter_tooltip(rule, node_id)
             children = [delimiter_node]
 
-        html_node = self.comb_classes_to_html_node(comb_classes)
+        node_additional_style = ""
+        node_label_additional_style = ""
+        if flipped:
+            node_label_additional_style += "background-color: #ff8080;"
+            node_additional_style += "border-color: red;"
+            node_additional_style += "border-width: 3px; "
+        html_node = self.comb_classes_to_html_node(
+            comb_classes, node_additional_style, node_label_additional_style
+        )
         treant_node, node_id = self._create_standard_node(html_node, children)
         self._create_standard_tooltip(comb_classes, node_id)
         return treant_node
