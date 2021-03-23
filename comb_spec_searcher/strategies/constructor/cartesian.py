@@ -1,6 +1,6 @@
 import random
 from collections import defaultdict
-from itertools import product
+from itertools import chain, product
 from typing import (
     Callable,
     Counter,
@@ -351,7 +351,11 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         return "Cartesian product"
 
     def __eq__(self, obj: object) -> bool:
-        return isinstance(obj, type(self))
+        if not isinstance(obj, type(self)):
+            return False
+        if any(map(len, chain(self.extra_parameters, obj.extra_parameters))):
+            raise NotImplementedError("Assumptions not supported yet")
+        return True
 
     def __hash__(self) -> int:
         return hash(type(self))
@@ -607,7 +611,11 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         return "quotient"
 
     def __eq__(self, obj: object) -> bool:
-        return isinstance(obj, type(self))
+        if not isinstance(obj, type(self)):
+            return False
+        if any(map(len, chain(self.extra_parameters, obj.extra_parameters))):
+            raise NotImplementedError("Assumptions not supported yet")
+        return True
 
     def __hash__(self) -> int:
         return hash(type(self))

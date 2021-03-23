@@ -1,4 +1,5 @@
 from collections import defaultdict
+from itertools import chain
 from random import randint
 from typing import Callable, Counter, Dict, Iterator, List, Optional, Tuple
 
@@ -195,7 +196,11 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         return "disjoint union"
 
     def __eq__(self, obj: object) -> bool:
-        return isinstance(obj, type(self))
+        if not isinstance(obj, type(self)):
+            return False
+        if any(map(len, chain(self.extra_parameters, obj.extra_parameters))):
+            raise NotImplementedError("Assumptions not supported yet")
+        return True
 
     def __hash__(self) -> int:
         return hash(type(self))
@@ -346,7 +351,11 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         return "complement"
 
     def __eq__(self, obj: object) -> bool:
-        return isinstance(obj, type(self))
+        if not isinstance(obj, type(self)):
+            return False
+        if any(map(len, chain(self.extra_parameters, obj.extra_parameters))):
+            raise NotImplementedError("Assumptions not supported yet")
+        return True
 
     def __hash__(self) -> int:
         return hash(type(self))
