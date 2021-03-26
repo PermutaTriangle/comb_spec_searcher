@@ -506,7 +506,8 @@ class CombinatorialSpecification(
             levels_expand=levels_expand,
             verbose=verbose,
         )
-        sd.share()
+        file_url = sd.share()
+        print(f"The specification is available at {file_url}.")
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, CombinatorialSpecification):
