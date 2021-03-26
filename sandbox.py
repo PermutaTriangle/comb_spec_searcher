@@ -3,12 +3,17 @@ Hook the forest db to load from a given universe.
 """
 import time
 from typing import Tuple
+import json
 
 import sympy
 from forests.forest import sympy_to_pumping_maple
 from forests.packs import forest_pack
+from logzero import logger
 from tilings import Tiling
-from tilings.strategies.verification import BasicVerificationStrategy
+from tilings.strategies.verification import (
+    BasicVerificationStrategy,
+    LocallyFactorableVerificationStrategy,
+)
 from tilings.tilescope import TileScope, TileScopePack
 
 from comb_spec_searcher import rule_and_flip
@@ -16,6 +21,7 @@ from comb_spec_searcher.rule_db.forest import ForestRuleDB
 from comb_spec_searcher.specification import CombinatorialSpecification
 from comb_spec_searcher.specification_extrator import ForestRuleExtractor
 from comb_spec_searcher.strategies.rule import AbstractRule
+from comb_spec_searcher.strategies.strategy import EmptyStrategy
 
 
 class ForestFoundError(Exception):
@@ -42,24 +48,17 @@ class SpecialSearcher(TileScope):
             self.spec_found()
 
     def spec_found(self) -> None:
-        print(self.status(True))
-        print("Forest found!")
+        logger.info("Forest found!\n" + self.status(True))
         extractor = ForestRuleExtractor(
             self.start_label, self.forestdb, self.classdb, self.strategy_pack
         )
+        extractor.check()
         spec = CombinatorialSpecification(
             self.classdb.get_class(self.start_label), extractor.rules()
         )
-        import json
-
         with open("spec.json", "w") as fp:
             json.dump(spec.to_jsonable(), fp)
-        json.dump
-        spec.expand_verified()
-        spec.sanity_check(4)
         spec.show()
-        for n in range(10):
-            print(spec.count_objects_of_size(n))
         raise ForestFoundError
 
     def status(self, elaborate: bool) -> str:
@@ -97,11 +96,14 @@ pack = TileScopePack.point_and_row_and_col_placements(row_only=True).make_fusion
 )
 basis = "1423"
 
-
+pack.ver_strats = tuple(
+    s
+    for s in pack.ver_strats
+    if not isinstance(s, LocallyFactorableVerificationStrategy)
+)
+pack = pack.add_verification(EmptyStrategy())
 css = SpecialSearcher(basis, pack)
 try:
-    css.auto_search(status_update=30)
+    css.auto_search(status_update=300)
 except ForestFoundError:
-    print(css.status(True))
-    print(f"Forest found for root label {css.start_label}")
     assert css.get_specification is not None
