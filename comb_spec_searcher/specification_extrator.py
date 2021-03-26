@@ -1,12 +1,20 @@
 import itertools
 from typing import Dict, Iterable, Iterator, List, Tuple, Union
 
+from logzero import logger
+
 from comb_spec_searcher import rule_and_flip
 from comb_spec_searcher.class_db import ClassDB
 from comb_spec_searcher.exception import StrategyDoesNotApply
+from comb_spec_searcher.rule_and_flip import all_flips
 from comb_spec_searcher.rule_db.base import RuleDBBase
 from comb_spec_searcher.rule_db.forest import ForestRuleDB
-from comb_spec_searcher.strategies.rule import AbstractRule, Rule
+from comb_spec_searcher.strategies.rule import (
+    AbstractRule,
+    ReverseRule,
+    Rule,
+    VerificationRule,
+)
 from comb_spec_searcher.strategies.strategy import AbstractStrategy, StrategyFactory
 from comb_spec_searcher.strategies.strategy_pack import StrategyPack
 from comb_spec_searcher.tree_searcher import Node
@@ -124,6 +132,7 @@ class SpecificationRuleExtractor:
 
 
 RuleWithShifts = Tuple[RuleKey, Tuple[int, ...]]
+SortedRWS = Dict["str", List[RuleWithShifts]]
 
 
 class ForestRuleExtractor:
@@ -137,13 +146,29 @@ class ForestRuleExtractor:
         self.pack = pack
         self.classdb = classdb
         self.root_label = root_label
-        self.all_rule_with_shifts = list(self._rule_with_shifts_for_zero(ruledb))
+        self.all_rule_with_shifts = self._sorted_stable_rules(ruledb)
         self.needed_rule_with_shifts: List[RuleWithShifts] = list()
         self._minimize()
+
+    def check(self) -> bool:
         lhs = set(rk[0] for rk, _ in self.needed_rule_with_shifts)
         assert len(lhs) == len(self.needed_rule_with_shifts)
+        assert self._is_productive(self.needed_rule_with_shifts)
+        for rk, shifts in sorted(self.needed_rule_with_shifts):
+            rule = self._find_rule(rk)
+            if isinstance(rule, ReverseRule):
+                af = list(all_flips(rule.original_rule, self.classdb.get_label))
+                assert af[rule.idx + 1], rule
+            else:
+                af = list(all_flips(rule, self.classdb.get_label))
+                assert af[0], rule
 
     def rules(self) -> Iterator[AbstractRule]:
+        """
+        Return all the rules of the specification.
+
+        Should be called after minimization.
+        """
         for rk, _ in self.needed_rule_with_shifts:
             rule = self._find_rule(rk)
             if rule.is_equivalence():
@@ -153,35 +178,81 @@ class ForestRuleExtractor:
                 yield rule
 
     def _minimize(self) -> List[RuleKey]:
-        while self.all_rule_with_shifts:
-            print(len(self.all_rule_with_shifts), len(self.needed_rule_with_shifts))
-            rws = self.all_rule_with_shifts.pop()
-            if not self._is_productive(
-                itertools.chain(self.needed_rule_with_shifts, self.all_rule_with_shifts)
-            ):
-                self.needed_rule_with_shifts.append(rws)
+        """
+        Perform the complete minimization of the forest.
+        """
+        minimize_order = ["flipped", "normal", "verification"]
+        assert set(minimize_order) == set(self.all_rule_with_shifts)
+        for key in minimize_order:
+            self._minimize_key(key)
 
-    def _is_productive(self, rules_and_shifts: Iterator[RuleWithShifts]) -> bool:
+    def _minimize_key(self, key: str) -> None:
+        logger.info(f"Minimizing {key}")
+        maybe_useful: List[RuleWithShifts] = []
+        not_minimizing: List[List[RuleWithShifts]] = [
+            self.needed_rule_with_shifts,
+            maybe_useful,
+        ]
+        not_minimizing.extend(
+            l for k, l in self.all_rule_with_shifts.items() if k != key
+        )
+        minimizing = self.all_rule_with_shifts[key]
+        while minimizing:
+            ruledb = ForestRuleDB()
+            # Add the rule we are not trying to minimize
+            for rws in itertools.chain.from_iterable(not_minimizing):
+                ruledb.add_rule(*rws)
+            if ruledb.is_pumping(self.root_label):
+                self.all_rule_with_shifts[key].clear()
+                break
+            # Add rule until it gets productive
+            for i, rws in enumerate(minimizing):
+                ruledb.add_rule(*rws)
+                if ruledb.is_pumping(self.root_label):
+                    break
+            else:
+                raise RuntimeError("Not pumping after adding all rules")
+            maybe_useful.append(rws)
+            for _ in range(i, len(minimizing)):
+                minimizing.pop()
+        counter = 0
+        while maybe_useful:
+            rws = maybe_useful.pop()
+            if not self._is_productive(itertools.chain.from_iterable(not_minimizing)):
+                self.needed_rule_with_shifts.append(rws)
+                counter += 1
+        logger.info(f"Using {counter} rule for {key}")
+
+    def _is_productive(self, rules_and_shifts: Iterable[RuleWithShifts]) -> bool:
         ruledb = ForestRuleDB()
         for rws in rules_and_shifts:
             ruledb.add_rule(*rws)
         return ruledb.is_pumping(self.root_label)
 
-    def _rule_with_shifts_for_zero(
-        self, ruledb: ForestRuleDB
-    ) -> Iterator[RuleWithShifts]:
+    def _sorted_stable_rules(self, ruledb: ForestRuleDB) -> SortedRWS:
         """
-        Extract all the rule rom the stable subuniverse and return all the rule it
-        contains with there shifts.
+        Extract all the rule from the stable subuniverse and return all of them in a
+        dict sorted by type.
         """
+        res: SortedRWS = {"verification": [], "normal": [], "flipped": []}
         rule_to_find = set(ruledb.pumping_subuniverse())
         for rule in itertools.chain.from_iterable(
             map(self._rules_for_class, ruledb.stable_subset())
         ):
-            for rk, shifts in rule_and_flip.all_flips(rule, self.classdb.get_label):
-                if rk in rule_to_find:
-                    rule_to_find.remove(rk)
-                    yield rk, shifts
+            rule_flip_it = rule_and_flip.all_flips(rule, self.classdb.get_label)
+            first_key, first_shift = next(rule_flip_it)
+            if isinstance(rule, VerificationRule):
+                if first_key in rule_to_find:
+                    rule_to_find.remove(first_key)
+                    res["verification"].append((first_key, first_shift))
+            else:
+                if first_key in rule_to_find:
+                    rule_to_find.remove(first_key)
+                    res["normal"].append((first_key, first_shift))
+                for rk, shifts in rule_flip_it:
+                    if rk in rule_to_find:
+                        rule_to_find.remove(rk)
+                        res["flipped"].append((rk, shifts))
         if rule_to_find:
             rk = next(iter(rule_to_find))
             err_message = (
@@ -193,6 +264,7 @@ class ForestRuleExtractor:
                 err_message += f"Label: {label}\n"
                 err_message += str(self.classdb.get_class(label)) + "\n"
             raise RuntimeError(err_message)
+        return res
 
     def _find_rule(self, rule_key: RuleKey) -> AbstractRule:
         """
@@ -204,23 +276,26 @@ class ForestRuleExtractor:
             children = tuple(map(self.classdb.get_label, rule.children))
             return parent, children
 
-        parent = self.classdb.get_class(rule_key[0])
-        for rule in self._rules_for_class(rule_key[0]):
+        all_classes = (rule_key[0],) + rule_key[1]
+        all_normal_rules = itertools.chain.from_iterable(
+            self._rules_for_class(c) for c in all_classes
+        )
+        for rule in all_normal_rules:
             if rule_to_key(rule) == rule_key:
                 return rule
-        for child_idx, child_label in enumerate(rule_key[1]):
-            for rule in self._rules_for_class(child_label):
-                assert isinstance(rule, Rule)
-                try:
-                    pindex = rule.children.index(parent)
-                    if rule.is_two_way():
-                        reverse_rule = rule.to_reverse_rule(pindex)
-                        if rule_to_key(reverse_rule) == rule_key:
-                            return reverse_rule
-                except ValueError:
-                    pass
+            if not rule.is_two_way():
+                continue
+            assert isinstance(rule, Rule)
+            for i in range(len(rule.children)):
+                reverse_rule = rule.to_reverse_rule(i)
+                if rule_to_key(reverse_rule) == rule_key:
+                    return reverse_rule
 
-        raise RuntimeError(f"Can't find a rule for {rule_key}")
+        err = f"Can't find a rule for {rule_key}\n"
+        err += f"Parent:\n{self.classdb.get_class(rule_key[0])}\n"
+        for i, l in enumerate(rule_key[1]):
+            err += f"Child {i}:\n{self.classdb.get_class(l)}\n"
+        raise RuntimeError(err)
 
     def _rules_for_class(self, label: int) -> Iterator[AbstractRule]:
         """
