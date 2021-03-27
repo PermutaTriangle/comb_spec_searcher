@@ -611,10 +611,10 @@ class NonBijectiveRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     def indexed_forward_map(
         self, obj: CombinatorialObjectType
     ) -> Tuple[Tuple[Optional[CombinatorialObjectType], ...], int]:
-        return self.forward_map(obj), self._order_index()
+        return self.forward_map(obj), self._order_index(obj)
 
     @abc.abstractmethod
-    def _order_index(self) -> int:
+    def _order_index(self, obj: CombinatorialObjectType) -> int:
         """For rules that do not have an injective forward_map, we can mark the
         resulting object with a number i (that depends on the object we map from)
         in order to achieve a bijection. The backward map will then take said
