@@ -357,9 +357,6 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
             raise NotImplementedError("Assumptions not supported yet")
         return True
 
-    def __hash__(self) -> int:
-        return hash(type(self))
-
 
 class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     """
@@ -616,6 +613,3 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         if any(map(len, chain(self.extra_parameters, obj.extra_parameters))):
             raise NotImplementedError("Assumptions not supported yet")
         return True
-
-    def __hash__(self) -> int:
-        return hash(type(self))

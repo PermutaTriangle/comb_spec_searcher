@@ -20,7 +20,7 @@ MatchingInfo = DefaultDict[
 MatchingInfoSingle = DefaultDict[int, DefaultDict[int, Set[Tuple[int, ...]]]]
 SpecMap = Dict[int, Tuple[int, ...]]
 RuleClassification = DefaultDict[
-    int, DefaultDict[Union[type, Constructor], DefaultDict[int, Set[Tuple[int, ...]]]]
+    int, DefaultDict[int, List[Tuple[Tuple[int, ...], Union[Constructor, None]]]]
 ]
 
 
@@ -67,15 +67,15 @@ class ParallelInfo:
             if eq_par == self.root_eq_label and self.root_class is None:
                 self.root_class = parent
             if parent.is_atom():
-                eq_label_rules[eq_par][NO_CONSTRUCTOR][len(children)].add(eq_chi)
+                eq_label_rules[eq_par][0].append((eq_chi, None))
                 self.atom_map[eq_par] = parent
             else:
                 assert isinstance(rule, Rule)
                 non_empty_children = tuple(
                     eq_chi[i] for i, c in enumerate(children) if not c.is_empty()
                 )
-                eq_label_rules[eq_par][rule.constructor][len(non_empty_children)].add(
-                    non_empty_children
+                eq_label_rules[eq_par][len(non_empty_children)].append(
+                    (non_empty_children, rule.constructor)
                 )
         return eq_label_rules
 
@@ -90,9 +90,7 @@ class ParallelInfo:
         prune(rules_up_to_eq)
         lis = [(k, c) for k, v in rules_up_to_eq.items() for c in v]
         rule_dict = self.r_db.rule_from_equivalence_rule_dict(lis)
-        eq_label_rules: RuleClassification = defaultdict(
-            lambda: defaultdict(lambda: defaultdict(set))
-        )
+        eq_label_rules: RuleClassification = defaultdict(lambda: defaultdict(list))
         return lis, rule_dict, eq_label_rules
 
 
@@ -160,8 +158,8 @@ class ParallelSpecFinder:
         visited: Set[Tuple[int, int]],
     ) -> int:
         # If rule type has no constructor we compare atoms
-        if NO_CONSTRUCTOR in self._pi1.eq_label_rules[id1]:
-            if NO_CONSTRUCTOR in self._pi2.eq_label_rules[id2]:
+        if 0 in self._pi1.eq_label_rules[id1]:
+            if 0 in self._pi2.eq_label_rules[id2]:
                 atomic1, atomic2 = self._pi1.atom_map[id1], self._pi2.atom_map[id2]
                 atom1 = next(atomic1.objects_of_size(atomic1.minimum_size_of_object()))
                 atom2 = next(atomic2.objects_of_size(atomic2.minimum_size_of_object()))
@@ -191,10 +189,11 @@ class ParallelSpecFinder:
         """
         return [
             (c1, c2, n)
-            for rule_type, child_cnt_map in self._pi1.eq_label_rules[id1].items()
-            for n, child_set in child_cnt_map.items()
-            for c2 in self._pi2.eq_label_rules[id2][rule_type][n]
-            for c1 in child_set
+            for n, child_rule_pairs in self._pi1.eq_label_rules[id1].items()
+            for c1, r1 in child_rule_pairs
+            for c2, r2 in self._pi2.eq_label_rules[id2][n]
+            if (r1 is None and r2 is None)
+            or (r1 is not None and r2 is not None and r1 == r2)
         ]
 
     @staticmethod
