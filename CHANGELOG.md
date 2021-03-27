@@ -11,9 +11,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   `NotImplementedError`
 - `find_bijection_between` tries to find a bijection between classes given
   a `CombinatorialSpecificationSearcher` object for both.
+- Special forward and backward maps, called indexed forward and backward maps.
+  They are to be used for bijections and their purposes is to support bijections
+  for non-injective forward maps by labelling the resulting objects or map from 
+  an labelled object.
+- `NonBijectiveRule` will implement a labelling system for indexed forward
+  and backward maps.
 
 ### Fixed
 - Removed a debug print
+- Sharing of a specification html via gofile API.
 
 
 ## [3.0.0] - 2021-01-04

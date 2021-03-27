@@ -1,3 +1,5 @@
+# pylint: disable=too-many-lines
+
 """
 The rule class is used for a specific application of a strategy on a combinatorial
 class. This is not something the user should implement, as it is just a wrapper for
@@ -5,11 +7,13 @@ calling the Strategy class and storing its results.
 
 A CombinatorialSpecification is (more or less) a set of Rule.
 """
+
+
 import abc
 import random
 from collections import defaultdict
 from importlib import import_module
-from itertools import chain, product
+from itertools import chain, islice, product
 from typing import (
     TYPE_CHECKING,
     Callable,
@@ -394,6 +398,24 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         """
         return self.strategy.forward_map(self.comb_class, obj, self.children)
 
+    def indexed_forward_map(
+        self, obj: CombinatorialObjectType
+    ) -> Tuple[Tuple[Optional[CombinatorialObjectType], ...], int]:
+        """
+        A version of forward_map that is used for bijections. The idx is used
+        create a bijection from a nonbijective rule.
+        """
+        return self.forward_map(obj), 0
+
+    def indexed_backward_map(
+        self, objs: Tuple[Optional[CombinatorialObjectType], ...], idx: int
+    ) -> CombinatorialObjectType:
+        """
+        A version of backward_map that is used for bijections. The idx is used
+        create a bijection from a nonbijective rule.
+        """
+        return next(islice(self.backward_map(objs), idx, None))
+
     def to_equivalence_rule(self) -> "EquivalenceRule":
         """
         Return the reverse rule. At this stage, reverse rules can only be
@@ -583,6 +605,22 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         self.subrecs = tmpsubrec
         self.subterms = tmpsubterms
         return True
+
+
+class NonBijectiveRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
+    def indexed_forward_map(
+        self, obj: CombinatorialObjectType
+    ) -> Tuple[Tuple[Optional[CombinatorialObjectType], ...], int]:
+        return self.forward_map(obj), self._order_index()
+
+    @abc.abstractmethod
+    def _order_index(self) -> int:
+        """For rules that do not have an injective forward_map, we can mark the
+        resulting object with a number i (that depends on the object we map from)
+        in order to achieve a bijection. The backward map will then take said
+        number and yield the i-th element. This requires the backward_map's order
+        to be deterministic.
+        """
 
 
 class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):

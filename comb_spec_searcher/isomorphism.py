@@ -170,18 +170,21 @@ class Node:
         rule: AbstractRule,
         obj: CombinatorialObject,
         get_rule: Callable[[CombinatorialClass], AbstractRule],
+        idx: int = 0,
     ):
+        self.idx = idx
         self.obj = obj
         self._rule = rule
         if not rule.children:
             self._children: Tuple[Optional["Node"], ...] = tuple()
         else:
             assert isinstance(rule, Rule)
+            children, i = rule.indexed_forward_map(obj)
             self._children = tuple(
-                type(self)(get_rule(child), child_obj, get_rule)
+                type(self)(get_rule(child), child_obj, get_rule, i)
                 if child_obj is not None
                 else None
-                for child, child_obj in zip(rule.children, rule.forward_map(obj))
+                for child, child_obj in zip(rule.children, children)
                 if not child.is_empty()
             )
 
@@ -204,14 +207,9 @@ class Node:
         if rule.is_equivalence():
             if not self._rule.is_equivalence():
                 assert isinstance(rule, Rule)
-                val: CombinatorialObject = next(
-                    rule.backward_map(
-                        (
-                            self.build_obj(
-                                get_rule(rule.children[0]), get_order, get_rule
-                            ),
-                        )
-                    )
+                val: CombinatorialObject = rule.indexed_backward_map(
+                    (self.build_obj(get_rule(rule.children[0]), get_order, get_rule),),
+                    self.idx,
                 )
                 return val
             order = [0]
@@ -222,18 +220,17 @@ class Node:
             order = get_order[(self._rule.comb_class, rule.comb_class)]
         children = (self._children[idx] for idx in order)
         assert isinstance(rule, Rule)
-        val = next(
-            rule.backward_map(
-                tuple(
-                    c[0].build_obj(get_rule(c[1]), get_order, get_rule)
-                    if c is not None and c[0] is not None
-                    else None
-                    for c in (
-                        None if child.is_empty() else (next(children), child)
-                        for child in rule.children
-                    )
+        val = rule.indexed_backward_map(
+            tuple(
+                c[0].build_obj(get_rule(c[1]), get_order, get_rule)
+                if c is not None and c[0] is not None
+                else None
+                for c in (
+                    None if child.is_empty() else (next(children), child)
+                    for child in rule.children
                 )
-            )
+            ),
+            self.idx,
         )
         return val
 
