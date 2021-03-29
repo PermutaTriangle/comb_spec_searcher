@@ -1,9 +1,10 @@
 """
 Hook the forest db to load from a given universe.
 """
-import time
-from typing import Tuple
 import json
+import time
+from datetime import timedelta
+from typing import Tuple
 
 import sympy
 from forests.forest import sympy_to_pumping_maple
@@ -62,13 +63,13 @@ class SpecialSearcher(TileScope):
         raise ForestFoundError
 
     def status(self, elaborate: bool) -> str:
-        s = f"Added from {self.num_rules} normal rules\n"
-        s += f"Time spent on the forest stuff: {self.time_forest:.1f}\n"
-        s += f"Size of the gap: {self.forestdb._gap_size}\n"
-        s += f"Size of the stable subset: {self.forestdb._function._infinity_count}\n"
-        s += f"Sizes of the pre-images: {self.forestdb._function._preimage_count}\n"
-        s += self.classdb.status() + "\n"
-        s += self.classqueue.status() + "\n"
+        s = super().status(elaborate)
+        s += "\nForest status:\n"
+        s += f"\tAdded from {self.num_rules} normal rules\n"
+        s += f"\tTime spent on the forest stuff: {timedelta(seconds=int(self.time_forest))}\n"
+        s += f"\tSize of the gap: {self.forestdb._gap_size}\n"
+        s += f"\tSize of the stable subset: {self.forestdb._function._infinity_count}\n"
+        s += f"\tSizes of the pre-images: {self.forestdb._function._preimage_count}\n"
         return s
 
     def get_function(self, comb_class: Tiling) -> sympy.Function:
@@ -91,10 +92,14 @@ class SpecialSearcher(TileScope):
 # pack = forest_pack
 # basis = "0123_0132_0213_0231_1023_2013"
 
-pack = TileScopePack.point_and_row_and_col_placements(row_only=True).make_fusion(
-    isolation_level="isolated"
-)
-basis = "1423"
+# pack = TileScopePack.point_and_row_and_col_placements(row_only=True).make_fusion(
+#     isolation_level="isolated"
+# )
+# basis = "1423"
+
+# Last 2x4
+basis = "1432_2143"
+pack = TileScopePack.point_placements()
 
 pack.ver_strats = tuple(
     s
@@ -104,6 +109,6 @@ pack.ver_strats = tuple(
 pack = pack.add_verification(EmptyStrategy())
 css = SpecialSearcher(basis, pack)
 try:
-    css.auto_search(status_update=300)
+    css.auto_search(status_update=600)
 except ForestFoundError:
     assert css.get_specification is not None
