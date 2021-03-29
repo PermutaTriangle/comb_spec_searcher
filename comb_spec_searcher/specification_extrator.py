@@ -136,6 +136,8 @@ SortedRWS = Dict["str", List[RuleWithShifts]]
 
 
 class ForestRuleExtractor:
+    MINIMIZE_ORDER = ["flipped", "normal", "verification"]
+
     def __init__(
         self,
         root_label: int,
@@ -147,10 +149,14 @@ class ForestRuleExtractor:
         self.classdb = classdb
         self.root_label = root_label
         self.all_rule_with_shifts = self._sorted_stable_rules(ruledb)
+        assert set(ForestRuleExtractor.MINIMIZE_ORDER) == set(self.all_rule_with_shifts)
         self.needed_rule_with_shifts: List[RuleWithShifts] = list()
         self._minimize()
 
     def check(self) -> bool:
+        """
+        Make a sanity check of the status of the extractor.
+        """
         lhs = set(rk[0] for rk, _ in self.needed_rule_with_shifts)
         assert len(lhs) == len(self.needed_rule_with_shifts)
         assert self._is_productive(self.needed_rule_with_shifts)
@@ -166,8 +172,6 @@ class ForestRuleExtractor:
     def rules(self) -> Iterator[AbstractRule]:
         """
         Return all the rules of the specification.
-
-        Should be called after minimization.
         """
         for rk, _ in self.needed_rule_with_shifts:
             rule = self._find_rule(rk)
@@ -181,12 +185,16 @@ class ForestRuleExtractor:
         """
         Perform the complete minimization of the forest.
         """
-        minimize_order = ["flipped", "normal", "verification"]
-        assert set(minimize_order) == set(self.all_rule_with_shifts)
-        for key in minimize_order:
+        for key in ForestRuleExtractor.MINIMIZE_ORDER:
             self._minimize_key(key)
 
     def _minimize_key(self, key: str) -> None:
+        """
+        Minimize the number of rules used for the type of rule given by key.
+
+        The list of rule in self.all_rule_with_shifts[key] is cleared and a minimal set
+        from theses is added to self.needed_rule_with_shifts.
+        """
         logger.info(f"Minimizing {key}")
         maybe_useful: List[RuleWithShifts] = []
         not_minimizing: List[List[RuleWithShifts]] = [
@@ -224,6 +232,9 @@ class ForestRuleExtractor:
         logger.info(f"Using {counter} rule for {key}")
 
     def _is_productive(self, rules_and_shifts: Iterable[RuleWithShifts]) -> bool:
+        """
+        Check if the given set of rules is productive.
+        """
         ruledb = ForestRuleDB()
         for rws in rules_and_shifts:
             ruledb.add_rule(*rws)
