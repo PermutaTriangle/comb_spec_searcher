@@ -21,7 +21,7 @@ from comb_spec_searcher import rule_and_flip
 from comb_spec_searcher.rule_db.forest import ForestRuleDB
 from comb_spec_searcher.specification import CombinatorialSpecification
 from comb_spec_searcher.specification_extrator import ForestRuleExtractor
-from comb_spec_searcher.strategies.rule import AbstractRule
+from comb_spec_searcher.strategies.rule import AbstractRule, Rule
 from comb_spec_searcher.strategies.strategy import EmptyStrategy
 
 
@@ -42,10 +42,23 @@ class SpecialSearcher(TileScope):
         super()._add_rule(start_label, end_labels, rule)
         self.num_rules += 1
         start = time.time()
+        flip_index = -2
         for rule_key, shifts in rule_and_flip.all_flips(rule, self.classdb.get_label):
             self.forestdb.add_rule(rule_key, shifts)
+            flip_index += 1
+            if self.forestdb.is_pumping(self.start_label):
+                break
         self.time_forest += time.time() - start
         if self.forestdb.is_pumping(self.start_label):
+            if flip_index == -1:
+                critical_rule = rule
+            else:
+                assert isinstance(rule, Rule)
+                assert rule.is_two_way()
+                assert len(rule.children) > flip_index
+                critical_rule = rule.to_reverse_rule(flip_index)
+            logger.info("Critical rule found.")
+            logger.info(critical_rule)
             self.spec_found()
 
     def spec_found(self) -> None:
@@ -92,21 +105,21 @@ class SpecialSearcher(TileScope):
 # pack = forest_pack
 # basis = "0123_0132_0213_0231_1023_2013"
 
-# pack = TileScopePack.point_and_row_and_col_placements(row_only=True).make_fusion(
-#     isolation_level="isolated"
-# )
-# basis = "1423"
+pack = TileScopePack.point_and_row_and_col_placements(row_only=True).make_fusion(
+    isolation_level="isolated"
+)
+basis = "1423"
 
 # Last 2x4
-basis = "1432_2143"
-pack = TileScopePack.point_placements()
+# basis = "1432_2143"
+# pack = TileScopePack.point_placements()
 
 pack.ver_strats = tuple(
     s
     for s in pack.ver_strats
     if not isinstance(s, LocallyFactorableVerificationStrategy)
 )
-pack = pack.add_verification(EmptyStrategy())
+# pack = pack.add_verification(EmptyStrategy())
 css = SpecialSearcher(basis, pack)
 try:
     css.auto_search(status_update=600)
