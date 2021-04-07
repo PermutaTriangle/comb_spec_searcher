@@ -1,3 +1,4 @@
+import enum
 from typing import (
     Callable,
     Deque,
@@ -149,6 +150,14 @@ class Function:
         return "\n".join(parts)
 
 
+@enum.unique
+class RuleBucket(enum.Enum):
+    UNDEFINED = enum.auto()
+    VERIFICATION = enum.auto()
+    NORMAL = enum.auto()
+    REVERSE = enum.auto()
+
+
 class ForestRuleDB:
     """
     The rule database that provides live information on which class are pumping with the
@@ -161,6 +170,8 @@ class ForestRuleDB:
         self._rules_pumping_class: DefaultList[List[int]] = DefaultList(list)
         self._function: Function = Function()
         self._shifts: List[List[Optional[int]]] = []
+        self._shifts_for_zero: List[Tuple[int, ...]] = []
+        self._rule_type: List[RuleBucket] = []
         self._gap_size: int = 1
         self._processing_queue: Deque[int] = Deque()
         self._rule_holding_extra_terms: Set[int] = set()
@@ -177,7 +188,12 @@ class ForestRuleDB:
         """
         return self._function.to_dict()
 
-    def add_rule(self, rule_key: RuleKey, shifts_for_zero: Tuple[int, ...]):
+    def add_rule(
+        self,
+        rule_key: RuleKey,
+        shifts_for_zero: Tuple[int, ...],
+        rule_bucket: RuleBucket,
+    ):
         """
         Add the rule to the database.
 
@@ -185,10 +201,13 @@ class ForestRuleDB:
           - `rule_key`
           - `shifts_for_zero`: The values of the shifts if no information was known
           about any of the classes.
+          - `rule_bucket` the type of rule
         """
         assert len(shifts_for_zero) == len(rule_key[1])
         self._rules.append(rule_key)
         self._shifts.append(self._compute_shift(rule_key, shifts_for_zero))
+        self._shifts_for_zero.append(shifts_for_zero)
+        self._rule_type.append(rule_bucket)
         max_gap = max((abs(s) for s in shifts_for_zero), default=0)
         if max_gap > self._gap_size:
             self._gap_size = max_gap
@@ -217,6 +236,22 @@ class ForestRuleDB:
         for rule_key in self._rules:
             if rule_key[0] in stable_subset and stable_subset.issuperset(rule_key[1]):
                 yield rule_key
+
+    def pumping_subuniverse_with_info(
+        self,
+    ) -> Iterator[Tuple[RuleKey, Tuple[int, ...], RuleBucket]]:
+        """
+        Iterator over all the rules that contain only pumping combinatorial classes with
+        some additional information.
+
+        The methods returns an iteration of tuple (rule_key, shifts_for_zero, rule_type).
+        """
+        stable_subset = set(self.stable_subset())
+        for rule_key, shifts_for_zero, bucket in zip(
+            self._rules, self._shifts_for_zero, self._rule_type
+        ):
+            if rule_key[0] in stable_subset and stable_subset.issuperset(rule_key[1]):
+                yield rule_key, shifts_for_zero, bucket
 
     def stable_subset(self) -> Iterator[int]:
         return self._function.preimage(None)

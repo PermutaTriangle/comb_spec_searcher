@@ -8,7 +8,7 @@ from comb_spec_searcher.class_db import ClassDB
 from comb_spec_searcher.exception import StrategyDoesNotApply
 from comb_spec_searcher.rule_and_flip import all_flips
 from comb_spec_searcher.rule_db.base import RuleDBBase
-from comb_spec_searcher.rule_db.forest import ForestRuleDB
+from comb_spec_searcher.rule_db.forest import ForestRuleDB, RuleBucket
 from comb_spec_searcher.strategies.rule import (
     AbstractRule,
     ReverseRule,
@@ -132,11 +132,11 @@ class SpecificationRuleExtractor:
 
 
 RuleWithShifts = Tuple[RuleKey, Tuple[int, ...]]
-SortedRWS = Dict["str", List[RuleWithShifts]]
+SortedRWS = Dict[RuleBucket, List[RuleWithShifts]]
 
 
 class ForestRuleExtractor:
-    MINIMIZE_ORDER = ["flipped", "normal", "verification"]
+    MINIMIZE_ORDER = [RuleBucket.REVERSE, RuleBucket.NORMAL, RuleBucket.VERIFICATION]
 
     def __init__(
         self,
@@ -209,13 +209,13 @@ class ForestRuleExtractor:
             ruledb = ForestRuleDB()
             # Add the rule we are not trying to minimize
             for rws in itertools.chain.from_iterable(not_minimizing):
-                ruledb.add_rule(*rws)
+                ruledb.add_rule(*rws, RuleBucket.UNDEFINED)
             if ruledb.is_pumping(self.root_label):
                 self.all_rule_with_shifts[key].clear()
                 break
             # Add rule until it gets productive
             for i, rws in enumerate(minimizing):
-                ruledb.add_rule(*rws)
+                ruledb.add_rule(*rws, RuleBucket.UNDEFINED)
                 if ruledb.is_pumping(self.root_label):
                     break
             else:
@@ -237,7 +237,7 @@ class ForestRuleExtractor:
         """
         ruledb = ForestRuleDB()
         for rws in rules_and_shifts:
-            ruledb.add_rule(*rws)
+            ruledb.add_rule(*rws, RuleBucket.UNDEFINED)
         return ruledb.is_pumping(self.root_label)
 
     def _sorted_stable_rules(self, ruledb: ForestRuleDB) -> SortedRWS:
@@ -245,36 +245,14 @@ class ForestRuleExtractor:
         Extract all the rule from the stable subuniverse and return all of them in a
         dict sorted by type.
         """
-        res: SortedRWS = {"verification": [], "normal": [], "flipped": []}
-        rule_to_find = set(ruledb.pumping_subuniverse())
-        for rule in itertools.chain.from_iterable(
-            map(self._rules_for_class, ruledb.stable_subset())
-        ):
-            rule_flip_it = rule_and_flip.all_flips(rule, self.classdb.get_label)
-            first_key, first_shift = next(rule_flip_it)
-            if isinstance(rule, VerificationRule):
-                if first_key in rule_to_find:
-                    rule_to_find.remove(first_key)
-                    res["verification"].append((first_key, first_shift))
-            else:
-                if first_key in rule_to_find:
-                    rule_to_find.remove(first_key)
-                    res["normal"].append((first_key, first_shift))
-                for rk, shifts in rule_flip_it:
-                    if rk in rule_to_find:
-                        rule_to_find.remove(rk)
-                        res["flipped"].append((rk, shifts))
-        if rule_to_find:
-            rk = next(iter(rule_to_find))
-            err_message = (
-                f"Could not recompute all the rules."
-                f"Still missing {len(rule_to_find)}.\n"
-                f"One of them is {rk}\n"
-            )
-            for label in itertools.chain([rk[0]], rk[1]):
-                err_message += f"Label: {label}\n"
-                err_message += str(self.classdb.get_class(label)) + "\n"
-            raise RuntimeError(err_message)
+        res: SortedRWS = {bucket: [] for bucket in ForestRuleExtractor.MINIMIZE_ORDER}
+        for rule_key, shifts_for_zero, bucket in ruledb.pumping_subuniverse_with_info():
+            try:
+                res[bucket].append((rule_key, shifts_for_zero))
+            except KeyError as e:
+                raise RuntimeError(
+                    f"{bucket} type is not currently supported by the extractor"
+                ) from e
         return res
 
     def _find_rule(self, rule_key: RuleKey) -> AbstractRule:
