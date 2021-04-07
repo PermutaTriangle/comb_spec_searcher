@@ -7,21 +7,17 @@ from datetime import timedelta
 from typing import Tuple
 
 import sympy
-from forests.forest import sympy_to_pumping_maple
 from forests.packs import forest_pack
 from logzero import logger
 from tilings import Tiling
-from tilings.strategies.verification import (
-    BasicVerificationStrategy,
-    LocallyFactorableVerificationStrategy,
-)
+from tilings.strategies.verification import LocallyFactorableVerificationStrategy
 from tilings.tilescope import TileScope, TileScopePack
 
 from comb_spec_searcher import rule_and_flip
-from comb_spec_searcher.rule_db.forest import ForestRuleDB
+from comb_spec_searcher.rule_db.forest import ForestRuleDB, RuleBucket
 from comb_spec_searcher.specification import CombinatorialSpecification
 from comb_spec_searcher.specification_extrator import ForestRuleExtractor
-from comb_spec_searcher.strategies.rule import AbstractRule, Rule
+from comb_spec_searcher.strategies.rule import AbstractRule, Rule, VerificationRule
 from comb_spec_searcher.strategies.strategy import EmptyStrategy
 
 
@@ -43,9 +39,15 @@ class SpecialSearcher(TileScope):
         self.num_rules += 1
         start = time.time()
         flip_index = -2
+        first_bucket = (
+            RuleBucket.VERIFICATION
+            if isinstance(rule, VerificationRule)
+            else RuleBucket.NORMAL
+        )
         for rule_key, shifts in rule_and_flip.all_flips(rule, self.classdb.get_label):
-            self.forestdb.add_rule(rule_key, shifts)
             flip_index += 1
+            bucket = first_bucket if flip_index == -1 else RuleBucket.REVERSE
+            self.forestdb.add_rule(rule_key, shifts, bucket)
             if self.forestdb.is_pumping(self.start_label):
                 break
         self.time_forest += time.time() - start
@@ -119,9 +121,11 @@ pack.ver_strats = tuple(
     for s in pack.ver_strats
     if not isinstance(s, LocallyFactorableVerificationStrategy)
 )
-# pack = pack.add_verification(EmptyStrategy())
-css = SpecialSearcher(basis, pack)
-try:
-    css.auto_search(status_update=600)
-except ForestFoundError:
-    assert css.get_specification is not None
+pack = pack.add_verification(EmptyStrategy())
+
+if __name__ == "__main__":
+    css = SpecialSearcher(basis, pack)
+    try:
+        css.auto_search(status_update=60)
+    except ForestFoundError:
+        assert css.get_specification is not None
