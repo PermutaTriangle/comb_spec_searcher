@@ -92,5 +92,7 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
         Return a parameters map according to the given pos map.
         """
         return partial(
-            Constructor.param_map, child_pos_to_parent_pos, num_parent_params
+            Constructor.param_map,
+            child_pos_to_parent_pos=child_pos_to_parent_pos,
+            num_parent_params=num_parent_params,
         )
