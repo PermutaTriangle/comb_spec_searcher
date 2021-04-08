@@ -1,5 +1,6 @@
 import random
 from collections import defaultdict
+from functools import partial
 from itertools import product
 from typing import (
     Callable,
@@ -394,20 +395,28 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         self._num_parent_params = len(parent.extra_parameters)
 
     @staticmethod
+    def param_map(
+        child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...],
+        num_parent_params: int,
+        param: Parameters,
+    ) -> Parameters:
+        new_params: List[Optional[int]] = [None for _ in range(num_parent_params)]
+        for pos, value in enumerate(param):
+            parent_pos = child_pos_to_parent_pos[pos]
+            for p in parent_pos:
+                assert new_params[p] is None or new_params[p] == value
+                new_params[p] = value
+        assert all(p is not None for p in new_params)
+        return cast(Parameters, tuple(new_params))
+
+    @staticmethod
     def build_param_map(
         child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...], num_parent_params: int
     ) -> ParametersMap:
-        def param_map(param: Parameters) -> Parameters:
-            new_params: List[Optional[int]] = [None for _ in range(num_parent_params)]
-            for pos, value in enumerate(param):
-                parent_pos = child_pos_to_parent_pos[pos]
-                for p in parent_pos:
-                    assert new_params[p] is None or new_params[p] == value
-                    new_params[p] = value
-            assert all(p is not None for p in new_params)
-            return cast(Parameters, tuple(new_params))
 
-        return param_map
+        return partial(
+            Constructor.param_map, child_pos_to_parent_pos, num_parent_params
+        )
 
     def _build_parent_param_map(
         self,
