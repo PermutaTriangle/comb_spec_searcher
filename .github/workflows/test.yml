@@ -25,9 +25,6 @@ jobs:
             toxenv: tilescope
             os: ubuntu-latest
 
-          - python: 3.6
-            toxenv: py36
-            os: ubuntu-latest
           - python: 3.7
             toxenv: py37
             os: ubuntu-latest
