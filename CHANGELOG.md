@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Removed a debug print
 - Sharing of a specification html via gofile API.
 
+### Deprecated
+- Python 3.6 is no longer supported
+
 
 ## [3.0.0] - 2021-01-04
 ### Added
