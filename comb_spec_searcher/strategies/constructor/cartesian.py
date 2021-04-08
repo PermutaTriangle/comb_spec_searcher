@@ -414,11 +414,7 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...], num_parent_params: int
     ) -> ParametersMap:
 
-        return partial(
-            Constructor.param_map,
-            child_pos_to_parent_pos=child_pos_to_parent_pos,
-            num_parent_params=num_parent_params,
-        )
+        return partial(Quotient.param_map, child_pos_to_parent_pos, num_parent_params)
 
     def _build_parent_param_map(
         self,
