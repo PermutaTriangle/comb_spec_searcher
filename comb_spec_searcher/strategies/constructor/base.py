@@ -89,16 +89,8 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
         return param_map
 
     @abc.abstractmethod
-    def __eq__(self, obj: object) -> bool:
-        """Two constructors are equal if A <self> B and C <obj> D are isomorphic for any
+    def equiv(self, other: "Constructor", *args, **kwargs) -> bool:
+        """Two constructors are equiv if A <self> B and C <obj> D are isomorphic for any
         combinatorial classes A, B, C and D where A and C are isomorphic and B and D.
         This must be implemented for bijections.
         """
-
-    def __ne__(self, o: object) -> bool:
-        return not self == o
-
-    def __hash__(self) -> int:
-        """Equals isn't used in a typicial fashion and consequently constructors
-        should not be hashed."""
-        raise NotImplementedError("Hash not supported")
