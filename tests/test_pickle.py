@@ -30,3 +30,12 @@ def test_pickle_queue_not_exhausted():
     new_queue = pickle.loads(pickle.dumps(queue))
     assert new_queue == queue
     assert list(queue) == list(new_queue)
+
+
+def test_pickle_specification():
+    alphabet = ["a", "b"]
+    start_class = AvoidingWithPrefix("", ["ababa", "babb"], alphabet)
+    searcher = CombinatorialSpecificationSearcher(start_class, pack)
+    spec = searcher.auto_search()
+    spec.count_objects_of_size(10)
+    pickle.dumps(spec)
