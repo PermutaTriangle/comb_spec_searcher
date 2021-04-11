@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Moves local `Constructor.param_map` function outward so that specifications can be
   pickled.
 
+### Deprecated
+- Python 3.6 is no longer supported
+
 
 ## [3.0.0] - 2021-01-04
 ### Added
