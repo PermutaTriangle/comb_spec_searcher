@@ -9,12 +9,9 @@ if is_empty has been checked.
 """
 
 import zlib
-from typing import Dict, Generic, Iterator, Optional, Type, Union, cast
+from typing import Dict, Generic, Iterator, Optional, Type, cast
 
-from .combinatorial_class import CombinatorialClassType
-
-ClassKey = Union[bytes, CombinatorialClassType]
-Key = Union[CombinatorialClassType, int]
+from comb_spec_searcher.typing import ClassKey, CombinatorialClassType, Key
 
 
 class Info:
@@ -25,9 +22,7 @@ class Info:
         - is it empty?
     """
 
-    def __init__(
-        self, comb_class: ClassKey, label: int, empty: Optional[bool] = None,
-    ):
+    def __init__(self, comb_class: ClassKey, label: int, empty: Optional[bool] = None):
         self.comb_class = comb_class
         self.label = label
         self.empty = empty
@@ -90,7 +85,7 @@ class ClassDB(Generic[CombinatorialClassType]):
             and self.label_to_info == other.label_to_info
         )
 
-    def add(self, comb_class: ClassKey, compressed: bool = False,) -> None:
+    def add(self, comb_class: ClassKey, compressed: bool = False) -> None:
         """
         Add a combinatorial class to the database.
         """

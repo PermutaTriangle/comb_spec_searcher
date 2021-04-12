@@ -6,6 +6,63 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- Reverse rule default back to the equation of the original rule in case
+  `NotImplementedError`
+- `find_bijection_between` tries to find a bijection between classes given
+  a `CombinatorialSpecificationSearcher` object for both.
+
+### Fixed
+- Removed a debug print
+- Sharing of a specification html via gofile API.
+- Moves local `Constructor.param_map` function outward so that specifications can be
+  pickled.
+
+### Deprecated
+- Python 3.6 is no longer supported
+
+
+## [3.0.0] - 2021-01-04
+### Added
+- Automatic bijection between equivalent specifications through the functions
+  `get_bijection_to` and `are_isomorphic` of the specifications class. The bijection
+  object holds a `map` function that performs the actual mapping.
+- Sanity check for random sampling on rule
+- Strategy must not define a `is_two_way` method in order to decide if they can
+  be used to find the count of a children knowing the parent's and other
+  children' count. If so the constructor returned by the new method
+  `reverse_constructor` is used.
+- Adds `expand_all_verified_with_pack` to `Specification` to attempt expansion of
+  verified nodes with a given pack and time limit.
+- Adds `unexpanded_verified_classes` to `Specification` to return the set of verified
+  classes.
+
+### Changed
+- Specification are now built using a set of rules
+- The json format of a spec is based storing the json format of its rule
+- Streamlined the extraction of a specification from a searcher.
+- All unary strategy are now store at the level of the equivalence database in
+  order to avoid some productivity issue with catalytic variables.
+- Adds a `max_expansion_time` optional parameter to
+  `comb_spec_searcher._auto_search_rules`.
+
+### Fixed
+- `forward_map` of `EquivalencePathRule`
+- `all_specifications` method of `RuleDB`
+
+## [2.4.0] - 2020-11-11
+### Changed
+- Computation of terms in the constructor is now on a per size basis. The value for each possible parameters is computed at once in the new `get_terms` function of constructor. If you do not implement your own constructor this should have no effect on your code. The old `generate_object_of_size` method of the constructor is also replaced by a `get_objects` method that returns the objects for each possible combination of parameters.
+
+## [2.3.0] - 2020-10-28
+### Added
+- Can sample and generate objects from specifications using multiple parameters.
+- Sanity check tests object generation for rules with multiple parameteres.
+
+### Changed
+- Removed the processname extra from logging
+
+## [2.2.1] - 2020-09-10
 ### Fixed
 - when passed a multivariate function, the `taylor_expand` function expands in
   `x`.

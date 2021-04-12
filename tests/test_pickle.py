@@ -41,3 +41,11 @@ def tests_pickling_css():
     assert searcher == new_searcher
     assert spec == new_searcher.get_specification()
     assert spec == new_searcher.auto_search(maxtime=2)
+
+def test_pickle_specification():
+    alphabet = ["a", "b"]
+    start_class = AvoidingWithPrefix("", ["ababa", "babb"], alphabet)
+    searcher = CombinatorialSpecificationSearcher(start_class, pack)
+    spec = searcher.auto_search()
+    spec.count_objects_of_size(10)
+    pickle.dumps(spec)

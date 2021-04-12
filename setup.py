@@ -10,7 +10,7 @@ def read(fname):
 
 setup(
     name="comb_spec_searcher",
-    version="2.2.0",
+    version="3.0.0",
     author="Permuta Triangle",
     author_email="permutatriangle@gmail.com",
     description="A library for performing combinatorial exploration.",
@@ -40,16 +40,13 @@ setup(
         "Topic :: Education",
         "Topic :: Scientific/Engineering :: Mathematics",
     ],
-    # fmt: off
-    # Disable formatting until this is solved https://github.com/psf/black/issues/1288
     install_requires=[
-        "logzero==1.5.0",
-        "sympy==1.6.2",
-        "psutil==5.7.2",
-        "pympler==0.8",
-        "requests==2.24.0",
-        "typing-extensions==3.7.4.2",
+        "logzero==1.6.3",
+        "sympy==1.7.1",
+        "psutil==5.8.0",
+        "pympler==0.9",
+        "requests==2.25.1",
+        "typing-extensions==3.7.4.3",
         "tabulate==0.8.7",
     ],
-    # fmt: on
 )
