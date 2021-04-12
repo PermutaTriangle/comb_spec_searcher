@@ -128,6 +128,11 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         if self.symmetries:
             self._symmetry_expand(start_class, self.start_label)
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, CombinatorialSpecificationSearcher):
+            return NotImplemented
+        return self.__class__ == other.__class__ and self.__dict__ == other.__dict__
+
     @property
     def verification_strategies(self) -> Sequence[CSSstrategy]:
         """The verification strategies from the strategy pack."""
