@@ -42,6 +42,7 @@ def tests_pickling_css():
     assert spec == new_searcher.get_specification()
     assert spec == new_searcher.auto_search(maxtime=2)
 
+
 def test_pickle_specification():
     alphabet = ["a", "b"]
     start_class = AvoidingWithPrefix("", ["ababa", "babb"], alphabet)
