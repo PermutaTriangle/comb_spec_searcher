@@ -89,8 +89,9 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
         return param_map
 
     @abc.abstractmethod
-    def equiv(self, other: "Constructor", *args, **kwargs) -> bool:
+    def equiv(self, other: "Constructor") -> Tuple[bool, Optional[object]]:
         """Two constructors are equiv if A <self> B and C <obj> D are isomorphic for any
         combinatorial classes A, B, C and D where A and C are isomorphic and B and D.
-        This must be implemented for bijections.
+        This must be implemented for bijections. The second returned value is an
+        optional cache value intended for non-bijective rules.
         """

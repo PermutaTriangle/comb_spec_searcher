@@ -13,7 +13,7 @@ import abc
 import random
 from collections import defaultdict
 from importlib import import_module
-from itertools import chain, islice, product
+from itertools import chain, product
 from typing import (
     TYPE_CHECKING,
     Callable,
@@ -399,7 +399,12 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         return self.strategy.forward_map(self.comb_class, obj, self.children)
 
     def indexed_forward_map(
-        self, obj: CombinatorialObjectType
+        self,
+        obj: CombinatorialObjectType,
+        cache_key: Optional[Tuple[CombinatorialClass, CombinatorialClass]] = None,
+        cache: Optional[
+            dict[Tuple[CombinatorialClass, CombinatorialClass], object]
+        ] = None,
     ) -> Tuple[Tuple[Optional[CombinatorialObjectType], ...], int]:
         """
         A version of forward_map that is used for bijections. The idx is used
@@ -408,13 +413,19 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         return self.forward_map(obj), 0
 
     def indexed_backward_map(
-        self, objs: Tuple[Optional[CombinatorialObjectType], ...], idx: int
+        self,
+        objs: Tuple[Optional[CombinatorialObjectType], ...],
+        idx: int,
+        cache_key: Optional[Tuple[CombinatorialClass, CombinatorialClass]] = None,
+        cache: Optional[
+            dict[Tuple[CombinatorialClass, CombinatorialClass], object]
+        ] = None,
     ) -> CombinatorialObjectType:
         """
         A version of backward_map that is used for bijections. The idx is used
         create a bijection from a nonbijective rule.
         """
-        return next(islice(self.backward_map(objs), idx, None))
+        return next(self.backward_map(objs))
 
     def to_equivalence_rule(self) -> "EquivalenceRule":
         """
@@ -609,17 +620,54 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
 
 class NonBijectiveRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     def indexed_forward_map(
-        self, obj: CombinatorialObjectType
+        self,
+        obj: CombinatorialObjectType,
+        cache_key: Optional[Tuple[CombinatorialClass, CombinatorialClass]] = None,
+        cache: Optional[
+            dict[Tuple[CombinatorialClass, CombinatorialClass], object]
+        ] = None,
     ) -> Tuple[Tuple[Optional[CombinatorialObjectType], ...], int]:
-        return self.forward_map(obj), self._order_index(obj)
+        return self.forward_map(obj), self._forward_order(obj, cache_key, cache)
+
+    def indexed_backward_map(
+        self,
+        objs: Tuple[Optional[CombinatorialObjectType], ...],
+        idx: int,
+        cache_key: Optional[Tuple[CombinatorialClass, CombinatorialClass]] = None,
+        cache: Optional[
+            dict[Tuple[CombinatorialClass, CombinatorialClass], object]
+        ] = None,
+    ) -> CombinatorialObjectType:
+        return self._backward_order_item(idx, self.backward_map(objs), cache_key, cache)
 
     @abc.abstractmethod
-    def _order_index(self, obj: CombinatorialObjectType) -> int:
+    def _forward_order(
+        self,
+        obj: CombinatorialObjectType,
+        cache_key: Optional[Tuple[CombinatorialClass, CombinatorialClass]] = None,
+        cache: Optional[
+            dict[Tuple[CombinatorialClass, CombinatorialClass], object]
+        ] = None,
+    ) -> int:
         """For rules that do not have an injective forward_map, we can mark the
         resulting object with a number i (that depends on the object we map from)
         in order to achieve a bijection. The backward map will then take said
-        number and yield the i-th element. This requires the backward_map's order
-        to be deterministic.
+        number and yield the i-th element (by some predefined order). This requires
+        the backward_map's order to be deterministic.
+        """
+
+    @abc.abstractmethod
+    def _backward_order_item(
+        self,
+        idx: int,
+        parents: Iterator[CombinatorialObjectType],
+        cache_key: Optional[Tuple[CombinatorialClass, CombinatorialClass]] = None,
+        cache: Optional[
+            dict[Tuple[CombinatorialClass, CombinatorialClass], object]
+        ] = None,
+    ) -> CombinatorialObjectType:
+        """Given an iterator of all possible domain elements for an indexed forward map
+        and an index, this method will return the element that maps to said index.
         """
 
 

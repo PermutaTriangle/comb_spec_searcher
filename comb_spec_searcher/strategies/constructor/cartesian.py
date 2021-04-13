@@ -350,12 +350,12 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
     def __str__(self) -> str:
         return "Cartesian product"
 
-    def __eq__(self, obj: object) -> bool:
-        if not isinstance(obj, type(self)):
-            return False
-        if any(map(len, chain(self.extra_parameters, obj.extra_parameters))):
+    def equiv(self, other: "Constructor") -> Tuple[bool, Optional[object]]:
+        if not isinstance(other, type(self)):
+            return False, None
+        if any(map(len, chain(self.extra_parameters, other.extra_parameters))):
             raise NotImplementedError("Assumptions not supported yet")
-        return True
+        return True, None
 
 
 class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
@@ -607,9 +607,9 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     def __str__(self):
         return "quotient"
 
-    def __eq__(self, obj: object) -> bool:
-        if not isinstance(obj, type(self)):
-            return False
-        if any(map(len, chain(self.extra_parameters, obj.extra_parameters))):
+    def equiv(self, other: "Constructor") -> Tuple[bool, Optional[object]]:
+        if not isinstance(other, type(self)):
+            return False, None
+        if any(map(len, chain(self.extra_parameters, other.extra_parameters))):
             raise NotImplementedError("Assumptions not supported yet")
-        return True
+        return True, None

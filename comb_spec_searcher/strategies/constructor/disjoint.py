@@ -195,12 +195,12 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
     def __str__(self):
         return "disjoint union"
 
-    def __eq__(self, obj: object) -> bool:
-        if not isinstance(obj, type(self)):
-            return False
-        if any(map(len, chain(self.extra_parameters, obj.extra_parameters))):
+    def equiv(self, other: "Constructor") -> Tuple[bool, Optional[object]]:
+        if not isinstance(other, type(self)):
+            return False, None
+        if any(map(len, chain(self.extra_parameters, other.extra_parameters))):
             raise NotImplementedError("Assumptions not supported yet")
-        return True
+        return True, None
 
 
 class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
@@ -347,9 +347,9 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     def __str__(self):
         return "complement"
 
-    def __eq__(self, obj: object) -> bool:
-        if not isinstance(obj, type(self)):
-            return False
-        if any(map(len, chain(self.extra_parameters, obj.extra_parameters))):
+    def equiv(self, other: "Constructor") -> Tuple[bool, Optional[object]]:
+        if not isinstance(other, type(self)):
+            return False, None
+        if any(map(len, chain(self.extra_parameters, other.extra_parameters))):
             raise NotImplementedError("Assumptions not supported yet")
-        return True
+        return True, None

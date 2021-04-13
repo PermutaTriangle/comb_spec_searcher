@@ -193,7 +193,7 @@ class ParallelSpecFinder:
             for c1, r1 in child_rule_pairs
             for c2, r2 in self._pi2.eq_label_rules[id2][n]
             if (r1 is None and r2 is None)
-            or (r1 is not None and r2 is not None and r1 == r2)
+            or (r1 is not None and r2 is not None and r1.equiv(r2)[0])
         ]
 
     @staticmethod
