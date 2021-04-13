@@ -403,7 +403,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         obj: CombinatorialObjectType,
         cache_key: Optional[Tuple[CombinatorialClass, CombinatorialClass]] = None,
         cache: Optional[
-            dict[Tuple[CombinatorialClass, CombinatorialClass], object]
+            Dict[Tuple[CombinatorialClass, CombinatorialClass], object]
         ] = None,
     ) -> Tuple[Tuple[Optional[CombinatorialObjectType], ...], int]:
         """
@@ -418,7 +418,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         idx: int,
         cache_key: Optional[Tuple[CombinatorialClass, CombinatorialClass]] = None,
         cache: Optional[
-            dict[Tuple[CombinatorialClass, CombinatorialClass], object]
+            Dict[Tuple[CombinatorialClass, CombinatorialClass], object]
         ] = None,
     ) -> CombinatorialObjectType:
         """
@@ -624,7 +624,7 @@ class NonBijectiveRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         obj: CombinatorialObjectType,
         cache_key: Optional[Tuple[CombinatorialClass, CombinatorialClass]] = None,
         cache: Optional[
-            dict[Tuple[CombinatorialClass, CombinatorialClass], object]
+            Dict[Tuple[CombinatorialClass, CombinatorialClass], object]
         ] = None,
     ) -> Tuple[Tuple[Optional[CombinatorialObjectType], ...], int]:
         return self.forward_map(obj), self._forward_order(obj, cache_key, cache)
@@ -635,7 +635,7 @@ class NonBijectiveRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         idx: int,
         cache_key: Optional[Tuple[CombinatorialClass, CombinatorialClass]] = None,
         cache: Optional[
-            dict[Tuple[CombinatorialClass, CombinatorialClass], object]
+            Dict[Tuple[CombinatorialClass, CombinatorialClass], object]
         ] = None,
     ) -> CombinatorialObjectType:
         return self._backward_order_item(idx, self.backward_map(objs), cache_key, cache)
@@ -646,7 +646,7 @@ class NonBijectiveRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         obj: CombinatorialObjectType,
         cache_key: Optional[Tuple[CombinatorialClass, CombinatorialClass]] = None,
         cache: Optional[
-            dict[Tuple[CombinatorialClass, CombinatorialClass], object]
+            Dict[Tuple[CombinatorialClass, CombinatorialClass], object]
         ] = None,
     ) -> int:
         """For rules that do not have an injective forward_map, we can mark the
@@ -663,7 +663,7 @@ class NonBijectiveRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         parents: Iterator[CombinatorialObjectType],
         cache_key: Optional[Tuple[CombinatorialClass, CombinatorialClass]] = None,
         cache: Optional[
-            dict[Tuple[CombinatorialClass, CombinatorialClass], object]
+            Dict[Tuple[CombinatorialClass, CombinatorialClass], object]
         ] = None,
     ) -> CombinatorialObjectType:
         """Given an iterator of all possible domain elements for an indexed forward map
