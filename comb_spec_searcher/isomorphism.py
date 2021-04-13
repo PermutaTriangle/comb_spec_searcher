@@ -34,7 +34,7 @@ class Isomorphism:
             Tuple[CombinatorialClass, CombinatorialClass], List[int]
         ] = {}
         self._failed: Set[Tuple[CombinatorialClass, CombinatorialClass]] = set()
-        self._index_cache: Dict[
+        self._index_data: Dict[
             Tuple[CombinatorialClass, CombinatorialClass], object
         ] = {}
         self._isomorphic = self._are_isomorphic(spec1.root, spec2.root)
@@ -42,8 +42,8 @@ class Isomorphism:
     def get_order_data(
         self,
     ) -> Dict[Tuple[CombinatorialClass, CombinatorialClass], object]:
-        """Return any cached data for nonbijective matches."""
-        return self._index_cache
+        """Return any index data for nonbijective matches."""
+        return self._index_data
 
     def are_isomorphic(self) -> bool:
         """Check if the two specs are isomorphic."""
@@ -101,7 +101,7 @@ class Isomorphism:
             Isomorphism._extend_stack(i1, n, in_use, stack)
         self._ancestors.difference_update(product(eq_path1, eq_path2))
         self._failed.add((curr1, curr2))
-        self._index_cache.pop((curr1, curr2), None)
+        self._index_data.pop((curr1, curr2), None)
         return False
 
     @staticmethod
@@ -157,7 +157,7 @@ class Isomorphism:
         if not are_eq:
             return Isomorphism._INVALID
         if data is not None:
-            self._index_cache[(curr1, curr2)] = data
+            self._index_data[(curr1, curr2)] = data
 
         # Check for recursive match
         if any((n1, n2) in self._ancestors for n1, n2 in product(eq_nodes1, eq_nodes2)):
@@ -206,7 +206,7 @@ class Node:
         rule: AbstractRule,
         get_order: OrderMap,
         get_rule: Callable[[CombinatorialClass], AbstractRule],
-        index_cache: Dict[Tuple[CombinatorialClass, CombinatorialClass], object],
+        index_data: Dict[Tuple[CombinatorialClass, CombinatorialClass], object],
     ) -> CombinatorialObject:
         """Parse tree's recursive build object function."""
 
@@ -224,7 +224,7 @@ class Node:
                 val: CombinatorialObject = rule.indexed_backward_map(
                     (
                         self.build_obj(
-                            get_rule(rule.children[0]), get_order, get_rule, index_cache
+                            get_rule(rule.children[0]), get_order, get_rule, index_data
                         ),
                     ),
                     self.idx,
@@ -233,14 +233,14 @@ class Node:
             order = [0]
         elif self._rule.is_equivalence():
             assert self._children[0] is not None
-            return self._children[0].build_obj(rule, get_order, get_rule, index_cache)
+            return self._children[0].build_obj(rule, get_order, get_rule, index_data)
         else:
             order = get_order[(self._rule.comb_class, rule.comb_class)]
         children = (self._children[idx] for idx in order)
         assert isinstance(rule, Rule)
         val = rule.indexed_backward_map(
             tuple(
-                c[0].build_obj(get_rule(c[1]), get_order, get_rule, index_cache)
+                c[0].build_obj(get_rule(c[1]), get_order, get_rule, index_data)
                 if c is not None and c[0] is not None
                 else None
                 for c in (
@@ -249,21 +249,19 @@ class Node:
                 )
             ),
             self.idx,
-            self._get_cache_key(rule, index_cache),
-            index_cache,
+            self._get_index_data_value(rule, index_data),
         )
         return val
 
-    def _get_cache_key(
+    def _get_index_data_value(
         self,
         rule: AbstractRule,
-        index_cache: Dict[Tuple[CombinatorialClass, CombinatorialClass], object],
-    ):
-        if (self._rule.comb_class, rule.comb_class) in index_cache:
-            return (self._rule.comb_class, rule.comb_class)
-        if (rule.comb_class, self._rule.comb_class) in index_cache:
-            return (rule.comb_class, self._rule.comb_class)
-        return None
+        index_data: Dict[Tuple[CombinatorialClass, CombinatorialClass], object],
+    ) -> Optional[object]:
+        data = index_data.get((self._rule.comb_class, rule.comb_class), None)
+        if data is None:
+            data = index_data.get((rule.comb_class, self._rule.comb_class), None)
+        return data
 
 
 class ParseTree:
@@ -278,10 +276,10 @@ class ParseTree:
         root: AbstractRule,
         get_order: OrderMap,
         get_rule: Callable[[CombinatorialClass], AbstractRule],
-        index_cache: Dict[Tuple[CombinatorialClass, CombinatorialClass], object],
+        index_data: Dict[Tuple[CombinatorialClass, CombinatorialClass], object],
     ) -> CombinatorialObject:
         """Build object from the other specification."""
-        return self._root.build_obj(root, get_order, get_rule, index_cache)
+        return self._root.build_obj(root, get_order, get_rule, index_data)
 
 
 class Bijection:
@@ -297,18 +295,18 @@ class Bijection:
         iso = Isomorphism(spec, other)
         if not iso.are_isomorphic():
             return None
-        return cls(spec, other, iso.get_order())
+        return cls(spec, other, iso.get_order(), iso.get_order_data())
 
     def __init__(
         self,
         spec: "CombinatorialSpecification",
         other: "CombinatorialSpecification",
         get_order: OrderMap,
-        index_cache: Optional[
+        index_data: Optional[
             Dict[Tuple[CombinatorialClass, CombinatorialClass], object]
         ] = None,
     ):
-        self._index_cache = {} if index_cache is None else index_cache
+        self._index_data = {} if index_data is None else index_data
         self._spec = spec
         self._other = other
         self._get_order = get_order
@@ -338,7 +336,7 @@ class Bijection:
             self._other.root_rule,
             self._get_order,
             self._other.get_rule,
-            self._index_cache,
+            self._index_data,
         )
 
     def inverse_map(self, obj: CombinatorialObject) -> CombinatorialObject:
@@ -347,7 +345,7 @@ class Bijection:
             self._spec.root_rule,
             self._get_inverse_order,
             self._spec.get_rule,
-            self._index_cache,
+            self._index_data,
         )
 
     def to_jsonable(self) -> dict:
@@ -369,6 +367,7 @@ class Bijection:
                 reconstructed_map[i1] = {i2: lis}
             else:
                 reconstructed_map[i1][i2] = lis
+        # TODO: index order data
         return {
             "spec": self._spec.to_jsonable(),
             "other": self._other.to_jsonable(),
@@ -392,4 +391,5 @@ class Bijection:
             for idx1, sub_map in d["order"].items()
             for idx2, lis in sub_map.items()
         }
+        # TODO: index order data
         return cls(spec1, spec2, get_order)

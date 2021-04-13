@@ -401,10 +401,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
     def indexed_forward_map(
         self,
         obj: CombinatorialObjectType,
-        cache_key: Optional[Tuple[CombinatorialClass, CombinatorialClass]] = None,
-        cache: Optional[
-            Dict[Tuple[CombinatorialClass, CombinatorialClass], object]
-        ] = None,
+        data: Optional[object] = None,
     ) -> Tuple[Tuple[Optional[CombinatorialObjectType], ...], int]:
         """
         A version of forward_map that is used for bijections. The idx is used
@@ -416,10 +413,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         self,
         objs: Tuple[Optional[CombinatorialObjectType], ...],
         idx: int,
-        cache_key: Optional[Tuple[CombinatorialClass, CombinatorialClass]] = None,
-        cache: Optional[
-            Dict[Tuple[CombinatorialClass, CombinatorialClass], object]
-        ] = None,
+        data: Optional[object] = None,
     ) -> CombinatorialObjectType:
         """
         A version of backward_map that is used for bijections. The idx is used
@@ -622,32 +616,23 @@ class NonBijectiveRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     def indexed_forward_map(
         self,
         obj: CombinatorialObjectType,
-        cache_key: Optional[Tuple[CombinatorialClass, CombinatorialClass]] = None,
-        cache: Optional[
-            Dict[Tuple[CombinatorialClass, CombinatorialClass], object]
-        ] = None,
+        data: Optional[object] = None,
     ) -> Tuple[Tuple[Optional[CombinatorialObjectType], ...], int]:
-        return self.forward_map(obj), self._forward_order(obj, cache_key, cache)
+        return self.forward_map(obj), self._forward_order(obj, data)
 
     def indexed_backward_map(
         self,
         objs: Tuple[Optional[CombinatorialObjectType], ...],
         idx: int,
-        cache_key: Optional[Tuple[CombinatorialClass, CombinatorialClass]] = None,
-        cache: Optional[
-            Dict[Tuple[CombinatorialClass, CombinatorialClass], object]
-        ] = None,
+        data: Optional[object] = None,
     ) -> CombinatorialObjectType:
-        return self._backward_order_item(idx, self.backward_map(objs), cache_key, cache)
+        return self._backward_order_item(idx, self.backward_map(objs), data)
 
     @abc.abstractmethod
     def _forward_order(
         self,
         obj: CombinatorialObjectType,
-        cache_key: Optional[Tuple[CombinatorialClass, CombinatorialClass]] = None,
-        cache: Optional[
-            Dict[Tuple[CombinatorialClass, CombinatorialClass], object]
-        ] = None,
+        data: Optional[object] = None,
     ) -> int:
         """For rules that do not have an injective forward_map, we can mark the
         resulting object with a number i (that depends on the object we map from)
@@ -661,10 +646,7 @@ class NonBijectiveRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         self,
         idx: int,
         parents: Iterator[CombinatorialObjectType],
-        cache_key: Optional[Tuple[CombinatorialClass, CombinatorialClass]] = None,
-        cache: Optional[
-            Dict[Tuple[CombinatorialClass, CombinatorialClass], object]
-        ] = None,
+        data: Optional[object] = None,
     ) -> CombinatorialObjectType:
         """Given an iterator of all possible domain elements for an indexed forward map
         and an index, this method will return the element that maps to said index.

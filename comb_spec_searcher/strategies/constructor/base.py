@@ -92,6 +92,8 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
     def equiv(self, other: "Constructor") -> Tuple[bool, Optional[object]]:
         """Two constructors are equiv if A <self> B and C <obj> D are isomorphic for any
         combinatorial classes A, B, C and D where A and C are isomorphic and B and D.
-        This must be implemented for bijections. The second returned value is an
-        optional cache value intended for non-bijective rules.
+        This must be implemented for bijections. The second returned value is optional
+        data for bijections. It is used to pass additional arguments to determine index
+        ordering. It needs to be JSON compatible for bijection's to_jsonable and
+        from_dict to work.
         """
