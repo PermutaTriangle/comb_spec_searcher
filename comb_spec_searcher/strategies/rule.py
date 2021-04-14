@@ -977,6 +977,9 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
         lhs_func = get_function(self.comb_class)
         return Eq(lhs_func, self.strategy.get_genf(self.comb_class, funcs))
 
+    def get_eq_symbol(self) -> str:
+        return "↝"
+
     def random_sample_object_of_size(
         self, n: int, **parameters: int
     ) -> CombinatorialObjectType:
