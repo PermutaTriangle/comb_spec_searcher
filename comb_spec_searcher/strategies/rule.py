@@ -295,7 +295,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
 
         res = str(self.comb_class).split("\n")
         backpad(res)
-        if isinstance(self, Rule):
+        if self.children:
             children = [str(child).split("\n") for child in self.children]
             symbol_height = min(1, len(res) - 1)
             eq_symbol = (
@@ -918,7 +918,6 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
         comb_class: CombinatorialClassType,
         children: Optional[Tuple[CombinatorialClassType, ...]] = None,
     ):
-        assert not children
         super().__init__(strat, comb_class, children)
 
     def to_jsonable(self) -> dict:
