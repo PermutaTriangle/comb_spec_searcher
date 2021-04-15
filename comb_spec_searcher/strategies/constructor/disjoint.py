@@ -1,5 +1,4 @@
 from collections import defaultdict
-from itertools import chain
 from random import randint
 from typing import Callable, Counter, Dict, Iterator, List, Optional, Tuple
 
@@ -196,11 +195,13 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         return "disjoint union"
 
     def equiv(self, other: "Constructor") -> Tuple[bool, Optional[object]]:
-        if not isinstance(other, type(self)):
-            return False, None
-        if any(map(len, chain(self.extra_parameters, other.extra_parameters))):
-            raise NotImplementedError("Assumptions not supported yet")
-        return True, None
+        return (
+            isinstance(other, type(self))
+            and DisjointUnion.extra_params_equiv(
+                self.extra_parameters, other.extra_parameters
+            ),
+            None,
+        )
 
 
 class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
@@ -348,8 +349,10 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         return "complement"
 
     def equiv(self, other: "Constructor") -> Tuple[bool, Optional[object]]:
-        if not isinstance(other, type(self)):
-            return False, None
-        if any(map(len, chain(self.extra_parameters, other.extra_parameters))):
-            raise NotImplementedError("Assumptions not supported yet")
-        return True, None
+        return (
+            isinstance(other, type(self))
+            and Complement.extra_params_equiv(
+                self.extra_parameters, other.extra_parameters
+            ),
+            None,
+        )

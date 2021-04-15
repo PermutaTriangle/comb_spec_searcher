@@ -1,6 +1,6 @@
 import random
 from collections import defaultdict
-from itertools import chain, product
+from itertools import product
 from typing import (
     Callable,
     Counter,
@@ -351,11 +351,13 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         return "Cartesian product"
 
     def equiv(self, other: "Constructor") -> Tuple[bool, Optional[object]]:
-        if not isinstance(other, type(self)):
-            return False, None
-        if any(map(len, chain(self.extra_parameters, other.extra_parameters))):
-            raise NotImplementedError("Assumptions not supported yet")
-        return True, None
+        return (
+            isinstance(other, type(self))
+            and CartesianProduct.extra_params_equiv(
+                self.extra_parameters, other.extra_parameters
+            ),
+            None,
+        )
 
 
 class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
@@ -608,8 +610,10 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         return "quotient"
 
     def equiv(self, other: "Constructor") -> Tuple[bool, Optional[object]]:
-        if not isinstance(other, type(self)):
-            return False, None
-        if any(map(len, chain(self.extra_parameters, other.extra_parameters))):
-            raise NotImplementedError("Assumptions not supported yet")
-        return True, None
+        return (
+            isinstance(other, type(self))
+            and Quotient.extra_params_equiv(
+                self.extra_parameters, other.extra_parameters
+            ),
+            None,
+        )
