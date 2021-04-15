@@ -145,9 +145,9 @@ class Isomorphism:
         # Atoms
         if not rule1.children and not rule2.children:
             if curr1.is_atom() and curr2.is_atom():
-                atom1 = next(curr1.objects_of_size(curr1.minimum_size_of_object()))
-                atom2 = next(curr2.objects_of_size(curr2.minimum_size_of_object()))
-                if atom1.size() == atom2.size():
+                sz1 = next(curr1.objects_of_size(curr1.minimum_size_of_object())).size()
+                sz2 = next(curr2.objects_of_size(curr2.minimum_size_of_object())).size()
+                if sz1 == sz2 and rule1.get_terms(sz1) == rule2.get_terms(sz2):
                     return Isomorphism._VALID
             return Isomorphism._INVALID
 

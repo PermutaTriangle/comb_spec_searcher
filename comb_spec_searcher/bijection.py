@@ -11,7 +11,7 @@ from comb_spec_searcher.specification_extrator import SpecificationRuleExtractor
 from comb_spec_searcher.strategies.constructor.base import Constructor
 from comb_spec_searcher.strategies.rule import Rule
 from comb_spec_searcher.tree_searcher import Node, prune
-from comb_spec_searcher.typing import RuleKey
+from comb_spec_searcher.typing import RuleKey, Terms
 
 NO_CONSTRUCTOR = None.__class__
 MatchingInfo = DefaultDict[
@@ -34,7 +34,7 @@ class ParallelInfo:
         self._expand()
         self.r_db: RuleDBBase = self.searcher.ruledb
         self.root_eq_label: int = self.r_db.equivdb[self.searcher.start_label]
-        self.atom_map: Dict[int, CombinatorialClass] = {}
+        self.atom_map: Dict[int, Tuple[int, Terms]] = {}
         self.root_class: Optional[CombinatorialClass] = None
         self.eq_label_rules: RuleClassification = self._construct_eq_label_rules()
 
@@ -68,7 +68,10 @@ class ParallelInfo:
                 self.root_class = parent
             if parent.is_atom():
                 eq_label_rules[eq_par][0].append((eq_chi, None))
-                self.atom_map[eq_par] = parent
+                sz = next(
+                    parent.objects_of_size(parent.minimum_size_of_object())
+                ).size()
+                self.atom_map[eq_par] = (sz, rule.get_terms(sz))
             else:
                 assert isinstance(rule, Rule)
                 non_empty_children = tuple(
@@ -160,10 +163,9 @@ class ParallelSpecFinder:
         # If rule type has no constructor we compare atoms
         if 0 in self._pi1.eq_label_rules[id1]:
             if 0 in self._pi2.eq_label_rules[id2]:
-                atomic1, atomic2 = self._pi1.atom_map[id1], self._pi2.atom_map[id2]
-                atom1 = next(atomic1.objects_of_size(atomic1.minimum_size_of_object()))
-                atom2 = next(atomic2.objects_of_size(atomic2.minimum_size_of_object()))
-                if atom1.size() == atom2.size():
+                sz1, terms1 = self._pi1.atom_map[id1]
+                sz2, terms2 = self._pi2.atom_map[id2]
+                if sz1 == sz2 and terms1 == terms2:
                     matching_info[(id1, id2)] = {((), ())}
                     return ParallelSpecFinder._VALID
                 if len(self._pi2.eq_label_rules[id2]) == 1:
