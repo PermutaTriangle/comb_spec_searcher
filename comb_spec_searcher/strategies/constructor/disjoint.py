@@ -308,9 +308,7 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
             if value:
                 parent_terms_mapped[self._parent_param_map(param)] += value
         children_terms = subterms[1:]
-        for (idx, child_terms), param_map in zip(
-            enumerate(children_terms), self._children_param_maps
-        ):
+        for child_terms, param_map in zip(children_terms, self._children_param_maps):
             # we subtract from total
             for param, value in child_terms(n).items():
                 mapped_param = self._parent_param_map(param_map(param))
