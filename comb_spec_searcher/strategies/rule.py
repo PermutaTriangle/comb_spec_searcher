@@ -618,7 +618,8 @@ class NonBijectiveRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         obj: CombinatorialObjectType,
         data: Optional[object] = None,
     ) -> Tuple[Tuple[Optional[CombinatorialObjectType], ...], int]:
-        return self.forward_map(obj), self._forward_order(obj, data)
+        img = self.forward_map(obj)
+        return img, self._forward_order(obj, img, data)
 
     def indexed_backward_map(
         self,
@@ -626,12 +627,13 @@ class NonBijectiveRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         idx: int,
         data: Optional[object] = None,
     ) -> CombinatorialObjectType:
-        return self._backward_order_item(idx, self.backward_map(objs), data)
+        return self._backward_order_item(idx, objs, data)
 
     @abc.abstractmethod
     def _forward_order(
         self,
         obj: CombinatorialObjectType,
+        image: Tuple[Optional[CombinatorialObjectType], ...],
         data: Optional[object] = None,
     ) -> int:
         """For rules that do not have an injective forward_map, we can mark the
@@ -645,7 +647,7 @@ class NonBijectiveRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     def _backward_order_item(
         self,
         idx: int,
-        parents: Iterator[CombinatorialObjectType],
+        objs: Tuple[Optional[CombinatorialObjectType], ...],
         data: Optional[object] = None,
     ) -> CombinatorialObjectType:
         """Given an iterator of all possible domain elements for an indexed forward map
