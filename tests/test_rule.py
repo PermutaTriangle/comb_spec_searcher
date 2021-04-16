@@ -1,5 +1,6 @@
 import sympy
 
+from comb_spec_searcher.strategies.rule import EquivalenceRule
 from example import AvoidingWithPrefix, ExpansionStrategy, RemoveFrontOfPrefix
 
 
@@ -11,10 +12,12 @@ def test_reverse_equivalence():
     assert equiv_then_reverse.is_equivalence()
     assert equiv_then_reverse.children == (comb_class,)
     assert equiv_then_reverse.comb_class == rule.non_empty_children()[0]
+    assert isinstance(equiv_then_reverse, EquivalenceRule)
     reverse_then_equiv = rule.to_reverse_rule(0).to_equivalence_rule()
     assert reverse_then_equiv.is_equivalence()
     assert reverse_then_equiv.children == (comb_class,)
     assert reverse_then_equiv.comb_class == rule.non_empty_children()[0]
+    assert isinstance(reverse_then_equiv, EquivalenceRule)
 
 
 def test_complement_rule():

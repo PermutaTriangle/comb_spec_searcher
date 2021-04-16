@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Removed a debug print
 - Sharing of a specification html via gofile API.
+- Moves local `Constructor.param_map` function outward so that specifications can be
+  pickled.
+- Fix bug in complement constructor counting
+- Fixing a bug in counting for equivalence rule from a reverse rule
+
+### Deprecated
+- Python 3.6 is no longer supported
 
 
 ## [3.0.0] - 2021-01-04
