@@ -443,10 +443,23 @@ class CombinatorialSpecification(
 
         Raise an SanityCheckFailure error if it fails.
         """
-        return self._is_valid_spec() and all(
-            all(rule.sanity_check(n) for rule in self.rules_dict.values())
-            for n in range(length + 1)
-        )
+        if not self._is_valid_spec():
+            return False
+
+        for rule in self.rules_dict.values():
+            try:
+                for n in range(length + 1):
+                    if not rule.sanity_check(n):
+                        return False
+            except NotImplementedError:
+                logger.warning(
+                    "Can't sanity check the rule %s -> %s, which is\n" "%s",
+                    self.get_label(rule.comb_class),
+                    tuple(self.get_label(child) for child in rule.children),
+                    rule,
+                )
+
+        return True
 
     def get_bijection_to(
         self, other: "CombinatorialSpecification"
