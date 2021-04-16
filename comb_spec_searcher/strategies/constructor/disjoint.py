@@ -238,7 +238,11 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         parent_param_to_pos = {
             param: pos for pos, param in enumerate(parent.extra_parameters)
         }
-        for child, extra_param in zip(children, self.extra_parameters):
+        for (idx, child), extra_param in zip(
+            enumerate(children), self.extra_parameters
+        ):
+            if idx == self.idx:
+                continue
             reversed_extra_param: Dict[str, List[str]] = defaultdict(list)
             for parent_var, child_var in extra_param.items():
                 reversed_extra_param[child_var].append(parent_var)
@@ -303,19 +307,15 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         for param, value in subterms[0](n).items():
             if value:
                 parent_terms_mapped[self._parent_param_map(param)] += value
-
         children_terms = subterms[1:]
-        for (idx, child_terms), param_map in zip(
-            enumerate(children_terms), self._children_param_maps
-        ):
-            if self.idx != idx:
-                # we subtract from total
-                for param, value in child_terms(n).items():
-                    mapped_param = self._parent_param_map(param_map(param))
-                    parent_terms_mapped[mapped_param] -= value
-                    assert parent_terms_mapped[mapped_param] >= 0
-                    if parent_terms_mapped[mapped_param] == 0:
-                        parent_terms_mapped.pop(mapped_param)
+        for child_terms, param_map in zip(children_terms, self._children_param_maps):
+            # we subtract from total
+            for param, value in child_terms(n).items():
+                mapped_param = self._parent_param_map(param_map(param))
+                parent_terms_mapped[mapped_param] -= value
+                assert parent_terms_mapped[mapped_param] >= 0
+                if parent_terms_mapped[mapped_param] == 0:
+                    parent_terms_mapped.pop(mapped_param)
 
         return parent_terms_mapped
 
