@@ -627,15 +627,21 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
                 )
             elif isinstance(original_constructor, Complement):
                 assert isinstance(self.original_rule, ReverseRule)
-                original_original_constructor = (
-                    self.original_rule.original_rule.constructor
+                original_original_rule = self.original_rule.original_rule
+                original_original_child_idx = (
+                    original_original_rule.to_equivalence_rule().child_idx
                 )
+                original_original_constructor = original_original_rule.constructor
                 assert isinstance(original_original_constructor, DisjointUnion)
                 self._constructor = Complement(
-                    self.original_rule.original_rule.comb_class,
-                    self.original_rule.original_rule.children,
-                    self.original_rule.idx,
-                    original_original_constructor.extra_parameters,
+                    self.children[0],
+                    (self.comb_class,),
+                    0,
+                    (
+                        original_original_constructor.extra_parameters[
+                            original_original_child_idx
+                        ],
+                    ),
                 )
             else:
                 raise NotImplementedError
