@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `find_bijection_between` tries to find a bijection between classes given
   a `CombinatorialSpecificationSearcher` object for both.
 
+### Changed
+- If a rule in a specification cannot be sanity checked (e.g., counting is not
+  implemented), a warning is printed and sanity checking continues, instead of returning
+  the exception.
+
 ### Fixed
 - Removed a debug print
 - Sharing of a specification html via gofile API.
