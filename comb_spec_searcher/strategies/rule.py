@@ -912,6 +912,8 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
     empty tuple if it applies, else None.
     """
 
+    # The signature is refined from AbstractRule
+    # pylint: disable=useless-super-delegation
     def __init__(
         self,
         strat: "VerificationStrategy[CombinatorialClassType,CombinatorialObjectType]",
@@ -977,7 +979,8 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
         lhs_func = get_function(self.comb_class)
         return Eq(lhs_func, self.strategy.get_genf(self.comb_class, funcs))
 
-    def get_eq_symbol(self) -> str:
+    @staticmethod
+    def get_eq_symbol() -> str:
         return "↝"
 
     def random_sample_object_of_size(
