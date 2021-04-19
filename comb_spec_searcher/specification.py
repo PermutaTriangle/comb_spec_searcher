@@ -354,7 +354,7 @@ class CombinatorialSpecification(
         logger.info("Solving...")
         solutions = solve(
             eqs,
-            tuple([eq.lhs for eq in eqs]),
+            tuple(eq.lhs for eq in eqs),
             dict=True,
             cubics=False,
             quartics=False,
