@@ -953,6 +953,7 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
     def pack(self) -> "StrategyPack":
         return self.strategy.pack(self.comb_class)
 
+    # pylint: disable=arguments-differ
     def get_equation(
         self,
         get_function: Callable[[CombinatorialClassType], Function],
