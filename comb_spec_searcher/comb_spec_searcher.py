@@ -128,6 +128,11 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         if self.symmetries:
             self._symmetry_expand(start_class, self.start_label)
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, CombinatorialSpecificationSearcher):
+            return NotImplemented
+        return self.__class__ == other.__class__ and self.__dict__ == other.__dict__
+
     @property
     def verification_strategies(self) -> Sequence[CSSstrategy]:
         """The verification strategies from the strategy pack."""
@@ -617,7 +622,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 round(max_expansion_time, 2),
             )
 
-    def _auto_search_rules(self) -> Iterator[AbstractRule]:
+    def _auto_search_rules(
+        self, max_expansion_time: float = 0
+    ) -> Iterator[AbstractRule]:
         """
         A basic auto search for returning equivalence paths and rules.
 
@@ -630,7 +637,6 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         status_start = time.time()
         status_update = None  # this prevents status updates happening
         auto_search_start = time.time()
-        max_expansion_time: float = 0
         expanding = True
         while expanding:
             expanding, status_start = self._expand_classes_for(

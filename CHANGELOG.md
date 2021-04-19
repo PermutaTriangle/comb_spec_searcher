@@ -4,14 +4,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Reverse rule default back to the equation of the original rule in case
+  `NotImplementedError`
+- `find_bijection_between` tries to find a bijection between classes given
+  a `CombinatorialSpecificationSearcher` object for both.
+
+### Changed
+- If a rule in a specification cannot be sanity checked (e.g., counting is not
+  implemented), a warning is printed and sanity checking continues, instead of returning
+  the exception.
+
+### Fixed
+- Removed a debug print
+- Sharing of a specification html via gofile API.
+- Moves local `Constructor.param_map` function outward so that specifications can be
+  pickled.
+- Fix bug in complement constructor counting
+- Fixing a bug in counting for equivalence rule from a reverse rule
+
+### Deprecated
+- Python 3.6 is no longer supported
+
+
 ## [3.0.0] - 2021-01-04
 ### Added
-- Automatic bijection between equivalent specifications through the functions `get_bijection_to` and `are_isomorphic` of the specifications class. The bijection object holds a `map` function that performs the actual mapping.
+- Automatic bijection between equivalent specifications through the functions
+  `get_bijection_to` and `are_isomorphic` of the specifications class. The bijection
+  object holds a `map` function that performs the actual mapping.
 - Sanity check for random sampling on rule
 - Strategy must not define a `is_two_way` method in order to decide if they can
   be used to find the count of a children knowing the parent's and other
   children' count. If so the constructor returned by the new method
   `reverse_constructor` is used.
+- Adds `expand_all_verified_with_pack` to `Specification` to attempt expansion of
+  verified nodes with a given pack and time limit.
+- Adds `unexpanded_verified_classes` to `Specification` to return the set of verified
+  classes.
 
 ### Changed
 - Specification are now built using a set of rules
@@ -19,6 +50,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Streamlined the extraction of a specification from a searcher.
 - All unary strategy are now store at the level of the equivalence database in
   order to avoid some productivity issue with catalytic variables.
+- Adds a `max_expansion_time` optional parameter to
+  `comb_spec_searcher._auto_search_rules`.
 
 ### Fixed
 - `forward_map` of `EquivalencePathRule`

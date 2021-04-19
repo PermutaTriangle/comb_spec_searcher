@@ -78,8 +78,14 @@ using ``in``.
 
 .. code:: python
 
-   >>> w = "acbabcabbb"
-   >>> p = "abcab"
+   >>> from comb_spec_searcher import CombinatorialObject
+   
+   >>> class Word(str, CombinatorialObject):
+   ...     def size(self):
+   ...         return str.__len__(self)
+
+   >>> w = Word("acbabcabbb")
+   >>> p = Word("abcab")
    >>> p in w
    True
 
@@ -101,11 +107,11 @@ create a new python ``class`` representing this that inherits from
    >>> from comb_spec_searcher import CombinatorialClass
 
 
-   >>> class AvoidingWithPrefix(CombinatorialClass):
+   >>> class AvoidingWithPrefix(CombinatorialClass[Word]):
    ...     def __init__(self, prefix, patterns, alphabet, just_prefix=False):
    ...         self.alphabet = frozenset(alphabet)
-   ...         self.prefix = prefix
-   ...         self.patterns = frozenset(patterns)
+   ...         self.prefix = Word(prefix)
+   ...         self.patterns = frozenset(map(Word, patterns))
    ...         self.just_prefix = just_prefix # this will be needed later
 
 Inheriting from ``CombinatorialClass`` requires you to implement a few
@@ -233,7 +239,7 @@ create multiple rules, and as such should be implemented as generators.
    >>> from comb_spec_searcher import DisjointUnionStrategy
 
 
-   >>> class ExpansionStrategy(DisjointUnionStrategy):
+   >>> class ExpansionStrategy(DisjointUnionStrategy[AvoidingWithPrefix, Word]):
    ...     def decomposition_function(self, avoiding_with_prefix):
    ...        if not avoiding_with_prefix.just_prefix:
    ...           alphabet, prefix, patterns = (
@@ -265,7 +271,7 @@ create multiple rules, and as such should be implemented as generators.
    ...           if word[: len(child.prefix)] == child.prefix:
    ...                 return (
    ...                    tuple(None for _ in range(idx + 1))
-   ...                    + (child,)
+   ...                    + (word,)
    ...                    + tuple(None for _ in range(len(children) - idx - 1))
    ...                 )
    ...
@@ -292,7 +298,7 @@ constructor is cartesian product a ``DecompositionRule``.
    >>> from comb_spec_searcher import CartesianProductStrategy
 
 
-   >>> class RemoveFrontOfPrefix(CartesianProductStrategy):
+   >>> class RemoveFrontOfPrefix(CartesianProductStrategy[AvoidingWithPrefix, Word]):
    ...     def decomposition_function(self, avoiding_with_prefix):
    ...        """If the k is the maximum size of a pattern to be avoided, then any
    ...        occurrence using indices further to the right of the prefix can use at
@@ -318,7 +324,8 @@ constructor is cartesian product a ``DecompositionRule``.
    ...        )
    ...        # safe will be the index of the prefix in which we can remove upto without
    ...        # affecting the avoidance conditions
-   ...        safe = max(0, len(prefix) - max(len(p) for p in patterns) + 1)
+   ...        m = max(len(p) for p in patterns) if patterns else 1
+   ...        safe = max(0, len(prefix) - m + 1)
    ...        for i in range(safe, len(prefix)):
    ...           end = prefix[i:]
    ...           if any(end == patt[: len(end)] for patt in patterns):
@@ -340,7 +347,7 @@ constructor is cartesian product a ``DecompositionRule``.
    ...        if children is None:
    ...           children = self.decomposition_function(avoiding_with_prefix)
    ...           assert children is not None
-   ...        return Word(words[0] + words[1])
+   ...        yield Word(words[0] + words[1])
    ...
    ...     def forward_map(self, comb_class, word, children=None):
    ...        """
@@ -399,6 +406,7 @@ will).
 
    >>> searcher = CombinatorialSpecificationSearcher(start_class, pack)
    >>> spec = searcher.auto_search()
+   >>> # spec.show() will display the specification in your browser
 
 Now that we have a ``CombinatorialSpecification``, the obvious
 thing we want to do is find the generating function for the class that
@@ -422,11 +430,11 @@ of a given size in the class.
    ...            return
    ...         for letters in product(self.alphabet,
    ...                                 repeat=size - len(self.prefix)):
-   ...             yield self.prefix + "".join(a for a in letters)
+   ...             yield Word(self.prefix + "".join(a for a in letters))
    ...
    ...     if self.just_prefix:
    ...         if size == len(self.prefix) and not self.is_empty():
-   ...             yield self.prefix
+   ...             yield Word(self.prefix)
    ...         return
    ...     for word in possible_words():
    ...         if all(patt not in word for patt in self.patterns):
@@ -453,3 +461,54 @@ Moreover, we can get directly the number of objects by size with the method
 
 You can now try this yourself using the file ``example.py``, which can
 count any set of words avoiding consecutive patterns.
+
+Now we will demonstrate how a bijection can be found between classes.
+We will first need a couple of imports.
+
+.. code:: python
+
+   >>> from comb_spec_searcher import find_bijection_between, Bijection
+
+We start by defining our two classes that we wish to find a bijection between.
+
+.. code:: python
+
+   >>> prefix1 = ''
+   >>> patterns1 = ["00"]
+   >>> alphabet1 = ['0', '1']
+   >>> class1 = AvoidingWithPrefix(prefix1, patterns1, alphabet1)
+   >>> prefix2 = ''
+   >>> patterns2 = ["bb"]
+   >>> alphabet2 = ['a', 'b']
+   >>> class2 = AvoidingWithPrefix(prefix2, patterns2, alphabet2)
+
+To find a bijection we expand the universe given a pack for both classes
+and try to construct specifications that are parallel.
+
+.. code:: python
+
+   >>> searcher1 = CombinatorialSpecificationSearcher(class1, pack)
+   >>> searcher2 = CombinatorialSpecificationSearcher(class2, pack)
+
+We get two parallel specs if successful, ``None`` otherwise.
+
+.. code:: python
+
+   >>> specs = find_bijection_between(searcher1, searcher2)
+   >>> spec1, spec2 = specs
+   >>> bijection = Bijection.construct(spec1, spec2)
+
+We can use the `Bijection` object to map (either way) sampled objects
+from the sepcifications.
+
+.. code:: python
+
+   >>> for i in range(10):
+   ...     for w in spec1.generate_objects_of_size(i):
+   ...         assert w == bijection.inverse_map(bijection.map(w))
+   ...     for w in spec2.generate_objects_of_size(i):
+   ...         assert w == bijection.map(bijection.inverse_map(w))
+   ...
+
+Whether we find a bijection or not (when one exists) is highly 
+dependent on the packs chosen.
