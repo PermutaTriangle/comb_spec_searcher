@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   pickled.
 - Fix bug in complement constructor counting
 - Fixing a bug in counting for equivalence rule from a reverse rule
+- Fixing in the formal step of reverse equivalence rule. The formal step now
+  state that the rule is reversed.
 
 ### Deprecated
 - Python 3.6 is no longer supported
