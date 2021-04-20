@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   `NotImplementedError`
 - `find_bijection_between` tries to find a bijection between classes given
   a `CombinatorialSpecificationSearcher` object for both.
+- more useful logging in `Specification.get_genf`
 
 ### Changed
 - If a rule in a specification cannot be sanity checked (e.g., counting is not
@@ -24,6 +25,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   pickled.
 - Fix bug in complement constructor counting
 - Fixing a bug in counting for equivalence rule from a reverse rule
+
+### Changed
+- two way rules only add single edge rather than two way edge to `equivdb`. 
 
 ### Deprecated
 - Python 3.6 is no longer supported

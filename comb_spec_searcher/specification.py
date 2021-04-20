@@ -348,8 +348,8 @@ class CombinatorialSpecification(
         """
         eqs = tuple(self.get_equations())
         root_func = self.get_function(self.root)
-        logger.info("Computing initial conditions")
         initial_conditions = self.get_initial_conditions(check)
+        logger.info("%s", initial_conditions)
         logger.info(pretty_print_equations(root_func, initial_conditions, eqs))
         logger.info("Solving...")
         solutions = solve(
@@ -366,7 +366,9 @@ class CombinatorialSpecification(
             try:
                 expansion = taylor_expand(genf, check)
             except TaylorExpansionError:
+                logger.info("Error while expanding.")
                 continue
+            logger.info("The expansion gives: %s", expansion)
             if expansion == initial_conditions:
                 return sympy.simplify(genf)
         raise IncorrectGeneratingFunctionError(

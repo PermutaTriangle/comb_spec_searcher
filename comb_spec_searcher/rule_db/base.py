@@ -63,7 +63,7 @@ class RuleDBBase(abc.ABC):
         if isinstance(rule, VerificationRule):
             self.set_verified(start)
         if len(ends) == 1:
-            if rule.is_two_way():
+            if rule.strategy.can_be_equivalent():
                 self.equivdb.add_two_way_edge(start, ends[0])
                 self.eqv_rule_to_strategy[(start, ends)] = rule.strategy
                 self.rule_to_strategy.pop((start, ends), None)
