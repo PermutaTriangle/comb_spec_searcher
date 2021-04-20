@@ -17,7 +17,6 @@ def test_reverse_equivalence():
     assert reverse_then_equiv.children == (comb_class,)
     assert reverse_then_equiv.comb_class == rule.non_empty_children()[0]
     assert isinstance(reverse_then_equiv, EquivalenceRule)
-    print(rule)
     assert (
         eqv_rule.formal_step == "Either just the prefix, or append a"
         " letter from the alphabet but only child and index 0 is non-empty"
