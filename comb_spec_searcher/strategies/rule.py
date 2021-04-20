@@ -660,9 +660,15 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
 
     @property
     def formal_step(self) -> str:
-        return "{} but only the child at index {} is non-empty".format(
-            self.strategy.formal_step(), self.child_idx
-        )
+        strat = self.strategy.formal_step()
+        if isinstance(self.original_rule, ReverseRule):
+            idx = self.original_rule.idx
+        else:
+            idx = self.child_idx
+        s = f"{strat} but only child and index {idx} is non-empty"
+        if isinstance(self.original_rule, ReverseRule):
+            return f"reverse of '{s}'"
+        return s
 
     def backward_map(
         self, objs: Tuple[Optional[CombinatorialObjectType], ...]
