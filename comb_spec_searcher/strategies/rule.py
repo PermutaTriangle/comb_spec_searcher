@@ -371,10 +371,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         return self._constructor
 
     def is_equivalence(self):
-        return (
-            isinstance(self.constructor, (DisjointUnion, Complement))
-            and len(self.non_empty_children()) == 1
-        )
+        return self.strategy.can_be_equivalent() and len(self.non_empty_children()) == 1
 
     def backward_map(
         self, objs: Tuple[Optional[CombinatorialObjectType], ...]
