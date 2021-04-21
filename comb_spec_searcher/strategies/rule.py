@@ -293,7 +293,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
 
         res = str(self.comb_class).split("\n")
         backpad(res)
-        if isinstance(self, Rule):
+        if self.children:
             children = [str(child).split("\n") for child in self.children]
             symbol_height = min(1, len(res) - 1)
             eq_symbol = (
@@ -909,13 +909,14 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
     empty tuple if it applies, else None.
     """
 
+    # The signature is refined from AbstractRule
+    # pylint: disable=useless-super-delegation
     def __init__(
         self,
         strat: "VerificationStrategy[CombinatorialClassType,CombinatorialObjectType]",
         comb_class: CombinatorialClassType,
         children: Optional[Tuple[CombinatorialClassType, ...]] = None,
     ):
-        assert not children
         super().__init__(strat, comb_class, children)
 
     def to_jsonable(self) -> dict:
@@ -975,6 +976,10 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
     ) -> Eq:
         lhs_func = get_function(self.comb_class)
         return Eq(lhs_func, self.strategy.get_genf(self.comb_class, funcs))
+
+    @staticmethod
+    def get_eq_symbol() -> str:
+        return "↝"
 
     def random_sample_object_of_size(
         self, n: int, **parameters: int

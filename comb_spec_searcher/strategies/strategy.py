@@ -693,9 +693,11 @@ class VerificationStrategy(
         self, comb_class: CombinatorialClassType
     ) -> Union[Tuple[CombinatorialClassType, ...], None]:
         """
-        A combinatorial class C is marked as verified by returning a rule
-        C -> (). This ensures that C is in a combinatorial specification as it
-        appears exactly once on the left hand side.
+        A verification rule usually returns a rule C -> () with no children that
+        guarantees that C is in a combinatorial specification.
+
+        In special cases, the rule could have children to mark dependencies of the
+        expansion on some other combinatorial classes.
 
         The function returns None if the verification strategy doesn't apply.
         """
