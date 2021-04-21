@@ -18,9 +18,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `NonBijectiveRule` will implement a labelling system for indexed forward
   and backward maps.
 
+### Changed
+- If a rule in a specification cannot be sanity checked (e.g., counting is not
+  implemented), a warning is printed and sanity checking continues, instead of returning
+  the exception.
+
 ### Fixed
 - Removed a debug print
 - Sharing of a specification html via gofile API.
+- Moves local `Constructor.param_map` function outward so that specifications can be
+  pickled.
+- Fix bug in complement constructor counting
+- Fixing a bug in counting for equivalence rule from a reverse rule
+- Fixing in the formal step of reverse equivalence rule. The formal step now
+  state that the rule is reversed.
+
+### Deprecated
+- Python 3.6 is no longer supported
 
 
 ## [3.0.0] - 2021-01-04

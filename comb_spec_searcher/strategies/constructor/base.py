@@ -4,6 +4,7 @@ enumeration, generate objects, and sample objects.
 """
 import abc
 from collections import Counter
+from functools import partial
 from typing import Callable, Dict, Generic, Iterator, List, Optional, Set, Tuple
 
 import sympy
@@ -72,22 +73,30 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
         by the constructor."""
 
     @staticmethod
+    def param_map(
+        child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...],
+        num_parent_params: int,
+        param: Parameters,
+    ) -> Parameters:
+        new_params = [0 for _ in range(num_parent_params)]
+        for pos, value in enumerate(param):
+            parent_pos = child_pos_to_parent_pos[pos]
+            for p in parent_pos:
+                new_params[p] += value
+        return tuple(new_params)
+
+    @staticmethod
     def build_param_map(
         child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...], num_parent_params: int
     ) -> ParametersMap:
         """
         Return a parameters map according to the given pos map.
         """
-
-        def param_map(param: Parameters) -> Parameters:
-            new_params = [0 for _ in range(num_parent_params)]
-            for pos, value in enumerate(param):
-                parent_pos = child_pos_to_parent_pos[pos]
-                for p in parent_pos:
-                    new_params[p] += value
-            return tuple(new_params)
-
-        return param_map
+        return partial(
+            Constructor.param_map,
+            child_pos_to_parent_pos,
+            num_parent_params,
+        )
 
     @abc.abstractmethod
     def equiv(self, other: "Constructor") -> Tuple[bool, Optional[object]]:

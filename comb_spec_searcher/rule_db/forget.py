@@ -17,6 +17,7 @@ from .base import RuleDBBase
 __all__ = ["RuleDBForgetStrategy"]
 
 
+# pylint: disable=too-many-ancestors
 class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
     """
     A mapping from rules to strategies that recompute the strategy every time it's
