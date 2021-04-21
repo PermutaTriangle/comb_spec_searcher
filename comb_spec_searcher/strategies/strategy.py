@@ -172,6 +172,7 @@ class AbstractStrategy(
         """
         return self._workable
 
+    @abc.abstractmethod
     def can_be_equivalent(self) -> bool:
         """
         Return True if every Rule returned with one non-empty child is an
