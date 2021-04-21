@@ -2,8 +2,6 @@
 The rule class is used for a specific application of a strategy on a combinatorial
 class. This is not something the user should implement, as it is just a wrapper for
 calling the Strategy class and storing its results.
-
-A CombinatorialSpecification is (more or less) a set of Rule.
 """
 import abc
 import random
@@ -50,7 +48,8 @@ __all__ = ("Rule", "VerificationRule")
 
 class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectType]):
     """
-    An instance of Rule is created by the __call__ method of strategy.
+    An application of a strategy to a comb_class. If the children are not provided they
+    are computed from the strategy.
     """
 
     def __init__(
@@ -258,7 +257,6 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
 
         Raise a SanityCheckFailure error if the sanity_check fails.
         """
-        raise NotImplementedError
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, AbstractRule):
@@ -396,8 +394,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
 
     def to_equivalence_rule(self) -> "EquivalenceRule":
         """
-        Return the reverse rule. At this stage, reverse rules can only be
-        created for equivalence rules.
+        Return the version of the rule where the empty children are removed.
         """
         assert (
             self.is_equivalence()
@@ -406,8 +403,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
 
     def to_reverse_rule(self, idx: int) -> "Rule":
         """
-        Return the reverse rule. At this stage, reverse rules can only be
-        created for equivalence rules.
+        Return the reverse rule where the child at the given index is the parent.
         """
         return ReverseRule(self, idx)
 
@@ -613,10 +609,6 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
 
     @property
     def constructor(self) -> Union[DisjointUnion, Complement]:
-        """
-        Return the constructor, that contains all the information about how to
-        count/generate objects from the rule.
-        """
         if self._constructor is None:
             original_constructor = self.original_rule.constructor
             if isinstance(original_constructor, DisjointUnion):
@@ -827,10 +819,6 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
 
 
 class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
-    """
-    A class for creating a reverse equivalence rule.
-    """
-
     def __init__(
         self, rule: Rule[CombinatorialClassType, CombinatorialObjectType], idx: int
     ):
