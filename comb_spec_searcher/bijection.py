@@ -257,7 +257,7 @@ class ParallelSpecFinder:
                 ParallelSpecFinder._clean_descendants(*to_clean, id1, id2, sp1, sp2)
             return False
 
-        if _rec(self._pi1.root_eq_label, self._pi1.root_eq_label, (set(), set())):
+        if _rec(self._pi1.root_eq_label, self._pi2.root_eq_label, (set(), set())):
             return sp1, sp2
         return None
 
