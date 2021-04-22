@@ -184,5 +184,10 @@ class LocallyFactorableShift:
     def shift(self) -> int:
         from_spec = self.shift_from_spec()
         from_conjecture = self.shift_from_theory()
-        assert from_spec == from_conjecture
+        if from_spec != from_conjecture:
+            err = f"The conjecture failed for the rule:\n{self.rule}\n"
+            err += f"The basis was {self.basis}\n"
+            err += f"The conjecture gave shift {from_conjecture}\n"
+            err += f"The specification gave the shift {from_spec}\n"
+            raise RuntimeError(err)
         return from_conjecture
