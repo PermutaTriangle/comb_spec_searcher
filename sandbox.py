@@ -10,7 +10,6 @@ import sympy
 from forests.packs import forest_pack
 from logzero import logger
 from tilings import Tiling
-from tilings.strategies.verification import LocallyFactorableVerificationStrategy
 from tilings.tilescope import TileScope, TileScopePack
 
 from comb_spec_searcher import rule_and_flip
@@ -100,7 +99,6 @@ class SpecialSearcher(TileScope):
 
 
 # pack = TileScopePack.point_placements()
-# pack = pack.add_verification(BasicVerificationStrategy(), replace=True)
 # basis = "132"
 
 # Segmented
@@ -116,11 +114,6 @@ basis = "1423"
 # basis = "1432_2143"
 # pack = TileScopePack.point_placements()
 
-pack.ver_strats = tuple(
-    s
-    for s in pack.ver_strats
-    if not isinstance(s, LocallyFactorableVerificationStrategy)
-)
 pack = pack.add_verification(EmptyStrategy())
 
 if __name__ == "__main__":
@@ -128,4 +121,4 @@ if __name__ == "__main__":
     try:
         css.auto_search(status_update=60)
     except ForestFoundError:
-        assert css.get_specification is not None
+        pass
