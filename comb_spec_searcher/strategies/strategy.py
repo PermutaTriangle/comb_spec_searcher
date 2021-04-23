@@ -742,6 +742,9 @@ class VerificationStrategy(
         d.pop("workable")
         return d
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(ignore_parent={self.ignore_parent})"
+
 
 class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]):
     """
