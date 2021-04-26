@@ -1,5 +1,7 @@
+from .bijection import find_bijection_between
 from .comb_spec_searcher import CombinatorialSpecificationSearcher
 from .combinatorial_class import CombinatorialClass, CombinatorialObject
+from .isomorphism import Bijection
 from .specification import CombinatorialSpecification
 from .specification_drawer import ForestSpecificationDrawer, SpecificationDrawer
 from .strategies import (
@@ -34,4 +36,6 @@ __all__ = [
     "StrategyPack",
     "SymmetryStrategy",
     "VerificationStrategy",
+    "find_bijection_between",
+    "Bijection",
 ]
