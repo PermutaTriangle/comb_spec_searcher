@@ -183,18 +183,16 @@ class Node:
         rule: AbstractRule,
         obj: CombinatorialObject,
         get_rule: Callable[[CombinatorialClass], AbstractRule],
-        idx: int = 0,
     ):
-        self.idx = idx
         self.obj = obj
         self._rule = rule
         if not rule.children:
             self._children: Tuple[Optional["Node"], ...] = tuple()
         else:
             assert isinstance(rule, Rule)
-            children, i = rule.indexed_forward_map(obj)
+            children, self.idx = rule.indexed_forward_map(obj)
             self._children = tuple(
-                type(self)(get_rule(child), child_obj, get_rule, i)
+                type(self)(get_rule(child), child_obj, get_rule)
                 if child_obj is not None
                 else None
                 for child, child_obj in zip(rule.children, children)
