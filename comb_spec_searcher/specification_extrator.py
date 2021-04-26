@@ -1,11 +1,10 @@
 import itertools
-from typing import Dict, Iterator, List, Tuple
+from typing import Dict, Iterator, Tuple
 
 from comb_spec_searcher.class_db import ClassDB
 from comb_spec_searcher.rule_db.base import RuleDBBase
 from comb_spec_searcher.strategies.rule import AbstractRule, Rule
 from comb_spec_searcher.tree_searcher import Node
-from comb_spec_searcher.typing import RuleKey
 
 
 class SpecificationRuleExtractor:
@@ -15,10 +14,7 @@ class SpecificationRuleExtractor:
         self.ruledb = ruledb
         self.classdb = classdb
         self.root_label = root_label
-        self.eqv_rulekeys: List[RuleKey] = [
-            (node.label, tuple(sorted(child.label for child in node.children)))
-            for node in root_node.nodes()
-        ]
+        self.eqv_rulekeys = root_node.rule_keys()
         self.rules_dict: Dict[int, Tuple[int, ...]] = {}
         # A map from equiv label to an equivalent label actually in the tree.
         self.eqvparent_to_parent: Dict[int, int] = {}
@@ -32,10 +28,7 @@ class SpecificationRuleExtractor:
         """
         eqvrule_to_rule = self.ruledb.rule_from_equivalence_rule_dict(self.eqv_rulekeys)
         for eqvrule in self.eqv_rulekeys:
-            try:
-                parent, children = eqvrule_to_rule[eqvrule]
-            except KeyError:
-                continue
+            parent, children = eqvrule_to_rule[eqvrule]
             self.rules_dict[parent] = children
             self.eqvparent_to_parent[eqvrule[0]] = parent
 
@@ -72,6 +65,8 @@ class SpecificationRuleExtractor:
             )
         )
         assert all_rhs.issubset(self.rules_dict), "Something is not on the lhs"
+        extra_lhs = {c for c in self.rules_dict if c not in all_rhs}
+        assert extra_lhs.issubset({self.root_label})
 
     def _find_rule(self, parent: int, children: Tuple[int, ...]) -> AbstractRule:
         try:

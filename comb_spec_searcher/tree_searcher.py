@@ -8,7 +8,7 @@ from itertools import chain, product
 from random import choice, shuffle
 from typing import Dict, FrozenSet, Iterator, List, Optional, Sequence, Set, Tuple
 
-from comb_spec_searcher.typing import RulesDict
+from comb_spec_searcher.typing import RuleKey, RulesDict
 
 __all__ = ("prune", "proof_tree_generator_dfs", "proof_tree_generator_bfs")
 
@@ -33,6 +33,30 @@ class Node:
         yield self
         for node in self.children:
             yield from node.nodes()
+
+    def rule_keys(self) -> Set[RuleKey]:
+        """
+        Yields all the rule keys in the proof tree.
+
+        We remove rules from recurring node.
+        """
+        rulekeys = (
+            (node.label, tuple(sorted(child.label for child in node.children)))
+            for node in self.nodes()
+        )
+        res: Dict[int, Tuple[int, ...]] = {}
+        for rulekey in rulekeys:
+            parent, children = rulekey
+            if parent in res:
+                if not res[parent]:
+                    # This was probably inserted because of a recursion node.
+                    # We replace it.
+                    res[parent] = children
+                else:
+                    assert not children or children == res[parent]
+            else:
+                res[parent] = children
+        return set(res.items())
 
     def __str__(self) -> str:
         return "".join(["(", str(self.label), *map(str, self.children), ")"])
