@@ -3,22 +3,16 @@ from typing import Dict, Iterable, Iterator, List, Tuple, Union
 
 from logzero import logger
 
-from comb_spec_searcher import rule_and_flip
 from comb_spec_searcher.class_db import ClassDB
 from comb_spec_searcher.exception import StrategyDoesNotApply
 from comb_spec_searcher.rule_and_flip import all_flips
 from comb_spec_searcher.rule_db.base import RuleDBBase
 from comb_spec_searcher.rule_db.forest import ForestRuleDB, RuleBucket
-from comb_spec_searcher.strategies.rule import (
-    AbstractRule,
-    ReverseRule,
-    Rule,
-    VerificationRule,
-)
+from comb_spec_searcher.strategies.rule import AbstractRule, ReverseRule, Rule
 from comb_spec_searcher.strategies.strategy import AbstractStrategy, StrategyFactory
 from comb_spec_searcher.strategies.strategy_pack import StrategyPack
-from comb_spec_searcher.typing import RuleKey
 from comb_spec_searcher.tree_searcher import Node
+from comb_spec_searcher.typing import RuleKey
 
 
 class SpecificationRuleExtractor:
@@ -184,7 +178,7 @@ class ForestRuleExtractor:
         for key in ForestRuleExtractor.MINIMIZE_ORDER:
             self._minimize_key(key)
 
-    def _minimize_key(self, key: str) -> None:
+    def _minimize_key(self, key: RuleBucket) -> None:
         """
         Minimize the number of rules used for the type of rule given by key.
 
