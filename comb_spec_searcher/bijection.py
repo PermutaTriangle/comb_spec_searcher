@@ -63,6 +63,7 @@ class ParallelInfo:
             strategy = self.r_db.rule_to_strategy[(actual_par, actual_children)]
             parent = self.searcher.classdb.get_class(actual_par)
             rule = strategy(parent)
+            children = (c for c in rule.children if not c.is_empty())
             if eq_par == self.root_eq_label and self.root_class is None:
                 self.root_class = parent
             if parent.is_atom():
@@ -73,9 +74,7 @@ class ParallelInfo:
                 self.atom_map[eq_par] = (sz, rule.get_terms(sz))
             else:
                 assert isinstance(rule, Rule)
-                non_empty_children = tuple(
-                    eq_chi[i] for i, c in enumerate(rule.children) if not c.is_empty()
-                )
+                non_empty_children = tuple(eq_chi[i] for i, _ in enumerate(children))
                 eq_label_rules[eq_par][len(non_empty_children)].append(
                     (non_empty_children, rule.constructor)
                 )
@@ -319,8 +318,18 @@ class ParallelSpecFinder:
 
     @staticmethod
     def _create_spec(d: SpecMap, pi: ParallelInfo) -> CombinatorialSpecification:
+        rules = SpecificationRuleExtractor(
+            pi.root_eq_label,
+            ParallelSpecFinder._create_tree(d, pi.root_eq_label),
+            pi.r_db,
+            pi.searcher.classdb,
+        ).rules()
+        return CombinatorialSpecification(pi.root_class, rules)
+
+    @staticmethod
+    def _create_tree(d: SpecMap, root_eq_label: int) -> Node:
         visited: Set[int] = set()
-        root_node = Node(pi.root_eq_label)
+        root_node = Node(root_eq_label)
         queue = deque([root_node])
         while queue:
             v = queue.popleft()
@@ -330,7 +339,4 @@ class ParallelSpecFinder:
                 queue.extend(children)
                 v.children = children
             visited.add(v.label)
-        rules = SpecificationRuleExtractor(
-            pi.root_eq_label, root_node, pi.r_db, pi.searcher.classdb
-        ).rules()
-        return CombinatorialSpecification(pi.root_class, rules)
+        return root_node
