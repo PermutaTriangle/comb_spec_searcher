@@ -62,8 +62,7 @@ class ParallelInfo:
             actual_par, actual_children = rule_dict[(eq_par, eq_chi)]
             strategy = self.r_db.rule_to_strategy[(actual_par, actual_children)]
             parent = self.searcher.classdb.get_class(actual_par)
-            children = tuple(map(self.searcher.classdb.get_class, actual_children))
-            rule = strategy(parent, children)
+            rule = strategy(parent)
             if eq_par == self.root_eq_label and self.root_class is None:
                 self.root_class = parent
             if parent.is_atom():
@@ -75,7 +74,7 @@ class ParallelInfo:
             else:
                 assert isinstance(rule, Rule)
                 non_empty_children = tuple(
-                    eq_chi[i] for i, c in enumerate(children) if not c.is_empty()
+                    eq_chi[i] for i, c in enumerate(rule.children) if not c.is_empty()
                 )
                 eq_label_rules[eq_par][len(non_empty_children)].append(
                     (non_empty_children, rule.constructor)
