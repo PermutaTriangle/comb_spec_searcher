@@ -473,9 +473,8 @@ class ForestSpecificationDrawer:
     @staticmethod
     def export_html(html: str, file_name: str = "tree.html") -> None:
         """Creates a html file in current directory"""
-        text_file = open(file_name, "w", encoding="UTF8")
-        text_file.write(html)
-        text_file.close()
+        with open(file_name, "w", encoding="UTF8") as fp:
+            fp.write(html)
 
     def show(self) -> None:
         """Displays the forest in the web browser"""

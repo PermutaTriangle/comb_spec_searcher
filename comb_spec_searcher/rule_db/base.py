@@ -203,11 +203,12 @@ class RuleDBBase(abc.ABC):
         return None
 
     def rule_from_equivalence_rule_dict(
-        self, eqv_rules: List[RuleKey]
+        self, eqv_rules: Iterable[RuleKey]
     ) -> Dict[RuleKey, RuleKey]:
         """
         Return a dictionary pointing from an equivalence rule to an actual rule.
         """
+        eqv_rules = set(eqv_rules)
         res: Dict[RuleKey, RuleKey] = {}
         for start, ends in self.rule_to_strategy:
             eqv_start = self.equivdb[start]
