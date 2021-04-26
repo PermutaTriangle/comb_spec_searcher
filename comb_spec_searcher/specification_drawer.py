@@ -272,13 +272,14 @@ class SpecificationDrawer:
         fsd = ForestSpecificationDrawer([self])
         fsd.show()
 
-    def share(self) -> None:
+    def share(self) -> str:
         """
-        Upload the html of the specification on a file server and displays a link to the
+        Upload the html of the specification on a file server and return the link to the
+        file.
         file.
         """
         fsd = ForestSpecificationDrawer([self])
-        fsd.share()
+        return fsd.share()
 
     def to_html(self) -> str:
         """Returns a html string that contains the whole tree"""
@@ -450,9 +451,8 @@ class ForestSpecificationDrawer:
     @staticmethod
     def export_html(html: str, file_name: str = "tree.html") -> None:
         """Creates a html file in current directory"""
-        text_file = open(file_name, "w", encoding="UTF8")
-        text_file.write(html)
-        text_file.close()
+        with open(file_name, "w", encoding="UTF8") as fp:
+            fp.write(html)
 
     def show(self) -> None:
         """Displays the forest in the web browser"""
@@ -460,9 +460,9 @@ class ForestSpecificationDrawer:
         viewer = HTMLViewer()
         viewer.open_html(html_string)
 
-    def share(self) -> None:
+    def share(self) -> str:
         """
-        Upload the html of the forest on a file server and displays a link to the
+        Upload the html of the forest on a file server and return a link to the
         file.
         """
         html_string = self.to_html()
@@ -475,22 +475,20 @@ class ForestSpecificationDrawer:
 
         # ask gofile.io which server it wants us to use
         logger.info("Sending specification to file host.")
-        req1 = requests.get("https://apiv2.gofile.io/getServer")
+        req1 = requests.get("https://api.gofile.io/getServer")
+        req1.raise_for_status()
         server = req1.json()["data"]["server"]
-        upload_url = f"https://{server}.gofile.io/upload"
+        upload_url = f"https://{server}.gofile.io/uploadFile"
 
         with open(file_path, "rb") as f:
             req2 = requests.post(upload_url, files={"filesUploaded": f})
+        req2.raise_for_status()
 
         os.remove(file_path)
         file_code = req2.json()["data"]["code"]
-        _, file_name = os.path.split(file_path)
-
-        file_enable_url = f"https://gofile.io/d/{file_code}"
-        file_url = f"https://{server}.gofile.io/download/{file_code}/{file_name}"
-
-        print(f"First click this: {file_enable_url}")
-        print(f"Then this link will work: {file_url}")
+        file_url = f"https://gofile.io/d/{file_code}"
+        logger.info("File uploaded to: %s", file_url)
+        return file_url
 
 
 class HTMLViewer:
