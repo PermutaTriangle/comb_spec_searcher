@@ -38,7 +38,7 @@ class Node:
         """
         Yields all the rule keys in the proof tree.
 
-        We remove rules from recuring node.
+        We remove rules from recurring node.
         """
         rulekeys = (
             (node.label, tuple(sorted(child.label for child in node.children)))
@@ -49,6 +49,8 @@ class Node:
             parent, children = rulekey
             if parent in res:
                 if not res[parent]:
+                    # This was probably inserted because of a recursion node.
+                    # We replace it.
                     res[parent] = children
                 else:
                     assert not children or children == res[parent]
