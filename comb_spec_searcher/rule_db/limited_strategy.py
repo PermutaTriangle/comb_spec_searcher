@@ -4,7 +4,7 @@
 """
 from copy import deepcopy
 from itertools import combinations
-from typing import Iterable, Set, Tuple, Type
+from typing import Iterable, Set, Type
 
 from logzero import logger
 
@@ -18,8 +18,7 @@ from comb_spec_searcher.tree_searcher import (
     prune,
     smallish_random_proof_tree,
 )
-
-LabelRule = Tuple[int, Tuple[int, ...]]
+from comb_spec_searcher.typing import RuleKey
 
 
 class LimitedStrategyRuleDB(RuleDB):
@@ -41,12 +40,12 @@ class LimitedStrategyRuleDB(RuleDB):
         self.mark_verified = mark_verified
         super().__init__()
 
-    def get_rules_up_to_equiv_using_strategies(self) -> Set[LabelRule]:
+    def get_rules_up_to_equiv_using_strategies(self) -> Set[RuleKey]:
         """
         returns a set of rules, up to equivalence, that come from
         <self.strategies_to_limit>
         """
-        eqv_rules_using_strategies: Set[LabelRule] = set()
+        eqv_rules_using_strategies: Set[RuleKey] = set()
         for label_rule in self:
             rule_strat = self.rule_to_strategy[label_rule]
             start, ends = label_rule

@@ -25,9 +25,10 @@ import tabulate
 from logzero import logger
 from sympy import Eq, Function, var
 
+from comb_spec_searcher.typing import CombinatorialClassType, CSSstrategy, WorkPacket
+
 from .class_db import ClassDB
-from .class_queue import DefaultQueue, WorkPacket
-from .combinatorial_class import CombinatorialClassType
+from .class_queue import DefaultQueue
 from .exception import (
     ExceededMaxtimeError,
     InvalidOperationError,
@@ -37,6 +38,7 @@ from .exception import (
 from .rule_db import RuleDB, RuleDBForgetStrategy
 from .rule_db.base import RuleDBBase
 from .specification import CombinatorialSpecification
+from .specification_extrator import SpecificationRuleExtractor
 from .strategies import (
     AbstractStrategy,
     StrategyFactory,
@@ -44,7 +46,7 @@ from .strategies import (
     VerificationRule,
 )
 from .strategies.rule import AbstractRule
-from .strategies.strategy import CSSstrategy
+from .tree_searcher import Node
 from .utils import (
     cssiteratortimer,
     cssmethodtimer,
@@ -61,11 +63,6 @@ __all__ = ["CombinatorialSpecificationSearcher"]
 warnings.simplefilter("once", Warning)
 
 logzero.loglevel(logging.INFO)
-
-Specification = Tuple[
-    List[Tuple[CombinatorialClassType, AbstractStrategy]],
-    List[List[CombinatorialClassType]],
-]
 
 
 class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
@@ -130,6 +127,11 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         self.try_verify(start_class, self.start_label)
         if self.symmetries:
             self._symmetry_expand(start_class, self.start_label)
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, CombinatorialSpecificationSearcher):
+            return NotImplemented
+        return self.__class__ == other.__class__ and self.__dict__ == other.__dict__
 
     @property
     def verification_strategies(self) -> Sequence[CSSstrategy]:
@@ -275,19 +277,6 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                         "NotImplementedError: %s",
                         e,
                     )
-            if any(
-                self.ruledb.are_equivalent(start_label, elabel) for elabel in end_labels
-            ):
-                # This says comb_class = comb_class, so we skip it, but mark
-                # every other class as empty.
-                for elabel in end_labels:
-                    if not self.ruledb.are_equivalent(start_label, elabel):
-                        self._add_empty_rule(elabel)
-                if self.debug:
-                    for elabel, child in zip(end_labels, children):
-                        if not self.ruledb.are_equivalent(start_label, elabel):
-                            assert child.is_empty()
-
             yield start_label, tuple(end_labels), rule
 
     def _add_rule(
@@ -633,7 +622,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 round(max_expansion_time, 2),
             )
 
-    def _auto_search_rules(self) -> Specification:
+    def _auto_search_rules(
+        self, max_expansion_time: float = 0
+    ) -> Iterator[AbstractRule]:
         """
         A basic auto search for returning equivalence paths and rules.
 
@@ -646,7 +637,6 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         status_start = time.time()
         status_update = None  # this prevents status updates happening
         auto_search_start = time.time()
-        max_expansion_time: float = 0
         expanding = True
         while expanding:
             expanding, status_start = self._expand_classes_for(
@@ -706,44 +696,41 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         The function will return None if no such CombinatorialSpecification
         exists in the universe.
         """
-        spec = self._get_specification_rules(minimization_time_limit, smallest)
-        if spec is None:
+        rules = self._get_specification_rules(minimization_time_limit, smallest)
+        if rules is None:
             return None
         start_class = self.classdb.get_class(self.start_label)
-        strategies, comb_class_eqv_paths = spec
         logger.info("Creating a specification.")
-        return CombinatorialSpecification(start_class, strategies, comb_class_eqv_paths)
+        return CombinatorialSpecification(start_class, rules)
 
-    @cssmethodtimer("get specification")
     def _get_specification_rules(
         self, minimization_time_limit: float = 10, smallest: bool = False
-    ) -> Optional[Specification]:
+    ) -> Optional[Iterator[AbstractRule]]:
+        node = self._get_specification_node(minimization_time_limit, smallest)
+        if node is None:
+            return None
+        spec_extractor = SpecificationRuleExtractor(
+            self.start_label, node, self.ruledb, self.classdb
+        )
+        return spec_extractor.rules()
+
+    def _get_specification_node(
+        self, minimization_time_limit: float = 10, smallest: bool = False
+    ) -> Optional[Node]:
         """
-        Returns the equivalence paths needed to create a
-        CombinatorialSpecification, if one exists.
-
-        The minimization_time_limit only applies when smallest is false.
-
-        The function will return None if no such CombinatorialSpecification
-        exists in the universe.
+        Return the a specification node if one exists.
         """
         try:
             if smallest:
                 if self.iterative:
                     raise InvalidOperationError("can't use iterative and smallest")
-                rules, eqv_paths = self.ruledb.get_smallest_specification(
-                    self.start_label
-                )
+                node = self.ruledb.get_smallest_specification(self.start_label)
             else:
-                rules, eqv_paths = self.ruledb.get_specification_rules(
+                node = self.ruledb.find_specification(
                     self.start_label,
                     minimization_time_limit=minimization_time_limit,
                     iterative=self.iterative,
                 )
         except SpecificationNotFound:
             return None
-        comb_class_eqv_paths = [
-            list(map(self.classdb.get_class, path)) for path in eqv_paths
-        ]
-        strategies = [(self.classdb.get_class(label), rule) for label, rule in rules]
-        return strategies, comb_class_eqv_paths
+        return node
