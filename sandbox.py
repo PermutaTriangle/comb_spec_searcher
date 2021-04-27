@@ -4,7 +4,7 @@ Hook the forest db to load from a given universe.
 import json
 import time
 from datetime import timedelta
-from typing import Tuple
+from typing import Set, Tuple
 
 import sympy
 from forests.packs import forest_pack
@@ -30,6 +30,7 @@ class SpecialSearcher(TileScope):
         self.forestdb = ForestRuleDB()
         self.time_forest = 0.0
         self.num_rules = 0
+        self.already_empty: Set[int] = set()
 
     def _add_rule(
         self, start_label: int, end_labels: Tuple[int, ...], rule: AbstractRule
@@ -61,6 +62,15 @@ class SpecialSearcher(TileScope):
             logger.info("Critical rule found.")
             logger.info(critical_rule)
             self.spec_found()
+
+    def is_empty(self, comb_class: Tiling, label: int) -> bool:
+        empty = super().is_empty(comb_class, label)
+        if empty and label not in self.already_empty:
+            self.already_empty.add(label)
+            empty_strat: EmptyStrategy = EmptyStrategy()
+            empty_rule = empty_strat(comb_class)
+            self._add_rule(label, (), empty_rule)
+        return empty
 
     def spec_found(self) -> None:
         logger.info("Forest found!\n" + self.status(True))
@@ -105,20 +115,25 @@ class SpecialSearcher(TileScope):
 # pack = forest_pack
 # basis = "0123_0132_0213_0231_1023_2013"
 
-pack = TileScopePack.point_and_row_and_col_placements(row_only=True).make_fusion(
-    isolation_level="isolated"
-)
-basis = "1423"
+# pack = TileScopePack.point_and_row_and_col_placements(row_only=True).make_fusion(
+#     isolation_level="isolated"
+# )
+# basis = "1423"
 
 # Last 2x4
 # basis = "1432_2143"
 # pack = TileScopePack.point_placements()
 
-pack = pack.add_verification(EmptyStrategy())
+basis = "0132_1023"
+pack = TileScopePack.point_and_row_and_col_placements(row_only=True).make_fusion(
+    isolation_level="isolated"
+)
 
 if __name__ == "__main__":
     css = SpecialSearcher(basis, pack)
     try:
-        css.auto_search(status_update=60)
+        spec = css.auto_search(status_update=60)
     except ForestFoundError:
         pass
+    else:
+        spec.show()
