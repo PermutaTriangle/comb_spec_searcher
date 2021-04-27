@@ -255,16 +255,16 @@ class ParallelSpecFinder:
                 if self._eq_path_matches(
                     id1, id2, pid1, pid2, idx1, idx2, sp1, sp2
                 ) and all(
-                    _rec(child1, child2[1], id1, id2, i1, child2[0], to_clean)
-                    for i1, (child1, child2) in enumerate(
+                    _rec(child1, child2, id1, id2, j1, j2, to_clean)
+                    for j2, ((j1, child1), child2) in enumerate(
                         zip(
-                            children1,
                             (
-                                (i2, children2[i2])
-                                for i2 in matching_info[(id1, id2)][
+                                (i, children1[i])
+                                for i in matching_info[(id1, id2)][
                                     (children1, children2)
                                 ]
                             ),
+                            children2,
                         )
                     )
                 ):
