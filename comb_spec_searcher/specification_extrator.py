@@ -1,10 +1,12 @@
 import itertools
+from operator import itemgetter
 from typing import Dict, Iterator, List, Tuple
 
 from comb_spec_searcher.class_db import ClassDB
 from comb_spec_searcher.rule_db.base import RuleDBBase
 from comb_spec_searcher.strategies.rule import AbstractRule, Rule
 from comb_spec_searcher.tree_searcher import Node
+from comb_spec_searcher.typing import RuleKey
 
 
 class SpecificationRuleExtractor:
@@ -131,10 +133,42 @@ class EquivalenceRuleExtractor(SpecificationRuleExtractor):
         self.start = root_class_label
         self.end = -1
         self.idx = idx  # children_of_grandparent[idx] = parent
+        self.index_order_map: Dict[RuleKey, List[int]] = {}
         super().__init__(root_eq_label, root_node, ruledb, classdb)
 
+    @staticmethod
+    def _perm_inverse(perm: Tuple[int, ...]) -> List[int]:
+        inverse = [0] * len(perm)
+        for i, p in enumerate(perm):
+            inverse[p] = i
+        return inverse
+
     def _populate_decompositions(self) -> None:
-        eqvrule_to_rule = self.ruledb.rule_from_equivalence_rule_dict(self.eqv_rulekeys)
+        # Altered rule_from_equivalence_rule_dict
+        eqv_rules = set(self.eqv_rulekeys)
+        eqvrule_to_rule: Dict[RuleKey, RuleKey] = {}
+        for start, ends in self.ruledb.rule_to_strategy:
+            eqv_start = self.ruledb.equivdb[start]
+            # Sort but keep knowledge of original order
+            index_order, eqv_ends = (
+                zip(
+                    *sorted(
+                        enumerate(map(self.ruledb.equivdb.__getitem__, ends)),
+                        key=itemgetter(1),
+                    )
+                )
+                if ends
+                else ((), ())
+            )
+
+            eqv_key = (eqv_start, eqv_ends)
+            # Store as inverse
+            self.index_order_map[eqv_key] = EquivalenceRuleExtractor._perm_inverse(
+                index_order
+            )
+            if eqv_key in eqv_rules:
+                eqvrule_to_rule[eqv_key] = (start, ends)
+
         for eqvrule in self.eqv_rulekeys:
             try:
                 parent, children = eqvrule_to_rule[eqvrule]
@@ -143,11 +177,30 @@ class EquivalenceRuleExtractor(SpecificationRuleExtractor):
             self.rules_dict[parent] = children
             self.eqvparent_to_parent[eqvrule[0]] = parent
             if eqvrule[0] == self.parent_of_target:
-                self.start = [
-                    c for c in map(self.classdb.get_class, children) if not c.is_empty()
-                ][self.idx]
+                self.start = children[self.index_order_map[eqvrule][self.idx]]
             if eqvrule[0] == self.target:
                 self.end = parent
+
+    def _populate_equivalences(self) -> None:
+        all_rhs = itertools.chain.from_iterable(self.rules_dict.values())
+        no_lhs_labels = set(
+            itertools.filterfalse(self.rules_dict.__contains__, all_rhs)
+        )
+        if self.root_label not in self.rules_dict:
+            no_lhs_labels.add(self.root_label)
+        for label in no_lhs_labels:
+            eqv_label = self.ruledb.equivdb[label]
+            try:
+                path = self.ruledb.equivdb.find_path(
+                    label, self.eqvparent_to_parent[eqv_label]
+                )
+            except KeyError:
+                assert eqv_label != self.target
+                continue
+            for parent, child in zip(path[:-1], path[1:]):
+                if parent in self.rules_dict:
+                    break
+                self.rules_dict[parent] = (child,)
 
     def _check(self):
         pass
