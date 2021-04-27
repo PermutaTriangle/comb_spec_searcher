@@ -5,7 +5,6 @@ from comb_spec_searcher.class_db import ClassDB
 from comb_spec_searcher.rule_db.base import RuleDBBase
 from comb_spec_searcher.strategies.rule import AbstractRule, Rule
 from comb_spec_searcher.tree_searcher import Node
-from comb_spec_searcher.typing import RuleKey
 
 
 class SpecificationRuleExtractor:
@@ -15,10 +14,7 @@ class SpecificationRuleExtractor:
         self.ruledb = ruledb
         self.classdb = classdb
         self.root_label = root_label
-        self.eqv_rulekeys: List[RuleKey] = [
-            (node.label, tuple(sorted(child.label for child in node.children)))
-            for node in root_node.nodes()
-        ]
+        self.eqv_rulekeys = root_node.rule_keys()
         self.rules_dict: Dict[int, Tuple[int, ...]] = {}
         # A map from equiv label to an equivalent label actually in the tree.
         self.eqvparent_to_parent: Dict[int, int] = {}
@@ -32,10 +28,7 @@ class SpecificationRuleExtractor:
         """
         eqvrule_to_rule = self.ruledb.rule_from_equivalence_rule_dict(self.eqv_rulekeys)
         for eqvrule in self.eqv_rulekeys:
-            try:
-                parent, children = eqvrule_to_rule[eqvrule]
-            except KeyError:
-                continue
+            parent, children = eqvrule_to_rule[eqvrule]
             self.rules_dict[parent] = children
             self.eqvparent_to_parent[eqvrule[0]] = parent
 
@@ -72,6 +65,8 @@ class SpecificationRuleExtractor:
             )
         )
         assert all_rhs.issubset(self.rules_dict), "Something is not on the lhs"
+        extra_lhs = {c for c in self.rules_dict if c not in all_rhs}
+        assert extra_lhs.issubset({self.root_label})
 
     def _find_rule(self, parent: int, children: Tuple[int, ...]) -> AbstractRule:
         try:
@@ -116,3 +111,54 @@ class SpecificationRuleExtractor:
     def rules(self) -> Iterator[AbstractRule]:
         for parent, children in self.rules_dict.items():
             yield self._find_rule(parent, children)
+
+
+class EquivalenceRuleExtractor(SpecificationRuleExtractor):
+    def __init__(
+        self,
+        root_eq_label: int,
+        root_class_label: int,
+        root_node: Node,
+        ruledb: RuleDBBase,
+        classdb: ClassDB,
+        target: int,
+        parent_of_target: int,
+        idx: int,
+    ):
+        self.root_class_label = root_class_label  # TODO: rem
+        self.target = target
+        self.parent_of_target = parent_of_target
+        self.start = root_class_label
+        self.end = -1
+        self.idx = idx  # children_of_grandparent[idx] = parent
+        super().__init__(root_eq_label, root_node, ruledb, classdb)
+
+    def _populate_decompositions(self) -> None:
+        eqvrule_to_rule = self.ruledb.rule_from_equivalence_rule_dict(self.eqv_rulekeys)
+        for eqvrule in self.eqv_rulekeys:
+            try:
+                parent, children = eqvrule_to_rule[eqvrule]
+            except KeyError:
+                continue
+            self.rules_dict[parent] = children
+            self.eqvparent_to_parent[eqvrule[0]] = parent
+            if eqvrule[0] == self.parent_of_target:
+                self.start = [
+                    c for c in map(self.classdb.get_class, children) if not c.is_empty()
+                ][self.idx]
+            if eqvrule[0] == self.target:
+                self.end = parent
+
+    def _check(self):
+        pass
+
+    def nonequivalent_rules_in_equiv_path(self) -> List[Rule]:
+        return list(self._nonequivalent_rules_in_equiv_path())
+
+    def _nonequivalent_rules_in_equiv_path(self) -> Iterator[Rule]:
+        path = self.ruledb.equivdb.find_path(self.start, self.end)
+        for p, c in zip(path, path[1:]):
+            rule = self._find_rule(p, (c,))
+            if not rule.is_equivalence():
+                assert isinstance(rule, Rule)
+                yield rule

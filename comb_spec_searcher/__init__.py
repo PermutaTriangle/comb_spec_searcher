@@ -31,6 +31,8 @@ def find_bijection_between(
     return Bijection.construct(*specs) if specs else None
 
 
+__version__ = "3.0.0"
+
 __all__ = [
     "CombinatorialSpecificationSearcher",
     "CombinatorialClass",

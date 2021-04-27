@@ -1,5 +1,4 @@
 from collections import defaultdict, deque
-from itertools import product
 from typing import DefaultDict, Dict, List, Optional, Set, Tuple, Union
 
 from comb_spec_searcher.comb_spec_searcher import CombinatorialSpecificationSearcher
@@ -7,7 +6,10 @@ from comb_spec_searcher.combinatorial_class import CombinatorialClass
 from comb_spec_searcher.exception import NoMoreClassesToExpandError
 from comb_spec_searcher.rule_db.base import RuleDBBase
 from comb_spec_searcher.specification import CombinatorialSpecification
-from comb_spec_searcher.specification_extrator import SpecificationRuleExtractor
+from comb_spec_searcher.specification_extrator import (
+    EquivalenceRuleExtractor,
+    SpecificationRuleExtractor,
+)
 from comb_spec_searcher.strategies.constructor.base import Constructor
 from comb_spec_searcher.strategies.rule import Rule
 from comb_spec_searcher.tree_searcher import Node, prune
@@ -15,7 +17,7 @@ from comb_spec_searcher.typing import RuleKey, Terms
 
 NO_CONSTRUCTOR = None.__class__
 MatchingInfo = DefaultDict[
-    Tuple[int, int], Set[Tuple[Tuple[int, ...], Tuple[int, ...]]]
+    Tuple[int, int], Dict[Tuple[Tuple[int, ...], Tuple[int, ...]], List[int]]
 ]
 MatchingInfoSingle = DefaultDict[int, DefaultDict[int, Set[Tuple[int, ...]]]]
 SpecMap = Dict[int, Tuple[int, ...]]
@@ -35,7 +37,9 @@ class ParallelInfo:
         self.r_db: RuleDBBase = self.searcher.ruledb
         self.root_eq_label: int = self.r_db.equivdb[self.searcher.start_label]
         self.atom_map: Dict[int, Tuple[int, Terms]] = {}
-        self.root_class: Optional[CombinatorialClass] = None
+        self.root_class: CombinatorialClass = self.searcher.classdb.get_class(
+            self.searcher.start_label
+        )
         self.eq_label_rules: RuleClassification = self._construct_eq_label_rules()
 
     def _expand(self):
@@ -63,9 +67,6 @@ class ParallelInfo:
             strategy = self.r_db.rule_to_strategy[(actual_par, actual_children)]
             parent = self.searcher.classdb.get_class(actual_par)
             rule = strategy(parent)
-            children = (c for c in rule.children if not c.is_empty())
-            if eq_par == self.root_eq_label and self.root_class is None:
-                self.root_class = parent
             if parent.is_atom():
                 eq_label_rules[eq_par][0].append((eq_chi, None))
                 sz = next(
@@ -74,10 +75,7 @@ class ParallelInfo:
                 self.atom_map[eq_par] = (sz, rule.get_terms(sz))
             else:
                 assert isinstance(rule, Rule)
-                non_empty_children = tuple(eq_chi[i] for i, _ in enumerate(children))
-                eq_label_rules[eq_par][len(non_empty_children)].append(
-                    (non_empty_children, rule.constructor)
-                )
+                eq_label_rules[eq_par][len(eq_chi)].append((eq_chi, rule.constructor))
         return eq_label_rules
 
     def _construct_eq_labels_init(
@@ -113,7 +111,7 @@ class ParallelSpecFinder:
         self,
     ) -> Optional[Tuple[CombinatorialSpecification, CombinatorialSpecification]]:
         """Find bijections between the two universes."""
-        matching_info: MatchingInfo = defaultdict(set)
+        matching_info: MatchingInfo = defaultdict(dict)
         visited: Set[Tuple[int, int]] = set()
         found = self._find(
             self._pi1.root_eq_label, self._pi2.root_eq_label, matching_info, visited
@@ -133,6 +131,7 @@ class ParallelSpecFinder:
         self._ancestors.add((id1, id2))
         found = False
         for children1, children2, n in self._potential_children(id1, id2):
+            child_order: List[int] = [-1] * n
             stack = [(0, i, {i}) for i in range(n - 1, -1, -1)]
             blacklist: Set[Tuple[int, int]] = set()
             while stack:
@@ -142,8 +141,9 @@ class ParallelSpecFinder:
                 if not self._find(children1[i1], children2[i2], matching_info, visited):
                     blacklist.add((i1, i2))
                     continue
+                child_order[i2] = i1
                 if i1 == n - 1:
-                    matching_info[(id1, id2)].add((children1, children2))
+                    matching_info[(id1, id2)][(children1, children2)] = child_order
                     found = True
                     break
                 ParallelSpecFinder._extend_stack(i1, n, in_use, stack)
@@ -164,7 +164,7 @@ class ParallelSpecFinder:
                 sz1, terms1 = self._pi1.atom_map[id1]
                 sz2, terms2 = self._pi2.atom_map[id2]
                 if sz1 == sz2 and terms1 == terms2:
-                    matching_info[(id1, id2)] = {((), ())}
+                    matching_info[(id1, id2)] = {((), ()): []}
                     return ParallelSpecFinder._VALID
                 if len(self._pi2.eq_label_rules[id2]) == 1:
                     return ParallelSpecFinder._INVALID
@@ -230,7 +230,15 @@ class ParallelSpecFinder:
             sp2,
         ) = ParallelSpecFinder._search_matching_info_init(matching_info)
 
-        def _rec(id1: int, id2: int, id_sets: Tuple[Set[int], Set[int]]) -> bool:
+        def _rec(
+            id1: int,
+            id2: int,
+            pid1: int,
+            pid2: int,
+            idx1: int,
+            idx2: int,
+            id_sets: Tuple[Set[int], Set[int]],
+        ) -> bool:
             bc = ParallelSpecFinder._search_matching_info_recursion_base_cases(
                 id1, id2, matching_info, matching_info1, matching_info2, sp1, sp2
             )
@@ -243,10 +251,21 @@ class ParallelSpecFinder:
             ):
                 sp1[id1], sp2[id2] = children1, children2
                 to_clean: Tuple[Set[int], Set[int]] = (set(), set())
-                if all(
-                    _rec(child1, child2, to_clean)
-                    for child1, child2 in filter(
-                        lambda m: m in matching_info, product(children1, children2)
+
+                if self._eq_path_matches(
+                    id1, id2, pid1, pid2, idx1, idx2, sp1, sp2
+                ) and all(
+                    _rec(child1, child2[1], id1, id2, i1, child2[0], to_clean)
+                    for i1, (child1, child2) in enumerate(
+                        zip(
+                            children1,
+                            (
+                                (i2, children2[i2])
+                                for i2 in matching_info[(id1, id2)][
+                                    (children1, children2)
+                                ]
+                            ),
+                        )
                     )
                 ):
                     id_sets[0].update(to_clean[0], (id1,))
@@ -255,32 +274,17 @@ class ParallelSpecFinder:
                 ParallelSpecFinder._clean_descendants(*to_clean, id1, id2, sp1, sp2)
             return False
 
-        if _rec(self._pi1.root_eq_label, self._pi2.root_eq_label, (set(), set())):
+        if _rec(
+            self._pi1.root_eq_label,
+            self._pi2.root_eq_label,
+            -1,
+            -1,
+            -1,
+            -1,
+            (set(), set()),
+        ):
             return sp1, sp2
         return None
-
-    @staticmethod
-    def _search_matching_info_recursion_base_cases(
-        id1: int,
-        id2: int,
-        matching_info: MatchingInfo,
-        matching_info1: MatchingInfoSingle,
-        matching_info2: MatchingInfoSingle,
-        sp1: SpecMap,
-        sp2: SpecMap,
-    ) -> int:
-        if (id1, id2) not in matching_info:
-            return ParallelSpecFinder._INVALID
-        if matching_info[(id1, id2)] == {((), ())}:
-            sp1[id1], sp2[id2] = (), ()
-            return ParallelSpecFinder._VALID
-        if id1 in sp1 and id2 in sp2:
-            return ParallelSpecFinder._VALID
-        if id1 in sp1 and sp1[id1] not in matching_info1[id1][id2]:
-            return ParallelSpecFinder._INVALID
-        if id2 in sp2 and sp2[id2] not in matching_info2[id2][id1]:
-            return ParallelSpecFinder._INVALID
-        return ParallelSpecFinder._UNKNOWN
 
     @staticmethod
     def _search_matching_info_init(
@@ -295,6 +299,56 @@ class ParallelSpecFinder:
         sp1: SpecMap = {}
         sp2: SpecMap = {}
         return matching_info_1, matching_info_2, sp1, sp2
+
+    @staticmethod
+    def _search_matching_info_recursion_base_cases(
+        id1: int,
+        id2: int,
+        matching_info: MatchingInfo,
+        matching_info1: MatchingInfoSingle,
+        matching_info2: MatchingInfoSingle,
+        sp1: SpecMap,
+        sp2: SpecMap,
+    ) -> int:
+        if (id1, id2) not in matching_info:
+            return ParallelSpecFinder._INVALID
+        if ((), ()) in matching_info[(id1, id2)]:
+            sp1[id1], sp2[id2] = (), ()
+            return ParallelSpecFinder._VALID
+        if id1 in sp1 and id2 in sp2:
+            return ParallelSpecFinder._VALID
+        if id1 in sp1 and sp1[id1] not in matching_info1[id1][id2]:
+            return ParallelSpecFinder._INVALID
+        if id2 in sp2 and sp2[id2] not in matching_info2[id2][id1]:
+            return ParallelSpecFinder._INVALID
+        return ParallelSpecFinder._UNKNOWN
+
+    def _eq_path_matches(
+        self, id1, id2, pid1, pid2, idx1: int, idx2: int, sp1: SpecMap, sp2: SpecMap
+    ) -> bool:
+        path1 = EquivalenceRuleExtractor(
+            self._pi1.root_eq_label,
+            self._pi1.searcher.start_label,
+            ParallelSpecFinder._create_tree(sp1, self._pi1.root_eq_label),
+            self._pi1.r_db,
+            self._pi1.searcher.classdb,
+            id1,
+            pid1,
+            idx1,
+        ).nonequivalent_rules_in_equiv_path()
+        path2 = EquivalenceRuleExtractor(
+            self._pi2.root_eq_label,
+            self._pi2.searcher.start_label,
+            ParallelSpecFinder._create_tree(sp2, self._pi2.root_eq_label),
+            self._pi2.r_db,
+            self._pi2.searcher.classdb,
+            id2,
+            pid2,
+            idx2,
+        ).nonequivalent_rules_in_equiv_path()
+        return len(path1) == len(path2) and all(
+            r1.constructor.equiv(r2.constructor)[0] for r1, r2 in zip(path1, path2)
+        )
 
     @staticmethod
     def _clean_descendants(
