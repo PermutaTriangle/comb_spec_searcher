@@ -13,7 +13,7 @@ from tilings import Tiling
 from tilings.tilescope import TileScope, TileScopePack
 
 from comb_spec_searcher import rule_and_flip
-from comb_spec_searcher.rule_db.forest import ForestRuleDB, RuleBucket
+from comb_spec_searcher.rule_db.forest import ForestRuleDB
 from comb_spec_searcher.specification import CombinatorialSpecification
 from comb_spec_searcher.specification_extrator import ForestRuleExtractor
 from comb_spec_searcher.strategies.rule import AbstractRule, Rule, VerificationRule
@@ -39,14 +39,10 @@ class SpecialSearcher(TileScope):
         self.num_rules += 1
         start = time.time()
         flip_index = -2
-        first_bucket = (
-            RuleBucket.VERIFICATION
-            if isinstance(rule, VerificationRule)
-            else RuleBucket.NORMAL
-        )
-        for rule_key, shifts in rule_and_flip.all_flips(rule, self.classdb.get_label):
+        for rule_key, shifts, bucket in rule_and_flip.all_flips(
+            rule, self.classdb.get_label
+        ):
             flip_index += 1
-            bucket = first_bucket if flip_index == -1 else RuleBucket.REVERSE
             self.forestdb.add_rule(rule_key, shifts, bucket)
             if self.forestdb.is_pumping(self.start_label):
                 break

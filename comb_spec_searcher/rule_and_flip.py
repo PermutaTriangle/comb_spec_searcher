@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, Optional, Set, 
 
 from logzero import logger
 
+from comb_spec_searcher.rule_db.forest import RuleBucket
 from comb_spec_searcher.strategies.constructor import CartesianProduct, DisjointUnion
 from comb_spec_searcher.strategies.rule import AbstractRule, Rule, VerificationRule
 from comb_spec_searcher.typing import RuleKey
@@ -19,7 +20,7 @@ if TYPE_CHECKING:
 
     from comb_spec_searcher import CombinatorialSpecification
 
-RFIt = Iterator[Tuple[RuleKey, Tuple[int, ...]]]
+RFIt = Iterator[Tuple[RuleKey, Tuple[int, ...], RuleBucket]]
 
 __all__ = ["all_flips"]
 
@@ -35,9 +36,11 @@ def all_flips(rule: AbstractRule, labeller: Callable[[Any], int]) -> RFIt:
     rule_key = (start_label, end_labels)
     if isinstance(rule, VerificationRule):
         if not end_labels:
-            yield rule_key, tuple()
+            yield rule_key, tuple(), RuleBucket.VERIFICATION
         elif len(end_labels) == 1:
-            yield rule_key, (LocallyFactorableShift(rule).shift(),)
+            yield rule_key, (
+                LocallyFactorableShift(rule).shift(),
+            ), RuleBucket.VERIFICATION
         else:
             raise NotImplementedError("Verification rule with many children")
     elif isinstance(rule, Rule):
@@ -59,42 +62,42 @@ def all_flips(rule: AbstractRule, labeller: Callable[[Any], int]) -> RFIt:
 
 def _all_union_flips(rule_key: RuleKey) -> RFIt:
     shifts = tuple(0 for _ in rule_key[1])
-    yield rule_key, shifts
+    yield rule_key, shifts, RuleBucket.NORMAL
     for i, l in enumerate(rule_key[1]):
         children = (rule_key[0],) + rule_key[1][:i] + rule_key[1][i + 1 :]
-        yield (l, children), shifts
+        yield (l, children), shifts, RuleBucket.REVERSE
 
 
 def _all_cartesian_flips(rule_key: RuleKey, rule: Rule) -> RFIt:
     min_points = tuple(len(next(c.minimal_gridded_perms())) for c in rule.children)
     point_sum = sum(min_points)
     shifts = tuple(point_sum - mpoint for mpoint in min_points)
-    yield rule_key, shifts
+    yield rule_key, shifts, RuleBucket.NORMAL
     for i, l in enumerate(rule_key[1]):
         children = (rule_key[0],) + rule_key[1][:i] + rule_key[1][i + 1 :]
         nshifts = (-shifts[i],) + tuple(
             s - shifts[i] for s in shifts[:i] + shifts[i + 1 :]
         )
-        yield (l, children), nshifts
+        yield (l, children), nshifts, RuleBucket.REVERSE
 
 
 def _all_fusion_flips(rule_key: RuleKey, rule: Rule) -> RFIt:
-    yield rule_key, (0,)
+    yield rule_key, (0,), RuleBucket.NORMAL
     if rule.is_two_way():
         parent = rule_key[0]
         child = rule_key[1][0]
-        yield (child, (parent,)), (0,)
+        yield (child, (parent,)), (0,), RuleBucket.REVERSE
 
 
 def _all_add_assumption_flips(rule_key: RuleKey) -> RFIt:
-    yield rule_key, (0,)
+    yield rule_key, (0,), RuleBucket.NORMAL
 
 
 def _all_rearrange_flips(rule_key: RuleKey) -> RFIt:
-    yield rule_key, (0,)
+    yield rule_key, (0,), RuleBucket.NORMAL
     parent = rule_key[0]
     child = rule_key[1][0]
-    yield (child, (parent,)), (0,)
+    yield (child, (parent,)), (0,), RuleBucket.REVERSE
 
 
 class LocallyFactorableShift:
