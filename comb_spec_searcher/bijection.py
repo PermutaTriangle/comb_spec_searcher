@@ -228,6 +228,7 @@ class ParallelSpecFinder:
             matching_info2,
             sp1,
             sp2,
+            eq_path_tracker,
         ) = ParallelSpecFinder._search_matching_info_init(matching_info)
 
         def _rec(
@@ -244,6 +245,13 @@ class ParallelSpecFinder:
             )
             if bc:
                 return bool(bc + 1)
+            # TODO: move into base case
+            if id1 in sp1 and id2 in sp2:
+                if (pid1, pid2) in eq_path_tracker[(id1, id2)]:
+                    return True
+                if self._eq_path_matches(id1, id2, pid1, pid2, idx1, idx2, sp1, sp2)[0]:
+                    return True
+                return False
             for children1, children2 in filter(
                 lambda c: (id1 not in sp1 or c[0] == sp1[id1])
                 and (id2 not in sp2 or c[1] == sp2[id2]),
@@ -252,25 +260,29 @@ class ParallelSpecFinder:
                 sp1[id1], sp2[id2] = children1, children2
                 to_clean: Tuple[Set[int], Set[int]] = (set(), set())
 
-                if self._eq_path_matches(
+                valid_eq, store = self._eq_path_matches(
                     id1, id2, pid1, pid2, idx1, idx2, sp1, sp2
-                ) and all(
-                    _rec(child1, child2, id1, id2, j1, j2, to_clean)
-                    for j2, ((j1, child1), child2) in enumerate(
-                        zip(
-                            (
-                                (i, children1[i])
-                                for i in matching_info[(id1, id2)][
-                                    (children1, children2)
-                                ]
-                            ),
-                            children2,
+                )
+                if valid_eq:
+                    if store:
+                        eq_path_tracker[(id1, id2)].add((pid1, pid2))
+                    if all(
+                        _rec(child1, child2, id1, id2, j1, j2, to_clean)
+                        for j2, ((j1, child1), child2) in enumerate(
+                            zip(
+                                (
+                                    (i, children1[i])
+                                    for i in matching_info[(id1, id2)][
+                                        (children1, children2)
+                                    ]
+                                ),
+                                children2,
+                            )
                         )
-                    )
-                ):
-                    id_sets[0].update(to_clean[0], (id1,))
-                    id_sets[1].update(to_clean[1], (id2,))
-                    return True
+                    ):
+                        id_sets[0].update(to_clean[0], (id1,))
+                        id_sets[1].update(to_clean[1], (id2,))
+                        return True
                 ParallelSpecFinder._clean_descendants(*to_clean, id1, id2, sp1, sp2)
             return False
 
@@ -289,7 +301,13 @@ class ParallelSpecFinder:
     @staticmethod
     def _search_matching_info_init(
         matching_info: MatchingInfo,
-    ) -> Tuple[MatchingInfoSingle, MatchingInfoSingle, SpecMap, SpecMap]:
+    ) -> Tuple[
+        MatchingInfoSingle,
+        MatchingInfoSingle,
+        SpecMap,
+        SpecMap,
+        DefaultDict[Tuple[int, int], Set[Tuple[int, int]]],
+    ]:
         matching_info_1: MatchingInfoSingle = defaultdict(lambda: defaultdict(set))
         matching_info_2: MatchingInfoSingle = defaultdict(lambda: defaultdict(set))
         for (p1, p2), children in matching_info.items():
@@ -298,7 +316,10 @@ class ParallelSpecFinder:
                 matching_info_2[p2][p1].add(ch2)
         sp1: SpecMap = {}
         sp2: SpecMap = {}
-        return matching_info_1, matching_info_2, sp1, sp2
+        eq_path_tracker: DefaultDict[
+            Tuple[int, int], Set[Tuple[int, int]]
+        ] = defaultdict(set)
+        return matching_info_1, matching_info_2, sp1, sp2, eq_path_tracker
 
     @staticmethod
     def _search_matching_info_recursion_base_cases(
@@ -315,8 +336,8 @@ class ParallelSpecFinder:
         if ((), ()) in matching_info[(id1, id2)]:
             sp1[id1], sp2[id2] = (), ()
             return ParallelSpecFinder._VALID
-        if id1 in sp1 and id2 in sp2:
-            return ParallelSpecFinder._VALID
+        # if id1 in sp1 and id2 in sp2:
+        #    return ParallelSpecFinder._VALID
         if id1 in sp1 and sp1[id1] not in matching_info1[id1][id2]:
             return ParallelSpecFinder._INVALID
         if id2 in sp2 and sp2[id2] not in matching_info2[id2][id1]:
@@ -325,7 +346,7 @@ class ParallelSpecFinder:
 
     def _eq_path_matches(
         self, id1, id2, pid1, pid2, idx1: int, idx2: int, sp1: SpecMap, sp2: SpecMap
-    ) -> bool:
+    ) -> Tuple[bool, bool]:
         path1 = EquivalenceRuleExtractor(
             self._pi1.root_eq_label,
             self._pi1.searcher.start_label,
@@ -346,8 +367,12 @@ class ParallelSpecFinder:
             pid2,
             idx2,
         ).nonequivalent_rules_in_equiv_path()
-        return len(path1) == len(path2) and all(
-            r1.constructor.equiv(r2.constructor)[0] for r1, r2 in zip(path1, path2)
+        return (
+            len(path1) == len(path2)
+            and all(
+                r1.constructor.equiv(r2.constructor)[0] for r1, r2 in zip(path1, path2)
+            ),
+            len(path1) > 0 and len(path2) > 0,
         )
 
     @staticmethod
