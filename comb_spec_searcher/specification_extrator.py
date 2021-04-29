@@ -133,15 +133,8 @@ class EquivalenceRuleExtractor(SpecificationRuleExtractor):
         self.start = root_class_label
         self.end = -1
         self.idx = idx  # children_of_grandparent[idx] = parent
-        self.index_order_map: Dict[RuleKey, List[int]] = {}
+        self.index_order_map: Dict[RuleKey, Tuple[int, ...]] = {}
         super().__init__(root_eq_label, root_node, ruledb, classdb)
-
-    @staticmethod
-    def _perm_inverse(perm: Tuple[int, ...]) -> List[int]:
-        inverse = [0] * len(perm)
-        for i, p in enumerate(perm):
-            inverse[p] = i
-        return inverse
 
     def _populate_decompositions(self) -> None:
         # Altered rule_from_equivalence_rule_dict
@@ -162,10 +155,7 @@ class EquivalenceRuleExtractor(SpecificationRuleExtractor):
             )
 
             eqv_key = (eqv_start, eqv_ends)
-            # Store as inverse
-            self.index_order_map[eqv_key] = EquivalenceRuleExtractor._perm_inverse(
-                index_order
-            )
+            self.index_order_map[eqv_key] = index_order
             if eqv_key in eqv_rules:
                 eqvrule_to_rule[eqv_key] = (start, ends)
 

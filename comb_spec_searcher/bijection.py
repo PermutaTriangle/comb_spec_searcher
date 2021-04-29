@@ -252,6 +252,7 @@ class ParallelSpecFinder:
                 if self._eq_path_matches(id1, id2, pid1, pid2, idx1, idx2, sp1, sp2)[0]:
                     return True
                 return False
+            rec1, rec2 = id1 in sp1, id2 in sp2
             for children1, children2 in filter(
                 lambda c: (id1 not in sp1 or c[0] == sp1[id1])
                 and (id2 not in sp2 or c[1] == sp2[id2]),
@@ -280,10 +281,12 @@ class ParallelSpecFinder:
                             )
                         )
                     ):
-                        id_sets[0].update(to_clean[0], (id1,))
-                        id_sets[1].update(to_clean[1], (id2,))
+                        id_sets[0].update(to_clean[0], () if rec1 else (id1,))
+                        id_sets[1].update(to_clean[1], () if rec2 else (id2,))
                         return True
-                ParallelSpecFinder._clean_descendants(*to_clean, id1, id2, sp1, sp2)
+                ParallelSpecFinder._clean_descendants(
+                    *to_clean, id1, id2, sp1, sp2, rec1, rec2
+                )
             return False
 
         if _rec(
@@ -383,6 +386,8 @@ class ParallelSpecFinder:
         id2: int,
         sp1: SpecMap,
         sp2: SpecMap,
+        rec1: bool,
+        rec2: bool,
     ):
         for i in to_clean1:
             if i in sp1:
@@ -390,9 +395,9 @@ class ParallelSpecFinder:
         for i in to_clean2:
             if i in sp2:
                 del sp2[i]
-        if id1 in sp1:
+        if rec1 and id1 in sp1:
             del sp1[id1]
-        if id2 in sp2:
+        if rec2 and id2 in sp2:
             del sp2[id2]
 
     @staticmethod
