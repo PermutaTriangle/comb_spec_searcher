@@ -395,9 +395,9 @@ class ParallelSpecFinder:
         for i in to_clean2:
             if i in sp2:
                 del sp2[i]
-        if rec1 and id1 in sp1:
+        if not rec1 and id1 in sp1:
             del sp1[id1]
-        if rec2 and id2 in sp2:
+        if not rec2 and id2 in sp2:
             del sp2[id2]
 
     @staticmethod
