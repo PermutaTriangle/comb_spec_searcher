@@ -1,4 +1,10 @@
-from .constructor import CartesianProduct, Constructor, DisjointUnion
+from .constructor import (
+    CartesianProduct,
+    Complement,
+    Constructor,
+    DisjointUnion,
+    Quotient,
+)
 from .rule import EquivalencePathRule, ReverseRule, Rule, VerificationRule
 from .strategy import (
     AbstractStrategy,
@@ -15,8 +21,10 @@ from .strategy_pack import StrategyPack
 
 __all__ = [
     "CartesianProduct",
+    "Quotient",
     "Constructor",
     "DisjointUnion",
+    "Complement",
     "EquivalencePathRule",
     "ReverseRule",
     "Rule",
