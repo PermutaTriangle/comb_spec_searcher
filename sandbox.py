@@ -10,13 +10,13 @@ import sympy
 from forests.packs import forest_pack
 from logzero import logger
 from tilings import Tiling
+from tilings.strategies import LocallyFactorableVerificationStrategy
 from tilings.tilescope import TileScope, TileScopePack
 
-from comb_spec_searcher import rule_and_flip
 from comb_spec_searcher.rule_db.forest import ForestRuleDB
 from comb_spec_searcher.specification import CombinatorialSpecification
 from comb_spec_searcher.specification_extrator import ForestRuleExtractor
-from comb_spec_searcher.strategies.rule import AbstractRule, Rule, VerificationRule
+from comb_spec_searcher.strategies.rule import AbstractRule, Rule
 from comb_spec_searcher.strategies.strategy import EmptyStrategy
 
 
@@ -38,23 +38,18 @@ class SpecialSearcher(TileScope):
         super()._add_rule(start_label, end_labels, rule)
         self.num_rules += 1
         start = time.time()
-        flip_index = -2
-        for rk in rule_and_flip.all_flips(rule, self.classdb.get_label):
-            flip_index += 1
-            self.forestdb.add_rule(rk)
+        new_rules = [rule]
+        if rule.is_reversible():
+            assert isinstance(rule, Rule)
+            new_rules.extend(rule.to_reverse_rule(i) for i in range(len(rule.children)))
+        for rule in new_rules:
+            self.forestdb.add_rule(rule.forest_key(self.classdb.get_label))
             if self.forestdb.is_pumping(self.start_label):
                 break
         self.time_forest += time.time() - start
         if self.forestdb.is_pumping(self.start_label):
-            if flip_index == -1:
-                critical_rule = rule
-            else:
-                assert isinstance(rule, Rule)
-                assert rule.is_two_way()
-                assert len(rule.children) > flip_index
-                critical_rule = rule.to_reverse_rule(flip_index)
             logger.info("Critical rule found.")
-            logger.info(critical_rule)
+            logger.info(rule)
             self.spec_found()
 
     def is_empty(self, comb_class: Tiling, label: int) -> bool:
