@@ -27,9 +27,9 @@ class ForestFoundError(Exception):
 class SpecialSearcher(TileScope):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.forestdb = ForestRuleDB()
-        self.time_forest = 0.0
-        self.num_rules = 0
+        self.forestdb: ForestRuleDB = ForestRuleDB()
+        self.time_forest: float = 0.0
+        self.num_rules: int = 0
         self.already_empty: Set[int] = set()
 
     def _add_rule(
@@ -39,11 +39,9 @@ class SpecialSearcher(TileScope):
         self.num_rules += 1
         start = time.time()
         flip_index = -2
-        for rule_key, shifts, bucket in rule_and_flip.all_flips(
-            rule, self.classdb.get_label
-        ):
+        for rk in rule_and_flip.all_flips(rule, self.classdb.get_label):
             flip_index += 1
-            self.forestdb.add_rule(rule_key, shifts, bucket)
+            self.forestdb.add_rule(rk)
             if self.forestdb.is_pumping(self.start_label):
                 break
         self.time_forest += time.time() - start
