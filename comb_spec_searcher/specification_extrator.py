@@ -7,12 +7,12 @@ from comb_spec_searcher.class_db import ClassDB
 from comb_spec_searcher.exception import StrategyDoesNotApply
 from comb_spec_searcher.rule_and_flip import all_flips
 from comb_spec_searcher.rule_db.base import RuleDBBase
-from comb_spec_searcher.rule_db.forest import ForestRuleDB, RuleBucket
+from comb_spec_searcher.rule_db.forest import ForestRuleDB
 from comb_spec_searcher.strategies.rule import AbstractRule, ReverseRule, Rule
 from comb_spec_searcher.strategies.strategy import AbstractStrategy, StrategyFactory
 from comb_spec_searcher.strategies.strategy_pack import StrategyPack
 from comb_spec_searcher.tree_searcher import Node
-from comb_spec_searcher.typing import RuleKey
+from comb_spec_searcher.typing import ForestRuleKey, RuleBucket, RuleKey
 
 
 class SpecificationRuleExtractor:
@@ -122,7 +122,7 @@ class SpecificationRuleExtractor:
 
 
 RuleWithShifts = Tuple[RuleKey, Tuple[int, ...]]
-SortedRWS = Dict[RuleBucket, List[RuleWithShifts]]
+SortedRWS = Dict[RuleBucket, List[ForestRuleKey]]
 
 
 class ForestRuleExtractor:
@@ -138,19 +138,19 @@ class ForestRuleExtractor:
         self.pack = pack
         self.classdb = classdb
         self.root_label = root_label
-        self.all_rule_with_shifts = self._sorted_stable_rules(ruledb)
-        assert set(ForestRuleExtractor.MINIMIZE_ORDER) == set(self.all_rule_with_shifts)
-        self.needed_rule_with_shifts: List[RuleWithShifts] = list()
+        self.rule_by_bucket = self._sorted_stable_rules(ruledb)
+        assert set(ForestRuleExtractor.MINIMIZE_ORDER) == set(self.rule_by_bucket)
+        self.needed_rules: List[ForestRuleKey] = list()
         self._minimize()
 
     def check(self) -> bool:
         """
         Make a sanity check of the status of the extractor.
         """
-        lhs = set(rk[0] for rk, _ in self.needed_rule_with_shifts)
-        assert len(lhs) == len(self.needed_rule_with_shifts)
-        assert self._is_productive(self.needed_rule_with_shifts)
-        for rk, shifts in sorted(self.needed_rule_with_shifts):
+        lhs = set(rk.parent for rk in self.needed_rules)
+        assert len(lhs) == len(self.needed_rules)
+        assert self._is_productive(self.needed_rules)
+        for rk in sorted(self.needed_rules):
             rule = self._find_rule(rk)
             if isinstance(rule, ReverseRule):
                 af = list(all_flips(rule.original_rule, self.classdb.get_label))
@@ -163,7 +163,7 @@ class ForestRuleExtractor:
         """
         Return all the rules of the specification.
         """
-        for rk, _ in self.needed_rule_with_shifts:
+        for rk in self.needed_rules:
             rule = self._find_rule(rk)
             if rule.is_equivalence():
                 assert isinstance(rule, Rule)
@@ -171,7 +171,7 @@ class ForestRuleExtractor:
             else:
                 yield rule
 
-    def _minimize(self) -> List[RuleKey]:
+    def _minimize(self):
         """
         Perform the complete minimization of the forest.
         """
@@ -182,52 +182,52 @@ class ForestRuleExtractor:
         """
         Minimize the number of rules used for the type of rule given by key.
 
-        The list of rule in self.all_rule_with_shifts[key] is cleared and a minimal set
-        from theses is added to self.needed_rule_with_shifts.
+        The list of rule in `self.rule_by_bucket[key]` is cleared and a
+        minimal set from theses is added to `self.needed_rules`.
         """
         logger.info(f"Minimizing {key}")
-        maybe_useful: List[RuleWithShifts] = []
-        not_minimizing: List[List[RuleWithShifts]] = [
-            self.needed_rule_with_shifts,
+        maybe_useful: List[ForestRuleKey] = []
+        not_minimizing: List[List[ForestRuleKey]] = [
+            self.needed_rules,
             maybe_useful,
         ]
         not_minimizing.extend(
-            l for k, l in self.all_rule_with_shifts.items() if k != key
+            rules for k, rules in self.rule_by_bucket.items() if k != key
         )
-        minimizing = self.all_rule_with_shifts[key]
+        minimizing = self.rule_by_bucket[key]
         while minimizing:
             ruledb = ForestRuleDB()
             # Add the rule we are not trying to minimize
-            for rws in itertools.chain.from_iterable(not_minimizing):
-                ruledb.add_rule(*rws, RuleBucket.UNDEFINED)
+            for rk in itertools.chain.from_iterable(not_minimizing):
+                ruledb.add_rule(rk)
             if ruledb.is_pumping(self.root_label):
-                self.all_rule_with_shifts[key].clear()
+                self.rule_by_bucket[key].clear()
                 break
             # Add rule until it gets productive
-            for i, rws in enumerate(minimizing):
-                ruledb.add_rule(*rws, RuleBucket.UNDEFINED)
+            for i, rk in enumerate(minimizing):
+                ruledb.add_rule(rk)
                 if ruledb.is_pumping(self.root_label):
                     break
             else:
                 raise RuntimeError("Not pumping after adding all rules")
-            maybe_useful.append(rws)
+            maybe_useful.append(rk)
             for _ in range(i, len(minimizing)):
                 minimizing.pop()
         counter = 0
         while maybe_useful:
-            rws = maybe_useful.pop()
+            rk = maybe_useful.pop()
             if not self._is_productive(itertools.chain.from_iterable(not_minimizing)):
-                self.needed_rule_with_shifts.append(rws)
+                self.needed_rules.append(rk)
                 counter += 1
         logger.info(f"Using {counter} rule for {key}")
 
-    def _is_productive(self, rules_and_shifts: Iterable[RuleWithShifts]) -> bool:
+    def _is_productive(self, rule_keys: Iterable[ForestRuleKey]) -> bool:
         """
         Check if the given set of rules is productive.
         """
         ruledb = ForestRuleDB()
-        for rws in rules_and_shifts:
-            ruledb.add_rule(*rws, RuleBucket.UNDEFINED)
+        for rk in rule_keys:
+            ruledb.add_rule(rk)
         return ruledb.is_pumping(self.root_label)
 
     def _sorted_stable_rules(self, ruledb: ForestRuleDB) -> SortedRWS:
@@ -236,16 +236,16 @@ class ForestRuleExtractor:
         dict sorted by type.
         """
         res: SortedRWS = {bucket: [] for bucket in ForestRuleExtractor.MINIMIZE_ORDER}
-        for rule_key, shifts_for_zero, bucket in ruledb.pumping_subuniverse_with_info():
+        for forest_key in ruledb.pumping_subuniverse():
             try:
-                res[bucket].append((rule_key, shifts_for_zero))
+                res[forest_key.bucket].append(forest_key)
             except KeyError as e:
                 raise RuntimeError(
-                    f"{bucket} type is not currently supported by the extractor"
+                    f"{forest_key.bucket} type is not currently supported by the extractor"
                 ) from e
         return res
 
-    def _find_rule(self, rule_key: RuleKey) -> AbstractRule:
+    def _find_rule(self, rule_key: ForestRuleKey) -> AbstractRule:
         """
         Find a rule that have the given rule key.
         """
@@ -255,24 +255,25 @@ class ForestRuleExtractor:
             children = tuple(map(self.classdb.get_label, rule.children))
             return parent, children
 
-        all_classes = (rule_key[0],) + rule_key[1]
+        all_classes = (rule_key.parent,) + rule_key.children
         all_normal_rules = itertools.chain.from_iterable(
             self._rules_for_class(c) for c in all_classes
         )
         for rule in all_normal_rules:
-            if rule_to_key(rule) == rule_key:
+            if rule_to_key(rule) == rule_key.key:
                 return rule
+            # TODO: Make this is_reversible when implemented
             if not rule.is_two_way():
                 continue
             assert isinstance(rule, Rule)
             for i in range(len(rule.children)):
                 reverse_rule = rule.to_reverse_rule(i)
-                if rule_to_key(reverse_rule) == rule_key:
+                if rule_to_key(reverse_rule) == rule_key.key:
                     return reverse_rule
 
         err = f"Can't find a rule for {rule_key}\n"
-        err += f"Parent:\n{self.classdb.get_class(rule_key[0])}\n"
-        for i, l in enumerate(rule_key[1]):
+        err += f"Parent:\n{self.classdb.get_class(rule_key.parent)}\n"
+        for i, l in enumerate(rule_key.children):
             err += f"Child {i}:\n{self.classdb.get_class(l)}\n"
         raise RuntimeError(err)
 

@@ -1,4 +1,3 @@
-import enum
 from typing import (
     Callable,
     Deque,
@@ -12,7 +11,7 @@ from typing import (
     TypeVar,
 )
 
-from comb_spec_searcher.typing import RuleKey
+from comb_spec_searcher.typing import ForestRuleKey, RuleKey
 
 T = TypeVar("T")
 
@@ -150,14 +149,6 @@ class Function:
         return "\n".join(parts)
 
 
-@enum.unique
-class RuleBucket(enum.Enum):
-    UNDEFINED = enum.auto()
-    VERIFICATION = enum.auto()
-    NORMAL = enum.auto()
-    REVERSE = enum.auto()
-
-
 class ForestRuleDB:
     """
     The rule database that provides live information on which class are pumping with the
@@ -165,13 +156,11 @@ class ForestRuleDB:
     """
 
     def __init__(self) -> None:
-        self._rules: List[RuleKey] = []
+        self._rules: List[ForestRuleKey] = []
         self._rules_using_class: DefaultList[List[Tuple[int, int]]] = DefaultList(list)
         self._rules_pumping_class: DefaultList[List[int]] = DefaultList(list)
         self._function: Function = Function()
         self._shifts: List[List[Optional[int]]] = []
-        self._shifts_for_zero: List[Tuple[int, ...]] = []
-        self._rule_type: List[RuleBucket] = []
         self._gap_size: int = 1
         self._processing_queue: Deque[int] = Deque()
         self._rule_holding_extra_terms: Set[int] = set()
@@ -190,9 +179,7 @@ class ForestRuleDB:
 
     def add_rule(
         self,
-        rule_key: RuleKey,
-        shifts_for_zero: Tuple[int, ...],
-        rule_bucket: RuleBucket,
+        rule_key: ForestRuleKey,
     ):
         """
         Add the rule to the database.
@@ -203,19 +190,16 @@ class ForestRuleDB:
           about any of the classes.
           - `rule_bucket` the type of rule
         """
-        assert len(shifts_for_zero) == len(rule_key[1])
         self._rules.append(rule_key)
-        self._shifts.append(self._compute_shift(rule_key, shifts_for_zero))
-        self._shifts_for_zero.append(shifts_for_zero)
-        self._rule_type.append(rule_bucket)
-        max_gap = max((abs(s) for s in shifts_for_zero), default=0)
+        self._shifts.append(self._compute_shift(rule_key.key, rule_key.shifts))
+        max_gap = max((abs(s) for s in rule_key.shifts), default=0)
         if max_gap > self._gap_size:
             self._gap_size = max_gap
             self._correct_gap()
-        if self._function[rule_key[0]] is not None:
+        if self._function[rule_key.parent] is not None:
             rule_idx = len(self._rules) - 1
-            self._rules_pumping_class[rule_key[0]].append(rule_idx)
-            for child_idx, child in enumerate(rule_key[1]):
+            self._rules_pumping_class[rule_key.parent].append(rule_idx)
+            for child_idx, child in enumerate(rule_key.children):
                 if self._function[child] is not None:
                     self._rules_using_class[child].append((rule_idx, child_idx))
             self._processing_queue.append(rule_idx)
@@ -228,30 +212,19 @@ class ForestRuleDB:
         assert not self._processing_queue and not self._rule_holding_extra_terms
         return self._function[comb_class] is None
 
-    def pumping_subuniverse(self) -> Iterator[RuleKey]:
-        """
-        Iterator over all the rules that contain only pumping combinatorial classes.
-        """
-        stable_subset = set(self.stable_subset())
-        for rule_key in self._rules:
-            if rule_key[0] in stable_subset and stable_subset.issuperset(rule_key[1]):
-                yield rule_key
-
-    def pumping_subuniverse_with_info(
+    def pumping_subuniverse(
         self,
-    ) -> Iterator[Tuple[RuleKey, Tuple[int, ...], RuleBucket]]:
+    ) -> Iterator[ForestRuleKey]:
         """
-        Iterator over all the rules that contain only pumping combinatorial classes with
-        some additional information.
-
-        The methods returns an iteration of tuple (rule_key, shifts_for_zero, rule_type).
+        Iterator over all the forest rule keys that contain only pumping
+        combinatorial classes.
         """
         stable_subset = set(self.stable_subset())
-        for rule_key, shifts_for_zero, bucket in zip(
-            self._rules, self._shifts_for_zero, self._rule_type
-        ):
-            if rule_key[0] in stable_subset and stable_subset.issuperset(rule_key[1]):
-                yield rule_key, shifts_for_zero, bucket
+        for forest_key in self._rules:
+            if forest_key.parent in stable_subset and stable_subset.issuperset(
+                forest_key.children
+            ):
+                yield forest_key
 
     def stable_subset(self) -> Iterator[int]:
         return self._function.preimage(None)
@@ -290,11 +263,11 @@ class ForestRuleDB:
                 rule_idx = self._processing_queue.popleft()
                 shifts = self._shifts[rule_idx]
                 if self._can_give_terms(shifts):
-                    parent = self._rules[rule_idx][0]
+                    parent = self._rules[rule_idx].parent
                     self._increase_value(parent, rule_idx)
             if self._rule_holding_extra_terms:
                 rule_idx = self._rule_holding_extra_terms.pop()
-                parent = self._rules[rule_idx][0]
+                parent = self._rules[rule_idx].parent
                 self._set_infinite(parent)
 
     def _correct_gap(self) -> None:
@@ -363,7 +336,7 @@ class ForestRuleDB:
         # of the rule of any rule for that class from _rules_using_class and
         # _rules_pumping_class
         for rule_idx in self._rules_pumping_class[comb_class]:
-            for child in self._rules[rule_idx][1]:
+            for child in self._rules[rule_idx].children:
                 self._rules_using_class[child] = [
                     (ri, ci)
                     for ri, ci in self._rules_using_class[child]
@@ -391,12 +364,14 @@ class ForestRuleDB:
             return str(v)
 
         rule_key = self._rules[rule_idx]
-        current_value = f"{v_to_str(self._function[rule_key[0]])} -> " + ", ".join(
-            map(v_to_str, (self._function[c] for c in rule_key[1]))
+        current_value = f"{v_to_str(self._function[rule_key.parent])} -> " + ", ".join(
+            map(v_to_str, (self._function[c] for c in rule_key.children))
         )
         shifts = map(v_to_str, self._shifts[rule_idx])
-        child_with_shift = ", ".join(f"({c}, {s})" for c, s in zip(rule_key[1], shifts))
-        return f"{rule_key[0]} -> {child_with_shift} || {current_value}"
+        child_with_shift = ", ".join(
+            f"({c}, {s})" for c, s in zip(rule_key.children, shifts)
+        )
+        return f"{rule_key.parent} -> {child_with_shift} || {current_value}"
 
     def status(self):
         """
