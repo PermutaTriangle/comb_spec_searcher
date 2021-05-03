@@ -188,6 +188,27 @@ class AbstractStrategy(
         """
 
     @abc.abstractmethod
+    def is_reversible(self, comb_class: CombinatorialClassType) -> bool:
+        """
+        Return True if knowing the enumeration of the lhs and all bar one
+        of the rhs implies knowing the enumeration of all of the classes on
+        the rhs.
+        """
+
+    @abc.abstractmethod
+    def shifts(
+        self,
+        comb_class: CombinatorialClassType,
+        children: Optional[Tuple[CombinatorialClassType, ...]],
+    ) -> Tuple[int, ...]:
+        """
+        Return the reliance on the children needed for counting.
+
+        Positive shift indicate a reliance on shorted length than the one on the parent
+        while negative number indicate reliance on length greater length.
+        """
+
+    @abc.abstractmethod
     def decomposition_function(
         self, comb_class: CombinatorialClassType
     ) -> Optional[Tuple[CombinatorialClassType, ...]]:
@@ -427,6 +448,23 @@ class CartesianProductStrategy(
     def is_two_way(comb_class: CombinatorialClassType) -> bool:
         return True
 
+    @staticmethod
+    def is_reversible(comb_class: CombinatorialClassType) -> bool:
+        return True
+
+    def shifts(
+        self,
+        comb_class: CombinatorialClassType,
+        children: Optional[Tuple[CombinatorialClassType, ...]] = None,
+    ) -> Tuple[int, ...]:
+        if children is None:
+            children = self.decomposition_function(comb_class)
+            if children is None:
+                raise StrategyDoesNotApply("Strategy does not apply")
+        min_points = tuple(c.minimum_size_of_object() for c in children)
+        point_sum = sum(min_points)
+        return tuple(point_sum - mpoint for mpoint in min_points)
+
     def constructor(
         self,
         comb_class: CombinatorialClassType,
@@ -499,6 +537,21 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObject
     @staticmethod
     def is_two_way(comb_class: CombinatorialClassType) -> bool:
         return True
+
+    @staticmethod
+    def is_reversible(comb_class: CombinatorialClassType) -> bool:
+        return True
+
+    def shifts(
+        self,
+        comb_class: CombinatorialClassType,
+        children: Optional[Tuple[CombinatorialClassType, ...]] = None,
+    ) -> Tuple[int, ...]:
+        if children is None:
+            children = self.decomposition_function(comb_class)
+            if children is None:
+                raise StrategyDoesNotApply("Strategy does not apply")
+        return tuple(0 for _ in children)
 
     def constructor(
         self,
@@ -640,6 +693,17 @@ class VerificationStrategy(
     @staticmethod
     def is_two_way(comb_class: CombinatorialClassType) -> bool:
         return False
+
+    @staticmethod
+    def is_reversible(comb_class: CombinatorialClassType) -> bool:
+        return False
+
+    def shifts(
+        self,
+        comb_class: CombinatorialClassType,
+        children: Optional[Tuple[CombinatorialClassType, ...]] = None,
+    ) -> Tuple[int, ...]:
+        return ()
 
     def pack(self, comb_class: CombinatorialClassType) -> "StrategyPack":
         """

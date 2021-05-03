@@ -5,7 +5,6 @@ from logzero import logger
 
 from comb_spec_searcher.class_db import ClassDB
 from comb_spec_searcher.exception import StrategyDoesNotApply
-from comb_spec_searcher.rule_and_flip import all_flips
 from comb_spec_searcher.rule_db.base import RuleDBBase
 from comb_spec_searcher.rule_db.forest import ForestRuleDB
 from comb_spec_searcher.strategies.rule import AbstractRule, ReverseRule, Rule
@@ -150,14 +149,6 @@ class ForestRuleExtractor:
         lhs = set(rk.parent for rk in self.needed_rules)
         assert len(lhs) == len(self.needed_rules)
         assert self._is_productive(self.needed_rules)
-        for rk in sorted(self.needed_rules):
-            rule = self._find_rule(rk)
-            if isinstance(rule, ReverseRule):
-                af = list(all_flips(rule.original_rule, self.classdb.get_label))
-                assert af[rule.idx + 1], rule
-            else:
-                af = list(all_flips(rule, self.classdb.get_label))
-                assert af[0], rule
 
     def rules(self) -> Iterator[AbstractRule]:
         """
@@ -260,16 +251,15 @@ class ForestRuleExtractor:
             self._rules_for_class(c) for c in all_classes
         )
         for rule in all_normal_rules:
-            if rule_to_key(rule) == rule_key.key:
-                return rule
-            # TODO: Make this is_reversible when implemented
-            if not rule.is_two_way():
-                continue
-            assert isinstance(rule, Rule)
-            for i in range(len(rule.children)):
-                reverse_rule = rule.to_reverse_rule(i)
-                if rule_to_key(reverse_rule) == rule_key.key:
-                    return reverse_rule
+            potential_rules = [rule]
+            if rule.is_reversible():
+                assert isinstance(rule, Rule)
+                potential_rules.extend(
+                    rule.to_reverse_rule(i) for i in range(len(rule.children))
+                )
+            for rule in potential_rules:
+                if rule.forest_key(self.classdb.get_label) == rule_key:
+                    return rule
 
         err = f"Can't find a rule for {rule_key}\n"
         err += f"Parent:\n{self.classdb.get_class(rule_key.parent)}\n"

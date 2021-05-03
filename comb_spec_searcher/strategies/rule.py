@@ -27,8 +27,10 @@ from sympy import Eq, Function
 
 from comb_spec_searcher.combinatorial_class import CombinatorialClass
 from comb_spec_searcher.typing import (
+    ForestRuleKey,
     Objects,
     ObjectsCache,
+    RuleBucket,
     SubObjects,
     SubTerms,
     Terms,
@@ -73,6 +75,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         self.subobjects: Optional[SubObjects] = None
         self._children = children
         self._non_empty_children: Optional[Tuple[CombinatorialClassType, ...]] = None
+        self._shifts: Optional[Tuple[int, ...]] = None
 
     def to_jsonable(self) -> dict:
         d = {
@@ -178,6 +181,24 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         Returns True if it is a two way rule.
         """
         return self.strategy.is_two_way(self.comb_class)
+
+    def is_reversible(self) -> bool:
+        """
+        Returns True if it is possible to compute the enumeration of a child using the
+        enumeration of the parent and the other children.
+        """
+        return self.strategy.is_reversible(self.comb_class)
+
+    def shifts(self) -> Tuple[int, ...]:
+        if self._shifts is None:
+            self._shifts = self.strategy.shifts(self.comb_class, self.children)
+        return self._shifts
+
+    @abc.abstractmethod
+    def forest_key(
+        self, get_label: Callable[[CombinatorialClassType], int]
+    ) -> ForestRuleKey:
+        """Return the forest key of the rule."""
 
     def non_empty_children(self) -> Tuple[CombinatorialClassType, ...]:
         """
@@ -371,6 +392,16 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
     def is_equivalence(self):
         return self.strategy.can_be_equivalent() and len(self.non_empty_children()) == 1
 
+    def forest_key(
+        self, get_label: Callable[[CombinatorialClassType], int]
+    ) -> ForestRuleKey:
+        return ForestRuleKey(
+            get_label(self.comb_class),
+            tuple(map(get_label, self.children)),
+            self.shifts(),
+            RuleBucket.NORMAL,
+        )
+
     def backward_map(
         self, objs: Tuple[Optional[CombinatorialObjectType], ...]
     ) -> Iterator[CombinatorialObjectType]:
@@ -402,6 +433,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         """
         Return the reverse rule where the child at the given index is the parent.
         """
+        assert self.is_reversible()
         return ReverseRule(self, idx)
 
     def _ensure_level(self, n: int) -> None:
@@ -849,6 +881,24 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     def to_reverse_rule(self, idx: int) -> "Rule":
         raise NotImplementedError("You don't want to do that! I promise")
 
+    def shifts(self) -> Tuple[int, ...]:
+        original_shifts = self.original_rule.shifts()
+        pshift = -original_shifts[self.idx]
+        return (pshift,) + tuple(
+            s + pshift
+            for s in (s for i, s in enumerate(original_shifts) if i != self.idx)
+        )
+
+    def forest_key(
+        self, get_label: Callable[[CombinatorialClassType], int]
+    ) -> ForestRuleKey:
+        return ForestRuleKey(
+            get_label(self.comb_class),
+            tuple(map(get_label, self.children)),
+            self.shifts(),
+            RuleBucket.REVERSE,
+        )
+
     def get_equation(
         self, get_function: Callable[[CombinatorialClassType], Function]
     ) -> Eq:
@@ -967,6 +1017,16 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
 
     def pack(self) -> "StrategyPack":
         return self.strategy.pack(self.comb_class)
+
+    def forest_key(
+        self, get_label: Callable[[CombinatorialClassType], int]
+    ) -> ForestRuleKey:
+        return ForestRuleKey(
+            get_label(self.comb_class),
+            tuple(map(get_label, self.children)),
+            self.shifts(),
+            RuleBucket.VERIFICATION,
+        )
 
     # pylint: disable=arguments-differ
     def get_equation(
