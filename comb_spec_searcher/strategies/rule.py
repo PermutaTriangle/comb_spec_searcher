@@ -399,7 +399,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
             get_label(self.comb_class),
             tuple(map(get_label, self.children)),
             self.shifts(),
-            RuleBucket.NORMAL,
+            RuleBucket.EQUIV if self.is_equivalence() else RuleBucket.NORMAL,
         )
 
     def backward_map(
@@ -896,7 +896,7 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
             get_label(self.comb_class),
             tuple(map(get_label, self.children)),
             self.shifts(),
-            RuleBucket.REVERSE,
+            RuleBucket.EQUIV if self.is_equivalence() else RuleBucket.REVERSE,
         )
 
     def get_equation(

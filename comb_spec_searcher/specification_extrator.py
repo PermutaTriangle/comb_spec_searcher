@@ -125,7 +125,12 @@ SortedRWS = Dict[RuleBucket, List[ForestRuleKey]]
 
 
 class ForestRuleExtractor:
-    MINIMIZE_ORDER = [RuleBucket.REVERSE, RuleBucket.NORMAL, RuleBucket.VERIFICATION]
+    MINIMIZE_ORDER = [
+        RuleBucket.REVERSE,
+        RuleBucket.NORMAL,
+        RuleBucket.EQUIV,
+        RuleBucket.VERIFICATION,
+    ]
 
     def __init__(
         self,
@@ -176,7 +181,7 @@ class ForestRuleExtractor:
         The list of rule in `self.rule_by_bucket[key]` is cleared and a
         minimal set from theses is added to `self.needed_rules`.
         """
-        logger.info(f"Minimizing {key}")
+        logger.info(f"Minimizing {key.name}")
         maybe_useful: List[ForestRuleKey] = []
         not_minimizing: List[List[ForestRuleKey]] = [
             self.needed_rules,
@@ -210,7 +215,7 @@ class ForestRuleExtractor:
             if not self._is_productive(itertools.chain.from_iterable(not_minimizing)):
                 self.needed_rules.append(rk)
                 counter += 1
-        logger.info(f"Using {counter} rule for {key}")
+        logger.info(f"Using {counter} rule for {key.name}")
 
     def _is_productive(self, rule_keys: Iterable[ForestRuleKey]) -> bool:
         """

@@ -66,6 +66,7 @@ class WorkPacket(NamedTuple):
 class RuleBucket(enum.Enum):
     UNDEFINED = enum.auto()
     VERIFICATION = enum.auto()
+    EQUIV = enum.auto()
     NORMAL = enum.auto()
     REVERSE = enum.auto()
 
