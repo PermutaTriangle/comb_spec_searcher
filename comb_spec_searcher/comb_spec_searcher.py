@@ -77,6 +77,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         self,
         start_class: CombinatorialClassType,
         strategy_pack: StrategyPack,
+        *,
         ruledb: Optional[Union[str, RuleDB]] = None,
         expand_verified: bool = False,
         debug: bool = False,
