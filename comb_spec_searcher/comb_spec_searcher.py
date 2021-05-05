@@ -147,6 +147,11 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         """The symmetries functions for the strategy pack."""
         return self.strategy_pack.symmetries
 
+    @property
+    def start_class(self) -> CombinatorialClassType:
+        """Returns the start class of the searcher."""
+        return self.classdb.get_class(self.start_label)
+
     def try_verify(self, comb_class: CombinatorialClassType, label: int) -> None:
         """
         Try to verify the combinatorial class.
@@ -492,7 +497,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         """Return a string detailing what CombSpecSearcher is looking for."""
         start_string = (
             "Initialising CombSpecSearcher for the combinatorial"
-            " class:\n{}\n".format(self.classdb.get_class(self.start_label))
+            " class:\n{}\n".format(self.start_class)
         )
         start_string += str(self.strategy_pack)
         return start_string
@@ -553,85 +558,69 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         tree that is as small as possible.
         """
         auto_search_start = time.time()
-
-        perc = kwargs.get("perc", 1)
-        if not 0 < perc <= 100:
-            logger.warning(
-                (
-                    "Percentage not between 0 and 100, so assuming 1%"
-                    " search percentage."
-                ),
-            )
-            perc = 1
-        status_update = kwargs.get("status_update", None)
-        max_time = kwargs.get("max_time", None)
-        status_start = time.time()
         start_string = "Auto search started {}\n".format(
             time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime())
         )
         start_string += self.run_information()
         logger.info(start_string)
-
-        max_expansion_time = 0
-        expanding = True
-
-        while expanding:
-            expanding, status_start = self._expand_classes_for(
-                max_expansion_time, status_update, status_start, auto_search_start
-            )
-
-            spec_search_start = time.time()
-            logger.debug("Searching for specification.")
-            specification = self.get_specification(
-                smallest=kwargs.get("smallest", False),
-                minimization_time_limit=0.01 * (time.time() - auto_search_start),
-            )
-            if specification is not None:
-                self._log_spec_found(specification, auto_search_start)
-                return specification
-            logger.debug("No specification found.")
-            if max_time is not None:
-                if time.time() - auto_search_start > max_time:
-                    raise ExceededMaxtimeError(
-                        "Exceeded maximum time. Aborting auto search.",
-                    )
-            # worst case, search every hour
-            multiplier = 100 // perc
-            max_expansion_time = min(
-                multiplier * (time.time() - spec_search_start), 3600
-            )
-            logger.debug(
-                "Will expand for %s seconds.",
-                round(max_expansion_time, 2),
-            )
+        spec_rules = self._auto_search_rules(**kwargs)
+        if spec_rules is not None:
+            specification = CombinatorialSpecification(self.start_class, spec_rules)
+            self._log_spec_found(specification, auto_search_start)
+            return specification
+        raise SpecificationNotFound
 
     def _auto_search_rules(
-        self, max_expansion_time: float = 0
+        self,
+        *,
+        max_expansion_time: Optional[float] = None,
+        perc: int = 1,
+        smallest: bool = False,
+        status_update: Optional[int] = None,
     ) -> Iterator[AbstractRule]:
         """
-        A basic auto search for returning equivalence paths and rules.
+        The core functionality of the auto_search method.
 
         This method is used by CombinatorialSpecification for expanding
-        verified classes.
-
-        Will raise SpecificationNotFound error if no specification is found
-        after running out of classes to expand.
+        verified classes.  Will raise SpecificationNotFound error if no
+        specification is found after running out of classes to expand.
         """
-        status_start = time.time()
-        status_update = None  # this prevents status updates happening
+        if not 0 < perc <= 100:
+            logger.warn(
+                "Percentage not between 0 and 100, so assuming 1% search percentage."
+            )
+            perc = 1
         auto_search_start = time.time()
+        expansion_time: float = 0
+        status_start = time.time()
         expanding = True
         while expanding:
             expanding, status_start = self._expand_classes_for(
-                max_expansion_time, status_update, status_start, auto_search_start
+                expansion_time, status_update, status_start, auto_search_start
             )
             spec_search_start = time.time()
-            spec = self._get_specification_rules(
-                0.01 * (time.time() - auto_search_start)
+            logger.debug("Searching for specification.")
+            specification_rules = self._get_specification_rules(
+                smallest=smallest,
+                minimization_time_limit=0.01 * (time.time() - auto_search_start),
             )
-            if spec is not None:
-                return spec
-            max_expansion_time = min(0.01 * (time.time() - spec_search_start), 3600)
+            if specification_rules is not None:
+                return specification_rules
+            logger.debug("No specification found.")
+            if (
+                max_expansion_time is not None
+                and time.time() - auto_search_start > max_expansion_time
+            ):
+                raise ExceededMaxtimeError(
+                    "Exceeded maximum time. Aborting auto search.",
+                )
+            # worst case, search every hour
+            multiplier = 100 / perc
+            expansion_time = min(multiplier * (time.time() - spec_search_start), 3600.0)
+            logger.debug(
+                "Will expand for %s seconds.",
+                round(expansion_time, 2),
+            )
         raise SpecificationNotFound
 
     def _expand_classes_for(
@@ -645,8 +634,8 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         Will expand classes for `expansion_time` seconds.
 
         It will return a pair (bool, time), where the bool is True if there are
-        more classes to expand, False otherwise. The `time` is the initial time
-        for checking whether to post a status update.
+        more classes to expand, False otherwise. The `time` is the time of the last
+        status update printed.
         """
         expansion_start = time.time()
         last_label = None
@@ -667,7 +656,6 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             logger.info("No more classes to expand.")
         return expanding, status_start
 
-    @cssmethodtimer("get specification")
     def get_specification(
         self, minimization_time_limit: float = 10, smallest: bool = False
     ) -> Optional[CombinatorialSpecification]:
@@ -682,10 +670,10 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         rules = self._get_specification_rules(minimization_time_limit, smallest)
         if rules is None:
             return None
-        start_class = self.classdb.get_class(self.start_label)
         logger.info("Creating a specification.")
-        return CombinatorialSpecification(start_class, rules)
+        return CombinatorialSpecification(self.start_class, rules)
 
+    @cssmethodtimer("get specification")
     def _get_specification_rules(
         self, minimization_time_limit: float = 10, smallest: bool = False
     ) -> Optional[Iterator[AbstractRule]]:

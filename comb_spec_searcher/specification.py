@@ -180,7 +180,7 @@ class CombinatorialSpecification(
         self,
         comb_class: Union[int, CombinatorialClassType],
         pack: StrategyPack,
-        max_expansion_time: float = 0,
+        max_expansion_time: Optional[float] = None,
     ) -> None:
         """
         Will try to expand a particular class with respect to the strategy pack
