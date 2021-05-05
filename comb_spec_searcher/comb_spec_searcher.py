@@ -194,8 +194,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 ):
                     self._add_rule(start_label, end_labels, rule)
 
+    @staticmethod
     def _rules_from_strategy(
-        self, comb_class: CombinatorialClassType, strategy: CSSstrategy
+        comb_class: CombinatorialClassType, strategy: CSSstrategy
     ) -> Iterator[AbstractRule]:
         """Yield all the rules given by a strategy/strategy factory."""
         if isinstance(strategy, AbstractStrategy):
@@ -586,7 +587,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         specification is found after running out of classes to expand.
         """
         if not 0 < perc <= 100:
-            logger.warn(
+            logger.warning(
                 "Percentage not between 0 and 100, so assuming 1% search percentage."
             )
             perc = 1
