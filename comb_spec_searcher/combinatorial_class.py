@@ -5,9 +5,19 @@ import abc
 from functools import reduce
 from importlib import import_module
 from operator import mul
-from typing import Counter, DefaultDict, Dict, Generic, Iterator, List, Tuple, Type
+from typing import (
+    Callable,
+    Counter,
+    DefaultDict,
+    Dict,
+    Generic,
+    Iterator,
+    List,
+    Tuple,
+    Type,
+)
 
-from sympy import Expr, Number, var
+import sympy
 
 from comb_spec_searcher.typing import (
     CombinatorialClassType,
@@ -65,7 +75,18 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
             "comb_class": c.__name__,
         }
 
-    def get_genf(self, *args, **kwargs) -> Expr:
+    def get_function(
+        self: CombinatorialClassType, get_label: Callable[[CombinatorialClassType], int]
+    ) -> sympy.Function:
+        """
+        Return a sympy function for the comb class, using the label it is
+        assigned.
+        """
+        x = sympy.var("x")
+        extra_parameters = [sympy.var(k) for k in self.extra_parameters]
+        return sympy.Function("F_{}".format(get_label(self)))(x, *extra_parameters)
+
+    def get_genf(self, *args, **kwargs) -> sympy.Expr:
         """Return the generating function for the combinatorial class"""
         raise NotImplementedError(
             (
@@ -143,20 +164,22 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
             objects[param].append(obj)  # pylint: disable=invalid-sequence-index
         return objects
 
-    def initial_conditions(self, check: int = 6) -> List[Expr]:
+    def initial_conditions(self, check: int = 6) -> List[sympy.Expr]:
         """
         Returns a list with the initial conditions to size `check` of the
         CombinatorialClass.
         """
 
-        def monomial(parameters: Dict[str, int]) -> Expr:
+        def monomial(parameters: Dict[str, int]) -> sympy.Expr:
             return reduce(
-                mul, [var(k) ** val for k, val in parameters.items()], Number(1)
+                mul,
+                [sympy.var(k) ** val for k, val in parameters.items()],
+                sympy.Number(1),
             )
 
         return [
             sum(
-                sum(Number(1) for _ in self.objects_of_size(n, **parameters))
+                sum(sympy.Number(1) for _ in self.objects_of_size(n, **parameters))
                 * monomial(parameters)
                 for parameters in self.possible_parameters(n)
             )
@@ -201,10 +224,6 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
         'cls.from_bytes(self.to_bytes()) == self'
         """
         raise NotImplementedError
-
-    @abc.abstractmethod
-    def __init__(self):
-        return
 
     @abc.abstractmethod
     def __eq__(self, other) -> bool:

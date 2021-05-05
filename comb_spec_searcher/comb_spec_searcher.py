@@ -378,13 +378,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         """
         Returns a set of equations for all rules currently found.
         """
-        x = var("x")
 
-        def get_function(comb_class: CombinatorialClassType):
-            # TODO: This is broken with extra parameters.
-            label = self.classdb.get_label(comb_class)
-            eqv_label = self.ruledb.equivdb[label]
-            return Function("F_{}".format(eqv_label))(x)
+        def get_function(comb_class: CombinatorialClassType) -> Function:
+            return comb_class.get_function(self.classdb.get_label)
 
         eqs = set()
         for start, ends, strategy in self.ruledb.all_rules():
@@ -399,7 +395,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                     get_function(rule.comb_class),
                     rule.comb_class,
                 )
-                eq = Eq(get_function(rule.comb_class), Function("NOTIMPLEMENTED")(x))
+                eq = Eq(
+                    get_function(rule.comb_class), Function("NOTIMPLEMENTED")(var("x"))
+                )
             eqs.add(eq)
         return eqs
 

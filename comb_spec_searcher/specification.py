@@ -275,12 +275,8 @@ class CombinatorialSpecification(
         """
         Return a sympy function for the comb class, using the label it is
         assigned.
-
-        TODO: call comb_class for its parameters - 'x' is reserved for size.
         """
-        x = var("x")
-        extra_parameters = [var(k) for k in comb_class.extra_parameters]
-        return Function("F_{}".format(self.get_label(comb_class)))(x, *extra_parameters)
+        return comb_class.get_function(self.get_label)
 
     def get_equations(self) -> Iterator[Eq]:
         """
