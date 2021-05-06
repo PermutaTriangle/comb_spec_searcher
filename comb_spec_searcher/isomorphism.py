@@ -1,47 +1,65 @@
 from itertools import product
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Set, Tuple
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Dict,
+    Generic,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    TypeVar,
+)
 
-from .combinatorial_class import CombinatorialClass, CombinatorialObject
+from .combinatorial_class import CombinatorialClass
 from .strategies.rule import AbstractRule, Rule
 
 if TYPE_CHECKING:
+    from .combinatorial_class import CombinatorialObject
     from .specification import CombinatorialSpecification
 
 
-AtomEquals = Callable[["CombinatorialClass", "CombinatorialClass"], bool]
-OrderMap = Dict[Tuple[CombinatorialClass, CombinatorialClass], List[int]]
+ClassType1 = TypeVar("ClassType1", bound="CombinatorialClass")
+ObjType1 = TypeVar("ObjType1", bound="CombinatorialObject")
+ClassType2 = TypeVar("ClassType2", bound="CombinatorialClass")
+ObjType2 = TypeVar("ObjType2", bound="CombinatorialObject")
+OrderMap = Dict[Tuple[ClassType1, ClassType2], List[int]]
 
 
-class Isomorphism:
+class Isomorphism(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
     """Isomorphism checker."""
 
     _INVALID, _UNKNOWN, _VALID = range(-1, 2)
 
     @classmethod
     def check(
-        cls, spec1: "CombinatorialSpecification", spec2: "CombinatorialSpecification"
+        cls,
+        spec1: "CombinatorialSpecification[ClassType1, ObjType1]",
+        spec2: "CombinatorialSpecification[ClassType2, ObjType2]",
     ) -> bool:
         """Check if two specs are isomorphic."""
         return cls(spec1, spec2).are_isomorphic()
 
     def __init__(
-        self, spec1: "CombinatorialSpecification", spec2: "CombinatorialSpecification"
+        self,
+        spec1: "CombinatorialSpecification[ClassType1, ObjType1]",
+        spec2: "CombinatorialSpecification[ClassType2, ObjType2]",
     ) -> None:
-        self._rules1: Dict[CombinatorialClass, AbstractRule] = spec1.rules_dict
-        self._rules2: Dict[CombinatorialClass, AbstractRule] = spec2.rules_dict
-        self._ancestors: Set[Tuple[CombinatorialClass, CombinatorialClass]] = set()
-        self._order_map: Dict[
-            Tuple[CombinatorialClass, CombinatorialClass], List[int]
-        ] = {}
-        self._failed: Set[Tuple[CombinatorialClass, CombinatorialClass]] = set()
-        self._index_data: Dict[
-            Tuple[CombinatorialClass, CombinatorialClass], object
-        ] = {}
+        self._rules1: Dict[
+            ClassType1, AbstractRule[ClassType1, ObjType1]
+        ] = spec1.rules_dict
+        self._rules2: Dict[
+            ClassType2, AbstractRule[ClassType2, ObjType2]
+        ] = spec2.rules_dict
+        self._ancestors: Set[Tuple[ClassType1, ClassType2]] = set()
+        self._order_map: Dict[Tuple[ClassType1, ClassType2], List[int]] = {}
+        self._failed: Set[Tuple[ClassType1, ClassType2]] = set()
+        self._index_data: Dict[Tuple[ClassType1, ClassType2], object] = {}
         self._isomorphic = self._are_isomorphic(spec1.root, spec2.root)
 
     def get_order_data(
         self,
-    ) -> Dict[Tuple[CombinatorialClass, CombinatorialClass], object]:
+    ) -> Dict[Tuple[ClassType1, ClassType2], object]:
         """Return any index data for nonbijective matches."""
         return self._index_data
 
@@ -55,9 +73,7 @@ class Isomorphism:
         """Get order map of corresponding nodes."""
         return self._order_map
 
-    def _are_isomorphic(
-        self, node1: CombinatorialClass, node2: CombinatorialClass
-    ) -> bool:
+    def _are_isomorphic(self, node1: ClassType1, node2: ClassType2) -> bool:
         # If there are equivilances, we use the 'latest' one
         # but we check for recursion for any possible pairing
         eq_path1, eq_path2 = Isomorphism._get_eq_descendant(
@@ -106,11 +122,11 @@ class Isomorphism:
 
     @staticmethod
     def _get_eq_descendant(
-        node1: CombinatorialClass,
-        rules1: Dict[CombinatorialClass, AbstractRule],
-        node2: CombinatorialClass,
-        rules2: Dict[CombinatorialClass, AbstractRule],
-    ) -> Tuple[List[CombinatorialClass], List[CombinatorialClass]]:
+        node1: ClassType1,
+        rules1: Dict[ClassType1, AbstractRule[ClassType1, ObjType1]],
+        node2: ClassType2,
+        rules2: Dict[ClassType2, AbstractRule[ClassType2, ObjType2]],
+    ) -> Tuple[List[ClassType1], List[ClassType2]]:
         rule1, rule2 = rules1[node1], rules2[node2]
         nodes1, nodes2 = [node1], [node2]
         if rule1.is_equivalence():
@@ -121,11 +137,11 @@ class Isomorphism:
 
     def _base_cases(
         self,
-        eq_nodes1: List[CombinatorialClass],
-        rule1: AbstractRule,
+        eq_nodes1: List[ClassType1],
+        rule1: AbstractRule[ClassType1, ObjType1],
         non_empty_children1: Tuple[int, ...],
-        eq_nodes2: List[CombinatorialClass],
-        rule2: AbstractRule,
+        eq_nodes2: List[ClassType2],
+        rule2: AbstractRule[ClassType2, ObjType2],
         non_empty_children2: Tuple[int, ...],
     ) -> int:
         curr1, curr2 = eq_nodes1[-1], eq_nodes2[-1]
@@ -175,19 +191,21 @@ class Isomorphism:
             stack.append((i1 + 1, i, in_use.union({i})))
 
 
-class Node:
+class Node(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
     """Parse tree node."""
 
     def __init__(
         self,
-        rule: AbstractRule,
-        obj: CombinatorialObject,
-        get_rule: Callable[[CombinatorialClass], AbstractRule],
+        rule: AbstractRule[ClassType1, ObjType1],
+        obj: ObjType1,
+        get_rule: Callable[[ClassType1], AbstractRule[ClassType1, ObjType1]],
     ):
         self.obj = obj
         self._rule = rule
         if not rule.children:
-            self._children: Tuple[Optional["Node"], ...] = tuple()
+            self._children: Tuple[
+                Optional["Node[ClassType1, ObjType1, ClassType2, ObjType2]"], ...
+            ] = tuple()
         else:
             assert isinstance(rule, Rule)
             children, self.idx = rule.indexed_forward_map(obj)
@@ -201,16 +219,16 @@ class Node:
 
     def build_obj(
         self,
-        rule: AbstractRule,
+        rule: AbstractRule[ClassType2, ObjType2],
         get_order: OrderMap,
-        get_rule: Callable[[CombinatorialClass], AbstractRule],
-        index_data: Dict[Tuple[CombinatorialClass, CombinatorialClass], object],
-    ) -> CombinatorialObject:
+        get_rule: Callable[[ClassType2], AbstractRule[ClassType2, ObjType2]],
+        index_data: Dict[Tuple[ClassType1, ClassType2], object],
+    ) -> ObjType2:
         """Parse tree's recursive build object function."""
 
         if not self._children:
             # TODO: stop special casing verification rules!
-            obj: CombinatorialObject = next(
+            obj: ObjType2 = next(
                 rule.comb_class.objects_of_size(
                     rule.comb_class.minimum_size_of_object()
                 )
@@ -219,7 +237,7 @@ class Node:
         if rule.is_equivalence():
             if not self._rule.is_equivalence():
                 assert isinstance(rule, Rule)
-                val: CombinatorialObject = rule.indexed_backward_map(
+                val: ObjType2 = rule.indexed_backward_map(
                     (
                         self.build_obj(
                             get_rule(rule.children[0]), get_order, get_rule, index_data
@@ -247,64 +265,59 @@ class Node:
                 )
             ),
             self.idx,
-            self._get_index_data_value(rule, index_data),
+            index_data.get((self._rule.comb_class, rule.comb_class)),
         )
         return val
 
-    def _get_index_data_value(
-        self,
-        rule: AbstractRule,
-        index_data: Dict[Tuple[CombinatorialClass, CombinatorialClass], object],
-    ) -> Optional[object]:
-        data = index_data.get((self._rule.comb_class, rule.comb_class), None)
-        if data is None:
-            data = index_data.get((rule.comb_class, self._rule.comb_class), None)
-        return data
 
-
-class ParseTree:
+class ParseTree(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
     """Parse tree that parses an object and can reconstruct it for the other
     specification."""
 
-    def __init__(self, obj: CombinatorialObject, spec: "CombinatorialSpecification"):
-        self._root = Node(spec.root_rule, obj, spec.get_rule)
+    def __init__(
+        self, obj: ObjType1, spec: "CombinatorialSpecification[ClassType1, ObjType1]"
+    ):
+        self._root = Node[ClassType1, ObjType1, ClassType2, ObjType2](
+            spec.root_rule, obj, spec.get_rule
+        )
 
     def build_obj(
         self,
-        root: AbstractRule,
+        root: AbstractRule[ClassType2, ObjType2],
         get_order: OrderMap,
-        get_rule: Callable[[CombinatorialClass], AbstractRule],
-        index_data: Dict[Tuple[CombinatorialClass, CombinatorialClass], object],
-    ) -> CombinatorialObject:
+        get_rule: Callable[[ClassType2], AbstractRule[ClassType2, ObjType2]],
+        index_data: Dict[Tuple[ClassType1, ClassType2], object],
+    ) -> ObjType2:
         """Build object from the other specification."""
         return self._root.build_obj(root, get_order, get_rule, index_data)
 
 
-class Bijection:
+class Bijection(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
     """A bijection object that contains a map between two specifications."""
 
     @classmethod
     def construct(
         cls,
-        spec: "CombinatorialSpecification",
-        other: "CombinatorialSpecification",
-    ) -> Optional["Bijection"]:
+        spec: "CombinatorialSpecification[ClassType1, ObjType1]",
+        other: "CombinatorialSpecification[ClassType2, ObjType2]",
+    ) -> Optional["Bijection[ClassType1, ObjType1, ClassType2, ObjType2]"]:
         """Create a bijection object between two specifications if possible."""
-        iso = Isomorphism(spec, other)
+        iso = Isomorphism[ClassType1, ObjType1, ClassType2, ObjType2](spec, other)
         if not iso.are_isomorphic():
             return None
         return cls(spec, other, iso.get_order(), iso.get_order_data())
 
     def __init__(
         self,
-        spec: "CombinatorialSpecification",
-        other: "CombinatorialSpecification",
+        spec: "CombinatorialSpecification[ClassType1, ObjType1]",
+        other: "CombinatorialSpecification[ClassType2, ObjType2]",
         get_order: OrderMap,
-        index_data: Optional[
-            Dict[Tuple[CombinatorialClass, CombinatorialClass], object]
-        ] = None,
+        index_data: Optional[Dict[Tuple[ClassType1, ClassType2], object]] = None,
     ):
         self._index_data = {} if index_data is None else index_data
+        self._inv_index_data = {
+            (t2, t1): data for (t1, t2), data in self._index_data.items()
+        }
         self._spec = spec
         self._other = other
         self._get_order = get_order
@@ -313,11 +326,11 @@ class Bijection:
         }
 
     @property
-    def domain(self) -> "CombinatorialSpecification":
+    def domain(self) -> "CombinatorialSpecification[ClassType1, ObjType1]":
         return self._spec
 
     @property
-    def codomain(self) -> "CombinatorialSpecification":
+    def codomain(self) -> "CombinatorialSpecification[ClassType2, ObjType2]":
         return self._other
 
     @staticmethod
@@ -327,9 +340,11 @@ class Bijection:
             inv[v] = i
         return inv
 
-    def map(self, obj: CombinatorialObject) -> CombinatorialObject:
+    def map(self, obj: ObjType1) -> ObjType2:
         """Map an object of the root of one specification to the root of the other."""
-        parse_tree = ParseTree(obj, self._spec)
+        parse_tree = ParseTree[ClassType1, ObjType1, ClassType2, ObjType2](
+            obj, self._spec
+        )
         return parse_tree.build_obj(
             self._other.root_rule,
             self._get_order,
@@ -337,13 +352,15 @@ class Bijection:
             self._index_data,
         )
 
-    def inverse_map(self, obj: CombinatorialObject) -> CombinatorialObject:
-        parse_tree = ParseTree(obj, self._other)
+    def inverse_map(self, obj: ObjType2) -> ObjType1:
+        parse_tree = ParseTree[ClassType2, ObjType2, ClassType1, ObjType1](
+            obj, self._other
+        )
         return parse_tree.build_obj(
             self._spec.root_rule,
             self._get_inverse_order,
             self._spec.get_rule,
-            self._index_data,
+            self._inv_index_data,
         )
 
     def to_jsonable(self) -> dict:
@@ -374,7 +391,7 @@ class Bijection:
         }
 
     @classmethod
-    def from_dict(cls, d):
+    def from_dict(cls, d) -> "Bijection":
         """Return the bijection with the dictionary outputter by
         the 'to_jsonable' method.
         """
