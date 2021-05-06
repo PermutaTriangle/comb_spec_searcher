@@ -137,7 +137,6 @@ class AbstractStrategy(
         self,
         comb_class: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...] = None,
-        **kwargs,
     ) -> AbstractRule[CombinatorialClassType, CombinatorialObjectType]:
         """
         Return the rule formed by using the strategy.
@@ -307,7 +306,6 @@ class Strategy(AbstractStrategy[CombinatorialClassType, CombinatorialObjectType]
         self,
         comb_class: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...] = None,
-        **kwargs,
     ) -> Rule[CombinatorialClassType, CombinatorialObjectType]:
         if children is None:
             children = self.decomposition_function(comb_class)
@@ -625,7 +623,6 @@ class VerificationStrategy(
         self,
         comb_class: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...] = None,
-        **kwargs,
     ) -> VerificationRule[CombinatorialClassType, CombinatorialObjectType]:
         if children is None:
             children = self.decomposition_function(comb_class)
@@ -895,7 +892,7 @@ class StrategyFactory(abc.ABC, Generic[CombinatorialClassType]):
 
     @abc.abstractmethod
     def __call__(
-        self, comb_class: CombinatorialClassType, **kwargs
+        self, comb_class: CombinatorialClassType
     ) -> Iterator[Union[AbstractRule, AbstractStrategy]]:
         """
         Returns the results of the strategy on a comb_class.
