@@ -636,8 +636,8 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         Will expand classes for `expansion_time` seconds.
 
         It will return a pair (bool, time), where the bool is True if there are
-        more classes to expand, False otherwise. The `time` is the time of the last
-        status update printed.
+        more classes to expand, False otherwise. The `time` is the time that the
+        last status update printed.
         """
         expansion_start = time.time()
         last_label = None
