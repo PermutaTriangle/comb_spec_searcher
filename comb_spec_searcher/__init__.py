@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple
 
 from .bijection import ParallelSpecFinder
 from .comb_spec_searcher import CombinatorialSpecificationSearcher
@@ -27,7 +27,9 @@ def find_bijection_between(
 ) -> Optional[Bijection]:
     """Find bijections between two universes. If they are not of the same type, a
     custom atom comparator is needed."""
-    specs = ParallelSpecFinder(searcher1, searcher2).find()
+    specs: Optional[
+        Tuple[CombinatorialSpecification, CombinatorialSpecification]
+    ] = ParallelSpecFinder(searcher1, searcher2).find()
     return Bijection.construct(*specs) if specs else None
 
 

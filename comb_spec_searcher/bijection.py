@@ -1,8 +1,18 @@
 from collections import defaultdict, deque
-from typing import DefaultDict, Dict, List, Optional, Set, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    DefaultDict,
+    Dict,
+    Generic,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
 from comb_spec_searcher.comb_spec_searcher import CombinatorialSpecificationSearcher
-from comb_spec_searcher.combinatorial_class import CombinatorialClass
 from comb_spec_searcher.exception import NoMoreClassesToExpandError
 from comb_spec_searcher.rule_db.base import RuleDBBase
 from comb_spec_searcher.specification import CombinatorialSpecification
@@ -11,62 +21,114 @@ from comb_spec_searcher.specification_extrator import (
     SpecificationRuleExtractor,
 )
 from comb_spec_searcher.strategies.constructor.base import Constructor
-from comb_spec_searcher.strategies.rule import Rule
+from comb_spec_searcher.strategies.rule import AbstractRule, Rule
 from comb_spec_searcher.tree_searcher import Node, prune
-from comb_spec_searcher.typing import RuleKey, Terms
+from comb_spec_searcher.typing import (
+    CombinatorialClassType,
+    CombinatorialObjectType,
+    Terms,
+)
 
+if TYPE_CHECKING:
+    from comb_spec_searcher.combinatorial_class import (
+        CombinatorialClass,
+        CombinatorialObject,
+    )
+
+
+ClassType1 = TypeVar("ClassType1", bound="CombinatorialClass")
+ObjType1 = TypeVar("ObjType1", bound="CombinatorialObject")
+ClassType2 = TypeVar("ClassType2", bound="CombinatorialClass")
+ObjType2 = TypeVar("ObjType2", bound="CombinatorialObject")
 NO_CONSTRUCTOR = None.__class__
 MatchingInfo = DefaultDict[
     Tuple[int, int], Dict[Tuple[Tuple[int, ...], Tuple[int, ...]], List[int]]
 ]
 MatchingInfoSingle = DefaultDict[int, DefaultDict[int, Set[Tuple[int, ...]]]]
 SpecMap = Dict[int, Tuple[int, ...]]
-RuleClassification = DefaultDict[
-    int, DefaultDict[int, List[Tuple[Tuple[int, ...], Union[Constructor, None]]]]
-]
 
 
-class ParallelInfo:
+class ParallelInfo(Generic[CombinatorialClassType, CombinatorialObjectType]):
     """Information from searcher essential to finding bijection with another and then
     to create specifications.
     """
 
-    def __init__(self, searcher: CombinatorialSpecificationSearcher):
-        self.searcher: CombinatorialSpecificationSearcher = searcher
-        self._expand()
+    def __init__(
+        self,
+        searcher: CombinatorialSpecificationSearcher[CombinatorialClassType],
+        additional_levels: int = 0,
+    ):
+        self.searcher = searcher
+        self._expand(additional_levels)
         self.r_db: RuleDBBase = self.searcher.ruledb
         self.root_eq_label: int = self.r_db.equivdb[self.searcher.start_label]
         self.atom_map: Dict[int, Tuple[int, Terms]] = {}
-        self.root_class: CombinatorialClass = self.searcher.classdb.get_class(
-            self.searcher.start_label
-        )
-        self.eq_label_rules: RuleClassification = self._construct_eq_label_rules()
+        self.root_class = self.searcher.classdb.get_class(self.searcher.start_label)
+        self.eq_label_rules = self._construct_eq_label_rules()
 
-    def _expand(self):
+    def _expand(self, additional_levels: int):
         try:
             while self.searcher.get_specification(minimization_time_limit=0) is None:
                 self.searcher.do_level()
+        except NoMoreClassesToExpandError as ex:
+            if self.searcher.get_specification(minimization_time_limit=0) is None:
+                raise ValueError("No specifications were found") from ex
+        try:
+            for _ in range(additional_levels):
+                self.searcher.do_level()
         except NoMoreClassesToExpandError:
-            assert (
-                self.searcher.get_specification(minimization_time_limit=0) is not None
-            )
+            pass
 
     def _construct_eq_label_rules(
         self,
-    ) -> RuleClassification:
+    ) -> DefaultDict[
+        int,
+        DefaultDict[
+            int,
+            List[
+                Tuple[
+                    Tuple[int, ...],
+                    Union[
+                        Constructor[CombinatorialClassType, CombinatorialObjectType],
+                        None,
+                    ],
+                ]
+            ],
+        ],
+    ]:
         """
         Creates a dictionary d such that
             d[label][rule_type][number_of_children]
         is a set of possible resulting children ids (grouped into tuples of length
         number_of_children) by applying rule_type to label.
         """
-        lis, rule_dict, eq_label_rules = self._construct_eq_labels_init()
+        lis = self._pruned_rules_up_to_eq()
+        rule_dict = self.r_db.rule_from_equivalence_rule_dict(lis)
+        eq_label_rules: DefaultDict[
+            int,
+            DefaultDict[
+                int,
+                List[
+                    Tuple[
+                        Tuple[int, ...],
+                        Union[
+                            Constructor[
+                                CombinatorialClassType, CombinatorialObjectType
+                            ],
+                            None,
+                        ],
+                    ]
+                ],
+            ],
+        ] = defaultdict(lambda: defaultdict(list))
 
         for eq_par, eq_chi in lis:
             actual_par, actual_children = rule_dict[(eq_par, eq_chi)]
             strategy = self.r_db.rule_to_strategy[(actual_par, actual_children)]
             parent = self.searcher.classdb.get_class(actual_par)
-            rule = strategy(parent)
+            rule: AbstractRule[
+                CombinatorialClassType, CombinatorialObjectType
+            ] = strategy(parent)
             if parent.is_atom():
                 eq_label_rules[eq_par][0].append((eq_chi, None))
                 sz = next(
@@ -78,38 +140,36 @@ class ParallelInfo:
                 eq_label_rules[eq_par][len(eq_chi)].append((eq_chi, rule.constructor))
         return eq_label_rules
 
-    def _construct_eq_labels_init(
+    def _pruned_rules_up_to_eq(
         self,
-    ) -> Tuple[
-        List[Tuple[int, Tuple[int, ...]]],
-        Dict[RuleKey, RuleKey],
-        RuleClassification,
-    ]:
+    ) -> List[Tuple[int, Tuple[int, ...]]]:
         rules_up_to_eq = self.r_db.rules_up_to_equivalence()
         prune(rules_up_to_eq)
-        lis = [(k, c) for k, v in rules_up_to_eq.items() for c in v]
-        rule_dict = self.r_db.rule_from_equivalence_rule_dict(lis)
-        eq_label_rules: RuleClassification = defaultdict(lambda: defaultdict(list))
-        return lis, rule_dict, eq_label_rules
+        return [(k, c) for k, v in rules_up_to_eq.items() for c in v]
 
 
-class ParallelSpecFinder:
+class ParallelSpecFinder(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
     """Finder for paralell specs."""
 
     _INVALID, _UNKNOWN, _VALID = range(-1, 2)
 
     def __init__(
         self,
-        searcher1: CombinatorialSpecificationSearcher,
-        searcher2: CombinatorialSpecificationSearcher,
+        searcher1: CombinatorialSpecificationSearcher[ClassType1],
+        searcher2: CombinatorialSpecificationSearcher[ClassType2],
     ):
-        self._pi1 = ParallelInfo(searcher1)
-        self._pi2 = ParallelInfo(searcher2)
+        self._pi1 = ParallelInfo[ClassType1, ObjType1](searcher1)
+        self._pi2 = ParallelInfo[ClassType2, ObjType2](searcher2)
         self._ancestors: Set[Tuple[int, int]] = set()
 
     def find(
         self,
-    ) -> Optional[Tuple[CombinatorialSpecification, CombinatorialSpecification]]:
+    ) -> Optional[
+        Tuple[
+            CombinatorialSpecification[ClassType1, ObjType1],
+            CombinatorialSpecification[ClassType2, ObjType2],
+        ]
+    ]:
         """Find bijections between the two universes."""
         matching_info: MatchingInfo = defaultdict(dict)
         visited: Set[Tuple[int, int]] = set()
@@ -209,7 +269,12 @@ class ParallelSpecFinder:
         self,
         found: bool,
         matching_info: MatchingInfo,
-    ) -> Optional[Tuple[CombinatorialSpecification, CombinatorialSpecification]]:
+    ) -> Optional[
+        Tuple[
+            CombinatorialSpecification[ClassType1, ObjType1],
+            CombinatorialSpecification[ClassType2, ObjType2],
+        ]
+    ]:
         if not found:
             return None
         spec_rules = self._search_matching_info(matching_info)
