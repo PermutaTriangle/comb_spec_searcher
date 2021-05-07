@@ -2,6 +2,7 @@
 A database for rules.
 """
 import abc
+import itertools
 from collections import defaultdict
 from typing import (
     Any,
@@ -18,6 +19,7 @@ from typing import (
     cast,
 )
 
+import sympy
 import tabulate
 from logzero import logger
 
@@ -212,11 +214,11 @@ class RuleDBBase(RuleDBAbstract):
 
     def is_verified(self, label: int) -> bool:
         """Return True if label has been verified."""
-        return bool(self.equivdb.is_verified(label))
+        return self.equivdb.is_verified(label)
 
     def are_equivalent(self, label: int, other: int) -> bool:
         """Return true if label and other are equivalent."""
-        return bool(self.equivdb.equivalent(label, other))
+        return self.equivdb.equivalent(label, other)
 
     def rules_up_to_equivalence(self) -> Dict[int, Set[Tuple[int, ...]]]:
         """Return a defaultdict containing all rules up to the equivalence."""
@@ -230,23 +232,14 @@ class RuleDBBase(RuleDBAbstract):
             )
         return rules_dict
 
-    def all_rules(self) -> Iterator[Tuple[int, Tuple[int, ...], AbstractStrategy]]:
-        """Yield all the rules found so far."""
-        for start, ends in self:
-            yield start, ends, self.rule_to_strategy[(start, ends)]
-
     def __iter__(self) -> Iterator[Tuple[int, Tuple[int, ...]]]:
-        """Iterate through rules as the pairs (start, end)."""
-        for start, ends in self.rule_to_strategy:
-            yield start, ends
+        """Iterate through rules as the pairs (start, ends)."""
+        return itertools.chain(self.rule_to_strategy, self.eqv_rule_to_strategy)
 
     def contains(self, start: int, ends: Tuple[int, ...]) -> bool:
         """Return true if the rule start -> ends is in the database."""
-        ends = tuple(sorted(ends))
-        return (start, ends) in self.rule_to_strategy or (
-            start,
-            ends,
-        ) in self.eqv_rule_to_strategy
+        key = (start, sorted(ends))
+        return key in self.rule_to_strategy or key in self.eqv_rule_to_strategy
 
     def status(self, elaborate: bool) -> str:
         """Return a string describing the status of the rule database."""
@@ -468,3 +461,38 @@ class RuleDB(RuleDBBase):
         self,
     ) -> Dict[Tuple[int, Tuple[int, ...]], AbstractStrategy]:
         return self._eqv_rule_to_strategy
+
+    def all_rules(self) -> Iterator[AbstractRule]:
+        """Yield all the rules found so far."""
+        for rulekey in self:
+            parent = self.classdb.get_class(rulekey[0])
+            try:
+                strategy = self.rule_to_strategy[rulekey]
+            except KeyError:
+                strategy = self.eqv_rule_to_strategy[rulekey]
+            yield strategy(parent)
+
+    def all_equations(self) -> Set[sympy.Eq]:
+        """
+        Returns a set of equations for all rules currently found.
+        """
+
+        def get_function(comb_class) -> sympy.Function:
+            return comb_class.get_function(self.classdb.get_label)
+
+        eqs = set()
+        for rule in self.all_rules():
+            try:
+                eq = rule.get_equation(get_function)
+            except NotImplementedError:
+                logger.info(
+                    "can't find generating function for %s." " The comb class is:\n%s",
+                    get_function(rule.comb_class),
+                    rule.comb_class,
+                )
+                eq = sympy.Eq(
+                    get_function(rule.comb_class),
+                    sympy.Function("NOTIMPLEMENTED")(sympy.var("x")),
+                )
+            eqs.add(eq)
+        return eqs
