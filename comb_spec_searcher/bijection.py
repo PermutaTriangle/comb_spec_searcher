@@ -38,7 +38,7 @@ class ParallelInfo:
 
     def _expand(self):
         try:
-            while self.searcher.get_specification(minimization_time_limit=0) is None:
+            while not self.searcher.has_specification() is None:
                 self.searcher.do_level()
         except NoMoreClassesToExpandError:
             assert (

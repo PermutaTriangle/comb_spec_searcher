@@ -1,15 +1,17 @@
 import itertools
-from typing import Dict, Iterator, Tuple
+from typing import TYPE_CHECKING, Dict, Iterator, Tuple
 
 from comb_spec_searcher.class_db import ClassDB
-from comb_spec_searcher.rule_db.base import RuleDBBase
 from comb_spec_searcher.strategies.rule import AbstractRule, Rule
 from comb_spec_searcher.tree_searcher import Node
+
+if TYPE_CHECKING:
+    from comb_spec_searcher.rule_db.base import RuleDBBase
 
 
 class SpecificationRuleExtractor:
     def __init__(
-        self, root_label: int, root_node: Node, ruledb: RuleDBBase, classdb: ClassDB
+        self, root_label: int, root_node: Node, ruledb: "RuleDBBase", classdb: ClassDB
     ):
         self.ruledb = ruledb
         self.classdb = classdb
