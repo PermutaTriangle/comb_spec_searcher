@@ -6,6 +6,7 @@ from comb_spec_searcher import (
     CombinatorialSpecification,
     CombinatorialSpecificationSearcher,
 )
+from comb_spec_searcher.rule_db import RuleDBForgetStrategy
 from comb_spec_searcher.utils import taylor_expand
 from example import AvoidingWithPrefix, Word, pack
 
@@ -88,7 +89,8 @@ def test_random_sample(specification):
 def test_forget_ruledb():
     alphabet = ["a", "b"]
     start_class = AvoidingWithPrefix("", ["ababa", "babb"], alphabet)
-    searcher = CombinatorialSpecificationSearcher(start_class, pack, ruledb="forget")
+    ruledb = RuleDBForgetStrategy()
+    searcher = CombinatorialSpecificationSearcher(start_class, pack, ruledb=ruledb)
     return searcher.auto_search()
 
 
