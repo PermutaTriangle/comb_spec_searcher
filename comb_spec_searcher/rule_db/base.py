@@ -3,14 +3,28 @@ A database for rules.
 """
 import abc
 from collections import defaultdict
-from typing import Dict, Iterable, Iterator, List, MutableMapping, Optional, Set, Tuple
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    MutableMapping,
+    Optional,
+    Set,
+    Tuple,
+    TypeVar,
+    cast,
+)
 
 import tabulate
 from logzero import logger
 
 from comb_spec_searcher.class_db import ClassDB
 from comb_spec_searcher.equiv_db import EquivalenceDB
-from comb_spec_searcher.exception import SpecificationNotFound
+from comb_spec_searcher.exception import InvalidOperationError, SpecificationNotFound
+from comb_spec_searcher.specification_extrator import SpecificationRuleExtractor
 from comb_spec_searcher.strategies import AbstractStrategy, VerificationRule
 from comb_spec_searcher.strategies.rule import AbstractRule
 from comb_spec_searcher.strategies.strategy_pack import StrategyPack
@@ -20,12 +34,23 @@ from comb_spec_searcher.tree_searcher import (
     iterative_prune,
     proof_tree_generator_dfs,
     prune,
-    random_proof_tree,
     smallish_random_proof_tree,
 )
-from comb_spec_searcher.typing import RuleKey
+from comb_spec_searcher.typing import RuleKey, RulesDict
 
 __all__ = ["RuleDBBase", "RuleDB"]
+
+RuleDBMethod = TypeVar("RuleDBMethod", bound=Callable[..., Any])
+
+
+def ensure_specification(func: RuleDBMethod) -> RuleDBMethod:
+    def inner(ruledb: RuleDBAbstract, *args, **kwargs):
+        assert isinstance(ruledb, RuleDBAbstract)
+        if not ruledb.has_specification():
+            raise SpecificationNotFound
+        return func(ruledb, *args, **kwargs)
+
+    return cast(RuleDBMethod, inner)
 
 
 class RuleDBAbstract(abc.ABC):
@@ -104,11 +129,43 @@ class RuleDBAbstract(abc.ABC):
         """
 
 
-class RuleDBBase(abc.ABC):
-    """A database for rules found."""
+class RuleDBBase(RuleDBAbstract):
+    """
+    A database to find specification using the pruning method.
+    """
 
     def __init__(self) -> None:
+        super().__init__()
         self.equivdb = EquivalenceDB()
+        # Store the pruned dict. Should be set back to None every time the ruledb is
+        # edited. Use the propertu for clean access.
+        self._pruned_dict: Optional[RulesDict] = None
+
+    @property
+    def iterative(self) -> bool:
+        """
+        Indicate wheter we are searching for an iterative specification.
+        """
+        return self.strategy_pack.iterative
+
+    @property
+    def pruned_dict(self) -> RulesDict:
+        """
+        Returned the prune dict of all the rules that are in a specification.
+
+        The dict needs to be recomputed every time the database changes and it
+        is costly to so. Call with moderation.
+        """
+        if self._pruned_dict is None:
+            rules_dict = self.rules_up_to_equivalence()
+            if self.iterative:
+                rules_dict = iterative_prune(rules_dict, root=self.root_label)
+            else:
+                prune(rules_dict)
+            self._pruned_dict = rules_dict
+            for ver_label in rules_dict.keys():
+                self.equivdb.set_verified(ver_label)
+        return self._pruned_dict
 
     @property
     @abc.abstractmethod
@@ -137,9 +194,10 @@ class RuleDBBase(abc.ABC):
         - ends is a tuple of integers, representing the non-empty children.
         - rule is a Rule that creates start -> ends.
         """
+        self._pruned_dict = None
         ends = tuple(sorted(ends))
         if isinstance(rule, VerificationRule):
-            self.set_verified(start)
+            self.equivdb.set_verified(start)
         if len(ends) == 1:
             if rule.is_two_way():
                 self.equivdb.add_two_way_edge(start, ends[0])
@@ -156,17 +214,9 @@ class RuleDBBase(abc.ABC):
         """Return True if label has been verified."""
         return bool(self.equivdb.is_verified(label))
 
-    def set_verified(self, label: int) -> None:
-        """Mark label as verified."""
-        self.equivdb.set_verified(label)
-
     def are_equivalent(self, label: int, other: int) -> bool:
         """Return true if label and other are equivalent."""
         return bool(self.equivdb.equivalent(label, other))
-
-    def set_equivalent(self, label: int, other: int) -> None:
-        """Mark label and other as equivalent."""
-        self.equivdb.add_two_way_edge(label, other)
 
     def rules_up_to_equivalence(self) -> Dict[int, Set[Tuple[int, ...]]]:
         """Return a defaultdict containing all rules up to the equivalence."""
@@ -256,9 +306,12 @@ class RuleDBBase(abc.ABC):
     # Below are methods for finding a combinatorial specification. #
     ################################################################
 
-    def has_specification(self, label: int) -> bool:
+    def has_specification(self) -> bool:
         """Return True if a specification has been found, false otherwise."""
-        return self.is_verified(label)
+        if self.equivdb[self.root_label] in self.pruned_dict:
+            logger.info("Specification detected.")
+            return True
+        return False
 
     def rule_from_equivalence_rule(
         self, eqv_start: int, eqv_ends: Iterable[int]
@@ -294,94 +347,108 @@ class RuleDBBase(abc.ABC):
                 res[eqv_key] = (start, ends)
         return res
 
-    def find_specification(
-        self, label: int, minimization_time_limit: float, iterative: bool = False
+    @ensure_specification
+    def get_specification_rules(
+        self,
+        *,
+        minimization_time_limit: float = 10,
+        smallest: bool = False,
+        **kwargs,
+    ) -> Iterator[AbstractRule]:
+        node = self._get_specification_node(minimization_time_limit, smallest)
+        logger.info("Found specification with %s rules.", len(node.labels()))
+        spec_extractor = SpecificationRuleExtractor(
+            self.root_label, node, self, self.classdb
+        )
+        return spec_extractor.rules()
+
+    @ensure_specification
+    def _get_specification_node(
+        self, minimization_time_limit: float, smallest: bool
     ) -> Node:
-        """Search for a specification based on current data found."""
-        rules_dict = self.rules_up_to_equivalence()
-        # Prune all unverified labels (recursively)
-        if iterative:
-            rules_dict = iterative_prune(rules_dict, root=label)
+        """
+        Return a specification node for the given label.
+        """
+        if self.iterative:
+            if smallest:
+                raise InvalidOperationError("can't use iterative and smallest")
+            node = self._get_iterative_node()
         else:
-            prune(rules_dict)  # this function removes rules not in a specification.
-
-        # only verified labels in rules_dict, in particular, there is a
-        # specification if a label is in the rules_dict
-        for ver_label in rules_dict.keys():
-            self.set_verified(ver_label)
-
-        if self.equivdb[label] in rules_dict:
-            logger.info("Specification detected.")
-            if iterative:
-                specification = iterative_proof_tree_finder(
-                    rules_dict, root=self.equivdb[label]
-                )
+            if smallest:
+                node = self._get_smallest_node(minimization_time_limit)
             else:
-                logger.info(
-                    "Minimizing for %s seconds.", round(minimization_time_limit)
+                node = self._get_smallish_node(
+                    minimization_time_limit=minimization_time_limit,
                 )
-                specification = smallish_random_proof_tree(
-                    rules_dict, self.equivdb[label], minimization_time_limit
-                )
-            logger.info(
-                "Found specification with %s rules.", len(specification.labels())
-            )
-        else:
-            raise SpecificationNotFound("No specification for label {}".format(label))
-        return specification
+        return node
 
-    def all_specifications(self, label: int, iterative: bool = False) -> Iterator[Node]:
-        """
-        A generator that yields all specifications in the universe for
-        the given label.
-        """
-        if iterative:
-            raise NotImplementedError(
-                "There is no method for yielding all iterative proof trees."
-            )
-        rules_dict = self.rules_up_to_equivalence()
-        # Prune all unverified labels (recursively)
-        prune(rules_dict)
+    @ensure_specification
+    def _get_iterative_node(self) -> Node:
+        if not self.iterative:
+            raise InvalidOperationError("Not supported in non-iterative mode")
+        return iterative_proof_tree_finder(
+            self.pruned_dict, root=self.equivdb[self.root_label]
+        )
 
-        if self.equivdb[label] in rules_dict:
-            yield from proof_tree_generator_dfs(rules_dict, root=self.equivdb[label])
+    @ensure_specification
+    def _get_smallish_node(self, minimization_time_limit: float) -> Node:
+        """Search for a smallish node for the given minimization time."""
+        if self.iterative:
+            raise InvalidOperationError("Not supported in iterative mode.")
+        logger.info("Minimizing for %s seconds.", round(minimization_time_limit))
+        return smallish_random_proof_tree(
+            self.pruned_dict, self.equivdb[self.root_label], minimization_time_limit
+        )
 
-    def get_smallest_specification(self, label: int, iterative: bool = False) -> Node:
+    @ensure_specification
+    def _get_smallest_node(self, minimization_time_limit: float) -> Node:
         """
-        Return the smallest specification in the universe for label. It uses
-        exponential search to find it.
+        Return the smallest specification node in the universe.
+
+        Will look for a smallish spec for minimization_time_limit and then use
+        binary search to find it to find the smallest one.
+
         This doesn't consider the length of the equivalence paths.
         """
-        if iterative:
-            raise NotImplementedError(
-                "There is no method for finding smallest iterative proof trees."
-            )
-        rules_dict = self.rules_up_to_equivalence()
-        prune(rules_dict)
-
-        if not self.equivdb[label] in rules_dict:
-            raise SpecificationNotFound("No specification for label {}".format(label))
-        tree = random_proof_tree(rules_dict, root=self.equivdb[label])
+        if self.iterative:
+            raise InvalidOperationError("Not supported in iterative mode.")
+        node = self._get_smallish_node(minimization_time_limit)
         minimum = 1
-        maximum = len(tree)
+        maximum = len(node)
         logger.info(
-            "Found a specification of size %s. Looking for the smallest.", len(tree)
+            "Found a specification of size %s. Looking for the smallest.", len(node)
         )
         # Binary search to find a smallest proof tree.
         while minimum < maximum:
             middle = (minimum + maximum) // 2
             logger.info("Looking for specification of size %s", middle)
             try:
-                tree = next(
+                node = next(
                     proof_tree_generator_dfs(
-                        rules_dict, root=self.equivdb[label], maximum=middle
+                        self.pruned_dict,
+                        root=self.equivdb[self.root_label],
+                        maximum=middle,
                     )
                 )
-                maximum = min(middle, len(tree))
+                maximum = min(middle, len(node))
             except StopIteration:
                 minimum = middle + 1
-        logger.info("The smallest specification is of size %s.", len(tree))
-        return tree
+        logger.info("The smallest specification is of size %s.", len(node))
+        return node
+
+    @ensure_specification
+    def _all_nodes(self, iterative: bool = False) -> Iterator[Node]:
+        """
+        A generator that yields all specifications in the universe for
+        the given label.
+        """
+        if self.iterative:
+            raise NotImplementedError(
+                "There is no method for yielding all iterative proof trees."
+            )
+        yield from proof_tree_generator_dfs(
+            self.pruned_dict, root=self.equivdb[self.root_label]
+        )
 
 
 class RuleDB(RuleDBBase):
