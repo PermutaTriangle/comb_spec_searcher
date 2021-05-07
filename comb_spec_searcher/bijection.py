@@ -271,7 +271,7 @@ class ParallelSpecFinder(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
         visited.add((id1, id2))
 
         # Return true if any valid matching was found.
-        return len(matching_info[(id1, id2)]) > 0
+        return (id1, id2) in matching_info
 
     def _base_case(
         self,
