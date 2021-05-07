@@ -20,8 +20,8 @@ if TYPE_CHECKING:
     from .specification import CombinatorialSpecification
 
 
-ClassType1 = TypeVar("ClassType1", bound="CombinatorialClass")
 ObjType1 = TypeVar("ObjType1", bound="CombinatorialObject")
+ClassType1 = TypeVar("ClassType1", bound="CombinatorialClass")
 ClassType2 = TypeVar("ClassType2", bound="CombinatorialClass")
 ObjType2 = TypeVar("ObjType2", bound="CombinatorialObject")
 OrderMap = Dict[Tuple[ClassType1, ClassType2], List[int]]
@@ -85,7 +85,7 @@ class Isomorphism(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
 
     def get_order(
         self,
-    ) -> OrderMap:
+    ) -> OrderMap[ClassType1, ClassType2]:
         """Get order map of corresponding nodes."""
         return self._order_map
 
@@ -299,7 +299,7 @@ class Node(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
     def build_obj(
         self,
         rule: AbstractRule[ClassType2, ObjType2],
-        get_order: OrderMap,
+        get_order: OrderMap[ClassType1, ClassType2],
         get_rule: Callable[[ClassType2], AbstractRule[ClassType2, ObjType2]],
         index_data: Dict[Tuple[ClassType1, ClassType2], object],
     ) -> ObjType2:
@@ -366,7 +366,7 @@ class ParseTree(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
     def build_obj(
         self,
         root: AbstractRule[ClassType2, ObjType2],
-        get_order: OrderMap,
+        get_order: OrderMap[ClassType1, ClassType2],
         get_rule: Callable[[ClassType2], AbstractRule[ClassType2, ObjType2]],
         index_data: Dict[Tuple[ClassType1, ClassType2], object],
     ) -> ObjType2:
@@ -393,7 +393,7 @@ class Bijection(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
         self,
         spec: "CombinatorialSpecification[ClassType1, ObjType1]",
         other: "CombinatorialSpecification[ClassType2, ObjType2]",
-        get_order: OrderMap,
+        get_order: OrderMap[ClassType1, ClassType2],
         index_data: IndexDataMap = None,
     ):
         self._index_data = {} if index_data is None else index_data
@@ -512,4 +512,4 @@ class Bijection(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
             for idx1, sub_map in d["index_data"].items()
             for idx2, data in sub_map.items()
         }
-        return cls(spec1, spec2, get_order, index_data)
+        return cls(spec1, spec2, get_order, index_data)  # type: ignore
