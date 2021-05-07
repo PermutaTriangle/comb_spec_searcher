@@ -135,6 +135,7 @@ class ParallelInfo(Generic[CombinatorialClassType, CombinatorialObjectType]):
             else:
                 if not isinstance(rule, Rule):
                     raise ValueError("Only atoms can be verified.")
+                assert len(eq_chi) > 0
                 eq_label_rules[eq_par][len(eq_chi)].append((eq_chi, rule.constructor))
         return eq_label_rules
 
@@ -281,8 +282,8 @@ class ParallelSpecFinder(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
     ) -> int:
         # If no children we compare atoms
         if (
-            0 in self._pi1.eq_label_rules[id1]
-            and 0 in self._pi2.eq_label_rules[id2]
+            id1 in self._pi1.atom_map
+            and id2 in self._pi2.atom_map
             and self._atom_match(id1, id2)
         ):
             matching_info[(id1, id2)] = {((), ()): []}
