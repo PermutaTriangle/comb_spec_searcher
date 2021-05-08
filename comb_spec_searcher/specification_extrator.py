@@ -1,6 +1,6 @@
 import itertools
 from operator import itemgetter
-from typing import Dict, Iterator, List, Tuple
+from typing import Dict, Iterator, List, Set, Tuple
 
 from comb_spec_searcher.class_db import ClassDB
 from comb_spec_searcher.rule_db.base import RuleDBBase
@@ -39,13 +39,7 @@ class SpecificationRuleExtractor:
         Populate the rules dict with the labels of equivalences rules needed to make
         every class be on a right hand side.
         """
-        all_rhs = itertools.chain.from_iterable(self.rules_dict.values())
-        no_lhs_labels = set(
-            itertools.filterfalse(self.rules_dict.__contains__, all_rhs)
-        )
-        if self.root_label not in self.rules_dict:
-            no_lhs_labels.add(self.root_label)
-        for label in no_lhs_labels:
+        for label in self._no_lhs_labels():
             eqv_label = self.ruledb.equivdb[label]
             path = self.ruledb.equivdb.find_path(
                 label, self.eqvparent_to_parent[eqv_label]
@@ -56,6 +50,18 @@ class SpecificationRuleExtractor:
                     # with something in the specification
                     break
                 self.rules_dict[parent] = (child,)
+
+    def _no_lhs_labels(self) -> Set[int]:
+        """
+        Find labels that are not a lhs of any rule.
+        """
+        all_rhs = itertools.chain.from_iterable(self.rules_dict.values())
+        no_lhs_labels = set(
+            itertools.filterfalse(self.rules_dict.__contains__, all_rhs)
+        )
+        if self.root_label not in self.rules_dict:
+            no_lhs_labels.add(self.root_label)
+        return no_lhs_labels
 
     def _check(self):
         """
@@ -116,6 +122,15 @@ class SpecificationRuleExtractor:
 
 
 class EquivalenceRuleExtractor(SpecificationRuleExtractor):
+    """
+    This class extracts the actual rules that would be created for an equivalence
+    label given a partial spec that is traversable from root. Suppose we want the
+    rules for the parent in `grandparent-parent-children` than what rules are used
+    will depend on the grandparent and children and we are looking for the rules
+    that have the same equivalance label on both the LHS and RHS and in the order they
+    would be traversed from the root.
+    """
+
     def __init__(
         self,
         root_eq_label: int,
@@ -127,12 +142,19 @@ class EquivalenceRuleExtractor(SpecificationRuleExtractor):
         parent_of_target: int,
         idx: int,
     ):
+        # parent
         self.target = target
+        # grandparent
         self.parent_of_target = parent_of_target
+        # grandparent.children[idx] is parent
+        self.idx = idx
+        # class label of the LHS of the first rule for the eq path, updated later
         self.start = root_class_label
+        # class label of the RHS of the last rule for the eq path, updated later
         self.end = -1
-        self.idx = idx  # children_of_grandparent[idx] = parent
+        # Maps our children index order to that of the actual rules
         self.index_order_map: Dict[RuleKey, Tuple[int, ...]] = {}
+        # Children are included in the tree
         super().__init__(root_eq_label, root_node, ruledb, classdb)
 
     def _populate_decompositions(self) -> None:
@@ -159,25 +181,25 @@ class EquivalenceRuleExtractor(SpecificationRuleExtractor):
                 eqvrule_to_rule[eqv_key] = (start, ends)
 
         for eqvrule in self.eqv_rulekeys:
+            # Might not exist because spec is incomplete.
             try:
                 parent, children = eqvrule_to_rule[eqvrule]
             except KeyError:
                 continue
             self.rules_dict[parent] = children
             self.eqvparent_to_parent[eqvrule[0]] = parent
+            # If grandparent, then we can find our starting point
+            # If no grandparent exists, this will always be the root.
             if eqvrule[0] == self.parent_of_target:
                 self.start = children[self.index_order_map[eqvrule][self.idx]]
+            # If parent, we have our end point
             if eqvrule[0] == self.target:
                 self.end = parent
 
     def _populate_equivalences(self) -> None:
-        all_rhs = itertools.chain.from_iterable(self.rules_dict.values())
-        no_lhs_labels = set(
-            itertools.filterfalse(self.rules_dict.__contains__, all_rhs)
-        )
-        if self.root_label not in self.rules_dict:
-            no_lhs_labels.add(self.root_label)
-        for label in no_lhs_labels:
+        # SpecificationRuleExtractor's with a try-catch do deal with incomplete spec
+
+        for label in self._no_lhs_labels():
             eqv_label = self.ruledb.equivdb[label]
             try:
                 path = self.ruledb.equivdb.find_path(
@@ -201,6 +223,7 @@ class EquivalenceRuleExtractor(SpecificationRuleExtractor):
         path = self.ruledb.equivdb.find_path(self.start, self.end)
         for p, c in zip(path, path[1:]):
             rule = self._find_rule(p, (c,))
+            # If rule is an actual equivalence rule, we don't care and ignore it.
             if not rule.is_equivalence():
                 assert isinstance(rule, Rule)
                 yield rule
