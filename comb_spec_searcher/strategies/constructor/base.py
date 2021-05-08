@@ -109,7 +109,26 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
         """
 
     @staticmethod
+    def extra_params_equiv(
+        params1: Tuple[Dict[str, str], ...],
+        params2: Tuple[Dict[str, str], ...],
+    ) -> bool:
+        """A base equiv for extra params that will suffice for most constructors."""
+        non_empty1 = tuple(par for par in params1 if par)
+        non_empty2 = tuple(par for par in params2 if par)
+        n = len(non_empty1)
+        if len(non_empty2) != n:
+            return False
+        if n == 0:
+            return True
+        return Constructor._extra_params_match_bijection(n, non_empty1, non_empty2)
+
+    @staticmethod
     def _extra_params_match_single(par1: Dict[str, str], par2: Dict[str, str]) -> bool:
+        """Two parameter dictionaries are equivalent if they have the same number
+        of keys if there is a value with k keys mapping to it, then there is a
+        corresponding value with k keys mapping to it in the other one.
+        """
         return len(par1) == len(par2) and sorted(
             Counter(par1.values()).values()
         ) == sorted(Counter(par2.values()).values())
@@ -118,6 +137,10 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
     def _extra_params_match_bijection(
         n: int, p1: Tuple[Dict[str, str], ...], p2: Tuple[Dict[str, str], ...]
     ) -> bool:
+        """Check if there is a bijection between the two tuples of params
+        such that they are pairwise equivalent."""
+
+        # Shared variables in recursion
         bijection: List[int] = []
         in_use: Set[int] = set()
         cache: Dict[Tuple[int, int], bool] = {}
@@ -128,14 +151,17 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
                     continue
                 bijection.append(i)
                 in_use.add(i)
+
                 k = len(bijection)
                 key = (k - 1, i)
-                if key not in cache:
+                res = cache.get(key, None)
+                if res is None:
                     res = Constructor._extra_params_match_single(p1[key[0]], p2[key[1]])
                     cache[key] = res
-                else:
-                    res = cache[key]
+
+                # Check if consistent and either done or recursive success.
                 res = res and (k == n or _backtracking())
+
                 bijection.pop()
                 in_use.remove(i)
                 if res:
@@ -143,18 +169,3 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
             return False
 
         return _backtracking()
-
-    @staticmethod
-    def extra_params_equiv(
-        pars1: Tuple[Dict[str, str], ...],
-        pars2: Tuple[Dict[str, str], ...],
-    ) -> bool:
-        """A base equiv for extra params that will suffice for most constructors."""
-        t1 = tuple(par for par in pars1 if par)
-        t2 = tuple(par for par in pars2 if par)
-        n = len(t1)
-        if len(t2) != n:
-            return False
-        if n == 0:
-            return True
-        return Constructor._extra_params_match_bijection(n, t1, t2)

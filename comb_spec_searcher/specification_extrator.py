@@ -127,7 +127,6 @@ class EquivalenceRuleExtractor(SpecificationRuleExtractor):
         parent_of_target: int,
         idx: int,
     ):
-        self.root_class_label = root_class_label  # TODO: rem
         self.target = target
         self.parent_of_target = parent_of_target
         self.start = root_class_label

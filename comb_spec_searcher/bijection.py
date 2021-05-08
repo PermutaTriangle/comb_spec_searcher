@@ -61,6 +61,13 @@ RuleClassification = DefaultDict[
         ],
     ],
 ]
+EqPathTracker = DefaultDict[
+    Tuple[int, int],
+    DefaultDict[
+        Tuple[int, int],
+        Dict[Tuple[Tuple[int, ...], Tuple[int, ...]], bool],
+    ],
+]
 
 
 class ParallelInfo(Generic[CombinatorialClassType, CombinatorialObjectType]):
@@ -162,7 +169,10 @@ class ParallelInfo(Generic[CombinatorialClassType, CombinatorialObjectType]):
 
 
 class ParallelSpecFinder(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
-    """Finder for paralell specs."""
+    """
+    Finder for paralell specs. This version assumes that any classes that share
+    equivalence labels are in fact equivalent.
+    """
 
     _INVALID, _UNKNOWN, _VALID = range(-1, 2)
 
@@ -391,7 +401,7 @@ class ParallelSpecFinder(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
                 and (id2 not in sp2 or c[1] == sp2[id2]),
                 matching_info[(id1, id2)],
             ):
-                # Set rule for spec to (id -> children) for both specs
+                # Add rule for spec to (id -> children) for both specs
                 sp1[id1], sp2[id2] = children1, children2
 
                 # Construct cleaning sets that are passed down the recursion
@@ -452,8 +462,9 @@ class ParallelSpecFinder(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
         sp1: SpecMap,
         sp2: SpecMap,
     ) -> int:
-        # If it isn't in the matching order (should not happen)
-        if (id1, id2) not in matching_info:
+        if ParallelSpecFinder._inconsistent_with_matching_info(
+            id1, id2, matching_info, matching_info1, matching_info2, sp1, sp2
+        ):
             return ParallelSpecFinder._INVALID
         # If atoms, there is only one possible outcome
         if ((), ()) in matching_info[(id1, id2)]:
@@ -462,12 +473,26 @@ class ParallelSpecFinder(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
         # If both are assigned, we are done
         if id1 in sp1 and id2 in sp2:
             return ParallelSpecFinder._VALID
-        # If one is assigned but those children aren't compatible with the other
-        if id1 in sp1 and sp1[id1] not in matching_info1[id1][id2]:
-            return ParallelSpecFinder._INVALID
-        if id2 in sp2 and sp2[id2] not in matching_info2[id2][id1]:
-            return ParallelSpecFinder._INVALID
         return ParallelSpecFinder._UNKNOWN
+
+    @staticmethod
+    def _inconsistent_with_matching_info(
+        id1: int,
+        id2: int,
+        matching_info: MatchingInfo,
+        matching_info1: MatchingInfoSingle,
+        matching_info2: MatchingInfoSingle,
+        sp1: SpecMap,
+        sp2: SpecMap,
+    ):
+        """If ids are not in the matching order or if one is assigned but those
+        children aren't compatible with the other.
+        """
+        return (
+            (id1, id2) not in matching_info
+            or (id1 in sp1 and sp1[id1] not in matching_info1[id1][id2])
+            or (id2 in sp2 and sp2[id2] not in matching_info2[id2][id1])
+        )
 
     @staticmethod
     def _clean_descendants(
@@ -525,26 +550,40 @@ class ParallelSpecFinder(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
 class EqPathParallelSpecFinder(
     ParallelSpecFinder[ClassType1, ObjType1, ClassType2, ObjType2]
 ):
+    """
+    A version of ParallelSpecFinder that supports nonequivalent
+    classes sharing equivalence labels.
+    """
+
+    def __init__(
+        self,
+        searcher1: CombinatorialSpecificationSearcher[ClassType1],
+        searcher2: CombinatorialSpecificationSearcher[ClassType2],
+    ):
+        super().__init__(searcher1, searcher2)
+
+        # Tracks the path taken in the second search
+        self._path: List[Tuple[int, int, int, int]] = [(-1, -1, -1, -1)]
+
     def _search_matching_info(
         self, matching_info: MatchingInfo
     ) -> Optional[Tuple[SpecMap, SpecMap]]:
+        # This will differ (from super's) that equiv lables must
+        # be validated given the path that has been taken.
+
         (
             matching_info1,
             matching_info2,
             sp1,
             sp2,
         ) = EqPathParallelSpecFinder._search_matching_info_init(matching_info)
-        eq_path_tracker: DefaultDict[
-            Tuple[int, int], Set[Tuple[int, int]]
-        ] = defaultdict(set)
+
+        # For storing results of eq path checking.
+        eq_path_tracker: EqPathTracker = defaultdict(lambda: defaultdict(dict))
 
         def _rec(
             id1: int,
             id2: int,
-            pid1: int,
-            pid2: int,
-            idx1: int,
-            idx2: int,
             id_sets: Tuple[Set[int], Set[int]],
         ) -> bool:
             bc = self._search_matching_info_recursion_base_cases_eq(
@@ -555,7 +594,7 @@ class EqPathParallelSpecFinder(
                 matching_info2,
                 sp1,
                 sp2,
-                (pid1, pid2, idx1, idx2),
+                self._path[-1],
                 eq_path_tracker,
             )
             if bc:
@@ -569,26 +608,29 @@ class EqPathParallelSpecFinder(
                 sp1[id1], sp2[id2] = children1, children2
                 to_clean: Tuple[Set[int], Set[int]] = (set(), set())
 
-                valid_eq, store = self._eq_path_matches(
-                    id1, id2, pid1, pid2, idx1, idx2, sp1, sp2
-                )
-                if valid_eq:
-                    if store:
-                        eq_path_tracker[(id1, id2)].add((pid1, pid2))
-                    if all(
-                        _rec(child1, child2, id1, id2, j1, j2, to_clean)
-                        for j2, ((j1, child1), child2) in enumerate(
-                            zip(
-                                (
-                                    (i, children1[i])
-                                    for i in matching_info[(id1, id2)][
-                                        (children1, children2)
-                                    ]
-                                ),
-                                children2,
-                            )
+                # Check if the path required for the eq labels actually matches
+                if self._eq_path_matches(
+                    id1, id2, *self._path[-1], sp1, sp2, eq_path_tracker
+                ):
+                    valid = True
+                    for j2, ((j1, child1), child2) in enumerate(
+                        zip(
+                            (
+                                (i, children1[i])
+                                for i in matching_info[(id1, id2)][
+                                    (children1, children2)
+                                ]
+                            ),
+                            children2,
                         )
                     ):
+                        self._path.append((id1, id2, j1, j2))
+                        if not _rec(child1, child2, to_clean):
+                            valid = False
+                            self._path.pop()
+                            break
+                        self._path.pop()
+                    if valid:
                         id_sets[0].update(to_clean[0], () if rec1 else (id1,))
                         id_sets[1].update(to_clean[1], () if rec2 else (id2,))
                         return True
@@ -600,10 +642,6 @@ class EqPathParallelSpecFinder(
         if _rec(
             self._pi1.root_eq_label,
             self._pi2.root_eq_label,
-            -1,
-            -1,
-            -1,
-            -1,
             (set(), set()),
         ):
             return sp1, sp2
@@ -619,53 +657,76 @@ class EqPathParallelSpecFinder(
         sp1: SpecMap,
         sp2: SpecMap,
         relations: Tuple[int, int, int, int],
-        eq_path_tracker: DefaultDict[Tuple[int, int], Set[Tuple[int, int]]],
+        eq_path_tracker: EqPathTracker,
     ) -> int:
         pid1, pid2, idx1, idx2 = relations
-        if (id1, id2) not in matching_info:
+        if EqPathParallelSpecFinder._inconsistent_with_matching_info(
+            id1, id2, matching_info, matching_info1, matching_info2, sp1, sp2
+        ):
             return EqPathParallelSpecFinder._INVALID
+        # These atoms will have matches in the first searcher but we do offer
+        # additional checks which will, by default, always return true.
         if ((), ()) in matching_info[(id1, id2)]:
+            if not self._atom_path_match(id1, id2):
+                return EqPathParallelSpecFinder._INVALID
             sp1[id1], sp2[id2] = (), ()
             return EqPathParallelSpecFinder._VALID
+        # If both ids are set we still need to check if they are valid in terms
+        # of eq paths since we may have arrived from different parents.
         if id1 in sp1 and id2 in sp2:
-            if (pid1, pid2) in eq_path_tracker[(id1, id2)]:
+            if self._eq_path_matches(
+                id1, id2, pid1, pid2, idx1, idx2, sp1, sp2, eq_path_tracker
+            ):
                 return EqPathParallelSpecFinder._VALID
-            if self._eq_path_matches(id1, id2, pid1, pid2, idx1, idx2, sp1, sp2)[0]:
-                return EqPathParallelSpecFinder._VALID
-            return EqPathParallelSpecFinder._INVALID
-        if id1 in sp1 and sp1[id1] not in matching_info1[id1][id2]:
-            return EqPathParallelSpecFinder._INVALID
-        if id2 in sp2 and sp2[id2] not in matching_info2[id2][id1]:
             return EqPathParallelSpecFinder._INVALID
         return EqPathParallelSpecFinder._UNKNOWN
 
+    def _atom_path_match(self, id1: int, id2: int) -> bool:
+        """This can be overwritten if the path can affect the validity of the pair."""
+        # pylint: disable=no-self-use
+        return True
+
     def _eq_path_matches(
-        self, id1, id2, pid1, pid2, idx1: int, idx2: int, sp1: SpecMap, sp2: SpecMap
-    ) -> Tuple[bool, bool]:
-        path1 = EquivalenceRuleExtractor(
-            self._pi1.root_eq_label,
-            self._pi1.searcher.start_label,
-            EqPathParallelSpecFinder._create_tree(sp1, self._pi1.root_eq_label),
-            self._pi1.searcher.ruledb,
-            self._pi1.searcher.classdb,
-            id1,
-            pid1,
-            idx1,
-        ).nonequivalent_rules_in_equiv_path()
-        path2 = EquivalenceRuleExtractor(
-            self._pi2.root_eq_label,
-            self._pi2.searcher.start_label,
-            EqPathParallelSpecFinder._create_tree(sp2, self._pi2.root_eq_label),
-            self._pi2.searcher.ruledb,
-            self._pi2.searcher.classdb,
-            id2,
-            pid2,
-            idx2,
-        ).nonequivalent_rules_in_equiv_path()
-        return (
-            len(path1) == len(path2)
-            and all(
+        self,
+        id1,
+        id2,
+        pid1,
+        pid2,
+        idx1: int,
+        idx2: int,
+        sp1: SpecMap,
+        sp2: SpecMap,
+        cache: EqPathTracker,
+    ) -> bool:
+        """
+        Given (grandparent, parent, children) eq labels in both specs, this will check
+        if the actual rules required (disregarding actual equivalence rules) to traverse
+        this path match.
+        """
+        children = (sp1[id1], sp2[id2])
+        children_cache = cache[(id1, id2)][(pid1, pid2)]
+        if children not in children_cache:
+            path1 = EquivalenceRuleExtractor(
+                self._pi1.root_eq_label,
+                self._pi1.searcher.start_label,
+                EqPathParallelSpecFinder._create_tree(sp1, self._pi1.root_eq_label),
+                self._pi1.searcher.ruledb,
+                self._pi1.searcher.classdb,
+                id1,
+                pid1,
+                idx1,
+            ).nonequivalent_rules_in_equiv_path()
+            path2 = EquivalenceRuleExtractor(
+                self._pi2.root_eq_label,
+                self._pi2.searcher.start_label,
+                EqPathParallelSpecFinder._create_tree(sp2, self._pi2.root_eq_label),
+                self._pi2.searcher.ruledb,
+                self._pi2.searcher.classdb,
+                id2,
+                pid2,
+                idx2,
+            ).nonequivalent_rules_in_equiv_path()
+            children_cache[children] = len(path1) == len(path2) and all(
                 r1.constructor.equiv(r2.constructor)[0] for r1, r2 in zip(path1, path2)
-            ),
-            len(path1) > 0 and len(path2) > 0,
-        )
+            )
+        return children_cache[children]
