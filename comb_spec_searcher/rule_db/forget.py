@@ -1,12 +1,13 @@
 """
-A database for rules.
+A database to search for tree.
+
+The database do not store the strategy to save memory.
 """
 import itertools
 from typing import Iterable, Iterator, MutableMapping, Optional, Set, Tuple, Union, cast
 
 from comb_spec_searcher.class_db import ClassDB
 from comb_spec_searcher.exception import StrategyDoesNotApply
-from comb_spec_searcher.rule_db.base import RuleDBAbstract
 from comb_spec_searcher.strategies.rule import AbstractRule
 from comb_spec_searcher.strategies.strategy import AbstractStrategy, StrategyFactory
 from comb_spec_searcher.strategies.strategy_pack import StrategyPack
