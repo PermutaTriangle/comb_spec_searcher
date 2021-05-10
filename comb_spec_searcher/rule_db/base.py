@@ -239,7 +239,7 @@ class RuleDBBase(RuleDBAbstract):
         return res
 
     @ensure_specification
-    def get_specification_rules(
+    def get_specification_rules(  # pylint: disable=arguments-differ
         self,
         *,
         minimization_time_limit: float = 10,

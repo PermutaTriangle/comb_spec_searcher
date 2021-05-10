@@ -15,16 +15,6 @@ RuleDBMethod = TypeVar("RuleDBMethod", bound=Callable[..., Any])
 __all__ = ["ensure_specification", "RuleDBAbstract"]
 
 
-def ensure_specification(func: RuleDBMethod) -> RuleDBMethod:
-    def inner(ruledb: RuleDBAbstract, *args, **kwargs):
-        assert isinstance(ruledb, RuleDBAbstract)
-        if not ruledb.has_specification():
-            raise SpecificationNotFound
-        return func(ruledb, *args, **kwargs)
-
-    return cast(RuleDBMethod, inner)
-
-
 class RuleDBAbstract(abc.ABC):
     NOT_LINK_ERROR = RuntimeError(
         "RuleDB is not linked with the searcher. Call `link_searcher` before using it."
@@ -71,7 +61,7 @@ class RuleDBAbstract(abc.ABC):
         """Return True if label has been verified."""
 
     @abc.abstractmethod
-    def add(self, label: int, end_labels: Tuple[int, ...], rule: AbstractRule) -> None:
+    def add(self, start: int, ends: Tuple[int, ...], rule: AbstractRule) -> None:
         """
         Add a rule to the database.
 
@@ -99,3 +89,13 @@ class RuleDBAbstract(abc.ABC):
         The kwargs should to used to pass some option for the specification search that
         are specific to each type of ruledb.
         """
+
+
+def ensure_specification(func: RuleDBMethod) -> RuleDBMethod:
+    def inner(ruledb: RuleDBAbstract, *args, **kwargs):
+        assert isinstance(ruledb, RuleDBAbstract)
+        if not ruledb.has_specification():
+            raise SpecificationNotFound
+        return func(ruledb, *args, **kwargs)
+
+    return cast(RuleDBMethod, inner)
