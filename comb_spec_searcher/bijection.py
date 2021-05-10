@@ -5,7 +5,7 @@ from typing import DefaultDict, Dict, List, Optional, Set, Tuple
 from comb_spec_searcher.comb_spec_searcher import CombinatorialSpecificationSearcher
 from comb_spec_searcher.combinatorial_class import CombinatorialClass
 from comb_spec_searcher.exception import NoMoreClassesToExpandError
-from comb_spec_searcher.rule_db.base import RuleDBBase
+from comb_spec_searcher.rule_db.base import RuleDB
 from comb_spec_searcher.specification import CombinatorialSpecification
 from comb_spec_searcher.specification_extrator import SpecificationRuleExtractor
 from comb_spec_searcher.strategies.rule import Rule
@@ -28,7 +28,9 @@ class ParallelInfo:
     def __init__(self, searcher: CombinatorialSpecificationSearcher):
         self.searcher: CombinatorialSpecificationSearcher = searcher
         self._expand()
-        self.r_db: RuleDBBase = self.searcher.ruledb
+        if not isinstance(self.searcher.ruledb, RuleDB):
+            raise RuntimeError("Only searcher supported rule db is `RuleDB`.")
+        self.r_db: RuleDB = self.searcher.ruledb
         self.root_eq_label: int = self.r_db.equivdb[self.searcher.start_label]
         self.atom_map: Dict[int, CombinatorialClass] = {}
         self.root_class: Optional[CombinatorialClass] = None
@@ -38,7 +40,7 @@ class ParallelInfo:
 
     def _expand(self):
         try:
-            while self.searcher.get_specification(minimization_time_limit=0) is None:
+            while not self.searcher.has_specification():
                 self.searcher.do_level()
         except NoMoreClassesToExpandError:
             assert (
