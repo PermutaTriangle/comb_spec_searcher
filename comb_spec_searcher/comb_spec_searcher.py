@@ -619,7 +619,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
     @cssmethodtimer("get specification")
     def get_specification(
         self, minimization_time_limit: float = 10, smallest: bool = False
-    ) -> Optional[CombinatorialSpecification]:
+    ) -> CombinatorialSpecification:
         """
         Return a CombinatorialSpecification if the universe contains one.
 
