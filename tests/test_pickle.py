@@ -40,7 +40,7 @@ def tests_pickling_css():
     new_searcher = pickle.loads(pickle.dumps(searcher))
     assert searcher == new_searcher
     assert spec == new_searcher.get_specification()
-    assert spec == new_searcher.auto_search(maxtime=2)
+    assert spec == new_searcher.auto_search(max_expansion_time=2)
 
 
 def test_pickle_specification():

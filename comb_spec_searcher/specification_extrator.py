@@ -1,22 +1,24 @@
 import itertools
-from typing import Dict, Iterable, Iterator, List, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Iterable, Iterator, List, Tuple, Union
 
 from logzero import logger
 
 from comb_spec_searcher.class_db import ClassDB
 from comb_spec_searcher.exception import StrategyDoesNotApply
-from comb_spec_searcher.rule_db.base import RuleDBBase
 from comb_spec_searcher.rule_db.forest import ForestRuleDB
-from comb_spec_searcher.strategies.rule import AbstractRule, ReverseRule, Rule
+from comb_spec_searcher.strategies.rule import AbstractRule, Rule
 from comb_spec_searcher.strategies.strategy import AbstractStrategy, StrategyFactory
 from comb_spec_searcher.strategies.strategy_pack import StrategyPack
 from comb_spec_searcher.tree_searcher import Node
 from comb_spec_searcher.typing import ForestRuleKey, RuleBucket, RuleKey
 
+if TYPE_CHECKING:
+    from comb_spec_searcher.rule_db.base import RuleDBBase
+
 
 class SpecificationRuleExtractor:
     def __init__(
-        self, root_label: int, root_node: Node, ruledb: RuleDBBase, classdb: ClassDB
+        self, root_label: int, root_node: Node, ruledb: "RuleDBBase", classdb: ClassDB
     ):
         self.ruledb = ruledb
         self.classdb = classdb

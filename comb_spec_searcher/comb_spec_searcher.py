@@ -16,16 +16,14 @@ from typing import (
     Sequence,
     Set,
     Tuple,
-    Union,
     cast,
 )
 
 import logzero
 import tabulate
 from logzero import logger
-from sympy import Eq, Function, var
 
-from comb_spec_searcher.typing import CombinatorialClassType, CSSstrategy, WorkPacket
+from comb_spec_searcher.typing import CombinatorialClassType, CSSstrategy
 
 from .class_db import ClassDB
 from .class_queue import DefaultQueue
@@ -35,10 +33,9 @@ from .exception import (
     SpecificationNotFound,
     StrategyDoesNotApply,
 )
-from .rule_db import RuleDB, RuleDBForgetStrategy
-from .rule_db.base import RuleDBBase
+from .rule_db import RuleDB
+from .rule_db.base import RuleDBAbstract
 from .specification import CombinatorialSpecification
-from .specification_extrator import SpecificationRuleExtractor
 from .strategies import (
     AbstractStrategy,
     StrategyFactory,
@@ -46,7 +43,6 @@ from .strategies import (
     VerificationRule,
 )
 from .strategies.rule import AbstractRule
-from .tree_searcher import Node
 from .utils import (
     cssiteratortimer,
     cssmethodtimer,
@@ -77,51 +73,42 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         self,
         start_class: CombinatorialClassType,
         strategy_pack: StrategyPack,
-        ruledb: Optional[Union[str, RuleDB]] = None,
-        **kwargs,
+        *,
+        ruledb: Optional[RuleDBAbstract] = None,
+        expand_verified: bool = False,
+        debug: bool = False,
     ):
         """
         Initialise CombinatorialSpecificationSearcher.
 
-        OTHER INPUT:
-            - `ruledb`: a string to specify the type of ruledb to use for the
-            search. Default to `None` but can be changed to "forget" for a ruledb that
-            saves more memory.
-            - `expand_verified`: if True, every verified combinatorial class will
-              still be expanded using the strategies in strategy pack
-            - `debug`: if True every rule found will be sanity checked and logged
-              to logging.DEBUG
-            - `function_kwargs` are passed to the call method of strategies
+        INPUTS:
+          - `start_class`: the combinatorial class to search a specification for.
+          - `strategy_pack`: a set of strategy to use for the search.
+          - `ruledb`: a string to specify the type of ruledb to use for the
+          search. Default to `None` but can be changed to "forget" for a ruledb that
+          saves more memory.
+          - `expand_verified`: if True, every verified combinatorial class will
+            still be expanded using the strategies in strategy pack
+          - `debug`: if True every rule found will be sanity checked and logged
+            to logging.DEBUG
         """
         self.strategy_pack = strategy_pack
-        self.debug = kwargs.get("debug", False)
-        self.expand_verified = kwargs.get("expand_verified", False)
+        self.debug = debug
+        self.expand_verified = expand_verified
         if self.debug:
             logzero.loglevel(logging.DEBUG, True)
-        self.kwargs = kwargs.get("function_kwargs", dict())
 
         self.func_times: Dict[str, float] = defaultdict(float)
         self.func_calls: Dict[str, int] = defaultdict(int)
 
-        self.kwargs["symmetry"] = bool(strategy_pack.symmetries)
-
         self.classdb = ClassDB[CombinatorialClassType](type(start_class))
         self.classqueue = DefaultQueue(strategy_pack)
-
-        if ruledb is None:
-            self.ruledb: RuleDBBase = RuleDB()
-        elif ruledb == "forget":
-            self.ruledb = RuleDBForgetStrategy(self.classdb, self.strategy_pack)
-        elif isinstance(ruledb, RuleDBBase):
-            self.ruledb = ruledb
-        else:
-            raise ValueError(
-                "ruledb argument should be None or 'forget' or a RuleDB object"
-            )
+        self.ruledb: RuleDBAbstract = ruledb if ruledb is not None else RuleDB()
 
         # initialise the run with start_class
         self.start_label = self.classdb.get_label(start_class)
-        self._add_to_queue(self.start_label)
+        self.ruledb.link_searcher(self.start_label, self.classdb, self.strategy_pack)
+        self.classqueue.add(self.start_label)
         self.tried_to_verify: Set[int] = set()
         self.symmetry_expanded: Set[int] = set()
         self.try_verify(start_class, self.start_label)
@@ -139,14 +126,14 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         return self.strategy_pack.ver_strats
 
     @property
-    def iterative(self) -> bool:
-        """The iterative parameter from the strategy pack."""
-        return self.strategy_pack.iterative
-
-    @property
     def symmetries(self) -> Sequence[CSSstrategy]:
         """The symmetries functions for the strategy pack."""
         return self.strategy_pack.symmetries
+
+    @property
+    def start_class(self) -> CombinatorialClassType:
+        """Returns the start class of the searcher."""
+        return self.classdb.get_class(self.start_label)
 
     def try_verify(self, comb_class: CombinatorialClassType, label: int) -> None:
         """
@@ -164,8 +151,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
 
     @cssmethodtimer("is empty")
     def is_empty(self, comb_class: CombinatorialClassType, label: int) -> bool:
-        """Return True if a combinatorial class contains no objects, False
-        otherwise."""
+        """
+        Return True if a combinatorial class contains no objects, False otherwise.
+        """
         empty = self.classdb.is_empty(comb_class, label)
         return empty
 
@@ -189,29 +177,30 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 ):
                     self._add_rule(start_label, end_labels, rule)
 
+    @staticmethod
     def _rules_from_strategy(
-        self, comb_class: CombinatorialClassType, strategy: CSSstrategy
+        comb_class: CombinatorialClassType, strategy: CSSstrategy
     ) -> Iterator[AbstractRule]:
-        """Yield all the rules given by a strategy/strategy generator."""
+        """Yield all the rules given by a strategy/strategy factory."""
         if isinstance(strategy, AbstractStrategy):
             try:
-                yield strategy(comb_class, **self.kwargs)
+                yield strategy(comb_class)
             except StrategyDoesNotApply:
                 pass
         elif isinstance(strategy, StrategyFactory):
-            for strat in strategy(comb_class, **self.kwargs):
+            for strat in strategy(comb_class):
                 if isinstance(strat, AbstractRule):
                     yield strat
                 elif isinstance(strat, AbstractStrategy):
                     try:
-                        yield strat(comb_class, **self.kwargs)
+                        yield strat(comb_class)
                     except StrategyDoesNotApply:
                         continue
                 else:
                     raise InvalidOperationError(
                         "Attempting to add non Rule type. A Strategy "
-                        "Generator's __call__ method should yield Strategy or "
-                        "Strategy(comb_class, children) object."
+                        "Factory's __call__ method should yield strategy or "
+                        "a rule."
                     )
         else:
             raise InvalidOperationError(
@@ -303,9 +292,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 logger.debug("Label %s is empty.", child_label)
                 continue
             if rule.workable:
-                self._add_to_queue(child_label)
+                self.classqueue.add(child_label)
             if not rule.inferrable:
-                self._not_inferrable(child_label)
+                self.classqueue.set_not_inferrable(child_label)
             if not rule.possibly_empty:
                 self.classdb.set_empty(child_label, empty=False)
 
@@ -317,16 +306,14 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             return
 
         if rule.ignore_parent:
-            self._stop_yielding(start_label)
+            self.classqueue.set_stop_yielding(start_label)
 
         if not cleaned_end_labels:
             # this must be a verification strategy!
-            assert isinstance(rule, VerificationRule), rule.formal_step
+            assert cleaned_end_labels or isinstance(
+                rule, VerificationRule
+            ), rule.formal_step
         self.ruledb.add(start_label, tuple(cleaned_end_labels), rule)
-
-    def _add_empty_rule(self, label: int) -> None:
-        """Mark label as empty. Treated as verified as can count empty set."""
-        self.classdb.set_empty(label, empty=True)
 
     def _symmetry_expand(self, comb_class: CombinatorialClassType, label: int) -> None:
         """Add symmetries of combinatorial class to the database."""
@@ -337,7 +324,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             ):
                 sym_label = end_labels[0]
                 self.ruledb.add(start_label, (sym_label,), rule)
-                self._stop_yielding(sym_label)
+                self.classqueue.set_stop_yielding(sym_label)
                 sym_labels.add(sym_label)
         self.symmetry_expanded.update(sym_labels)
 
@@ -366,7 +353,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 inf_class = rule.children[0]
                 inf_label = end_labels[0]
                 self._add_rule(start_label, end_labels, rule)
-                self._not_inferrable(start_label)
+                self.classqueue.set_not_inferrable(start_label)
                 inferral_strategies = (
                     inferral_strategies[i + 1 :] + inferral_strategies[0 : i + 1]
                 )
@@ -374,35 +361,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                     inf_class, inf_label, inferral_strategies, skip=strategy_generator
                 )
                 break
-        self._not_inferrable(label)
-
-    def get_equations(self, **kwargs) -> Set[Eq]:
-        """
-        Returns a set of equations for all rules currently found.
-        """
-        x = var("x")
-
-        def get_function(comb_class):
-            label = self.classdb.get_label(comb_class)
-            eqv_label = self.ruledb.equivdb[label]
-            return Function("F_{}".format(eqv_label))(x)
-
-        eqs = set()
-        for start, ends, strategy in self.ruledb.all_rules():
-            parent = self.classdb.get_class(start)
-            children = tuple(map(self.classdb.get_class, ends))
-            rule = strategy(parent, children)
-            try:
-                eq = rule.get_equation(get_function)
-            except NotImplementedError:
-                logger.info(
-                    "can't find generating function for %s." " The comb class is:\n%s",
-                    get_function(rule.comb_class),
-                    rule.comb_class,
-                )
-                eq = Eq(get_function(rule.comb_class), Function("NOTIMPLEMENTED")(x))
-            eqs.add(eq)
-        return eqs
+        self.classqueue.set_not_inferrable(label)
 
     def do_level(self) -> None:
         """Expand combinatorial classes in current queue. Combintorial classes
@@ -410,18 +369,6 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         for label, strategies, inferral in self.classqueue.do_level():
             comb_class = self.classdb.get_class(label)
             self._expand(comb_class, label, strategies, inferral)
-
-    def _labels_to_expand(self) -> Iterator[WorkPacket]:
-        yield from self.classqueue
-
-    def _add_to_queue(self, label: int):
-        self.classqueue.add(label)
-
-    def _not_inferrable(self, label: int):
-        self.classqueue.set_not_inferrable(label)
-
-    def _stop_yielding(self, label: int):
-        self.classqueue.set_stop_yielding(label)
 
     @cssmethodtimer("status")
     def status(self, elaborate: bool) -> str:
@@ -442,10 +389,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         status += self.classdb.status() + "\n"
         status += self.classqueue.status() + "\n"
         status += self.ruledb.status(elaborate) + "\n"
-        status += self.mem_status(elaborate)
+        status += self._mem_status(elaborate)
         return status
 
-    @cssmethodtimer("status")
     def _css_status(self, total: float) -> str:
         table: List[Tuple[str, str, timedelta, str]] = []
         for explanation in self.func_calls:
@@ -467,8 +413,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             + "\n"
         )
 
-    @cssmethodtimer("status")
-    def mem_status(self, elaborate: bool) -> str:
+    def _mem_status(self, elaborate: bool) -> str:
         """Provide status information related to memory usage."""
 
         status = "Memory Status:\n"
@@ -506,17 +451,17 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         return status
 
     def run_information(self) -> str:
-        """Return string detailing what CombSpecSearcher is looking for."""
+        """Return a string detailing what CombSpecSearcher is looking for."""
         start_string = (
             "Initialising CombSpecSearcher for the combinatorial"
-            " class:\n{}\n".format(self.classdb.get_class(self.start_label))
+            " class:\n{}\n".format(self.start_class)
         )
         start_string += str(self.strategy_pack)
         return start_string
 
     def _log_spec_found(
         self, specification: CombinatorialSpecification, start_time: float
-    ):
+    ) -> None:
         found_string = "Specification built {}\n".format(
             time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime())
         )
@@ -570,85 +515,68 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         tree that is as small as possible.
         """
         auto_search_start = time.time()
-
-        perc = kwargs.get("perc", 1)
-        if not 0 < perc <= 100:
-            logger.warning(
-                (
-                    "Percentage not between 0 and 100, so assuming 1%"
-                    " search percentage."
-                ),
-            )
-            perc = 1
-        status_update = kwargs.get("status_update", None)
-        max_time = kwargs.get("max_time", None)
-        status_start = time.time()
         start_string = "Auto search started {}\n".format(
             time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime())
         )
         start_string += self.run_information()
         logger.info(start_string)
-
-        max_expansion_time = 0
-        expanding = True
-
-        while expanding:
-            expanding, status_start = self._expand_classes_for(
-                max_expansion_time, status_update, status_start, auto_search_start
-            )
-
-            spec_search_start = time.time()
-            logger.debug("Searching for specification.")
-            specification = self.get_specification(
-                smallest=kwargs.get("smallest", False),
-                minimization_time_limit=0.01 * (time.time() - auto_search_start),
-            )
-            if specification is not None:
-                self._log_spec_found(specification, auto_search_start)
-                return specification
-            logger.debug("No specification found.")
-            if max_time is not None:
-                if time.time() - auto_search_start > max_time:
-                    raise ExceededMaxtimeError(
-                        "Exceeded maximum time. Aborting auto search.",
-                    )
-            # worst case, search every hour
-            multiplier = 100 // perc
-            max_expansion_time = min(
-                multiplier * (time.time() - spec_search_start), 3600
-            )
-            logger.debug(
-                "Will expand for %s seconds.",
-                round(max_expansion_time, 2),
-            )
+        spec_rules = self._auto_search_rules(**kwargs)
+        if spec_rules is not None:
+            specification = CombinatorialSpecification(self.start_class, spec_rules)
+            self._log_spec_found(specification, auto_search_start)
+            return specification
+        raise SpecificationNotFound
 
     def _auto_search_rules(
-        self, max_expansion_time: float = 0
+        self,
+        *,
+        max_expansion_time: Optional[float] = None,
+        perc: int = 1,
+        smallest: bool = False,
+        status_update: Optional[int] = None,
     ) -> Iterator[AbstractRule]:
         """
-        A basic auto search for returning equivalence paths and rules.
+        The core functionality of the auto_search method.
 
         This method is used by CombinatorialSpecification for expanding
-        verified classes.
-
-        Will raise SpecificationNotFound error if no specification is found
-        after running out of classes to expand.
+        verified classes.  Will raise SpecificationNotFound error if no
+        specification is found after running out of classes to expand.
         """
-        status_start = time.time()
-        status_update = None  # this prevents status updates happening
+        if not 0 < perc <= 100:
+            logger.warning(
+                "Percentage not between 0 and 100, so assuming 1% search percentage."
+            )
+            perc = 1
         auto_search_start = time.time()
+        expansion_time: float = 0
+        status_start = time.time()
         expanding = True
         while expanding:
             expanding, status_start = self._expand_classes_for(
-                max_expansion_time, status_update, status_start, auto_search_start
+                expansion_time, status_update, status_start, auto_search_start
             )
             spec_search_start = time.time()
-            spec = self._get_specification_rules(
-                0.01 * (time.time() - auto_search_start)
+            logger.debug("Searching for specification.")
+            if self.has_specification():
+                return self.ruledb.get_specification_rules(
+                    smallest=smallest,
+                    minimization_time_limit=0.01 * (time.time() - auto_search_start),
+                )
+            logger.debug("No specification found.")
+            if (
+                max_expansion_time is not None
+                and time.time() - auto_search_start > max_expansion_time
+            ):
+                raise ExceededMaxtimeError(
+                    "Exceeded maximum time. Aborting auto search.",
+                )
+            # worst case, search every hour
+            multiplier = 100 / perc
+            expansion_time = min(multiplier * (time.time() - spec_search_start), 3600.0)
+            logger.debug(
+                "Will expand for %s seconds.",
+                round(expansion_time, 2),
             )
-            if spec is not None:
-                return spec
-            max_expansion_time = min(0.01 * (time.time() - spec_search_start), 3600)
         raise SpecificationNotFound
 
     def _expand_classes_for(
@@ -662,13 +590,13 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         Will expand classes for `expansion_time` seconds.
 
         It will return a pair (bool, time), where the bool is True if there are
-        more classes to expand, False otherwise. The `time` is the initial time
-        for checking whether to post a status update.
+        more classes to expand, False otherwise. The `time` is the time that the
+        last status update printed.
         """
         expansion_start = time.time()
         last_label = None
         expanding = True
-        for label, strategies, inferral in self._labels_to_expand():
+        for label, strategies, inferral in self.classqueue:
             if label != last_label:
                 comb_class = self.classdb.get_class(label)
                 last_label = label
@@ -684,10 +612,14 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             logger.info("No more classes to expand.")
         return expanding, status_start
 
+    @cssmethodtimer("has specification")
+    def has_specification(self) -> bool:
+        return self.ruledb.has_specification()
+
     @cssmethodtimer("get specification")
     def get_specification(
         self, minimization_time_limit: float = 10, smallest: bool = False
-    ) -> Optional[CombinatorialSpecification]:
+    ) -> CombinatorialSpecification:
         """
         Return a CombinatorialSpecification if the universe contains one.
 
@@ -696,41 +628,12 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         The function will return None if no such CombinatorialSpecification
         exists in the universe.
         """
-        rules = self._get_specification_rules(minimization_time_limit, smallest)
-        if rules is None:
-            return None
-        start_class = self.classdb.get_class(self.start_label)
+        if not self.ruledb.has_specification():
+            raise SpecificationNotFound
+        kwargs = {
+            "minimization_time_limit": minimization_time_limit,
+            "smallest": smallest,
+        }
+        rules = self.ruledb.get_specification_rules(**kwargs)
         logger.info("Creating a specification.")
-        return CombinatorialSpecification(start_class, rules)
-
-    def _get_specification_rules(
-        self, minimization_time_limit: float = 10, smallest: bool = False
-    ) -> Optional[Iterator[AbstractRule]]:
-        node = self._get_specification_node(minimization_time_limit, smallest)
-        if node is None:
-            return None
-        spec_extractor = SpecificationRuleExtractor(
-            self.start_label, node, self.ruledb, self.classdb
-        )
-        return spec_extractor.rules()
-
-    def _get_specification_node(
-        self, minimization_time_limit: float = 10, smallest: bool = False
-    ) -> Optional[Node]:
-        """
-        Return the a specification node if one exists.
-        """
-        try:
-            if smallest:
-                if self.iterative:
-                    raise InvalidOperationError("can't use iterative and smallest")
-                node = self.ruledb.get_smallest_specification(self.start_label)
-            else:
-                node = self.ruledb.find_specification(
-                    self.start_label,
-                    minimization_time_limit=minimization_time_limit,
-                    iterative=self.iterative,
-                )
-        except SpecificationNotFound:
-            return None
-        return node
+        return CombinatorialSpecification(self.start_class, rules)
