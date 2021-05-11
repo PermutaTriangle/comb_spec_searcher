@@ -1,19 +1,32 @@
+import itertools
 from typing import (
     Callable,
     Deque,
     Dict,
     Generic,
+    Iterable,
     Iterator,
     List,
     Optional,
     Set,
     Tuple,
     TypeVar,
+    Union,
 )
 
-from comb_spec_searcher.typing import ForestRuleKey, RuleKey
+from logzero import logger
+
+from comb_spec_searcher.class_db import ClassDB
+from comb_spec_searcher.exception import StrategyDoesNotApply
+from comb_spec_searcher.rule_db.abstract import RuleDBAbstract, ensure_specification
+from comb_spec_searcher.strategies.rule import AbstractRule, Rule
+from comb_spec_searcher.strategies.strategy import AbstractStrategy, StrategyFactory
+from comb_spec_searcher.strategies.strategy_pack import StrategyPack
+from comb_spec_searcher.typing import ForestRuleKey, RuleBucket, RuleKey
 
 T = TypeVar("T")
+RuleWithShifts = Tuple[RuleKey, Tuple[int, ...]]
+SortedRWS = Dict[RuleBucket, List[ForestRuleKey]]
 
 
 class DefaultList(Generic[T]):
@@ -67,6 +80,20 @@ class Function:
         self._value: List[Optional[int]] = []
         self._preimage_count: DefaultList[int] = DefaultList(int)
         self._infinity_count: int = 0
+
+    @property
+    def preimage_count(self) -> List[int]:
+        """
+        Return the number of classes for each value of the function.
+        """
+        count = list(self._preimage_count)
+        while count[-1] == 0:
+            count.pop()
+        return count
+
+    @property
+    def infinity_count(self) -> int:
+        return self._infinity_count
 
     def __getitem__(self, key: int) -> Optional[int]:
         """
@@ -149,35 +176,29 @@ class Function:
         return "\n".join(parts)
 
 
-class RuleDBForest:
-    """
-    The rule database that provides live information on which class are pumping with the
-    current rule in the database.
-    """
-
+class TableMethod:
     def __init__(self) -> None:
         self._rules: List[ForestRuleKey] = []
+        self._shifts: List[List[Optional[int]]] = []
+        self._function: Function = Function()
+        self._gap_size: int = 1
         self._rules_using_class: DefaultList[List[Tuple[int, int]]] = DefaultList(list)
         self._rules_pumping_class: DefaultList[List[int]] = DefaultList(list)
-        self._function: Function = Function()
-        self._shifts: List[List[Optional[int]]] = []
-        self._gap_size: int = 1
         self._processing_queue: Deque[int] = Deque()
-        self._rule_holding_extra_terms: Set[int] = set()
         self._current_gap: Tuple[int, int] = (1, 1)
+        self._rule_holding_extra_terms: Set[int] = set()
 
     @property
     def function(self) -> Dict[int, Optional[int]]:
         """
         Return a dict representing the number of term that are computable for each
         class.
-
         Only the class where it can get at least a term are included. If a class is map
         to None, then all the terms of the enumeration are computable.
         """
         return self._function.to_dict()
 
-    def add_rule(
+    def add_rule_key(
         self,
         rule_key: ForestRuleKey,
     ):
@@ -205,12 +226,20 @@ class RuleDBForest:
             self._processing_queue.append(rule_idx)
         self._process_queue()
 
-    def is_pumping(self, comb_class: int) -> bool:
+    def is_pumping(self, label: int) -> bool:
         """
         Determine if the comb_class is pumping in the current universe.
         """
-        assert not self._processing_queue and not self._rule_holding_extra_terms
-        return self._function[comb_class] is None
+        return self._function[label] is None
+
+    def status(self) -> str:
+        s = f"\tSize of the gap: {self._gap_size}\n"
+        s += f"\tSize of the stable subset: {self._function.infinity_count}\n"
+        s += f"\tSizes of the pre-images: {self._function.preimage_count}\n"
+        return s
+
+    def stable_subset(self) -> Iterator[int]:
+        return self._function.preimage(None)
 
     def pumping_subuniverse(
         self,
@@ -225,9 +254,6 @@ class RuleDBForest:
                 forest_key.children
             ):
                 yield forest_key
-
-    def stable_subset(self) -> Iterator[int]:
-        return self._function.preimage(None)
 
     def _compute_shift(
         self,
@@ -247,12 +273,20 @@ class RuleDBForest:
             for fvalue, sfz in zip(chidlren_function_value, shifts_for_zero)
         ]
 
-    @staticmethod
-    def _can_give_terms(shifts: List[Optional[int]]) -> bool:
+    def _correct_gap(self) -> None:
         """
-        Return True if the shifts indicate that a new terms can be computed.
+        Correct the gap and if needed queue rules for the classes that were previously
+        on the right hand  side of the gap.
+
+        This should be toggled every time the gap changes whether the size changes or
+        the some value changes of the function caused the gap to change.
         """
-        return all(s is None or s > 0 for s in shifts)
+        k = self._function.preimage_gap(self._gap_size)
+        new_gap = (k, k + self._gap_size - 1)
+        if new_gap[1] > self._current_gap[1]:
+            self._processing_queue.extend(self._rule_holding_extra_terms)
+            self._rule_holding_extra_terms.clear()
+        self._current_gap = new_gap
 
     def _process_queue(self) -> None:
         """
@@ -270,20 +304,12 @@ class RuleDBForest:
                 parent = self._rules[rule_idx].parent
                 self._set_infinite(parent)
 
-    def _correct_gap(self) -> None:
+    @staticmethod
+    def _can_give_terms(shifts: List[Optional[int]]) -> bool:
         """
-        Correct the gap and if needed queue rules for the classes that were previously
-        on the right hand  side of the gap.
-
-        This should be toggled every time the gap changes whether the size changes or
-        the some value changes of the function caused the gap to change.
+        Return True if the shifts indicate that a new terms can be computed.
         """
-        k = self._function.preimage_gap(self._gap_size)
-        new_gap = (k, k + self._gap_size - 1)
-        if new_gap[1] > self._current_gap[1]:
-            self._processing_queue.extend(self._rule_holding_extra_terms)
-            self._rule_holding_extra_terms.clear()
-        self._current_gap = new_gap
+        return all(s is None or s > 0 for s in shifts)
 
     def _increase_value(self, comb_class: int, rule_idx: int) -> None:
         """
@@ -373,10 +399,220 @@ class RuleDBForest:
         )
         return f"{rule_key.parent} -> {child_with_shift} || {current_value}"
 
-    def status(self):
+
+class ForestRuleExtractor:
+    MINIMIZE_ORDER = [
+        RuleBucket.REVERSE,
+        RuleBucket.NORMAL,
+        RuleBucket.EQUIV,
+        RuleBucket.VERIFICATION,
+    ]
+
+    def __init__(
+        self,
+        root_label: int,
+        ruledb: "RuleDBForest",
+        classdb: ClassDB,
+        pack: StrategyPack,
+    ):
+        self.pack = pack
+        self.classdb = classdb
+        self.root_label = root_label
+        self.rule_by_bucket = self._sorted_stable_rules(ruledb.table_method)
+        assert set(ForestRuleExtractor.MINIMIZE_ORDER) == set(self.rule_by_bucket)
+        self.needed_rules: List[ForestRuleKey] = list()
+        self._minimize()
+
+    def check(self) -> bool:
         """
-        Print the rule_info for all the rules.
-        Mostly intended for debugging.
+        Make a sanity check of the status of the extractor.
         """
-        for i in range(len(self._rules)):
-            print(self.rule_info(i))
+        lhs = set(rk.parent for rk in self.needed_rules)
+        assert len(lhs) == len(self.needed_rules)
+        assert self._is_productive(self.needed_rules)
+
+    def rules(self) -> Iterator[AbstractRule]:
+        """
+        Return all the rules of the specification.
+        """
+        for rk in self.needed_rules:
+            rule = self._find_rule(rk)
+            if rule.is_equivalence():
+                assert isinstance(rule, Rule)
+                yield rule.to_equivalence_rule()
+            else:
+                yield rule
+
+    def _minimize(self):
+        """
+        Perform the complete minimization of the forest.
+        """
+        for key in ForestRuleExtractor.MINIMIZE_ORDER:
+            self._minimize_key(key)
+
+    def _minimize_key(self, key: RuleBucket) -> None:
+        """
+        Minimize the number of rules used for the type of rule given by key.
+
+        The list of rule in `self.rule_by_bucket[key]` is cleared and a
+        minimal set from theses is added to `self.needed_rules`.
+        """
+        logger.info(f"Minimizing {key.name}")
+        maybe_useful: List[ForestRuleKey] = []
+        not_minimizing: List[List[ForestRuleKey]] = [
+            self.needed_rules,
+            maybe_useful,
+        ]
+        not_minimizing.extend(
+            rules for k, rules in self.rule_by_bucket.items() if k != key
+        )
+        minimizing = self.rule_by_bucket[key]
+        while minimizing:
+            ruledb = TableMethod()
+            # Add the rule we are not trying to minimize
+            for rk in itertools.chain.from_iterable(not_minimizing):
+                ruledb.add_rule_key(rk)
+            if ruledb.is_pumping(self.root_label):
+                self.rule_by_bucket[key].clear()
+                break
+            # Add rule until it gets productive
+            for i, rk in enumerate(minimizing):
+                ruledb.add_rule_key(rk)
+                if ruledb.is_pumping(self.root_label):
+                    break
+            else:
+                raise RuntimeError("Not pumping after adding all rules")
+            maybe_useful.append(rk)
+            for _ in range(i, len(minimizing)):
+                minimizing.pop()
+        counter = 0
+        while maybe_useful:
+            rk = maybe_useful.pop()
+            if not self._is_productive(itertools.chain.from_iterable(not_minimizing)):
+                self.needed_rules.append(rk)
+                counter += 1
+        logger.info(f"Using {counter} rule for {key.name}")
+
+    def _is_productive(self, rule_keys: Iterable[ForestRuleKey]) -> bool:
+        """
+        Check if the given set of rules is productive.
+        """
+        ruledb = TableMethod()
+        for rk in rule_keys:
+            ruledb.add_rule_key(rk)
+        return ruledb.is_pumping(self.root_label)
+
+    def _sorted_stable_rules(self, ruledb: TableMethod) -> SortedRWS:
+        """
+        Extract all the rule from the stable subuniverse and return all of them in a
+        dict sorted by type.
+        """
+        res: SortedRWS = {bucket: [] for bucket in ForestRuleExtractor.MINIMIZE_ORDER}
+        for forest_key in ruledb.pumping_subuniverse():
+            try:
+                res[forest_key.bucket].append(forest_key)
+            except KeyError as e:
+                msg = (
+                    f"{forest_key.bucket} type is not currently supported "
+                    "by the extractor"
+                )
+                raise RuntimeError(msg) from e
+        return res
+
+    def _find_rule(self, rule_key: ForestRuleKey) -> AbstractRule:
+        """
+        Find a rule that have the given rule key.
+        """
+
+        def rule_to_key(rule: AbstractRule) -> RuleKey:
+            parent = self.classdb.get_label(rule.comb_class)
+            children = tuple(map(self.classdb.get_label, rule.children))
+            return parent, children
+
+        all_classes = (rule_key.parent,) + rule_key.children
+        all_normal_rules = itertools.chain.from_iterable(
+            self._rules_for_class(c) for c in all_classes
+        )
+        for rule in all_normal_rules:
+            potential_rules = [rule]
+            if rule.is_reversible():
+                assert isinstance(rule, Rule)
+                potential_rules.extend(
+                    rule.to_reverse_rule(i) for i in range(len(rule.children))
+                )
+            for rule in potential_rules:
+                if rule.forest_key(self.classdb.get_label) == rule_key:
+                    return rule
+
+        err = f"Can't find a rule for {rule_key}\n"
+        err += f"Parent:\n{self.classdb.get_class(rule_key.parent)}\n"
+        for i, l in enumerate(rule_key.children):
+            err += f"Child {i}:\n{self.classdb.get_class(l)}\n"
+        raise RuntimeError(err)
+
+    def _rules_for_class(self, label: int) -> Iterator[AbstractRule]:
+        """
+        Return all the rule created for that class with the pack.
+        """
+        for strat in self.pack:
+            comb_class = self.classdb.get_class(label)
+            if isinstance(strat, StrategyFactory):
+                strats_or_rules: Iterable[
+                    Union[AbstractRule, AbstractStrategy]
+                ] = strat(comb_class)
+            else:
+                strats_or_rules = [strat]
+            for x in strats_or_rules:
+                if isinstance(x, AbstractStrategy):
+                    try:
+                        yield x(comb_class)
+                    except StrategyDoesNotApply:
+                        continue
+                else:
+                    yield x
+
+
+class RuleDBForest(RuleDBAbstract):
+    """
+    The rule database that provides live information on which class are pumping with the
+    current rule in the database.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._num_rules = 0
+        self.table_method = TableMethod()
+
+    # Implementation of RuleDBAbstract
+
+    def status(self, elaborate: bool) -> str:
+        s = "RuleDB status:\n"
+        s += f"\tAdded from {self._num_rules} normal rules\n"
+        s += self.table_method.status()
+        return s
+
+    def is_verified(self, label: int) -> bool:
+        """
+        Determine if the comb_class is pumping in the current universe.
+        """
+        return self.table_method._function[label] is None
+
+    def has_specification(self) -> bool:
+        return self.is_verified(self.root_label)
+
+    def add(self, start: int, ends: Tuple[int, ...], rule: AbstractRule) -> None:
+        self._num_rules += 1
+        new_rules = [rule]
+        if rule.is_reversible():
+            assert isinstance(rule, Rule)
+            new_rules.extend(rule.to_reverse_rule(i) for i in range(len(rule.children)))
+        for rule in new_rules:
+            self.table_method.add_rule_key(rule.forest_key(self.classdb.get_label))
+
+    @ensure_specification
+    def get_specification_rules(self, **kwargs) -> Iterator[AbstractRule]:
+        extractor = ForestRuleExtractor(
+            self.root_label, self, self.classdb, self.strategy_pack
+        )
+        extractor.check()
+        return extractor.rules()

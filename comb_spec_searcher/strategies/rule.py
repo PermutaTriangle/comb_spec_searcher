@@ -851,7 +851,7 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     def __init__(
         self, rule: Rule[CombinatorialClassType, CombinatorialObjectType], idx: int
     ):
-        assert rule.is_two_way()
+        assert rule.is_reversible()
         super().__init__(
             rule.strategy,
             rule.children[idx],
