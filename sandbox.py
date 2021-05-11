@@ -13,7 +13,7 @@ from tilings import Tiling
 from tilings.strategies import LocallyFactorableVerificationStrategy
 from tilings.tilescope import TileScope, TileScopePack
 
-from comb_spec_searcher.rule_db.forest import ForestRuleDB
+from comb_spec_searcher.rule_db.forest import RuleDBForest
 from comb_spec_searcher.specification import CombinatorialSpecification
 from comb_spec_searcher.specification_extrator import ForestRuleExtractor
 from comb_spec_searcher.strategies.rule import AbstractRule, Rule
@@ -27,7 +27,7 @@ class ForestFoundError(Exception):
 class SpecialSearcher(TileScope):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.forestdb: ForestRuleDB = ForestRuleDB()
+        self.forestdb: RuleDBForest = RuleDBForest()
         self.time_forest: float = 0.0
         self.num_rules: int = 0
         self.already_empty: Set[int] = set()

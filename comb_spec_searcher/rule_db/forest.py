@@ -149,7 +149,7 @@ class Function:
         return "\n".join(parts)
 
 
-class ForestRuleDB:
+class RuleDBForest:
     """
     The rule database that provides live information on which class are pumping with the
     current rule in the database.

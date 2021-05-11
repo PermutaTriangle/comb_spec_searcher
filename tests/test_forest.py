@@ -3,7 +3,7 @@ from typing import Dict, List, Union
 
 import pytest
 
-from comb_spec_searcher.rule_db.forest import ForestRuleDB, Function
+from comb_spec_searcher.rule_db.forest import RuleDBForest, Function
 from comb_spec_searcher.typing import ForestRuleKey, RuleBucket
 
 
@@ -115,7 +115,7 @@ def test_132_universe_pumping():
     The universe consist of the rule of the usual 132 tree plus a dummy rule that is
     useless.
     """
-    ruledb = ForestRuleDB()
+    ruledb = RuleDBForest()
     rules = [
         ForestRuleKey(0, (1, 2), (0, 0), RuleBucket.NORMAL),
         ForestRuleKey(1, (), (), RuleBucket.VERIFICATION),  # Empty verif
@@ -147,7 +147,7 @@ def test_132_universe_pumping_progressive():
 
     We add rule progressively and make sure the function is always up to date.
     """
-    ruledb = ForestRuleDB()
+    ruledb = RuleDBForest()
 
     # Point insertion
     ruledb.add_rule(ForestRuleKey(0, (1, 2), (0, 0), RuleBucket.NORMAL))
@@ -183,7 +183,7 @@ def test_132_universe_pumping_progressive():
 
 
 def test_universe_not_pumping():
-    ruledb = ForestRuleDB()
+    ruledb = RuleDBForest()
     rules = [
         ForestRuleKey(0, (1, 2), (0, 0), RuleBucket.NORMAL),  # point insertion
         ForestRuleKey(5, (), (), RuleBucket.VERIFICATION),  # point verif
@@ -198,7 +198,7 @@ def test_universe_not_pumping():
 
 def test_segmented():
     """The segemented forest."""
-    ruledb = ForestRuleDB()
+    ruledb = RuleDBForest()
     ruledb.add_rule(ForestRuleKey(0, (1, 2), (0, 0), RuleBucket.UNDEFINED))
     ruledb.add_rule(ForestRuleKey(1, (4, 14), (0, 0), RuleBucket.UNDEFINED))
     ruledb.add_rule(ForestRuleKey(2, tuple(), tuple(), RuleBucket.UNDEFINED))

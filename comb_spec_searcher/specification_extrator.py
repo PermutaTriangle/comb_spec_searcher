@@ -5,7 +5,7 @@ from logzero import logger
 
 from comb_spec_searcher.class_db import ClassDB
 from comb_spec_searcher.exception import StrategyDoesNotApply
-from comb_spec_searcher.rule_db.forest import ForestRuleDB
+from comb_spec_searcher.rule_db.forest import RuleDBForest
 from comb_spec_searcher.strategies.rule import AbstractRule, Rule
 from comb_spec_searcher.strategies.strategy import AbstractStrategy, StrategyFactory
 from comb_spec_searcher.strategies.strategy_pack import StrategyPack
@@ -137,7 +137,7 @@ class ForestRuleExtractor:
     def __init__(
         self,
         root_label: int,
-        ruledb: ForestRuleDB,
+        ruledb: RuleDBForest,
         classdb: ClassDB,
         pack: StrategyPack,
     ):
@@ -194,7 +194,7 @@ class ForestRuleExtractor:
         )
         minimizing = self.rule_by_bucket[key]
         while minimizing:
-            ruledb = ForestRuleDB()
+            ruledb = RuleDBForest()
             # Add the rule we are not trying to minimize
             for rk in itertools.chain.from_iterable(not_minimizing):
                 ruledb.add_rule(rk)
@@ -223,12 +223,12 @@ class ForestRuleExtractor:
         """
         Check if the given set of rules is productive.
         """
-        ruledb = ForestRuleDB()
+        ruledb = RuleDBForest()
         for rk in rule_keys:
             ruledb.add_rule(rk)
         return ruledb.is_pumping(self.root_label)
 
-    def _sorted_stable_rules(self, ruledb: ForestRuleDB) -> SortedRWS:
+    def _sorted_stable_rules(self, ruledb: RuleDBForest) -> SortedRWS:
         """
         Extract all the rule from the stable subuniverse and return all of them in a
         dict sorted by type.
