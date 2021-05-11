@@ -1,6 +1,7 @@
 import itertools
+from collections import deque
 from operator import itemgetter
-from typing import Dict, Iterator, List, Set, Tuple
+from typing import Deque, Dict, Iterable, Iterator, List, Set, Tuple
 
 from comb_spec_searcher.class_db import ClassDB
 from comb_spec_searcher.rule_db.base import RuleDBBase
@@ -227,3 +228,28 @@ class EquivalenceRuleExtractor(SpecificationRuleExtractor):
             if not rule.is_equivalence():
                 assert isinstance(rule, Rule)
                 yield rule
+
+
+class RulePathToAtomExtractor(SpecificationRuleExtractor):
+    def __init__(
+        self,
+        root_label: int,
+        root_node: Node,
+        ruledb: RuleDBBase,
+        classdb: ClassDB,
+        path: Iterable[Tuple[int, int]],
+        atom: int,
+    ):
+        super().__init__(root_label, root_node, ruledb, classdb)
+
+    def _populate_decompositions(self) -> None:
+        pass
+
+    def _populate_equivalences(self) -> None:
+        pass
+
+    def _check(self):
+        pass
+
+    def rule_path(self) -> Deque[Tuple[AbstractRule, int]]:
+        return deque([])

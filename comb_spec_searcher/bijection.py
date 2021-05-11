@@ -312,9 +312,7 @@ class ParallelSpecFinder(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
 
     def _atom_match(self, id1: int, id2: int) -> bool:
         """Returns true if atoms match."""
-        sz1, terms1 = self._pi1.atom_map[id1]
-        sz2, terms2 = self._pi2.atom_map[id2]
-        return sz1 == sz2 and terms1 == terms2
+        return self._pi1.atom_map[id1][0] == self._pi2.atom_map[id2][0]
 
     def _potential_children(
         self, id1: int, id2: int
@@ -565,6 +563,12 @@ class EqPathParallelSpecFinder(
         # Tracks the path taken in the second search
         self._path: List[Tuple[int, int, int, int]] = [(-1, -1, -1, -1)]
 
+    def _atom_match(self, id1: int, id2: int) -> bool:
+        # Overwritten to compare terms as well.
+        sz1, terms1 = self._pi1.atom_map[id1]
+        sz2, terms2 = self._pi2.atom_map[id2]
+        return sz1 == sz2 and terms1 == terms2
+
     def _search_matching_info(
         self, matching_info: MatchingInfo
     ) -> Optional[Tuple[SpecMap, SpecMap]]:
@@ -667,7 +671,7 @@ class EqPathParallelSpecFinder(
         # These atoms will have matches in the first searcher but we do offer
         # additional checks which will, by default, always return true.
         if ((), ()) in matching_info[(id1, id2)]:
-            if not self._atom_path_match(id1, id2):
+            if not self._atom_path_match(id1, id2, sp1, sp2):
                 return EqPathParallelSpecFinder._INVALID
             sp1[id1], sp2[id2] = (), ()
             return EqPathParallelSpecFinder._VALID
@@ -681,7 +685,7 @@ class EqPathParallelSpecFinder(
             return EqPathParallelSpecFinder._INVALID
         return EqPathParallelSpecFinder._UNKNOWN
 
-    def _atom_path_match(self, id1: int, id2: int) -> bool:
+    def _atom_path_match(self, id1: int, id2: int, sp1: SpecMap, sp2: SpecMap) -> bool:
         """This can be overwritten if the path can affect the validity of the pair."""
         # pylint: disable=no-self-use
         return True
