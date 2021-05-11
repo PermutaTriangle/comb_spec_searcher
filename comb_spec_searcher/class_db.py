@@ -177,7 +177,6 @@ class ClassDB(Generic[CombinatorialClassType]):
     ) -> bool:
         """
         Return True if combinatorial class is empty set, False if not.
-        Return None if status not set.
         """
         if label is None:
             info = self._get_info(comb_class)

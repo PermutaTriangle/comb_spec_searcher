@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - If a rule in a specification cannot be sanity checked (e.g., counting is not
   implemented), a warning is printed and sanity checking continues, instead of returning
   the exception.
+- More responsibility have been delegated to the rule database. This will allow
+  for more flexibility in the implementation of the rule database. Things like
+  computing specification rule now happens at the rule db level.
 
 ### Fixed
 - Removed a debug print
@@ -35,6 +38,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Deprecated
 - Python 3.6 is no longer supported
+- `LimitedStrategyRuleDB` is not longer part of css
 
 
 ## [3.0.0] - 2021-01-04

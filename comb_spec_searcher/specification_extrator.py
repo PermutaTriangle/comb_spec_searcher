@@ -1,18 +1,20 @@
 import itertools
 from collections import deque
 from operator import itemgetter
-from typing import Deque, Dict, Iterable, Iterator, List, Set, Tuple
+from typing import TYPE_CHECKING, Deque, Dict, Iterable, Iterator, List, Set, Tuple
 
 from comb_spec_searcher.class_db import ClassDB
-from comb_spec_searcher.rule_db.base import RuleDBBase
 from comb_spec_searcher.strategies.rule import AbstractRule, Rule
 from comb_spec_searcher.tree_searcher import Node
 from comb_spec_searcher.typing import RuleKey
 
+if TYPE_CHECKING:
+    from comb_spec_searcher.rule_db.base import RuleDBBase
+
 
 class SpecificationRuleExtractor:
     def __init__(
-        self, root_label: int, root_node: Node, ruledb: RuleDBBase, classdb: ClassDB
+        self, root_label: int, root_node: Node, ruledb: "RuleDBBase", classdb: ClassDB
     ):
         self.ruledb = ruledb
         self.classdb = classdb
@@ -137,7 +139,7 @@ class EquivalenceRuleExtractor(SpecificationRuleExtractor):
         root_eq_label: int,
         root_class_label: int,
         root_node: Node,
-        ruledb: RuleDBBase,
+        ruledb: "RuleDBBase",
         classdb: ClassDB,
         target: int,
         parent_of_target: int,
@@ -235,7 +237,7 @@ class RulePathToAtomExtractor(SpecificationRuleExtractor):
         self,
         root_label: int,
         root_node: Node,
-        ruledb: RuleDBBase,
+        ruledb: "RuleDBBase",
         classdb: ClassDB,
         path: Iterable[Tuple[int, int]],
         atom: int,

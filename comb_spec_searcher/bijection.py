@@ -14,6 +14,7 @@ from typing import (
 
 from comb_spec_searcher.comb_spec_searcher import CombinatorialSpecificationSearcher
 from comb_spec_searcher.exception import NoMoreClassesToExpandError
+from comb_spec_searcher.rule_db.base import RuleDB
 from comb_spec_searcher.specification import CombinatorialSpecification
 from comb_spec_searcher.specification_extrator import (
     EquivalenceRuleExtractor,
@@ -82,6 +83,9 @@ class ParallelInfo(Generic[CombinatorialClassType, CombinatorialObjectType]):
     ):
         self.searcher = searcher
         self._expand(additional_levels)
+        if not isinstance(self.searcher.ruledb, RuleDB):
+            raise RuntimeError("Only searcher supported rule db is `RuleDB`.")
+        self.ruledb: RuleDB = self.searcher.ruledb
 
         # Root eq label and actual class
         self.root_eq_label: int = self.searcher.ruledb.equivdb[
@@ -103,10 +107,10 @@ class ParallelInfo(Generic[CombinatorialClassType, CombinatorialObjectType]):
 
     def _expand_until_spec(self) -> None:
         try:
-            while self.searcher.get_specification(minimization_time_limit=0) is None:
+            while not self.searcher.has_specification():
                 self.searcher.do_level()
         except NoMoreClassesToExpandError as ex:
-            if self.searcher.get_specification(minimization_time_limit=0) is None:
+            if not self.searcher.has_specification():
                 raise ValueError("No specifications were found") from ex
 
     def _additional_expands(self, additional_levels: int) -> None:
@@ -126,7 +130,7 @@ class ParallelInfo(Generic[CombinatorialClassType, CombinatorialObjectType]):
         constructor if any.
         """
         lis = self._pruned_rules_up_to_eq()
-        rule_dict = self.searcher.ruledb.rule_from_equivalence_rule_dict(lis)
+        rule_dict = self.ruledb.rule_from_equivalence_rule_dict(lis)
         eq_label_rules: RuleClassification[
             CombinatorialClassType, CombinatorialObjectType
         ] = defaultdict(lambda: defaultdict(list))
@@ -153,7 +157,7 @@ class ParallelInfo(Generic[CombinatorialClassType, CombinatorialObjectType]):
         AbstractRule[CombinatorialClassType, CombinatorialObjectType],
     ]:
         actual_par, actual_children = rule_dict[(eq_par, eq_chi)]
-        strategy = self.searcher.ruledb.rule_to_strategy[(actual_par, actual_children)]
+        strategy = self.ruledb.rule_to_strategy[(actual_par, actual_children)]
         parent = self.searcher.classdb.get_class(actual_par)
         rule: AbstractRule[CombinatorialClassType, CombinatorialObjectType] = strategy(
             parent
@@ -163,7 +167,7 @@ class ParallelInfo(Generic[CombinatorialClassType, CombinatorialObjectType]):
     def _pruned_rules_up_to_eq(
         self,
     ) -> List[Tuple[int, Tuple[int, ...]]]:
-        rules_up_to_eq = self.searcher.ruledb.rules_up_to_equivalence()
+        rules_up_to_eq = self.ruledb.rules_up_to_equivalence()
         prune(rules_up_to_eq)
         return [(k, c) for k, v in rules_up_to_eq.items() for c in v]
 
@@ -523,7 +527,7 @@ class ParallelSpecFinder(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
         rules = SpecificationRuleExtractor(
             pi.root_eq_label,
             ParallelSpecFinder._create_tree(d, pi.root_eq_label),
-            pi.searcher.ruledb,
+            pi.ruledb,
             pi.searcher.classdb,
         ).rules()
         return CombinatorialSpecification(pi.root_class, rules)
@@ -714,7 +718,7 @@ class EqPathParallelSpecFinder(
                 self._pi1.root_eq_label,
                 self._pi1.searcher.start_label,
                 EqPathParallelSpecFinder._create_tree(sp1, self._pi1.root_eq_label),
-                self._pi1.searcher.ruledb,
+                self._pi1.ruledb,
                 self._pi1.searcher.classdb,
                 id1,
                 pid1,
@@ -724,7 +728,7 @@ class EqPathParallelSpecFinder(
                 self._pi2.root_eq_label,
                 self._pi2.searcher.start_label,
                 EqPathParallelSpecFinder._create_tree(sp2, self._pi2.root_eq_label),
-                self._pi2.searcher.ruledb,
+                self._pi2.ruledb,
                 self._pi2.searcher.classdb,
                 id2,
                 pid2,
