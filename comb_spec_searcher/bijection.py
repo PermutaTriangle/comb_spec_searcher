@@ -316,7 +316,9 @@ class ParallelSpecFinder(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
 
     def _atom_match(self, id1: int, id2: int) -> bool:
         """Returns true if atoms match."""
-        return self._pi1.atom_map[id1][0] == self._pi2.atom_map[id2][0]
+        sz1, terms1 = self._pi1.atom_map[id1]
+        sz2, terms2 = self._pi2.atom_map[id2]
+        return sz1 == sz2 and terms1 == terms2
 
     def _potential_children(
         self, id1: int, id2: int
@@ -566,12 +568,6 @@ class EqPathParallelSpecFinder(
 
         # Tracks the path taken in the second search
         self._path: List[Tuple[int, int, int, int]] = [(-1, -1, -1, -1)]
-
-    def _atom_match(self, id1: int, id2: int) -> bool:
-        # Overwritten to compare terms as well.
-        sz1, terms1 = self._pi1.atom_map[id1]
-        sz2, terms2 = self._pi2.atom_map[id2]
-        return sz1 == sz2 and terms1 == terms2
 
     def _search_matching_info(
         self, matching_info: MatchingInfo
