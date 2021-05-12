@@ -125,6 +125,8 @@ class SpecificationRuleExtractor:
 
 
 class PartialSpecificationRuleExtractor(SpecificationRuleExtractor):
+    """A base class for extractors for incomplete specifications."""
+
     def _populate_decompositions(self) -> None:
         pass
 
@@ -242,6 +244,11 @@ class EquivalenceRuleExtractor(PartialSpecificationRuleExtractor):
 
 
 class RulePathToAtomExtractor(PartialSpecificationRuleExtractor):
+    """
+    This class extracts rules from the root down to an atom in a specification (in terms
+    of eq label maps) that is not complete but contains a path from root to said atom.
+    """
+
     def __init__(
         self,
         root_class_label: int,
@@ -267,6 +274,7 @@ class RulePathToAtomExtractor(PartialSpecificationRuleExtractor):
             self.rules_dict[parent] = children
             self.eqvparent_to_parent[eqvrule[0]] = parent
 
+            # Order in searcher
             order = index_order_map[eqvrule]
             self.search_order[parent] = tuple(
                 children[order[i]] for i in range(len(children))
@@ -281,11 +289,14 @@ class RulePathToAtomExtractor(PartialSpecificationRuleExtractor):
                 len(children) == 1
                 and self.ruledb.equivdb[curr_class] == self.ruledb.equivdb[children[0]]
             ):
+                # If rule is within eq class, we add it with idx 0
                 path.append((self._find_rule(curr_class, children), 0))
                 curr_class = children[0]
             else:
                 _, idx = self.path.pop()
                 rule = self._find_rule(curr_class, children)
+                # Get the first child that matches the label of the child we want.
+                # If there are multiple, it does not matter which one.
                 rule_idx = next(
                     i
                     for i, c in enumerate(rule.children)
