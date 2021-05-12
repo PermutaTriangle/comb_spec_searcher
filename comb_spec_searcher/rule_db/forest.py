@@ -330,20 +330,20 @@ class TableMethod:
         if self._current_gap[0] != gap_start:
             self._correct_gap()
         # Correction of the shifts for rule pumping comb_class
-        for rule_idx in self._rules_pumping_class[comb_class]:
-            shifts = self._shifts[rule_idx]
+        for r_idx in self._rules_pumping_class[comb_class]:
+            shifts = self._shifts[r_idx]
             for i, v in enumerate(shifts):
                 shifts[i] = v - 1 if v is not None else None
             if self._can_give_terms(shifts):
-                self._processing_queue.append(rule_idx)
+                self._processing_queue.append(r_idx)
         # Correction of the shifts for rules using comb_class to pump
-        for rule_idx, class_idx in self._rules_using_class[comb_class]:
-            shifts = self._shifts[rule_idx]
+        for r_idx, class_idx in self._rules_using_class[comb_class]:
+            shifts = self._shifts[r_idx]
             current_shift = shifts[class_idx]
             assert current_shift is not None
             shifts[class_idx] = current_shift + 1
             if self._can_give_terms(shifts):
-                self._processing_queue.append(rule_idx)
+                self._processing_queue.append(r_idx)
 
     def _set_infinite(self, comb_class: int) -> None:
         """
@@ -401,12 +401,12 @@ class TableMethod:
 
 
 class ForestRuleExtractor:
-    MINIMIZE_ORDER = [
+    MINIMIZE_ORDER = (
         RuleBucket.REVERSE,
         RuleBucket.NORMAL,
         RuleBucket.EQUIV,
         RuleBucket.VERIFICATION,
-    ]
+    )
 
     def __init__(
         self,
@@ -457,7 +457,7 @@ class ForestRuleExtractor:
         The list of rule in `self.rule_by_bucket[key]` is cleared and a
         minimal set from theses is added to `self.needed_rules`.
         """
-        logger.info(f"Minimizing {key.name}")
+        logger.info("Minimizing %s", key.name)
         maybe_useful: List[ForestRuleKey] = []
         not_minimizing: List[List[ForestRuleKey]] = [
             self.needed_rules,
@@ -468,21 +468,23 @@ class ForestRuleExtractor:
         )
         minimizing = self.rule_by_bucket[key]
         while minimizing:
-            ruledb = TableMethod()
+            tb = TableMethod()
             # Add the rule we are not trying to minimize
             for rk in itertools.chain.from_iterable(not_minimizing):
-                ruledb.add_rule_key(rk)
-            if ruledb.is_pumping(self.root_label):
-                self.rule_by_bucket[key].clear()
+                tb.add_rule_key(rk)
+            if tb.is_pumping(self.root_label):
+                minimizing.clear()
                 break
             # Add rule until it gets productive
             for i, rk in enumerate(minimizing):
-                ruledb.add_rule_key(rk)
-                if ruledb.is_pumping(self.root_label):
+                tb.add_rule_key(rk)
+                if tb.is_pumping(self.root_label):
                     break
             else:
                 raise RuntimeError("Not pumping after adding all rules")
             maybe_useful.append(rk)
+            assert minimizing, "variable i won't be set"
+            # pylint: disable=undefined-loop-variable
             for _ in range(i, len(minimizing)):
                 minimizing.pop()
         counter = 0
@@ -491,7 +493,7 @@ class ForestRuleExtractor:
             if not self._is_productive(itertools.chain.from_iterable(not_minimizing)):
                 self.needed_rules.append(rk)
                 counter += 1
-        logger.info(f"Using {counter} rule for {key.name}")
+        logger.info("Using %s rule for %s", counter, key.name)
 
     def _is_productive(self, rule_keys: Iterable[ForestRuleKey]) -> bool:
         """
@@ -507,7 +509,7 @@ class ForestRuleExtractor:
         Extract all the rule from the stable subuniverse and return all of them in a
         dict sorted by type.
         """
-        res: SortedRWS = {bucket: [] for bucket in ForestRuleExtractor.MINIMIZE_ORDER}
+        res: SortedRWS = {bucket: [] for bucket in self.MINIMIZE_ORDER}
         for forest_key in ruledb.pumping_subuniverse():
             try:
                 res[forest_key.bucket].append(forest_key)
@@ -523,27 +525,21 @@ class ForestRuleExtractor:
         """
         Find a rule that have the given rule key.
         """
-
-        def rule_to_key(rule: AbstractRule) -> RuleKey:
-            parent = self.classdb.get_label(rule.comb_class)
-            children = tuple(map(self.classdb.get_label, rule.children))
-            return parent, children
-
         all_classes = (rule_key.parent,) + rule_key.children
         all_normal_rules = itertools.chain.from_iterable(
             self._rules_for_class(c) for c in all_classes
         )
-        for rule in all_normal_rules:
-            potential_rules = [rule]
-            if rule.is_reversible():
-                assert isinstance(rule, Rule)
+        for normal_rule in all_normal_rules:
+            potential_rules = [normal_rule]
+            if normal_rule.is_reversible():
+                assert isinstance(normal_rule, Rule)
                 potential_rules.extend(
-                    rule.to_reverse_rule(i) for i in range(len(rule.children))
+                    normal_rule.to_reverse_rule(i)
+                    for i in range(len(normal_rule.children))
                 )
             for rule in potential_rules:
                 if rule.forest_key(self.classdb.get_label) == rule_key:
                     return rule
-
         err = f"Can't find a rule for {rule_key}\n"
         err += f"Parent:\n{self.classdb.get_class(rule_key.parent)}\n"
         for i, l in enumerate(rule_key.children):
@@ -595,7 +591,7 @@ class RuleDBForest(RuleDBAbstract):
         """
         Determine if the comb_class is pumping in the current universe.
         """
-        return self.table_method._function[label] is None
+        return self.table_method.is_pumping(label)
 
     def has_specification(self) -> bool:
         return self.is_verified(self.root_label)
@@ -606,8 +602,8 @@ class RuleDBForest(RuleDBAbstract):
         if rule.is_reversible():
             assert isinstance(rule, Rule)
             new_rules.extend(rule.to_reverse_rule(i) for i in range(len(rule.children)))
-        for rule in new_rules:
-            self.table_method.add_rule_key(rule.forest_key(self.classdb.get_label))
+        for new_rule in new_rules:
+            self.table_method.add_rule_key(new_rule.forest_key(self.classdb.get_label))
 
     @ensure_specification
     def get_specification_rules(self, **kwargs) -> Iterator[AbstractRule]:
