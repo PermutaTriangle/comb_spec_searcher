@@ -223,11 +223,8 @@ class Isomorphism(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
 
         # If different type of rules are applied, the trees are not isomorphic
         assert isinstance(rule1, Rule) and isinstance(rule2, Rule)
-        are_eq, data = rule1.constructor.equiv(rule2.constructor)
-        if not are_eq:
+        if not self._constructor_match(rule1, rule2, curr1, curr2):
             return Isomorphism._INVALID
-        if data is not None:
-            self._index_data[(curr1, curr2)] = data
 
         # Check for recursive match
         if any((n1, n2) in self._ancestors for n1, n2 in product(eq_nodes1, eq_nodes2)):
@@ -259,6 +256,20 @@ class Isomorphism(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
         sz1 = next(atom1.objects_of_size(atom1.minimum_size_of_object())).size()
         sz2 = next(atom2.objects_of_size(atom2.minimum_size_of_object())).size()
         return sz1 == sz2 and rule1.get_terms(sz1) == rule2.get_terms(sz2)
+
+    def _constructor_match(
+        self,
+        rule1: Rule[ClassType1, ObjType1],
+        rule2: Rule[ClassType2, ObjType2],
+        curr1: ClassType1,
+        curr2: ClassType2,
+    ) -> bool:
+        are_eq, data = rule1.constructor.equiv(rule2.constructor)
+        if not are_eq:
+            return False
+        if data is not None:
+            self._index_data[(curr1, curr2)] = data
+        return True
 
     @staticmethod
     def _extend_stack(
