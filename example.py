@@ -46,8 +46,9 @@ from comb_spec_searcher import (
     CombinatorialSpecificationSearcher,
     DisjointUnionStrategy,
     StrategyPack,
-    find_bijection_between,
 )
+from comb_spec_searcher.bijection import ParallelSpecFinder
+from comb_spec_searcher.isomorphism import Bijection
 
 
 class Word(str, CombinatorialObject):
@@ -365,14 +366,17 @@ if __name__ == "__main__":
         "(press any key to continue)"
     )
 
-    bijection = find_bijection_between(
+    specs = ParallelSpecFinder[AvoidingWithPrefix, Word, AvoidingWithPrefix, Word](
         CombinatorialSpecificationSearcher(
             AvoidingWithPrefix(Word(), ["00"], ["0", "1"]), pack
         ),
         CombinatorialSpecificationSearcher(
             AvoidingWithPrefix(Word(), ["11"], ["0", "1"]), pack
         ),
-    )
+    ).find()
+    assert specs is not None
+    spec1, spec2 = specs
+    bijection = Bijection.construct(spec1, spec2)
     assert bijection is not None
     for i in range(5):
         for word in bijection.domain.generate_objects_of_size(i):

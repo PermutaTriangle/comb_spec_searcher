@@ -463,11 +463,12 @@ You can now try this yourself using the file ``example.py``, which can
 count any set of words avoiding consecutive patterns.
 
 Now we will demonstrate how a bijection can be found between classes.
-We will first need to import the `find_bijection_between` function.
+We will first need a couple of imports.
 
 .. code:: python
 
-   >>> from comb_spec_searcher import find_bijection_between
+   >>> from comb_spec_searcher.bijection import ParallelSpecFinder
+   >>> from comb_spec_searcher.isomorphism import Bijection
 
 We start by defining our two classes that we wish to find a bijection between.
 
@@ -490,11 +491,17 @@ and try to construct specifications that are parallel.
    >>> searcher1 = CombinatorialSpecificationSearcher(class1, pack)
    >>> searcher2 = CombinatorialSpecificationSearcher(class2, pack)
 
-We get a bijection object if successful, ``None`` otherwise.
+We get two parallel specs if successful, ``None`` otherwise.
 
 .. code:: python
 
-   >>> bijection = find_bijection_between(searcher1, searcher2)
+   >>> specs = ParallelSpecFinder(searcher1, searcher2).find()
+
+We then construct the bijection from the parallel specifications.
+
+.. code:: python
+
+   >>> bijection = Bijection.construct(*specs)
 
 We can use the `Bijection` object to map (either way) sampled objects
 from the sepcifications.

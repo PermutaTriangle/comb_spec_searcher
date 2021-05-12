@@ -1,13 +1,26 @@
 import json
+from typing import Optional
 
 from comb_spec_searcher import (
     AtomStrategy,
     CombinatorialSpecificationSearcher,
     StrategyPack,
-    find_bijection_between,
 )
+from comb_spec_searcher.bijection import ParallelSpecFinder
 from comb_spec_searcher.isomorphism import Bijection
-from example import AvoidingWithPrefix, ExpansionStrategy, RemoveFrontOfPrefix
+from example import AvoidingWithPrefix, ExpansionStrategy, RemoveFrontOfPrefix, Word
+
+
+def find_bijection_between(
+    searcher1: CombinatorialSpecificationSearcher[AvoidingWithPrefix],
+    searcher2: CombinatorialSpecificationSearcher[AvoidingWithPrefix],
+) -> Optional[Bijection]:
+    specs = ParallelSpecFinder[AvoidingWithPrefix, Word, AvoidingWithPrefix, Word](
+        searcher1, searcher2
+    ).find()
+    if specs is not None:
+        s1, s2 = specs
+        return Bijection.construct(s1, s2)
 
 
 def get_word_searcher(avoid, alphabet):
