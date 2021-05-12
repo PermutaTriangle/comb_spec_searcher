@@ -1,7 +1,7 @@
 import itertools
 from collections import deque
 from operator import itemgetter
-from typing import TYPE_CHECKING, Deque, Dict, Iterable, Iterator, List, Set, Tuple
+from typing import TYPE_CHECKING, Deque, Dict, Iterator, List, Set, Tuple
 
 from comb_spec_searcher.class_db import ClassDB
 from comb_spec_searcher.strategies.rule import AbstractRule, Rule
@@ -124,7 +124,59 @@ class SpecificationRuleExtractor:
             yield self._find_rule(parent, children)
 
 
-class EquivalenceRuleExtractor(SpecificationRuleExtractor):
+class PartialSpecificationRuleExtractor(SpecificationRuleExtractor):
+    def _populate_decompositions(self) -> None:
+        pass
+
+    def _populate_equivalences(self) -> None:
+        # SpecificationRuleExtractor's with a try-catch do deal with incomplete spec
+        for label in self._no_lhs_labels():
+            eqv_label = self.ruledb.equivdb[label]
+            # Might not exist because spec is incomplete.
+            try:
+                path = self.ruledb.equivdb.find_path(
+                    label, self.eqvparent_to_parent[eqv_label]
+                )
+            except KeyError:
+                continue
+            for parent, child in zip(path[:-1], path[1:]):
+                if parent in self.rules_dict:
+                    break
+                self.rules_dict[parent] = (child,)
+
+    def _check(self):
+        pass
+
+    def _ordered_eqvrule_to_rule(
+        self,
+    ) -> Tuple[Dict[RuleKey, RuleKey], Dict[RuleKey, Tuple[int, ...]]]:
+        """Altered version of rule_from_equivalence_rule_dict that deals with order."""
+        eqv_rules = set(self.eqv_rulekeys)
+        eqvrule_to_rule: Dict[RuleKey, RuleKey] = {}
+        # Maps our children index order to that of the actual rules
+        index_order_map: Dict[RuleKey, Tuple[int, ...]] = {}
+        for start, ends in self.ruledb.rule_to_strategy:
+            eqv_start = self.ruledb.equivdb[start]
+            # Sort but keep knowledge of original order
+            index_order, eqv_ends = (
+                zip(
+                    *sorted(
+                        enumerate(map(self.ruledb.equivdb.__getitem__, ends)),
+                        key=itemgetter(1),
+                    )
+                )
+                if ends
+                else ((), ())
+            )
+
+            eqv_key = (eqv_start, eqv_ends)
+            index_order_map[eqv_key] = index_order
+            if eqv_key in eqv_rules:
+                eqvrule_to_rule[eqv_key] = (start, ends)
+        return eqvrule_to_rule, index_order_map
+
+
+class EquivalenceRuleExtractor(PartialSpecificationRuleExtractor):
     """
     This class extracts the actual rules that would be created for an equivalence
     label given a partial spec that is traversable from root. Suppose we want the
@@ -155,34 +207,11 @@ class EquivalenceRuleExtractor(SpecificationRuleExtractor):
         self.start = root_class_label
         # class label of the RHS of the last rule for the eq path, updated later
         self.end = -1
-        # Maps our children index order to that of the actual rules
-        self.index_order_map: Dict[RuleKey, Tuple[int, ...]] = {}
         # Children are included in the tree
         super().__init__(root_eq_label, root_node, ruledb, classdb)
 
     def _populate_decompositions(self) -> None:
-        # Altered rule_from_equivalence_rule_dict
-        eqv_rules = set(self.eqv_rulekeys)
-        eqvrule_to_rule: Dict[RuleKey, RuleKey] = {}
-        for start, ends in self.ruledb.rule_to_strategy:
-            eqv_start = self.ruledb.equivdb[start]
-            # Sort but keep knowledge of original order
-            index_order, eqv_ends = (
-                zip(
-                    *sorted(
-                        enumerate(map(self.ruledb.equivdb.__getitem__, ends)),
-                        key=itemgetter(1),
-                    )
-                )
-                if ends
-                else ((), ())
-            )
-
-            eqv_key = (eqv_start, eqv_ends)
-            self.index_order_map[eqv_key] = index_order
-            if eqv_key in eqv_rules:
-                eqvrule_to_rule[eqv_key] = (start, ends)
-
+        eqvrule_to_rule, index_order_map = self._ordered_eqvrule_to_rule()
         for eqvrule in self.eqv_rulekeys:
             # Might not exist because spec is incomplete.
             try:
@@ -194,30 +223,10 @@ class EquivalenceRuleExtractor(SpecificationRuleExtractor):
             # If grandparent, then we can find our starting point
             # If no grandparent exists, this will always be the root.
             if eqvrule[0] == self.parent_of_target:
-                self.start = children[self.index_order_map[eqvrule][self.idx]]
+                self.start = children[index_order_map[eqvrule][self.idx]]
             # If parent, we have our end point
             if eqvrule[0] == self.target:
                 self.end = parent
-
-    def _populate_equivalences(self) -> None:
-        # SpecificationRuleExtractor's with a try-catch do deal with incomplete spec
-
-        for label in self._no_lhs_labels():
-            eqv_label = self.ruledb.equivdb[label]
-            try:
-                path = self.ruledb.equivdb.find_path(
-                    label, self.eqvparent_to_parent[eqv_label]
-                )
-            except KeyError:
-                assert eqv_label != self.target
-                continue
-            for parent, child in zip(path[:-1], path[1:]):
-                if parent in self.rules_dict:
-                    break
-                self.rules_dict[parent] = (child,)
-
-    def _check(self):
-        pass
 
     def nonequivalent_rules_in_equiv_path(self) -> List[Rule]:
         return list(self._nonequivalent_rules_in_equiv_path())
@@ -232,26 +241,56 @@ class EquivalenceRuleExtractor(SpecificationRuleExtractor):
                 yield rule
 
 
-class RulePathToAtomExtractor(SpecificationRuleExtractor):
+class RulePathToAtomExtractor(PartialSpecificationRuleExtractor):
     def __init__(
         self,
+        root_class_label: int,
         root_label: int,
         root_node: Node,
         ruledb: "RuleDBBase",
         classdb: ClassDB,
-        path: Iterable[Tuple[int, int]],
-        atom: int,
+        path: List[Tuple[int, int]],
     ):
+        self.root_class_label = root_class_label
+        self.path = path
+        self.path.pop()  # remove padded -1
+        self.search_order: Dict[int, Tuple[int, ...]] = {}
         super().__init__(root_label, root_node, ruledb, classdb)
 
     def _populate_decompositions(self) -> None:
-        pass
+        eqvrule_to_rule, index_order_map = self._ordered_eqvrule_to_rule()
+        for eqvrule in self.eqv_rulekeys:
+            try:
+                parent, children = eqvrule_to_rule[eqvrule]
+            except KeyError:
+                continue
+            self.rules_dict[parent] = children
+            self.eqvparent_to_parent[eqvrule[0]] = parent
 
-    def _populate_equivalences(self) -> None:
-        pass
-
-    def _check(self):
-        pass
+            order = index_order_map[eqvrule]
+            self.search_order[parent] = tuple(
+                children[order[i]] for i in range(len(children))
+            )
 
     def rule_path(self) -> Deque[Tuple[AbstractRule, int]]:
-        return deque([])
+        curr_class = self.root_class_label
+        path: Deque[Tuple[AbstractRule, int]] = deque([])
+        while self.path:
+            children = self.rules_dict[curr_class]
+            if (
+                len(children) == 1
+                and self.ruledb.equivdb[curr_class] == self.ruledb.equivdb[children[0]]
+            ):
+                path.append((self._find_rule(curr_class, children), 0))
+                curr_class = children[0]
+            else:
+                _, idx = self.path.pop()
+                rule = self._find_rule(curr_class, children)
+                rule_idx = next(
+                    i
+                    for i, c in enumerate(rule.children)
+                    if self.classdb.get_label(c) == children[idx]
+                )
+                path.append((rule, rule_idx))
+                curr_class = self.search_order[curr_class][idx]
+        return path
