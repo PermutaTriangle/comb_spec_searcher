@@ -2,12 +2,24 @@
 Definition of the base feature of any ruledb.
 """
 import abc
-from typing import Any, Callable, Iterator, Optional, Tuple, TypeVar, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Iterator,
+    Optional,
+    Tuple,
+    TypeVar,
+    cast,
+)
 
 from comb_spec_searcher.class_db import ClassDB
 from comb_spec_searcher.exception import SpecificationNotFound
 from comb_spec_searcher.strategies.rule import AbstractRule
 from comb_spec_searcher.strategies.strategy_pack import StrategyPack
+
+if TYPE_CHECKING:
+    from comb_spec_searcher import CombinatorialSpecificationSearcher
 
 RuleDBMethod = TypeVar("RuleDBMethod", bound=Callable[..., Any])
 
@@ -21,40 +33,30 @@ class RuleDBAbstract(abc.ABC):
     )
 
     def __init__(self) -> None:
-        self._classdb: Optional[ClassDB] = None
-        self._strategy_pack: Optional[StrategyPack] = None
-        self._root_label: Optional[int] = None
+        self._searcher: Optional["CombinatorialSpecificationSearcher"] = None
 
-    def link_searcher(
-        self, root_label: int, classdb: ClassDB, strat_pack: StrategyPack
-    ) -> None:
-        if (
-            self._root_label is not None
-            or self._classdb is not None
-            or self._strategy_pack is not None
-        ):
+    def link_searcher(self, searcher: "CombinatorialSpecificationSearcher") -> None:
+        if self._searcher is not None:
             raise RuntimeError("Searcher is alreay linked")
-        self._classdb = classdb
-        self._strategy_pack = strat_pack
-        self._root_label = root_label
+        self._searcher = searcher
+
+    @property
+    def searcher(self) -> "CombinatorialSpecificationSearcher":
+        if self._searcher is None:
+            raise RuleDBAbstract.NOT_LINK_ERROR
+        return self._searcher
 
     @property
     def classdb(self) -> ClassDB:
-        if self._classdb is None:
-            raise RuleDBAbstract.NOT_LINK_ERROR
-        return self._classdb
+        return self.searcher.classdb
 
     @property
     def strategy_pack(self) -> StrategyPack:
-        if self._strategy_pack is None:
-            raise RuleDBAbstract.NOT_LINK_ERROR
-        return self._strategy_pack
+        return self.searcher.strategy_pack
 
     @property
     def root_label(self) -> int:
-        if self._root_label is None:
-            raise RuleDBAbstract.NOT_LINK_ERROR
-        return self._root_label
+        return self.searcher.start_label
 
     @abc.abstractmethod
     def is_verified(self, label: int) -> bool:

@@ -36,12 +36,7 @@ from .exception import (
 from .rule_db import RuleDB
 from .rule_db.base import RuleDBAbstract
 from .specification import CombinatorialSpecification
-from .strategies import (
-    AbstractStrategy,
-    StrategyFactory,
-    StrategyPack,
-    VerificationRule,
-)
+from .strategies import AbstractStrategy, StrategyFactory, StrategyPack
 from .strategies.rule import AbstractRule
 from .utils import (
     cssiteratortimer,
@@ -104,10 +99,10 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         self.classdb = ClassDB[CombinatorialClassType](type(start_class))
         self.classqueue = DefaultQueue(strategy_pack)
         self.ruledb: RuleDBAbstract = ruledb if ruledb is not None else RuleDB()
+        self.ruledb.link_searcher(self)
 
         # initialise the run with start_class
         self.start_label = self.classdb.get_label(start_class)
-        self.ruledb.link_searcher(self.start_label, self.classdb, self.strategy_pack)
         self.classqueue.add(self.start_label)
         self.tried_to_verify: Set[int] = set()
         self.symmetry_expanded: Set[int] = set()
@@ -148,14 +143,6 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 ):
                     self._add_rule(start_label, end_labels, rule)
             self.tried_to_verify.add(label)
-
-    @cssmethodtimer("is empty")
-    def is_empty(self, comb_class: CombinatorialClassType, label: int) -> bool:
-        """
-        Return True if a combinatorial class contains no objects, False otherwise.
-        """
-        empty = self.classdb.is_empty(comb_class, label)
-        return empty
 
     def _expand(
         self,
@@ -280,40 +267,21 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         - symmetry expand combinatorial classes
         - add class to classqueue
         """
-        cleaned_end_labels = []
         for comb_class, child_label in zip(rule.children, end_labels):
             if self.symmetries and child_label not in self.symmetry_expanded:
                 self._symmetry_expand(
                     comb_class, child_label
                 )  # TODO: mark symmetries as empty where appropriate
-            # Only applying is_empty check to comb classes that are
-            # possibly empty.
-            if rule.possibly_empty and self.is_empty(comb_class, child_label):
-                logger.debug("Label %s is empty.", child_label)
-                continue
             if rule.workable:
                 self.classqueue.add(child_label)
             if not rule.inferrable:
                 self.classqueue.set_not_inferrable(child_label)
             if not rule.possibly_empty:
                 self.classdb.set_empty(child_label, empty=False)
-
             self.try_verify(comb_class, child_label)
-
-            cleaned_end_labels.append(child_label)
-
-        if cleaned_end_labels == [start_label]:
-            return
-
         if rule.ignore_parent:
             self.classqueue.set_stop_yielding(start_label)
-
-        if not cleaned_end_labels:
-            # this must be a verification strategy!
-            assert cleaned_end_labels or isinstance(
-                rule, VerificationRule
-            ), rule.formal_step
-        self.ruledb.add(start_label, tuple(cleaned_end_labels), rule)
+        self.ruledb.add(start_label, end_labels, rule)
 
     def _symmetry_expand(self, comb_class: CombinatorialClassType, label: int) -> None:
         """Add symmetries of combinatorial class to the database."""
