@@ -54,6 +54,8 @@ class Isomorphism(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
         self._rules2: Dict[
             ClassType2, AbstractRule[ClassType2, ObjType2]
         ] = spec2.rules_dict
+        self.root1 = spec1.root
+        self.root2 = spec2.root
 
         # Tracking recursion
         self._ancestors: Set[Tuple[ClassType1, ClassType2]] = set()
