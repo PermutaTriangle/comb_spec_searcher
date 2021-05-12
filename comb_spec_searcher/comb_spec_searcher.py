@@ -558,6 +558,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             spec_search_start = time.time()
             logger.debug("Searching for specification.")
             if self.has_specification():
+                logger.info("Specification detected.")
                 return self.ruledb.get_specification_rules(
                     smallest=smallest,
                     minimization_time_limit=0.01 * (time.time() - auto_search_start),
