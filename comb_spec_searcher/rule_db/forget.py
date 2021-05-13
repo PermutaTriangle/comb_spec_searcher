@@ -4,7 +4,17 @@ A database to search for tree.
 The database do not store the strategy to save memory.
 """
 import itertools
-from typing import Iterable, Iterator, MutableMapping, Optional, Set, Tuple, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Iterable,
+    Iterator,
+    MutableMapping,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+    cast,
+)
 
 from comb_spec_searcher.class_db import ClassDB
 from comb_spec_searcher.exception import StrategyDoesNotApply
@@ -14,6 +24,9 @@ from comb_spec_searcher.strategies.strategy_pack import StrategyPack
 from comb_spec_searcher.typing import RuleKey
 
 from .base import RuleDBBase
+
+if TYPE_CHECKING:
+    from comb_spec_searcher import CombinatorialSpecificationSearcher
 
 __all__ = ["RuleDBForgetStrategy"]
 
@@ -132,10 +145,10 @@ class RuleDBForgetStrategy(RuleDBBase):
         self._rule_to_strategy = RecomputingDict(only_equiv=False)
         self._eqv_rule_to_strategy = RecomputingDict(only_equiv=True)
 
-    def link_searcher(
-        self, root_label: int, classdb: ClassDB, strat_pack: StrategyPack
-    ) -> None:
-        super().link_searcher(root_label, classdb, strat_pack)
+    def link_searcher(self, searcher: "CombinatorialSpecificationSearcher") -> None:
+        super().link_searcher(searcher)
+        classdb = searcher.classdb
+        strat_pack = searcher.strategy_pack
         self.rule_to_strategy.link_searcher(classdb, strat_pack)
         self.eqv_rule_to_strategy.link_searcher(classdb, strat_pack)
 

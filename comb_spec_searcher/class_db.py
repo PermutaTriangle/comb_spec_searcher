@@ -8,7 +8,9 @@ Contains information about if combinatorial classes have been found by
 if is_empty has been checked.
 """
 
+import time
 import zlib
+from datetime import timedelta
 from typing import Dict, Generic, Iterator, Optional, Type, cast
 
 from comb_spec_searcher.typing import ClassKey, CombinatorialClassType, Key
@@ -56,6 +58,8 @@ class ClassDB(Generic[CombinatorialClassType]):
         self.class_to_info: Dict[ClassKey, Info] = {}
         self.label_to_info: Dict[int, Info] = {}
         self.combinatorial_class = combinatorial_class
+        self._empty_time = 0.0
+        self._empty_num_application = 0
 
     def __iter__(self) -> Iterator[int]:
         """
@@ -194,7 +198,11 @@ class ClassDB(Generic[CombinatorialClassType]):
     def _is_empty(self, comb_class: CombinatorialClassType) -> bool:
         if not isinstance(comb_class, self.combinatorial_class):
             comb_class = self.get_class(comb_class)
-        return comb_class.is_empty()
+        self._empty_num_application += 1
+        start = time.time()
+        is_empty = comb_class.is_empty()
+        self._empty_time += time.time() - start
+        return is_empty
 
     def set_empty(self, key: Key, empty: bool = True) -> None:
         """
@@ -209,5 +217,7 @@ class ClassDB(Generic[CombinatorialClassType]):
         """
         status = "ClassDB status:\n"
         status += "\tTotal number of combinatorial classes found is"
-        status += f" {len(self.label_to_info):,d}"
+        status += f" {len(self.label_to_info):,d}\n"
+        status += f"\tis_empty check applied {self._empty_num_application} time. "
+        status += f"Time spent: {timedelta(seconds=int(self._empty_time))}"
         return status

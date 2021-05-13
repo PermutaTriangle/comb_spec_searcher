@@ -87,15 +87,10 @@ class RuleDBBase(RuleDBAbstract):
         )
 
     def add(self, start: int, ends: Tuple[int, ...], rule: AbstractRule) -> None:
-        """
-        Add a rule to the database.
-
-        - start is a single integer.
-        - ends is a tuple of integers, representing the non-empty children.
-        - rule is a Rule that creates start -> ends.
-        """
         self._pruned_dict = None
-        ends = tuple(sorted(ends))
+        ends = self._clean_labels(ends, rule)
+        if ends == [start]:
+            return
         if isinstance(rule, VerificationRule):
             self.equivdb.set_verified(start)
         if len(ends) == 1:
@@ -109,6 +104,21 @@ class RuleDBBase(RuleDBAbstract):
                 self.rule_to_strategy[(start, ends)] = rule.strategy
         else:
             self.rule_to_strategy[(start, ends)] = rule.strategy
+
+    def _clean_labels(
+        self, ends: Tuple[int, ...], rule: AbstractRule
+    ) -> Tuple[int, ...]:
+        """
+        Remove the empty label and sort the remaining one.
+        """
+        cleaned_ends = []
+        for comb_class, child_label in zip(rule.children, ends):
+            if rule.possibly_empty and self.classdb.is_empty(comb_class, child_label):
+                logger.debug("Label %s is empty.", child_label)
+                self.searcher.classqueue.set_stop_yielding(child_label)
+                continue
+            cleaned_ends.append(child_label)
+        return tuple(sorted(cleaned_ends))
 
     def is_verified(self, label: int) -> bool:
         """Return True if label has been verified."""
