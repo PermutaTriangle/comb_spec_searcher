@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   `NotImplementedError`
 - `find_bijection_between` tries to find a bijection between classes given
   a `CombinatorialSpecificationSearcher` object for both.
+- Added Forest searching capability to the css. Those are specification that can
+  you reverse rule that are not equivalences.
 
 ### Changed
 - If a rule in a specification cannot be sanity checked (e.g., counting is not
