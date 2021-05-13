@@ -141,7 +141,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 for start_label, end_labels, rule in self._expand_class_with_strategy(
                     comb_class, strategy, label
                 ):
-                    self._add_rule(start_label, end_labels, rule)
+                    self.add_rule(start_label, end_labels, rule)
             self.tried_to_verify.add(label)
 
     def _expand(
@@ -162,7 +162,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 for start_label, end_labels, rule in self._expand_class_with_strategy(
                     comb_class, strategy_generator, label
                 ):
-                    self._add_rule(start_label, end_labels, rule)
+                    self.add_rule(start_label, end_labels, rule)
 
     @staticmethod
     def _rules_from_strategy(
@@ -255,15 +255,14 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                     )
             yield start_label, tuple(end_labels), rule
 
-    def _add_rule(
+    def add_rule(
         self, start_label: int, end_labels: Tuple[int, ...], rule: AbstractRule
     ) -> None:
         """
-        Add the cleaned rules labels.
+        Add the rule to the searcher
 
         - try to verify children combinatorial classes
         - set workability of combinatorial classes
-        - remove empty combinatorial classes
         - symmetry expand combinatorial classes
         - add class to classqueue
         """
@@ -320,7 +319,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             ):
                 inf_class = rule.children[0]
                 inf_label = end_labels[0]
-                self._add_rule(start_label, end_labels, rule)
+                self.add_rule(start_label, end_labels, rule)
                 self.classqueue.set_not_inferrable(start_label)
                 inferral_strategies = (
                     inferral_strategies[i + 1 :] + inferral_strategies[0 : i + 1]

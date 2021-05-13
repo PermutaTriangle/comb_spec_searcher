@@ -634,4 +634,4 @@ class RuleDBForest(RuleDBAbstract):
             ):
                 rule = empty_strategy(comb_class)
                 self._already_empty.add(label)
-                self.searcher._add_rule(label, (), rule)
+                self.searcher.add_rule(label, (), rule)
