@@ -87,7 +87,7 @@ class Function:
         Return the number of classes for each value of the function.
         """
         count = list(self._preimage_count)
-        while count[-1] == 0:
+        while count and count[-1] == 0:
             count.pop()
         return count
 
