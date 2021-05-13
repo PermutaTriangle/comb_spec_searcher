@@ -1,5 +1,5 @@
 from .base import RuleDB
-from .forget import RuleDBForgetStrategy
 from .forest import RuleDBForest
+from .forget import RuleDBForgetStrategy
 
 __all__ = ["RuleDB", "RuleDBForgetStrategy", "RuleDBForest"]
