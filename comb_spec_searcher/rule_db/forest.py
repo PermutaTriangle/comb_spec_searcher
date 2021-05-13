@@ -26,7 +26,7 @@ from comb_spec_searcher.strategies.strategy import (
     StrategyFactory,
 )
 from comb_spec_searcher.strategies.strategy_pack import StrategyPack
-from comb_spec_searcher.typing import ForestRuleKey, RuleBucket, RuleKey
+from comb_spec_searcher.typing import CSSstrategy, ForestRuleKey, RuleBucket, RuleKey
 
 T = TypeVar("T")
 RuleWithShifts = Tuple[RuleKey, Tuple[int, ...]]
@@ -555,8 +555,9 @@ class ForestRuleExtractor:
         """
         Return all the rule created for that class with the pack.
         """
-        for strat in self.pack:
-            comb_class = self.classdb.get_class(label)
+        comb_class = self.classdb.get_class(label)
+        strats: Iterator[CSSstrategy] = itertools.chain(self.pack, [EmptyStrategy()])
+        for strat in strats:
             if isinstance(strat, StrategyFactory):
                 strats_or_rules: Iterable[
                     Union[AbstractRule, AbstractStrategy]
