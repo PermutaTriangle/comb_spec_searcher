@@ -20,13 +20,18 @@ from comb_spec_searcher.class_db import ClassDB
 from comb_spec_searcher.exception import StrategyDoesNotApply
 from comb_spec_searcher.rule_db.abstract import RuleDBAbstract, ensure_specification
 from comb_spec_searcher.strategies.rule import AbstractRule, Rule
-from comb_spec_searcher.strategies.strategy import AbstractStrategy, StrategyFactory
+from comb_spec_searcher.strategies.strategy import (
+    AbstractStrategy,
+    EmptyStrategy,
+    StrategyFactory,
+)
 from comb_spec_searcher.strategies.strategy_pack import StrategyPack
 from comb_spec_searcher.typing import ForestRuleKey, RuleBucket, RuleKey
 
 T = TypeVar("T")
 RuleWithShifts = Tuple[RuleKey, Tuple[int, ...]]
 SortedRWS = Dict[RuleBucket, List[ForestRuleKey]]
+empty_strategy: EmptyStrategy = EmptyStrategy()
 
 
 class DefaultList(Generic[T]):
@@ -578,6 +583,7 @@ class RuleDBForest(RuleDBAbstract):
         super().__init__()
         self._num_rules = 0
         self.table_method = TableMethod()
+        self._already_empty: Set[int] = set()
 
     # Implementation of RuleDBAbstract
 
@@ -597,6 +603,7 @@ class RuleDBForest(RuleDBAbstract):
         return self.is_verified(self.root_label)
 
     def add(self, start: int, ends: Tuple[int, ...], rule: AbstractRule) -> None:
+        self._add_empty_rule(ends, rule)
         self._num_rules += 1
         new_rules = [rule]
         if rule.is_reversible():
@@ -612,3 +619,19 @@ class RuleDBForest(RuleDBAbstract):
         )
         extractor.check()
         return extractor.rules()
+
+    # Other methods
+
+    def _add_empty_rule(self, ends: Iterable[int], rule: AbstractRule) -> None:
+        """
+        Add empty rule for the children of the rule if needed.
+        """
+        if not rule.possibly_empty:
+            return
+        for label, comb_class in zip(ends, rule.children):
+            if label not in self._already_empty and self.classdb.is_empty(
+                comb_class, label
+            ):
+                rule = empty_strategy(comb_class)
+                self._already_empty.add(label)
+                self.searcher._add_rule(label, (), rule)
