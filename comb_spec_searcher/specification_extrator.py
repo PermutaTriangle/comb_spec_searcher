@@ -297,11 +297,12 @@ class RulePathToAtomExtractor(PartialSpecificationRuleExtractor):
                 rule = self._find_rule(curr_class, children)
                 # Get the first child that matches the label of the child we want.
                 # If there are multiple, it does not matter which one.
+                next_child = self.search_order[curr_class][idx]
                 rule_idx = next(
                     i
                     for i, c in enumerate(rule.children)
-                    if self.classdb.get_label(c) == children[idx]
+                    if self.classdb.get_label(c) == next_child
                 )
                 path.append((rule, rule_idx))
-                curr_class = self.search_order[curr_class][idx]
+                curr_class = next_child
         return path
