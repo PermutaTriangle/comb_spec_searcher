@@ -295,9 +295,11 @@ class RulePathToAtomExtractor(PartialSpecificationRuleExtractor):
             else:
                 _, idx = self.path.pop()
                 rule = self._find_rule(curr_class, children)
+                # The idx given by the searcher might differ from that of rule_dict
+                # and we use search_order to get the corresponding index in rule_dict
+                next_child = self.search_order[curr_class][idx]
                 # Get the first child that matches the label of the child we want.
                 # If there are multiple, it does not matter which one.
-                next_child = self.search_order[curr_class][idx]
                 rule_idx = next(
                     i
                     for i, c in enumerate(rule.children)
