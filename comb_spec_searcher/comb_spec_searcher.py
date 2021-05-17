@@ -134,15 +134,18 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         """
         Try to verify the combinatorial class.
         """
-        if label not in self.tried_to_verify:
-            for strategy in self.verification_strategies:
-                if self.ruledb.is_verified(label):
-                    break
-                for start_label, end_labels, rule in self._expand_class_with_strategy(
-                    comb_class, strategy, label
-                ):
-                    self._add_rule(start_label, end_labels, rule)
-            self.tried_to_verify.add(label)
+        if label in self.tried_to_verify:
+            return
+        self.tried_to_verify.add(label)
+        if self.classdb.is_empty(comb_class, label):
+            return
+        for strategy in self.verification_strategies:
+            if self.ruledb.is_verified(label):
+                return
+            for start_label, end_labels, rule in self._expand_class_with_strategy(
+                comb_class, strategy, label
+            ):
+                self._add_rule(start_label, end_labels, rule)
 
     def _expand(
         self,
