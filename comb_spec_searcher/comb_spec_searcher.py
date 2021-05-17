@@ -255,6 +255,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                     )
             yield start_label, tuple(end_labels), rule
 
+    @cssmethodtimer("add rule")
     def add_rule(
         self, start_label: int, end_labels: Tuple[int, ...], rule: AbstractRule
     ) -> None:
