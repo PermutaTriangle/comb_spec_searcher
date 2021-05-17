@@ -1,4 +1,6 @@
 import itertools
+import time
+from datetime import timedelta
 from typing import (
     Callable,
     Deque,
@@ -583,6 +585,8 @@ class RuleDBForest(RuleDBAbstract):
     def __init__(self) -> None:
         super().__init__()
         self._num_rules = 0
+        self._time_table_method = 0.0
+        self._time_key = 0.0
         self.table_method = TableMethod()
         self._already_empty: Set[int] = set()
 
@@ -591,6 +595,10 @@ class RuleDBForest(RuleDBAbstract):
     def status(self, elaborate: bool) -> str:
         s = "RuleDB status:\n"
         s += f"\tAdded from {self._num_rules} normal rules\n"
+        key_time = timedelta(seconds=int(self._time_key))
+        tm_time = timedelta(seconds=int(self._time_table_method))
+        s += f"\tTime spent computing forest keys: {key_time}\n"
+        s += f"\tTime spent running the table method: {tm_time}\n"
         s += self.table_method.status()
         return s
 
@@ -606,12 +614,19 @@ class RuleDBForest(RuleDBAbstract):
     def add(self, start: int, ends: Tuple[int, ...], rule: AbstractRule) -> None:
         self._add_empty_rule(ends, rule)
         self._num_rules += 1
-        new_rules = [rule]
+        start_time = time.time()
+        new_rule_keys = [rule.forest_key(self.classdb.get_label)]
         if rule.is_reversible():
             assert isinstance(rule, Rule)
-            new_rules.extend(rule.to_reverse_rule(i) for i in range(len(rule.children)))
-        for new_rule in new_rules:
-            self.table_method.add_rule_key(new_rule.forest_key(self.classdb.get_label))
+            new_rule_keys.extend(
+                rule.to_reverse_rule(i).forest_key(self.classdb.get_label)
+                for i in range(len(rule.children))
+            )
+        self._time_key += time.time() - start_time
+        start_time = time.time()
+        for new_key in new_rule_keys:
+            self.table_method.add_rule_key(new_key)
+        self._time_table_method += time.time() - start_time
 
     @ensure_specification
     def get_specification_rules(self, **kwargs) -> Iterator[AbstractRule]:
