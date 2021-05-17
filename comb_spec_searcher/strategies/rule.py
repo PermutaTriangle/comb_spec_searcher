@@ -4,6 +4,8 @@ The rule class is used for a specific application of a strategy on a combinatori
 class. This is not something the user should implement, as it is just a wrapper for
 calling the Strategy class and storing its results.
 """
+
+
 import abc
 import random
 from collections import defaultdict
@@ -421,6 +423,29 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         """
         return self.strategy.forward_map(self.comb_class, obj, self.children)
 
+    def indexed_forward_map(
+        self,
+        obj: CombinatorialObjectType,
+        data: Optional[object] = None,
+    ) -> Tuple[Tuple[Optional[CombinatorialObjectType], ...], int]:
+        """
+        A version of forward_map that is used for bijections. The idx is used
+        create a bijection from a nonbijective rule.
+        """
+        return self.forward_map(obj), 0
+
+    def indexed_backward_map(
+        self,
+        objs: Tuple[Optional[CombinatorialObjectType], ...],
+        idx: int,
+        data: Optional[object] = None,
+    ) -> CombinatorialObjectType:
+        """
+        A version of backward_map that is used for bijections. The idx is used
+        create a bijection from a nonbijective rule.
+        """
+        return next(self.backward_map(objs))
+
     def to_equivalence_rule(self) -> "EquivalenceRule":
         """
         Return the version of the rule where the empty children are removed.
@@ -609,6 +634,49 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         self.subrecs = tmpsubrec
         self.subterms = tmpsubterms
         return True
+
+
+class NonBijectiveRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
+    def indexed_forward_map(
+        self,
+        obj: CombinatorialObjectType,
+        data: Optional[object] = None,
+    ) -> Tuple[Tuple[Optional[CombinatorialObjectType], ...], int]:
+        img = self.forward_map(obj)
+        return img, self._forward_order(obj, img, data)
+
+    def indexed_backward_map(
+        self,
+        objs: Tuple[Optional[CombinatorialObjectType], ...],
+        idx: int,
+        data: Optional[object] = None,
+    ) -> CombinatorialObjectType:
+        return self._backward_order_item(idx, objs, data)
+
+    @abc.abstractmethod
+    def _forward_order(
+        self,
+        obj: CombinatorialObjectType,
+        image: Tuple[Optional[CombinatorialObjectType], ...],
+        data: Optional[object] = None,
+    ) -> int:
+        """For rules that do not have an injective forward_map, we can mark the
+        resulting object with a number i (that depends on the object we map from)
+        in order to achieve a bijection. The backward map will then take said
+        number and yield the i-th element (by some predefined order). This requires
+        the backward_map's order to be deterministic.
+        """
+
+    @abc.abstractmethod
+    def _backward_order_item(
+        self,
+        idx: int,
+        objs: Tuple[Optional[CombinatorialObjectType], ...],
+        data: Optional[object] = None,
+    ) -> CombinatorialObjectType:
+        """Given an iterator of all possible domain elements for an indexed forward map
+        and an index, this method will return the element that maps to said index.
+        """
 
 
 class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):

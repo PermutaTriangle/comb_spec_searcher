@@ -467,7 +467,8 @@ We will first need a couple of imports.
 
 .. code:: python
 
-   >>> from comb_spec_searcher import find_bijection_between, Bijection
+   >>> from comb_spec_searcher.bijection import ParallelSpecFinder
+   >>> from comb_spec_searcher.isomorphism import Bijection
 
 We start by defining our two classes that we wish to find a bijection between.
 
@@ -494,9 +495,13 @@ We get two parallel specs if successful, ``None`` otherwise.
 
 .. code:: python
 
-   >>> specs = find_bijection_between(searcher1, searcher2)
-   >>> spec1, spec2 = specs
-   >>> bijection = Bijection.construct(spec1, spec2)
+   >>> specs = ParallelSpecFinder(searcher1, searcher2).find()
+
+We then construct the bijection from the parallel specifications.
+
+.. code:: python
+
+   >>> bijection = Bijection.construct(*specs)
 
 We can use the `Bijection` object to map (either way) sampled objects
 from the sepcifications.
@@ -504,9 +509,9 @@ from the sepcifications.
 .. code:: python
 
    >>> for i in range(10):
-   ...     for w in spec1.generate_objects_of_size(i):
+   ...     for w in bijection.domain.generate_objects_of_size(i):
    ...         assert w == bijection.inverse_map(bijection.map(w))
-   ...     for w in spec2.generate_objects_of_size(i):
+   ...     for w in bijection.codomain.generate_objects_of_size(i):
    ...         assert w == bijection.map(bijection.inverse_map(w))
    ...
 
