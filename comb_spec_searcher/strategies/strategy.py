@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 """
 The Strategy class is essentially following the mantra of 'strategy' from the
 combinatorial explanation paper.

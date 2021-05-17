@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 """
 The rule class is used for a specific application of a strategy on a combinatorial
 class. This is not something the user should implement, as it is just a wrapper for

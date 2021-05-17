@@ -62,7 +62,6 @@ confidence=
 # --disable=W".
 disable=missing-class-docstring,
         unsubscriptable-object, # Pylint does not support Genric class see https://github.com/PyCQA/pylint/issues/3520
-        too-many-lines,
         too-few-public-methods,
         not-callable,
         cyclic-import,
