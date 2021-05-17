@@ -209,10 +209,7 @@ class RuleDBBase(RuleDBAbstract):
 
     def has_specification(self) -> bool:
         """Return True if a specification has been found, false otherwise."""
-        if self.equivdb[self.root_label] in self.pruned_dict:
-            logger.info("Specification detected.")
-            return True
-        return False
+        return self.equivdb[self.root_label] in self.pruned_dict
 
     def rule_from_equivalence_rule(
         self, eqv_start: int, eqv_ends: Iterable[int]

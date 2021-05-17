@@ -1,3 +1,4 @@
+import enum
 from typing import (
     TYPE_CHECKING,
     Callable,
@@ -29,6 +30,8 @@ __all__ = [
     "Parameters",
     "ParametersMap",
     "RelianceProfile",
+    "RuleBucket",
+    "ForestRuleKey",
     "Objects",
     "ObjectsCache",
     "Terms",
@@ -59,7 +62,28 @@ class WorkPacket(NamedTuple):
     inferral: bool
 
 
+@enum.unique
+class RuleBucket(enum.Enum):
+    UNDEFINED = enum.auto()
+    VERIFICATION = enum.auto()
+    EQUIV = enum.auto()
+    NORMAL = enum.auto()
+    REVERSE = enum.auto()
+
+
 RuleKey = Tuple[int, Tuple[int, ...]]
+
+
+class ForestRuleKey(NamedTuple):
+    parent: int
+    children: Tuple[int, ...]
+    shifts: Tuple[int, ...]
+    bucket: RuleBucket
+
+    @property
+    def key(self) -> RuleKey:
+        return (self.parent, self.children)
+
 
 # From constructor
 Parameters = Tuple[int, ...]
