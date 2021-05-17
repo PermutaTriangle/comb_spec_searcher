@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   `NotImplementedError`
 - `find_bijection_between` tries to find a bijection between classes given
   a `CombinatorialSpecificationSearcher` object for both.
+- Special forward and backward maps, called indexed forward and backward maps.
+  They are to be used for bijections and their purposes is to support bijections
+  for non-injective forward maps by labelling the resulting objects or map from 
+  an labelled object.
+- `NonBijectiveRule` will implement a labelling system for indexed forward
+  and backward maps.
+- `EqPathParallelSpecFinder` that, on top of the base class, validates any
+  potential path contained in equivalence labels.
+- `PartialSpecificationRuleExtractor` that extracts rules from partially built
+  specifications and two subclasses with specific applications of that.
 
 ### Changed
 - If a rule in a specification cannot be sanity checked (e.g., counting is not

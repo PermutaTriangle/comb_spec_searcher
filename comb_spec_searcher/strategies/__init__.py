@@ -5,7 +5,13 @@ from .constructor import (
     DisjointUnion,
     Quotient,
 )
-from .rule import EquivalencePathRule, ReverseRule, Rule, VerificationRule
+from .rule import (
+    EquivalencePathRule,
+    NonBijectiveRule,
+    ReverseRule,
+    Rule,
+    VerificationRule,
+)
 from .strategy import (
     AbstractStrategy,
     AtomStrategy,
@@ -28,6 +34,7 @@ __all__ = [
     "EquivalencePathRule",
     "ReverseRule",
     "Rule",
+    "NonBijectiveRule",
     "VerificationRule",
     "AbstractStrategy",
     "AtomStrategy",

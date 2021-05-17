@@ -40,15 +40,15 @@ from typing import Iterable, Iterator, Optional, Tuple, Union
 
 from comb_spec_searcher import (
     AtomStrategy,
-    Bijection,
     CartesianProductStrategy,
     CombinatorialClass,
     CombinatorialObject,
     CombinatorialSpecificationSearcher,
     DisjointUnionStrategy,
     StrategyPack,
-    find_bijection_between,
 )
+from comb_spec_searcher.bijection import ParallelSpecFinder
+from comb_spec_searcher.isomorphism import Bijection
 
 
 class Word(str, CombinatorialObject):
@@ -366,22 +366,20 @@ if __name__ == "__main__":
         "(press any key to continue)"
     )
 
-    specs = find_bijection_between(
+    specs = ParallelSpecFinder[AvoidingWithPrefix, Word, AvoidingWithPrefix, Word](
         CombinatorialSpecificationSearcher(
             AvoidingWithPrefix(Word(), ["00"], ["0", "1"]), pack
         ),
         CombinatorialSpecificationSearcher(
             AvoidingWithPrefix(Word(), ["11"], ["0", "1"]), pack
         ),
-    )
-    if specs is None:
-        print("No bijection found")
-    else:
-        spec1, spec2 = specs
-        bijection = Bijection.construct(spec1, spec2)
-        assert bijection is not None
-        for i in range(5):
-            for word in bijection.domain.generate_objects_of_size(i):
-                mapped_to = bijection.map(word)
-                assert bijection.inverse_map(mapped_to) == word
-                print(f"{word} -> {mapped_to}")
+    ).find()
+    assert specs is not None
+    spec1, spec2 = specs
+    bijection = Bijection.construct(spec1, spec2)
+    assert bijection is not None
+    for i in range(5):
+        for word in bijection.domain.generate_objects_of_size(i):
+            mapped_to = bijection.map(word)
+            assert bijection.inverse_map(mapped_to) == word
+            print(f"{word} -> {mapped_to}")
