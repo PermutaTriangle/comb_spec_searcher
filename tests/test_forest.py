@@ -3,8 +3,11 @@ from typing import Dict, List, Union
 
 import pytest
 
-from comb_spec_searcher.rule_db.forest import Function, TableMethod
+from comb_spec_searcher import CombinatorialSpecificationSearcher
+from comb_spec_searcher.rule_db.forest import Function, RuleDBForest, TableMethod
+from comb_spec_searcher.strategies.strategy import EmptyStrategy
 from comb_spec_searcher.typing import ForestRuleKey, RuleBucket
+from example import AvoidingWithPrefix, pack
 
 
 def assert_function_values(
@@ -108,6 +111,9 @@ class TestFunction:
         assert f.preimage_gap(1) == 2
         assert f.preimage_gap(2) == 4
         assert f.preimage_gap(3) == 4
+
+
+# Test of the table method
 
 
 def test_132_universe_pumping():
@@ -320,3 +326,17 @@ def test_segmented():
     tb.add_rule_key(ForestRuleKey(19, (10,), (0,), RuleBucket.UNDEFINED))
     assert tb.function == {i: None for i in range(21)}
     assert all(tb.is_pumping(c) for c in range(21))
+
+
+# Test of the extractor
+
+
+def test_emtpy_rule_first():
+    """
+    When recomputing the rules. The forest extractor should favor the empty rule.
+    """
+    empty_class = AvoidingWithPrefix("ab", ["ab"], ["a", "b"])
+    assert empty_class.is_empty()
+    css = CombinatorialSpecificationSearcher(empty_class, pack, ruledb=RuleDBForest())
+    spec = css.auto_search()
+    assert isinstance(spec.rules_dict[empty_class].strategy, EmptyStrategy)
