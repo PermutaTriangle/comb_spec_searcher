@@ -558,7 +558,7 @@ class ForestRuleExtractor:
         Return all the rule created for that class with the pack.
         """
         comb_class = self.classdb.get_class(label)
-        strats: Iterator[CSSstrategy] = itertools.chain(self.pack, [EmptyStrategy()])
+        strats: Iterator[CSSstrategy] = itertools.chain([EmptyStrategy()], self.pack)
         for strat in strats:
             if isinstance(strat, StrategyFactory):
                 strats_or_rules: Iterable[
