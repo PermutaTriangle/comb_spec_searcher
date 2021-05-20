@@ -319,13 +319,13 @@ class ParallelSpecFinder(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
         self,
         rule1: AbstractRule[ClassType1, ObjType1],
         rule2: AbstractRule[ClassType2, ObjType2],
-    ) -> Tuple[bool, Optional[object]]:
+    ) -> bool:
         # pylint: disable=no-self-use
         if not isinstance(rule1, Rule):
-            return not isinstance(rule2, Rule), None
+            return not isinstance(rule2, Rule)
         if not isinstance(rule2, Rule):
-            return False, None
-        return rule1.constructor.equiv(rule2.constructor)
+            return False
+        return rule1.constructor.equiv(rule2.constructor)[0]
 
     def _potential_children(
         self, id1: int, id2: int
@@ -338,7 +338,7 @@ class ParallelSpecFinder(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
             for n, child_rule_pairs in self._pi1.eq_label_rules[id1].items()
             for c1, r1 in child_rule_pairs
             for c2, r2 in self._pi2.eq_label_rules[id2][n]
-            if self._rule_match(r1, r2)[0]
+            if self._rule_match(r1, r2)
         ]
 
     @staticmethod
@@ -737,6 +737,6 @@ class EqPathParallelSpecFinder(
                 idx2,
             ).nonequivalent_rules_in_equiv_path()
             children_cache[children] = len(path1) == len(path2) and all(
-                self._rule_match(r1, r2)[0] for r1, r2 in zip(path1, path2)
+                self._rule_match(r1, r2) for r1, r2 in zip(path1, path2)
             )
         return children_cache[children]
