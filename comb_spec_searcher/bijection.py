@@ -9,7 +9,6 @@ from typing import (
     Set,
     Tuple,
     TypeVar,
-    Union,
 )
 
 from comb_spec_searcher.comb_spec_searcher import CombinatorialSpecificationSearcher
@@ -20,7 +19,6 @@ from comb_spec_searcher.specification_extrator import (
     EquivalenceRuleExtractor,
     SpecificationRuleExtractor,
 )
-from comb_spec_searcher.strategies.constructor.base import Constructor
 from comb_spec_searcher.strategies.rule import AbstractRule, Rule
 from comb_spec_searcher.tree_searcher import Node, prune
 from comb_spec_searcher.typing import (
@@ -54,10 +52,7 @@ RuleClassification = DefaultDict[
         List[
             Tuple[
                 Tuple[int, ...],
-                Union[
-                    Constructor[CombinatorialClassType, CombinatorialObjectType],
-                    None,
-                ],
+                AbstractRule[CombinatorialClassType, CombinatorialObjectType],
             ]
         ],
     ],
@@ -137,8 +132,8 @@ class ParallelInfo(Generic[CombinatorialClassType, CombinatorialObjectType]):
 
         for eq_par, eq_chi in lis:
             parent, rule = self._get_class_and_rule(eq_par, eq_chi, rule_dict)
+            assert not parent.is_empty()
             if parent.is_atom():
-                eq_label_rules[eq_par][0].append((eq_chi, None))
                 sz = next(
                     parent.objects_of_size(parent.minimum_size_of_object())
                 ).size()
@@ -147,7 +142,7 @@ class ParallelInfo(Generic[CombinatorialClassType, CombinatorialObjectType]):
                 if not isinstance(rule, Rule):
                     raise ValueError("Only atoms can be verified.")
                 assert len(eq_chi) > 0
-                eq_label_rules[eq_par][len(eq_chi)].append((eq_chi, rule.constructor))
+            eq_label_rules[eq_par][len(eq_chi)].append((eq_chi, rule))
         return eq_label_rules
 
     def _get_class_and_rule(
@@ -320,6 +315,18 @@ class ParallelSpecFinder(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
         sz2, terms2 = self._pi2.atom_map[id2]
         return sz1 == sz2 and terms1 == terms2
 
+    def _rule_match(
+        self,
+        rule1: AbstractRule[ClassType1, ObjType1],
+        rule2: AbstractRule[ClassType2, ObjType2],
+    ) -> Tuple[bool, Optional[object]]:
+        # pylint: disable=no-self-use
+        if not isinstance(rule1, Rule):
+            return not isinstance(rule2, Rule), None
+        if not isinstance(rule2, Rule):
+            return False, None
+        return rule1.constructor.equiv(rule2.constructor)
+
     def _potential_children(
         self, id1: int, id2: int
     ) -> List[Tuple[Tuple[int, ...], Tuple[int, ...], int]]:
@@ -331,8 +338,7 @@ class ParallelSpecFinder(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
             for n, child_rule_pairs in self._pi1.eq_label_rules[id1].items()
             for c1, r1 in child_rule_pairs
             for c2, r2 in self._pi2.eq_label_rules[id2][n]
-            if (r1 is None and r2 is None)
-            or (r1 is not None and r2 is not None and r1.equiv(r2)[0])
+            if self._rule_match(r1, r2)[0]
         ]
 
     @staticmethod
@@ -731,6 +737,6 @@ class EqPathParallelSpecFinder(
                 idx2,
             ).nonequivalent_rules_in_equiv_path()
             children_cache[children] = len(path1) == len(path2) and all(
-                r1.constructor.equiv(r2.constructor)[0] for r1, r2 in zip(path1, path2)
+                self._rule_match(r1, r2)[0] for r1, r2 in zip(path1, path2)
             )
         return children_cache[children]

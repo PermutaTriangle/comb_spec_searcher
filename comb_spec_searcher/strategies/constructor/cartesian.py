@@ -351,7 +351,9 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
     def __str__(self) -> str:
         return "Cartesian product"
 
-    def equiv(self, other: "Constructor") -> Tuple[bool, Optional[object]]:
+    def equiv(
+        self, other: "Constructor", data: Optional[object] = None
+    ) -> Tuple[bool, Optional[object]]:
         return (
             isinstance(other, type(self))
             and CartesianProduct.extra_params_equiv(
@@ -615,7 +617,9 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     def __str__(self):
         return "quotient"
 
-    def equiv(self, other: "Constructor") -> Tuple[bool, Optional[object]]:
+    def equiv(
+        self, other: "Constructor", data: Optional[object] = None
+    ) -> Tuple[bool, Optional[object]]:
         return (
             isinstance(other, type(self))
             and Quotient.extra_params_equiv(
