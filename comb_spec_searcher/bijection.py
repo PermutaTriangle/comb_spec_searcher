@@ -574,6 +574,7 @@ class EqPathParallelSpecFinder(
 
         # Tracks the path taken in the second search
         self._path: List[Tuple[int, int, int, int]] = [(-1, -1, -1, -1)]
+        self._path_ancestors: Set[Tuple[int, int]] = set()
 
     def _search_matching_info(
         self, matching_info: MatchingInfo
@@ -635,11 +636,14 @@ class EqPathParallelSpecFinder(
                         )
                     ):
                         self._path.append((id1, id2, j1, j2))
+                        self._path_ancestors.add((id1, id2))
                         if not _rec(child1, child2, to_clean):
                             valid = False
                             self._path.pop()
+                            self._path_ancestors.remove((id1, id2))
                             break
                         self._path.pop()
+                        self._path_ancestors.remove((id1, id2))
                     if valid:
                         id_sets[0].update(to_clean[0], () if rec1 else (id1,))
                         id_sets[1].update(to_clean[1], () if rec2 else (id2,))
@@ -687,9 +691,50 @@ class EqPathParallelSpecFinder(
             if self._eq_path_matches(
                 id1, id2, pid1, pid2, idx1, idx2, sp1, sp2, eq_path_tracker
             ):
+                # If we have already matched id1 and id2 but in a different path, they
+                # can still be incompatible due to this current path's atom labels.
+                should_check = (id1, id2) not in self._path_ancestors
+                if should_check and not self._validate_atoms_for_existing_entries(
+                    id1, id2, sp1, sp2, matching_info, set()
+                ):
+                    return EqPathParallelSpecFinder._INVALID
                 return EqPathParallelSpecFinder._VALID
             return EqPathParallelSpecFinder._INVALID
         return EqPathParallelSpecFinder._UNKNOWN
+
+    def _validate_atoms_for_existing_entries(
+        self,
+        id1: int,
+        id2: int,
+        sp1: SpecMap,
+        sp2: SpecMap,
+        matching_info: MatchingInfo,
+        mem: Set[Tuple[int, int]],
+    ) -> bool:
+        if (id1, id2) in mem:
+            return True
+        if (sp1[id1], sp2[id2]) == ((), ()):
+            return self._atom_path_match(id1, id2, sp1, sp2)
+        mem.add((id1, id2))
+        children1 = sp1[id1]
+        children2 = sp2[id2]
+        for j2, ((j1, child1), child2) in enumerate(
+            zip(
+                (
+                    (i, children1[i])
+                    for i in matching_info[(id1, id2)][(children1, children2)]
+                ),
+                children2,
+            )
+        ):
+            self._path.append((id1, id2, j1, j2))
+            recurse = self._validate_atoms_for_existing_entries(
+                child1, child2, sp1, sp2, matching_info, mem
+            )
+            self._path.pop()
+            if not recurse:
+                return False
+        return True
 
     def _atom_path_match(self, id1: int, id2: int, sp1: SpecMap, sp2: SpecMap) -> bool:
         """This can be overwritten if the path can affect the validity of the pair."""
