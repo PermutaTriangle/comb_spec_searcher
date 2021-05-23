@@ -711,13 +711,16 @@ class EqPathParallelSpecFinder(
         matching_info: MatchingInfo,
         mem: Set[Tuple[int, int]],
     ) -> bool:
+        """Check if atoms are valid for a given path, when initial ids have already
+        been added to the spec maps elsewhere."""
         if (id1, id2) in mem:
             return True
-        if (sp1[id1], sp2[id2]) == ((), ()):
+        children1, children2 = sp1.get(id1, None), sp2.get(id2, None)
+        if children1 is None or children2 is None:
+            return True
+        if children1 == () == children2:
             return self._atom_path_match(id1, id2, sp1, sp2)
         mem.add((id1, id2))
-        children1 = sp1[id1]
-        children2 = sp2[id2]
         for j2, ((j1, child1), child2) in enumerate(
             zip(
                 (
@@ -728,11 +731,11 @@ class EqPathParallelSpecFinder(
             )
         ):
             self._path.append((id1, id2, j1, j2))
-            recurse = self._validate_atoms_for_existing_entries(
+            check_descendant = self._validate_atoms_for_existing_entries(
                 child1, child2, sp1, sp2, matching_info, mem
             )
             self._path.pop()
-            if not recurse:
+            if not check_descendant:
                 return False
         return True
 
