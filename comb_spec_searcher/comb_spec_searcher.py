@@ -142,10 +142,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         for strategy in self.verification_strategies:
             if self.ruledb.is_verified(label):
                 return
-            for start_label, end_labels, rule in self._expand_class_with_strategy(
-                comb_class, strategy, label
-            ):
-                self.add_rule(start_label, end_labels, rule)
+            self._expand(comb_class, label, (strategy,), False)
 
     def _expand(
         self,
