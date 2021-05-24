@@ -194,7 +194,9 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
     def __str__(self):
         return "disjoint union"
 
-    def equiv(self, other: "Constructor") -> Tuple[bool, Optional[object]]:
+    def equiv(
+        self, other: "Constructor", data: Optional[object] = None
+    ) -> Tuple[bool, Optional[object]]:
         return (
             isinstance(other, type(self))
             and DisjointUnion.extra_params_equiv(
@@ -347,7 +349,9 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     def __str__(self):
         return "complement"
 
-    def equiv(self, other: "Constructor") -> Tuple[bool, Optional[object]]:
+    def equiv(
+        self, other: "Constructor", data: Optional[object] = None
+    ) -> Tuple[bool, Optional[object]]:
         return (
             isinstance(other, type(self))
             and Complement.extra_params_equiv(

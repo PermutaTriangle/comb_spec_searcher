@@ -99,13 +99,16 @@ class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectTy
         )
 
     @abc.abstractmethod
-    def equiv(self, other: "Constructor") -> Tuple[bool, Optional[object]]:
-        """Two constructors are equiv if A <self> B and C <obj> D are isomorphic for any
-        combinatorial classes A, B, C and D where A and C are isomorphic and B and D.
-        This must be implemented for bijections. The second returned value is optional
-        data for bijections. It is used to pass additional arguments to determine index
-        ordering. It needs to be JSON compatible for bijection's to_jsonable and
-        from_dict to work.
+    def equiv(
+        self, other: "Constructor", data: Optional[object] = None
+    ) -> Tuple[bool, Optional[object]]:
+        """Two constructors are equiv if A <self> B and C <other> D are isomorphic for
+        any combinatorial classes A, B, C and D where A and C are isomorphic and B and
+        D. This must be implemented for bijections. The data argument is to optionally
+        pass additional information to the equiv function. The second returned value is
+        optional data for bijections. It is used to pass additional arguments to
+        determine index ordering. It needs to be JSON compatible for bijection's
+        `to_jsonable` and `from_dict` to work.
         """
 
     @staticmethod

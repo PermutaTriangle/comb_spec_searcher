@@ -9,7 +9,6 @@ from typing import (
     Set,
     Tuple,
     TypeVar,
-    Union,
 )
 
 from comb_spec_searcher.comb_spec_searcher import CombinatorialSpecificationSearcher
@@ -20,7 +19,6 @@ from comb_spec_searcher.specification_extrator import (
     EquivalenceRuleExtractor,
     SpecificationRuleExtractor,
 )
-from comb_spec_searcher.strategies.constructor.base import Constructor
 from comb_spec_searcher.strategies.rule import AbstractRule, Rule
 from comb_spec_searcher.tree_searcher import Node, prune
 from comb_spec_searcher.typing import (
@@ -54,10 +52,7 @@ RuleClassification = DefaultDict[
         List[
             Tuple[
                 Tuple[int, ...],
-                Union[
-                    Constructor[CombinatorialClassType, CombinatorialObjectType],
-                    None,
-                ],
+                AbstractRule[CombinatorialClassType, CombinatorialObjectType],
             ]
         ],
     ],
@@ -137,8 +132,8 @@ class ParallelInfo(Generic[CombinatorialClassType, CombinatorialObjectType]):
 
         for eq_par, eq_chi in lis:
             parent, rule = self._get_class_and_rule(eq_par, eq_chi, rule_dict)
+            assert not parent.is_empty()
             if parent.is_atom():
-                eq_label_rules[eq_par][0].append((eq_chi, None))
                 sz = next(
                     parent.objects_of_size(parent.minimum_size_of_object())
                 ).size()
@@ -147,7 +142,7 @@ class ParallelInfo(Generic[CombinatorialClassType, CombinatorialObjectType]):
                 if not isinstance(rule, Rule):
                     raise ValueError("Only atoms can be verified.")
                 assert len(eq_chi) > 0
-                eq_label_rules[eq_par][len(eq_chi)].append((eq_chi, rule.constructor))
+            eq_label_rules[eq_par][len(eq_chi)].append((eq_chi, rule))
         return eq_label_rules
 
     def _get_class_and_rule(
@@ -320,6 +315,18 @@ class ParallelSpecFinder(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
         sz2, terms2 = self._pi2.atom_map[id2]
         return sz1 == sz2 and terms1 == terms2
 
+    def _rule_match(
+        self,
+        rule1: AbstractRule[ClassType1, ObjType1],
+        rule2: AbstractRule[ClassType2, ObjType2],
+    ) -> bool:
+        # pylint: disable=no-self-use
+        if not isinstance(rule1, Rule):
+            return not isinstance(rule2, Rule)
+        if not isinstance(rule2, Rule):
+            return False
+        return rule1.constructor.equiv(rule2.constructor)[0]
+
     def _potential_children(
         self, id1: int, id2: int
     ) -> List[Tuple[Tuple[int, ...], Tuple[int, ...], int]]:
@@ -331,8 +338,7 @@ class ParallelSpecFinder(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
             for n, child_rule_pairs in self._pi1.eq_label_rules[id1].items()
             for c1, r1 in child_rule_pairs
             for c2, r2 in self._pi2.eq_label_rules[id2][n]
-            if (r1 is None and r2 is None)
-            or (r1 is not None and r2 is not None and r1.equiv(r2)[0])
+            if self._rule_match(r1, r2)
         ]
 
     @staticmethod
@@ -568,6 +574,7 @@ class EqPathParallelSpecFinder(
 
         # Tracks the path taken in the second search
         self._path: List[Tuple[int, int, int, int]] = [(-1, -1, -1, -1)]
+        self._path_ancestors: Set[Tuple[int, int]] = set()
 
     def _search_matching_info(
         self, matching_info: MatchingInfo
@@ -629,11 +636,14 @@ class EqPathParallelSpecFinder(
                         )
                     ):
                         self._path.append((id1, id2, j1, j2))
+                        self._path_ancestors.add((id1, id2))
                         if not _rec(child1, child2, to_clean):
                             valid = False
                             self._path.pop()
+                            self._path_ancestors.remove((id1, id2))
                             break
                         self._path.pop()
+                        self._path_ancestors.remove((id1, id2))
                     if valid:
                         id_sets[0].update(to_clean[0], () if rec1 else (id1,))
                         id_sets[1].update(to_clean[1], () if rec2 else (id2,))
@@ -681,9 +691,53 @@ class EqPathParallelSpecFinder(
             if self._eq_path_matches(
                 id1, id2, pid1, pid2, idx1, idx2, sp1, sp2, eq_path_tracker
             ):
+                # If we have already matched id1 and id2 but in a different path, they
+                # can still be incompatible due to this current path's atom labels.
+                should_check = (id1, id2) not in self._path_ancestors
+                if should_check and not self._validate_atoms_for_existing_entries(
+                    id1, id2, sp1, sp2, matching_info, set()
+                ):
+                    return EqPathParallelSpecFinder._INVALID
                 return EqPathParallelSpecFinder._VALID
             return EqPathParallelSpecFinder._INVALID
         return EqPathParallelSpecFinder._UNKNOWN
+
+    def _validate_atoms_for_existing_entries(
+        self,
+        id1: int,
+        id2: int,
+        sp1: SpecMap,
+        sp2: SpecMap,
+        matching_info: MatchingInfo,
+        mem: Set[Tuple[int, int]],
+    ) -> bool:
+        """Check if atoms are valid for a given path, when initial ids have already
+        been added to the spec maps elsewhere."""
+        if (id1, id2) in mem:
+            return True
+        children1, children2 = sp1.get(id1, None), sp2.get(id2, None)
+        if children1 is None or children2 is None:
+            return True
+        if children1 == () == children2:
+            return self._atom_path_match(id1, id2, sp1, sp2)
+        mem.add((id1, id2))
+        for j2, ((j1, child1), child2) in enumerate(
+            zip(
+                (
+                    (i, children1[i])
+                    for i in matching_info[(id1, id2)][(children1, children2)]
+                ),
+                children2,
+            )
+        ):
+            self._path.append((id1, id2, j1, j2))
+            check_descendant = self._validate_atoms_for_existing_entries(
+                child1, child2, sp1, sp2, matching_info, mem
+            )
+            self._path.pop()
+            if not check_descendant:
+                return False
+        return True
 
     def _atom_path_match(self, id1: int, id2: int, sp1: SpecMap, sp2: SpecMap) -> bool:
         """This can be overwritten if the path can affect the validity of the pair."""
@@ -731,6 +785,6 @@ class EqPathParallelSpecFinder(
                 idx2,
             ).nonequivalent_rules_in_equiv_path()
             children_cache[children] = len(path1) == len(path2) and all(
-                r1.constructor.equiv(r2.constructor)[0] for r1, r2 in zip(path1, path2)
+                self._rule_match(r1, r2) for r1, r2 in zip(path1, path2)
             )
         return children_cache[children]
