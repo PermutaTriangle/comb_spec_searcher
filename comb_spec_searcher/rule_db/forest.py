@@ -441,9 +441,13 @@ class ForestRuleExtractor:
     def rules(self) -> Iterator[AbstractRule]:
         """
         Return all the rules of the specification.
+
+        The empty rule are ignored as they be produced as needed by the specification.
         """
         for rk in self.needed_rules:
             rule = self._find_rule(rk)
+            if isinstance(rule.strategy, EmptyStrategy):
+                continue
             if rule.is_equivalence():
                 assert isinstance(rule, Rule)
                 yield rule.to_equivalence_rule()
