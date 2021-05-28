@@ -336,6 +336,10 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                     inf_class, inf_label, inferral_strategies, skip=strategy_generator
                 )
                 break
+            else:
+                continue
+            # only breaks if inner loop breaks
+            break
         self.classqueue.set_not_inferrable(label)
 
     def do_level(self) -> None:
