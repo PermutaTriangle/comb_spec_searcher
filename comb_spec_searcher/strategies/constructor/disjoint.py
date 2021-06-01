@@ -69,7 +69,7 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         for rhs_func, extra_parameters in zip(rhs_funcs, self.extra_parameters):
             subs: Dict[sympy.Expr, sympy.Expr] = dict()
             for parent, child in extra_parameters.items():
-                if child not in parent:
+                if child not in subs:
                     subs[child] = parent
                 else:
                     subs[child] *= parent
