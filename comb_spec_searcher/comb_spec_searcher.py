@@ -106,6 +106,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         self.classqueue.add(self.start_label)
         self.tried_to_verify: Set[int] = set()
         self.symmetry_expanded: Set[int] = set()
+        self.inferral_expanded: Set[int] = set()
         self.try_verify(start_class, self.start_label)
         if self.symmetries:
             self._symmetry_expand(start_class, self.start_label)
@@ -315,6 +316,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         """
         if self.debug:
             assert comb_class == self.classdb.get_class(label)
+        if label in self.inferral_expanded:
+            return
+        self.inferral_expanded.add(label)
         for i, strategy_generator in enumerate(inferral_strategies):
             if strategy_generator == skip:
                 continue
@@ -332,6 +336,10 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                     inf_class, inf_label, inferral_strategies, skip=strategy_generator
                 )
                 break
+            else:
+                continue
+            # only breaks if inner loop breaks
+            break
         self.classqueue.set_not_inferrable(label)
 
     def do_level(self) -> None:
