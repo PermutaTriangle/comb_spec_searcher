@@ -67,8 +67,14 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
     ) -> sympy.Eq:
         res = 0
         for rhs_func, extra_parameters in zip(rhs_funcs, self.extra_parameters):
+            subs: Dict[sympy.Expr, sympy.Expr] = dict()
+            for parent, child in extra_parameters.items():
+                if child not in parent:
+                    subs[child] = parent
+                else:
+                    subs[child] *= parent
             res += rhs_func.subs(
-                {child: parent for parent, child in extra_parameters.items()},
+                subs,
                 simultaneous=True,
             )
         return sympy.Eq(lhs_func, res)

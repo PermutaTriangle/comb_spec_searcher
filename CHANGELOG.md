@@ -41,6 +41,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixing a bug in counting for equivalence rule from a reverse rule
 - Fixing in the formal step of reverse equivalence rule. The formal step now
   state that the rule is reversed.
+- Removed bug in equation of `DisjointUnion` that ignores multiple CVs mapping to the 
+  same in a child
 
 ### Deprecated
 - Python 3.6 is no longer supported
