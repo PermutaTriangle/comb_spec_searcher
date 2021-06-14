@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [4.0.0] - 2021-06-14
 ### Added
 - Reverse rule default back to the equation of the original rule in case
   `NotImplementedError`
@@ -15,7 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   you reverse rule that are not equivalences.
 - Special forward and backward maps, called indexed forward and backward maps.
   They are to be used for bijections and their purposes is to support bijections
-  for non-injective forward maps by labelling the resulting objects or map from 
+  for non-injective forward maps by labelling the resulting objects or map from
   an labelled object.
 - `NonBijectiveRule` will implement a labelling system for indexed forward
   and backward maps.
@@ -41,7 +42,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixing a bug in counting for equivalence rule from a reverse rule
 - Fixing in the formal step of reverse equivalence rule. The formal step now
   state that the rule is reversed.
-- Removed bug in equation of `DisjointUnion` that ignores multiple CVs mapping to the 
+- Removed bug in equation of `DisjointUnion` that ignores multiple CVs mapping to the
   same in a child
 
 ### Deprecated
