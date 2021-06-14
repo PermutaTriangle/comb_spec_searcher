@@ -13,14 +13,14 @@ Combinatorial Specification Searcher
     :target: https://pypi.python.org/pypi/comb_spec_searcher
 .. image:: https://img.shields.io/pypi/pyversions/comb_spec_searcher.svg
     :target: https://pypi.python.org/pypi/comb_spec_searcher
-
 .. image:: http://img.shields.io/badge/readme-tested-brightgreen.svg
     :alt: Travis
     :target: https://travis-ci.org/PermutaTriangle/comb_spec_searcher
-
 .. image:: https://requires.io/github/PermutaTriangle/comb_spec_searcher/requirements.svg?branch=master
      :target: https://requires.io/github/PermutaTriangle/comb_spec_searcher/requirements/?branch=master
      :alt: Requirements Status
+.. image:: https://zenodo.org/badge/121520109.svg
+   :target: https://zenodo.org/badge/latestdoi/121520109
 
 The ``comb_spec_searcher`` package contains code for combinatorial
 exploration.
@@ -517,3 +517,13 @@ from the sepcifications.
 
 Whether we find a bijection or not (when one exists) is highly 
 dependent on the packs chosen.
+
+Citing
+######
+
+If you found this library helpful with your research and would like to cite us, 
+you can use the following `BibTeX`_ or go to `Zenodo`_ for alternative formats. 
+
+.. _BibTex: https://zenodo.org/record/4944021/export/hx#.YMcpIC2l30o
+
+.. _Zenodo: https://doi.org/10.5281/zenodo.4944020
