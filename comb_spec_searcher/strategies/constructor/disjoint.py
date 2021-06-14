@@ -67,8 +67,14 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
     ) -> sympy.Eq:
         res = 0
         for rhs_func, extra_parameters in zip(rhs_funcs, self.extra_parameters):
+            subs: Dict[str, sympy.Expr] = dict()
+            for parent, child in extra_parameters.items():
+                if child in subs:
+                    subs[child] *= sympy.var(parent)
+                else:
+                    subs[child] = sympy.var(parent)
             res += rhs_func.subs(
-                {child: parent for parent, child in extra_parameters.items()},
+                subs,
                 simultaneous=True,
             )
         return sympy.Eq(lhs_func, res)
@@ -194,6 +200,17 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
     def __str__(self):
         return "disjoint union"
 
+    def equiv(
+        self, other: "Constructor", data: Optional[object] = None
+    ) -> Tuple[bool, Optional[object]]:
+        return (
+            isinstance(other, type(self))
+            and DisjointUnion.extra_params_equiv(
+                self.extra_parameters, other.extra_parameters
+            ),
+            None,
+        )
+
 
 class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     """
@@ -238,7 +255,11 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         parent_param_to_pos = {
             param: pos for pos, param in enumerate(parent.extra_parameters)
         }
-        for child, extra_param in zip(children, self.extra_parameters):
+        for (idx, child), extra_param in zip(
+            enumerate(children), self.extra_parameters
+        ):
+            if idx == self.idx:
+                continue
             reversed_extra_param: Dict[str, List[str]] = defaultdict(list)
             for parent_var, child_var in extra_param.items():
                 reversed_extra_param[child_var].append(parent_var)
@@ -282,16 +303,15 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     def get_equation(
         self, lhs_func: sympy.Function, rhs_funcs: Tuple[sympy.Function, ...]
     ) -> sympy.Eq:
-        res = lhs_func.subs(self.extra_parameters[self.idx])
-        for (idx, rhs_func), extra_parameters in zip(
-            enumerate(rhs_funcs), self.extra_parameters
-        ):
-            if self.idx != idx:
-                res -= rhs_func.subs(
-                    {child: parent for parent, child in extra_parameters.items()},
-                    simultaneous=True,
-                ).subs(self.extra_parameters[self.idx], simultaneous=True)
-        return sympy.Eq(rhs_funcs[self.idx], res)
+        if any(self.extra_parameters):
+            raise NotImplementedError(
+                "Complement equation is not implemented with extra parameters. "
+                "You can fall back on the union equations."
+            )
+        res = rhs_funcs[0]
+        for rhs_func in rhs_funcs[1:]:
+            res -= rhs_func
+        return sympy.Eq(lhs_func, res)
 
     def reliance_profile(self, n: int, **parameters: int) -> RelianceProfile:
         raise NotImplementedError
@@ -303,19 +323,15 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         for param, value in subterms[0](n).items():
             if value:
                 parent_terms_mapped[self._parent_param_map(param)] += value
-
         children_terms = subterms[1:]
-        for (idx, child_terms), param_map in zip(
-            enumerate(children_terms), self._children_param_maps
-        ):
-            if self.idx != idx:
-                # we subtract from total
-                for param, value in child_terms(n).items():
-                    mapped_param = self._parent_param_map(param_map(param))
-                    parent_terms_mapped[mapped_param] -= value
-                    assert parent_terms_mapped[mapped_param] >= 0
-                    if parent_terms_mapped[mapped_param] == 0:
-                        parent_terms_mapped.pop(mapped_param)
+        for child_terms, param_map in zip(children_terms, self._children_param_maps):
+            # we subtract from total
+            for param, value in child_terms(n).items():
+                mapped_param = self._parent_param_map(param_map(param))
+                parent_terms_mapped[mapped_param] -= value
+                assert parent_terms_mapped[mapped_param] >= 0
+                if parent_terms_mapped[mapped_param] == 0:
+                    parent_terms_mapped.pop(mapped_param)
 
         return parent_terms_mapped
 
@@ -335,3 +351,17 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         **parameters: int,
     ) -> Tuple[Optional[CombinatorialObjectType], ...]:
         raise NotImplementedError
+
+    def __str__(self):
+        return "complement"
+
+    def equiv(
+        self, other: "Constructor", data: Optional[object] = None
+    ) -> Tuple[bool, Optional[object]]:
+        return (
+            isinstance(other, type(self))
+            and Complement.extra_params_equiv(
+                self.extra_parameters, other.extra_parameters
+            ),
+            None,
+        )

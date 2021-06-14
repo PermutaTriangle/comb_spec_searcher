@@ -1,11 +1,22 @@
 """
-A database for rules.
+A database to search for tree.
+
+The database do not store the strategy to save memory.
 """
 import itertools
-from typing import Iterable, Iterator, MutableMapping, Set, Tuple, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Iterable,
+    Iterator,
+    MutableMapping,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+    cast,
+)
 
 from comb_spec_searcher.class_db import ClassDB
-from comb_spec_searcher.equiv_db import EquivalenceDB
 from comb_spec_searcher.exception import StrategyDoesNotApply
 from comb_spec_searcher.strategies.rule import AbstractRule
 from comb_spec_searcher.strategies.strategy import AbstractStrategy, StrategyFactory
@@ -14,9 +25,13 @@ from comb_spec_searcher.typing import RuleKey
 
 from .base import RuleDBBase
 
+if TYPE_CHECKING:
+    from comb_spec_searcher import CombinatorialSpecificationSearcher
+
 __all__ = ["RuleDBForgetStrategy"]
 
 
+# pylint: disable=too-many-ancestors
 class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
     """
     A mapping from rules to strategies that recompute the strategy every time it's
@@ -30,16 +45,30 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
 
     def __init__(
         self,
-        classdb: ClassDB,
-        strat_pack: StrategyPack,
-        equivdb: EquivalenceDB,
         only_equiv: bool,
     ) -> None:
-        self.classdb = classdb
-        self.equivdb = equivdb
-        self.pack = strat_pack
+        self._classdb: Optional[ClassDB] = None
+        self._pack: Optional[StrategyPack] = None
         self.rules: Set[Tuple[int, ...]] = set()
         self.only_equiv: bool = only_equiv
+
+    def link_searcher(self, classdb: ClassDB, strat_pack: StrategyPack) -> None:
+        if self._classdb is not None or self._pack is not None:
+            raise RuntimeError("Searcher is alreay linked")
+        self._classdb = classdb
+        self._pack = strat_pack
+
+    @property
+    def classdb(self) -> ClassDB:
+        if self._classdb is None:
+            raise RuntimeError("Not linked with classdb")
+        return self._classdb
+
+    @property
+    def pack(self) -> StrategyPack:
+        if self._pack is None:
+            raise RuntimeError("Not linked with pack")
+        return self._pack
 
     @staticmethod
     def _flatten(tuple_: RuleKey) -> Tuple[int, ...]:
@@ -111,14 +140,17 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
 
 
 class RuleDBForgetStrategy(RuleDBBase):
-    def __init__(self, classdb: ClassDB, strat_pack: StrategyPack) -> None:
+    def __init__(self) -> None:
         super().__init__()
-        self._rule_to_strategy = RecomputingDict(
-            classdb, strat_pack, self.equivdb, only_equiv=False
-        )
-        self._eqv_rule_to_strategy = RecomputingDict(
-            classdb, strat_pack, self.equivdb, only_equiv=True
-        )
+        self._rule_to_strategy = RecomputingDict(only_equiv=False)
+        self._eqv_rule_to_strategy = RecomputingDict(only_equiv=True)
+
+    def link_searcher(self, searcher: "CombinatorialSpecificationSearcher") -> None:
+        super().link_searcher(searcher)
+        classdb = searcher.classdb
+        strat_pack = searcher.strategy_pack
+        self.rule_to_strategy.link_searcher(classdb, strat_pack)
+        self.eqv_rule_to_strategy.link_searcher(classdb, strat_pack)
 
     @property
     def rule_to_strategy(self) -> RecomputingDict:
