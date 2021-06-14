@@ -351,6 +351,17 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
     def __str__(self) -> str:
         return "Cartesian product"
 
+    def equiv(
+        self, other: "Constructor", data: Optional[object] = None
+    ) -> Tuple[bool, Optional[object]]:
+        return (
+            isinstance(other, type(self))
+            and CartesianProduct.extra_params_equiv(
+                self.extra_parameters, other.extra_parameters
+            ),
+            None,
+        )
+
 
 class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     """
@@ -530,10 +541,10 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
 
     @staticmethod
     def _poly_to_terms(poly: Union[sympy.Poly, int]) -> Terms:
-        if isinstance(poly, int):
+        if isinstance(poly, (int, sympy.core.numbers.Integer)):
             if poly == 0:
                 return Counter()
-            return Counter({tuple(): poly})
+            return Counter({tuple(): int(poly)})
         return Counter(poly.as_dict())
 
     def _b(
@@ -573,16 +584,15 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     def get_equation(
         self, lhs_func: sympy.Function, rhs_funcs: Tuple[sympy.Function, ...]
     ) -> sympy.Eq:
-        res = lhs_func.subs(self.extra_parameters[self.idx])
-        for (idx, rhs_func), extra_parameters in zip(
-            enumerate(rhs_funcs), self.extra_parameters
-        ):
-            if self.idx != idx:
-                res /= rhs_func.subs(
-                    {child: parent for parent, child in extra_parameters.items()},
-                    simultaneous=True,
-                ).subs(self.extra_parameters[self.idx], simultaneous=True)
-        return sympy.Eq(rhs_funcs[self.idx], res)
+        if any(self.extra_parameters):
+            raise NotImplementedError(
+                "Quotient equation is not implemented with extra parameters. "
+                "You can fall back on the cartesian equation."
+            )
+        res = rhs_funcs[0]
+        for rhs_func in rhs_funcs[1:]:
+            res /= rhs_func
+        return sympy.Eq(lhs_func, res)
 
     def reliance_profile(self, n: int, **parameters: int) -> RelianceProfile:
         raise NotImplementedError
@@ -606,3 +616,14 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
 
     def __str__(self):
         return "quotient"
+
+    def equiv(
+        self, other: "Constructor", data: Optional[object] = None
+    ) -> Tuple[bool, Optional[object]]:
+        return (
+            isinstance(other, type(self))
+            and Quotient.extra_params_equiv(
+                self.extra_parameters, other.extra_parameters
+            ),
+            None,
+        )

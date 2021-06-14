@@ -67,8 +67,14 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
     ) -> sympy.Eq:
         res = 0
         for rhs_func, extra_parameters in zip(rhs_funcs, self.extra_parameters):
+            subs: Dict[str, sympy.Expr] = dict()
+            for parent, child in extra_parameters.items():
+                if child in subs:
+                    subs[child] *= sympy.var(parent)
+                else:
+                    subs[child] = sympy.var(parent)
             res += rhs_func.subs(
-                {child: parent for parent, child in extra_parameters.items()},
+                subs,
                 simultaneous=True,
             )
         return sympy.Eq(lhs_func, res)
@@ -194,6 +200,17 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
     def __str__(self):
         return "disjoint union"
 
+    def equiv(
+        self, other: "Constructor", data: Optional[object] = None
+    ) -> Tuple[bool, Optional[object]]:
+        return (
+            isinstance(other, type(self))
+            and DisjointUnion.extra_params_equiv(
+                self.extra_parameters, other.extra_parameters
+            ),
+            None,
+        )
+
 
 class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     """
@@ -286,16 +303,15 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     def get_equation(
         self, lhs_func: sympy.Function, rhs_funcs: Tuple[sympy.Function, ...]
     ) -> sympy.Eq:
-        res = lhs_func.subs(self.extra_parameters[self.idx])
-        for (idx, rhs_func), extra_parameters in zip(
-            enumerate(rhs_funcs), self.extra_parameters
-        ):
-            if self.idx != idx:
-                res -= rhs_func.subs(
-                    {child: parent for parent, child in extra_parameters.items()},
-                    simultaneous=True,
-                ).subs(self.extra_parameters[self.idx], simultaneous=True)
-        return sympy.Eq(rhs_funcs[self.idx], res)
+        if any(self.extra_parameters):
+            raise NotImplementedError(
+                "Complement equation is not implemented with extra parameters. "
+                "You can fall back on the union equations."
+            )
+        res = rhs_funcs[0]
+        for rhs_func in rhs_funcs[1:]:
+            res -= rhs_func
+        return sympy.Eq(lhs_func, res)
 
     def reliance_profile(self, n: int, **parameters: int) -> RelianceProfile:
         raise NotImplementedError
@@ -338,3 +354,14 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
 
     def __str__(self):
         return "complement"
+
+    def equiv(
+        self, other: "Constructor", data: Optional[object] = None
+    ) -> Tuple[bool, Optional[object]]:
+        return (
+            isinstance(other, type(self))
+            and Complement.extra_params_equiv(
+                self.extra_parameters, other.extra_parameters
+            ),
+            None,
+        )

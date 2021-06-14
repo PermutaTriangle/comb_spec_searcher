@@ -11,11 +11,26 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   `NotImplementedError`
 - `find_bijection_between` tries to find a bijection between classes given
   a `CombinatorialSpecificationSearcher` object for both.
+- Added Forest searching capability to the css. Those are specification that can
+  you reverse rule that are not equivalences.
+- Special forward and backward maps, called indexed forward and backward maps.
+  They are to be used for bijections and their purposes is to support bijections
+  for non-injective forward maps by labelling the resulting objects or map from 
+  an labelled object.
+- `NonBijectiveRule` will implement a labelling system for indexed forward
+  and backward maps.
+- `EqPathParallelSpecFinder` that, on top of the base class, validates any
+  potential path contained in equivalence labels.
+- `PartialSpecificationRuleExtractor` that extracts rules from partially built
+  specifications and two subclasses with specific applications of that.
 
 ### Changed
 - If a rule in a specification cannot be sanity checked (e.g., counting is not
   implemented), a warning is printed and sanity checking continues, instead of returning
   the exception.
+- More responsibility have been delegated to the rule database. This will allow
+  for more flexibility in the implementation of the rule database. Things like
+  computing specification rule now happens at the rule db level.
 
 ### Fixed
 - Removed a debug print
@@ -26,9 +41,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixing a bug in counting for equivalence rule from a reverse rule
 - Fixing in the formal step of reverse equivalence rule. The formal step now
   state that the rule is reversed.
+- Removed bug in equation of `DisjointUnion` that ignores multiple CVs mapping to the 
+  same in a child
 
 ### Deprecated
 - Python 3.6 is no longer supported
+- `LimitedStrategyRuleDB` is not longer part of css
 
 
 ## [3.0.0] - 2021-01-04

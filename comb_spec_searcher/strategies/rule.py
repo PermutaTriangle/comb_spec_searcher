@@ -1,8 +1,11 @@
+# pylint: disable=too-many-lines
 """
 The rule class is used for a specific application of a strategy on a combinatorial
 class. This is not something the user should implement, as it is just a wrapper for
 calling the Strategy class and storing its results.
 """
+
+
 import abc
 import random
 from collections import defaultdict
@@ -27,8 +30,10 @@ from sympy import Eq, Function
 
 from comb_spec_searcher.combinatorial_class import CombinatorialClass
 from comb_spec_searcher.typing import (
+    ForestRuleKey,
     Objects,
     ObjectsCache,
+    RuleBucket,
     SubObjects,
     SubTerms,
     Terms,
@@ -73,6 +78,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         self.subobjects: Optional[SubObjects] = None
         self._children = children
         self._non_empty_children: Optional[Tuple[CombinatorialClassType, ...]] = None
+        self._shifts: Optional[Tuple[int, ...]] = None
 
     def to_jsonable(self) -> dict:
         d = {
@@ -178,6 +184,24 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         Returns True if it is a two way rule.
         """
         return self.strategy.is_two_way(self.comb_class)
+
+    def is_reversible(self) -> bool:
+        """
+        Returns True if it is possible to compute the enumeration of a child using the
+        enumeration of the parent and the other children.
+        """
+        return self.strategy.is_reversible(self.comb_class)
+
+    def shifts(self) -> Tuple[int, ...]:
+        if self._shifts is None:
+            self._shifts = self.strategy.shifts(self.comb_class, self.children)
+        return self._shifts
+
+    @abc.abstractmethod
+    def forest_key(
+        self, get_label: Callable[[CombinatorialClassType], int]
+    ) -> ForestRuleKey:
+        """Return the forest key of the rule."""
 
     def non_empty_children(self) -> Tuple[CombinatorialClassType, ...]:
         """
@@ -371,6 +395,16 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
     def is_equivalence(self):
         return self.strategy.can_be_equivalent() and len(self.non_empty_children()) == 1
 
+    def forest_key(
+        self, get_label: Callable[[CombinatorialClassType], int]
+    ) -> ForestRuleKey:
+        return ForestRuleKey(
+            get_label(self.comb_class),
+            tuple(map(get_label, self.children)),
+            self.shifts(),
+            RuleBucket.EQUIV if self.is_equivalence() else RuleBucket.NORMAL,
+        )
+
     def backward_map(
         self, objs: Tuple[Optional[CombinatorialObjectType], ...]
     ) -> Iterator[CombinatorialObjectType]:
@@ -389,6 +423,29 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         """
         return self.strategy.forward_map(self.comb_class, obj, self.children)
 
+    def indexed_forward_map(
+        self,
+        obj: CombinatorialObjectType,
+        data: Optional[object] = None,
+    ) -> Tuple[Tuple[Optional[CombinatorialObjectType], ...], int]:
+        """
+        A version of forward_map that is used for bijections. The idx is used
+        create a bijection from a nonbijective rule.
+        """
+        return self.forward_map(obj), 0
+
+    def indexed_backward_map(
+        self,
+        objs: Tuple[Optional[CombinatorialObjectType], ...],
+        idx: int,
+        data: Optional[object] = None,
+    ) -> CombinatorialObjectType:
+        """
+        A version of backward_map that is used for bijections. The idx is used
+        create a bijection from a nonbijective rule.
+        """
+        return next(self.backward_map(objs))
+
     def to_equivalence_rule(self) -> "EquivalenceRule":
         """
         Return the version of the rule where the empty children are removed.
@@ -402,6 +459,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         """
         Return the reverse rule where the child at the given index is the parent.
         """
+        assert self.is_reversible()
         return ReverseRule(self, idx)
 
     def _ensure_level(self, n: int) -> None:
@@ -576,6 +634,49 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         self.subrecs = tmpsubrec
         self.subterms = tmpsubterms
         return True
+
+
+class NonBijectiveRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
+    def indexed_forward_map(
+        self,
+        obj: CombinatorialObjectType,
+        data: Optional[object] = None,
+    ) -> Tuple[Tuple[Optional[CombinatorialObjectType], ...], int]:
+        img = self.forward_map(obj)
+        return img, self._forward_order(obj, img, data)
+
+    def indexed_backward_map(
+        self,
+        objs: Tuple[Optional[CombinatorialObjectType], ...],
+        idx: int,
+        data: Optional[object] = None,
+    ) -> CombinatorialObjectType:
+        return self._backward_order_item(idx, objs, data)
+
+    @abc.abstractmethod
+    def _forward_order(
+        self,
+        obj: CombinatorialObjectType,
+        image: Tuple[Optional[CombinatorialObjectType], ...],
+        data: Optional[object] = None,
+    ) -> int:
+        """For rules that do not have an injective forward_map, we can mark the
+        resulting object with a number i (that depends on the object we map from)
+        in order to achieve a bijection. The backward map will then take said
+        number and yield the i-th element (by some predefined order). This requires
+        the backward_map's order to be deterministic.
+        """
+
+    @abc.abstractmethod
+    def _backward_order_item(
+        self,
+        idx: int,
+        objs: Tuple[Optional[CombinatorialObjectType], ...],
+        data: Optional[object] = None,
+    ) -> CombinatorialObjectType:
+        """Given an iterator of all possible domain elements for an indexed forward map
+        and an index, this method will return the element that maps to said index.
+        """
 
 
 class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
@@ -819,7 +920,7 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     def __init__(
         self, rule: Rule[CombinatorialClassType, CombinatorialObjectType], idx: int
     ):
-        assert rule.is_two_way()
+        assert rule.is_reversible()
         super().__init__(
             rule.strategy,
             rule.children[idx],
@@ -848,6 +949,24 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
 
     def to_reverse_rule(self, idx: int) -> "Rule":
         raise NotImplementedError("You don't want to do that! I promise")
+
+    def shifts(self) -> Tuple[int, ...]:
+        original_shifts = self.original_rule.shifts()
+        pshift = -original_shifts[self.idx]
+        return (pshift,) + tuple(
+            s + pshift
+            for s in (s for i, s in enumerate(original_shifts) if i != self.idx)
+        )
+
+    def forest_key(
+        self, get_label: Callable[[CombinatorialClassType], int]
+    ) -> ForestRuleKey:
+        return ForestRuleKey(
+            get_label(self.comb_class),
+            tuple(map(get_label, self.children)),
+            self.shifts(),
+            RuleBucket.EQUIV if self.is_equivalence() else RuleBucket.REVERSE,
+        )
 
     def get_equation(
         self, get_function: Callable[[CombinatorialClassType], Function]
@@ -967,6 +1086,16 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
 
     def pack(self) -> "StrategyPack":
         return self.strategy.pack(self.comb_class)
+
+    def forest_key(
+        self, get_label: Callable[[CombinatorialClassType], int]
+    ) -> ForestRuleKey:
+        return ForestRuleKey(
+            get_label(self.comb_class),
+            tuple(map(get_label, self.children)),
+            self.shifts(),
+            RuleBucket.VERIFICATION,
+        )
 
     # pylint: disable=arguments-differ
     def get_equation(

@@ -13,14 +13,14 @@ Combinatorial Specification Searcher
     :target: https://pypi.python.org/pypi/comb_spec_searcher
 .. image:: https://img.shields.io/pypi/pyversions/comb_spec_searcher.svg
     :target: https://pypi.python.org/pypi/comb_spec_searcher
-
 .. image:: http://img.shields.io/badge/readme-tested-brightgreen.svg
     :alt: Travis
     :target: https://travis-ci.org/PermutaTriangle/comb_spec_searcher
-
 .. image:: https://requires.io/github/PermutaTriangle/comb_spec_searcher/requirements.svg?branch=master
      :target: https://requires.io/github/PermutaTriangle/comb_spec_searcher/requirements/?branch=master
      :alt: Requirements Status
+.. image:: https://zenodo.org/badge/121520109.svg
+   :target: https://zenodo.org/badge/latestdoi/121520109
 
 The ``comb_spec_searcher`` package contains code for combinatorial
 exploration.
@@ -467,7 +467,8 @@ We will first need a couple of imports.
 
 .. code:: python
 
-   >>> from comb_spec_searcher import find_bijection_between, Bijection
+   >>> from comb_spec_searcher.bijection import ParallelSpecFinder
+   >>> from comb_spec_searcher.isomorphism import Bijection
 
 We start by defining our two classes that we wish to find a bijection between.
 
@@ -494,9 +495,13 @@ We get two parallel specs if successful, ``None`` otherwise.
 
 .. code:: python
 
-   >>> specs = find_bijection_between(searcher1, searcher2)
-   >>> spec1, spec2 = specs
-   >>> bijection = Bijection.construct(spec1, spec2)
+   >>> specs = ParallelSpecFinder(searcher1, searcher2).find()
+
+We then construct the bijection from the parallel specifications.
+
+.. code:: python
+
+   >>> bijection = Bijection.construct(*specs)
 
 We can use the `Bijection` object to map (either way) sampled objects
 from the sepcifications.
@@ -504,11 +509,21 @@ from the sepcifications.
 .. code:: python
 
    >>> for i in range(10):
-   ...     for w in spec1.generate_objects_of_size(i):
+   ...     for w in bijection.domain.generate_objects_of_size(i):
    ...         assert w == bijection.inverse_map(bijection.map(w))
-   ...     for w in spec2.generate_objects_of_size(i):
+   ...     for w in bijection.codomain.generate_objects_of_size(i):
    ...         assert w == bijection.map(bijection.inverse_map(w))
    ...
 
 Whether we find a bijection or not (when one exists) is highly 
 dependent on the packs chosen.
+
+Citing
+######
+
+If you found this library helpful with your research and would like to cite us, 
+you can use the following `BibTeX`_ or go to `Zenodo`_ for alternative formats. 
+
+.. _BibTex: https://zenodo.org/record/4944021/export/hx#.YMcpIC2l30o
+
+.. _Zenodo: https://doi.org/10.5281/zenodo.4944020
