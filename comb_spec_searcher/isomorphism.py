@@ -284,6 +284,12 @@ class Isomorphism(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
 
 
 class ParseTreeMap(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
+    """
+    Map the object by creating parse tree for it while mimicking the steps
+    in the other specification. Then backward maps are applied in the other
+    parse tree to get the object the original will map to.
+    """
+
     @classmethod
     def map(
         cls,
@@ -311,6 +317,7 @@ class ParseTreeMap(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
 
     @staticmethod
     def _min_object(rule: AbstractRule[ClassType2, ObjType2]) -> ObjType2:
+        """Get min object from rule's parent."""
         obj: ObjType2 = next(
             rule.comb_class.objects_of_size(rule.comb_class.minimum_size_of_object())
         )
@@ -319,6 +326,8 @@ class ParseTreeMap(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
     def _get_nonempty(
         self, rule: Rule[ClassType1, ObjType1], children: Tuple[Optional[ObjType1], ...]
     ) -> Tuple[Optional[Tuple[ObjType1, AbstractRule[ClassType1, ObjType1]]], ...]:
+        """Get the nonempty children for the domain's rule. We gather both the part
+        of the mapped object and the class it belongs to."""
         return tuple(
             (child_obj, self.domain.rules_dict[child])
             if child_obj is not None
@@ -333,13 +342,17 @@ class ParseTreeMap(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
         rule1: AbstractRule[ClassType1, ObjType1],
         rule2: AbstractRule[ClassType2, ObjType2],
     ) -> ObjType2:
+        # If atom, we return the minimum object of the corresponding rule.
         if not rule1.children:
             return ParseTreeMap._min_object(rule2)
-        assert isinstance(rule1, Rule)
-        assert isinstance(rule2, Rule)
-        children, idx = rule1.indexed_forward_map(obj)
+
+        assert isinstance(rule1, Rule) and isinstance(rule2, Rule)
+        mapped_obj, idx = rule1.indexed_forward_map(obj)
+
         if rule2.is_equivalence():
             if not rule1.is_equivalence():
+                # Backward map the outcome of a recursion when
+                # we move one rule further in spec2 only.
                 val: ObjType2 = rule2.indexed_backward_map(
                     (
                         self.map_rec(
@@ -349,19 +362,28 @@ class ParseTreeMap(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
                     idx,
                 )
                 return val
+            # When both are eq-rules, we treat them normally and set matching order
             order: List[int] = [0]
         elif rule1.is_equivalence():
+            # If only domain's rule is eq-rule then we don't backward map for the
+            # spec2's rule here but move along with the mapped object and next rule
+            # and return the outcome directly.
             return self.map_rec(
-                children[0], self.domain.rules_dict[rule1.children[0]], rule2
+                mapped_obj[0], self.domain.rules_dict[rule1.children[0]], rule2
             )
         else:
+            # Fetch the matching order to know what parts to recurse together.
             order = self.get_order[(rule1.comb_class, rule2.comb_class)]
 
-        _children = self._get_nonempty(rule1, children)
+        # Sort rule1's children to match those of rule 2
+        _children = self._get_nonempty(rule1, mapped_obj)
         child_it: Iterator[
             Optional[Tuple[ObjType1, AbstractRule[ClassType1, ObjType1]]]
         ] = (_children[idx] for idx in order)
-        assert isinstance(rule2, Rule)
+
+        # Recurse, when rule2's is not empty and the mapped object corresponding to
+        # the rule1's nonempty class is not None and gather the result into a tuple
+        # to backward map with rule2.
         val = rule2.indexed_backward_map(
             tuple(
                 self.map_rec(c[0][0], c[0][1], c[1])
