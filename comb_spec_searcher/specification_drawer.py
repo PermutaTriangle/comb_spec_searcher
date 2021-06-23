@@ -9,14 +9,14 @@ import time
 import uuid
 import webbrowser
 from copy import copy
-from typing import TYPE_CHECKING, ClassVar, Dict, Iterable, List, Tuple
+from typing import TYPE_CHECKING, ClassVar, Dict, Iterable, List, Tuple, cast
 
 import requests
 from logzero import logger
 from typing_extensions import TypedDict
 
 from .combinatorial_class import CombinatorialClass
-from .strategies import EquivalencePathRule, Rule, VerificationRule
+from .strategies import EquivalencePathRule, ReverseRule, Rule, VerificationRule
 
 if TYPE_CHECKING:
     from .specification import CombinatorialSpecification
@@ -78,7 +78,7 @@ class SpecificationDrawer:
         return str(new_id)
 
     def _to_tree(
-        self, comb_class: CombinatorialClass, rec_depth: int = 0
+        self, comb_class: CombinatorialClass, flipped: bool = False, rec_depth: int = 0
     ) -> TreantNode:
         """Create the subtree rooted in comb_class"""
         try:
@@ -103,22 +103,44 @@ class SpecificationDrawer:
         else:
             comb_classes = [comb_class]
 
+        is_flip_rule = isinstance(rule, ReverseRule)
         if recursed:
             children = []
         else:
-            children = [self._to_tree(child, rec_depth + 1) for child in rule.children]
+            children = [
+                self._to_tree(
+                    child,
+                    is_flip_rule
+                    and child == cast(ReverseRule, rule).original_rule.comb_class,
+                    rec_depth + 1,
+                )
+                for child in rule.children
+            ]
 
         # if a node has children we create a delimiter node between them
         # in order to separate tooltip describing the steps taking in the tree
 
         if children and isinstance(rule, Rule):
+            delimiter_additional_style = ""
+            if is_flip_rule:
+                delimiter_additional_style += "background-color: #ff8080;"
+                delimiter_additional_style += "border-color: red;"
+                delimiter_additional_style += "border-width: 2px; "
             delimiter_node, node_id = self._create_delimiter_node(
-                rule, children, rec_depth
+                rule, children, rec_depth, delimiter_additional_style
             )
             self._create_delimiter_tooltip(rule, node_id)
             children = [delimiter_node]
 
-        html_node = self.comb_classes_to_html_node(comb_classes)
+        node_additional_style = ""
+        node_label_additional_style = ""
+        if flipped:
+            node_label_additional_style += "background-color: #ff8080;"
+            node_additional_style += "border-color: red;"
+            node_additional_style += "border-width: 3px; "
+        html_node = self.comb_classes_to_html_node(
+            comb_classes, node_additional_style, node_label_additional_style
+        )
         treant_node, node_id = self._create_standard_node(html_node, children)
         self._create_standard_tooltip(comb_classes, node_id)
         return treant_node
@@ -272,13 +294,14 @@ class SpecificationDrawer:
         fsd = ForestSpecificationDrawer([self])
         fsd.show()
 
-    def share(self) -> None:
+    def share(self) -> str:
         """
-        Upload the html of the specification on a file server and displays a link to the
+        Upload the html of the specification on a file server and return the link to the
+        file.
         file.
         """
         fsd = ForestSpecificationDrawer([self])
-        fsd.share()
+        return fsd.share()
 
     def to_html(self) -> str:
         """Returns a html string that contains the whole tree"""
@@ -450,9 +473,8 @@ class ForestSpecificationDrawer:
     @staticmethod
     def export_html(html: str, file_name: str = "tree.html") -> None:
         """Creates a html file in current directory"""
-        text_file = open(file_name, "w", encoding="UTF8")
-        text_file.write(html)
-        text_file.close()
+        with open(file_name, "w", encoding="UTF8") as fp:
+            fp.write(html)
 
     def show(self) -> None:
         """Displays the forest in the web browser"""
@@ -460,9 +482,9 @@ class ForestSpecificationDrawer:
         viewer = HTMLViewer()
         viewer.open_html(html_string)
 
-    def share(self) -> None:
+    def share(self) -> str:
         """
-        Upload the html of the forest on a file server and displays a link to the
+        Upload the html of the forest on a file server and return a link to the
         file.
         """
         html_string = self.to_html()
@@ -475,22 +497,20 @@ class ForestSpecificationDrawer:
 
         # ask gofile.io which server it wants us to use
         logger.info("Sending specification to file host.")
-        req1 = requests.get("https://apiv2.gofile.io/getServer")
+        req1 = requests.get("https://api.gofile.io/getServer")
+        req1.raise_for_status()
         server = req1.json()["data"]["server"]
-        upload_url = f"https://{server}.gofile.io/upload"
+        upload_url = f"https://{server}.gofile.io/uploadFile"
 
         with open(file_path, "rb") as f:
             req2 = requests.post(upload_url, files={"filesUploaded": f})
+        req2.raise_for_status()
 
         os.remove(file_path)
         file_code = req2.json()["data"]["code"]
-        _, file_name = os.path.split(file_path)
-
-        file_enable_url = f"https://gofile.io/d/{file_code}"
-        file_url = f"https://{server}.gofile.io/download/{file_code}/{file_name}"
-
-        print(f"First click this: {file_enable_url}")
-        print(f"Then this link will work: {file_url}")
+        file_url = f"https://gofile.io/d/{file_code}"
+        logger.info("File uploaded to: %s", file_url)
+        return file_url
 
 
 class HTMLViewer:

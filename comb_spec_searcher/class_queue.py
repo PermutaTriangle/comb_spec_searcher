@@ -4,19 +4,13 @@ A queue of labels.
 import abc
 from collections import Counter, deque
 from typing import Counter as CounterType
-from typing import Deque, Iterator, List, NamedTuple, Set, Tuple
+from typing import Deque, Iterator, List, Set, Tuple
 
 import tabulate
 
-from .exception import NoMoreClassesToExpandError
-from .strategies.strategy import CSSstrategy
-from .strategies.strategy_pack import StrategyPack
-
-
-class WorkPacket(NamedTuple):
-    label: int
-    strategies: Tuple[CSSstrategy, ...]
-    inferral: bool
+from comb_spec_searcher.exception import NoMoreClassesToExpandError
+from comb_spec_searcher.strategies.strategy_pack import StrategyPack
+from comb_spec_searcher.typing import WorkPacket
 
 
 class CSSQueue(abc.ABC):

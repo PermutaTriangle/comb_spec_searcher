@@ -6,6 +6,7 @@ from comb_spec_searcher import (
     CombinatorialSpecification,
     CombinatorialSpecificationSearcher,
 )
+from comb_spec_searcher.rule_db import RuleDBForest, RuleDBForgetStrategy
 from comb_spec_searcher.utils import taylor_expand
 from example import AvoidingWithPrefix, Word, pack
 
@@ -88,8 +89,23 @@ def test_random_sample(specification):
 def test_forget_ruledb():
     alphabet = ["a", "b"]
     start_class = AvoidingWithPrefix("", ["ababa", "babb"], alphabet)
-    searcher = CombinatorialSpecificationSearcher(start_class, pack, ruledb="forget")
-    return searcher.auto_search()
+    ruledb = RuleDBForgetStrategy()
+    searcher = CombinatorialSpecificationSearcher(start_class, pack, ruledb=ruledb)
+    spec = searcher.auto_search()
+    expected_count = [1, 2, 4, 8, 15, 27, 48, 87, 157, 283]
+    count = [spec.count_objects_of_size(n) for n in range(10)]
+    assert count == expected_count
+
+
+def test_forest_ruledb():
+    alphabet = ["a", "b"]
+    start_class = AvoidingWithPrefix("", ["ababa", "babb"], alphabet)
+    ruledb = RuleDBForest()
+    searcher = CombinatorialSpecificationSearcher(start_class, pack, ruledb=ruledb)
+    spec = searcher.auto_search()
+    expected_count = [1, 2, 4, 8, 15, 27, 48, 87, 157, 283]
+    count = [spec.count_objects_of_size(n) for n in range(10)]
+    assert count == expected_count
 
 
 def test_sancheck(specification):

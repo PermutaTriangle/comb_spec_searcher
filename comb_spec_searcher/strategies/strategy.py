@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 """
 The Strategy class is essentially following the mantra of 'strategy' from the
 combinatorial explanation paper.
@@ -54,7 +55,6 @@ from importlib import import_module
 from typing import (
     TYPE_CHECKING,
     Counter,
-    DefaultDict,
     Dict,
     Generic,
     Iterator,
@@ -67,6 +67,8 @@ from typing import (
 
 from sympy import Expr, Function, Integer, var
 
+from comb_spec_searcher.typing import CSSstrategy, Objects, Terms
+
 from ..combinatorial_class import (
     CombinatorialClass,
     CombinatorialClassType,
@@ -74,18 +76,19 @@ from ..combinatorial_class import (
     CombinatorialObjectType,
 )
 from ..exception import InvalidOperationError, ObjectMappingError, StrategyDoesNotApply
-from .constructor import CartesianProduct, Constructor, DisjointUnion
+from .constructor import (
+    CartesianProduct,
+    Complement,
+    Constructor,
+    DisjointUnion,
+    Quotient,
+)
 from .rule import AbstractRule, Rule, VerificationRule
 
 if TYPE_CHECKING:
     from comb_spec_searcher import CombinatorialSpecification
 
     from .strategy_pack import StrategyPack
-
-Parameters = Tuple[int, ...]
-Objects = DefaultDict[Parameters, CombinatorialObjectType]
-Terms = Counter[Parameters]  # all terms for a fixed n
-
 
 __all__ = (
     "AbstractStrategy",
@@ -96,8 +99,6 @@ __all__ = (
     "SymmetryStrategy",
     "VerificationStrategy",
 )
-
-CSSstrategy = Union["Strategy", "StrategyFactory", "VerificationStrategy"]
 
 
 def strategy_from_dict(d) -> CSSstrategy:
@@ -137,7 +138,6 @@ class AbstractStrategy(
         self,
         comb_class: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...] = None,
-        **kwargs,
     ) -> AbstractRule[CombinatorialClassType, CombinatorialObjectType]:
         """
         Return the rule formed by using the strategy.
@@ -180,6 +180,35 @@ class AbstractStrategy(
         """
 
     @abc.abstractmethod
+    def is_two_way(self, comb_class: CombinatorialClassType) -> bool:
+        """
+        Return True if knowing the enumeration of the lhs and all bar one
+        of the rhs implies knowing the enumeration of all of the classes on
+        the rhs.
+        """
+
+    @abc.abstractmethod
+    def is_reversible(self, comb_class: CombinatorialClassType) -> bool:
+        """
+        Return True if knowing the enumeration of the lhs and all bar one
+        of the rhs implies knowing the enumeration of all of the classes on
+        the rhs.
+        """
+
+    @abc.abstractmethod
+    def shifts(
+        self,
+        comb_class: CombinatorialClassType,
+        children: Optional[Tuple[CombinatorialClassType, ...]],
+    ) -> Tuple[int, ...]:
+        """
+        Return the reliance on the children needed for counting.
+
+        Positive shift indicate a reliance on shorted length than the one on the parent
+        while negative number indicate reliance on length greater length.
+        """
+
+    @abc.abstractmethod
     def decomposition_function(
         self, comb_class: CombinatorialClassType
     ) -> Optional[Tuple[CombinatorialClassType, ...]]:
@@ -208,6 +237,10 @@ class AbstractStrategy(
         Return a choice for '?' in the pretty print a '=' b '?' c of rules.
         Your choice should be a single charachter.
         """
+        return "?"
+
+    @staticmethod
+    def get_reverse_op_symbol() -> str:
         return "?"
 
     def __eq__(self, other: object) -> bool:
@@ -295,7 +328,6 @@ class Strategy(AbstractStrategy[CombinatorialClassType, CombinatorialObjectType]
         self,
         comb_class: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...] = None,
-        **kwargs,
     ) -> Rule[CombinatorialClassType, CombinatorialObjectType]:
         if children is None:
             children = self.decomposition_function(comb_class)
@@ -315,6 +347,18 @@ class Strategy(AbstractStrategy[CombinatorialClassType, CombinatorialObjectType]
         """
         if children is None:
             children = self.decomposition_function(comb_class)
+
+    @abc.abstractmethod
+    def reverse_constructor(
+        self,
+        idx: int,
+        comb_class: CombinatorialClassType,
+        children: Optional[Tuple[CombinatorialClassType, ...]] = None,
+    ) -> Constructor:
+        """
+        This is where the details of the 'reliance profile' and 'counting'
+        functions are hidden.
+        """
 
     @abc.abstractmethod
     def backward_map(
@@ -399,6 +443,27 @@ class CartesianProductStrategy(
     def can_be_equivalent() -> bool:
         return True
 
+    @staticmethod
+    def is_two_way(comb_class: CombinatorialClassType) -> bool:
+        return True
+
+    @staticmethod
+    def is_reversible(comb_class: CombinatorialClassType) -> bool:
+        return True
+
+    def shifts(
+        self,
+        comb_class: CombinatorialClassType,
+        children: Optional[Tuple[CombinatorialClassType, ...]] = None,
+    ) -> Tuple[int, ...]:
+        if children is None:
+            children = self.decomposition_function(comb_class)
+            if children is None:
+                raise StrategyDoesNotApply("Strategy does not apply")
+        min_points = tuple(c.minimum_size_of_object() for c in children)
+        point_sum = sum(min_points)
+        return tuple(point_sum - mpoint for mpoint in min_points)
+
     def constructor(
         self,
         comb_class: CombinatorialClassType,
@@ -414,6 +479,20 @@ class CartesianProductStrategy(
             extra_parameters=self.extra_parameters(comb_class, children),
         )
 
+    def reverse_constructor(
+        self,
+        idx: int,
+        comb_class: CombinatorialClassType,
+        children: Optional[Tuple[CombinatorialClassType, ...]] = None,
+    ):
+        if children is None:
+            children = self.decomposition_function(comb_class)
+            if children is None:
+                raise StrategyDoesNotApply("Strategy does not apply")
+        return Quotient(
+            comb_class, children, idx, self.extra_parameters(comb_class, children)
+        )
+
     @staticmethod
     def get_op_symbol() -> str:
         """
@@ -421,6 +500,10 @@ class CartesianProductStrategy(
         Your choice should be a single charachter.
         """
         return "x"
+
+    @staticmethod
+    def get_reverse_op_symbol() -> str:
+        return "/"
 
 
 class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObjectType]):
@@ -450,6 +533,25 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObject
     def can_be_equivalent() -> bool:
         return True
 
+    @staticmethod
+    def is_two_way(comb_class: CombinatorialClassType) -> bool:
+        return True
+
+    @staticmethod
+    def is_reversible(comb_class: CombinatorialClassType) -> bool:
+        return True
+
+    def shifts(
+        self,
+        comb_class: CombinatorialClassType,
+        children: Optional[Tuple[CombinatorialClassType, ...]] = None,
+    ) -> Tuple[int, ...]:
+        if children is None:
+            children = self.decomposition_function(comb_class)
+            if children is None:
+                raise StrategyDoesNotApply("Strategy does not apply")
+        return tuple(0 for _ in children)
+
     def constructor(
         self,
         comb_class: CombinatorialClassType,
@@ -463,6 +565,20 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObject
             comb_class,
             children,
             extra_parameters=self.extra_parameters(comb_class, children),
+        )
+
+    def reverse_constructor(
+        self,
+        idx: int,
+        comb_class: CombinatorialClassType,
+        children: Optional[Tuple[CombinatorialClassType, ...]] = None,
+    ):
+        if children is None:
+            children = self.decomposition_function(comb_class)
+            if children is None:
+                raise StrategyDoesNotApply("Strategy does not apply")
+        return Complement(
+            comb_class, children, idx, self.extra_parameters(comb_class, children)
         )
 
     @staticmethod
@@ -501,6 +617,10 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObject
         Your choice should be a single charachter.
         """
         return "+"
+
+    @staticmethod
+    def get_reverse_op_symbol() -> str:
+        return "-"
 
 
 class SymmetryStrategy(
@@ -557,7 +677,6 @@ class VerificationStrategy(
         self,
         comb_class: CombinatorialClassType,
         children: Tuple[CombinatorialClassType, ...] = None,
-        **kwargs,
     ) -> VerificationRule[CombinatorialClassType, CombinatorialObjectType]:
         if children is None:
             children = self.decomposition_function(comb_class)
@@ -568,6 +687,21 @@ class VerificationStrategy(
     @staticmethod
     def can_be_equivalent() -> bool:
         return False
+
+    @staticmethod
+    def is_two_way(comb_class: CombinatorialClassType) -> bool:
+        return False
+
+    @staticmethod
+    def is_reversible(comb_class: CombinatorialClassType) -> bool:
+        return False
+
+    def shifts(
+        self,
+        comb_class: CombinatorialClassType,
+        children: Optional[Tuple[CombinatorialClassType, ...]] = None,
+    ) -> Tuple[int, ...]:
+        return ()
 
     def pack(self, comb_class: CombinatorialClassType) -> "StrategyPack":
         """
@@ -621,9 +755,11 @@ class VerificationStrategy(
         self, comb_class: CombinatorialClassType
     ) -> Union[Tuple[CombinatorialClassType, ...], None]:
         """
-        A combinatorial class C is marked as verified by returning a rule
-        C -> (). This ensures that C is in a combinatorial specification as it
-        appears exactly once on the left hand side.
+        A verification rule usually returns a rule C -> () with no children that
+        guarantees that C is in a combinatorial specification.
+
+        In special cases, the rule could have children to mark dependencies of the
+        expansion on some other combinatorial classes.
 
         The function returns None if the verification strategy doesn't apply.
         """
@@ -667,6 +803,9 @@ class VerificationStrategy(
         d.pop("possibly_empty")
         d.pop("workable")
         return d
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(ignore_parent={self.ignore_parent})"
 
 
 class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]):
@@ -746,7 +885,9 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
         return "verify atoms"
 
 
-class EmptyStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]):
+class EmptyStrategy(
+    VerificationStrategy[CombinatorialClassType, CombinatorialObjectType]
+):
     """
     A subclass for when a combinatorial class is equal to the empty set.
     """
@@ -764,8 +905,8 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject
 
     def get_genf(
         self,
-        comb_class: CombinatorialClass,
-        funcs: Optional[Dict[CombinatorialClass, Function]] = None,
+        comb_class: CombinatorialClassType,
+        funcs: Optional[Dict[CombinatorialClassType, Function]] = None,
     ) -> Integer:
         if not self.verified(comb_class):
             raise StrategyDoesNotApply(
@@ -775,8 +916,8 @@ class EmptyStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject
 
     @staticmethod
     def random_sample_object_of_size(
-        comb_class: CombinatorialClass, n: int, **parameters: int
-    ) -> CombinatorialObject:
+        comb_class: CombinatorialClassType, n: int, **parameters: int
+    ) -> CombinatorialObjectType:
         raise StrategyDoesNotApply("Can't sample from empty set.")
 
     @staticmethod
@@ -816,7 +957,7 @@ class StrategyFactory(abc.ABC, Generic[CombinatorialClassType]):
 
     @abc.abstractmethod
     def __call__(
-        self, comb_class: CombinatorialClassType, **kwargs
+        self, comb_class: CombinatorialClassType
     ) -> Iterator[Union[AbstractRule, AbstractStrategy]]:
         """
         Returns the results of the strategy on a comb_class.
