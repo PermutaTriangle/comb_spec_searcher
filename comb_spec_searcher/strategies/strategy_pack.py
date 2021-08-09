@@ -27,6 +27,8 @@ specification.
 from itertools import chain
 from typing import Iterable, Iterator, Type, TypeVar
 
+from permuta import Perm
+
 from .strategy import CSSstrategy, Strategy
 
 PackType = TypeVar("PackType", bound="StrategyPack")
@@ -284,4 +286,33 @@ class StrategyPack:
             expansion_strats=self.expansion_strats,
             symmetries=self.symmetries,
             iterative=True,
+        )
+
+    def add_basis(self, basis: Iterable[Perm]) -> "StrategyPack":
+        """
+        Update the pack to add the basis being run to the verifications strategy
+        that needs to be aware of it.
+        """
+        basis = tuple(basis)
+        symmetry = bool(self.symmetries)
+        from tilings.strategies.abstract import BasisAwareVerificationStrategy
+
+        def replace_list(strats):
+            """Return a new list with the replaced 1x1 strat."""
+            res = []
+            for strategy in strats:
+                if isinstance(strategy, BasisAwareVerificationStrategy):
+                    res.append(strategy.change_basis(basis, symmetry))
+                else:
+                    res.append(strategy)
+            return res
+
+        return self.__class__(
+            ver_strats=replace_list(self.ver_strats),
+            inferral_strats=replace_list(self.inferral_strats),
+            initial_strats=replace_list(self.initial_strats),
+            expansion_strats=list(map(replace_list, self.expansion_strats)),
+            name=self.name,
+            symmetries=self.symmetries,
+            iterative=self.iterative,
         )

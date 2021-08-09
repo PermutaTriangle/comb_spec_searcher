@@ -21,7 +21,12 @@ from logzero import logger
 from comb_spec_searcher.class_db import ClassDB
 from comb_spec_searcher.exception import StrategyDoesNotApply
 from comb_spec_searcher.rule_db.abstract import RuleDBAbstract, ensure_specification
-from comb_spec_searcher.strategies.rule import AbstractRule, Rule
+from comb_spec_searcher.strategies.rule import (
+    AbstractRule,
+    EquivalencePathRule,
+    EquivalenceRule,
+    Rule,
+)
 from comb_spec_searcher.strategies.strategy import (
     AbstractStrategy,
     EmptyStrategy,
@@ -438,17 +443,26 @@ class ForestRuleExtractor:
         assert len(lhs) == len(self.needed_rules)
         assert self._is_productive(self.needed_rules)
 
-    def rules(self) -> Iterator[AbstractRule]:
+    def rules(self, cache: Tuple[AbstractRule, ...]) -> Iterator[AbstractRule]:
         """
         Return all the rules of the specification.
 
+        It will first try to use a rule in the cache and otherwise will try to recompute it
+        from the pack.
+
         The empty rule are ignored as they be produced as needed by the specification.
         """
+        cache_dict = {rule.forest_key(self.classdb.get_label): rule for rule in cache}
         for rk in self.needed_rules:
-            rule = self._find_rule(rk)
+            if rk in cache_dict:
+                rule = cache_dict[rk]
+            else:
+                rule = self._find_rule(rk)
             if isinstance(rule.strategy, EmptyStrategy):
                 continue
-            if rule.is_equivalence():
+            if rule.is_equivalence() and not isinstance(
+                rule, (EquivalencePathRule, EquivalenceRule)
+            ):
                 assert isinstance(rule, Rule)
                 yield rule.to_equivalence_rule()
             else:
@@ -584,15 +598,24 @@ class RuleDBForest(RuleDBAbstract):
     """
     The rule database that provides live information on which class are pumping with the
     current rule in the database.
+
+    Set `reverse` to prevent the reverse of the added rules to be added to the database.
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        reverse: bool = True,
+        rule_cache: Iterable[AbstractRule] = tuple(),
+    ) -> None:
         super().__init__()
+        self.reverse = reverse
         self._num_rules = 0
         self._time_table_method = 0.0
         self._time_key = 0.0
         self.table_method = TableMethod()
         self._already_empty: Set[int] = set()
+        self._rule_cache = tuple(rule_cache)
 
     # Implementation of RuleDBAbstract
 
@@ -620,7 +643,7 @@ class RuleDBForest(RuleDBAbstract):
         self._num_rules += 1
         start_time = time.time()
         new_rule_keys = [rule.forest_key(self.classdb.get_label)]
-        if rule.is_reversible():
+        if self.reverse and rule.is_reversible():
             assert isinstance(rule, Rule)
             new_rule_keys.extend(
                 rule.to_reverse_rule(i).forest_key(self.classdb.get_label)
@@ -638,7 +661,7 @@ class RuleDBForest(RuleDBAbstract):
             self.root_label, self, self.classdb, self.strategy_pack
         )
         extractor.check()
-        return extractor.rules()
+        return extractor.rules(self._rule_cache)
 
     # Other methods
 
