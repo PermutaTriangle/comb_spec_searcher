@@ -27,8 +27,6 @@ specification.
 from itertools import chain
 from typing import Iterable, Iterator, Type, TypeVar
 
-from permuta import Perm
-
 from .strategy import CSSstrategy, Strategy
 
 PackType = TypeVar("PackType", bound="StrategyPack")

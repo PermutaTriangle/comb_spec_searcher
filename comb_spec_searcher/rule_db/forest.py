@@ -447,8 +447,8 @@ class ForestRuleExtractor:
         """
         Return all the rules of the specification.
 
-        It will first try to use a rule in the cache and otherwise will try to recompute it
-        from the pack.
+        It will first try to use a rule in the cache and otherwise will try to
+        recompute it from the pack.
 
         The empty rule are ignored as they be produced as needed by the specification.
         """

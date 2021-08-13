@@ -169,8 +169,6 @@ class CombinatorialSpecification(
         Will try to expand a particular class with respect to the given strategy pack.
         """
         # pylint: disable=import-outside-toplevel
-        from permuta import Perm
-
         from .comb_spec_searcher import CombinatorialSpecificationSearcher
         from .rule_db import RuleDBForest
 
