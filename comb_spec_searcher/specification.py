@@ -190,9 +190,10 @@ class CombinatorialSpecification(
         css.classqueue.add(css.classdb.get_label(comb_class))
         # logger.info(CSS.run_information())
         try:
+            # pylint: disable=protected-access
             spec_rule = css._auto_search_rules(max_expansion_time=max_expansion_time)
-        except SpecificationNotFound:
-            raise SpecificationNotFound("Expansion unsuccessful")
+        except SpecificationNotFound as e:
+            raise SpecificationNotFound("Expansion unsuccessful") from e
         new_spec = CombinatorialSpecification(self.root, spec_rule)
         return new_spec
 
