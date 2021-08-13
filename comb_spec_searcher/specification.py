@@ -174,7 +174,6 @@ class CombinatorialSpecification(
         from .comb_spec_searcher import CombinatorialSpecificationSearcher
         from .rule_db import RuleDBForest
 
-        print(comb_class)
         if isinstance(comb_class, int):
             comb_class = self._label_to_tiling[comb_class]
 
@@ -182,9 +181,8 @@ class CombinatorialSpecification(
             rule for cc, rule in self.rules_dict.items() if cc != comb_class
         )
         ruledb = RuleDBForest(reverse=False, rule_cache=spec_rules)
-        pack = pack.add_basis([Perm((0, 2, 1))])
         css = CombinatorialSpecificationSearcher(
-            self.root, pack, ruledb=ruledb, debug=True
+            self.root, pack, ruledb=ruledb, debug=False
         )
         for rule in spec_rules:
             start_label = css.classdb.get_label(rule.comb_class)
@@ -193,12 +191,11 @@ class CombinatorialSpecification(
         css.classqueue.set_stop_yielding(css.classdb.get_label(self.root))
         css.classqueue.add(css.classdb.get_label(comb_class))
         # logger.info(CSS.run_information())
-        spec_rule = css._auto_search_rules(max_expansion_time=max_expansion_time)
-        if spec_rule is not None:
-            new_spec = CombinatorialSpecification(self.root, spec_rule)
-        else:
+        try:
+            spec_rule = css._auto_search_rules(max_expansion_time=max_expansion_time)
+        except SpecificationNotFound:
             raise SpecificationNotFound("Expansion unsuccessful")
-        new_spec.show()
+        new_spec = CombinatorialSpecification(self.root, spec_rule)
         return new_spec
 
     def _is_valid_spec(self) -> bool:
