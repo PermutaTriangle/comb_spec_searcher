@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   state that the rule is reversed.
 - Removed bug in equation of `DisjointUnion` that ignores multiple CVs mapping to the
   same in a child
+- Fixing bug creating non productive forest when expanding verified classes
 
 ### Deprecated
 - Python 3.6 is no longer supported
