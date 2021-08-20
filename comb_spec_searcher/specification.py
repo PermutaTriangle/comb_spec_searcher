@@ -71,9 +71,7 @@ class CombinatorialSpecification(
 
     def _set_subrules(self) -> None:
         """Tells the subrules which children's recurrence methods it should use."""
-        for rule in list(
-            self.rules_dict.values()
-        ):  # list as we lazily assign empty rules
+        for rule in list(self):  # list as we lazily assign empty rules
             rule.set_subrecs(self.get_rule)
 
     def _group_equiv_in_path(self) -> None:
@@ -82,7 +80,7 @@ class CombinatorialSpecification(
         """
         self._ungroup_equiv_path()
         not_hidden_classes = {self.root}
-        for rule in self.rules_dict.values():
+        for rule in self:
             if rule.is_equivalence():
                 continue
             not_hidden_classes.add(rule.comb_class)
@@ -121,7 +119,7 @@ class CombinatorialSpecification(
         Remove the equiv path and replacing only with normal rules.
         """
         new_rules: Dict[CombinatorialClassType, Rule] = {}
-        for rule in self.rules_dict.values():
+        for rule in self:
             if not isinstance(rule, EquivalencePathRule):
                 continue
             for r in rule.rules:
@@ -200,7 +198,7 @@ class CombinatorialSpecification(
     def _is_valid_spec(self) -> bool:
         """Checks that each class is on a left hand side."""
         comb_classes = set()
-        for rule in self.rules_dict.values():
+        for rule in self:
             comb_classes.add(rule.comb_class)
             comb_classes.update(rule.children)
         return self.root in comb_classes and all(
@@ -234,7 +232,7 @@ class CombinatorialSpecification(
         Return a set containing all the combinatorial classes of the specification.
         """
         res: Set[CombinatorialClassType] = set()
-        for rule in self.rules_dict.values():
+        for rule in self:
             res.update(rule.children)
             res.add(rule.comb_class)
             if isinstance(rule, EquivalencePathRule):
@@ -429,7 +427,7 @@ class CombinatorialSpecification(
         if not self._is_valid_spec():
             return False
 
-        for rule in self.rules_dict.values():
+        for rule in self:
             try:
                 for n in range(length + 1):
                     if not rule.sanity_check(n):
@@ -542,6 +540,11 @@ class CombinatorialSpecification(
         assert not rules_dict
         return res + "\n"
 
+    def __iter__(
+        self,
+    ) -> Iterator[AbstractRule[CombinatorialClassType, CombinatorialObjectType]]:
+        yield from self.rules_dict.values()
+
     def equations_string(self) -> str:
         """
         Return a convenient to read string version of the equations returned by
@@ -561,7 +564,7 @@ class CombinatorialSpecification(
         """Return a JSON serializable dictionary for the specification."""
         return {
             "root": self.root.to_jsonable(),
-            "rules": [rule.to_jsonable() for rule in self.rules_dict.values()],
+            "rules": [rule.to_jsonable() for rule in self],
         }
 
     @classmethod
