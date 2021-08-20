@@ -63,8 +63,8 @@ class CombinatorialSpecification(
     ):
         self.root = root
         self.rules_dict = {rule.comb_class: rule for rule in rules}
-        self.labels: Dict[CombinatorialClassType, int] = {}
-        self._label_to_tiling: Dict[int, CombinatorialClassType] = {}
+        self._class_to_label: Dict[CombinatorialClassType, int] = {}
+        self._label_to_class: Dict[int, CombinatorialClassType] = {}
         if group_equiv:
             self._group_equiv_in_path()
         self._set_subrules()
@@ -171,7 +171,7 @@ class CombinatorialSpecification(
         from .rule_db import RuleDBForest
 
         if isinstance(comb_class, int):
-            comb_class = self._label_to_tiling[comb_class]
+            comb_class = self.get_comb_class(comb_class)
 
         spec_rules = tuple(
             rule for cc, rule in self.rules_dict.items() if cc != comb_class
@@ -210,13 +210,7 @@ class CombinatorialSpecification(
     ) -> AbstractRule[CombinatorialClassType, CombinatorialObjectType]:
         """Return the rule with comb class on the left."""
         if isinstance(comb_class, int):
-            try:
-                comb_class = self._label_to_tiling[comb_class]
-            except KeyError as e:
-                raise InvalidOperationError(
-                    f"The label {comb_class} does not correspond to a tiling"
-                    " in the specification."
-                ) from e
+            comb_class = self.get_comb_class(comb_class)
         if comb_class not in self.rules_dict:
             assert (
                 comb_class.is_empty()
@@ -249,12 +243,23 @@ class CombinatorialSpecification(
 
     def get_label(self, comb_class: CombinatorialClassType) -> int:
         """Return a unique label for the comb class."""
-        res = self.labels.get(comb_class)
+        res = self._class_to_label.get(comb_class)
         if res is None:
-            res = len(self.labels)
-            self.labels[comb_class] = res
-            self._label_to_tiling[res] = comb_class
+            res = len(self._class_to_label)
+            self._class_to_label[comb_class] = res
+            self._label_to_class[res] = comb_class
         return res
+
+    def get_comb_class(self, label: int) -> CombinatorialClassType:
+        """Return the comb class associated to the unique label."""
+        try:
+            comb_class = self._label_to_class[label]
+        except KeyError as e:
+            raise InvalidOperationError(
+                f"The label {comb_class} does not correspond to a tiling"
+                " in the specification."
+            ) from e
+        return comb_class
 
     def get_function(self, comb_class: CombinatorialClassType) -> Function:
         """
