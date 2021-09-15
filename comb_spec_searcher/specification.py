@@ -175,7 +175,7 @@ class CombinatorialSpecification(
             comb_class = self.get_comb_class(comb_class)
 
         spec_rules = tuple(
-            rule for cc, rule in self.rules_dict.items() if cc != comb_class
+            copy(rule) for cc, rule in self.rules_dict.items() if cc != comb_class
         )
         ruledb = RuleDBForest(reverse=False, rule_cache=spec_rules)
         css = CombinatorialSpecificationSearcher(
