@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- Make specification iterable
+- Add a `get_comb_class` method to combinatorial specification
+
+### Fixed
+- Fixing bug creating non productive forest when expanding verified classes
+
 ## [4.0.0] - 2021-06-14
 ### Added
 - Reverse rule default back to the equation of the original rule in case
@@ -24,8 +31,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   potential path contained in equivalence labels.
 - `PartialSpecificationRuleExtractor` that extracts rules from partially built
   specifications and two subclasses with specific applications of that.
-- Make specification iterable
-- Add a `get_comb_class` method to combinatorial specification
 
 ### Changed
 - If a rule in a specification cannot be sanity checked (e.g., counting is not
@@ -46,7 +51,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   state that the rule is reversed.
 - Removed bug in equation of `DisjointUnion` that ignores multiple CVs mapping to the
   same in a child
-- Fixing bug creating non productive forest when expanding verified classes
 
 ### Deprecated
 - Python 3.6 is no longer supported
