@@ -11,6 +11,7 @@ import sympy
 from logzero import logger
 from sympy import Eq, Expr, Function, Number, solve, var
 
+from comb_spec_searcher.class_queue import DefaultQueue
 from comb_spec_searcher.exception import SpecificationNotFound
 from comb_spec_searcher.typing import (
     CombinatorialClassType,
@@ -174,7 +175,7 @@ class CombinatorialSpecification(
             comb_class = self.get_comb_class(comb_class)
 
         spec_rules = tuple(
-            rule for cc, rule in self.rules_dict.items() if cc != comb_class
+            copy(rule) for cc, rule in self.rules_dict.items() if cc != comb_class
         )
         ruledb = RuleDBForest(reverse=False, rule_cache=spec_rules)
         css = CombinatorialSpecificationSearcher(
@@ -184,7 +185,7 @@ class CombinatorialSpecification(
             start_label = css.classdb.get_label(rule.comb_class)
             end_labels = tuple(map(css.classdb.get_label, rule.children))
             ruledb.add(start_label, end_labels, rule)
-        css.classqueue.set_stop_yielding(css.classdb.get_label(self.root))
+        css.classqueue = DefaultQueue(css.strategy_pack)
         css.classqueue.add(css.classdb.get_label(comb_class))
         # logger.info(CSS.run_information())
         try:
