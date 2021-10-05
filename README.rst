@@ -26,11 +26,8 @@ The ``comb_spec_searcher`` package contains code for combinatorial
 exploration.
 
 If this code is useful to you in your work, please consider citing it. To generate a
-BibTeX entry (or another format), click the badge below and locate the "Cite As"
+BibTeX entry (or another format), click the "DOI" badge above and locate the "Cite As"
 section.
-
-[![DOI](https://zenodo.org/badge/121520109.svg)](https://zenodo.org/badge/121520109.svg)
-
 
 Installing
 ----------
