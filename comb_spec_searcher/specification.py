@@ -143,7 +143,9 @@ class CombinatorialSpecification(
             rule = new_spec.rules_dict[class_to_expand]
             assert isinstance(rule, VerificationRule)
             pack = rule.pack()
-            new_spec = new_spec.expand_comb_class(class_to_expand, pack, reverse=False)
+            new_spec = new_spec.expand_comb_class(
+                class_to_expand, pack, reverse=False, continue_expanding_verified=False
+            )
 
     def unexpanded_verified_classes(self) -> Iterator[CombinatorialClassType]:
         """
@@ -163,6 +165,7 @@ class CombinatorialSpecification(
         comb_class: Union[int, CombinatorialClassType],
         pack: StrategyPack,
         reverse: bool,
+        continue_expanding_verified: bool,
         max_expansion_time: Optional[float] = None,
     ) -> "CombinatorialSpecification[CombinatorialClassType, CombinatorialObjectType]":
         """
@@ -182,7 +185,11 @@ class CombinatorialSpecification(
         )
         ruledb = RuleDBForest(reverse=False, rule_cache=spec_rules)
         css = CombinatorialSpecificationSearcher(
-            self.root, pack, ruledb=ruledb, debug=False
+            self.root,
+            pack,
+            ruledb=ruledb,
+            debug=False,
+            expand_verified=continue_expanding_verified,
         )
         for rule in spec_rules:
             start_label = css.classdb.get_label(rule.comb_class)
