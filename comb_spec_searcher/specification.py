@@ -143,7 +143,9 @@ class CombinatorialSpecification(
             rule = new_spec.rules_dict[class_to_expand]
             assert isinstance(rule, VerificationRule)
             pack = rule.pack()
-            new_spec = new_spec.expand_comb_class(class_to_expand, pack)
+            new_spec = new_spec.expand_comb_class(
+                class_to_expand, pack, reverse=False, continue_expanding_verified=False
+            )
 
     def unexpanded_verified_classes(self) -> Iterator[CombinatorialClassType]:
         """
@@ -162,10 +164,17 @@ class CombinatorialSpecification(
         self,
         comb_class: Union[int, CombinatorialClassType],
         pack: StrategyPack,
+        reverse: bool,
+        continue_expanding_verified: bool,
         max_expansion_time: Optional[float] = None,
     ) -> "CombinatorialSpecification[CombinatorialClassType, CombinatorialObjectType]":
         """
         Will try to expand a particular class with respect to the given strategy pack.
+
+        If reverse is set to True, will allow to use reverse rule in the expansion.
+
+        If continue continue_expanding_verified is set to True then the css will keep
+        working on verified classes when performing the search.
         """
         # pylint: disable=import-outside-toplevel
         from .comb_spec_searcher import CombinatorialSpecificationSearcher
@@ -179,12 +188,17 @@ class CombinatorialSpecification(
         )
         ruledb = RuleDBForest(reverse=False, rule_cache=spec_rules)
         css = CombinatorialSpecificationSearcher(
-            self.root, pack, ruledb=ruledb, debug=False
+            self.root,
+            pack,
+            ruledb=ruledb,
+            debug=False,
+            expand_verified=continue_expanding_verified,
         )
         for rule in spec_rules:
             start_label = css.classdb.get_label(rule.comb_class)
             end_labels = tuple(map(css.classdb.get_label, rule.children))
             ruledb.add(start_label, end_labels, rule)
+        ruledb.reverse = reverse
         css.classqueue = DefaultQueue(css.strategy_pack)
         css.classqueue.add(css.classdb.get_label(comb_class))
         # logger.info(CSS.run_information())
