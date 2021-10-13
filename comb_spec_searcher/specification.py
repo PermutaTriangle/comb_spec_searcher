@@ -172,6 +172,9 @@ class CombinatorialSpecification(
         Will try to expand a particular class with respect to the given strategy pack.
 
         If reverse is set to True, will allow to use reverse rule in the expansion.
+
+        If continue continue_expanding_verified is set to True then the css will keep
+        working on verified classes when performing the search.
         """
         # pylint: disable=import-outside-toplevel
         from .comb_spec_searcher import CombinatorialSpecificationSearcher
