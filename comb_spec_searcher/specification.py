@@ -11,6 +11,7 @@ import sympy
 from logzero import logger
 from sympy import Eq, Expr, Function, Number, solve, var
 
+from comb_spec_searcher.class_queue import DefaultQueue
 from comb_spec_searcher.exception import SpecificationNotFound
 from comb_spec_searcher.typing import (
     CombinatorialClassType,
@@ -63,17 +64,15 @@ class CombinatorialSpecification(
     ):
         self.root = root
         self.rules_dict = {rule.comb_class: rule for rule in rules}
-        self.labels: Dict[CombinatorialClassType, int] = {}
-        self._label_to_tiling: Dict[int, CombinatorialClassType] = {}
+        self._class_to_label: Dict[CombinatorialClassType, int] = {}
+        self._label_to_class: Dict[int, CombinatorialClassType] = {}
         if group_equiv:
             self._group_equiv_in_path()
         self._set_subrules()
 
     def _set_subrules(self) -> None:
         """Tells the subrules which children's recurrence methods it should use."""
-        for rule in list(
-            self.rules_dict.values()
-        ):  # list as we lazily assign empty rules
+        for rule in list(self):  # list as we lazily assign empty rules
             rule.set_subrecs(self.get_rule)
 
     def _group_equiv_in_path(self) -> None:
@@ -82,7 +81,7 @@ class CombinatorialSpecification(
         """
         self._ungroup_equiv_path()
         not_hidden_classes = {self.root}
-        for rule in self.rules_dict.values():
+        for rule in self:
             if rule.is_equivalence():
                 continue
             not_hidden_classes.add(rule.comb_class)
@@ -121,7 +120,7 @@ class CombinatorialSpecification(
         Remove the equiv path and replacing only with normal rules.
         """
         new_rules: Dict[CombinatorialClassType, Rule] = {}
-        for rule in self.rules_dict.values():
+        for rule in self:
             if not isinstance(rule, EquivalencePathRule):
                 continue
             for r in rule.rules:
@@ -144,7 +143,9 @@ class CombinatorialSpecification(
             rule = new_spec.rules_dict[class_to_expand]
             assert isinstance(rule, VerificationRule)
             pack = rule.pack()
-            new_spec = new_spec.expand_comb_class(class_to_expand, pack)
+            new_spec = new_spec.expand_comb_class(
+                class_to_expand, pack, reverse=False, continue_expanding_verified=False
+            )
 
     def unexpanded_verified_classes(self) -> Iterator[CombinatorialClassType]:
         """
@@ -163,30 +164,42 @@ class CombinatorialSpecification(
         self,
         comb_class: Union[int, CombinatorialClassType],
         pack: StrategyPack,
+        reverse: bool,
+        continue_expanding_verified: bool,
         max_expansion_time: Optional[float] = None,
     ) -> "CombinatorialSpecification[CombinatorialClassType, CombinatorialObjectType]":
         """
         Will try to expand a particular class with respect to the given strategy pack.
+
+        If reverse is set to True, will allow to use reverse rule in the expansion.
+
+        If continue continue_expanding_verified is set to True then the css will keep
+        working on verified classes when performing the search.
         """
         # pylint: disable=import-outside-toplevel
         from .comb_spec_searcher import CombinatorialSpecificationSearcher
         from .rule_db import RuleDBForest
 
         if isinstance(comb_class, int):
-            comb_class = self._label_to_tiling[comb_class]
+            comb_class = self.get_comb_class(comb_class)
 
         spec_rules = tuple(
-            rule for cc, rule in self.rules_dict.items() if cc != comb_class
+            copy(rule) for cc, rule in self.rules_dict.items() if cc != comb_class
         )
         ruledb = RuleDBForest(reverse=False, rule_cache=spec_rules)
         css = CombinatorialSpecificationSearcher(
-            self.root, pack, ruledb=ruledb, debug=False
+            self.root,
+            pack,
+            ruledb=ruledb,
+            debug=False,
+            expand_verified=continue_expanding_verified,
         )
         for rule in spec_rules:
             start_label = css.classdb.get_label(rule.comb_class)
             end_labels = tuple(map(css.classdb.get_label, rule.children))
             ruledb.add(start_label, end_labels, rule)
-        css.classqueue.set_stop_yielding(css.classdb.get_label(self.root))
+        ruledb.reverse = reverse
+        css.classqueue = DefaultQueue(css.strategy_pack)
         css.classqueue.add(css.classdb.get_label(comb_class))
         # logger.info(CSS.run_information())
         try:
@@ -200,7 +213,7 @@ class CombinatorialSpecification(
     def _is_valid_spec(self) -> bool:
         """Checks that each class is on a left hand side."""
         comb_classes = set()
-        for rule in self.rules_dict.values():
+        for rule in self:
             comb_classes.add(rule.comb_class)
             comb_classes.update(rule.children)
         return self.root in comb_classes and all(
@@ -212,13 +225,7 @@ class CombinatorialSpecification(
     ) -> AbstractRule[CombinatorialClassType, CombinatorialObjectType]:
         """Return the rule with comb class on the left."""
         if isinstance(comb_class, int):
-            try:
-                comb_class = self._label_to_tiling[comb_class]
-            except KeyError as e:
-                raise InvalidOperationError(
-                    f"The label {comb_class} does not correspond to a tiling"
-                    " in the specification."
-                ) from e
+            comb_class = self.get_comb_class(comb_class)
         if comb_class not in self.rules_dict:
             assert (
                 comb_class.is_empty()
@@ -234,7 +241,7 @@ class CombinatorialSpecification(
         Return a set containing all the combinatorial classes of the specification.
         """
         res: Set[CombinatorialClassType] = set()
-        for rule in self.rules_dict.values():
+        for rule in self:
             res.update(rule.children)
             res.add(rule.comb_class)
             if isinstance(rule, EquivalencePathRule):
@@ -251,12 +258,23 @@ class CombinatorialSpecification(
 
     def get_label(self, comb_class: CombinatorialClassType) -> int:
         """Return a unique label for the comb class."""
-        res = self.labels.get(comb_class)
+        res = self._class_to_label.get(comb_class)
         if res is None:
-            res = len(self.labels)
-            self.labels[comb_class] = res
-            self._label_to_tiling[res] = comb_class
+            res = len(self._class_to_label)
+            self._class_to_label[comb_class] = res
+            self._label_to_class[res] = comb_class
         return res
+
+    def get_comb_class(self, label: int) -> CombinatorialClassType:
+        """Return the comb class associated to the unique label."""
+        try:
+            comb_class = self._label_to_class[label]
+        except KeyError as e:
+            raise InvalidOperationError(
+                f"The label {comb_class} does not correspond to a tiling"
+                " in the specification."
+            ) from e
+        return comb_class
 
     def get_function(self, comb_class: CombinatorialClassType) -> Function:
         """
@@ -429,7 +447,7 @@ class CombinatorialSpecification(
         if not self._is_valid_spec():
             return False
 
-        for rule in self.rules_dict.values():
+        for rule in self:
             try:
                 for n in range(length + 1):
                     if not rule.sanity_check(n):
@@ -542,6 +560,11 @@ class CombinatorialSpecification(
         assert not rules_dict
         return res + "\n"
 
+    def __iter__(
+        self,
+    ) -> Iterator[AbstractRule[CombinatorialClassType, CombinatorialObjectType]]:
+        yield from self.rules_dict.values()
+
     def equations_string(self) -> str:
         """
         Return a convenient to read string version of the equations returned by
@@ -561,7 +584,7 @@ class CombinatorialSpecification(
         """Return a JSON serializable dictionary for the specification."""
         return {
             "root": self.root.to_jsonable(),
-            "rules": [rule.to_jsonable() for rule in self.rules_dict.values()],
+            "rules": [rule.to_jsonable() for rule in self],
         }
 
     @classmethod

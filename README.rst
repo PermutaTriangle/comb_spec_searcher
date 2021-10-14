@@ -25,6 +25,10 @@ Combinatorial Specification Searcher
 The ``comb_spec_searcher`` package contains code for combinatorial
 exploration.
 
+If this code is useful to you in your work, please consider citing it. To generate a
+BibTeX entry (or another format), click the "DOI" badge above and locate the "Cite As"
+section.
+
 Installing
 ----------
 
@@ -79,7 +83,7 @@ using ``in``.
 .. code:: python
 
    >>> from comb_spec_searcher import CombinatorialObject
-   
+
    >>> class Word(str, CombinatorialObject):
    ...     def size(self):
    ...         return str.__len__(self)
@@ -515,14 +519,14 @@ from the sepcifications.
    ...         assert w == bijection.map(bijection.inverse_map(w))
    ...
 
-Whether we find a bijection or not (when one exists) is highly 
+Whether we find a bijection or not (when one exists) is highly
 dependent on the packs chosen.
 
 Citing
 ######
 
-If you found this library helpful with your research and would like to cite us, 
-you can use the following `BibTeX`_ or go to `Zenodo`_ for alternative formats. 
+If you found this library helpful with your research and would like to cite us,
+you can use the following `BibTeX`_ or go to `Zenodo`_ for alternative formats.
 
 .. _BibTex: https://zenodo.org/record/4944021/export/hx#.YMcpIC2l30o
 

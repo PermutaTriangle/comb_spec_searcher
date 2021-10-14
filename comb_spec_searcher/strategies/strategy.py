@@ -665,7 +665,7 @@ class VerificationStrategy(
     AtomStrategy, relying on CombinatorialClass methods.
     """
 
-    def __init__(self, ignore_parent: bool = True):
+    def __init__(self, ignore_parent: bool = False):
         super().__init__(
             ignore_parent=ignore_parent,
             inferrable=False,

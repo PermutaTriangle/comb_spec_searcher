@@ -2,9 +2,9 @@ from itertools import product
 from typing import (
     TYPE_CHECKING,
     Any,
-    Callable,
     Dict,
     Generic,
+    Iterator,
     List,
     Optional,
     Set,
@@ -283,108 +283,123 @@ class Isomorphism(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
             stack.append((i1 + 1, i, in_use.union({i})))
 
 
-class Node(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
-    """Parse tree node."""
+class ParseTreeMap(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
+    """
+    Map the object by creating parse tree for it while mimicking the steps
+    in the other specification. Then backward maps are applied in the other
+    parse tree to get the object the original will map to.
+    """
+
+    @classmethod
+    def map(
+        cls,
+        domain: "CombinatorialSpecification[ClassType1, ObjType1]",
+        codomain: "CombinatorialSpecification[ClassType2, ObjType2]",
+        get_order: OrderMap[ClassType1, ClassType2],
+        index_data: Dict[Tuple[ClassType1, ClassType2], object],
+        obj: ObjType1,
+    ) -> ObjType2:
+        return cls(domain, codomain, get_order, index_data).map_rec(
+            obj, domain.root_rule, codomain.root_rule
+        )
 
     def __init__(
         self,
-        rule: AbstractRule[ClassType1, ObjType1],
-        obj: ObjType1,
-        get_rule: Callable[[ClassType1], AbstractRule[ClassType1, ObjType1]],
-    ):
-        self.obj = obj
-        self._rule = rule
-        if not rule.children:
-            self._children: Tuple[
-                Optional["Node[ClassType1, ObjType1, ClassType2, ObjType2]"], ...
-            ] = tuple()
-        else:
-            assert isinstance(rule, Rule)
-            children, self.idx = rule.indexed_forward_map(obj)
-            self._children = tuple(
-                type(self)(get_rule(child), child_obj, get_rule)
-                if child_obj is not None
-                else None
-                for child, child_obj in zip(rule.children, children)
-                if not child.is_empty()
-            )
-
-    def build_obj(
-        self,
-        rule: AbstractRule[ClassType2, ObjType2],
+        domain: "CombinatorialSpecification[ClassType1, ObjType1]",
+        codomain: "CombinatorialSpecification[ClassType2, ObjType2]",
         get_order: OrderMap[ClassType1, ClassType2],
-        get_rule: Callable[[ClassType2], AbstractRule[ClassType2, ObjType2]],
         index_data: Dict[Tuple[ClassType1, ClassType2], object],
+    ) -> None:
+        self.domain = domain
+        self.codomain = codomain
+        self.get_order = get_order
+        self.index_data = index_data
+
+    @staticmethod
+    def _min_object(rule: AbstractRule[ClassType2, ObjType2]) -> ObjType2:
+        """Get min object from rule's parent."""
+        obj: ObjType2 = next(
+            rule.comb_class.objects_of_size(rule.comb_class.minimum_size_of_object())
+        )
+        return obj
+
+    def _get_nonempty(
+        self, rule: Rule[ClassType1, ObjType1], children: Tuple[Optional[ObjType1], ...]
+    ) -> Tuple[Optional[Tuple[ObjType1, AbstractRule[ClassType1, ObjType1]]], ...]:
+        """Get the nonempty children for the domain's rule. We gather both the part
+        of the mapped object and the class it belongs to."""
+        return tuple(
+            (child_obj, self.domain.rules_dict[child])
+            if child_obj is not None
+            else None
+            for child, child_obj in zip(rule.children, children)
+            if not child.is_empty()
+        )
+
+    def map_rec(
+        self,
+        obj: Optional[ObjType1],
+        rule1: AbstractRule[ClassType1, ObjType1],
+        rule2: AbstractRule[ClassType2, ObjType2],
     ) -> ObjType2:
-        """Parse tree's recursive build object function."""
+        # If atom, we return the minimum object of the corresponding rule.
+        if not rule1.children:
+            return ParseTreeMap._min_object(rule2)
 
-        atom = not self._children
-        if atom:
-            obj: ObjType2 = next(
-                rule.comb_class.objects_of_size(
-                    rule.comb_class.minimum_size_of_object()
-                )
-            )
-            return obj
+        assert isinstance(rule1, Rule) and isinstance(rule2, Rule)
+        mapped_obj, idx = rule1.indexed_forward_map(obj)
 
-        if rule.is_equivalence():
-            if not self._rule.is_equivalence():
-                assert isinstance(rule, Rule)
-                val: ObjType2 = rule.indexed_backward_map(
+        if rule2.is_equivalence():
+            if not rule1.is_equivalence():
+                # Backward map the outcome of a recursion when
+                # we move one rule further in spec2 only.
+                val: ObjType2 = rule2.indexed_backward_map(
                     (
-                        self.build_obj(
-                            get_rule(rule.children[0]), get_order, get_rule, index_data
+                        self.map_rec(
+                            obj, rule1, self.codomain.rules_dict[rule2.children[0]]
                         ),
                     ),
-                    self.idx,
+                    idx,
                 )
                 return val
-            order = [0]  # If both are equivalences
-        elif self._rule.is_equivalence():
-            assert self._children[0] is not None
-            return self._children[0].build_obj(rule, get_order, get_rule, index_data)
+            # When both are eq-rules, we treat them normally and set matching order
+            order: List[int] = [0]
+        elif rule1.is_equivalence():
+            # If only domain's rule is eq-rule then we don't backward map for the
+            # spec2's rule here but move along with the mapped object and next rule
+            # and return the outcome directly.
+            return self.map_rec(
+                mapped_obj[0], self.domain.rules_dict[rule1.children[0]], rule2
+            )
         else:
-            order = get_order[(self._rule.comb_class, rule.comb_class)]
-        children = (self._children[idx] for idx in order)
-        assert isinstance(rule, Rule)
+            # Fetch the matching order to know what parts to recurse together.
+            order = self.get_order[(rule1.comb_class, rule2.comb_class)]
 
-        # Deal with avoiding empty children and supplying ibm with data if any
-        val = rule.indexed_backward_map(
+        # Sort rule1's children to match those of rule 2
+        _children = self._get_nonempty(rule1, mapped_obj)
+        child_it: Iterator[
+            Optional[Tuple[ObjType1, AbstractRule[ClassType1, ObjType1]]]
+        ] = (_children[idx] for idx in order)
+
+        # Recurse, when rule2's is not empty and the mapped object corresponding to
+        # the rule1's nonempty class is not None and gather the result into a tuple
+        # to backward map with rule2.
+        val = rule2.indexed_backward_map(
             tuple(
-                c[0].build_obj(get_rule(c[1]), get_order, get_rule, index_data)
+                self.map_rec(c[0][0], c[0][1], c[1])
                 if c is not None and c[0] is not None
                 else None
                 for c in (
-                    None if child.is_empty() else (next(children), child)
-                    for child in rule.children
+                    None
+                    if child.is_empty()
+                    else (next(child_it), self.codomain.rules_dict[child])
+                    for child in rule2.children
                 )
             ),
-            self.idx,
-            index_data.get((self._rule.comb_class, rule.comb_class)),
+            idx,
+            self.index_data.get((rule1.comb_class, rule2.comb_class)),
         )
         return val
-
-
-class ParseTree(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
-    """Parse tree that parses an object and can reconstruct it for the other
-    specification."""
-
-    def __init__(
-        self, obj: ObjType1, spec: "CombinatorialSpecification[ClassType1, ObjType1]"
-    ):
-        self._root = Node[ClassType1, ObjType1, ClassType2, ObjType2](
-            spec.root_rule, obj, spec.get_rule
-        )
-
-    def build_obj(
-        self,
-        root: AbstractRule[ClassType2, ObjType2],
-        get_order: OrderMap[ClassType1, ClassType2],
-        get_rule: Callable[[ClassType2], AbstractRule[ClassType2, ObjType2]],
-        index_data: Dict[Tuple[ClassType1, ClassType2], object],
-    ) -> ObjType2:
-        """Build object from the other specification."""
-        return self._root.build_obj(root, get_order, get_rule, index_data)
 
 
 class Bijection(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
@@ -439,27 +454,15 @@ class Bijection(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
 
     def map(self, obj: ObjType1) -> ObjType2:
         """Map an object of the domain to an object of the codomain."""
-        parse_tree = ParseTree[ClassType1, ObjType1, ClassType2, ObjType2](
-            obj, self._spec
-        )
-        return parse_tree.build_obj(
-            self._other.root_rule,
-            self._get_order,
-            self._other.get_rule,
-            self._index_data,
+        return ParseTreeMap[ClassType1, ObjType1, ClassType2, ObjType2].map(
+            self._spec, self._other, self._get_order, self._index_data, obj
         )
 
     def inverse_map(self, obj: ObjType2) -> ObjType1:
         """Map an object of the codomain to an object of the domain."""
         # Swap types and use inverse versions of tuple maps
-        parse_tree = ParseTree[ClassType2, ObjType2, ClassType1, ObjType1](
-            obj, self._other
-        )
-        return parse_tree.build_obj(
-            self._spec.root_rule,
-            self._get_inverse_order,
-            self._spec.get_rule,
-            self._inv_index_data,
+        return ParseTreeMap[ClassType2, ObjType2, ClassType1, ObjType1].map(
+            self._other, self._spec, self._get_inverse_order, self._inv_index_data, obj
         )
 
     def to_jsonable(self) -> dict:
