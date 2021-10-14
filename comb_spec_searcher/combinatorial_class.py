@@ -127,7 +127,7 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
                 "CombinatorialClass in order to use various methods, including "
                 "sanity checking."
             )
-        yield dict()
+        yield {}
 
     def get_parameters(self, obj: CombinatorialObjectType) -> Parameters:
         """

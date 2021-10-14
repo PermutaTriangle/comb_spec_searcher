@@ -432,7 +432,7 @@ class ForestRuleExtractor:
         self.root_label = root_label
         self.rule_by_bucket = self._sorted_stable_rules(ruledb.table_method)
         assert set(ForestRuleExtractor.MINIMIZE_ORDER) == set(self.rule_by_bucket)
-        self.needed_rules: List[ForestRuleKey] = list()
+        self.needed_rules: List[ForestRuleKey] = []
         self._minimize()
 
     def check(self) -> bool:

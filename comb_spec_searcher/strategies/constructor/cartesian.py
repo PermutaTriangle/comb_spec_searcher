@@ -65,7 +65,7 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         if extra_parameters is not None:
             self.extra_parameters = tuple(extra_parameters)
         else:
-            self.extra_parameters = tuple(dict() for _ in children)
+            self.extra_parameters = tuple({} for _ in children)
         self._children_param_maps = self._build_children_param_map(
             parent, children, self.extra_parameters
         )
@@ -391,7 +391,7 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         if extra_parameters is not None:
             self.extra_parameters = tuple(extra_parameters)
         else:
-            self.extra_parameters = tuple(dict() for _ in children)
+            self.extra_parameters = tuple({} for _ in children)
         self.idx = idx
         self._children_param_maps = CartesianProduct._build_children_param_map(
             parent, children, self.extra_parameters

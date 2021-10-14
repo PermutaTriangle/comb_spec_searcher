@@ -31,7 +31,7 @@ from .strategy import CSSstrategy, Strategy
 
 PackType = TypeVar("PackType", bound="StrategyPack")
 
-__all__ = "StrategyPack"
+__all__ = ["StrategyPack"]
 
 
 class StrategyPack:

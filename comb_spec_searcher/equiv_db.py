@@ -99,7 +99,7 @@ class EquivalenceDB:
     def connect_cycles(self):
         """Look for cycles using one way edges that have been added."""
         one_way_vertices = self.get_one_way_vertices()
-        stack: List[Tuple[int, ...]] = list()
+        stack: List[Tuple[int, ...]] = []
         stack.extend([(label,) for label in one_way_vertices.keys()])
         visited = set()
         while stack:

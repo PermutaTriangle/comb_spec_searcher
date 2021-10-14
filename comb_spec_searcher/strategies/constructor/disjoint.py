@@ -48,9 +48,7 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
             assert len(extra_parameters) == len(children)
         else:
             assert not parent.extra_parameters
-            self.extra_parameters = tuple(
-                dict() for _ in range(self.number_of_children)
-            )
+            self.extra_parameters = tuple({} for _ in range(self.number_of_children))
         self._children_param_maps = self._build_children_param_maps(parent, children)
         self.zeroes = tuple(
             frozenset(parent.extra_parameters) - frozenset(parameter.keys())
@@ -67,7 +65,7 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
     ) -> sympy.Eq:
         res = 0
         for rhs_func, extra_parameters in zip(rhs_funcs, self.extra_parameters):
-            subs: Dict[str, sympy.Expr] = dict()
+            subs: Dict[str, sympy.Expr] = {}
             for parent, child in extra_parameters.items():
                 if child in subs:
                     subs[child] *= sympy.var(parent)
@@ -238,9 +236,7 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
             assert len(extra_parameters) == len(children)
         else:
             assert not parent.extra_parameters
-            self.extra_parameters = tuple(
-                dict() for _ in range(self.number_of_children)
-            )
+            self.extra_parameters = tuple({} for _ in range(self.number_of_children))
         self.idx = idx
         self._children_param_maps = self._build_children_param_maps(parent, children)
         self._parent_param_map = self._build_parent_param_map(parent, children, idx)

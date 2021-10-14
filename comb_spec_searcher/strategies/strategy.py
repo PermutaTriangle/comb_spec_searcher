@@ -409,7 +409,7 @@ class Strategy(AbstractStrategy[CombinatorialClassType, CombinatorialObjectType]
             children = self.decomposition_function(comb_class)
             if children is None:
                 raise StrategyDoesNotApply("Strategy does not apply")
-        return tuple(dict() for _ in children)
+        return tuple({} for _ in children)
 
 
 class CartesianProductStrategy(
