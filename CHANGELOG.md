@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixing bug creating non productive forest when expanding verified classes
 - Handled properly when user asks for an random object of a size the class does
   not have
+- Trying to verify the class being expanded when expanding a combinatorial
+  specification.
 
 ## [4.0.0] - 2021-06-14
 ### Added
