@@ -1,5 +1,6 @@
 import itertools
 import json
+from comb_spec_searcher.exception import InvalidOperationError
 
 import pytest
 
@@ -18,6 +19,14 @@ from example import AvoidingWithPrefix, Word, pack
 def specification():
     alphabet = ["a", "b"]
     start_class = AvoidingWithPrefix("", ["ababa", "babb"], alphabet)
+    searcher = CombinatorialSpecificationSearcher(start_class, pack)
+    return searcher.auto_search()
+
+
+@pytest.fixture
+def finite_specification():
+    alphabet = ["a", "b"]
+    start_class = AvoidingWithPrefix("", ["aa", "bb", "ab", "ba"], alphabet)
     searcher = CombinatorialSpecificationSearcher(start_class, pack)
     return searcher.auto_search()
 
@@ -87,6 +96,20 @@ def test_random_sample(specification):
     """
     assert specification.random_sample_object_of_size(0) == ""
     assert len(specification.random_sample_object_of_size(100)) == 100
+
+
+def test_random_sample_from_finite(finite_specification):
+    """
+    Testing that the finite spec behaves properly.
+    """
+    assert finite_specification.random_sample_object_of_size(0) == ""
+    assert finite_specification.random_sample_object_of_size(1) in set(
+        [Word("a"), Word("b")]
+    )
+    with pytest.raises(InvalidOperationError):
+        finite_specification.random_sample_object_of_size(2)
+    with pytest.raises(InvalidOperationError):
+        finite_specification.random_sample_object_of_size(100)
 
 
 def test_forget_ruledb():
