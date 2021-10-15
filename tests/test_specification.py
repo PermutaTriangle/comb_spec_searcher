@@ -1,6 +1,5 @@
 import itertools
 import json
-from comb_spec_searcher.exception import InvalidOperationError
 
 import pytest
 
@@ -8,6 +7,7 @@ from comb_spec_searcher import (
     CombinatorialSpecification,
     CombinatorialSpecificationSearcher,
 )
+from comb_spec_searcher.exception import InvalidOperationError
 from comb_spec_searcher.rule_db import RuleDBForest, RuleDBForgetStrategy
 from comb_spec_searcher.strategies.strategy import VerificationStrategy
 from comb_spec_searcher.strategies.strategy_pack import StrategyPack
