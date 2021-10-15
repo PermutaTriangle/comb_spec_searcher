@@ -200,7 +200,9 @@ class CombinatorialSpecification(
             ruledb.add(start_label, end_labels, rule)
         ruledb.reverse = reverse
         css.classqueue = DefaultQueue(css.strategy_pack)
-        css.classqueue.add(css.classdb.get_label(comb_class))
+        label_to_expand = css.classdb.get_label(comb_class)
+        css.classqueue.add(label_to_expand)
+        css.try_verify(comb_class, label_to_expand)
         # logger.info(CSS.run_information())
         try:
             # pylint: disable=protected-access
