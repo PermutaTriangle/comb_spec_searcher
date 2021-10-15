@@ -433,7 +433,11 @@ class CombinatorialSpecification(
         """
         limit = n * self.number_of_rules()
         with RecursionLimit(limit):
-            return self.root_rule.random_sample_object_of_size(n, **parameters)
+            if self.count_objects_of_size(n, **parameters) > 0:
+                return self.root_rule.random_sample_object_of_size(n, **parameters)
+            raise InvalidOperationError(
+                "The root does not contain objects of this size"
+            )
 
     def number_of_rules(self) -> int:
         return len(self.rules_dict)
