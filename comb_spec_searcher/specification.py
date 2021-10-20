@@ -97,15 +97,18 @@ class CombinatorialSpecification(
                 eqv_path_rules[new_rule.comb_class] = new_rule
                 path_rules.clear()
             comb_class = comb_class_stack.pop()
-            if comb_class in not_hidden_classes and comb_class in visited:
+            if comb_class in not_hidden_classes or comb_class in visited:
                 continue
             visited.add(comb_class)
             rule = self.get_rule(comb_class)
-            comb_class_stack.extend(rule.children)
             if rule.is_equivalence() and not isinstance(rule, EquivalencePathRule):
                 assert isinstance(rule, Rule)
                 assert not path_rules or path_rules[-1].children[0] == rule.comb_class
+                if len(rule.children) > 1:
+                    rule = rule.to_equivalence_rule()
                 path_rules.append(rule)
+            comb_class_stack.extend(rule.children)
+
         # Clearing the equivalences and replacing by paths
         self.rules_dict = {
             comb_class: rule
