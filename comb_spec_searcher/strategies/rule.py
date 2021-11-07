@@ -42,7 +42,7 @@ from comb_spec_searcher.typing import (
 
 from ..combinatorial_class import CombinatorialClassType, CombinatorialObjectType
 from ..exception import SanityCheckFailure, StrategyDoesNotApply
-from .constructor import Complement, Constructor, DisjointUnion
+from .constructor import CartesianProduct, Complement, Constructor, DisjointUnion
 
 if TYPE_CHECKING:
     from .strategy import AbstractStrategy, Strategy, VerificationStrategy
@@ -79,6 +79,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         self._children = children
         self._non_empty_children: Optional[Tuple[CombinatorialClassType, ...]] = None
         self._shifts: Optional[Tuple[int, ...]] = None
+        self.cache = False
 
     def to_jsonable(self) -> dict:
         d = {
@@ -153,6 +154,11 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             get_subrule(child).get_objects for child in self.children
         )
         self.subterms = tuple(get_subrule(child).get_terms for child in self.children)
+        if hasattr(self, "constructor") and isinstance(
+            self.constructor, CartesianProduct
+        ):
+            for child in self.children:
+                get_subrule(child).cache = True
 
     @property
     def children(self) -> Tuple[CombinatorialClassType, ...]:
@@ -224,8 +230,10 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         """
         Return the terms for the given n.
         """
-        self._ensure_level(n)
-        return self.terms_cache[n]
+        if self.cache:
+            self._ensure_level(n)
+            return self.terms_cache[n]
+        return self.constructor.get_terms(self.get_terms, self.subterms, n)
 
     def count_objects_of_size(self, n: int, **parameters: int) -> int:
         """
@@ -1071,6 +1079,15 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
     @staticmethod
     def is_equivalence() -> bool:
         return False
+
+    def get_terms(self, n: int) -> Terms:
+        """
+        Return the terms for the given n.
+        """
+        if self.cache:
+            self._ensure_level(n)
+            return self.terms_cache[n]
+        return self.strategy.get_terms(self.comb_class, n)
 
     def _ensure_level(self, n: int) -> None:
         while n >= len(self.terms_cache):
