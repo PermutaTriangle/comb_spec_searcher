@@ -157,6 +157,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         if hasattr(self, "constructor") and isinstance(
             self.constructor, CartesianProduct
         ):
+            self.cache = True
             for child in self.children:
                 get_subrule(child).cache = True
 
