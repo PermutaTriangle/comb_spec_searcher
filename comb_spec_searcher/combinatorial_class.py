@@ -84,7 +84,7 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
         """
         x = sympy.var("x")
         extra_parameters = [sympy.var(k) for k in self.extra_parameters]
-        return sympy.Function("F_{}".format(get_label(self)))(x, *extra_parameters)
+        return sympy.Function(f"F_{get_label(self)}")(x, *extra_parameters)
 
     def get_genf(self, *args, **kwargs) -> sympy.Expr:
         """Return the generating function for the combinatorial class"""
@@ -127,7 +127,7 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
                 "CombinatorialClass in order to use various methods, including "
                 "sanity checking."
             )
-        yield dict()
+        yield {}
 
     def get_parameters(self, obj: CombinatorialObjectType) -> Parameters:
         """

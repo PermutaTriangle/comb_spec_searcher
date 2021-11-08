@@ -130,7 +130,7 @@ class ClassDB(Generic[CombinatorialClassType]):
             raise TypeError(
                 "ClassDB only accepts"
                 "CombinatorialClass and will decompress with"
-                "{}.".format(self.combinatorial_class)
+                f"{self.combinatorial_class}."
             )
         return info
 

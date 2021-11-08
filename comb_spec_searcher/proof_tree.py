@@ -51,7 +51,7 @@ class ProofTreeNode:
 
     def to_jsonable(self):
         """Class is deprecated - use CombinatorialSpecification."""
-        output = dict()
+        output = {}
         output["label"] = self.label
         output["eqv_path_labels"] = list(self.eqv_path_labels)
         output["eqv_path_comb_classes"] = [
@@ -141,7 +141,7 @@ class ProofTree:
     @classmethod
     def from_specification(cls, spec: CombinatorialSpecification) -> "ProofTree":
         """Return a ProofTree from a CombinatorialSpecification."""
-        seen: List[Rule] = list()
+        seen: List[Rule] = []
 
         def proof_tree_node(comb_class: CombinatorialClass) -> ProofTreeNode:
             rule = spec.get_rule(comb_class)

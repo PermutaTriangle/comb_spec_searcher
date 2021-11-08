@@ -163,7 +163,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         if self._children is None:
             self._children = self._strategy.decomposition_function(self.comb_class)
             if self._children is None:
-                raise StrategyDoesNotApply("{} does not apply".format(self._strategy))
+                raise StrategyDoesNotApply(f"{self.strategy} does not apply")
         return self._children
 
     @property
@@ -322,7 +322,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             symbol_height = min(1, len(res) - 1)
             eq_symbol = (
                 ["     " for i in range(symbol_height)]
-                + ["  {}  ".format(self.get_eq_symbol())]
+                + [f"  {self.get_op_symbol()}  "]
                 + ["     " for i in range(symbol_height)]
             )
             join(res, eq_symbol)
@@ -330,7 +330,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             if len(children) > 1:
                 op_symbol = (
                     ["     " for i in range(symbol_height)]
-                    + ["  {}  ".format(self.get_op_symbol())]
+                    + [f"  {self.get_op_symbol()}  "]
                     + ["     " for i in range(symbol_height)]
                 )
                 for child in children[1:]:
@@ -389,7 +389,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
                 self.comb_class, self.children
             )
             if self._constructor is None:
-                raise StrategyDoesNotApply("{} does not apply".format(self.strategy))
+                raise StrategyDoesNotApply(f"{self.strategy} does not apply")
         return self._constructor
 
     def is_equivalence(self):
@@ -682,7 +682,7 @@ class NonBijectiveRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
 class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     def __init__(self, rule: Rule[CombinatorialClassType, CombinatorialObjectType]):
         non_empty_children = rule.non_empty_children()
-        assert rule.is_equivalence(), "not an equivalence rule: {}".format(str(rule))
+        assert rule.is_equivalence(), f"not an equivalence rule: {rule}"
         child = non_empty_children[0]
         super().__init__(rule.strategy, rule.comb_class, (child,))
         self.child_idx = rule.children.index(child)
@@ -907,13 +907,13 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
         symbol_height = min(1, len(res) - 1)
         eq_symbol = (
             ["     " for i in range(symbol_height)]
-            + ["  {}  ".format("=")]
+            + ["  =  "]
             + ["     " for i in range(symbol_height)]
         )
         for comb_class in comb_classes:
             join(res, eq_symbol)
             join(res, comb_class)
-        return "{}\n".format(self.formal_step) + "\n".join(x for x in res)
+        return f"{self.formal_step}\n" + "\n".join(x for x in res)
 
 
 class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
@@ -991,7 +991,7 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     @property
     def formal_step(self) -> str:
         if len(self.children) == 1:
-            return "reverse of '{}'".format(self.strategy.formal_step())
+            return f"reverse of '{self.strategy.formal_step()}'"
         return f"reverse of '{self.strategy.formal_step()}', counting child {self.idx}"
 
     def backward_map(
