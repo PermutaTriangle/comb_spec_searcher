@@ -200,7 +200,9 @@ class CombinatorialSpecification(
             ruledb.add(start_label, end_labels, rule)
         ruledb.reverse = reverse
         css.classqueue = DefaultQueue(css.strategy_pack)
-        css.classqueue.add(css.classdb.get_label(comb_class))
+        label_to_expand = css.classdb.get_label(comb_class)
+        css.classqueue.add(label_to_expand)
+        css.try_verify(comb_class, label_to_expand)
         # logger.info(CSS.run_information())
         try:
             # pylint: disable=protected-access
@@ -433,7 +435,11 @@ class CombinatorialSpecification(
         """
         limit = n * self.number_of_rules()
         with RecursionLimit(limit):
-            return self.root_rule.random_sample_object_of_size(n, **parameters)
+            if self.count_objects_of_size(n, **parameters) > 0:
+                return self.root_rule.random_sample_object_of_size(n, **parameters)
+            raise InvalidOperationError(
+                "The root does not contain objects of this size"
+            )
 
     def number_of_rules(self) -> int:
         return len(self.rules_dict)
