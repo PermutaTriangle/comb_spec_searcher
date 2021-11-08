@@ -400,10 +400,8 @@ class Strategy(AbstractStrategy[CombinatorialClassType, CombinatorialObjectType]
         that child.
         """
         assert not comb_class.extra_parameters, (
-            "you need to update the 'extra_parameters' method in the strategy {} "
-            "in order to enumerate class with multiple extra_parameters".format(
-                str(self)
-            )
+            f"you need to update the 'extra_parameters' method in the strategy {self} "
+            "in order to enumerate class with multiple extra_parameters"
         )
         if children is None:
             children = self.decomposition_function(comb_class)

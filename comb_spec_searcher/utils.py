@@ -161,12 +161,12 @@ def taylor_expand(genf, n: int = 10):
 
 
 def pretty_print_equations(root_func, count, eqs) -> str:
-    s = "The system of {} equations\n".format(len(eqs))
-    s += "root_func := {}:\n".format(str(root_func))
+    s = f"The system of {len(eqs)} equations\n"
+    s += f"root_func := {root_func}:\n"
     s += "eqs := [\n"
-    s += ",\n".join("{} = {}".format(str(eq.lhs), str(eq.rhs)) for eq in eqs)
+    s += ",\n".join(f"{eq.lhs} = {eq.rhs}" for eq in eqs)
     s += "\n]:\n"
-    s += "count := {}:".format(list(count))
+    s += f"count := {list(count)}:"
     if all(len(eq.lhs.args) == 1 for eq in eqs):
         s = s.replace("(x)", "")
     return s
@@ -180,7 +180,7 @@ def maple_equations(root_func, count, eqs) -> str:
     s += "eqs := [\n"
     s += ",\n".join(map(sympy_expr_to_maple, eqs))
     s += "\n]:\n"
-    s += "count := {}:".format(list(count))
+    s += f"count := {list(count)}:"
     return s
 
 

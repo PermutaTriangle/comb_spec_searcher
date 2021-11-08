@@ -529,9 +529,7 @@ class CombinatorialSpecification(
         return bool(self.root == other.root and self.rules_dict == other.rules_dict)
 
     def __str__(self) -> str:
-        res = "A combinatorial specification with {} rules.".format(
-            self.number_of_rules()
-        )
+        res = f"A combinatorial specification with {self.number_of_rules()} rules."
         rules_dict = copy(self.rules_dict)
 
         def update_res(comb_class: CombinatorialClassType, res: str):
@@ -543,8 +541,8 @@ class CombinatorialSpecification(
             if isinstance(rule, EquivalencePathRule):
                 child_label = self.get_label(rule.comb_class)
                 child_eqv_label = self.get_label(rule.children[0])
-                labels = "{} = {}\n".format(child_label, child_eqv_label)
-                res += "\n{}\n".format("-" * (len(labels) - 1))
+                labels = f"{child_label} = {child_eqv_label}\n"
+                res += f"\n{'-' * (len(labels) - 1)}\n"
                 res += labels
                 res += str(rule)
                 try:
@@ -554,8 +552,8 @@ class CombinatorialSpecification(
                     return res
             start_label = self.get_label(rule.comb_class)
             end_labels = tuple(self.get_label(c) for c in rule.children)
-            labels = "{} -> {}\n".format(start_label, end_labels)
-            res += "\n{}\n".format("-" * (len(labels) - 1))
+            labels = f"{start_label} -> {end_labels}\n"
+            res += f"\n{'-' * (len(labels) - 1)}\n"
             res += labels
             res += str(rule)
             for child in rule.children:
@@ -581,7 +579,7 @@ class CombinatorialSpecification(
             self.get_equations(),
             key=lambda eq: int(str(eq.lhs).split("_")[1].split("(")[0]),
         ):
-            res += "\n{} = {}".format(eq.lhs, eq.rhs)
+            res += f"\n{eq.lhs} = {eq.rhs}"
         return res
 
     # JSON methods

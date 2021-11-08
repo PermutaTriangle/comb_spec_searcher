@@ -277,7 +277,7 @@ def iterative_proof_tree_finder(rules_dict: RulesDict, root: int) -> Node:
             return Node(start)
         if start in trees:
             return trees[start]
-        raise KeyError("{} is not in trees".format(start))
+        raise KeyError(f"{start} is not in trees")
 
     def create_tree(start, end):
         if start in trees:
@@ -308,4 +308,4 @@ def iterative_proof_tree_finder(rules_dict: RulesDict, root: int) -> Node:
             break
     if root in trees:
         return trees[root]
-    raise ValueError("{} has no tree in rules_dict".format(root))
+    raise ValueError(f"{root} has no tree in rules_dict")

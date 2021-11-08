@@ -77,45 +77,47 @@ class StrategyPack:
         return any(strat.__class__ == strategy.__class__ for strat in self)
 
     def __repr__(self) -> str:
-        s = "{}(\n".format(self.__class__.__name__)
+        s = f"{self.__class__.__name__}(\n"
         s += "    initial_strats=[\n"
         for st in self.initial_strats:
-            s += "        {!r},\n".format(st)
+            s += f"        {st!r},\n"
         s += "    ], ver_strats=[\n"
         for st in self.ver_strats:
-            s += "        {!r},\n".format(st)
+            s += f"        {st!r},\n"
         s += "    ], inferral_strats=[\n"
         for st in self.inferral_strats:
-            s += "        {!r},\n".format(st)
+            s += f"        {st!r},\n"
         s += "    ], expansion_strats=[\n"
         for sl in self.expansion_strats:
             s += "        [\n"
             for st in sl:
-                s += "            {!r},\n".format(st)
+                s += f"            {st!r},\n"
             s += "        ],\n"
         s += "    ],\n"
-        s += "    name={!r},\n".format(self.name)
-        s += "    symmetries={!r},\n".format(self.symmetries)
-        s += "    iterative={!r},\n".format(self.iterative)
+        s += f"    name={self.name!r},\n"
+        s += f"    symmetries={self.symmetries!r},\n"
+        s += f"    iterative={self.iterative!r},\n"
         s += ")"
         return s
 
     def __str__(self) -> str:
+        type_search = "iterative" if self.iterative else "recursive"
         string = (
-            "Looking for {} combinatorial specification" " with the strategies:\n"
-        ).format("iterative" if self.iterative else "recursive")
+            f"Looking for {type_search} combinatorial specification"
+            " with the strategies:\n"
+        )
         initial_strats = ", ".join(map(str, self.initial_strats))
         infer_strats = ", ".join(map(str, self.inferral_strats))
         verif_strats = ", ".join(map(str, self.ver_strats))
-        string += "Inferral: {}\n".format(infer_strats)
-        string += "Initial: {}\n".format(initial_strats)
-        string += "Verification: {}\n".format(verif_strats)
+        string += f"Inferral: {infer_strats}\n"
+        string += f"Initial: {initial_strats}\n"
+        string += f"Verification: {verif_strats}\n"
         if self.symmetries:
             symme_strats = ", ".join(map(str, self.symmetries))
-            string += "Symmetries: {}\n".format(symme_strats)
+            string += f"Symmetries: {symme_strats}\n"
         for i, strategies in enumerate(self.expansion_strats):
             strats = ", ".join(map(str, strategies))
-            string += "Set {}: {}\n".format(i + 1, strats)
+            string += f"Set {i+1}: {strats}\n"
         return string
 
     def __eq__(self, other: object) -> bool:
@@ -183,9 +185,7 @@ class StrategyPack:
         name_ext to the name of the pack.
         """
         if strategy in self:
-            raise ValueError(
-                ("The strategy {!r} is already in pack." "".format(strategy))
-            )
+            raise ValueError(f"The strategy {strategy!r} is already in pack.")
         if apply_first:
             initial_strats = (strategy,) + self.initial_strats
         else:
@@ -208,9 +208,7 @@ class StrategyPack:
         name_ext to the name of the pack.
         """
         if strategy in self:
-            raise ValueError(
-                ("The strategy {!r} is already in pack." "".format(strategy))
-            )
+            raise ValueError(f"The strategy {strategy!r} is already in pack.")
         return self.__class__(
             name="_".join([self.name, name_ext]) if name_ext else self.name,
             initial_strats=self.initial_strats,
@@ -229,9 +227,7 @@ class StrategyPack:
         name_ext to the name of the pack.
         """
         if strategy in self:
-            raise ValueError(
-                ("The strategy {!r} is already in pack." "".format(strategy))
-            )
+            raise ValueError(f"The strategy {strategy!r} is already in pack.")
         return self.__class__(
             name="_".join([self.name, name_ext]) if name_ext else self.name,
             initial_strats=self.initial_strats,
@@ -255,9 +251,7 @@ class StrategyPack:
         If replace is set, it will ignore old verification strategies
         """
         if not replace and strategy in self:
-            raise ValueError(
-                ("The strategy {!r} is already in pack." "".format(strategy))
-            )
+            raise ValueError(f"The strategy {strategy!r} is already in pack.")
         if apply_first:
             ver_strats = (strategy,) + (tuple() if replace else self.ver_strats)
         else:
