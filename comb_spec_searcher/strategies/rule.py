@@ -818,6 +818,8 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
                 original_constructor = rule.constructor
                 assert isinstance(original_constructor, (DisjointUnion, Complement))
                 rules_parameters = original_constructor.extra_parameters[0]
+                if isinstance(original_constructor, Complement):
+                    rules_parameters = {b: a for a, b in rules_parameters.items()}
                 extra_parameters = {
                     parent_var: rules_parameters[child_var]
                     for parent_var, child_var in extra_parameters.items()
