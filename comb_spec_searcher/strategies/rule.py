@@ -65,7 +65,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
     ):
         self.comb_class = comb_class
         self._strategy = strategy
-        self.terms_cache: TermsCache = []
+        self.terms_cache: TermsCache = TermsCache()
         self.objects_cache: ObjectsCache = []
         self.subrecs: Optional[Tuple[Callable[..., int], ...]] = None
         self.subgenerators: Optional[
