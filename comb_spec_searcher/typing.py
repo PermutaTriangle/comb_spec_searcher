@@ -118,7 +118,6 @@ class TermsCache:
 
     @classmethod
     def clean_keys(cls, terms: Terms) -> Terms:
-        return terms
         new_terms: Counter[Parameters] = Counter()
         for k, v in terms.items():
             if k not in cls.KEY_CACHE:
