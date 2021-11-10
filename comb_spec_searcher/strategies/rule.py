@@ -322,7 +322,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             symbol_height = min(1, len(res) - 1)
             eq_symbol = (
                 ["     " for i in range(symbol_height)]
-                + [f"  {self.get_op_symbol()}  "]
+                + [f"  {self.get_eq_symbol()}  "]
                 + ["     " for i in range(symbol_height)]
             )
             join(res, eq_symbol)
