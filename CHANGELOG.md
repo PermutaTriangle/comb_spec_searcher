@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Make specification iterable
 - Add a `get_comb_class` method to combinatorial specification
 
+### Changed
+- The `get_terms` now have unique keys for the parameters to save memory.
+
 ### Fixed
 - Fixing bug creating non productive forest when expanding verified classes
 - Handled properly when user asks for an random object of a size the class does
