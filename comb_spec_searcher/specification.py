@@ -144,7 +144,7 @@ class CombinatorialSpecification(
             assert isinstance(rule, VerificationRule)
             pack = rule.pack()
             try:
-                logger.info(f"Expanding with {pack.name} on \n{class_to_expand} \n")
+                logger.info("Expanding with %s on \n%s\n", pack.name, class_to_expand)
                 new_spec = new_spec.expand_comb_class(
                     class_to_expand,
                     pack,
