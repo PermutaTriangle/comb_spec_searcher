@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 - The `get_terms` now have unique keys for the parameters to save memory.
+- `CombinatorialSpecification.expand_verified` will try to find a spec 
+  allowing reverse rules if it fails without.
 
 ### Fixed
 - Fixing bug creating non productive forest when expanding verified classes

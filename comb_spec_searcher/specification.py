@@ -143,9 +143,22 @@ class CombinatorialSpecification(
             rule = new_spec.rules_dict[class_to_expand]
             assert isinstance(rule, VerificationRule)
             pack = rule.pack()
-            new_spec = new_spec.expand_comb_class(
-                class_to_expand, pack, reverse=False, continue_expanding_verified=False
-            )
+            try:
+                logger.info("Expanding with %s on \n%s\n", pack.name, class_to_expand)
+                new_spec = new_spec.expand_comb_class(
+                    class_to_expand,
+                    pack,
+                    reverse=False,
+                    continue_expanding_verified=False,
+                )
+            except SpecificationNotFound:
+                logger.info("Specification NOT detected. Allowing reverse rules")
+                new_spec = new_spec.expand_comb_class(
+                    class_to_expand,
+                    pack,
+                    reverse=True,
+                    continue_expanding_verified=True,
+                )
 
     def unexpanded_verified_classes(self) -> Iterator[CombinatorialClassType]:
         """
