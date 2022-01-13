@@ -69,6 +69,18 @@ class CombinatorialSpecification(
         if group_equiv:
             self._group_equiv_in_path()
         self._set_subrules()
+        self._enforce_labels()
+
+    def _enforce_labels(self) -> None:
+        done = set()
+        todo = [self.root]
+
+        while todo:
+            class_to_process = todo.pop()
+            self.get_label(class_to_process)
+            done.add(class_to_process)
+            children = self.rules_dict[class_to_process].children
+            todo.extend([child for child in children[::-1] if child not in done])
 
     def _set_subrules(self) -> None:
         """Tells the subrules which children's recurrence methods it should use."""
