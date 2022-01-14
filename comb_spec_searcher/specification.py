@@ -72,6 +72,10 @@ class CombinatorialSpecification(
         self._enforce_labels()
 
     def _enforce_labels(self) -> None:
+        """
+        Traverses the spec in a DFS order from the root and calls self.get_label on
+        each to assign labels to each node.
+        """
         done = set()
         todo = [self.root]
 
