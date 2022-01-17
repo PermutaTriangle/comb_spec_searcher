@@ -69,6 +69,22 @@ class CombinatorialSpecification(
         if group_equiv:
             self._group_equiv_in_path()
         self._set_subrules()
+        self._enforce_labels()
+
+    def _enforce_labels(self) -> None:
+        """
+        Traverses the spec in a DFS order from the root and calls self.get_label on
+        each to assign labels to each node.
+        """
+        done = set()
+        todo = [self.root]
+
+        while todo:
+            class_to_process = todo.pop()
+            self.get_label(class_to_process)
+            done.add(class_to_process)
+            children = self.rules_dict[class_to_process].children
+            todo.extend([child for child in children[::-1] if child not in done])
 
     def _set_subrules(self) -> None:
         """Tells the subrules which children's recurrence methods it should use."""
@@ -143,9 +159,22 @@ class CombinatorialSpecification(
             rule = new_spec.rules_dict[class_to_expand]
             assert isinstance(rule, VerificationRule)
             pack = rule.pack()
-            new_spec = new_spec.expand_comb_class(
-                class_to_expand, pack, reverse=False, continue_expanding_verified=False
-            )
+            try:
+                logger.info("Expanding with %s on \n%s\n", pack.name, class_to_expand)
+                new_spec = new_spec.expand_comb_class(
+                    class_to_expand,
+                    pack,
+                    reverse=False,
+                    continue_expanding_verified=False,
+                )
+            except SpecificationNotFound:
+                logger.info("Specification NOT detected. Allowing reverse rules")
+                new_spec = new_spec.expand_comb_class(
+                    class_to_expand,
+                    pack,
+                    reverse=True,
+                    continue_expanding_verified=True,
+                )
 
     def unexpanded_verified_classes(self) -> Iterator[CombinatorialClassType]:
         """

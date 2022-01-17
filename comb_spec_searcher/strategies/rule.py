@@ -37,11 +37,11 @@ from comb_spec_searcher.typing import (
     SubObjects,
     SubTerms,
     Terms,
-    TermsCache,
 )
 
 from ..combinatorial_class import CombinatorialClassType, CombinatorialObjectType
 from ..exception import SanityCheckFailure, StrategyDoesNotApply
+from ..utils import TermsCache
 from .constructor import Complement, Constructor, DisjointUnion
 
 if TYPE_CHECKING:
@@ -65,7 +65,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
     ):
         self.comb_class = comb_class
         self._strategy = strategy
-        self.terms_cache: TermsCache = []
+        self.terms_cache: TermsCache = TermsCache()
         self.objects_cache: ObjectsCache = []
         self.subrecs: Optional[Tuple[Callable[..., int], ...]] = None
         self.subgenerators: Optional[
@@ -322,7 +322,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
             symbol_height = min(1, len(res) - 1)
             eq_symbol = (
                 ["     " for i in range(symbol_height)]
-                + [f"  {self.get_op_symbol()}  "]
+                + [f"  {self.get_eq_symbol()}  "]
                 + ["     " for i in range(symbol_height)]
             )
             join(res, eq_symbol)
@@ -818,6 +818,8 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
                 original_constructor = rule.constructor
                 assert isinstance(original_constructor, (DisjointUnion, Complement))
                 rules_parameters = original_constructor.extra_parameters[0]
+                if isinstance(original_constructor, Complement):
+                    rules_parameters = {b: a for a, b in rules_parameters.items()}
                 extra_parameters = {
                     parent_var: rules_parameters[child_var]
                     for parent_var, child_var in extra_parameters.items()

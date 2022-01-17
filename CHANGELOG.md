@@ -10,12 +10,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Make specification iterable
 - Add a `get_comb_class` method to combinatorial specification
 
+### Changed
+- The `get_terms` now have unique keys for the parameters to save memory.
+- `CombinatorialSpecification.expand_verified` will try to find a spec
+  allowing reverse rules if it fails without.
+- The labels assigned to nodes will always be in DFS order now.
+
 ### Fixed
 - Fixing bug creating non productive forest when expanding verified classes
 - Handled properly when user asks for an random object of a size the class does
   not have
 - Trying to verify the class being expanded when expanding a combinatorial
   specification.
+- Bug in complement constructors inside equivalence path rules.
 
 ## [4.0.0] - 2021-06-14
 ### Added

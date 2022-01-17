@@ -35,7 +35,6 @@ __all__ = [
     "Objects",
     "ObjectsCache",
     "Terms",
-    "TermsCache",
     "SubObjects",
     "SubRecs",
     "SubSamplers",
@@ -92,7 +91,6 @@ RelianceProfile = Tuple[Dict[str, Tuple[int, ...]], ...]
 Objects = DefaultDict[Parameters, List[CombinatorialObjectType]]
 ObjectsCache = List[Objects]
 Terms = Counter[Parameters]  # all terms for a fixed n
-TermsCache = List[Terms]  # index n contains terms for n
 SubObjects = Tuple[Callable[[int], Objects], ...]
 SubRecs = Tuple[Callable[..., int], ...]
 SubSamplers = Tuple[Callable[..., CombinatorialObjectType], ...]
