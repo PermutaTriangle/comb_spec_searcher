@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [4.1.0] 2022-01-17
 ### Added
 - Make specification iterable
 - Add a `get_comb_class` method to combinatorial specification
