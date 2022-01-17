@@ -424,16 +424,15 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         )
         status += "\n"
         if platform.python_implementation() == "PyPy":
-            status += "\tTotal Garbage Collection Time: {}\n".format(
-                timedelta(seconds=int(gc_stats.total_gc_time / 1000))
-            )
+            gc_time = timedelta(seconds=int(gc_stats.total_gc_time / 1000))
+            status += f"\tTotal Garbage Collection Time: {gc_time}\n"
         return status
 
     def run_information(self) -> str:
         """Return a string detailing what CombSpecSearcher is looking for."""
         start_string = (
             "Initialising CombSpecSearcher for the combinatorial"
-            " class:\n{}\n".format(self.start_class)
+            f" class:\n{self.start_class}\n"
         )
         start_string += str(self.strategy_pack)
         return start_string
@@ -441,9 +440,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
     def _log_spec_found(
         self, specification: CombinatorialSpecification, start_time: float
     ) -> None:
-        found_string = "Specification built {}\n".format(
-            time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime())
-        )
+        found_string = "Specification built\n"
         time_taken = time.time() - start_time
         found_string += f"Time taken: {timedelta(seconds=int(time_taken))}\n"
         found_string += self.status(elaborate=True)
@@ -461,9 +458,8 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         ne_goal = 100 * self.func_times["status"] - (time.time() - start_time)
         next_elaborate = round(ne_goal - (ne_goal % status_update) + status_update)
         if elaborate:
-            status += " -- status update took {} seconds --\n".format(
-                round(time.time() - status_start, 2)
-            )
+            time_spent = time.time() - status_start
+            status += f" -- status update took {time_spent:.2f} seconds --\n"
         else:
             status += (
                 " -- next elaborate status update in "
@@ -494,9 +490,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         tree that is as small as possible.
         """
         auto_search_start = time.time()
-        start_string = "Auto search started {}\n".format(
-            time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime())
-        )
+        start_string = "Auto search started\n"
         start_string += self.run_information()
         logger.info(start_string)
         spec_rules = self._auto_search_rules(**kwargs)

@@ -400,16 +400,14 @@ class Strategy(AbstractStrategy[CombinatorialClassType, CombinatorialObjectType]
         that child.
         """
         assert not comb_class.extra_parameters, (
-            "you need to update the 'extra_parameters' method in the strategy {} "
-            "in order to enumerate class with multiple extra_parameters".format(
-                str(self)
-            )
+            f"you need to update the 'extra_parameters' method in the strategy {self} "
+            "in order to enumerate class with multiple extra_parameters"
         )
         if children is None:
             children = self.decomposition_function(comb_class)
             if children is None:
                 raise StrategyDoesNotApply("Strategy does not apply")
-        return tuple(dict() for _ in children)
+        return tuple({} for _ in children)
 
 
 class CartesianProductStrategy(
@@ -665,7 +663,7 @@ class VerificationStrategy(
     AtomStrategy, relying on CombinatorialClass methods.
     """
 
-    def __init__(self, ignore_parent: bool = True):
+    def __init__(self, ignore_parent: bool = False):
         super().__init__(
             ignore_parent=ignore_parent,
             inferrable=False,

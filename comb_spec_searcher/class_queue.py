@@ -231,7 +231,6 @@ class DefaultQueue(CSSQueue):
             )
             + "\n"
         )
-        status += "\tThe size of the current queues at each level: {}".format(
-            ", ".join(str(i) for i in self.queue_sizes)
-        )
+        status += "\tThe size of the current queues at each level: "
+        status += ", ".join(map(str, self.queue_sizes))
         return status

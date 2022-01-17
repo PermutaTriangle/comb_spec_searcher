@@ -43,6 +43,7 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Topic :: Education",
@@ -50,11 +51,11 @@ setup(
     ],
     install_requires=[
         "logzero==1.7.0",
-        "sympy==1.8",
+        "sympy==1.9",
         "psutil==5.8.0",
         "pympler==0.9",
-        "requests==2.25.1",
-        "typing-extensions==3.10.0.0",
+        "requests==2.26.0",
+        "typing-extensions==4.0.0",
         "tabulate==0.8.9",
     ],
 )

@@ -5,22 +5,16 @@ import os
 import re
 import sys
 import time
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Iterable,
-    Iterator,
-    Optional,
-    Tuple,
-    TypeVar,
-    cast,
-)
+from collections import Counter
+from typing import TYPE_CHECKING, Any, Callable
+from typing import Counter as CounterType
+from typing import Dict, Iterable, Iterator, List, Optional, Tuple, TypeVar, cast
 
 import psutil
 import sympy
 
 from comb_spec_searcher.exception import TaylorExpansionError
+from comb_spec_searcher.typing import Parameters, Terms
 
 if TYPE_CHECKING:
     from comb_spec_searcher import CombinatorialSpecificationSearcher
@@ -85,6 +79,64 @@ class RecursionLimit:
 
     def __exit__(self, exc_type, exc_value, exc_traceback) -> None:
         sys.setrecursionlimit(self.curr_limit)
+
+
+class TermsCache:
+    """
+    A term cache that ensures that each key is unique to save memory.
+    """
+
+    ALL_CACHES: List["TermsCache"] = []
+    KEY_CACHE: Dict[Parameters, Parameters] = {}
+
+    def __init__(self) -> None:
+        self.data: List[Terms] = []
+        self.ALL_CACHES.append(self)
+
+    def __len__(self) -> int:
+        return len(self.data)
+
+    def append(self, terms: Terms) -> None:
+        self.data.append(self.clean_keys(terms))
+
+    def __getitem__(self, index: int) -> Terms:
+        return self.data.__getitem__(index)
+
+    @classmethod
+    def clean_keys(cls, terms: Terms) -> Terms:
+        new_terms: CounterType[Parameters] = Counter()
+        for k, v in terms.items():
+            if k not in cls.KEY_CACHE:
+                cls.KEY_CACHE[k] = k
+            new_terms[cls.KEY_CACHE[k]] = v
+        return new_terms
+
+    @classmethod
+    def num_keys(cls):
+        tot = 0
+        for cache in cls.ALL_CACHES:
+            for terms in cache:
+                for _ in terms:
+                    tot += 1
+        return tot
+
+    @classmethod
+    def num_key_ids(cls):
+        ids = set()
+        for cache in cls.ALL_CACHES:
+            for terms in cache:
+                for key in terms:
+                    ids.add(id(key))
+        return len(ids)
+
+    @classmethod
+    def num_unique_keys(cls):
+        keys = set()
+        for cache in cls.ALL_CACHES:
+            for terms in cache:
+                for key in terms:
+                    keys.add(key)
+        return len(keys)
 
 
 def check_poly(min_poly, initial, root_initial=None, root_func=None):
@@ -161,12 +213,12 @@ def taylor_expand(genf, n: int = 10):
 
 
 def pretty_print_equations(root_func, count, eqs) -> str:
-    s = "The system of {} equations\n".format(len(eqs))
-    s += "root_func := {}:\n".format(str(root_func))
+    s = f"The system of {len(eqs)} equations\n"
+    s += f"root_func := {root_func}:\n"
     s += "eqs := [\n"
-    s += ",\n".join("{} = {}".format(str(eq.lhs), str(eq.rhs)) for eq in eqs)
+    s += ",\n".join(f"{eq.lhs} = {eq.rhs}" for eq in eqs)
     s += "\n]:\n"
-    s += "count := {}:".format(list(count))
+    s += f"count := {list(count)}:"
     if all(len(eq.lhs.args) == 1 for eq in eqs):
         s = s.replace("(x)", "")
     return s
@@ -180,7 +232,7 @@ def maple_equations(root_func, count, eqs) -> str:
     s += "eqs := [\n"
     s += ",\n".join(map(sympy_expr_to_maple, eqs))
     s += "\n]:\n"
-    s += "count := {}:".format(list(count))
+    s += f"count := {list(count)}:"
     return s
 
 
