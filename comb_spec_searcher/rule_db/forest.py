@@ -460,8 +460,10 @@ class ForestRuleExtractor:
                 rule = self._find_rule(rk)
             if isinstance(rule.strategy, EmptyStrategy):
                 continue
-            if rule.is_equivalence() and not isinstance(
-                rule, (EquivalencePathRule, EquivalenceRule)
+            if (
+                rule.is_equivalence()
+                and not isinstance(rule, (EquivalencePathRule, EquivalenceRule))
+                and len(rule.children) > 1
             ):
                 assert isinstance(rule, Rule)
                 yield rule.to_equivalence_rule()
