@@ -1,5 +1,6 @@
 """A class for automatically performing combinatorial exploration."""
 import gc
+import json
 import logging
 import platform
 import time
@@ -20,6 +21,7 @@ from typing import (
 )
 
 import logzero
+import requests
 import tabulate
 from logzero import logger
 
@@ -507,6 +509,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         perc: int = 1,
         smallest: bool = False,
         status_update: Optional[int] = None,
+        post: bool = False,
     ) -> Iterator[AbstractRule]:
         """
         The core functionality of the auto_search method.
@@ -531,7 +534,25 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             spec_search_start = time.time()
             logger.debug("Searching for specification.")
             if self.has_specification():
+
                 logger.info("Specification detected.")
+                if post:
+                    webhookurl = (
+                        "https://discord.com/api/webhooks/696054699308089345/Wc5svxm1mgMKM7zNVR3ocu"
+                        "CFow2leHAZt9z_le8_S-b8g-w0kFaki-GQqDxxevkGPlGG"
+                    )
+
+                    headers = {
+                        "User-Agent": "foresthammer (0.1.0)",
+                        "Content-Type": "application/json",
+                    }
+
+                    message = (
+                        f"Minimization has begun for\n```\n{self.start_class}\n```\n"
+                        f"using {self.strategy_pack.name}."
+                    )
+                    data = json.dumps({"content": message})
+                    requests.post(webhookurl, headers=headers, data=data)
                 return self.ruledb.get_specification_rules(
                     smallest=smallest,
                     minimization_time_limit=0.01 * (time.time() - auto_search_start),
