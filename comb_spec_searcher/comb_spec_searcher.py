@@ -553,7 +553,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
 
                     message = (
                         f"Minimization has begun for\n```\n{self.start_class}\n```\n"
-                        f"using {self.strategy_pack.name}. ({random_id_str})"
+                        f"using {self.strategy_pack.name}. {random_id_str}"
                     )
                     data = json.dumps({"content": message})
                     requests.post(webhookurl, headers=headers, data=data)
