@@ -512,6 +512,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         smallest: bool = False,
         status_update: Optional[int] = None,
         post: bool = False,
+        random_id: Optional[str] = None,
     ) -> Iterator[AbstractRule]:
         """
         The core functionality of the auto_search method.
@@ -539,6 +540,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
 
                 logger.info("Specification detected.")
                 if post:
+                    random_id_str = f"({random_id})" if random_id is not None else ""
                     webhookurl = (
                         "https://discord.com/api/webhooks/696054699308089345/Wc5svxm1mgMKM7zNVR3ocu"
                         "CFow2leHAZt9z_le8_S-b8g-w0kFaki-GQqDxxevkGPlGG"
@@ -551,7 +553,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
 
                     message = (
                         f"Minimization has begun for\n```\n{self.start_class}\n```\n"
-                        f"using {self.strategy_pack.name}."
+                        f"using {self.strategy_pack.name}. ({random_id_str})"
                     )
                     data = json.dumps({"content": message})
                     requests.post(webhookurl, headers=headers, data=data)
