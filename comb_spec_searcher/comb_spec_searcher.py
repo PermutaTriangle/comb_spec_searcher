@@ -468,6 +468,8 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 f"{timedelta(seconds=next_elaborate)} --\n"
             )
         logger.info(status)
+        print(self.strategy_pack.name)
+        print(status)
 
     def auto_search(self, **kwargs) -> CombinatorialSpecification:
         """
