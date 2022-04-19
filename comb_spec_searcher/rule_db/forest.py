@@ -1,3 +1,4 @@
+import gc
 import itertools
 import time
 from datetime import timedelta
@@ -512,12 +513,14 @@ class ForestRuleExtractor:
             # pylint: disable=undefined-loop-variable
             for _ in range(i, len(minimizing)):
                 minimizing.pop()
+            gc.collect()
         counter = 0
         while maybe_useful:
             rk = maybe_useful.pop()
             if not self._is_productive(itertools.chain.from_iterable(not_minimizing)):
                 self.needed_rules.append(rk)
                 counter += 1
+            gc.collect()
         logger.info("Using %s rule for %s", counter, key.name)
 
     def _is_productive(self, rule_keys: Iterable[ForestRuleKey]) -> bool:
