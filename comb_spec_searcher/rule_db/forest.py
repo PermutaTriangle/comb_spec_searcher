@@ -1,3 +1,4 @@
+import gc
 import itertools
 import time
 from datetime import timedelta
