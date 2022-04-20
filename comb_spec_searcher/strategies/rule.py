@@ -737,8 +737,7 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
                 raise NotImplementedError
         return self._constructor
 
-    @staticmethod
-    def is_equivalence() -> bool:
+    def is_equivalence(self) -> bool:
         return True
 
     def to_reverse_rule(self, idx: int) -> "EquivalenceRule":
@@ -835,8 +834,7 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
             )
         return self._constructor
 
-    @staticmethod
-    def is_equivalence() -> bool:
+    def is_equivalence(self) -> bool:
         return True
 
     @property
@@ -1070,8 +1068,7 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
             super().strategy,
         )
 
-    @staticmethod
-    def is_equivalence() -> bool:
+    def is_equivalence(self) -> bool:
         return False
 
     def _ensure_level(self, n: int) -> None:

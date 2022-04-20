@@ -639,8 +639,7 @@ class AlreadyVerified(VerificationStrategy[CombinatorialClass, CombinatorialObje
     def verified(self, comb_class: CombinatorialClass) -> bool:
         return comb_class in self.verified_classes
 
-    @staticmethod
-    def formal_step() -> str:
+    def formal_step(self) -> str:
         return "already verified"
 
     def to_jsonable(self) -> dict:

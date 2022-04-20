@@ -437,16 +437,13 @@ class CartesianProductStrategy(
             workable=workable,
         )
 
-    @staticmethod
-    def can_be_equivalent() -> bool:
+    def can_be_equivalent(self) -> bool:
         return True
 
-    @staticmethod
-    def is_two_way(comb_class: CombinatorialClassType) -> bool:
+    def is_two_way(self, comb_class: CombinatorialClassType) -> bool:
         return True
 
-    @staticmethod
-    def is_reversible(comb_class: CombinatorialClassType) -> bool:
+    def is_reversible(self, comb_class: CombinatorialClassType) -> bool:
         return True
 
     def shifts(
@@ -527,16 +524,13 @@ class DisjointUnionStrategy(Strategy[CombinatorialClassType, CombinatorialObject
             workable=workable,
         )
 
-    @staticmethod
-    def can_be_equivalent() -> bool:
+    def can_be_equivalent(self) -> bool:
         return True
 
-    @staticmethod
-    def is_two_way(comb_class: CombinatorialClassType) -> bool:
+    def is_two_way(self, comb_class: CombinatorialClassType) -> bool:
         return True
 
-    @staticmethod
-    def is_reversible(comb_class: CombinatorialClassType) -> bool:
+    def is_reversible(self, comb_class: CombinatorialClassType) -> bool:
         return True
 
     def shifts(
@@ -682,16 +676,13 @@ class VerificationStrategy(
                 raise StrategyDoesNotApply("The combinatorial class is not verified")
         return VerificationRule(self, comb_class, children)
 
-    @staticmethod
-    def can_be_equivalent() -> bool:
+    def can_be_equivalent(self) -> bool:
         return False
 
-    @staticmethod
-    def is_two_way(comb_class: CombinatorialClassType) -> bool:
+    def is_two_way(self, comb_class: CombinatorialClassType) -> bool:
         return False
 
-    @staticmethod
-    def is_reversible(comb_class: CombinatorialClassType) -> bool:
+    def is_reversible(self, comb_class: CombinatorialClassType) -> bool:
         return False
 
     def shifts(
@@ -815,16 +806,14 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
     def __init__(self):
         super().__init__(ignore_parent=True)
 
-    @staticmethod
-    def get_terms(comb_class: CombinatorialClass, n: int) -> Terms:
+    def get_terms(self, comb_class: CombinatorialClass, n: int) -> Terms:
         if comb_class.extra_parameters:
             raise NotImplementedError
         if n == comb_class.minimum_size_of_object():
             return Counter([tuple()])
         return Counter()
 
-    @staticmethod
-    def get_objects(comb_class: CombinatorialClass, n: int) -> Objects:
+    def get_objects(self, comb_class: CombinatorialClass, n: int) -> Objects:
         if comb_class.extra_parameters:
             raise NotImplementedError
         res: Objects = defaultdict(list)
@@ -844,9 +833,8 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
         x = var("x")
         return x ** comb_class.minimum_size_of_object()
 
-    @staticmethod
     def random_sample_object_of_size(
-        comb_class: CombinatorialClass, n: int, **parameters: int
+        self, comb_class: CombinatorialClass, n: int, **parameters: int
     ) -> CombinatorialObject:
         if comb_class.extra_parameters:
             raise NotImplementedError
@@ -854,16 +842,13 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
             obj: CombinatorialObject = next(comb_class.objects_of_size(n))
             return obj
 
-    @staticmethod
-    def verified(comb_class: CombinatorialClass) -> bool:
+    def verified(self, comb_class: CombinatorialClass) -> bool:
         return bool(comb_class.is_atom())
 
-    @staticmethod
-    def formal_step() -> str:
+    def formal_step(self) -> str:
         return "is atom"
 
-    @staticmethod
-    def pack(comb_class: CombinatorialClass) -> "StrategyPack":
+    def pack(self, comb_class: CombinatorialClass) -> "StrategyPack":
         raise InvalidOperationError("No pack for the empty strategy.")
 
     def to_jsonable(self) -> dict:
@@ -893,12 +878,10 @@ class EmptyStrategy(
     def __init__(self):
         super().__init__(ignore_parent=True)
 
-    @staticmethod
-    def get_terms(comb_class: CombinatorialClass, n: int) -> Terms:
+    def get_terms(self, comb_class: CombinatorialClass, n: int) -> Terms:
         return Counter()
 
-    @staticmethod
-    def get_objects(comb_class: CombinatorialClass, n: int) -> Objects:
+    def get_objects(self, comb_class: CombinatorialClass, n: int) -> Objects:
         return defaultdict(list)
 
     def get_genf(
@@ -912,22 +895,18 @@ class EmptyStrategy(
             )
         return Integer(0)
 
-    @staticmethod
     def random_sample_object_of_size(
-        comb_class: CombinatorialClassType, n: int, **parameters: int
+        self, comb_class: CombinatorialClassType, n: int, **parameters: int
     ) -> CombinatorialObjectType:
         raise StrategyDoesNotApply("Can't sample from empty set.")
 
-    @staticmethod
-    def verified(comb_class: CombinatorialClass) -> bool:
+    def verified(self, comb_class: CombinatorialClass) -> bool:
         return bool(comb_class.is_empty())
 
-    @staticmethod
-    def formal_step() -> str:
+    def formal_step(self) -> str:
         return "is empty"
 
-    @staticmethod
-    def pack(comb_class: CombinatorialClass) -> "StrategyPack":
+    def pack(self, comb_class: CombinatorialClass) -> "StrategyPack":
         raise InvalidOperationError("No pack for the empty strategy.")
 
     def to_jsonable(self) -> dict:
