@@ -302,7 +302,7 @@ class CombinatorialSpecification(
             comb_class = self._label_to_class[label]
         except KeyError as e:
             raise InvalidOperationError(
-                f"The label {comb_class} does not correspond to a tiling"
+                f"The label {label} does not correspond to a tiling"
                 " in the specification."
             ) from e
         return comb_class
