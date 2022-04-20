@@ -147,11 +147,11 @@ def check_poly(min_poly, initial, root_initial=None, root_func=None):
     x = sympy.var("x")
     init_poly = 0
     for i, coeff in enumerate(initial):
-        init_poly += coeff * x ** i
+        init_poly += coeff * x**i
     if root_initial is not None:
         root_poly = 0
         for i, coeff in enumerate(root_initial):
-            root_poly += coeff * x ** i
+            root_poly += coeff * x**i
     verification = min_poly.subs({F: init_poly})
     if root_initial is not None:
         verification = verification.subs({root_func: root_poly})
@@ -320,8 +320,8 @@ def get_mem() -> int:
 def size_to_readable(size: int) -> str:
     """Convert a size in bytes to a human readable value in KiB, MiB, or
     GiB"""
-    if size / 1024 ** 2 < 1:
+    if size / 1024**2 < 1:
         return str(round(size / 1024)) + " KiB"
-    if size / 1024 ** 3 < 1:
-        return str(round(size / 1024 ** 2, 1)) + " MiB"
-    return str(round(size / 1024 ** 3, 3)) + " GiB"
+    if size / 1024**3 < 1:
+        return str(round(size / 1024**2, 1)) + " MiB"
+    return str(round(size / 1024**3, 3)) + " GiB"

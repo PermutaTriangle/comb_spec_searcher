@@ -535,7 +535,7 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
                 res += value
             else:
                 res += value * utils.prod(
-                    var ** power for var, power in zip(variables, param)
+                    var**power for var, power in zip(variables, param)
                 )
         return res
 
