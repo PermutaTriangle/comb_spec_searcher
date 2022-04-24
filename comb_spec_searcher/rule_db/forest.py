@@ -461,8 +461,10 @@ class ForestRuleExtractor:
                 rule = self._find_rule(rk)
             if isinstance(rule.strategy, EmptyStrategy):
                 continue
-            if rule.is_equivalence() and not isinstance(
-                rule, (EquivalencePathRule, EquivalenceRule)
+            if (
+                rule.is_equivalence()
+                and not isinstance(rule, (EquivalencePathRule, EquivalenceRule))
+                and len(rule.children) > 1
             ):
                 assert isinstance(rule, Rule)
                 yield rule.to_equivalence_rule()
@@ -513,6 +515,7 @@ class ForestRuleExtractor:
             # pylint: disable=undefined-loop-variable
             for _ in range(i, len(minimizing)):
                 minimizing.pop()
+            # added to avoid doubling in memory when minimizing with pypy
             gc.collect()
         counter = 0
         while maybe_useful:
@@ -520,6 +523,7 @@ class ForestRuleExtractor:
             if not self._is_productive(itertools.chain.from_iterable(not_minimizing)):
                 self.needed_rules.append(rk)
                 counter += 1
+            # added to avoid doubling in memory when minimizing with pypy
             gc.collect()
         logger.info("Using %s rule for %s", counter, key.name)
 
