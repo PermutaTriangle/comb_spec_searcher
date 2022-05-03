@@ -272,16 +272,14 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         - add class to classqueue
         """
         for comb_class, child_label in zip(rule.children, end_labels):
+            if not rule.possibly_empty:
+                self.classdb.set_empty(child_label, empty=False)
             if self.symmetries and child_label not in self.symmetry_expanded:
-                self._symmetry_expand(
-                    comb_class, child_label
-                )  # TODO: mark symmetries as empty where appropriate
+                self._symmetry_expand(comb_class, child_label)
             if rule.workable:
                 self.classqueue.add(child_label)
             if not rule.inferrable:
                 self.classqueue.set_not_inferrable(child_label)
-            if not rule.possibly_empty:
-                self.classdb.set_empty(child_label, empty=False)
             self.try_verify(comb_class, child_label)
         if rule.ignore_parent:
             self.classqueue.set_stop_yielding(start_label)
@@ -290,11 +288,13 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
     def _symmetry_expand(self, comb_class: CombinatorialClassType, label: int) -> None:
         """Add symmetries of combinatorial class to the database."""
         sym_labels = set([label])
+        empty = self.classdb.is_empty(comb_class, label)
         for strategy_generator in self.symmetries:
             for start_label, end_labels, rule in self._expand_class_with_strategy(
                 comb_class, strategy_generator, label=label
             ):
                 sym_label = end_labels[0]
+                self.classdb.set_empty(sym_label, empty)
                 self.ruledb.add(start_label, (sym_label,), rule)
                 self.classqueue.set_stop_yielding(sym_label)
                 sym_labels.add(sym_label)
