@@ -637,6 +637,10 @@ class AlreadyVerified(VerificationStrategy[CombinatorialClass, CombinatorialObje
         super().__init__()
 
     def verified(self, comb_class: CombinatorialClass) -> bool:
+        comb_class = comb_class.remove_assumptions()
+        if comb_class in self.verified_classes:
+            print("WHAOOOOOOOOOOOOOOOOOOOOOO")
+            print(comb_class)
         return comb_class in self.verified_classes
 
     @staticmethod
@@ -647,6 +651,11 @@ class AlreadyVerified(VerificationStrategy[CombinatorialClass, CombinatorialObje
         d: dict = super().to_jsonable()
         d["comb_classes"] = [c.to_jsonable() for c in self.verified_classes]
         return d
+
+    def get_terms(self, comb_class, n):
+        from collections import Counter
+
+        return Counter()
 
     @classmethod
     def from_dict(cls, d: dict) -> "AlreadyVerified":

@@ -271,6 +271,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         - symmetry expand combinatorial classes
         - add class to classqueue
         """
+        self.try_verify(rule.comb_class, start_label)
         for comb_class, child_label in zip(rule.children, end_labels):
             if self.symmetries and child_label not in self.symmetry_expanded:
                 self._symmetry_expand(
