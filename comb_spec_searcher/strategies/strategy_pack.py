@@ -308,7 +308,7 @@ class StrategyPack:
         d = strategy.to_jsonable()
 
         def replace_list(strats):
-            """Return a new list with the replaced fusion strat."""
+            """Return a new list with the strategy removed."""
             res = []
             for strategy in strats:
                 if not strategy.to_jsonable() == d:
