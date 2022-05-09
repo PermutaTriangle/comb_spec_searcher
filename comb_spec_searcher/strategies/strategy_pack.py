@@ -25,7 +25,7 @@ If the iterative boolean is True, then CSS will search for an iterative
 specification.
 """
 from itertools import chain
-from typing import Iterable, Iterator, Type, TypeVar
+from typing import Iterable, Iterator, Optional, Type, TypeVar
 
 from .strategy import CSSstrategy, Strategy
 
@@ -219,6 +219,43 @@ class StrategyPack:
             iterative=self.iterative,
         )
 
+    def add_expansion(
+        self: PackType,
+        strategies: Iterable[CSSstrategy],
+        idx: Optional[int] = None,
+        name_ext: str = "",
+    ) -> PackType:
+        """
+        Create a new pack with the expansion strategies added as a new set.
+        If idx is given as an argument, then the strategies are appended to
+        Set idx in the expansion strategies.
+        Adds name_ext to the name of the pack.
+        """
+        strategies = tuple(strategies)
+        for strat in strategies:
+            if strat in self:
+                raise ValueError(f"The strategy {strat!r} is already in the pack")
+        if idx is None:
+            expansion_strats = self.expansion_strats + (strategies,)
+        else:
+            try:
+                expansion_strats = (
+                    self.expansion_strats[:idx]
+                    + (self.expansion_strats[idx] + strategies,)
+                    + self.expansion_strats[idx + 1 :]
+                )
+            except IndexError:
+                raise IndexError("expansion_strats: index out of range")
+        return self.__class__(
+            name="_".join([self.name, name_ext]) if name_ext else self.name,
+            initial_strats=self.initial_strats,
+            ver_strats=self.ver_strats,
+            inferral_strats=self.inferral_strats,
+            expansion_strats=expansion_strats,
+            symmetries=self.symmetries,
+            iterative=self.iterative,
+        )
+
     def add_symmetry(
         self: PackType, strategy: CSSstrategy, name_ext: str = ""
     ) -> PackType:
@@ -263,6 +300,30 @@ class StrategyPack:
             inferral_strats=self.inferral_strats,
             expansion_strats=self.expansion_strats,
             symmetries=self.symmetries,
+            iterative=self.iterative,
+        )
+
+    def remove_strategy(self, strategy: CSSstrategy):
+        """Create a new pack where the strategy is removed."""
+        d = strategy.to_jsonable()
+
+        def replace_list(strats):
+            """Return a new list with the replaced fusion strat."""
+            res = []
+            for strategy in strats:
+                if not strategy.to_jsonable() == d:
+                    res.append(strategy)
+            return res
+
+        return self.__class__(
+            ver_strats=replace_list(self.ver_strats),
+            inferral_strats=replace_list(self.inferral_strats),
+            initial_strats=replace_list(self.initial_strats),
+            expansion_strats=[
+                strat for strat in map(replace_list, self.expansion_strats) if strat
+            ],
+            name=self.name,
+            symmetries=replace_list(self.symmetries),
             iterative=self.iterative,
         )
 
