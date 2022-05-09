@@ -244,8 +244,8 @@ class StrategyPack:
                     + (self.expansion_strats[idx] + strategies,)
                     + self.expansion_strats[idx + 1 :]
                 )
-            except IndexError:
-                raise IndexError("expansion_strats: index out of range")
+            except IndexError as error:
+                raise IndexError("expansion_strats: index out of range") from error
         return self.__class__(
             name="_".join([self.name, name_ext]) if name_ext else self.name,
             initial_strats=self.initial_strats,
