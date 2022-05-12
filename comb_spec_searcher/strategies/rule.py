@@ -374,7 +374,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
             msg += "The saved children are:\n"
             for child in saved_children:
                 msg += f"{child}\n"
-            logger.warn(msg)
+            logger.warning(msg)
         assert not d
         return rule
 
