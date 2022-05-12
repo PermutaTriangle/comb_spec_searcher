@@ -6,6 +6,7 @@ calling the Strategy class and storing its results.
 """
 
 
+from logzero import logger
 import abc
 import random
 from collections import defaultdict
@@ -365,9 +366,17 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         assert isinstance(strategy, Strategy)
         comb_class = CombinatorialClass.from_dict(d.pop("comb_class"))
         comb_class = cast(CombinatorialClassType, comb_class)
-        d.pop("children")
+        saved_children = tuple(map(CombinatorialClass.from_dict, d.pop("children")))
+        rule = cls(strategy, comb_class)
+        if rule.children != saved_children:
+            msg = "Children built from strategy different from saved children\n"
+            msg += f"{rule}\n"
+            msg += "The saved children are:\n"
+            for child in saved_children:
+                msg += f"{child}\n"
+            logger.warn(msg)
         assert not d
-        return cls(strategy, comb_class)
+        return rule
 
     @property
     def strategy(self) -> "Strategy[CombinatorialClassType, CombinatorialObjectType]":
