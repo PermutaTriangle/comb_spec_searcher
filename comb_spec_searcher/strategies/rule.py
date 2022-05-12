@@ -6,7 +6,6 @@ calling the Strategy class and storing its results.
 """
 
 
-from logzero import logger
 import abc
 import random
 from collections import defaultdict
@@ -27,6 +26,7 @@ from typing import (
     cast,
 )
 
+from logzero import logger
 from sympy import Eq, Function
 
 from comb_spec_searcher.combinatorial_class import CombinatorialClass
