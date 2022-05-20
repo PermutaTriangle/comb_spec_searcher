@@ -13,7 +13,7 @@ from typing import (
     cast,
 )
 
-from comb_spec_searcher.class_db import ClassDB
+from comb_spec_searcher.class_db import AbstractClassDB
 from comb_spec_searcher.exception import SpecificationNotFound
 from comb_spec_searcher.strategies.rule import AbstractRule
 from comb_spec_searcher.strategies.strategy_pack import StrategyPack
@@ -47,7 +47,7 @@ class RuleDBAbstract(abc.ABC):
         return self._searcher
 
     @property
-    def classdb(self) -> ClassDB:
+    def classdb(self) -> AbstractClassDB:
         return self.searcher.classdb
 
     @property

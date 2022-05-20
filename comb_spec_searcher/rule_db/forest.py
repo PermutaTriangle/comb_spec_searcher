@@ -19,7 +19,7 @@ from typing import (
 
 from logzero import logger
 
-from comb_spec_searcher.class_db import ClassDB
+from comb_spec_searcher.class_db import AbstractClassDB
 from comb_spec_searcher.exception import StrategyDoesNotApply
 from comb_spec_searcher.rule_db.abstract import RuleDBAbstract, ensure_specification
 from comb_spec_searcher.strategies.rule import (
@@ -425,7 +425,7 @@ class ForestRuleExtractor:
         self,
         root_label: int,
         ruledb: "RuleDBForest",
-        classdb: ClassDB,
+        classdb: AbstractClassDB,
         pack: StrategyPack,
     ):
         self.pack = pack

@@ -8,6 +8,7 @@ Contains information about if combinatorial classes have been found by
 if is_empty has been checked.
 """
 
+import abc
 import time
 import zlib
 from datetime import timedelta
@@ -39,7 +40,101 @@ class Info:
         )
 
 
-class ClassDB(Generic[CombinatorialClassType]):
+class AbstractClassDB(Generic[CombinatorialClassType]):
+    def __init__(self, combinatorial_class: Type[CombinatorialClassType]):
+        self.combinatorial_class = combinatorial_class
+
+    @abc.abstractmethod
+    def _get_info(self, key: Key) -> Info:
+        """
+        Return Info for given key.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def _set_info(self, key: Key, info: Info) -> None:
+        """
+        Return Info for given key.
+        """
+        raise NotImplementedError
+
+    def get_class(self, key: Key) -> CombinatorialClassType:
+        """
+        Return combinatorial class of key.
+        """
+        info = self._get_info(key)
+        return self._decompress(info.comb_class)
+
+    def is_empty(
+        self, comb_class: CombinatorialClassType, label: Optional[int] = None
+    ) -> bool:
+        """
+        Return True if combinatorial class is empty set, False if not.
+        """
+        if label is None:
+            info = self._get_info(comb_class)
+            label = info.label
+        else:
+            info = self._get_info(label)
+        empty = info.empty
+        if empty is None:
+            if not isinstance(comb_class, self.combinatorial_class):
+                comb_class = self.get_class(comb_class)
+            empty = self._is_empty(comb_class)
+            self.set_empty(label, empty)
+        return bool(empty)
+
+    def _is_empty(self, comb_class: CombinatorialClassType) -> bool:
+        return comb_class.is_empty()
+
+    def get_label(self, key: Key) -> int:
+        """
+        Return label of key.
+        """
+        info = self._get_info(key)
+        return info.label
+
+    def set_empty(self, key: Key, empty: bool = True) -> None:
+        """
+        Update database about comb class being empty.
+        """
+        info = self._get_info(key)
+        info.empty = empty
+        self._set_info(key, info)
+
+    def _decompress(self, key: ClassKey) -> CombinatorialClassType:
+        """
+        Return decompressed version of compressed combinatorial class.
+        """
+        try:
+            assert isinstance(key, bytes)
+            return cast(
+                CombinatorialClassType,
+                self.combinatorial_class.from_bytes(zlib.decompress(key)),
+            )
+        except (AssertionError, NotImplementedError):
+            # to use compression you should implement a 'from_bytes' function.
+            assert isinstance(
+                key, self.combinatorial_class
+            ), "you must implement a 'from_bytes' function to use compression"
+            return key
+
+    def _compress(self, key: CombinatorialClassType) -> ClassKey:
+        """
+        Return compressed version of combinatorial class.
+        """
+        # pylint: disable=no-self-use
+        try:
+            return zlib.compress(key.to_bytes(), 9)
+        except NotImplementedError:
+            # to use compression you should implement a 'to_bytes' function.
+            return key
+
+    def status(self) -> str:
+        return "Status {self.__class__} is not implemented."
+
+
+class ClassDB(AbstractClassDB[CombinatorialClassType]):
     """
     A database for combinatorial classes.
 
@@ -55,9 +150,9 @@ class ClassDB(Generic[CombinatorialClassType]):
     """
 
     def __init__(self, combinatorial_class: Type[CombinatorialClassType]):
+        super().__init__(combinatorial_class)
         self.class_to_info: Dict[ClassKey, Info] = {}
         self.label_to_info: Dict[int, Info] = {}
-        self.combinatorial_class = combinatorial_class
         self._empty_time = 0.0
         self._empty_num_application = 0
 
@@ -134,33 +229,9 @@ class ClassDB(Generic[CombinatorialClassType]):
             )
         return info
 
-    def _compress(self, key: CombinatorialClassType) -> ClassKey:
-        """
-        Return compressed version of combinatorial class.
-        """
-        # pylint: disable=no-self-use
-        try:
-            return zlib.compress(key.to_bytes(), 9)
-        except NotImplementedError:
-            # to use compression you should implement a 'to_bytes' function.
-            return key
-
-    def _decompress(self, key: ClassKey) -> CombinatorialClassType:
-        """
-        Return decompressed version of compressed combinatorial class.
-        """
-        try:
-            assert isinstance(key, bytes)
-            return cast(
-                CombinatorialClassType,
-                self.combinatorial_class.from_bytes(zlib.decompress(key)),
-            )
-        except (AssertionError, NotImplementedError):
-            # to use compression you should implement a 'from_bytes' function.
-            assert isinstance(
-                key, self.combinatorial_class
-            ), "you must implement a 'from_bytes' function to use compression"
-            return key
+    def _set_info(self, key: Key, info: Info):
+        self.label_to_info[info.label] = info
+        self.class_to_info[info.comb_class] = info
 
     def get_class(self, key: Key) -> CombinatorialClassType:
         """
@@ -169,47 +240,12 @@ class ClassDB(Generic[CombinatorialClassType]):
         info = self._get_info(key)
         return self._decompress(info.comb_class)
 
-    def get_label(self, key: Key) -> int:
-        """
-        Return label of key.
-        """
-        info = self._get_info(key)
-        return info.label
-
-    def is_empty(
-        self, comb_class: CombinatorialClassType, label: Optional[int] = None
-    ) -> bool:
-        """
-        Return True if combinatorial class is empty set, False if not.
-        """
-        if label is None:
-            info = self._get_info(comb_class)
-            label = info.label
-        else:
-            info = self._get_info(label)
-        empty = info.empty
-        if empty is None:
-            if not isinstance(comb_class, self.combinatorial_class):
-                comb_class = self.get_class(comb_class)
-            empty = self._is_empty(comb_class)
-            self.set_empty(label, empty)
-        return bool(empty)
-
     def _is_empty(self, comb_class: CombinatorialClassType) -> bool:
-        if not isinstance(comb_class, self.combinatorial_class):
-            comb_class = self.get_class(comb_class)
         self._empty_num_application += 1
         start = time.time()
-        is_empty = comb_class.is_empty()
+        is_empty = super()._is_empty(comb_class)
         self._empty_time += time.time() - start
         return is_empty
-
-    def set_empty(self, key: Key, empty: bool = True) -> None:
-        """
-        Update database about comb class being empty.
-        """
-        info = self._get_info(key)
-        info.empty = empty
 
     def status(self) -> str:
         """

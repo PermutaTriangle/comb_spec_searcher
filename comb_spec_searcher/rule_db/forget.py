@@ -16,7 +16,7 @@ from typing import (
     cast,
 )
 
-from comb_spec_searcher.class_db import ClassDB
+from comb_spec_searcher.class_db import AbstractClassDB
 from comb_spec_searcher.exception import StrategyDoesNotApply
 from comb_spec_searcher.strategies.rule import AbstractRule
 from comb_spec_searcher.strategies.strategy import AbstractStrategy, StrategyFactory
@@ -47,19 +47,19 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
         self,
         only_equiv: bool,
     ) -> None:
-        self._classdb: Optional[ClassDB] = None
+        self._classdb: Optional[AbstractClassDB] = None
         self._pack: Optional[StrategyPack] = None
         self.rules: Set[Tuple[int, ...]] = set()
         self.only_equiv: bool = only_equiv
 
-    def link_searcher(self, classdb: ClassDB, strat_pack: StrategyPack) -> None:
+    def link_searcher(self, classdb: AbstractClassDB, strat_pack: StrategyPack) -> None:
         if self._classdb is not None or self._pack is not None:
             raise RuntimeError("Searcher is alreay linked")
         self._classdb = classdb
         self._pack = strat_pack
 
     @property
-    def classdb(self) -> ClassDB:
+    def classdb(self) -> AbstractClassDB:
         if self._classdb is None:
             raise RuntimeError("Not linked with classdb")
         return self._classdb
