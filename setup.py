@@ -52,7 +52,7 @@ setup(
     install_requires=[
         "logzero==1.7.0",
         "sympy==1.10.1",
-        "psutil==5.9.0",
+        "psutil==5.9.1",
         "pympler==1.0.1",
         "requests==2.27.1",
         "typing-extensions==4.2.0",
