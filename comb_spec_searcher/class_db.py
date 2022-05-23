@@ -132,7 +132,7 @@ class AbstractClassDB(Generic[CombinatorialClassType]):
             return key
 
     def status(self) -> str:
-        return "Status {self.__class__} is not implemented."
+        return f"Status update for class {self.__class__} is not implemented."
 
 
 class ClassDB(AbstractClassDB[CombinatorialClassType]):
