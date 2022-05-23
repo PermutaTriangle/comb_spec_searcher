@@ -70,6 +70,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         strategy_pack: StrategyPack,
         *,
         ruledb: Optional[RuleDBAbstract] = None,
+        classdb: Optional[AbstractClassDB] = None,
         expand_verified: bool = False,
         debug: bool = False,
     ):
@@ -96,9 +97,12 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         self.func_times: Dict[str, float] = defaultdict(float)
         self.func_calls: Dict[str, int] = defaultdict(int)
 
-        self.classdb: AbstractClassDB[CombinatorialClassType] = ClassDB[
-            CombinatorialClassType
-        ](type(start_class))
+        if classdb is None:
+            self.classdb: AbstractClassDB[CombinatorialClassType] = ClassDB[
+                CombinatorialClassType
+            ](type(start_class))
+        else:
+            self.classdb = classdb
         self.classqueue = DefaultQueue(strategy_pack)
         self.ruledb: RuleDBAbstract = ruledb if ruledb is not None else RuleDB()
         self.ruledb.link_searcher(self)

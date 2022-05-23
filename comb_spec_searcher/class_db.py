@@ -9,10 +9,11 @@ if is_empty has been checked.
 """
 
 import abc
+import multiprocessing
 import time
 import zlib
 from datetime import timedelta
-from typing import Dict, Generic, Iterator, Optional, Type, cast
+from typing import Dict, Generic, Iterator, List, Optional, Type, cast
 
 from comb_spec_searcher.typing import ClassKey, CombinatorialClassType, Key
 
@@ -257,3 +258,84 @@ class ClassDB(AbstractClassDB[CombinatorialClassType]):
         status += f"\tis_empty check applied {self._empty_num_application} time. "
         status += f"Time spent: {timedelta(seconds=int(self._empty_time))}"
         return status
+
+
+class SlaveClassDB(AbstractClassDB[CombinatorialClassType]):
+    def __init__(
+        self,
+        combinatorial_class: Type[CombinatorialClassType],
+        conn: "multiprocessing.connection.Connection",
+    ) -> None:
+        super().__init__(combinatorial_class)
+        self.conn = conn
+
+    def _get_info(self, key: Key) -> Info:
+        """
+        Return Info for given key.
+        """
+        if isinstance(key, self.combinatorial_class):
+            message: ClassKey = self._compress(key)
+        elif isinstance(key, int):
+            message = key
+        else:
+            raise TypeError(
+                "ClassDB only accepts"
+                "CombinatorialClass and will decompress with"
+                f"{self.combinatorial_class}."
+            )
+        self.conn.send(message)
+        info = self.conn.recv()
+        assert isinstance(info, Info)
+        return info
+
+    def _set_info(self, key: Key, info: Info) -> None:
+        """
+        Return Info for given key.
+        """
+        self.conn.send(info)
+
+
+class MasterClassDB(Generic[CombinatorialClassType]):
+    def __init__(
+        self,
+        combinatorial_class: Type[CombinatorialClassType],
+    ) -> None:
+        self.combinatorial_class = combinatorial_class
+        self.class_to_info: Dict[bytes, Info] = {}
+        self.label_to_info: Dict[int, Info] = {}
+        self.connections: List["multiprocessing.connection.Connection"] = []
+
+    def spawn_slave(self) -> SlaveClassDB[CombinatorialClassType]:
+        master_conn, slave_conn = multiprocessing.Pipe()
+        self.connections.append(master_conn)
+        return SlaveClassDB(self.combinatorial_class, slave_conn)
+
+    def add(self, compressed_class: bytes) -> Info:
+        assert compressed_class not in self.class_to_info
+        label = len(self.class_to_info)
+        info = Info(compressed_class, label)
+        self.class_to_info[compressed_class] = info
+        self.label_to_info[label] = info
+        return info
+
+    def monitor_connection(self) -> None:
+        while True:
+            ready_connections = multiprocessing.connection.wait(self.connections)
+            for conn in ready_connections:
+                assert isinstance(conn, multiprocessing.connection.Connection)
+                message = conn.recv()
+                if isinstance(message, Info):
+                    self.label_to_info[message.label] = message
+                    self.class_to_info[message.comb_class] = message
+                elif isinstance(message, bytes):
+                    info = self.class_to_info.get(message)
+                    if info is None:
+                        info = self.add(message)
+                    conn.send(info)
+                elif isinstance(message, int):
+                    info = self.label_to_info[message]
+                    if info is None:
+                        raise KeyError("Missing class")
+                    conn.send(info)
+                else:
+                    raise ValueError("Unexpected message")
