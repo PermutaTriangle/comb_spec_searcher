@@ -1,6 +1,7 @@
 import gc
 import itertools
 import multiprocessing
+import os
 import time
 from datetime import timedelta
 from typing import (
@@ -716,6 +717,7 @@ class PrimaryRuleDBForest(RuleDBForest):
         return WorkerRuleDBForest(conn=worker_conn, reverse=self.reverse)
 
     def monitor_connection_until_spec(self) -> None:
+        print("ruledb", os.getpid())
         while not self.has_specification():
             ready_connections = multiprocessing.connection.wait(self.connections)
             for conn in ready_connections:

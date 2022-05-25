@@ -3,9 +3,23 @@ A queue of labels.
 """
 import abc
 import multiprocessing
-from collections import Counter, deque
+import os
+import time
+from collections import Counter, defaultdict, deque
+from email.policy import default
 from typing import Counter as CounterType
-from typing import Deque, Dict, Generic, Iterable, Iterator, List, Optional, Set, Tuple
+from typing import (
+    Deque,
+    Dict,
+    Generic,
+    Iterable,
+    Iterator,
+    List,
+    NamedTuple,
+    Optional,
+    Set,
+    Tuple,
+)
 
 import tabulate
 
@@ -13,7 +27,14 @@ from comb_spec_searcher.class_db import WorkerClassDB
 from comb_spec_searcher.exception import NoMoreClassesToExpandError
 from comb_spec_searcher.strategies.rule import AbstractRule
 from comb_spec_searcher.strategies.strategy_pack import StrategyPack
-from comb_spec_searcher.typing import CombinatorialClassType, CSSstrategy, WorkPacket
+from comb_spec_searcher.typing import CombinatorialClassType, CSSstrategy
+
+
+class WorkPacket(NamedTuple):
+    label: int
+    strategies: Tuple[CSSstrategy, ...]
+    inferral: bool
+    initial: bool
 
 
 class CSSQueue(abc.ABC):
@@ -290,16 +311,16 @@ class TrackedDefaultQueue(DefaultQueue):
         if idx == len(self.expansion_strats):
             self.set_stop_yielding(label)
             return
-        yield WorkPacket(label, self.expansion_strats[idx], False)
+        yield WorkPacket(label, self.expansion_strats[idx], False, False)
         self.curr_level[idx + 1].append(label)
 
     def _iter_helper_working(self) -> Iterator[WorkPacket]:
         label = self.working.popleft()
         if self.can_do_inferral(label):
-            yield WorkPacket(label, self.inferral_strategies, True)
+            yield WorkPacket(label, self.inferral_strategies, True, True)
             self.set_not_inferrable(label)
         if self.can_do_initial(label):
-            yield WorkPacket(label, self.initial_strategies, False)
+            yield WorkPacket(label, self.initial_strategies, False, True)
             self.set_not_initial(label)
         self.next_level.update((label,))
 
@@ -314,6 +335,7 @@ class TrackedQueue(CSSQueue):
         first_queue = TrackedDefaultQueue(pack)
         first_queue.set_tracked_queue(self)
         self.queues = [first_queue]
+        self._all_labels_per_level = defaultdict(int)
         self.add_new_queue()
 
         super().__init__(pack)
@@ -332,15 +354,25 @@ class TrackedQueue(CSSQueue):
     def level_first_found(self, label: int) -> int:
         """Return the level that the label was first found at."""
         level = self._level_first_found.get(label)
+        if label == -1:
+            return -1
         if level is None:
             level = len(self.queues) - 2
             self._level_first_found[label] = level
+            self._all_labels_per_level[level] += 1
         return level
 
-    def add_to_level_plus_one(self, label: int, parent_label: int):
+    def add_to_level_plus_one(self, label: int, parent_label: int, initial: bool):
         if label in self.ignore:
             return
-        level = min(self.level_first_found(parent_label) + 1, len(self.queues) - 2)
+        level = self.level_first_found(parent_label)
+        if not initial:
+            level += 1
+        if label not in self._level_first_found:
+            self._all_labels_per_level[level] += 1
+            self._level_first_found[label] = level
+        else:
+            self._level_first_found[label] = min(self._level_first_found[label], level)
         self.queues[level].add(label)
 
     def add(self, label: int) -> None:
@@ -364,22 +396,22 @@ class TrackedQueue(CSSQueue):
         status = f"Queue status (currently on level {self.levels_completed}):\n"
         table: List[Tuple[str, ...]] = []
         working = ("working",) + tuple(
-            f"{len(queue.working):,d}" for queue in self.queues[:-1]
+            f"{len(queue.working):,d}" for queue in self.queues
         )
         table.append(working)
         for idx in range(len(self.pack.expansion_strats)):
             current = (f"current (set {idx+1})",) + tuple(
-                f"{len(queue.curr_level[idx]):,d}" for queue in self.queues[:-1]
+                f"{len(queue.curr_level[idx]):,d}" for queue in self.queues
             )
             table.append(current)
-        nxt = ("next",) + tuple(
-            f"{len(queue.next_level):,d}" for queue in self.queues[:-1]
-        )
+        nxt = ("next",) + tuple(f"{len(queue.next_level):,d}" for queue in self.queues)
         table.append(nxt)
-        status += "    "
-        headers = ("Size",) + tuple(
-            f"Queue {idx}" for idx in range(len(self.queues) - 1)
+        all_labels = ("all labels",) + tuple(
+            self._all_labels_per_level[level] for level in range(len(self.queues))
         )
+        table.append(all_labels)
+        status += "    "
+        headers = ("Size",) + tuple(f"Queue {idx}" for idx in range(len(self.queues)))
         table = [headers] + table
         table = list(zip(*table))
         headers = table[0]
@@ -396,7 +428,7 @@ class TrackedQueue(CSSQueue):
     def __next__(self) -> WorkPacket:
         for idx, queue in enumerate(self.queues):
             if idx == len(self.queues) - 1:
-                if all(queue.is_empty() for queue in self.queues):
+                if queue.is_empty():
                     raise StopIteration
                 self.add_new_queue()
             try:
@@ -413,7 +445,7 @@ class WorkerParallelQueue(Generic[CombinatorialClassType]):
     def add_to_queue(
         self,
         new_labels: Iterable[
-            Tuple[Tuple[int, Tuple[int, ...], Tuple[bool, ...], bool]]
+            Tuple[int, Tuple[int, ...], Tuple[bool, ...], bool]
         ],  # parent, children, inferrable, ignore_parent
     ) -> None:
         self.conn.send(tuple(new_labels))
@@ -426,6 +458,7 @@ class WorkerParallelQueue(Generic[CombinatorialClassType]):
 
     def get_work_packet(self):
         self.conn.send(None)
+        return self.conn.recv()
 
 
 class ParallelQueue(Generic[CombinatorialClassType]):
@@ -440,7 +473,9 @@ class ParallelQueue(Generic[CombinatorialClassType]):
         return WorkerParallelQueue(worker_conn)
 
     def monitor_connection(self) -> None:
+        print("parallel queue", os.getpid())
         waiting: List["multiprocessing.connection.Connection"] = []
+        start = time.time()
         while True:
             while waiting:
                 conn = waiting.pop()
@@ -449,10 +484,13 @@ class ParallelQueue(Generic[CombinatorialClassType]):
                 except StopIteration:
                     waiting.append(conn)
                     break
-
+            if time.time() - start > 10:
+                print(self.queue.status())
+                start = time.time()
             ready_connections = multiprocessing.connection.wait(self.connections)
 
             for conn in ready_connections:
+
                 assert isinstance(conn, multiprocessing.connection.Connection)
                 message = conn.recv()
                 if isinstance(message, tuple):
@@ -460,10 +498,17 @@ class ParallelQueue(Generic[CombinatorialClassType]):
                         for label in message:
                             self.queue.set_stop_yielding(label)
                     else:
-                        for parent, children, inferrable, ignore_parent in message:
+                        for (
+                            parent,
+                            children,
+                            inferrable,
+                            ignore_parent,
+                            initial,
+                        ) in message:
                             self.add_to_queue(
-                                parent, children, inferrable, ignore_parent
+                                parent, children, inferrable, ignore_parent, initial
                             )
+
                 elif isinstance(message, int):
                     self.queue.set_not_inferrable(message)
                 elif message is None:
@@ -480,71 +525,11 @@ class ParallelQueue(Generic[CombinatorialClassType]):
         children: Tuple[int, ...],
         inferrable: Tuple[bool, ...],
         ignore_parent: bool,
+        initial: bool,
     ) -> None:
         if ignore_parent:
             self.queue.set_stop_yielding(parent)
         for child, infer in zip(children, inferrable):
             if not infer:
                 self.queue.set_not_inferrable(child)
-            self.queue.add_to_level_plus_one(child, parent)
-
-
-class Worker(Generic[CombinatorialClassType]):
-    def __init__(
-        self, classdb: WorkerClassDB, ruledb: "WorkerRuleDB", queue: WorkerParallelQueue
-    ) -> None:
-        self.classdb = classdb
-        self.ruledb = ruledb
-        self.queue = queue
-
-    def start(self):
-        while True:
-            work_packet = self.queue.get_work_packet()
-            label, strategies, inferral = work_packet
-            comb_class = self.classdb.get_class(label)
-            if inferral:
-                self.inferral_expand(comb_class, strategies)
-            else:
-                self.expand(comb_class, strategies)
-
-    def expand(
-        self, comb_class: CombinatorialClassType, strategies: Tuple[CSSstrategy, ...]
-    ) -> None:
-        res: List[AbstractRule] = []
-        for strategy in strategies:
-            for rule in CombinatorialSpecificationSearcher._rules_from_strategy(
-                comb_class, strategy
-            ):
-                res.append(rule)
-            if any(rule.ignore_parent for rule in res):
-                break
-        self.ruledb.send_rules(res)
-
-    def inferral_expand(
-        self,
-        comb_class: CombinatorialClassType,
-        strategies: Tuple[CSSstrategy, ...],
-        skip: Optional[CSSstrategy] = None,
-        res: Optional[List[AbstractRule]] = None,
-    ) -> None:
-        if res is None:
-            actual_res: List[AbstractRule] = []
-        for i, strategy in enumerate(strategies):
-            if strategy == skip:
-                continue
-            for rule in CombinatorialSpecificationSearcher._rules_from_strategy(
-                comb_class, strategy
-            ):
-                inf_class = rule.children[0]
-                actual_res.append(rule)
-                self.queue.set_not_inferrable(self.classdb.get_label(comb_class))
-                strategies = strategies[i + 1 :] + strategies[0 : i + 1]
-                self.inferral_expand(
-                    inf_class,
-                    strategies,
-                    skip=strategy,
-                    res=actual_res,
-                )
-        if res is None:
-            # the first call to the method so finished inferring
-            self.ruledb.send_rules(actual_res)
+            self.queue.add_to_level_plus_one(child, parent, initial)

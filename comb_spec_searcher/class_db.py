@@ -11,6 +11,7 @@ if is_empty has been checked.
 import abc
 import multiprocessing
 import multiprocessing.connection
+import os
 import time
 import zlib
 from datetime import timedelta
@@ -320,6 +321,7 @@ class PrimaryClassDB(Generic[CombinatorialClassType]):
         return info
 
     def monitor_connection(self) -> None:
+        print("classdb", os.getpid())
         while True:
             ready_connections = multiprocessing.connection.wait(self.connections)
             for conn in ready_connections:
