@@ -647,13 +647,15 @@ class RuleDBForest(RuleDBAbstract):
         return self.is_verified(self.root_label)
 
     def add(self, start: int, ends: Tuple[int, ...], rule: AbstractRule) -> None:
+        labels = dict(zip(rule.children, ends))
+        labels[rule.comb_class] = start
         self._add_empty_rule(ends, rule)
         start_time = time.time()
-        new_rule_keys = [rule.forest_key(self.classdb.get_label)]
+        new_rule_keys = [rule.forest_key(labels.__getitem__)]
         if self.reverse and rule.is_reversible():
             assert isinstance(rule, Rule)
             new_rule_keys.extend(
-                rule.to_reverse_rule(i).forest_key(self.classdb.get_label)
+                rule.to_reverse_rule(i).forest_key(labels.__getitem__)
                 for i in range(len(rule.children))
             )
         self._time_key += time.time() - start_time
