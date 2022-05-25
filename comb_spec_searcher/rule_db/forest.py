@@ -1,5 +1,6 @@
 import gc
 import itertools
+import multiprocessing
 import time
 from datetime import timedelta
 from typing import (
@@ -647,7 +648,6 @@ class RuleDBForest(RuleDBAbstract):
 
     def add(self, start: int, ends: Tuple[int, ...], rule: AbstractRule) -> None:
         self._add_empty_rule(ends, rule)
-        self._num_rules += 1
         start_time = time.time()
         new_rule_keys = [rule.forest_key(self.classdb.get_label)]
         if self.reverse and rule.is_reversible():
@@ -657,10 +657,7 @@ class RuleDBForest(RuleDBAbstract):
                 for i in range(len(rule.children))
             )
         self._time_key += time.time() - start_time
-        start_time = time.time()
-        for new_key in new_rule_keys:
-            self.table_method.add_rule_key(new_key)
-        self._time_table_method += time.time() - start_time
+        self._add_keys_to_table(new_rule_keys)
 
     @ensure_specification
     def get_specification_rules(self, **kwargs) -> Iterator[AbstractRule]:
@@ -685,3 +682,41 @@ class RuleDBForest(RuleDBAbstract):
                 rule = empty_strategy(comb_class)
                 self._already_empty.add(label)
                 self.searcher.add_rule(label, (), rule)
+
+    def _add_keys_to_table(self, keys: List[ForestRuleKey]) -> None:
+        self._num_rules += 1
+        start_time = time.time()
+        for new_key in keys:
+            self.table_method.add_rule_key(new_key)
+        self._time_table_method += time.time() - start_time
+
+
+class WorkerRuleDBForest(RuleDBForest):
+    def __init__(
+        self, conn: "multiprocessing.connection.Connection", *, reverse: bool = True
+    ) -> None:
+        super().__init__(reverse=reverse)
+        self.conn = conn
+
+    def _add_keys_to_table(self, keys: List[ForestRuleKey]) -> None:
+        self._num_rules += 1
+        self.conn.send(keys)
+
+
+class PrimaryRuleDBForest(RuleDBForest):
+    def __init__(self, *, reverse: bool = True) -> None:
+        super().__init__(reverse=reverse)
+        self.connections: List["multiprocessing.connection.Connection"] = []
+
+    def spawn_workerdb(self) -> WorkerRuleDBForest:
+        primary_conn, worker_conn = multiprocessing.Pipe(duplex=False)
+        self.connections.append(primary_conn)
+        return WorkerRuleDBForest(conn=worker_conn, reverse=self.reverse)
+
+    def monitor_connection_until_spec(self) -> None:
+        while not self.has_specification():
+            ready_connections = multiprocessing.connection.wait(self.connections)
+            for conn in ready_connections:
+                assert isinstance(conn, multiprocessing.connection.Connection)
+                message = conn.recv()
+                self._add_keys_to_table(message)
