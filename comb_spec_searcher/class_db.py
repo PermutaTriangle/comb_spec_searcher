@@ -10,6 +10,7 @@ if is_empty has been checked.
 
 import abc
 import multiprocessing
+import multiprocessing.connection
 import time
 import zlib
 from datetime import timedelta
