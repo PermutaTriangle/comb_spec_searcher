@@ -296,7 +296,7 @@ class WorkerClassDB(AbstractClassDB[CombinatorialClassType]):
         self.conn.send(info)
 
 
-class MasterClassDB(Generic[CombinatorialClassType]):
+class PrimaryClassDB(Generic[CombinatorialClassType]):
     def __init__(
         self,
         combinatorial_class: Type[CombinatorialClassType],
@@ -306,9 +306,9 @@ class MasterClassDB(Generic[CombinatorialClassType]):
         self.label_to_info: Dict[int, Info] = {}
         self.connections: List["multiprocessing.connection.Connection"] = []
 
-    def spawn_worker(self) -> WorkerClassDB[CombinatorialClassType]:
-        master_conn, worker_conn = multiprocessing.Pipe()
-        self.connections.append(master_conn)
+    def spawn_workerdb(self) -> WorkerClassDB[CombinatorialClassType]:
+        primary_conn, worker_conn = multiprocessing.Pipe()
+        self.connections.append(primary_conn)
         return WorkerClassDB(self.combinatorial_class, worker_conn)
 
     def add(self, compressed_class: bytes) -> Info:
