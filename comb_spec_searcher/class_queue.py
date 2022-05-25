@@ -9,7 +9,6 @@ from typing import Deque, Dict, Generic, Iterable, Iterator, List, Optional, Set
 
 import tabulate
 
-from comb_spec_searcher import CombinatorialSpecificationSearcher
 from comb_spec_searcher.class_db import WorkerClassDB
 from comb_spec_searcher.exception import NoMoreClassesToExpandError
 from comb_spec_searcher.strategies.rule import AbstractRule
@@ -241,7 +240,7 @@ class DefaultQueue(CSSQueue):
 
 
 class TrackedDefaultQueue(DefaultQueue):
-    def __init__(self, pack: TileScopePack):
+    def __init__(self, pack: StrategyPack):
         super().__init__(pack)
         self.next_curr_level: Optional[Tuple[Deque[int], ...]] = None
 
@@ -321,7 +320,6 @@ class TrackedQueue(CSSQueue):
 
     @property
     def levels_completed(self):
-        """Return the number of levels completed for underlying tilings"""
         return len(self.queues) - 2
 
     def add_new_queue(self) -> None:
@@ -493,7 +491,7 @@ class ParallelQueue(Generic[CombinatorialClassType]):
 
 class Worker(Generic[CombinatorialClassType]):
     def __init__(
-        self, classdb: WorkerClassDB, ruledb: WorkerRuleDB, queue: WorkerParallelQueue
+        self, classdb: WorkerClassDB, ruledb: "WorkerRuleDB", queue: WorkerParallelQueue
     ) -> None:
         self.classdb = classdb
         self.ruledb = ruledb
