@@ -728,5 +728,5 @@ class PrimaryRuleDBForest(RuleDBForest):
                 message = conn.recv()
                 self._add_keys_to_table(message)
             if time.time() - start > status_update:
-                print(self.searcher.status())
+                logger.info(self.searcher.status())
                 start = time.time()
