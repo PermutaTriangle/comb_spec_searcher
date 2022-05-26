@@ -390,6 +390,8 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         table.sort(key=lambda row: row[2], reverse=True)
         headers = ["", "Number of \napplications", "\nTime spent", "\nPercentage"]
         colalign = ("left", "right", "right", "right")
+        if not table:
+            return ""
         return (
             "    "
             + tabulate.tabulate(table, headers=headers, colalign=colalign).replace(

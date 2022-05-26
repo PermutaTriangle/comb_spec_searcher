@@ -4,7 +4,6 @@ A queue of labels.
 import abc
 import multiprocessing
 import os
-import time
 from collections import Counter, defaultdict, deque
 from email.policy import default
 from typing import Counter as CounterType
@@ -27,14 +26,7 @@ from comb_spec_searcher.class_db import WorkerClassDB
 from comb_spec_searcher.exception import NoMoreClassesToExpandError
 from comb_spec_searcher.strategies.rule import AbstractRule
 from comb_spec_searcher.strategies.strategy_pack import StrategyPack
-from comb_spec_searcher.typing import CombinatorialClassType, CSSstrategy
-
-
-class WorkPacket(NamedTuple):
-    label: int
-    strategies: Tuple[CSSstrategy, ...]
-    inferral: bool
-    initial: bool
+from comb_spec_searcher.typing import CombinatorialClassType, CSSstrategy, WorkPacket
 
 
 class CSSQueue(abc.ABC):
@@ -260,6 +252,11 @@ class DefaultQueue(CSSQueue):
         return status
 
 
+class ParallelWorkPacket(NamedTuple):
+    label: int
+    strategy_index: int
+
+
 class TrackedDefaultQueue(DefaultQueue):
     def __init__(self, pack: StrategyPack):
         super().__init__(pack)
@@ -311,16 +308,16 @@ class TrackedDefaultQueue(DefaultQueue):
         if idx == len(self.expansion_strats):
             self.set_stop_yielding(label)
             return
-        yield WorkPacket(label, self.expansion_strats[idx], False, False)
+        yield ParallelWorkPacket(label, idx + 2)
         self.curr_level[idx + 1].append(label)
 
     def _iter_helper_working(self) -> Iterator[WorkPacket]:
         label = self.working.popleft()
         if self.can_do_inferral(label):
-            yield WorkPacket(label, self.inferral_strategies, True, True)
+            yield ParallelWorkPacket(label, 0)
             self.set_not_inferrable(label)
         if self.can_do_initial(label):
-            yield WorkPacket(label, self.initial_strategies, False, True)
+            yield ParallelWorkPacket(label, 1)
             self.set_not_initial(label)
         self.next_level.update((label,))
 
@@ -445,8 +442,8 @@ class WorkerParallelQueue(Generic[CombinatorialClassType]):
     def add_to_queue(
         self,
         new_labels: Iterable[
-            Tuple[int, Tuple[int, ...], Tuple[bool, ...], bool]
-        ],  # parent, children, inferrable, ignore_parent
+            Tuple[int, Tuple[int, ...], bool, bool, bool]
+        ],  # parent, children, inferrable, ignore_parent, initial
     ) -> None:
         self.conn.send(tuple(new_labels))
 
@@ -458,6 +455,10 @@ class WorkerParallelQueue(Generic[CombinatorialClassType]):
 
     def get_work_packet(self):
         self.conn.send(None)
+        return self.conn.recv()
+
+    def status(self):
+        self.conn.send("status")
         return self.conn.recv()
 
 
@@ -475,7 +476,6 @@ class ParallelQueue(Generic[CombinatorialClassType]):
     def monitor_connection(self) -> None:
         print("parallel queue", os.getpid())
         waiting: List["multiprocessing.connection.Connection"] = []
-        start = time.time()
         while True:
             while waiting:
                 conn = waiting.pop()
@@ -484,9 +484,6 @@ class ParallelQueue(Generic[CombinatorialClassType]):
                 except StopIteration:
                     waiting.append(conn)
                     break
-            if time.time() - start > 10:
-                print(self.queue.status())
-                start = time.time()
             ready_connections = multiprocessing.connection.wait(self.connections)
 
             for conn in ready_connections:
@@ -516,6 +513,8 @@ class ParallelQueue(Generic[CombinatorialClassType]):
                         conn.send(next(self.queue))
                     except StopIteration:
                         waiting.append(conn)
+                elif message == "status":
+                    conn.send(self.queue.status())
                 else:
                     raise ValueError("Unexpected message")
 
@@ -523,13 +522,13 @@ class ParallelQueue(Generic[CombinatorialClassType]):
         self,
         parent: int,
         children: Tuple[int, ...],
-        inferrable: Tuple[bool, ...],
+        inferrable: bool,
         ignore_parent: bool,
         initial: bool,
     ) -> None:
         if ignore_parent:
             self.queue.set_stop_yielding(parent)
-        for child, infer in zip(children, inferrable):
-            if not infer:
+        for child in children:
+            if not inferrable:
                 self.queue.set_not_inferrable(child)
             self.queue.add_to_level_plus_one(child, parent, initial)

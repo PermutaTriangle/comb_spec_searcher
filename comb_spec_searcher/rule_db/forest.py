@@ -684,7 +684,7 @@ class RuleDBForest(RuleDBAbstract):
             ):
                 rule = empty_strategy(comb_class)
                 self._already_empty.add(label)
-                self.searcher.add_rule(label, (), rule)
+                self.add(label, (), rule)
 
     def _add_keys_to_table(self, keys: List[ForestRuleKey]) -> None:
         self._num_rules += 1
@@ -716,11 +716,17 @@ class PrimaryRuleDBForest(RuleDBForest):
         self.connections.append(primary_conn)
         return WorkerRuleDBForest(conn=worker_conn, reverse=self.reverse)
 
-    def monitor_connection_until_spec(self) -> None:
+    def monitor_connection_until_spec(self, status_update) -> None:
         print("ruledb", os.getpid())
+        start = time.time()
         while not self.has_specification():
+            # TODO: send verified labels to classqueue
+            # self.searcher.queue.set_verified(...)
             ready_connections = multiprocessing.connection.wait(self.connections)
             for conn in ready_connections:
                 assert isinstance(conn, multiprocessing.connection.Connection)
                 message = conn.recv()
                 self._add_keys_to_table(message)
+            if time.time() - start > status_update:
+                print(self.searcher.status())
+                start = time.time()

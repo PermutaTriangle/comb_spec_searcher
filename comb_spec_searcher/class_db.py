@@ -296,6 +296,10 @@ class WorkerClassDB(AbstractClassDB[CombinatorialClassType]):
         """
         self.conn.send(info)
 
+    def status(self) -> str:
+        self.conn.send("status")
+        return self.conn.recv()
+
 
 class PrimaryClassDB(Generic[CombinatorialClassType]):
     def __init__(
@@ -340,5 +344,16 @@ class PrimaryClassDB(Generic[CombinatorialClassType]):
                     if info is None:
                         raise KeyError("Missing class")
                     conn.send(info)
+                elif message == "status":
+                    conn.send(self.status())
                 else:
                     raise ValueError("Unexpected message")
+
+    def status(self) -> str:
+        """
+        Return a string with the current status of the run.
+        """
+        status = "ClassDB status:\n"
+        status += "\tTotal number of combinatorial classes found is"
+        status += f" {len(self.label_to_info):,d}\n"
+        return status
