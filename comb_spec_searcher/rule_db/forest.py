@@ -202,6 +202,7 @@ class TableMethod:
         self._processing_queue: Deque[int] = Deque()
         self._current_gap: Tuple[int, int] = (1, 1)
         self._rule_holding_extra_terms: Set[int] = set()
+        self._newly_enumerable: List[int] = []
 
     @property
     def function(self) -> Dict[int, Optional[int]]:
@@ -246,6 +247,14 @@ class TableMethod:
         Determine if the comb_class is pumping in the current universe.
         """
         return self._function[label] is None
+
+    def newly_enumerable(self) -> Iterator[int]:
+        """
+        Iterator over the labels that have entered to the enumerable subset since
+        the last call.
+        """
+        while self._newly_enumerable:
+            yield self._newly_enumerable.pop()
 
     def status(self) -> str:
         s = f"\tSize of the gap: {self._gap_size}\n"
@@ -373,6 +382,7 @@ class TableMethod:
         assert current_value > self._current_gap[1]
         assert not self._processing_queue
         self._function.set_infinite(comb_class)
+        self._newly_enumerable.append(comb_class)
         # This class will never be increased again so we remove any occurrence
         # of the rule of any rule for that class from _rules_using_class and
         # _rules_pumping_class
@@ -720,8 +730,9 @@ class PrimaryRuleDBForest(RuleDBForest):
         print("ruledb", os.getpid())
         start = time.time()
         while not self.has_specification():
-            # TODO: send verified labels to classqueue
-            # self.searcher.queue.set_verified(...)
+            new_verified = tuple(self.table_method.newly_enumerable())
+            if new_verified:
+                self.searcher.classqueue.set_verified(new_verified)
             ready_connections = multiprocessing.connection.wait(self.connections)
             for conn in ready_connections:
                 assert isinstance(conn, multiprocessing.connection.Connection)
