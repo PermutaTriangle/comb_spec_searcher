@@ -54,6 +54,7 @@ class cssiteratortimer:
             css.func_calls[key] += 1
             start = time.time()
             for res in func(css, *args, **kwargs):
+                css.func_yield[key] += 1
                 css.func_times[key] += time.time() - start
                 yield res
                 start = time.time()
