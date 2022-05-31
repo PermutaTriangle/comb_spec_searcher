@@ -95,6 +95,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
 
         self.func_times: Dict[str, float] = defaultdict(float)
         self.func_calls: Dict[str, int] = defaultdict(int)
+        self.func_yield: Dict[str, int] = defaultdict(int)
 
         self.classdb = ClassDB[CombinatorialClassType](type(start_class))
         self.classqueue = DefaultQueue(strategy_pack)
@@ -372,7 +373,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         return status
 
     def _css_status(self, total: float) -> str:
-        table: List[Tuple[str, str, timedelta, str]] = []
+        table: List[Tuple[str, str, timedelta, str, str]] = []
         for explanation in self.func_calls:
             count = f"{self.func_calls[explanation]:,d}"
             time_spent = timedelta(seconds=int(self.func_times[explanation]))
@@ -380,10 +381,20 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 percentage = "? %"
             else:
                 percentage = f"{int((self.func_times[explanation] * 100) / total)}%"
-            table.append((explanation, count, time_spent, percentage))
+            if explanation in self.func_yield:
+                yielded = f"{self.func_yield[explanation]:,d}"
+            else:
+                yielded = "-"
+            table.append((explanation, count, time_spent, percentage, yielded))
         table.sort(key=lambda row: row[2], reverse=True)
-        headers = ["", "Number of \napplications", "\nTime spent", "\nPercentage"]
-        colalign = ("left", "right", "right", "right")
+        headers = [
+            "",
+            "Number of\napplications",
+            "\nTime spent",
+            "\nPercentage",
+            "Number of\nrules",
+        ]
+        colalign = ("left", "right", "right", "right", "right")
         return (
             "    "
             + tabulate.tabulate(table, headers=headers, colalign=colalign).replace(
