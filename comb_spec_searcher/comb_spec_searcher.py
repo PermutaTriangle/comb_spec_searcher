@@ -97,6 +97,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
 
         self.func_times: Dict[str, float] = defaultdict(float)
         self.func_calls: Dict[str, int] = defaultdict(int)
+        self.func_yield: Dict[str, int] = defaultdict(int)
 
         self.classdb = ClassDB[CombinatorialClassType](type(start_class))
         self.classqueue = DefaultQueue(strategy_pack)
@@ -274,16 +275,14 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         - add class to classqueue
         """
         for comb_class, child_label in zip(rule.children, end_labels):
+            if not rule.possibly_empty:
+                self.classdb.set_empty(child_label, empty=False)
             if self.symmetries and child_label not in self.symmetry_expanded:
-                self._symmetry_expand(
-                    comb_class, child_label
-                )  # TODO: mark symmetries as empty where appropriate
+                self._symmetry_expand(comb_class, child_label)
             if rule.workable:
                 self.classqueue.add(child_label)
             if not rule.inferrable:
                 self.classqueue.set_not_inferrable(child_label)
-            if not rule.possibly_empty:
-                self.classdb.set_empty(child_label, empty=False)
             self.try_verify(comb_class, child_label)
         if rule.ignore_parent:
             self.classqueue.set_stop_yielding(start_label)
@@ -292,11 +291,13 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
     def _symmetry_expand(self, comb_class: CombinatorialClassType, label: int) -> None:
         """Add symmetries of combinatorial class to the database."""
         sym_labels = set([label])
+        empty = self.classdb.is_empty(comb_class, label)
         for strategy_generator in self.symmetries:
             for start_label, end_labels, rule in self._expand_class_with_strategy(
                 comb_class, strategy_generator, label=label
             ):
                 sym_label = end_labels[0]
+                self.classdb.set_empty(sym_label, empty)
                 self.ruledb.add(start_label, (sym_label,), rule)
                 self.classqueue.set_stop_yielding(sym_label)
                 sym_labels.add(sym_label)
@@ -374,7 +375,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         return status
 
     def _css_status(self, total: float) -> str:
-        table: List[Tuple[str, str, timedelta, str]] = []
+        table: List[Tuple[str, str, timedelta, str, str]] = []
         for explanation in self.func_calls:
             count = f"{self.func_calls[explanation]:,d}"
             time_spent = timedelta(seconds=int(self.func_times[explanation]))
@@ -382,10 +383,20 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 percentage = "? %"
             else:
                 percentage = f"{int((self.func_times[explanation] * 100) / total)}%"
-            table.append((explanation, count, time_spent, percentage))
+            if explanation in self.func_yield:
+                yielded = f"{self.func_yield[explanation]:,d}"
+            else:
+                yielded = "-"
+            table.append((explanation, count, time_spent, percentage, yielded))
         table.sort(key=lambda row: row[2], reverse=True)
-        headers = ["", "Number of \napplications", "\nTime spent", "\nPercentage"]
-        colalign = ("left", "right", "right", "right")
+        headers = [
+            "",
+            "Number of\napplications",
+            "\nTime spent",
+            "\nPercentage",
+            "Number of\nrules",
+        ]
+        colalign = ("left", "right", "right", "right", "right")
         return (
             "    "
             + tabulate.tabulate(table, headers=headers, colalign=colalign).replace(

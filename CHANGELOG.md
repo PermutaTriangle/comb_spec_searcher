@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - Make specification iterable
 - Add a `get_comb_class` method to combinatorial specification
+- `StrategyPack.add_expansion` and `StrategyPack.remove_strategy` methods
 
 ### Changed
 - The `get_terms` now have unique keys for the parameters to save memory.
