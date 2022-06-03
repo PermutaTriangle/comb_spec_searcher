@@ -32,7 +32,7 @@ class Info(NamedTuple):
     empty: Optional[bool] = None
 
 
-class LabelToInfo(MutableMapping[int, Info]):
+class LabelToInfo(MutableMapping[int, Optional[Info]]):
     def __init__(
         self,
         comb_class_list: List[ClassKey],
@@ -43,7 +43,7 @@ class LabelToInfo(MutableMapping[int, Info]):
         self.label_dict = label_dict
         self.empty_list = empty_list
 
-    def __getitem__(self, label: int) -> Info:
+    def __getitem__(self, label: int) -> Optional[Info]:
         try:
             return Info(self.comb_class_list[label], label, self.empty_list[label])
         except KeyError:
@@ -72,7 +72,7 @@ class LabelToInfo(MutableMapping[int, Info]):
         )
 
 
-class ClassToInfo(MutableMapping[ClassKey, Info]):
+class ClassToInfo(MutableMapping[ClassKey, Optional[Info]]):
     def __init__(
         self,
         comb_class_list: List[ClassKey],
@@ -133,7 +133,7 @@ class ClassDB(Generic[CombinatorialClassType]):
     def __init__(self, combinatorial_class: Type[CombinatorialClassType]):
         self.comb_class_list: List[ClassKey] = []
         self.label_dict: Dict[ClassKey, int] = dict()
-        self.empty_list: List[bool] = []
+        self.empty_list: List[Optional[bool]] = []
         self.class_to_info: ClassToInfo = ClassToInfo(
             self.comb_class_list, self.label_dict, self.empty_list
         )
@@ -218,7 +218,7 @@ class ClassDB(Generic[CombinatorialClassType]):
                 "CombinatorialClass and will decompress with"
                 f"{self.combinatorial_class}."
             )
-        return info
+        return cast(Info, info)
 
     def _compress(self, key: CombinatorialClassType) -> ClassKey:
         """
