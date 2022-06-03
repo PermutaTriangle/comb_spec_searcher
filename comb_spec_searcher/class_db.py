@@ -49,7 +49,7 @@ class LabelToInfo(MutableMapping[int, Optional[Info]]):
         except KeyError:
             return None
 
-    def __setitem__(self, key: int, value: Info) -> None:
+    def __setitem__(self, key: int, value: Optional[Info]) -> None:
         raise NotImplementedError
 
     def __delitem__(self, key: int) -> None:
@@ -90,7 +90,7 @@ class ClassToInfo(MutableMapping[ClassKey, Optional[Info]]):
         except KeyError:
             return None
 
-    def __setitem__(self, key: ClassKey, value: Info) -> None:
+    def __setitem__(self, key: ClassKey, value: Optional[Info]) -> None:
         raise NotImplementedError
 
     def __delitem__(self, key: ClassKey) -> None:
