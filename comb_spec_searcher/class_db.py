@@ -132,7 +132,7 @@ class ClassDB(Generic[CombinatorialClassType]):
 
     def __init__(self, combinatorial_class: Type[CombinatorialClassType]):
         self.comb_class_list: List[ClassKey] = []
-        self.label_dict: Dict[ClassKey, int] = dict()
+        self.label_dict: Dict[ClassKey, int] = {}
         self.empty_list: List[Optional[bool]] = []
         self.class_to_info: ClassToInfo = ClassToInfo(
             self.comb_class_list, self.label_dict, self.empty_list
