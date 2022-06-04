@@ -37,7 +37,7 @@ class LabelToInfo(MutableMapping[int, Optional[Info]]):
         self,
         comb_class_list: List[ClassKey],
         label_dict: Dict[ClassKey, int],
-        empty_list: List[bool],
+        empty_list: List[Optional[bool]],
     ):
         self.comb_class_list = comb_class_list
         self.label_dict = label_dict
@@ -77,7 +77,7 @@ class ClassToInfo(MutableMapping[ClassKey, Optional[Info]]):
         self,
         comb_class_list: List[ClassKey],
         label_dict: Dict[ClassKey, int],
-        empty_list: List[bool],
+        empty_list: List[Optional[bool]],
     ):
         self.comb_class_list = comb_class_list
         self.label_dict = label_dict
