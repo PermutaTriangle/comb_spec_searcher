@@ -657,7 +657,7 @@ class RuleDBForest(RuleDBAbstract):
     def has_specification(self) -> bool:
         return self.is_verified(self.root_label)
 
-    def add(self, start: int, ends: Tuple[int, ...], rule: AbstractRule) -> None:
+    def add(self, start: int, ends: Tuple[int, ...], rule: AbstractRule) -> float:
         labels = dict(zip(rule.children, ends))
         labels[rule.comb_class] = start
         self._add_empty_rule(ends, rule)
@@ -670,7 +670,7 @@ class RuleDBForest(RuleDBAbstract):
                 for i in range(len(rule.children))
             )
         self._time_key += time.time() - start_time
-        self._add_keys_to_table(new_rule_keys)
+        return self._add_keys_to_table(new_rule_keys)
 
     @ensure_specification
     def get_specification_rules(self, **kwargs) -> Iterator[AbstractRule]:
@@ -711,9 +711,11 @@ class WorkerRuleDBForest(RuleDBForest):
         super().__init__(reverse=reverse)
         self.conn = conn
 
-    def _add_keys_to_table(self, keys: List[ForestRuleKey]) -> None:
+    def _add_keys_to_table(self, keys: List[ForestRuleKey]) -> float:
         self._num_rules += 1
+        add_time = time.time()
         self.conn.send(keys)
+        return time.time() - add_time
 
 
 class PrimaryRuleDBForest(RuleDBForest):
