@@ -331,13 +331,14 @@ class PrimaryClassDB(Generic[CombinatorialClassType]):
     def monitor_connection(self) -> None:
         print("classdb", os.getpid())
         times = defaultdict(float)
+        num_waiting = defaultdict(int)
         while True:
             waiting_time = time.time()
             ready_connections = multiprocessing.connection.wait(self.connections)
             times["waiting_time"] += time.time() - waiting_time
 
+            num_waiting[len(ready_connections)] += 1
             for conn in ready_connections:
-                print(len(ready_connections))
                 assert isinstance(conn, multiprocessing.connection.Connection)
 
                 rcv_time = time.time()
@@ -371,6 +372,7 @@ class PrimaryClassDB(Generic[CombinatorialClassType]):
                     print("\n\n" + "=" * 50)
                     for k, v in times.items():
                         print(f"{k} {round(v,4)}")
+                    print(num_waiting)
                     conn.send(self.status())
                 else:
                     raise ValueError("Unexpected message")
