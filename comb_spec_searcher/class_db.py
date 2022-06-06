@@ -14,6 +14,7 @@ import multiprocessing.connection
 import os
 import time
 import zlib
+from collections import defaultdict
 from datetime import timedelta
 from typing import Dict, Generic, Iterator, List, Optional, Type, cast
 
@@ -270,6 +271,7 @@ class WorkerClassDB(AbstractClassDB[CombinatorialClassType]):
     ) -> None:
         super().__init__(combinatorial_class)
         self.conn = conn
+        self.waiting_time = 0.0
 
     def _get_info(self, key: Key) -> Info:
         """
@@ -285,8 +287,10 @@ class WorkerClassDB(AbstractClassDB[CombinatorialClassType]):
                 "CombinatorialClass and will decompress with"
                 f"{self.combinatorial_class}."
             )
+        wait_time = time.time()
         self.conn.send(message)
         info = self.conn.recv()
+        self.waiting_time += time.time() - wait_time
         assert isinstance(info, Info)
         return info
 
@@ -326,11 +330,19 @@ class PrimaryClassDB(Generic[CombinatorialClassType]):
 
     def monitor_connection(self) -> None:
         print("classdb", os.getpid())
+        times = defaultdict(float)
         while True:
+            waiting_time = time.time()
             ready_connections = multiprocessing.connection.wait(self.connections)
+            times["waiting_time"] += time.time() - waiting_time
+
             for conn in ready_connections:
                 assert isinstance(conn, multiprocessing.connection.Connection)
+
+                rcv_time = time.time()
                 message = conn.recv()
+                times["receiving"] += time.time() - rcv_time
+
                 if isinstance(message, Info):
                     self.label_to_info[message.label] = message
                     self.class_to_info[message.comb_class] = message
@@ -338,13 +350,22 @@ class PrimaryClassDB(Generic[CombinatorialClassType]):
                     info = self.class_to_info.get(message)
                     if info is None:
                         info = self.add(message)
+                    send_info_bytes = time.time()
                     conn.send(info)
+                    times["send_info_bytes"] += time.time() - send_info_bytes
+
                 elif isinstance(message, int):
                     info = self.label_to_info[message]
                     if info is None:
                         raise KeyError("Missing class")
+
+                    send_info_int = time.time()
                     conn.send(info)
+                    times["send_info_int"] += time.time() - send_info_int
                 elif message == "status":
+                    print("\n\n" + "=" * 50)
+                    for k, v in times.items():
+                        print(f"{k} {round(v,4)}")
                     conn.send(self.status())
                 else:
                     raise ValueError("Unexpected message")
