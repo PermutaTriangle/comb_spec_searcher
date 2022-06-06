@@ -337,16 +337,19 @@ class PrimaryClassDB(Generic[CombinatorialClassType]):
             times["waiting_time"] += time.time() - waiting_time
 
             for conn in ready_connections:
+                print(len(ready_connections))
                 assert isinstance(conn, multiprocessing.connection.Connection)
 
                 rcv_time = time.time()
                 message = conn.recv()
-                times["receiving"] += time.time() - rcv_time
+                rcv_time = time.time() - rcv_time
 
                 if isinstance(message, Info):
+                    times["rcv_Info"] += rcv_time
                     self.label_to_info[message.label] = message
                     self.class_to_info[message.comb_class] = message
                 elif isinstance(message, bytes):
+                    times["rcv_bytes"] += rcv_time
                     info = self.class_to_info.get(message)
                     if info is None:
                         info = self.add(message)
@@ -355,6 +358,7 @@ class PrimaryClassDB(Generic[CombinatorialClassType]):
                     times["send_info_bytes"] += time.time() - send_info_bytes
 
                 elif isinstance(message, int):
+                    times["rcv_int"] += rcv_time
                     info = self.label_to_info[message]
                     if info is None:
                         raise KeyError("Missing class")
@@ -363,6 +367,7 @@ class PrimaryClassDB(Generic[CombinatorialClassType]):
                     conn.send(info)
                     times["send_info_int"] += time.time() - send_info_int
                 elif message == "status":
+                    times["rcv_status"] += rcv_time
                     print("\n\n" + "=" * 50)
                     for k, v in times.items():
                         print(f"{k} {round(v,4)}")
