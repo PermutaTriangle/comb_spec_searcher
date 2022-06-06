@@ -416,6 +416,51 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 table.append(("ClassDB", size_to_readable(asizeof(self.classdb))))
                 table.append(("ClassQueue", size_to_readable(asizeof(self.classqueue))))
                 table.append(("RuleDB", size_to_readable(asizeof(self.ruledb))))
+                try:
+                    table.append(
+                        (
+                            "    RuleDB.table_method",
+                            size_to_readable(asizeof(self.ruledb.table_method)),
+                        )
+                    )
+                    table.append(
+                        (
+                            "        RuleDB.table_method._rules",
+                            size_to_readable(asizeof(self.ruledb.table_method._rules)),
+                        )
+                    )
+                    table.append(
+                        (
+                            "        RuleDB.table_method._shifts",
+                            size_to_readable(asizeof(self.ruledb.table_method._shifts)),
+                        )
+                    )
+                    table.append(
+                        (
+                            "        RuleDB.table_method._function",
+                            size_to_readable(
+                                asizeof(self.ruledb.table_method._function)
+                            ),
+                        )
+                    )
+                    table.append(
+                        (
+                            "        RuleDB.table_method._rules_using_class",
+                            size_to_readable(
+                                asizeof(self.ruledb.table_method._rules_using_class)
+                            ),
+                        )
+                    )
+                    table.append(
+                        (
+                            "        RuleDB.table_method._rules_pumping_class",
+                            size_to_readable(
+                                asizeof(self.ruledb.table_method._rules_pumping_class)
+                            ),
+                        )
+                    )
+                except Exception:
+                    pass
 
         elif platform.python_implementation() == "PyPy":
             gc_stats = cast(Any, gc.get_stats())
