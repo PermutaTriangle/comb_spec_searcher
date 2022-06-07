@@ -365,7 +365,8 @@ class TrackedQueue(CSSQueue):
         if label in self.ignore:
             return
         level = min(
-            self.level_first_found(parent_label), self.level_first_found(parent_label)
+            self.level_first_found(parent_label),
+            self.level_first_found(underlying_label),
         )
         if not initial:
             level += 1
