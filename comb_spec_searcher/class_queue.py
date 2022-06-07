@@ -447,7 +447,7 @@ class WorkerParallelQueue(Generic[CombinatorialClassType]):
     def add_to_queue(
         self,
         new_labels: Iterable[
-            Tuple[int, int, Tuple[int, ...], bool, bool, bool]
+            Tuple[int, Tuple[int, ...], Tuple[int, ...], bool, bool, bool]
         ],  # parent, underlying, children, inferrable, ignore_parent, initial
     ) -> None:
         self.conn.send(tuple(new_labels))
@@ -532,7 +532,7 @@ class ParallelQueue(Generic[CombinatorialClassType]):
     def add_to_queue(
         self,
         parent: int,
-        underlying: int,
+        underlying: Tuple[int, ...],
         children: Tuple[int, ...],
         inferrable: bool,
         ignore_parent: bool,
@@ -540,7 +540,7 @@ class ParallelQueue(Generic[CombinatorialClassType]):
     ) -> None:
         if ignore_parent:
             self.queue.set_stop_yielding(parent)
-        for child in children:
+        for under, child in zip(underlying, children):
             if not inferrable:
                 self.queue.set_not_inferrable(child)
             self.queue.add_to_level_plus_one(child, parent, underlying, initial)
