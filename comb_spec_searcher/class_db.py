@@ -16,7 +16,19 @@ import time
 import zlib
 from collections import defaultdict
 from datetime import timedelta
-from typing import Dict, Generic, Iterator, List, Optional, Type, cast
+from typing import (
+    Any,
+    Dict,
+    Generic,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+    cast,
+)
 
 from comb_spec_searcher.typing import ClassKey, CombinatorialClassType, Key
 
@@ -294,6 +306,36 @@ class WorkerClassDB(AbstractClassDB[CombinatorialClassType]):
         assert isinstance(info, Info)
         return info
 
+    def _get_infos(self, keys: Iterable[Key]) -> Tuple[Info]:
+        """
+        Return Info for given key.
+        """
+        messages = []
+        for key in keys:
+            if isinstance(key, self.combinatorial_class):
+                message: ClassKey = self._compress(key)
+            elif isinstance(key, int):
+                message = key
+            else:
+                raise TypeError(
+                    "ClassDB only accepts"
+                    "CombinatorialClass and will decompress with"
+                    f"{self.combinatorial_class}."
+                )
+            messages.append(message)
+        wait_time = time.time()
+        self.conn.send(tuple(messages))
+        infos = self.conn.recv()
+        self.waiting_time += time.time() - wait_time
+        return infos
+
+    def get_labels(self, keys: Iterable[Key]) -> Tuple[int, ...]:
+        """
+        Return label of key.
+        """
+        infos = self._get_infos(keys)
+        return tuple(info.label for info in infos)
+
     def _set_info(self, key: Key, info: Info) -> None:
         """
         Return Info for given key.
@@ -344,38 +386,50 @@ class PrimaryClassDB(Generic[CombinatorialClassType]):
                 rcv_time = time.time()
                 message = conn.recv()
                 rcv_time = time.time() - rcv_time
-
-                if isinstance(message, Info):
-                    times["rcv_Info"] += rcv_time
-                    self.label_to_info[message.label] = message
-                    self.class_to_info[message.comb_class] = message
-                elif isinstance(message, bytes):
-                    times["rcv_bytes"] += rcv_time
-                    info = self.class_to_info.get(message)
-                    if info is None:
-                        info = self.add(message)
-                    send_info_bytes = time.time()
-                    conn.send(info)
-                    times["send_info_bytes"] += time.time() - send_info_bytes
-
-                elif isinstance(message, int):
-                    times["rcv_int"] += rcv_time
-                    info = self.label_to_info[message]
-                    if info is None:
-                        raise KeyError("Missing class")
-
-                    send_info_int = time.time()
-                    conn.send(info)
-                    times["send_info_int"] += time.time() - send_info_int
-                elif message == "status":
-                    times["rcv_status"] += rcv_time
-                    print("\n\n" + "=" * 50)
-                    for k, v in times.items():
-                        print(f"{k} {round(v,4)}")
-                    print(num_waiting)
-                    conn.send(self.status())
+                if isinstance(message, tuple):
+                    conn.send(
+                        tuple(
+                            self.handle_message(
+                                msg, times, rcv_time / len(message), num_waiting
+                            )
+                            for msg in message
+                        )
+                    )
                 else:
-                    raise ValueError("Unexpected message")
+                    res = self.handle_message(message, times, rcv_time, num_waiting)
+                    if res is not None:
+                        conn.send(res)
+
+    def handle_message(
+        self, message: Union[Info, bytes, int, str], times, rcv_time, num_waiting
+    ) -> Optional[Any]:
+        if isinstance(message, Info):
+            times["rcv_Info"] += rcv_time
+            self.label_to_info[message.label] = message
+            self.class_to_info[message.comb_class] = message
+        elif isinstance(message, bytes):
+            times["rcv_bytes"] += rcv_time
+            info = self.class_to_info.get(message)
+            if info is None:
+                info = self.add(message)
+            return info
+
+        elif isinstance(message, int):
+            times["rcv_int"] += rcv_time
+            info = self.label_to_info[message]
+            if info is None:
+                raise KeyError("Missing class")
+            return info
+        elif message == "status":
+            times["rcv_status"] += rcv_time
+            print("\n\n" + "=" * 50)
+            for k, v in times.items():
+                print(f"{k} {round(v,4)}")
+            print(num_waiting)
+            return self.status()
+        else:
+            print(message)
+            raise ValueError("Unexpected message")
 
     def status(self) -> str:
         """
