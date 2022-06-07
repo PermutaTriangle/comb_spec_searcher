@@ -1,4 +1,5 @@
 import gc
+import psutil
 import itertools
 import multiprocessing
 import os
@@ -731,7 +732,7 @@ class PrimaryRuleDBForest(RuleDBForest):
     def monitor_connection_until_spec(self, status_update) -> None:
         print("ruledb", os.getpid())
         start = time.time()
-        while not self.has_specification():
+        while not self.has_specification() and psutil.virtual_memory().percent < 95:
             new_verified = tuple(self.table_method.newly_enumerable())
             if new_verified:
                 self.searcher.classqueue.set_verified(new_verified)
