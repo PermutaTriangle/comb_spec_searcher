@@ -192,11 +192,6 @@ class ClassDB(Generic[CombinatorialClassType]):
             self.comb_class_list.append(compressed_class)
             self.label_dict[compressed_class] = label
             self.empty_list.append(None)
-            # info = Info(compressed_class, label)
-            # self.class_to_info[compressed_class] = info
-            # self.label_to_info[label] = info
-        # else:
-        #     label = self.class_to_info[compressed_class].label
 
     def _get_info(self, key: Key) -> Info:
         """
@@ -269,13 +264,8 @@ class ClassDB(Generic[CombinatorialClassType]):
         Return True if combinatorial class is empty set, False if not.
         """
         if label is None:
-            # info = self._get_info(comb_class)
-            # label = info.label
             label = self.label_dict[self._compress(comb_class)]
-        # else:
-        # info = self._get_info(label)
 
-        # empty = info.empty
         empty = self.empty_list[label]
         if empty is None:
             if not isinstance(comb_class, self.combinatorial_class):
@@ -297,8 +287,6 @@ class ClassDB(Generic[CombinatorialClassType]):
         """
         Update database about comb class being empty.
         """
-        # info = self._get_info(key)
-        # info.empty = empty
         if isinstance(key, self.combinatorial_class):
             label = self.label_dict[key]
         else:
