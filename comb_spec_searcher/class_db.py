@@ -287,11 +287,7 @@ class ClassDB(Generic[CombinatorialClassType]):
         """
         Update database about comb class being empty.
         """
-        if isinstance(key, self.combinatorial_class):
-            label = self.label_dict[key]
-        else:
-            label = key
-        self.empty_list[label] = empty
+        self.empty_list[self.get_label(key)] = empty
 
     def status(self) -> str:
         """
