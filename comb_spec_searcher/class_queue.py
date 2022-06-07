@@ -359,10 +359,14 @@ class TrackedQueue(CSSQueue):
             self._all_labels_per_level[level] += 1
         return level
 
-    def add_to_level_plus_one(self, label: int, parent_label: int, initial: bool):
+    def add_to_level_plus_one(
+        self, label: int, parent_label: int, underlying_label: int, initial: bool
+    ):
         if label in self.ignore:
             return
-        level = self.level_first_found(parent_label)
+        level = min(
+            self.level_first_found(parent_label), self.level_first_found(parent_label)
+        )
         if not initial:
             level += 1
         if label not in self._level_first_found:
@@ -442,8 +446,8 @@ class WorkerParallelQueue(Generic[CombinatorialClassType]):
     def add_to_queue(
         self,
         new_labels: Iterable[
-            Tuple[int, Tuple[int, ...], bool, bool, bool]
-        ],  # parent, children, inferrable, ignore_parent, initial
+            Tuple[int, int, Tuple[int, ...], bool, bool, bool]
+        ],  # parent, underlying, children, inferrable, ignore_parent, initial
     ) -> None:
         self.conn.send(tuple(new_labels))
 
@@ -497,13 +501,19 @@ class ParallelQueue(Generic[CombinatorialClassType]):
                     else:
                         for (
                             parent,
+                            underlying,
                             children,
                             inferrable,
                             ignore_parent,
                             initial,
                         ) in message:
                             self.add_to_queue(
-                                parent, children, inferrable, ignore_parent, initial
+                                parent,
+                                underlying,
+                                children,
+                                inferrable,
+                                ignore_parent,
+                                initial,
                             )
 
                 elif isinstance(message, int):
@@ -521,6 +531,7 @@ class ParallelQueue(Generic[CombinatorialClassType]):
     def add_to_queue(
         self,
         parent: int,
+        underlying: int,
         children: Tuple[int, ...],
         inferrable: bool,
         ignore_parent: bool,
@@ -531,4 +542,4 @@ class ParallelQueue(Generic[CombinatorialClassType]):
         for child in children:
             if not inferrable:
                 self.queue.set_not_inferrable(child)
-            self.queue.add_to_level_plus_one(child, parent, initial)
+            self.queue.add_to_level_plus_one(child, parent, underlying, initial)
