@@ -11,31 +11,107 @@ if is_empty has been checked.
 import time
 import zlib
 from datetime import timedelta
-from typing import Dict, Generic, Iterator, Optional, Type, cast
+from typing import (
+    Dict,
+    Generic,
+    Iterator,
+    List,
+    MutableMapping,
+    NamedTuple,
+    Optional,
+    Type,
+    cast,
+)
 
 from comb_spec_searcher.typing import ClassKey, CombinatorialClassType, Key
 
 
-class Info:
-    """
-    Information about a combinatorial class.
-        - the class,
-        - the label,
-        - is it empty?
-    """
+class Info(NamedTuple):
+    comb_class: ClassKey
+    label: int
+    empty: Optional[bool] = None
 
-    def __init__(self, comb_class: ClassKey, label: int, empty: Optional[bool] = None):
-        self.comb_class = comb_class
-        self.label = label
-        self.empty = empty
+
+class LabelToInfo(MutableMapping[int, Optional[Info]]):
+    def __init__(
+        self,
+        comb_class_list: List[ClassKey],
+        label_dict: Dict[ClassKey, int],
+        empty_list: List[Optional[bool]],
+    ):
+        self.comb_class_list = comb_class_list
+        self.label_dict = label_dict
+        self.empty_list = empty_list
+
+    def __getitem__(self, label: int) -> Optional[Info]:
+        try:
+            return Info(self.comb_class_list[label], label, self.empty_list[label])
+        except KeyError:
+            return None
+
+    def __setitem__(self, key: int, value: Optional[Info]) -> None:
+        raise NotImplementedError
+
+    def __delitem__(self, key: int) -> None:
+        raise NotImplementedError
+
+    def __iter__(self) -> Iterator:
+        for label in self.label_dict.values():
+            yield label
+
+    def __len__(self) -> int:
+        return len(self.empty_list)
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Info):
+        if not isinstance(other, LabelToInfo):
             return NotImplemented
         return (
-            self.comb_class == self.comb_class
-            and self.label == self.label
-            and self.empty == self.empty
+            self.comb_class_list == other.comb_class_list
+            and self.label_dict == other.label_dict
+            and self.empty_list == other.empty_list
+        )
+
+
+class ClassToInfo(MutableMapping[ClassKey, Optional[Info]]):
+    def __init__(
+        self,
+        comb_class_list: List[ClassKey],
+        label_dict: Dict[ClassKey, int],
+        empty_list: List[Optional[bool]],
+    ):
+        self.comb_class_list = comb_class_list
+        self.label_dict = label_dict
+        self.empty_list = empty_list
+
+    def __getitem__(self, class_key: ClassKey) -> Optional[Info]:
+        try:
+            label = self.label_dict[class_key]
+            return Info(self.comb_class_list[label], label, self.empty_list[label])
+        except KeyError:
+            return None
+
+    def __setitem__(self, key: ClassKey, value: Optional[Info]) -> None:
+        raise NotImplementedError
+
+    def __delitem__(self, key: ClassKey) -> None:
+        raise NotImplementedError
+
+    def __iter__(self) -> Iterator:
+        raise NotImplementedError
+
+    def __len__(self) -> int:
+        return len(self.empty_list)
+
+    def __contains__(self, class_key: ClassKey) -> bool:
+        return class_key in self.label_dict
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ClassToInfo):
+            return NotImplemented
+        return (
+            self.comb_class_list == other.comb_class_list
+            and self.label_dict == other.label_dict
+            and self.empty_list == other.empty_list
         )
 
 
@@ -55,8 +131,15 @@ class ClassDB(Generic[CombinatorialClassType]):
     """
 
     def __init__(self, combinatorial_class: Type[CombinatorialClassType]):
-        self.class_to_info: Dict[ClassKey, Info] = {}
-        self.label_to_info: Dict[int, Info] = {}
+        self.comb_class_list: List[ClassKey] = []
+        self.label_dict: Dict[ClassKey, int] = {}
+        self.empty_list: List[Optional[bool]] = []
+        self.class_to_info: ClassToInfo = ClassToInfo(
+            self.comb_class_list, self.label_dict, self.empty_list
+        )
+        self.label_to_info: LabelToInfo = LabelToInfo(
+            self.comb_class_list, self.label_dict, self.empty_list
+        )
         self.combinatorial_class = combinatorial_class
         self._empty_time = 0.0
         self._empty_num_application = 0
@@ -106,11 +189,9 @@ class ClassDB(Generic[CombinatorialClassType]):
             compressed_class = comb_class
         if compressed_class not in self.class_to_info:
             label = len(self.class_to_info)
-            info = Info(compressed_class, label)
-            self.class_to_info[compressed_class] = info
-            self.label_to_info[label] = info
-        else:
-            label = self.class_to_info[compressed_class].label
+            self.comb_class_list.append(compressed_class)
+            self.label_dict[compressed_class] = label
+            self.empty_list.append(None)
 
     def _get_info(self, key: Key) -> Info:
         """
@@ -132,7 +213,7 @@ class ClassDB(Generic[CombinatorialClassType]):
                 "CombinatorialClass and will decompress with"
                 f"{self.combinatorial_class}."
             )
-        return info
+        return cast(Info, info)
 
     def _compress(self, key: CombinatorialClassType) -> ClassKey:
         """
@@ -183,11 +264,9 @@ class ClassDB(Generic[CombinatorialClassType]):
         Return True if combinatorial class is empty set, False if not.
         """
         if label is None:
-            info = self._get_info(comb_class)
-            label = info.label
-        else:
-            info = self._get_info(label)
-        empty = info.empty
+            label = self.label_dict[self._compress(comb_class)]
+
+        empty = self.empty_list[label]
         if empty is None:
             if not isinstance(comb_class, self.combinatorial_class):
                 comb_class = self.get_class(comb_class)
@@ -208,8 +287,7 @@ class ClassDB(Generic[CombinatorialClassType]):
         """
         Update database about comb class being empty.
         """
-        info = self._get_info(key)
-        info.empty = empty
+        self.empty_list[self.get_label(key)] = empty
 
     def status(self) -> str:
         """
