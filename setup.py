@@ -56,6 +56,6 @@ setup(
         "pympler==1.0.1",
         "requests==2.28.0",
         "typing-extensions==4.2.0",
-        "tabulate==0.8.9",
+        "tabulate==0.8.10",
     ],
 )
