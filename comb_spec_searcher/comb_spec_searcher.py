@@ -70,7 +70,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         strategy_pack: StrategyPack,
         *,
         ruledb: Optional[RuleDBAbstract] = None,
-        classdb: Optional[ClassDB] = None,
+        classdb: Optional[ClassDB[CombinatorialClassType]] = None,
         expand_verified: bool = False,
         debug: bool = False,
     ):
