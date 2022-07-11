@@ -26,7 +26,7 @@ from logzero import logger
 from comb_spec_searcher.typing import CombinatorialClassType, CSSstrategy
 
 from .class_db import ClassDB
-from .class_queue import DefaultQueue
+from .class_queue import CSSQueue, DefaultQueue
 from .exception import (
     ExceededMaxtimeError,
     InvalidOperationError,
@@ -71,6 +71,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         *,
         ruledb: Optional[RuleDBAbstract] = None,
         classdb: Optional[ClassDB[CombinatorialClassType]] = None,
+        classqueue: Optional[CSSQueue] = None,
         expand_verified: bool = False,
         debug: bool = False,
     ):
@@ -103,7 +104,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             if classdb is not None
             else ClassDB[CombinatorialClassType](type(start_class))
         )
-        self.classqueue = DefaultQueue(strategy_pack)
+        self.classqueue = (
+            DefaultQueue(strategy_pack) if classqueue is None else classqueue
+        )
         self.ruledb: RuleDBAbstract = ruledb if ruledb is not None else RuleDB()
         self.ruledb.link_searcher(self)
 
