@@ -335,12 +335,13 @@ class CombinatorialSpecification(
                     eq = rule.get_equation(self.get_function)
                 if not isinstance(eq, bool):
                     yield eq
-            except NotImplementedError:
+            except NotImplementedError as e:
                 logger.info(
-                    "can't find generating function for the rule %s -> %s. "
+                    "can't find generating function for the rule %s -> %s. Reason: %s"
                     "The rule was:\n%s",
                     self.get_label(rule.comb_class),
                     tuple(self.get_label(child) for child in rule.children),
+                    e,
                     rule,
                 )
                 x = var("x")
