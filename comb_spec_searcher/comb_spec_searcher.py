@@ -408,7 +408,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             + tabulate.tabulate(table, headers=headers, colalign=colalign).replace(
                 "\n", "\n    "
             )
-            + "\n"
+            + "\n\n"
         )
 
     def _mem_status(self, elaborate: bool) -> str:
