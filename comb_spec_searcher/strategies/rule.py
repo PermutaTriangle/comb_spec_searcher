@@ -538,7 +538,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         try:
             rule_terms = self.get_terms(n)
         except (NotImplementedError, SpecificationNotFound) as e:
-            logger.warning("Skipping sanitiy checking counts for rule\n%s\n%s", self, e)
+            logger.warning("Skipping sanity checking counts for rule\n%s\n%s", self, e)
             return True
         self.subterms = temp_subterms
         if actual_terms != rule_terms:
@@ -564,7 +564,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
             rule_objects = self.get_objects(n)
         except (NotImplementedError, SpecificationNotFound) as e:
             logger.warning(
-                "Skipping sanitiy checking generation for rule\n%s\n%s", self, e
+                "Skipping sanity checking generation for rule\n%s\n%s", self, e
             )
             return True
         self.subobjects = tempobjects
@@ -1141,5 +1141,5 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
         try:
             return self.get_terms(n) == self.comb_class.get_terms(n)
         except (NotImplementedError, SpecificationNotFound) as e:
-            logger.warning("Skipping sanitiy checking counts for rule\n%s\n%s", self, e)
+            logger.warning("Skipping sanity checking counts for rule\n%s\n%s", self, e)
             return True
