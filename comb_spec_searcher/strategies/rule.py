@@ -27,7 +27,7 @@ from typing import (
 )
 
 from logzero import logger
-from sympy import Eq, Function
+from sympy import Eq, Function, var
 
 from comb_spec_searcher.combinatorial_class import CombinatorialClass
 from comb_spec_searcher.typing import (
@@ -41,7 +41,7 @@ from comb_spec_searcher.typing import (
 )
 
 from ..combinatorial_class import CombinatorialClassType, CombinatorialObjectType
-from ..exception import SanityCheckFailure, StrategyDoesNotApply
+from ..exception import SanityCheckFailure, SpecificationNotFound, StrategyDoesNotApply
 from ..utils import TermsCache
 from .constructor import Complement, Constructor, DisjointUnion
 
@@ -535,7 +535,11 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         actual_terms = self.comb_class.get_terms(n)
         temp_subterms = self.subterms
         self.subterms = tuple(child.get_terms for child in self.children)
-        rule_terms = self.get_terms(n)
+        try:
+            rule_terms = self.get_terms(n)
+        except (NotImplementedError, SpecificationNotFound) as e:
+            logger.warning("Skipping sanity checking counts for rule\n%s\n%s", self, e)
+            return True
         self.subterms = temp_subterms
         if actual_terms != rule_terms:
             raise SanityCheckFailure(
@@ -558,8 +562,10 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         self.subobjects = tuple(child.get_objects for child in self.children)
         try:
             rule_objects = self.get_objects(n)
-        except NotImplementedError:
-            # Skipping testing rules that have not implemented object generation.
+        except (NotImplementedError, SpecificationNotFound) as e:
+            logger.warning(
+                "Skipping sanity checking generation for rule\n%s\n%s", self, e
+            )
             return True
         self.subobjects = tempobjects
         actual_objects = self.comb_class.get_objects(n)
@@ -1115,7 +1121,10 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
         funcs: Optional[Dict[CombinatorialClassType, Function]] = None,
     ) -> Eq:
         lhs_func = get_function(self.comb_class)
-        return Eq(lhs_func, self.strategy.get_genf(self.comb_class, funcs))
+        return Eq(
+            lhs_func,
+            self.strategy.get_genf(self.comb_class, funcs).subs({var("F"): lhs_func}),
+        )
 
     @staticmethod
     def get_eq_symbol() -> str:
@@ -1129,4 +1138,8 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
         )
 
     def sanity_check(self, n: int) -> bool:
-        return self.get_terms(n) == self.comb_class.get_terms(n)
+        try:
+            return self.get_terms(n) == self.comb_class.get_terms(n)
+        except (NotImplementedError, SpecificationNotFound) as e:
+            logger.warning("Skipping sanity checking counts for rule\n%s\n%s", self, e)
+            return True
