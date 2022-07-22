@@ -175,7 +175,9 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
         return self._strategy.formal_step()
 
     @abc.abstractmethod
-    def is_equivalence(self) -> bool:
+    def is_equivalence(
+        self, is_empty: Optional[Callable[[CombinatorialClassType], bool]] = None
+    ) -> bool:
         """
         Returns True if the rule is an equivalence.
         """
@@ -200,18 +202,28 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
 
     @abc.abstractmethod
     def forest_key(
-        self, get_label: Callable[[CombinatorialClassType], int]
+        self,
+        get_label: Callable[[CombinatorialClassType], int],
+        is_empty: Optional[Callable[[CombinatorialClassType], bool]] = None,
     ) -> ForestRuleKey:
         """Return the forest key of the rule."""
 
-    def non_empty_children(self) -> Tuple[CombinatorialClassType, ...]:
+    def non_empty_children(
+        self, is_empty: Optional[Callable[[CombinatorialClassType], bool]] = None
+    ) -> Tuple[CombinatorialClassType, ...]:
         """
         Return the tuple of non-empty combinatorial classes that are found
         by applying the decomposition function.
         """
+        if is_empty is None:
+
+            def _is_empty(comb_class: CombinatorialClassType) -> bool:
+                return comb_class.is_empty()
+
+            is_empty = _is_empty
         if self._non_empty_children is None:
             self._non_empty_children = tuple(
-                child for child in self.children if not child.is_empty()
+                child for child in self.children if not is_empty(child)
             )
         return self._non_empty_children
 
@@ -401,17 +413,24 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
                 raise StrategyDoesNotApply(f"{self.strategy} does not apply")
         return self._constructor
 
-    def is_equivalence(self):
-        return self.strategy.can_be_equivalent() and len(self.non_empty_children()) == 1
+    def is_equivalence(
+        self, is_empty: Optional[Callable[[CombinatorialClassType], bool]] = None
+    ):
+        return (
+            self.strategy.can_be_equivalent()
+            and len(self.non_empty_children(is_empty)) == 1
+        )
 
     def forest_key(
-        self, get_label: Callable[[CombinatorialClassType], int]
+        self,
+        get_label: Callable[[CombinatorialClassType], int],
+        is_empty: Optional[Callable[[CombinatorialClassType], bool]] = None,
     ) -> ForestRuleKey:
         return ForestRuleKey(
             get_label(self.comb_class),
             tuple(map(get_label, self.children)),
             self.shifts(),
-            RuleBucket.EQUIV if self.is_equivalence() else RuleBucket.NORMAL,
+            RuleBucket.EQUIV if self.is_equivalence(is_empty) else RuleBucket.NORMAL,
         )
 
     def backward_map(
@@ -753,7 +772,9 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         return self._constructor
 
     @staticmethod
-    def is_equivalence() -> bool:
+    def is_equivalence(
+        is_empty: Optional[Callable[[CombinatorialClassType], bool]] = None
+    ) -> bool:
         return True
 
     def to_reverse_rule(self, idx: int) -> "EquivalenceRule":
@@ -851,7 +872,9 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
         return self._constructor
 
     @staticmethod
-    def is_equivalence() -> bool:
+    def is_equivalence(
+        is_empty: Optional[Callable[[CombinatorialClassType], bool]] = None
+    ) -> bool:
         return True
 
     @property
@@ -976,13 +999,15 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         )
 
     def forest_key(
-        self, get_label: Callable[[CombinatorialClassType], int]
+        self,
+        get_label: Callable[[CombinatorialClassType], int],
+        is_empty: Optional[Callable[[CombinatorialClassType], bool]] = None,
     ) -> ForestRuleKey:
         return ForestRuleKey(
             get_label(self.comb_class),
             tuple(map(get_label, self.children)),
             self.shifts(),
-            RuleBucket.EQUIV if self.is_equivalence() else RuleBucket.REVERSE,
+            RuleBucket.EQUIV if self.is_equivalence(is_empty) else RuleBucket.REVERSE,
         )
 
     def get_equation(
@@ -1086,7 +1111,9 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
         )
 
     @staticmethod
-    def is_equivalence() -> bool:
+    def is_equivalence(
+        is_empty: Optional[Callable[[CombinatorialClassType], bool]] = None
+    ) -> bool:
         return False
 
     def _ensure_level(self, n: int) -> None:
@@ -1105,7 +1132,9 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
         return self.strategy.pack(self.comb_class)
 
     def forest_key(
-        self, get_label: Callable[[CombinatorialClassType], int]
+        self,
+        get_label: Callable[[CombinatorialClassType], int],
+        is_empty: Optional[Callable[[CombinatorialClassType], bool]] = None,
     ) -> ForestRuleKey:
         return ForestRuleKey(
             get_label(self.comb_class),
