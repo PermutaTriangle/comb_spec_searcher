@@ -453,7 +453,10 @@ class ForestRuleExtractor:
 
         The empty rule are ignored as they be produced as needed by the specification.
         """
-        cache_dict = {rule.forest_key(self.classdb.get_label): rule for rule in cache}
+        cache_dict = {
+            rule.forest_key(self.classdb.get_label, self.classdb.is_empty): rule
+            for rule in cache
+        }
         for rk in self.needed_rules:
             if rk in cache_dict:
                 rule = cache_dict[rk]
@@ -570,7 +573,10 @@ class ForestRuleExtractor:
                     for i in range(len(normal_rule.children))
                 )
             for rule in potential_rules:
-                if rule.forest_key(self.classdb.get_label) == rule_key:
+                if (
+                    rule.forest_key(self.classdb.get_label, self.classdb.is_empty)
+                    == rule_key
+                ):
                     return rule
         err = f"Can't find a rule for {rule_key}\n"
         err += f"Parent:\n{self.classdb.get_class(rule_key.parent)}\n"
@@ -649,11 +655,14 @@ class RuleDBForest(RuleDBAbstract):
         self._add_empty_rule(ends, rule)
         self._num_rules += 1
         start_time = time.time()
-        new_rule_keys = [rule.forest_key(self.classdb.get_label)]
+        new_rule_keys = [rule.forest_key(self.classdb.get_label, self.classdb.is_empty)]
+
         if self.reverse and rule.is_reversible():
             assert isinstance(rule, Rule)
             new_rule_keys.extend(
-                rule.to_reverse_rule(i).forest_key(self.classdb.get_label)
+                rule.to_reverse_rule(i).forest_key(
+                    self.classdb.get_label, self.classdb.is_empty
+                )
                 for i in range(len(rule.children))
             )
         self._time_key += time.time() - start_time
