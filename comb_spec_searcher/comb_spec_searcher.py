@@ -89,6 +89,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
           - `debug`: if True every rule found will be sanity checked and logged
             to logging.DEBUG
         """
+
         self.strategy_pack = strategy_pack
         self.debug = debug
         self.expand_verified = expand_verified
@@ -378,6 +379,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         status += self.classqueue.status() + "\n"
         status += self.ruledb.status(elaborate) + "\n"
         status += self._mem_status(elaborate)
+
         return status
 
     def _css_status(self, total: float) -> str:
