@@ -282,6 +282,14 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         """
         for comb_class, child_label in zip(rule.children, end_labels):
             if not rule.possibly_empty:
+                if self.debug:
+                    if comb_class.is_empty():
+                        logger.debug(
+                            "SANITY CHECK FAILURE.\n"
+                            " The folowing combinatorial class "
+                            "is set not empty but is empty!\n%s",
+                            comb_class,
+                        )
                 self.classdb.set_empty(child_label, empty=False)
             if self.symmetries and child_label not in self.symmetry_expanded:
                 self._symmetry_expand(comb_class, child_label)

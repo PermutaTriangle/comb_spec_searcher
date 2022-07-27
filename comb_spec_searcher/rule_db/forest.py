@@ -686,6 +686,15 @@ class RuleDBForest(RuleDBAbstract):
         Add empty rule for the children of the rule if needed.
         """
         if not rule.possibly_empty:
+            if self.searcher.debug:
+                for child in rule.children:
+                    if child.is_empty():
+                        logger.debug(
+                            "SANITY CHECK FAILURE.\n"
+                            " The folowing combinatorial class "
+                            "assumed not empty but is empty!\n%s",
+                            child,
+                        )
             return
         for label, comb_class in zip(ends, rule.children):
             if label not in self._already_empty and self.classdb.is_empty(

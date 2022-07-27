@@ -396,7 +396,16 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         self._children_param_maps = CartesianProduct._build_children_param_map(
             parent, children, self.extra_parameters
         )
-        self._min_sizes = tuple(child.minimum_size_of_object() for child in children)
+        self._min_sizes = tuple(
+            len(
+                next(
+                    child.gridded_perms(
+                        child.maximum_length_of_minimum_gridded_perm() + 4
+                    )
+                )
+            )
+            for child in children
+        )
         self._max_sizes = tuple(
             child.minimum_size_of_object() if child.is_atom() else None
             for child in children
