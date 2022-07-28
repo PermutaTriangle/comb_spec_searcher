@@ -74,12 +74,22 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         for k in parent.extra_parameters:
             self.minimum_sizes[k] = parent.get_minimum_value(k)
 
-        self.min_child_sizes = tuple(
-            {"n": child.minimum_size_of_object()} for child in children
-        )
+        def min_size(child):
+            try:
+                min_point = len(
+                    next(
+                        child.gridded_perms(
+                            child.maximum_length_of_minimum_gridded_perm() + 4
+                        )
+                    )
+                )
+            except StopIteration:
+                min_point = child.minimum_size_of_object()
+            return min_point
+
+        self.min_child_sizes = tuple({"n": min_size(child)} for child in children)
         self.max_child_sizes = tuple(
-            {"n": child.minimum_size_of_object()} if child.is_atom() else {}
-            for child in children
+            {"n": min_size(child)} if child.is_atom() else {} for child in children
         )
         self.parent_parameters = ("n",) + parent.extra_parameters
 
