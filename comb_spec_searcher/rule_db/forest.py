@@ -1,5 +1,6 @@
 import gc
 import itertools
+import platform
 import time
 from datetime import timedelta
 from typing import (
@@ -519,7 +520,10 @@ class ForestRuleExtractor:
             for _ in range(i, len(minimizing)):
                 minimizing.pop()
             # added to avoid doubling in memory when minimizing with pypy
-            gc.collect_step()
+            if platform.python_implementation() == "CPython":
+                gc.collect()
+            elif platform.python_implementation() == "PyPy":
+                gc.collect_step()
         counter = 0
         while maybe_useful:
             rk = maybe_useful.pop()
@@ -527,7 +531,10 @@ class ForestRuleExtractor:
                 self.needed_rules.append(rk)
                 counter += 1
             # added to avoid doubling in memory when minimizing with pypy
-            gc.collect_step()
+            if platform.python_implementation() == "CPython":
+                gc.collect()
+            elif platform.python_implementation() == "PyPy":
+                gc.collect_step()
         logger.info("Using %s rule for %s", counter, key.name)
 
     def _is_productive(self, rule_keys: Iterable[ForestRuleKey]) -> bool:
