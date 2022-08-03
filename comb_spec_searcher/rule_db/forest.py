@@ -529,9 +529,7 @@ class ForestRuleExtractor:
                 self.needed_rules.append(rk)
                 counter += 1
             # added to avoid doubling in memory when minimizing with pypy
-            if platform.python_implementation() == "CPython":
-                gc.collect()
-            elif platform.python_implementation() == "PyPy":
+            if platform.python_implementation() == "PyPy":
                 gc.collect_step()  # type: ignore
         logger.info("Using %s rule for %s", counter, key.name)
 
