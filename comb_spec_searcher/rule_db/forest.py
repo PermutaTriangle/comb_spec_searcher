@@ -520,9 +520,7 @@ class ForestRuleExtractor:
             for _ in range(i, len(minimizing)):
                 minimizing.pop()
             # added to avoid doubling in memory when minimizing with pypy
-            if platform.python_implementation() == "CPython":
-                gc.collect()
-            elif platform.python_implementation() == "PyPy":
+            if platform.python_implementation() == "PyPy":
                 gc.collect_step()  # type: ignore
         counter = 0
         while maybe_useful:
