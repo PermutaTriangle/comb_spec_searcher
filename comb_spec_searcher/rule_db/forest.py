@@ -523,7 +523,7 @@ class ForestRuleExtractor:
             if platform.python_implementation() == "CPython":
                 gc.collect()
             elif platform.python_implementation() == "PyPy":
-                gc.collect_step()
+                gc.collect_step()  # type: ignore
         counter = 0
         while maybe_useful:
             rk = maybe_useful.pop()
@@ -534,7 +534,7 @@ class ForestRuleExtractor:
             if platform.python_implementation() == "CPython":
                 gc.collect()
             elif platform.python_implementation() == "PyPy":
-                gc.collect_step()
+                gc.collect_step()  # type: ignore
         logger.info("Using %s rule for %s", counter, key.name)
 
     def _is_productive(self, rule_keys: Iterable[ForestRuleKey]) -> bool:
