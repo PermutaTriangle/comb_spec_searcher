@@ -34,7 +34,7 @@ from comb_spec_searcher.tree_searcher import (
     prune,
     smallish_random_proof_tree,
 )
-from comb_spec_searcher.typing import CombinatorialClass, RuleKey, RulesDict
+from comb_spec_searcher.typing import CombinatorialClassType, RuleKey, RulesDict
 
 __all__ = ["RuleDBBase", "RuleDB"]
 
@@ -392,7 +392,7 @@ class RuleDB(RuleDBBase):
         Returns a set of equations for all rules currently found.
         """
 
-        def get_function(comb_class: CombinatorialClass) -> Any:
+        def get_function(comb_class: CombinatorialClassType) -> Any:
             return comb_class.get_function(self.classdb.get_label)
 
         eqs = set()
