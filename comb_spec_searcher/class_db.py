@@ -178,7 +178,7 @@ class ClassDB(Generic[CombinatorialClassType]):
         """
         if not compressed and not isinstance(comb_class, self.combinatorial_class):
             raise TypeError(
-                ("Trying to add something that isn't a" "CombinatorialClass.")
+                ("Trying to add something that isn't a CombinatorialClass.")
             )
         if not compressed:
             assert isinstance(

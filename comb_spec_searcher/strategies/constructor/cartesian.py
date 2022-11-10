@@ -333,8 +333,8 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
                     break
             total += tmp
             if random_choice <= total:
+                extra_parameters = self.get_extra_parameters(child_parameters)
                 break
-        extra_parameters = self.get_extra_parameters(child_parameters)
         assert extra_parameters is not None
         return tuple(
             subsampler(n=extra_params.pop("n"), **extra_params)

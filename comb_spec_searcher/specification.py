@@ -303,7 +303,7 @@ class CombinatorialSpecification(
             comb_class = self._label_to_class[label]
         except KeyError as e:
             raise InvalidOperationError(
-                f"The label {comb_class} does not correspond to a tiling"
+                f"The label {label} does not correspond to a tiling"
                 " in the specification."
             ) from e
         return comb_class
@@ -491,7 +491,7 @@ class CombinatorialSpecification(
                         return False
             except NotImplementedError:
                 logger.warning(
-                    "Can't sanity check the rule %s -> %s, which is\n" "%s",
+                    "Can't sanity check the rule %s -> %s, which is\n%s",
                     self.get_label(rule.comb_class),
                     tuple(self.get_label(child) for child in rule.children),
                     rule,
@@ -641,8 +641,7 @@ class AlreadyVerified(VerificationStrategy[CombinatorialClass, CombinatorialObje
     def verified(self, comb_class: CombinatorialClass) -> bool:
         return comb_class in self.verified_classes
 
-    @staticmethod
-    def formal_step() -> str:
+    def formal_step(self) -> str:
         return "already verified"
 
     def to_jsonable(self) -> dict:

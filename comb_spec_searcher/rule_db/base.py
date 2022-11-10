@@ -401,7 +401,7 @@ class RuleDB(RuleDBBase):
                 eq = rule.get_equation(get_function)
             except NotImplementedError:
                 logger.info(
-                    "can't find generating function for %s." " The comb class is:\n%s",
+                    "can't find generating function for %s. The comb class is:\n%s",
                     get_function(rule.comb_class),
                     rule.comb_class,
                 )

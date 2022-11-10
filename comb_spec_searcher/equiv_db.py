@@ -153,7 +153,7 @@ class EquivalenceDB:
         """Set the two labels as equivalent in UnionFind"""
         verified = self.is_verified(label) or self.is_verified(other_label)
         roots = [self[label], self[other_label]]
-        heaviest = max([(self.weights[r], r) for r in roots])[1]
+        heaviest = max(((self.weights[r], r) for r in roots))[1]
         for r in roots:
             if r != heaviest:
                 self.weights[heaviest] += self.weights[r]
