@@ -5,6 +5,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+
+### Changed
+- Update dependency on psutil from 5.8 to 5.9.4
+- Update dependency on sympy from 1.9 to 1.11.1
+- Update dependency on pympler from 0.9 to 1.0.1
+- Update dependency on requests from 2.26.0 to 2.28.1
+- Update dependency on typing-extensions from 4.0.0 to 4.4.0
+- Update dependency on tabulate from 0.8.9 to 0.9.0
 
 ## [4.1.0] 2022-01-17
 ### Added
