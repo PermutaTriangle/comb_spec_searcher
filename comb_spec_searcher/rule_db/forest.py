@@ -437,7 +437,7 @@ class ForestRuleExtractor:
         self.needed_rules: List[ForestRuleKey] = []
         self._minimize()
 
-    def check(self) -> bool:
+    def check(self) -> None:
         """
         Make a sanity check of the status of the extractor.
         """

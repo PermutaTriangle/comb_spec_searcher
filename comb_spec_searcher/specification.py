@@ -6,7 +6,7 @@ from copy import copy
 from functools import reduce
 from itertools import chain
 from operator import mul
-from typing import Dict, Generic, Iterable, Iterator, List, Optional, Set, Union
+from typing import Any, Dict, Generic, Iterable, Iterator, List, Optional, Set, Union
 
 import sympy
 from logzero import logger
@@ -308,7 +308,7 @@ class CombinatorialSpecification(
             ) from e
         return comb_class
 
-    def get_function(self, comb_class: CombinatorialClassType) -> Function:
+    def get_function(self, comb_class: CombinatorialClassType) -> Any:
         """
         Return a sympy function for the comb class, using the label it is
         assigned.
@@ -374,7 +374,7 @@ class CombinatorialSpecification(
             )
         return self.root.initial_conditions(check)
 
-    def get_genf(self, check: int = 6) -> Expr:
+    def get_genf(self, check: int = 6) -> Any:
         """
         Return the generating function for the root comb class.
 

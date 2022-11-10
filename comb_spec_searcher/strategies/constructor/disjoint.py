@@ -174,18 +174,19 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
         ):
             # if a parent parameter is not mapped to by some child parameter
             # then it is assumed that the value of the parent parameter must be 0
-            if extra_params is None or any(
+            if extra_params is not None and all(
                 val != 0 and k in self.zeroes[idx] for k, val in parameters.items()
             ):
-                continue
-            total += rec(n=n, **extra_params)
+                total += rec(n=n, **extra_params)
             if random_choice <= total:
-                obj = subsampler(n=n, **extra_params)
-                return (
-                    tuple(None for _ in range(idx))
-                    + (obj,)
-                    + tuple(None for _ in range(len(subrecs) - idx - 1))
-                )
+                break
+        assert extra_params is not None
+        obj = subsampler(n=n, **extra_params)
+        return (
+            tuple(None for _ in range(idx))
+            + (obj,)
+            + tuple(None for _ in range(len(subrecs) - idx - 1))
+        )
 
     @staticmethod
     def get_eq_symbol() -> str:

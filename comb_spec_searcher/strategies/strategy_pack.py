@@ -46,7 +46,7 @@ class StrategyPack:
         expansion_strats: Iterable[Iterable[CSSstrategy]],
         ver_strats: Iterable[CSSstrategy],
         name: str,
-        symmetries: Iterable[CSSstrategy] = None,
+        symmetries: Optional[Iterable[CSSstrategy]] = None,
         iterative: bool = False,
     ):
         self.name = name

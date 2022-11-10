@@ -96,7 +96,7 @@ class EquivalenceDB:
         self._one_way_vertices[self[label]].add(self[other_label])
 
     @cssmethodtimer("find_paths")
-    def connect_cycles(self):
+    def connect_cycles(self) -> None:
         """Look for cycles using one way edges that have been added."""
         one_way_vertices = self.get_one_way_vertices()
         stack: List[Tuple[int, ...]] = []

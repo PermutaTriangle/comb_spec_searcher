@@ -54,6 +54,7 @@ from collections import defaultdict
 from importlib import import_module
 from typing import (
     TYPE_CHECKING,
+    Any,
     Counter,
     Dict,
     Generic,
@@ -137,7 +138,7 @@ class AbstractStrategy(
     def __call__(
         self,
         comb_class: CombinatorialClassType,
-        children: Tuple[CombinatorialClassType, ...] = None,
+        children: Optional[Tuple[CombinatorialClassType, ...]] = None,
     ) -> AbstractRule[CombinatorialClassType, CombinatorialObjectType]:
         """
         Return the rule formed by using the strategy.
@@ -327,7 +328,7 @@ class Strategy(AbstractStrategy[CombinatorialClassType, CombinatorialObjectType]
     def __call__(
         self,
         comb_class: CombinatorialClassType,
-        children: Tuple[CombinatorialClassType, ...] = None,
+        children: Optional[Tuple[CombinatorialClassType, ...]] = None,
     ) -> Rule[CombinatorialClassType, CombinatorialObjectType]:
         if children is None:
             children = self.decomposition_function(comb_class)
@@ -345,8 +346,6 @@ class Strategy(AbstractStrategy[CombinatorialClassType, CombinatorialObjectType]
         This is where the details of the 'reliance profile' and 'counting'
         functions are hidden.
         """
-        if children is None:
-            children = self.decomposition_function(comb_class)
 
     @abc.abstractmethod
     def reverse_constructor(
@@ -371,8 +370,6 @@ class Strategy(AbstractStrategy[CombinatorialClassType, CombinatorialObjectType]
         The backward direction of the underlying bijection used for object
         generation and sampling.
         """
-        if children is None:
-            children = self.decomposition_function(comb_class)
 
     @abc.abstractmethod
     def forward_map(
@@ -385,8 +382,6 @@ class Strategy(AbstractStrategy[CombinatorialClassType, CombinatorialObjectType]
         The forward direction of the underlying bijection used for object
         generation and sampling.
         """
-        if children is None:
-            children = self.decomposition_function(comb_class)
 
     def extra_parameters(
         self,
@@ -674,7 +669,7 @@ class VerificationStrategy(
     def __call__(
         self,
         comb_class: CombinatorialClassType,
-        children: Tuple[CombinatorialClassType, ...] = None,
+        children: Optional[Tuple[CombinatorialClassType, ...]] = None,
     ) -> VerificationRule[CombinatorialClassType, CombinatorialObjectType]:
         if children is None:
             children = self.decomposition_function(comb_class)
@@ -740,7 +735,7 @@ class VerificationStrategy(
         self,
         comb_class: CombinatorialClassType,
         funcs: Optional[Dict[CombinatorialClassType, Function]] = None,
-    ) -> Expr:
+    ) -> Any:
         """
         Returns the generating function for the combinatorial class.
         Raises an StrategyDoesNotApply if the combinatorial class is not verified.
@@ -836,7 +831,7 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
         self,
         comb_class: CombinatorialClass,
         funcs: Optional[Dict[CombinatorialClass, Function]] = None,
-    ) -> Expr:
+    ) -> Any:
         if comb_class.extra_parameters:
             raise NotImplementedError
         if not self.verified(comb_class):
@@ -850,9 +845,10 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
     ) -> CombinatorialObject:
         if comb_class.extra_parameters:
             raise NotImplementedError
-        if n == comb_class.minimum_size_of_object():
-            obj: CombinatorialObject = next(comb_class.objects_of_size(n))
-            return obj
+        if n != comb_class.minimum_size_of_object():
+            raise ValueError("Invalid size")
+        obj: CombinatorialObject = next(comb_class.objects_of_size(n))
+        return obj
 
     @staticmethod
     def verified(comb_class: CombinatorialClass) -> bool:
@@ -905,7 +901,7 @@ class EmptyStrategy(
         self,
         comb_class: CombinatorialClassType,
         funcs: Optional[Dict[CombinatorialClassType, Function]] = None,
-    ) -> Integer:
+    ) -> Any:
         if not self.verified(comb_class):
             raise StrategyDoesNotApply(
                 "can't find generating functon for non-empty class."
