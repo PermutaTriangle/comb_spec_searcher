@@ -339,7 +339,7 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
                     subsampler(n=extra_params.pop("n"), **extra_params)
                     for subsampler, extra_params in zip(subsamplers, extra_parameters)
                 )
-        raise Exception("Function did not return")
+        raise RuntimeError("Function did not return")
 
     @staticmethod
     def get_eq_symbol() -> str:
