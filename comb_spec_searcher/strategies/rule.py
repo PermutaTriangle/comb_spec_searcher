@@ -771,9 +771,8 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
                 raise NotImplementedError
         return self._constructor
 
-    @staticmethod
     def is_equivalence(
-        is_empty: Optional[Callable[[CombinatorialClassType], bool]] = None
+        self, is_empty: Optional[Callable[[CombinatorialClassType], bool]] = None
     ) -> bool:
         return True
 
@@ -871,9 +870,8 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
             )
         return self._constructor
 
-    @staticmethod
     def is_equivalence(
-        is_empty: Optional[Callable[[CombinatorialClassType], bool]] = None
+        self, is_empty: Optional[Callable[[CombinatorialClassType], bool]] = None
     ) -> bool:
         return True
 
@@ -1110,9 +1108,8 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
             super().strategy,
         )
 
-    @staticmethod
     def is_equivalence(
-        is_empty: Optional[Callable[[CombinatorialClassType], bool]] = None
+        self, is_empty: Optional[Callable[[CombinatorialClassType], bool]] = None
     ) -> bool:
         return False
 

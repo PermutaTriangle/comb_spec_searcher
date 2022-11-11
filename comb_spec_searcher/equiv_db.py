@@ -96,7 +96,7 @@ class EquivalenceDB:
         self._one_way_vertices[self[label]].add(self[other_label])
 
     @cssmethodtimer("find_paths")
-    def connect_cycles(self):
+    def connect_cycles(self) -> None:
         """Look for cycles using one way edges that have been added."""
         one_way_vertices = self.get_one_way_vertices()
         stack: List[Tuple[int, ...]] = []
@@ -153,7 +153,7 @@ class EquivalenceDB:
         """Set the two labels as equivalent in UnionFind"""
         verified = self.is_verified(label) or self.is_verified(other_label)
         roots = [self[label], self[other_label]]
-        heaviest = max([(self.weights[r], r) for r in roots])[1]
+        heaviest = max(((self.weights[r], r) for r in roots))[1]
         for r in roots:
             if r != heaviest:
                 self.weights[heaviest] += self.weights[r]

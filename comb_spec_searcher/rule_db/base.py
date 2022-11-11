@@ -4,7 +4,17 @@ A database to search for tree.
 import abc
 import itertools
 from collections import defaultdict
-from typing import Dict, Iterable, Iterator, List, MutableMapping, Optional, Set, Tuple
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    MutableMapping,
+    Optional,
+    Set,
+    Tuple,
+)
 
 import sympy
 import tabulate
@@ -24,7 +34,7 @@ from comb_spec_searcher.tree_searcher import (
     prune,
     smallish_random_proof_tree,
 )
-from comb_spec_searcher.typing import RuleKey, RulesDict
+from comb_spec_searcher.typing import CombinatorialClassType, RuleKey, RulesDict
 
 __all__ = ["RuleDBBase", "RuleDB"]
 
@@ -382,7 +392,7 @@ class RuleDB(RuleDBBase):
         Returns a set of equations for all rules currently found.
         """
 
-        def get_function(comb_class) -> sympy.Function:
+        def get_function(comb_class: CombinatorialClassType) -> Any:
             return comb_class.get_function(self.classdb.get_label)
 
         eqs = set()
@@ -391,7 +401,7 @@ class RuleDB(RuleDBBase):
                 eq = rule.get_equation(get_function)
             except NotImplementedError:
                 logger.info(
-                    "can't find generating function for %s." " The comb class is:\n%s",
+                    "can't find generating function for %s. The comb class is:\n%s",
                     get_function(rule.comb_class),
                     rule.comb_class,
                 )

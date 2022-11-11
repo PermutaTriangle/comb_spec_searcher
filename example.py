@@ -195,7 +195,7 @@ class ExpansionStrategy(DisjointUnionStrategy[AvoidingWithPrefix, Word]):
         avoiding_with_prefix: AvoidingWithPrefix,
         word: CombinatorialObject,
         children: Optional[Tuple[AvoidingWithPrefix, ...]] = None,
-    ) -> Tuple[Word, ...]:
+    ) -> Tuple[Optional[Word], ...]:
         """
         The backward direction of the underlying bijection used for object
         generation and sampling.
@@ -208,11 +208,12 @@ class ExpansionStrategy(DisjointUnionStrategy[AvoidingWithPrefix, Word]):
             return (word,) + tuple(None for i in range(len(children) - 1))
         for idx, child in enumerate(children[1:]):
             if word[: len(child.prefix)] == child.prefix:
-                return (
-                    tuple(None for _ in range(idx + 1))
-                    + (word,)
-                    + tuple(None for _ in range(len(children) - idx - 1))
-                )
+                break
+        return (
+            tuple(None for _ in range(idx + 1))
+            + (word,)
+            + tuple(None for _ in range(len(children) - idx - 1))
+        )
 
     def __str__(self) -> str:
         return self.formal_step()

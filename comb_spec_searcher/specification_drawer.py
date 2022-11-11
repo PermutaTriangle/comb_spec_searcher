@@ -500,13 +500,13 @@ class ForestSpecificationDrawer:
 
         # ask gofile.io which server it wants us to use
         logger.info("Sending specification to file host.")
-        req1 = requests.get("https://api.gofile.io/getServer")
+        req1 = requests.get("https://api.gofile.io/getServer", timeout=5)
         req1.raise_for_status()
         server = req1.json()["data"]["server"]
         upload_url = f"https://{server}.gofile.io/uploadFile"
 
         with open(file_path, "rb") as f:
-            req2 = requests.post(upload_url, files={"filesUploaded": f})
+            req2 = requests.post(upload_url, files={"filesUploaded": f}, timeout=5)
         req2.raise_for_status()
 
         os.remove(file_path)
