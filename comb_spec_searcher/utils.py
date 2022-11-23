@@ -103,6 +103,9 @@ class TermsCache:
     def __getitem__(self, index: int) -> Terms:
         return self.data.__getitem__(index)
 
+    def __iter__(self) -> Iterator[Terms]:
+        return iter(self.data)
+
     @classmethod
     def clean_keys(cls, terms: Terms) -> Terms:
         new_terms: CounterType[Parameters] = Counter()
@@ -256,9 +259,10 @@ def sympy_expr_to_maple(expr):
         if "NOTIMPLEMENTED" in str(expr):
             return "NOTIMPLEMENTED"
         split = re.compile(r"F_([0-9]+)\((.*)\)")
-        assert split.match(repr(expr)) is not None, expr
-        label = split.match(repr(expr)).group(1)
-        args = map(sympy.sympify, split.match(repr(expr)).group(2).split(", "))
+        splitmatch = split.match(repr(expr))
+        assert splitmatch is not None, expr
+        label = splitmatch.group(1)
+        args = map(sympy.sympify, splitmatch.group(2).split(", "))
         content = f"{label}, " + ", ".join(map(sympy_expr_to_maple, args))
         return f"F[{content}]"
     if isinstance(expr, sympy.core.symbol.Symbol):
