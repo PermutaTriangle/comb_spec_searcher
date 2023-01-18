@@ -5,8 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-### Added
 
+
+## [4.2.0] 2023-01-18
 ### Changed
 - Update dependency on psutil from 5.8 to 5.9.4
 - Update dependency on sympy from 1.9 to 1.10.1

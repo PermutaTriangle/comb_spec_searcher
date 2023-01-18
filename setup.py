@@ -32,7 +32,7 @@ setup(
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     package_data={"comb_spec_searcher": ["py.typed"]},
     long_description=read("README.rst"),
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     include_package_data=True,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
