@@ -54,6 +54,7 @@ class cssiteratortimer:
             css.func_calls[key] += 1
             start = time.time()
             for res in func(css, *args, **kwargs):
+                css.func_yield[key] += 1
                 css.func_times[key] += time.time() - start
                 yield res
                 start = time.time()
@@ -102,6 +103,9 @@ class TermsCache:
     def __getitem__(self, index: int) -> Terms:
         return self.data.__getitem__(index)
 
+    def __iter__(self) -> Iterator[Terms]:
+        return iter(self.data)
+
     @classmethod
     def clean_keys(cls, terms: Terms) -> Terms:
         new_terms: CounterType[Parameters] = Counter()
@@ -147,11 +151,11 @@ def check_poly(min_poly, initial, root_initial=None, root_func=None):
     x = sympy.var("x")
     init_poly = 0
     for i, coeff in enumerate(initial):
-        init_poly += coeff * x ** i
+        init_poly += coeff * x**i
     if root_initial is not None:
         root_poly = 0
         for i, coeff in enumerate(root_initial):
-            root_poly += coeff * x ** i
+            root_poly += coeff * x**i
     verification = min_poly.subs({F: init_poly})
     if root_initial is not None:
         verification = verification.subs({root_func: root_poly})
@@ -255,9 +259,10 @@ def sympy_expr_to_maple(expr):
         if "NOTIMPLEMENTED" in str(expr):
             return "NOTIMPLEMENTED"
         split = re.compile(r"F_([0-9]+)\((.*)\)")
-        assert split.match(repr(expr)) is not None, expr
-        label = split.match(repr(expr)).group(1)
-        args = map(sympy.sympify, split.match(repr(expr)).group(2).split(", "))
+        splitmatch = split.match(repr(expr))
+        assert splitmatch is not None, expr
+        label = splitmatch.group(1)
+        args = map(sympy.sympify, splitmatch.group(2).split(", "))
         content = f"{label}, " + ", ".join(map(sympy_expr_to_maple, args))
         return f"F[{content}]"
     if isinstance(expr, sympy.core.symbol.Symbol):
@@ -320,8 +325,8 @@ def get_mem() -> int:
 def size_to_readable(size: int) -> str:
     """Convert a size in bytes to a human readable value in KiB, MiB, or
     GiB"""
-    if size / 1024 ** 2 < 1:
+    if size / 1024**2 < 1:
         return str(round(size / 1024)) + " KiB"
-    if size / 1024 ** 3 < 1:
-        return str(round(size / 1024 ** 2, 1)) + " MiB"
-    return str(round(size / 1024 ** 3, 3)) + " GiB"
+    if size / 1024**3 < 1:
+        return str(round(size / 1024**2, 1)) + " MiB"
+    return str(round(size / 1024**3, 3)) + " GiB"

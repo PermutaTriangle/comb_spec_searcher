@@ -4,8 +4,9 @@ where each of the bi appear exactly once on the left hand side of some rule.
 """
 from copy import copy
 from functools import reduce
+from itertools import chain
 from operator import mul
-from typing import Dict, Generic, Iterable, Iterator, List, Optional, Set, Union
+from typing import Any, Dict, Generic, Iterable, Iterator, List, Optional, Set, Union
 
 import sympy
 from logzero import logger
@@ -302,12 +303,12 @@ class CombinatorialSpecification(
             comb_class = self._label_to_class[label]
         except KeyError as e:
             raise InvalidOperationError(
-                f"The label {comb_class} does not correspond to a tiling"
+                f"The label {label} does not correspond to a tiling"
                 " in the specification."
             ) from e
         return comb_class
 
-    def get_function(self, comb_class: CombinatorialClassType) -> Function:
+    def get_function(self, comb_class: CombinatorialClassType) -> Any:
         """
         Return a sympy function for the comb class, using the label it is
         assigned.
@@ -334,12 +335,13 @@ class CombinatorialSpecification(
                     eq = rule.get_equation(self.get_function)
                 if not isinstance(eq, bool):
                     yield eq
-            except NotImplementedError:
+            except NotImplementedError as e:
                 logger.info(
-                    "can't find generating function for the rule %s -> %s. "
+                    "can't find generating function for the rule %s -> %s. Reason: %s"
                     "The rule was:\n%s",
                     self.get_label(rule.comb_class),
                     tuple(self.get_label(child) for child in rule.children),
+                    e,
                     rule,
                 )
                 x = var("x")
@@ -372,7 +374,7 @@ class CombinatorialSpecification(
             )
         return self.root.initial_conditions(check)
 
-    def get_genf(self, check: int = 6) -> Expr:
+    def get_genf(self, check: int = 6) -> Any:
         """
         Return the generating function for the root comb class.
 
@@ -386,7 +388,7 @@ class CombinatorialSpecification(
         logger.info("Solving...")
         solutions = solve(
             eqs,
-            tuple(eq.lhs for eq in eqs),
+            set(chain.from_iterable(eq.atoms(Function) for eq in eqs)),
             dict=True,
             cubics=False,
             quartics=False,
@@ -489,7 +491,7 @@ class CombinatorialSpecification(
                         return False
             except NotImplementedError:
                 logger.warning(
-                    "Can't sanity check the rule %s -> %s, which is\n" "%s",
+                    "Can't sanity check the rule %s -> %s, which is\n%s",
                     self.get_label(rule.comb_class),
                     tuple(self.get_label(child) for child in rule.children),
                     rule,
@@ -639,8 +641,7 @@ class AlreadyVerified(VerificationStrategy[CombinatorialClass, CombinatorialObje
     def verified(self, comb_class: CombinatorialClass) -> bool:
         return comb_class in self.verified_classes
 
-    @staticmethod
-    def formal_step() -> str:
+    def formal_step(self) -> str:
         return "already verified"
 
     def to_jsonable(self) -> dict:

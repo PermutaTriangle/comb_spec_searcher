@@ -1,4 +1,6 @@
+import gc
 import itertools
+import platform
 import time
 from datetime import timedelta
 from typing import (
@@ -435,7 +437,7 @@ class ForestRuleExtractor:
         self.needed_rules: List[ForestRuleKey] = []
         self._minimize()
 
-    def check(self) -> bool:
+    def check(self) -> None:
         """
         Make a sanity check of the status of the extractor.
         """
@@ -452,7 +454,10 @@ class ForestRuleExtractor:
 
         The empty rule are ignored as they be produced as needed by the specification.
         """
-        cache_dict = {rule.forest_key(self.classdb.get_label): rule for rule in cache}
+        cache_dict = {
+            rule.forest_key(self.classdb.get_label, self.classdb.is_empty): rule
+            for rule in cache
+        }
         for rk in self.needed_rules:
             if rk in cache_dict:
                 rule = cache_dict[rk]
@@ -460,8 +465,10 @@ class ForestRuleExtractor:
                 rule = self._find_rule(rk)
             if isinstance(rule.strategy, EmptyStrategy):
                 continue
-            if rule.is_equivalence() and not isinstance(
-                rule, (EquivalencePathRule, EquivalenceRule)
+            if (
+                rule.is_equivalence()
+                and not isinstance(rule, (EquivalencePathRule, EquivalenceRule))
+                and len(rule.children) > 1
             ):
                 assert isinstance(rule, Rule)
                 yield rule.to_equivalence_rule()
@@ -512,12 +519,18 @@ class ForestRuleExtractor:
             # pylint: disable=undefined-loop-variable
             for _ in range(i, len(minimizing)):
                 minimizing.pop()
+            # added to avoid doubling in memory when minimizing with pypy
+            if platform.python_implementation() == "PyPy":
+                gc.collect_step()  # type: ignore
         counter = 0
         while maybe_useful:
             rk = maybe_useful.pop()
             if not self._is_productive(itertools.chain.from_iterable(not_minimizing)):
                 self.needed_rules.append(rk)
                 counter += 1
+            # added to avoid doubling in memory when minimizing with pypy
+            if platform.python_implementation() == "PyPy":
+                gc.collect_step()  # type: ignore
         logger.info("Using %s rule for %s", counter, key.name)
 
     def _is_productive(self, rule_keys: Iterable[ForestRuleKey]) -> bool:
@@ -563,7 +576,10 @@ class ForestRuleExtractor:
                     for i in range(len(normal_rule.children))
                 )
             for rule in potential_rules:
-                if rule.forest_key(self.classdb.get_label) == rule_key:
+                if (
+                    rule.forest_key(self.classdb.get_label, self.classdb.is_empty)
+                    == rule_key
+                ):
                     return rule
         err = f"Can't find a rule for {rule_key}\n"
         err += f"Parent:\n{self.classdb.get_class(rule_key.parent)}\n"
@@ -642,11 +658,14 @@ class RuleDBForest(RuleDBAbstract):
         self._add_empty_rule(ends, rule)
         self._num_rules += 1
         start_time = time.time()
-        new_rule_keys = [rule.forest_key(self.classdb.get_label)]
+        new_rule_keys = [rule.forest_key(self.classdb.get_label, self.classdb.is_empty)]
+
         if self.reverse and rule.is_reversible():
             assert isinstance(rule, Rule)
             new_rule_keys.extend(
-                rule.to_reverse_rule(i).forest_key(self.classdb.get_label)
+                rule.to_reverse_rule(i).forest_key(
+                    self.classdb.get_label, self.classdb.is_empty
+                )
                 for i in range(len(rule.children))
             )
         self._time_key += time.time() - start_time

@@ -6,10 +6,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+
+## [4.2.0] 2023-01-18
+### Changed
+- Update dependency on psutil from 5.8 to 5.9.4
+- Update dependency on sympy from 1.9 to 1.10.1
+- Update dependency on pympler from 0.9 to 1.0.1
+- Update dependency on requests from 2.26.0 to 2.28.1
+- Update dependency on typing-extensions from 4.0.0 to 4.4.0
+- Update dependency on tabulate from 0.8.9 to 0.9.0
+- Updated dependencies in the tox file
+
 ## [4.1.0] 2022-01-17
 ### Added
 - Make specification iterable
 - Add a `get_comb_class` method to combinatorial specification
+- `StrategyPack.add_expansion` and `StrategyPack.remove_strategy` methods
+- Add a flag `classdb` and `classqueue` to `comb_spec_searcher.__init__`
 
 ### Changed
 - The `get_terms` now have unique keys for the parameters to save memory.

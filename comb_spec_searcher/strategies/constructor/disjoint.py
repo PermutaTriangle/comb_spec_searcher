@@ -186,6 +186,7 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
                     + (obj,)
                     + tuple(None for _ in range(len(subrecs) - idx - 1))
                 )
+        raise RuntimeError("Function did not return")
 
     @staticmethod
     def get_eq_symbol() -> str:

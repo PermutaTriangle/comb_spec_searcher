@@ -8,7 +8,7 @@ the Specification class.
 """
 import json
 import warnings
-from typing import Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 from .combinatorial_class import CombinatorialClass
 from .specification import CombinatorialSpecification
@@ -27,8 +27,8 @@ class ProofTreeNode:
         label: int,
         eqv_path_labels: Iterable[int],
         eqv_path_comb_classes: Iterable[CombinatorialClass],
-        eqv_explanations: Iterable[str] = None,
-        children: Iterable["ProofTreeNode"] = None,
+        eqv_explanations: Optional[Iterable[str]] = None,
+        children: Optional[Iterable["ProofTreeNode"]] = None,
         strategy_verified: bool = False,
         decomposition: bool = False,
         disjoint_union: bool = False,
@@ -51,7 +51,7 @@ class ProofTreeNode:
 
     def to_jsonable(self):
         """Class is deprecated - use CombinatorialSpecification."""
-        output = {}
+        output: Dict[str, Any] = {}
         output["label"] = self.label
         output["eqv_path_labels"] = list(self.eqv_path_labels)
         output["eqv_path_comb_classes"] = [

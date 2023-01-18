@@ -90,8 +90,9 @@ class SpecificationDrawer:
             rule = self.spec.get_rule(comb_class)
             recursed = True
 
+        comb_classes = [comb_class]
         # if EqvPathRule then the node and its child are put into single node
-        if isinstance(rule, EquivalencePathRule):
+        while isinstance(rule, EquivalencePathRule) and not recursed:
             child = rule.children[0]
             try:
                 rule = self._rules_dict_copy.pop(child)
@@ -99,9 +100,7 @@ class SpecificationDrawer:
                 # child rule has recurred before
                 rule = self.spec.get_rule(child)
                 recursed = True
-            comb_classes = [comb_class, child]
-        else:
-            comb_classes = [comb_class]
+            comb_classes.append(child)
 
         is_flip_rule = isinstance(rule, ReverseRule)
         if recursed:
@@ -157,14 +156,18 @@ class SpecificationDrawer:
         self, comb_classes: List[CombinatorialClass], node_identifier: str
     ) -> None:
         """Creates hover over tooltip for standard node"""
-        rule = self.spec.get_rule(comb_classes[0])
-        if isinstance(rule, EquivalencePathRule):
+        eqv_rules: List[Rule] = []
+        for path_rule in map(self.spec.get_rule, comb_classes[:-1]):
+            assert isinstance(path_rule, EquivalencePathRule)
+            eqv_rules.extend(path_rule.rules)
+        rule = self.spec.get_rule(comb_classes[-1])
+        if eqv_rules:
             # need to use the rule to be able to see the whole eqv path
-            rule_string = str(rule).replace("\n", "<br>")
-            # get the rule that starts from the end of the equiv path
-            rule = self.spec.get_rule(comb_classes[-1])
+            rule_string = str(EquivalencePathRule(eqv_rules))
         else:
-            rule_string = str(comb_classes[0]).replace("\n", "<br>")
+            assert len(comb_classes) == 1
+            rule_string = str(comb_classes[0])
+        rule_string = rule_string.replace("\n", "<br>")
 
         # labels
         labels = [str(self.spec.get_label(comb_class)) for comb_class in comb_classes]
@@ -497,13 +500,13 @@ class ForestSpecificationDrawer:
 
         # ask gofile.io which server it wants us to use
         logger.info("Sending specification to file host.")
-        req1 = requests.get("https://api.gofile.io/getServer")
+        req1 = requests.get("https://api.gofile.io/getServer", timeout=5)
         req1.raise_for_status()
         server = req1.json()["data"]["server"]
         upload_url = f"https://{server}.gofile.io/uploadFile"
 
         with open(file_path, "rb") as f:
-            req2 = requests.post(upload_url, files={"filesUploaded": f})
+            req2 = requests.post(upload_url, files={"filesUploaded": f}, timeout=5)
         req2.raise_for_status()
 
         os.remove(file_path)

@@ -339,6 +339,7 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
                     subsampler(n=extra_params.pop("n"), **extra_params)
                     for subsampler, extra_params in zip(subsamplers, extra_parameters)
                 )
+        raise RuntimeError("Function did not return")
 
     @staticmethod
     def get_eq_symbol() -> str:
@@ -526,6 +527,7 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
 
     def _terms_to_poly(self, terms: Terms) -> Union[sympy.Poly, int]:
         variables = tuple(sympy.var(f"k_{i}") for i in range(self._num_parent_params))
+        res: Union[sympy.Poly, int]
         if variables:
             res = sympy.Poly(sympy.sympify("0"), *variables)
         else:
@@ -535,7 +537,7 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
                 res += value
             else:
                 res += value * utils.prod(
-                    var ** power for var, power in zip(variables, param)
+                    var**power for var, power in zip(variables, param)
                 )
         return res
 
