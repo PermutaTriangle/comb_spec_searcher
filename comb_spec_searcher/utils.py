@@ -269,11 +269,11 @@ def sympy_expr_to_maple(expr):
         symb = str(expr)
         if "Av" in symb:
             # This section handles the right-hand side for 1x1 verification rules
-            # by turning the "F[Av(0123,0213)(x*k0)]" sympy Symbol into
+            # by turning the "F[Av(0123,0213)(x*k_0)]" sympy Symbol into
             # F[Av(0123,0213), x, k[0]] for the maple equations
             parts = re.findall(r"\((.*?)\)", symb)
             assert len(parts) == 2
-            parts[1] = "x, k[0]" if "k0" in parts[1] else "x"
+            parts[1] = "x, k[0]" if "k_0" in parts[1] else "x"
             return f"F[Av({parts[0]}) {parts[1]}]"
         if "_" in symb:
             var, label = symb.split("_")
