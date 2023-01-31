@@ -1097,7 +1097,7 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
         comb_class = CombinatorialClass.from_dict(d.pop("comb_class"))
         comb_class = cast(CombinatorialClassType, comb_class)
         assert not d
-        return cls(strategy, comb_class)
+        return strategy(comb_class)
 
     @property
     def strategy(
