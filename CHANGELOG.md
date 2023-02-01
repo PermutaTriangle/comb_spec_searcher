@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - `VerificationRule.from_dict` reapplies strategies. 
 
+### Fixed
+- Bug in `CombinatorialSpecification.expand_comb_class`, 
+  it will now unpack all of the `EquivalencePathRule`s. 
+
 ## [4.2.0] 2023-01-18
 ### Changed
 - Update dependency on psutil from 5.8 to 5.9.4
