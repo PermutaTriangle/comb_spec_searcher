@@ -8,7 +8,7 @@ calling the Strategy class and storing its results.
 
 import abc
 import random
-from collections import Counter, defaultdict
+from collections import defaultdict
 from importlib import import_module
 from itertools import chain, product
 from typing import (
