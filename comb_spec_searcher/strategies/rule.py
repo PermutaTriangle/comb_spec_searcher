@@ -8,7 +8,7 @@ calling the Strategy class and storing its results.
 
 import abc
 import random
-from collections import defaultdict
+from collections import Counter, defaultdict
 from importlib import import_module
 from itertools import chain, product
 from typing import (
@@ -42,7 +42,7 @@ from comb_spec_searcher.typing import (
 
 from ..combinatorial_class import CombinatorialClassType, CombinatorialObjectType
 from ..exception import SanityCheckFailure, SpecificationNotFound, StrategyDoesNotApply
-from ..utils import TermsCache
+from ..utils import TermsCache, equal_counters
 from .constructor import Complement, Constructor, DisjointUnion
 
 if TYPE_CHECKING:
@@ -560,7 +560,11 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
             logger.warning("Skipping sanity checking counts for rule\n%s\n%s", self, e)
             return True
         self.subterms = temp_subterms
-        if actual_terms != rule_terms:
+
+        # REMINDER: In python versions 3.9 and older, the counters Counter() and
+        # Counter({tuple(): 0}) are considered distinct. We want them to be treated
+        # as equal for the purpose of comparing counts.
+        if not equal_counters(actual_terms, rule_terms):
             raise SanityCheckFailure(
                 f"The following rule failed sanity check:\n"
                 f"{self}\n"
@@ -1165,7 +1169,20 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
 
     def sanity_check(self, n: int) -> bool:
         try:
-            return self.get_terms(n) == self.comb_class.get_terms(n)
+            # REMINDER: In python versions 3.9 and older, the counters Counter() and
+            # Counter({tuple(): 0}) are considered distinct. We want them to be treated
+            # as equal for the purpose of comparing counts.
+            rule_terms = self.get_terms(n)
+            actual_terms = self.comb_class.get_terms(n)
+            if not equal_counters(rule_terms, actual_terms):
+                raise SanityCheckFailure(
+                    f"The following rule failed sanity check:\n"
+                    f"{self}\n"
+                    f"Failed for size {n}\n"
+                    f"The actual count is {actual_terms}.\n"
+                    f"The rule count is {rule_terms}.",
+                )
+            return True
         except (NotImplementedError, SpecificationNotFound) as e:
             logger.warning("Skipping sanity checking counts for rule\n%s\n%s", self, e)
             return True

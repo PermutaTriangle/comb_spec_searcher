@@ -338,3 +338,12 @@ def size_to_readable(size: int) -> str:
     if size / 1024**3 < 1:
         return str(round(size / 1024**2, 1)) + " MiB"
     return str(round(size / 1024**3, 3)) + " GiB"
+
+
+def equal_counters(A: Counter, B: Counter) -> bool:
+    """
+    In python versions 3.9 and older, the counters Counter() and
+    Counter({tuple(): 0}) are considered distinct. We want them to be treated
+    as equal for the purpose of comparing counts.
+    """
+    return all(A[i] == B[i] for i in set(A.keys()).union(set(B.keys())))
