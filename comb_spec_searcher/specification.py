@@ -217,9 +217,9 @@ class CombinatorialSpecification(
         for cc, rule in self.rules_dict.items():
             if cc != comb_class:
                 if isinstance(rule, EquivalencePathRule):
-                    spec_rules.extend(rule.rules)
+                    spec_rules.extend(map(copy, rule.rules))
                 else:
-                    spec_rules.append(rule)
+                    spec_rules.append(copy(rule))
 
         ruledb = RuleDBForest(reverse=False, rule_cache=spec_rules)
         css = CombinatorialSpecificationSearcher(
