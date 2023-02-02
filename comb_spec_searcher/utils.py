@@ -6,6 +6,7 @@ import re
 import sys
 import time
 from collections import Counter
+from itertools import chain
 from typing import TYPE_CHECKING, Any, Callable
 from typing import Counter as CounterType
 from typing import Dict, Iterable, Iterator, List, Optional, Tuple, TypeVar, cast
@@ -346,4 +347,4 @@ def equal_counters(A: Counter, B: Counter) -> bool:
     Counter({tuple(): 0}) are considered distinct. We want them to be treated
     as equal for the purpose of comparing counts.
     """
-    return all(A[i] == B[i] for i in set(A.keys()).union(set(B.keys())))
+    return all(A[i] == B[i] for i in set(chain(A.keys(), B.keys())))
