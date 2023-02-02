@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Bug in `CombinatorialSpecification.expand_comb_class`, 
   it will now unpack all of the `EquivalencePathRule`s. 
+- Bug in `Quotient.get_terms`. Look at reliance profile 
+  to check for initial conditions, so as to avoid max 
+  recursion error.
 
 ## [4.2.0] 2023-01-18
 ### Changed
