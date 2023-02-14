@@ -275,7 +275,7 @@ def sympy_expr_to_maple(expr):
             parts = re.findall(r"\((.*?)\)", symb)
             assert len(parts) == 2
             parts[1] = "x, k[0]" if "k_0" in parts[1] else "x"
-            return f"F[Av({parts[0]}) {parts[1]}]"
+            return f"F[Av({parts[0]}), {parts[1]}]"
         if "_" in symb:
             var, label = symb.split("_")
             return f"{var}[{label}]"
