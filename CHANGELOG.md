@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Bug in `Quotient.get_terms`. Look at reliance profile 
   to check for initial conditions, so as to avoid max 
   recursion error.
+- Bug in `DisjointUnion.build_param_map`. If two params 
+  map to the same, then these shouldn't sum. 
+- `EquivalencePathRule` can not accept `Complement` rules 
+  where two parameters map to the same parameter as this will 
+  result in more than permuting labels.
 
 ## [4.2.0] 2023-01-18
 ### Changed
