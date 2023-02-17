@@ -26,7 +26,7 @@ from comb_spec_searcher.typing import (
 class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectType]):
     """The constructor is akin to the 'counting function' in the comb exp paper."""
 
-    def can_be_equivalent(self) -> bool:
+    def can_be_equivalent(self) -> bool:  # pylint: disable=no-self-use
         """
         Return False if the constructor can NOT be an 'identity' map
         (i.e., up to rearranging params)
