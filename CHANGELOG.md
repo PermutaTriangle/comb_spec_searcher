@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Bug in `Quotient.get_terms`. Look at reliance profile 
   to check for initial conditions, so as to avoid max 
   recursion error.
+- `CombinatorialSpecification.get_genf` will not try to 
+  solve systems of equations with catalytic variables.
 
 ## [4.2.0] 2023-01-18
 ### Changed

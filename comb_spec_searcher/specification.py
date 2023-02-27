@@ -355,6 +355,12 @@ class CombinatorialSpecification(
                     sympy.Function("NOTIMPLEMENTED")(x),
                 )
 
+    def number_of_cvs(self):
+        """Return the number of catalytic variables used."""
+        return max(
+            len(comb_class.extra_parameters) for comb_class in self.comb_classes()
+        )
+
     def get_initial_conditions(self, check: int = 6) -> List[Expr]:
         """
         Compute the initial conditions of the root class. It will use the
@@ -390,6 +396,11 @@ class CombinatorialSpecification(
         logger.info("Computing initial conditions")
         initial_conditions = self.get_initial_conditions(check)
         logger.info(pretty_print_equations(root_func, initial_conditions, eqs))
+        if self.number_of_cvs() > 0:
+            raise NotImplementedError(
+                "Can't compute generating function for a specification with "
+                "catalytic variables."
+            )
         logger.info("Solving...")
         solutions = solve(
             eqs,
