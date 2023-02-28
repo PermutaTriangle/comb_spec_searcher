@@ -419,6 +419,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         return (
             self.strategy.can_be_equivalent()
             and len(self.non_empty_children(is_empty)) == 1
+            and self.constructor.can_be_equivalent()
         )
 
     def forest_key(
@@ -858,6 +859,13 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
                 assert isinstance(original_constructor, (DisjointUnion, Complement))
                 rules_parameters = original_constructor.extra_parameters[0]
                 if isinstance(original_constructor, Complement):
+                    if len(set(rules_parameters.values())) != len(
+                        rules_parameters.values()
+                    ):
+                        raise NotImplementedError(
+                            "Complement rules with duplicate parameters "
+                            "are not supported in equivalence path rules"
+                        )
                     rules_parameters = {b: a for a, b in rules_parameters.items()}
                 extra_parameters = {
                     parent_var: rules_parameters[child_var]
