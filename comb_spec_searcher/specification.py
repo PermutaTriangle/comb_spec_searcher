@@ -6,7 +6,7 @@ from copy import copy
 from functools import reduce
 from itertools import chain
 from operator import mul
-from typing import Dict, Generic, Iterable, Iterator, List, Optional, Set, Union
+from typing import Any, Dict, Generic, Iterable, Iterator, List, Optional, Set, Union
 
 import sympy
 from logzero import logger
@@ -213,9 +213,14 @@ class CombinatorialSpecification(
         if isinstance(comb_class, int):
             comb_class = self.get_comb_class(comb_class)
 
-        spec_rules = tuple(
-            copy(rule) for cc, rule in self.rules_dict.items() if cc != comb_class
-        )
+        spec_rules: List[AbstractRule] = []
+        for cc, rule in self.rules_dict.items():
+            if cc != comb_class:
+                if isinstance(rule, EquivalencePathRule):
+                    spec_rules.extend(map(copy, rule.rules))
+                else:
+                    spec_rules.append(copy(rule))
+
         ruledb = RuleDBForest(reverse=False, rule_cache=spec_rules)
         css = CombinatorialSpecificationSearcher(
             self.root,
@@ -303,12 +308,12 @@ class CombinatorialSpecification(
             comb_class = self._label_to_class[label]
         except KeyError as e:
             raise InvalidOperationError(
-                f"The label {comb_class} does not correspond to a tiling"
+                f"The label {label} does not correspond to a tiling"
                 " in the specification."
             ) from e
         return comb_class
 
-    def get_function(self, comb_class: CombinatorialClassType) -> Function:
+    def get_function(self, comb_class: CombinatorialClassType) -> Any:
         """
         Return a sympy function for the comb class, using the label it is
         assigned.
@@ -350,6 +355,12 @@ class CombinatorialSpecification(
                     sympy.Function("NOTIMPLEMENTED")(x),
                 )
 
+    def number_of_cvs(self):
+        """Return the number of catalytic variables used."""
+        return max(
+            len(comb_class.extra_parameters) for comb_class in self.comb_classes()
+        )
+
     def get_initial_conditions(self, check: int = 6) -> List[Expr]:
         """
         Compute the initial conditions of the root class. It will use the
@@ -374,7 +385,7 @@ class CombinatorialSpecification(
             )
         return self.root.initial_conditions(check)
 
-    def get_genf(self, check: int = 6) -> Expr:
+    def get_genf(self, check: int = 6) -> Any:
         """
         Return the generating function for the root comb class.
 
@@ -385,6 +396,11 @@ class CombinatorialSpecification(
         logger.info("Computing initial conditions")
         initial_conditions = self.get_initial_conditions(check)
         logger.info(pretty_print_equations(root_func, initial_conditions, eqs))
+        if self.number_of_cvs() > 0:
+            raise NotImplementedError(
+                "Can't compute generating function for a specification with "
+                "catalytic variables."
+            )
         logger.info("Solving...")
         solutions = solve(
             eqs,
@@ -491,7 +507,7 @@ class CombinatorialSpecification(
                         return False
             except NotImplementedError:
                 logger.warning(
-                    "Can't sanity check the rule %s -> %s, which is\n" "%s",
+                    "Can't sanity check the rule %s -> %s, which is\n%s",
                     self.get_label(rule.comb_class),
                     tuple(self.get_label(child) for child in rule.children),
                     rule,
@@ -641,8 +657,7 @@ class AlreadyVerified(VerificationStrategy[CombinatorialClass, CombinatorialObje
     def verified(self, comb_class: CombinatorialClass) -> bool:
         return comb_class in self.verified_classes
 
-    @staticmethod
-    def formal_step() -> str:
+    def formal_step(self) -> str:
         return "already verified"
 
     def to_jsonable(self) -> dict:

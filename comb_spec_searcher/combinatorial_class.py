@@ -6,6 +6,7 @@ from functools import reduce
 from importlib import import_module
 from operator import mul
 from typing import (
+    Any,
     Callable,
     Counter,
     DefaultDict,
@@ -77,7 +78,7 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
 
     def get_function(
         self: CombinatorialClassType, get_label: Callable[[CombinatorialClassType], int]
-    ) -> sympy.Function:
+    ) -> Any:
         """
         Return a sympy function for the comb class, using the label it is
         assigned.

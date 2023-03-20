@@ -6,6 +6,7 @@ import re
 import sys
 import time
 from collections import Counter
+from itertools import chain
 from typing import TYPE_CHECKING, Any, Callable
 from typing import Counter as CounterType
 from typing import Dict, Iterable, Iterator, List, Optional, Tuple, TypeVar, cast
@@ -102,6 +103,9 @@ class TermsCache:
 
     def __getitem__(self, index: int) -> Terms:
         return self.data.__getitem__(index)
+
+    def __iter__(self) -> Iterator[Terms]:
+        return iter(self.data)
 
     @classmethod
     def clean_keys(cls, terms: Terms) -> Terms:
@@ -256,13 +260,22 @@ def sympy_expr_to_maple(expr):
         if "NOTIMPLEMENTED" in str(expr):
             return "NOTIMPLEMENTED"
         split = re.compile(r"F_([0-9]+)\((.*)\)")
-        assert split.match(repr(expr)) is not None, expr
-        label = split.match(repr(expr)).group(1)
-        args = map(sympy.sympify, split.match(repr(expr)).group(2).split(", "))
+        splitmatch = split.match(repr(expr))
+        assert splitmatch is not None, expr
+        label = splitmatch.group(1)
+        args = map(sympy.sympify, splitmatch.group(2).split(", "))
         content = f"{label}, " + ", ".join(map(sympy_expr_to_maple, args))
         return f"F[{content}]"
     if isinstance(expr, sympy.core.symbol.Symbol):
         symb = str(expr)
+        if "Av" in symb:
+            # This section handles the right-hand side for 1x1 verification rules
+            # by turning the "F[Av(1234,1324)(x*k_0)]" sympy Symbol into
+            # F[Av(1234,1324), x, k[0]] for the maple equations
+            parts = re.findall(r"\((.*?)\)", symb)
+            assert len(parts) == 2
+            parts[1] = "x, k[0]" if "k_0" in parts[1] else "x"
+            return f"F[Av({parts[0]}), {parts[1]}]"
         if "_" in symb:
             var, label = symb.split("_")
             return f"{var}[{label}]"
@@ -326,3 +339,12 @@ def size_to_readable(size: int) -> str:
     if size / 1024**3 < 1:
         return str(round(size / 1024**2, 1)) + " MiB"
     return str(round(size / 1024**3, 3)) + " GiB"
+
+
+def equal_counters(A: Counter, B: Counter) -> bool:
+    """
+    In python versions 3.9 and older, the counters Counter() and
+    Counter({tuple(): 0}) are considered distinct. We want them to be treated
+    as equal for the purpose of comparing counts.
+    """
+    return all(A[i] == B[i] for i in set(chain(A.keys(), B.keys())))

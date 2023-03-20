@@ -224,7 +224,7 @@ def proof_tree_generator_dfs(
     """
 
     def _dfs_tree(
-        root_label: int, seen: FrozenSet[int], maximum: int = None
+        root_label: int, seen: FrozenSet[int], maximum: Optional[int] = None
     ) -> Iterator[Tuple[FrozenSet[int], Node]]:
         if maximum is not None and maximum <= 0:
             return

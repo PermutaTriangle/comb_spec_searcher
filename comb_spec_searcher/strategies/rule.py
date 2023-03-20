@@ -42,7 +42,7 @@ from comb_spec_searcher.typing import (
 
 from ..combinatorial_class import CombinatorialClassType, CombinatorialObjectType
 from ..exception import SanityCheckFailure, SpecificationNotFound, StrategyDoesNotApply
-from ..utils import TermsCache
+from ..utils import TermsCache, equal_counters
 from .constructor import Complement, Constructor, DisjointUnion
 
 if TYPE_CHECKING:
@@ -419,6 +419,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         return (
             self.strategy.can_be_equivalent()
             and len(self.non_empty_children(is_empty)) == 1
+            and self.constructor.can_be_equivalent()
         )
 
     def forest_key(
@@ -560,7 +561,11 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
             logger.warning("Skipping sanity checking counts for rule\n%s\n%s", self, e)
             return True
         self.subterms = temp_subterms
-        if actual_terms != rule_terms:
+
+        # REMINDER: In python versions 3.9 and older, the counters Counter() and
+        # Counter({tuple(): 0}) are considered distinct. We want them to be treated
+        # as equal for the purpose of comparing counts.
+        if not equal_counters(actual_terms, rule_terms):
             raise SanityCheckFailure(
                 f"The following rule failed sanity check:\n"
                 f"{self}\n"
@@ -771,9 +776,8 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
                 raise NotImplementedError
         return self._constructor
 
-    @staticmethod
     def is_equivalence(
-        is_empty: Optional[Callable[[CombinatorialClassType], bool]] = None
+        self, is_empty: Optional[Callable[[CombinatorialClassType], bool]] = None
     ) -> bool:
         return True
 
@@ -855,6 +859,13 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
                 assert isinstance(original_constructor, (DisjointUnion, Complement))
                 rules_parameters = original_constructor.extra_parameters[0]
                 if isinstance(original_constructor, Complement):
+                    if len(set(rules_parameters.values())) != len(
+                        rules_parameters.values()
+                    ):
+                        raise NotImplementedError(
+                            "Complement rules with duplicate parameters "
+                            "are not supported in equivalence path rules"
+                        )
                     rules_parameters = {b: a for a, b in rules_parameters.items()}
                 extra_parameters = {
                     parent_var: rules_parameters[child_var]
@@ -871,9 +882,8 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
             )
         return self._constructor
 
-    @staticmethod
     def is_equivalence(
-        is_empty: Optional[Callable[[CombinatorialClassType], bool]] = None
+        self, is_empty: Optional[Callable[[CombinatorialClassType], bool]] = None
     ) -> bool:
         return True
 
@@ -1099,7 +1109,7 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
         comb_class = CombinatorialClass.from_dict(d.pop("comb_class"))
         comb_class = cast(CombinatorialClassType, comb_class)
         assert not d
-        return cls(strategy, comb_class)
+        return strategy(comb_class)
 
     @property
     def strategy(
@@ -1110,9 +1120,8 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
             super().strategy,
         )
 
-    @staticmethod
     def is_equivalence(
-        is_empty: Optional[Callable[[CombinatorialClassType], bool]] = None
+        self, is_empty: Optional[Callable[[CombinatorialClassType], bool]] = None
     ) -> bool:
         return False
 
@@ -1168,7 +1177,20 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
 
     def sanity_check(self, n: int) -> bool:
         try:
-            return self.get_terms(n) == self.comb_class.get_terms(n)
+            # REMINDER: In python versions 3.9 and older, the counters Counter() and
+            # Counter({tuple(): 0}) are considered distinct. We want them to be treated
+            # as equal for the purpose of comparing counts.
+            rule_terms = self.get_terms(n)
+            actual_terms = self.comb_class.get_terms(n)
+            if not equal_counters(rule_terms, actual_terms):
+                raise SanityCheckFailure(
+                    f"The following rule failed sanity check:\n"
+                    f"{self}\n"
+                    f"Failed for size {n}\n"
+                    f"The actual count is {actual_terms}.\n"
+                    f"The rule count is {rule_terms}.",
+                )
+            return True
         except (NotImplementedError, SpecificationNotFound) as e:
             logger.warning("Skipping sanity checking counts for rule\n%s\n%s", self, e)
             return True
