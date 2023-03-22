@@ -631,11 +631,9 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         """
         if not self.ruledb.has_specification():
             raise SpecificationNotFound
-        kwargs = {
-            "minimization_time_limit": minimization_time_limit,
-            "smallest": smallest,
-        }
-        rules = self._get_specification_rules(**kwargs)
+        rules = self._get_specification_rules(
+            smallest=smallest, minimization_time_limit=minimization_time_limit
+        )
         logger.info("Creating a specification.")
         return CombinatorialSpecification(self.start_class, rules)
 
