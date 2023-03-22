@@ -204,13 +204,23 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
         )
 
     def min_size(self) -> int:
-        """Return the minimum size of the objects in the combinatorial class.
+        """
+        This is only here for when you are using an is empty method which returns
+        False on sets which are empty. If you are using an is empty method which
+        is 100% accurate, you can ignore this method.
+
+        Return the minimum size of the objects in the combinatorial class.
         This is the method used by the Cartesian product constructor.
         For productivity reasons, you must at least return 1, if this should be
-        greater than 0."""
-        raise NotImplementedError(
-            "To use the CartesianProduct constructor, 'min_size' must be implemented."
-        )
+        greater than 0.
+
+        By default, CartesianProductStrategy assumes that all children are
+        non-empty, and hence this check is redundant so it instead calls the
+        'minimum_size_of_object' method. But, if you overwrite the
+        CartesianProductStrategy to allow for some children to be empty, then
+        the rules are reversible only if all children are non-empty.
+        """
+        return self.minimum_size_of_object()
 
     def to_bytes(self) -> bytes:
         """Return a compressed version of the class in the form of a 'bytes'
