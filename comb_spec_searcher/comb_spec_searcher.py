@@ -559,7 +559,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             logger.debug("Searching for specification.")
             if self.has_specification():
                 logger.info("Specification detected.")
-                return self.ruledb.get_specification_rules(
+                return self._get_specification_rules(
                     smallest=smallest,
                     minimization_time_limit=0.01 * (time.time() - auto_search_start),
                 )
@@ -635,6 +635,13 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             "minimization_time_limit": minimization_time_limit,
             "smallest": smallest,
         }
-        rules = self.ruledb.get_specification_rules(**kwargs)
+        rules = self._get_specification_rules(**kwargs)
         logger.info("Creating a specification.")
         return CombinatorialSpecification(self.start_class, rules)
+
+    def _get_specification_rules(
+        self, smallest: bool = False, minimization_time_limit: float = 10
+    ) -> Iterator[AbstractRule]:
+        return self.ruledb.get_specification_rules(
+            smallest=smallest, minimization_time_limit=minimization_time_limit
+        )

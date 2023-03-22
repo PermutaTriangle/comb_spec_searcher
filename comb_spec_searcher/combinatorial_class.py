@@ -203,6 +203,15 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
             "'minimum_size_of_object' must be implemented."
         )
 
+    def min_size(self) -> int:
+        """Return the minimum size of the objects in the combinatorial class.
+        This is the method used by the Cartesian product constructor.
+        For productivity reasons, you must at least return 1, if this should be
+        greater than 0."""
+        raise NotImplementedError(
+            "To use the CartesianProduct constructor, 'min_size' must be implemented."
+        )
+
     def to_bytes(self) -> bytes:
         """Return a compressed version of the class in the form of a 'bytes'
         object. If you are having memory issues then implement this function

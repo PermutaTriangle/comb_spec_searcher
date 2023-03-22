@@ -52,9 +52,7 @@ class RuleDBAbstract(abc.ABC):
 
     @property
     def strategy_pack(self) -> StrategyPack:
-        from tilings.tilescope import OddOrEvenStrategy
-
-        return self.searcher.strategy_pack.add_initial(OddOrEvenStrategy())
+        return self.searcher.strategy_pack
 
     @property
     def root_label(self) -> int:
