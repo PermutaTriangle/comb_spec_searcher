@@ -44,7 +44,7 @@ cloning the repository:
 
 .. code:: bash
 
-       ./setup.py develop
+       pip install --editable .
 
 Combinatorial exploration
 -------------------------
