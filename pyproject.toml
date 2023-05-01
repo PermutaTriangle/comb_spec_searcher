@@ -1,5 +1,6 @@
 [project]
 name = "comb_spec_searcher"
+version = "4.2.0"
 authors = [
     {name = "Permuta Triangle", email = "permutatriangle@gmail.com"},
 ]
@@ -26,6 +27,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
+    "Programming Language :: Rust",
     "Topic :: Education",
     "Topic :: Scientific/Engineering :: Mathematics",
 ]
@@ -38,7 +40,6 @@ dependencies = [
     "typing-extensions==4.4.0",
     "tabulate==0.9.0",
 ]
-dynamic = ["version"]
 
 [project.urls]
 homepage = "https://github.com/PermutaTriangle/comb_spec_searcher"
@@ -46,22 +47,11 @@ source = "https://github.com/PermutaTriangle/comb_spec_searcher"
 tracker = "https://github.com/PermutaTriangle/comb_spec_searcher/issues"
 
 [build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+requires = ["maturin>=0.14,<0.15"]
+build-backend = "maturin"
 
-[tool.setuptools]
-include-package-data = true
-[tool.setuptools.package-data]
-comb_spec_searcher = ["py.typed"]
-
-[tool.setuptools.packages.find]
-exclude = ["*.tests", "*.tests.*", "tests.*", "tests"]
-
-[tool.setuptools.dynamic]
-version = {attr = "comb_spec_searcher.__version__"}
-
-
-
+[tool.maturin]
+exclude = ["tests/**/*"]
 
 [tool.black]
 target-version = ['py38']
