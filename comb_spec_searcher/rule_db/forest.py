@@ -5,7 +5,6 @@ import time
 from datetime import timedelta
 from typing import (
     Callable,
-    Deque,
     Dict,
     Generic,
     Iterable,
@@ -18,6 +17,7 @@ from typing import (
     Union,
 )
 
+from comb_spec_searcher_rs import ForestRuleKey, RuleBucket, TableMethod
 from logzero import logger
 
 from comb_spec_searcher.class_db import ClassDB
@@ -35,7 +35,7 @@ from comb_spec_searcher.strategies.strategy import (
     StrategyFactory,
 )
 from comb_spec_searcher.strategies.strategy_pack import StrategyPack
-from comb_spec_searcher.typing import CSSstrategy, ForestRuleKey, RuleBucket, RuleKey
+from comb_spec_searcher.typing import CSSstrategy, RuleKey
 
 T = TypeVar("T")
 RuleWithShifts = Tuple[RuleKey, Tuple[int, ...]]
@@ -190,230 +190,6 @@ class Function:
         return "\n".join(parts)
 
 
-class TableMethod:
-    def __init__(self) -> None:
-        self._rules: List[ForestRuleKey] = []
-        self._shifts: List[List[Optional[int]]] = []
-        self._function: Function = Function()
-        self._gap_size: int = 1
-        self._rules_using_class: DefaultList[List[Tuple[int, int]]] = DefaultList(list)
-        self._rules_pumping_class: DefaultList[List[int]] = DefaultList(list)
-        self._processing_queue: Deque[int] = Deque()
-        self._current_gap: Tuple[int, int] = (1, 1)
-        self._rule_holding_extra_terms: Set[int] = set()
-
-    @property
-    def function(self) -> Dict[int, Optional[int]]:
-        """
-        Return a dict representing the number of term that are computable for each
-        class.
-        Only the class where it can get at least a term are included. If a class is map
-        to None, then all the terms of the enumeration are computable.
-        """
-        return self._function.to_dict()
-
-    def add_rule_key(
-        self,
-        rule_key: ForestRuleKey,
-    ):
-        """
-        Add the rule to the database.
-
-        INPUTS:
-          - `rule_key`
-          - `shifts_for_zero`: The values of the shifts if no information was known
-          about any of the classes.
-          - `rule_bucket` the type of rule
-        """
-        self._rules.append(rule_key)
-        self._shifts.append(self._compute_shift(rule_key.key, rule_key.shifts))
-        max_gap = max((abs(s) for s in rule_key.shifts), default=0)
-        if max_gap > self._gap_size:
-            self._gap_size = max_gap
-            self._correct_gap()
-        if self._function[rule_key.parent] is not None:
-            rule_idx = len(self._rules) - 1
-            self._rules_pumping_class[rule_key.parent].append(rule_idx)
-            for child_idx, child in enumerate(rule_key.children):
-                if self._function[child] is not None:
-                    self._rules_using_class[child].append((rule_idx, child_idx))
-            self._processing_queue.append(rule_idx)
-        self._process_queue()
-
-    def is_pumping(self, label: int) -> bool:
-        """
-        Determine if the comb_class is pumping in the current universe.
-        """
-        return self._function[label] is None
-
-    def status(self) -> str:
-        s = f"\tSize of the gap: {self._gap_size}\n"
-        s += f"\tSize of the stable subset: {self._function.infinity_count}\n"
-        s += f"\tSizes of the pre-images: {self._function.preimage_count}\n"
-        return s
-
-    def stable_subset(self) -> Iterator[int]:
-        return self._function.preimage(None)
-
-    def pumping_subuniverse(
-        self,
-    ) -> Iterator[ForestRuleKey]:
-        """
-        Iterator over all the forest rule keys that contain only pumping
-        combinatorial classes.
-        """
-        stable_subset = set(self.stable_subset())
-        for forest_key in self._rules:
-            if forest_key.parent in stable_subset and stable_subset.issuperset(
-                forest_key.children
-            ):
-                yield forest_key
-
-    def _compute_shift(
-        self,
-        rule_key: RuleKey,
-        shifts_for_zero: Tuple[int, ...],
-    ) -> List[Optional[int]]:
-        """
-        Compute the initial value for the shifts a rule based on the current state of
-        the function.
-        """
-        parent_current_value = self._function[rule_key[0]]
-        if parent_current_value is None:
-            return [None for _ in shifts_for_zero]
-        chidlren_function_value = map(self._function.__getitem__, rule_key[1])
-        return [
-            fvalue + sfz - parent_current_value if fvalue is not None else None
-            for fvalue, sfz in zip(chidlren_function_value, shifts_for_zero)
-        ]
-
-    def _correct_gap(self) -> None:
-        """
-        Correct the gap and if needed queue rules for the classes that were previously
-        on the right hand  side of the gap.
-
-        This should be toggled every time the gap changes whether the size changes or
-        the some value changes of the function caused the gap to change.
-        """
-        k = self._function.preimage_gap(self._gap_size)
-        new_gap = (k, k + self._gap_size - 1)
-        if new_gap[1] > self._current_gap[1]:
-            self._processing_queue.extend(self._rule_holding_extra_terms)
-            self._rule_holding_extra_terms.clear()
-        self._current_gap = new_gap
-
-    def _process_queue(self) -> None:
-        """
-        Try to make improvement with all the class in the processing queue.
-        """
-        while self._processing_queue or self._rule_holding_extra_terms:
-            while self._processing_queue:
-                rule_idx = self._processing_queue.popleft()
-                shifts = self._shifts[rule_idx]
-                if self._can_give_terms(shifts):
-                    parent = self._rules[rule_idx].parent
-                    self._increase_value(parent, rule_idx)
-            if self._rule_holding_extra_terms:
-                rule_idx = self._rule_holding_extra_terms.pop()
-                parent = self._rules[rule_idx].parent
-                self._set_infinite(parent)
-
-    @staticmethod
-    def _can_give_terms(shifts: List[Optional[int]]) -> bool:
-        """
-        Return True if the shifts indicate that a new terms can be computed.
-        """
-        return all(s is None or s > 0 for s in shifts)
-
-    def _increase_value(self, comb_class: int, rule_idx: int) -> None:
-        """
-        Increase the value of the comb_class and put on the processing stack any rule
-        that can now give a new term.
-
-        The rule_idx must indicate the rule used to justify the increase.
-        """
-        current_value = self._function[comb_class]
-        if current_value is None:
-            return
-        if current_value > self._current_gap[1]:
-            self._rule_holding_extra_terms.add(rule_idx)
-            return
-        self._function.increase_value(comb_class)
-        # Correction of the gap
-        gap_start = self._function.preimage_gap(self._gap_size)
-        if self._current_gap[0] != gap_start:
-            self._correct_gap()
-        # Correction of the shifts for rule pumping comb_class
-        for r_idx in self._rules_pumping_class[comb_class]:
-            shifts = self._shifts[r_idx]
-            for i, v in enumerate(shifts):
-                shifts[i] = v - 1 if v is not None else None
-            if self._can_give_terms(shifts):
-                self._processing_queue.append(r_idx)
-        # Correction of the shifts for rules using comb_class to pump
-        for r_idx, class_idx in self._rules_using_class[comb_class]:
-            shifts = self._shifts[r_idx]
-            current_shift = shifts[class_idx]
-            assert current_shift is not None
-            shifts[class_idx] = current_shift + 1
-            if self._can_give_terms(shifts):
-                self._processing_queue.append(r_idx)
-
-    def _set_infinite(self, comb_class: int) -> None:
-        """
-        Set the value if the class to infinity.
-
-        This should happen when we know that we cannot pump anything on the left side
-        of the gap.
-        """
-        current_value = self._function[comb_class]
-        if current_value is None:
-            return
-        assert current_value > self._current_gap[1]
-        assert not self._processing_queue
-        self._function.set_infinite(comb_class)
-        # This class will never be increased again so we remove any occurrence
-        # of the rule of any rule for that class from _rules_using_class and
-        # _rules_pumping_class
-        for rule_idx in self._rules_pumping_class[comb_class]:
-            for child in self._rules[rule_idx].children:
-                self._rules_using_class[child] = [
-                    (ri, ci)
-                    for ri, ci in self._rules_using_class[child]
-                    if ri != rule_idx
-                ]
-        self._rules_pumping_class[comb_class].clear()
-        # Correction of the shifts for rules using comb_class to pump
-        for rule_idx, class_idx in self._rules_using_class[comb_class]:
-            shifts = self._shifts[rule_idx]
-            shifts[class_idx] = None
-            if self._can_give_terms(shifts):
-                self._processing_queue.append(rule_idx)
-        self._rules_using_class[comb_class].clear()
-
-    def rule_info(self, rule_idx: int) -> str:
-        """
-        Return a string with information about a particular rule.
-        Mostly intended for debugging.
-        """
-
-        def v_to_str(v: Optional[int]) -> str:
-            """Return a string for the integer and infinity if None"""
-            if v is None:
-                return "∞"
-            return str(v)
-
-        rule_key = self._rules[rule_idx]
-        current_value = f"{v_to_str(self._function[rule_key.parent])} -> " + ", ".join(
-            map(v_to_str, (self._function[c] for c in rule_key.children))
-        )
-        shifts = map(v_to_str, self._shifts[rule_idx])
-        child_with_shift = ", ".join(
-            f"({c}, {s})" for c, s in zip(rule_key.children, shifts)
-        )
-        return f"{rule_key.parent} -> {child_with_shift} || {current_value}"
-
-
 class ForestRuleExtractor:
     MINIMIZE_ORDER = (
         RuleBucket.REVERSE,
@@ -491,10 +267,7 @@ class ForestRuleExtractor:
         """
         logger.info("Minimizing %s", key.name)
         maybe_useful: List[ForestRuleKey] = []
-        not_minimizing: List[List[ForestRuleKey]] = [
-            self.needed_rules,
-            maybe_useful,
-        ]
+        not_minimizing: List[List[ForestRuleKey]] = [self.needed_rules, maybe_useful]
         not_minimizing.extend(
             rules for k, rules in self.rule_by_bucket.items() if k != key
         )
@@ -619,10 +392,7 @@ class RuleDBForest(RuleDBAbstract):
     """
 
     def __init__(
-        self,
-        *,
-        reverse: bool = True,
-        rule_cache: Iterable[AbstractRule] = tuple(),
+        self, *, reverse: bool = True, rule_cache: Iterable[AbstractRule] = tuple()
     ) -> None:
         super().__init__()
         self.reverse = reverse

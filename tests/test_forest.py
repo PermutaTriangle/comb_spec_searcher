@@ -2,11 +2,11 @@ import itertools
 from typing import Dict, List, Union
 
 import pytest
+from comb_spec_searcher_rs import ForestRuleKey, RuleBucket
 
 from comb_spec_searcher import CombinatorialSpecificationSearcher
 from comb_spec_searcher.rule_db.forest import Function, RuleDBForest, TableMethod
 from comb_spec_searcher.strategies.strategy import EmptyStrategy
-from comb_spec_searcher.typing import ForestRuleKey, RuleBucket
 from example import AvoidingWithPrefix, pack
 
 
@@ -114,6 +114,15 @@ class TestFunction:
 
 
 # Test of the table method
+
+
+def test_rule_key_eq():
+    key1 = ForestRuleKey(0, (1, 2), (0, 0), RuleBucket.NORMAL)
+    key2 = ForestRuleKey(0, (1, 2), (0, 0), RuleBucket.NORMAL)
+    key3 = ForestRuleKey(1, (), (), RuleBucket.VERIFICATION)
+    assert key1 == key2
+    assert key1 != key3
+    assert key2 != key3
 
 
 def test_132_universe_pumping():
@@ -224,16 +233,7 @@ def test_segmented():
 
     tb.add_rule_key(ForestRuleKey(7, tuple(), tuple(), RuleBucket.UNDEFINED))
     tb.add_rule_key(ForestRuleKey(8, (9, 5), (1, 0), RuleBucket.UNDEFINED))
-    assert tb.function == {
-        2: None,
-        3: 2,
-        4: None,
-        5: None,
-        6: 1,
-        7: None,
-        8: 1,
-        16: 1,
-    }
+    assert tb.function == {2: None, 3: 2, 4: None, 5: None, 6: 1, 7: None, 8: 1, 16: 1}
 
     tb.add_rule_key(ForestRuleKey(12, (20, 5), (-1, 0), RuleBucket.UNDEFINED))
     tb.add_rule_key(ForestRuleKey(20, (13,), (0,), RuleBucket.UNDEFINED))
