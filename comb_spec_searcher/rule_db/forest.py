@@ -4,16 +4,12 @@ import platform
 import time
 from datetime import timedelta
 from typing import (
-    Callable,
     Dict,
-    Generic,
     Iterable,
     Iterator,
     List,
-    Optional,
     Set,
     Tuple,
-    TypeVar,
     Union,
 )
 
@@ -35,159 +31,10 @@ from comb_spec_searcher.strategies.strategy import (
     StrategyFactory,
 )
 from comb_spec_searcher.strategies.strategy_pack import StrategyPack
-from comb_spec_searcher.typing import CSSstrategy, RuleKey
+from comb_spec_searcher.typing import CSSstrategy
 
-T = TypeVar("T")
-RuleWithShifts = Tuple[RuleKey, Tuple[int, ...]]
 SortedRWS = Dict[RuleBucket, List[ForestRuleKey]]
 empty_strategy: EmptyStrategy = EmptyStrategy()
-
-
-class DefaultList(Generic[T]):
-    """
-    A list data structure get automatically gets longer if an index not existing is
-    requested.
-
-    When getting longer the list is filled by calling the provied `default_factory`.
-    This is similar to the `collections.defaultdict` data structure.
-    """
-
-    def __init__(self, default_factory: Callable[[], T]):
-        self._default_factory = default_factory
-        self._list: List[T] = []
-
-    def _increase_list_len(self, key: int) -> None:
-        """
-        Increase the length of the list so that the given is valid.
-        """
-        num_new_entry = key - len(self._list) + 1
-        self._list.extend((self._default_factory() for _ in range(num_new_entry)))
-
-    def __getitem__(self, key: int) -> T:
-        try:
-            return self._list[key]
-        except IndexError:
-            self._increase_list_len(key)
-            return self._list[key]
-
-    def __setitem__(self, key: int, value: T) -> None:
-        self._list[key] = value
-
-    def __iter__(self) -> Iterator[T]:
-        return iter(self._list)
-
-    def __str__(self) -> str:
-        return str(self._list)
-
-
-class Function:
-    """
-    A python representation of a function.
-
-    The function maps natural number to a natural number or infinity (represented
-    by the use of None)
-
-    The default value of the function is 0.
-    """
-
-    def __init__(self) -> None:
-        self._value: List[Optional[int]] = []
-        self._preimage_count: DefaultList[int] = DefaultList(int)
-        self._infinity_count: int = 0
-
-    @property
-    def preimage_count(self) -> List[int]:
-        """
-        Return the number of classes for each value of the function.
-        """
-        count = list(self._preimage_count)
-        while count and count[-1] == 0:
-            count.pop()
-        return count
-
-    @property
-    def infinity_count(self) -> int:
-        return self._infinity_count
-
-    def __getitem__(self, key: int) -> Optional[int]:
-        """
-        Return the value of the function for the given key.
-        """
-        try:
-            return self._value[key]
-        except IndexError:
-            self._increase_list_len(key)
-            return 0
-
-    def _increase_list_len(self, key: int) -> None:
-        num_new_entry = key - len(self._value) + 1
-        self._value.extend((0 for _ in range(num_new_entry)))
-        self._preimage_count[0] += num_new_entry
-
-    def increase_value(self, key: int) -> None:
-        """
-        Increase by one the value of the function for the given key.
-        """
-        try:
-            old_value = self._value[key]
-            if old_value is None:
-                raise ValueError(f"The function is already infinity for {key}")
-        except IndexError:
-            self._increase_list_len(key)
-            old_value = 0
-        self._value[key] = old_value + 1
-        self._preimage_count[old_value] -= 1
-        self._preimage_count[old_value + 1] += 1
-
-    def set_infinite(self, key: int) -> None:
-        """
-        Set the value of function for the given key to infinity.
-        """
-        try:
-            old_value = self._value[key]
-            if old_value is None:
-                raise ValueError(f"The function is already infinity for {key}")
-        except IndexError:
-            self._increase_list_len(key)
-            old_value = 0
-        self._value[key] = None
-        self._preimage_count[old_value] -= 1
-        self._infinity_count += 1
-
-    def preimage_gap(self, length: int) -> int:
-        """
-        Return the smallest k such that the preimage of the interval
-        [k, k+length-1] is empty.
-        """
-        if length <= 0:
-            raise ValueError("length argument must be positive")
-        last_non_zero = -1
-        for i, v in enumerate(self._preimage_count):
-            if v != 0:
-                last_non_zero = i
-            elif i - last_non_zero >= length:
-                return last_non_zero + 1
-        return last_non_zero + 1
-
-    def preimage(self, value: Optional[int]) -> Iterator[int]:
-        """
-        Return the preimage of the function for the given value.
-        """
-        if value == 0:
-            raise ValueError("The preimage of 0 is infinite.")
-        return (k for k, v in enumerate(self._value) if v == value)
-
-    def to_dict(self) -> Dict[int, Optional[int]]:
-        """
-        Return a dictionary view of the function with only the non-zero value.
-        """
-        return {i: v for i, v in enumerate(self._value) if v != 0}
-
-    def __str__(self) -> str:
-        parts = (
-            f"{i} -> {v if v is not None else '∞'}" for i, v in enumerate(self._value)
-        )
-        return "\n".join(parts)
 
 
 class ForestRuleExtractor:

@@ -1,121 +1,14 @@
-import itertools
 from typing import Dict, List, Union
 
 import pytest
 from comb_spec_searcher_rs import ForestRuleKey, RuleBucket
 
 from comb_spec_searcher import CombinatorialSpecificationSearcher
-from comb_spec_searcher.rule_db.forest import Function, RuleDBForest, TableMethod
+from comb_spec_searcher.rule_db.forest import RuleDBForest, TableMethod
 from comb_spec_searcher.strategies.strategy import EmptyStrategy
 from example import AvoidingWithPrefix, pack
 
-
-def assert_function_values(
-    function: Function, values: Union[Dict[int, int], List[int]]
-):
-    """
-    Check that the function values matches the given values.
-    """
-    if isinstance(values, dict):
-        values = [values[i] if i in values else 0 for i in range(max(values) + 1)]
-    failing_index = []
-    for n, (fv, gv) in enumerate(
-        itertools.zip_longest(function._value, values, fillvalue=0)
-    ):
-        if not (fv == gv):
-            failing_index.append(n)
-
-    if failing_index:
-        m = f"Function differs on index {failing_index}\n"
-        m += f"The function values are {function._value}\n"
-        m += f"The expected values are {values}"
-        raise AssertionError(m)
-
-
-class TestFunction:
-    def test_add_value(self):
-        f = Function()
-        assert f[0] == 0
-        assert f[4] == 0
-        f.increase_value(0)
-        assert f[0] == 1
-        f.increase_value(3)
-        assert f[4] == 0
-        f.increase_value(4)
-        assert f[0] == 1
-        assert f[1] == 0
-        assert f[2] == 0
-        assert f[3] == 1
-        assert f[4] == 1
-        assert f[5] == 0
-        assert f[6] == 0
-        with pytest.raises(ValueError):
-            assert sorted(f.preimage(0)) == []
-        assert sorted(f.preimage(1)) == [0, 3, 4]
-        assert sorted(f.preimage(2)) == []
-
-    def test_infinity(self):
-        f = Function()
-        f.increase_value(0)
-        f.increase_value(3)
-        f.increase_value(4)
-        f.set_infinite(3)
-        assert f[0] == 1
-        assert f[1] == 0
-        assert f[2] == 0
-        assert f[3] is None
-        assert f[4] == 1
-        assert f.preimage_gap(100) == 2
-        assert sorted(f.preimage(None)) == [3]
-        assert sorted(f.preimage(1)) == [0, 4]
-
-    def test_find_gap(self):
-        f = Function()
-        f.increase_value(0)
-        f.increase_value(0)
-        f.increase_value(0)
-        f.increase_value(0)
-        f.increase_value(1)
-        f.increase_value(2)
-        assert f[0] == 4
-        assert f[1] == 1
-        assert f[2] == 1
-        assert f[3] == 0
-        assert f[4] == 0
-        assert f[5] == 0
-        assert f[6] == 0
-        assert f.preimage_gap(1) == 2
-        assert f.preimage_gap(2) == 2
-        assert f.preimage_gap(3) == 5
-        with pytest.raises(ValueError):
-            f.preimage_gap(0)
-        with pytest.raises(ValueError):
-            f.preimage_gap(-1)
-
-    def test_find_gap2(self):
-        f = Function()
-        f.increase_value(2)
-        f.increase_value(3)
-        f.increase_value(4)
-        f.increase_value(5)
-        f.increase_value(5)
-        f.increase_value(5)
-        print(f)
-        print(f._preimage_count)
-        assert f[0] == 0
-        assert f[1] == 0
-        assert f[2] == 1
-        assert f[3] == 1
-        assert f[4] == 1
-        assert f[5] == 3
-        assert f.preimage_gap(1) == 2
-        assert f.preimage_gap(2) == 4
-        assert f.preimage_gap(3) == 4
-
-
 # Test of the table method
-
-
 def test_rule_key_eq():
     key1 = ForestRuleKey(0, (1, 2), (0, 0), RuleBucket.NORMAL)
     key2 = ForestRuleKey(0, (1, 2), (0, 0), RuleBucket.NORMAL)
