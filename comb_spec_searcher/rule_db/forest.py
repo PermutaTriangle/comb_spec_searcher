@@ -3,15 +3,7 @@ import itertools
 import platform
 import time
 from datetime import timedelta
-from typing import (
-    Dict,
-    Iterable,
-    Iterator,
-    List,
-    Set,
-    Tuple,
-    Union,
-)
+from typing import Dict, Iterable, Iterator, List, Set, Tuple, Union
 
 from comb_spec_searcher_rs import ForestRuleKey, RuleBucket, TableMethod
 from logzero import logger

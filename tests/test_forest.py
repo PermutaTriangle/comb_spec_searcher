@@ -1,12 +1,10 @@
-from typing import Dict, List, Union
-
-import pytest
 from comb_spec_searcher_rs import ForestRuleKey, RuleBucket
 
 from comb_spec_searcher import CombinatorialSpecificationSearcher
 from comb_spec_searcher.rule_db.forest import RuleDBForest, TableMethod
 from comb_spec_searcher.strategies.strategy import EmptyStrategy
 from example import AvoidingWithPrefix, pack
+
 
 # Test of the table method
 def test_rule_key_eq():
