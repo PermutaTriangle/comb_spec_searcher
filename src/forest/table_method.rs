@@ -1,4 +1,4 @@
-use super::{Function, IntOrInf};
+use super::function::{Function, IntOrInf};
 use std::collections::hash_map::DefaultHasher;
 
 use core::slice::Iter;
@@ -8,6 +8,9 @@ use pyo3::types::PyTuple;
 use std;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::hash::{Hash, Hasher};
+use std::mem;
+
+use super::extractor::extract_specification;
 
 #[pyclass]
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
@@ -172,7 +175,6 @@ impl ForestRuleKey {
     }
 }
 
-#[pyclass]
 pub struct TableMethod {
     rules: Vec<ForestRuleKey>,
     shifts: Vec<Vec<Option<i8>>>,
@@ -415,23 +417,34 @@ impl TableMethod {
     }
 }
 
+#[pyclass(name="TableMethod")]
+pub struct TableMethodPyWrapper {
+    table_method: Option<TableMethod>
+}
+
 #[pymethods]
-impl TableMethod {
+impl TableMethodPyWrapper {
     #[new]
     fn py_new() -> Self {
-        TableMethod::new()
+        Self {
+            table_method: Some(TableMethod::new())
+        }
     }
 
-    #[pyo3(name="add_rule_key")]
-    fn py_add_rule_key(&mut self, rule_key: ForestRuleKey) {
-        self.add_rule_key(rule_key);
+    fn extract_specification(&mut self, root_class: u32) -> Vec<ForestRuleKey> {
+        let table_method = mem::replace(&mut self.table_method, None).unwrap();
+        extract_specification(root_class, table_method)
+    }
+
+    fn add_rule_key(&mut self, rule_key: ForestRuleKey) {
+        self.table_method.as_mut().unwrap().add_rule_key(rule_key);
     }
 
     #[getter]
     fn get_function(&self) -> HashMap<u32, Option<u8>> {
         let mut map = HashMap::new();
-        for pos in 0..self.function.len() {
-            let value = self.function.get_value(pos);
+        for pos in 0..self.table_method.as_ref().unwrap().function.len() {
+            let value = self.table_method.as_ref().unwrap().function.get_value(pos);
             match value {
                 IntOrInf::Infinity => {map.insert(pos, None);},
                 IntOrInf::Int(0) => (),
@@ -441,19 +454,16 @@ impl TableMethod {
         map
     }
 
-    #[pyo3(name="is_pumping")]
-    fn py_is_pumping(&self, label: u32) -> bool {
-        self.is_pumping(label)
+    fn is_pumping(&self, label: u32) -> bool {
+        self.table_method.as_ref().unwrap().is_pumping(label)
     }
 
-    #[pyo3(name="pumping_subuniverse")]
-    fn py_pumping_subuniverse(&self) -> Vec<ForestRuleKey> {
-        self.pumping_subuniverse().map(|rk| rk.clone()).collect()
+    fn pumping_subuniverse(&self) -> Vec<ForestRuleKey> {
+        self.table_method.as_ref().unwrap().pumping_subuniverse().map(|rk| rk.clone()).collect()
     }
 
-    #[pyo3(name="status")]
-    fn py_status(&self) -> String {
-        self.status()
+    fn status(&self) -> String {
+        self.table_method.as_ref().unwrap().status()
     }
 }
 

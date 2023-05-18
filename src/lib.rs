@@ -14,8 +14,9 @@ mod forest;
 #[pymodule]
 fn comb_spec_searcher_rs(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(sum_as_string, m)?)?;
-    m.add_class::<forest::TableMethod>()?;
+    m.add_class::<forest::TableMethodPyWrapper>()?;
     m.add_class::<forest::ForestRuleKey>()?;
     m.add_class::<forest::RuleBucket>()?;
     Ok(())
 }
+

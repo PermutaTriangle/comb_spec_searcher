@@ -1,6 +1,6 @@
 use super::ForestRuleKey;
 use super::RuleBucket;
-use super::TableMethod;
+use super::table_method::TableMethod;
 use std::collections::HashSet;
 
 const MINIMIZE_ORDER: [RuleBucket; 4] = [
