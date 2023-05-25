@@ -1,12 +1,9 @@
-import gc
 import itertools
-import platform
 import time
 from datetime import timedelta
 from typing import Dict, Iterable, Iterator, List, Set, Tuple, Union
 
 from comb_spec_searcher_rs import ForestRuleKey, RuleBucket, TableMethod
-from logzero import logger
 
 from comb_spec_searcher.class_db import ClassDB
 from comb_spec_searcher.exception import StrategyDoesNotApply
@@ -47,10 +44,7 @@ class ForestRuleExtractor:
         self.pack = pack
         self.classdb = classdb
         self.root_label = root_label
-        self.rule_by_bucket = self._sorted_stable_rules(ruledb.table_method)
-        assert set(ForestRuleExtractor.MINIMIZE_ORDER) == set(self.rule_by_bucket)
-        self.needed_rules: List[ForestRuleKey] = []
-        self._minimize()
+        self.needed_rules = ruledb.table_method.extract_specification(root_label)
 
     def check(self) -> None:
         """
@@ -90,61 +84,6 @@ class ForestRuleExtractor:
             else:
                 yield rule
 
-    def _minimize(self):
-        """
-        Perform the complete minimization of the forest.
-        """
-        for key in ForestRuleExtractor.MINIMIZE_ORDER:
-            self._minimize_key(key)
-
-    def _minimize_key(self, key: RuleBucket) -> None:
-        """
-        Minimize the number of rules used for the type of rule given by key.
-
-        The list of rule in `self.rule_by_bucket[key]` is cleared and a
-        minimal set from theses is added to `self.needed_rules`.
-        """
-        logger.info("Minimizing %s", key.name)
-        maybe_useful: List[ForestRuleKey] = []
-        not_minimizing: List[List[ForestRuleKey]] = [self.needed_rules, maybe_useful]
-        not_minimizing.extend(
-            rules for k, rules in self.rule_by_bucket.items() if k != key
-        )
-        minimizing = self.rule_by_bucket[key]
-        while minimizing:
-            tb = TableMethod()
-            # Add the rule we are not trying to minimize
-            for rk in itertools.chain.from_iterable(not_minimizing):
-                tb.add_rule_key(rk)
-            if tb.is_pumping(self.root_label):
-                minimizing.clear()
-                break
-            # Add rule until it gets productive
-            for i, rk in enumerate(minimizing):
-                tb.add_rule_key(rk)
-                if tb.is_pumping(self.root_label):
-                    break
-            else:
-                raise RuntimeError("Not pumping after adding all rules")
-            maybe_useful.append(rk)
-            assert minimizing, "variable i won't be set"
-            # pylint: disable=undefined-loop-variable
-            for _ in range(i, len(minimizing)):
-                minimizing.pop()
-            # added to avoid doubling in memory when minimizing with pypy
-            if platform.python_implementation() == "PyPy":
-                gc.collect_step()  # type: ignore
-        counter = 0
-        while maybe_useful:
-            rk = maybe_useful.pop()
-            if not self._is_productive(itertools.chain.from_iterable(not_minimizing)):
-                self.needed_rules.append(rk)
-                counter += 1
-            # added to avoid doubling in memory when minimizing with pypy
-            if platform.python_implementation() == "PyPy":
-                gc.collect_step()  # type: ignore
-        logger.info("Using %s rule for %s", counter, key.name)
-
     def _is_productive(self, rule_keys: Iterable[ForestRuleKey]) -> bool:
         """
         Check if the given set of rules is productive.
@@ -153,23 +92,6 @@ class ForestRuleExtractor:
         for rk in rule_keys:
             ruledb.add_rule_key(rk)
         return ruledb.is_pumping(self.root_label)
-
-    def _sorted_stable_rules(self, ruledb: TableMethod) -> SortedRWS:
-        """
-        Extract all the rule from the stable subuniverse and return all of them in a
-        dict sorted by type.
-        """
-        res: SortedRWS = {bucket: [] for bucket in self.MINIMIZE_ORDER}
-        for forest_key in ruledb.pumping_subuniverse():
-            try:
-                res[forest_key.bucket].append(forest_key)
-            except KeyError as e:
-                msg = (
-                    f"{forest_key.bucket} type is not currently supported "
-                    "by the extractor"
-                )
-                raise RuntimeError(msg) from e
-        return res
 
     def _find_rule(self, rule_key: ForestRuleKey) -> AbstractRule:
         """

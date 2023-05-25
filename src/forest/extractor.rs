@@ -1,6 +1,6 @@
+use super::table_method::TableMethod;
 use super::ForestRuleKey;
 use super::RuleBucket;
-use super::table_method::TableMethod;
 use std::collections::HashSet;
 
 const MINIMIZE_ORDER: [RuleBucket; 4] = [
@@ -37,13 +37,13 @@ fn minimzation_bucket_round(
     if new_tb.is_pumping(root_class) {
         return MinimizationRoundResult::Done(new_tb);
     }
-    while !new_tb.is_pumping(root_class) {
-        let last_key = new_tb.add_rule_key(
-            rules_in_bucket
-                .pop()
-                .expect("Not pumping after adding all rules"),
-        );
-        maybe_useful.insert(last_key.clone());
+    loop {
+        let rk = rules_in_bucket.pop().expect("Not pumping after adding all rules");
+        new_tb.add_rule_key(rk.clone());
+        if new_tb.is_pumping(root_class) {
+            maybe_useful.insert(rk.clone());
+            break;
+        }
     }
     MinimizationRoundResult::NotDone(new_tb)
 }
@@ -72,7 +72,7 @@ fn minimize(tb: TableMethod, root_class: u32) -> TableMethod {
 
 pub fn extract_specification(root_class: u32, tb: TableMethod) -> Vec<ForestRuleKey> {
     let minimized = minimize(tb, root_class);
-    let rules: Vec<_> = minimized.into_rules().collect();
+    let mut rules: Vec<_> = minimized.into_rules().collect();
     let parents: HashSet<_> = rules.iter().map(|rk| rk.get_parent()).collect();
     assert_eq!(parents.len(), rules.len());
     for rk in rules.iter() {

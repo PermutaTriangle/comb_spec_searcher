@@ -463,7 +463,10 @@ impl TableMethodPyWrapper {
     }
 
     fn status(&self) -> String {
-        self.table_method.as_ref().unwrap().status()
+        match self.table_method.as_ref() {
+            Some(tb) => tb.status(),
+            None => String::from("No status")
+        }
     }
 }
 

@@ -19,4 +19,3 @@ fn comb_spec_searcher_rs(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<forest::RuleBucket>()?;
     Ok(())
 }
-
