@@ -39,9 +39,9 @@ fn minimzation_bucket_round(
     }
     loop {
         let rk = rules_in_bucket.pop().expect("Not pumping after adding all rules");
-        new_tb.add_rule_key(rk.clone());
+        new_tb.add_rule_key(rk);
         if new_tb.is_pumping(root_class) {
-            maybe_useful.insert(rk.clone());
+            maybe_useful.insert(new_tb.get_last_added_rule_key().unwrap().clone());
             break;
         }
     }

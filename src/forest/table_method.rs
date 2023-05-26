@@ -275,6 +275,10 @@ impl TableMethod {
         s
     }
 
+    pub fn get_last_added_rule_key(&self) -> Option<&ForestRuleKey> {
+        self.rules.last()
+    }
+
     /// Compute the initial value for the shifts a rule based on the current state of
     /// the function.
     fn compute_shift(&self, rule_key: &ForestRuleKey) -> Vec<Option<i8>> {
