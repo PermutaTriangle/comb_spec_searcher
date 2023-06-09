@@ -1,5 +1,60 @@
+[project]
+name = "comb_spec_searcher"
+version = "4.2.0"
+authors = [
+    {name = "Permuta Triangle", email = "permutatriangle@gmail.com"},
+]
+description = "A library for performing combinatorial exploration."
+readme = "README.rst"
+requires-python = ">=3.8"
+keywords = [
+    "enumerative",
+    "combinatorics",
+    "combinatorial",
+    "specification",
+    "counting",
+]
+license = {text = "BSD-3-Clause"}
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Programming Language :: Rust",
+    "Topic :: Education",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+dependencies = [
+    "logzero==1.7.0",
+    "sympy==1.10.1",
+    "psutil==5.9.4",
+    "pympler==1.0.1",
+    "requests==2.28.1",
+    "typing-extensions==4.4.0",
+    "tabulate==0.9.0",
+]
+
+[project.urls]
+homepage = "https://github.com/PermutaTriangle/comb_spec_searcher"
+source = "https://github.com/PermutaTriangle/comb_spec_searcher"
+tracker = "https://github.com/PermutaTriangle/comb_spec_searcher/issues"
+
+[build-system]
+requires = ["maturin>=0.14,<0.15"]
+build-backend = "maturin"
+
+[tool.maturin]
+exclude = ["tests/**/*"]
+
 [tool.black]
-target-version = ['py37']
+target-version = ['py38']
 include = '\.pyi?$'
 exclude = '''
 (

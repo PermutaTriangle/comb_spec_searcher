@@ -26,19 +26,12 @@ from typing import (
     cast,
 )
 
+from comb_spec_searcher_rs import ForestRuleKey, RuleBucket
 from logzero import logger
 from sympy import Eq, Function, var
 
 from comb_spec_searcher.combinatorial_class import CombinatorialClass
-from comb_spec_searcher.typing import (
-    ForestRuleKey,
-    Objects,
-    ObjectsCache,
-    RuleBucket,
-    SubObjects,
-    SubTerms,
-    Terms,
-)
+from comb_spec_searcher.typing import Objects, ObjectsCache, SubObjects, SubTerms, Terms
 
 from ..combinatorial_class import CombinatorialClassType, CombinatorialObjectType
 from ..exception import SanityCheckFailure, SpecificationNotFound, StrategyDoesNotApply
