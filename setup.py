@@ -54,7 +54,7 @@ setup(
         "sympy==1.10.1",
         "psutil==5.9.4",
         "pympler==1.0.1",
-        "requests==2.28.1",
+        "requests==2.31.0",
         "typing-extensions==4.4.0",
         "tabulate==0.9.0",
     ],

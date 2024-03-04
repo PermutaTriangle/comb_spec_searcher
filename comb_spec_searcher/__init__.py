@@ -16,7 +16,7 @@ from .strategies import (
     VerificationStrategy,
 )
 
-__version__ = "4.2.0"
+__version__ = "4.2.1"
 
 __all__ = [
     "CombinatorialSpecificationSearcher",

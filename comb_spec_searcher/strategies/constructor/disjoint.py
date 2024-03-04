@@ -1,4 +1,5 @@
 from collections import defaultdict
+from functools import partial
 from random import randint
 from typing import Callable, Counter, Dict, Iterator, List, Optional, Tuple
 
@@ -59,6 +60,35 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
             assert len(fixed_values) == len(children)
         else:
             self.fixed_values = tuple({} for _ in children)
+
+    @staticmethod
+    def param_map(
+        child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...],
+        num_parent_params: int,
+        param: Parameters,
+    ) -> Parameters:
+        new_params: List[Optional[int]] = [None for _ in range(num_parent_params)]
+        for pos, value in enumerate(param):
+            parent_pos = child_pos_to_parent_pos[pos]
+            for p in parent_pos:
+                if new_params[p] is None:
+                    new_params[p] = value
+                else:
+                    assert new_params[p] == value
+        return tuple(0 if p is None else p for p in new_params)
+
+    @staticmethod
+    def build_param_map(
+        child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...], num_parent_params: int
+    ) -> ParametersMap:
+        """
+        Return a parameters map according to the given pos map.
+        """
+        return partial(
+            DisjointUnion.param_map,
+            child_pos_to_parent_pos,
+            num_parent_params,
+        )
 
     def get_equation(
         self, lhs_func: sympy.Function, rhs_funcs: Tuple[sympy.Function, ...]
@@ -242,6 +272,12 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         self._children_param_maps = self._build_children_param_maps(parent, children)
         self._parent_param_map = self._build_parent_param_map(parent, children, idx)
 
+    def can_be_equivalent(self) -> bool:
+        return all(
+            len(params.values()) == len(set(params.values()))
+            for params in self.extra_parameters
+        )
+
     def _build_children_param_maps(
         self,
         parent: CombinatorialClassType,
@@ -272,7 +308,9 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
                 for child_param in child.extra_parameters
             )
             map_list.append(
-                self.build_param_map(child_pos_to_parent_pos, num_parent_params)
+                DisjointUnion.build_param_map(
+                    child_pos_to_parent_pos, num_parent_params
+                )
             )
         return tuple(map_list)
 
@@ -293,7 +331,7 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
             else tuple()
             for parent_var in parent.extra_parameters
         )
-        return self.build_param_map(
+        return DisjointUnion.build_param_map(
             parent_pos_to_child_pos, len(child.extra_parameters)
         )
 

@@ -573,6 +573,8 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     def get_terms(
         self, parent_terms: Callable[[int], Terms], subterms: SubTerms, n: int
     ) -> Terms:
+        if n < self._min_sizes[self.idx]:
+            return Counter()
         new_terms: Terms = Counter()
         children_subterms = (
             subterms[1 : self.idx + 1] + (parent_terms,) + subterms[self.idx + 1 :]
