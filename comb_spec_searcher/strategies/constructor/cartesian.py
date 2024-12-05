@@ -74,12 +74,9 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
         for k in parent.extra_parameters:
             self.minimum_sizes[k] = parent.get_minimum_value(k)
 
-        self.min_child_sizes = tuple(
-            {"n": child.minimum_size_of_object()} for child in children
-        )
+        self.min_child_sizes = tuple({"n": child.min_size()} for child in children)
         self.max_child_sizes = tuple(
-            {"n": child.minimum_size_of_object()} if child.is_atom() else {}
-            for child in children
+            {"n": child.min_size()} if child.is_atom() else {} for child in children
         )
         self.parent_parameters = ("n",) + parent.extra_parameters
 
@@ -397,7 +394,7 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
         self._children_param_maps = CartesianProduct._build_children_param_map(
             parent, children, self.extra_parameters
         )
-        self._min_sizes = tuple(child.minimum_size_of_object() for child in children)
+        self._min_sizes = tuple(child.min_size() for child in children)
         self._max_sizes = tuple(
             child.minimum_size_of_object() if child.is_atom() else None
             for child in children
