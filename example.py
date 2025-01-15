@@ -149,7 +149,7 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
     def minimum_size_of_object(self) -> int:
         return len(self.prefix)
 
-    def objects_of_size(self, size) -> Iterator[Word]:
+    def objects_of_size(self, size):  # type: ignore
         """Yield the words of given size that start with prefix and avoid the
         patterns. If just_prefix, then only yield that word."""
 
