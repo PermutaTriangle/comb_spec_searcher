@@ -1,4 +1,5 @@
 """A class for automatically performing combinatorial exploration."""
+
 import gc
 import logging
 import platform
@@ -435,7 +436,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 ("Peak Memory Used", gc_stats.peak_memory),
                 ("Peak Memory Allocated Memory Used", gc_stats.peak_allocated_memory),
             ]
-            for (desc, mem) in stats:
+            for desc, mem in stats:
                 table.append((desc, nice_pypy_mem(mem)))
         status += "    "
         status += tabulate.tabulate(table, colalign=("left", "right")).replace(
@@ -594,7 +595,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 comb_class = self.classdb.get_class(label)
                 last_label = label
             if self.expand_verified or not self.ruledb.is_verified(label):
-                self._expand(comb_class, label, strategies, inferral)
+                self._expand(comb_class, label, strategies, inferral)  # type: ignore
             if time.time() - expansion_start > expansion_time:
                 break
             if status_update is not None and time.time() - status_start > status_update:
