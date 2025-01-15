@@ -595,7 +595,12 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 comb_class = self.classdb.get_class(label)
                 last_label = label
             if self.expand_verified or not self.ruledb.is_verified(label):
-                self._expand(comb_class, label, strategies, inferral)  # type: ignore
+                self._expand(
+                    comb_class,  # pylint: disable=possibly-used-before-assignment
+                    label,
+                    strategies,
+                    inferral,
+                )
             if time.time() - expansion_start > expansion_time:
                 break
             if status_update is not None and time.time() - status_start > status_update:

@@ -35,6 +35,7 @@ with respect to factor order is given.
 >>> specification.count_objects_of_size(n=15)
 9798
 """
+
 from itertools import product
 from typing import Iterable, Iterator, Optional, Tuple, Union
 
@@ -148,7 +149,7 @@ class AvoidingWithPrefix(CombinatorialClass[Word]):
     def minimum_size_of_object(self) -> int:
         return len(self.prefix)
 
-    def objects_of_size(self, size):
+    def objects_of_size(self, size) -> Iterator[Word]:
         """Yield the words of given size that start with prefix and avoid the
         patterns. If just_prefix, then only yield that word."""
 
