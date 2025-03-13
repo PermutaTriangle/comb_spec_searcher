@@ -2,6 +2,7 @@
 A combinatorial specification is a set rules of the form a -> b1, ..., bk
 where each of the bi appear exactly once on the left hand side of some rule.
 """
+
 from copy import copy
 from functools import reduce
 from itertools import chain
@@ -470,8 +471,7 @@ class CombinatorialSpecification(
         Return the objects with the given parameters.
         Note, 'n' is reserved for the size of the object.
         """
-        for obj in self.root_rule.generate_objects_of_size(n, **parameters):
-            yield obj
+        yield from self.root_rule.generate_objects_of_size(n, **parameters)
 
     def random_sample_object_of_size(
         self, n: int, **parameters: int

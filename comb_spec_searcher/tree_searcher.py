@@ -1,6 +1,7 @@
 """
 Finds and returns a combinatorial specification, that we call a proof tree.
 """
+
 import time
 from collections import defaultdict, deque
 from copy import deepcopy
@@ -205,7 +206,7 @@ def proof_tree_generator_bfs(rules_dict: RulesDict, root: int) -> Iterator[Node]
                 *[_bfs_helper(child_label, next_seen) for child_label in rule]
             ):
                 root_node = Node(root_label)
-                root_node.children = children
+                root_node.children = list(children)
                 yield root_node
 
     sorted_rules_dict = {

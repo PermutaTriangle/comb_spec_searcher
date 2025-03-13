@@ -56,8 +56,7 @@ class LabelToInfo(MutableMapping[int, Optional[Info]]):
         raise NotImplementedError
 
     def __iter__(self) -> Iterator:
-        for label in self.label_dict.values():
-            yield label
+        yield from self.label_dict.values()
 
     def __len__(self) -> int:
         return len(self.empty_list)
@@ -148,8 +147,7 @@ class ClassDB(Generic[CombinatorialClassType]):
         """
         Iterator of labels.
         """
-        for key in self.label_to_info:
-            yield key
+        yield from self.label_to_info
 
     def __contains__(self, key: Key) -> bool:
         """
