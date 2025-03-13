@@ -1,4 +1,5 @@
 """Some useful miscellaneous functions used througout the package."""
+
 import functools
 import operator
 import os
@@ -6,6 +7,7 @@ import re
 import sys
 import time
 from collections import Counter
+from itertools import chain
 from typing import TYPE_CHECKING, Any, Callable
 from typing import Counter as CounterType
 from typing import Dict, Iterable, Iterator, List, Optional, Tuple, TypeVar, cast
@@ -267,6 +269,14 @@ def sympy_expr_to_maple(expr):
         return f"F[{content}]"
     if isinstance(expr, sympy.core.symbol.Symbol):
         symb = str(expr)
+        if "Av" in symb:
+            # This section handles the right-hand side for 1x1 verification rules
+            # by turning the "F[Av(1234,1324)(x*k_0)]" sympy Symbol into
+            # F[Av(1234,1324), x, k[0]] for the maple equations
+            parts = re.findall(r"\((.*?)\)", symb)
+            assert len(parts) == 2
+            parts[1] = "x, k[0]" if "k_0" in parts[1] else "x"
+            return f"F[Av({parts[0]}), {parts[1]}]"
         if "_" in symb:
             var, label = symb.split("_")
             return f"{var}[{label}]"
@@ -330,3 +340,12 @@ def size_to_readable(size: int) -> str:
     if size / 1024**3 < 1:
         return str(round(size / 1024**2, 1)) + " MiB"
     return str(round(size / 1024**3, 3)) + " GiB"
+
+
+def equal_counters(A: Counter, B: Counter) -> bool:
+    """
+    In python versions 3.9 and older, the counters Counter() and
+    Counter({tuple(): 0}) are considered distinct. We want them to be treated
+    as equal for the purpose of comparing counts.
+    """
+    return all(A[i] == B[i] for i in set(chain(A.keys(), B.keys())))

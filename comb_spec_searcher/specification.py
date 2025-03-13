@@ -2,6 +2,7 @@
 A combinatorial specification is a set rules of the form a -> b1, ..., bk
 where each of the bi appear exactly once on the left hand side of some rule.
 """
+
 from copy import copy
 from functools import reduce
 from itertools import chain
@@ -213,9 +214,14 @@ class CombinatorialSpecification(
         if isinstance(comb_class, int):
             comb_class = self.get_comb_class(comb_class)
 
-        spec_rules = tuple(
-            copy(rule) for cc, rule in self.rules_dict.items() if cc != comb_class
-        )
+        spec_rules: List[AbstractRule] = []
+        for cc, rule in self.rules_dict.items():
+            if cc != comb_class:
+                if isinstance(rule, EquivalencePathRule):
+                    spec_rules.extend(map(copy, rule.rules))
+                else:
+                    spec_rules.append(copy(rule))
+
         ruledb = RuleDBForest(reverse=False, rule_cache=spec_rules)
         css = CombinatorialSpecificationSearcher(
             self.root,
@@ -350,6 +356,12 @@ class CombinatorialSpecification(
                     sympy.Function("NOTIMPLEMENTED")(x),
                 )
 
+    def number_of_cvs(self):
+        """Return the number of catalytic variables used."""
+        return max(
+            len(comb_class.extra_parameters) for comb_class in self.comb_classes()
+        )
+
     def get_initial_conditions(self, check: int = 6) -> List[Expr]:
         """
         Compute the initial conditions of the root class. It will use the
@@ -385,6 +397,11 @@ class CombinatorialSpecification(
         logger.info("Computing initial conditions")
         initial_conditions = self.get_initial_conditions(check)
         logger.info(pretty_print_equations(root_func, initial_conditions, eqs))
+        if self.number_of_cvs() > 0:
+            raise NotImplementedError(
+                "Can't compute generating function for a specification with "
+                "catalytic variables."
+            )
         logger.info("Solving...")
         solutions = solve(
             eqs,
@@ -454,8 +471,7 @@ class CombinatorialSpecification(
         Return the objects with the given parameters.
         Note, 'n' is reserved for the size of the object.
         """
-        for obj in self.root_rule.generate_objects_of_size(n, **parameters):
-            yield obj
+        yield from self.root_rule.generate_objects_of_size(n, **parameters)
 
     def random_sample_object_of_size(
         self, n: int, **parameters: int

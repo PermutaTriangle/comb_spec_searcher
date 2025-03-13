@@ -2,6 +2,7 @@
 The constructor class contains all the method, and logic, needed to get the
 enumeration, generate objects, and sample objects.
 """
+
 import abc
 from collections import Counter
 from functools import partial
@@ -25,6 +26,13 @@ from comb_spec_searcher.typing import (
 
 class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectType]):
     """The constructor is akin to the 'counting function' in the comb exp paper."""
+
+    def can_be_equivalent(self) -> bool:  # pylint: disable=no-self-use
+        """
+        Return False if the constructor can NOT be an 'identity' map
+        (i.e., up to rearranging params)
+        """
+        return True
 
     @abc.abstractmethod
     def get_equation(
