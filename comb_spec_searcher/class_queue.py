@@ -1,6 +1,7 @@
 """
 A queue of labels.
 """
+
 import abc
 from collections import Counter, deque
 from typing import Counter as CounterType

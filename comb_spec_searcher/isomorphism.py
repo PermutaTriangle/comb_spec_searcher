@@ -48,12 +48,12 @@ class Isomorphism(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
         spec2: "CombinatorialSpecification[ClassType2, ObjType2]",
     ) -> None:
         # The specs
-        self._rules1: Dict[
-            ClassType1, AbstractRule[ClassType1, ObjType1]
-        ] = spec1.rules_dict
-        self._rules2: Dict[
-            ClassType2, AbstractRule[ClassType2, ObjType2]
-        ] = spec2.rules_dict
+        self._rules1: Dict[ClassType1, AbstractRule[ClassType1, ObjType1]] = (
+            spec1.rules_dict
+        )
+        self._rules2: Dict[ClassType2, AbstractRule[ClassType2, ObjType2]] = (
+            spec2.rules_dict
+        )
         self.root1 = spec1.root
         self.root2 = spec2.root
 
@@ -329,9 +329,11 @@ class ParseTreeMap(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
         """Get the nonempty children for the domain's rule. We gather both the part
         of the mapped object and the class it belongs to."""
         return tuple(
-            (child_obj, self.domain.rules_dict[child])
-            if child_obj is not None
-            else None
+            (
+                (child_obj, self.domain.rules_dict[child])
+                if child_obj is not None
+                else None
+            )
             for child, child_obj in zip(rule.children, children)
             if not child.is_empty()
         )
@@ -386,13 +388,17 @@ class ParseTreeMap(Generic[ClassType1, ObjType1, ClassType2, ObjType2]):
         # to backward map with rule2.
         val = rule2.indexed_backward_map(
             tuple(
-                self.map_rec(c[0][0], c[0][1], c[1])
-                if c is not None and c[0] is not None
-                else None
+                (
+                    self.map_rec(c[0][0], c[0][1], c[1])
+                    if c is not None and c[0] is not None
+                    else None
+                )
                 for c in (
-                    None
-                    if child.is_empty()
-                    else (next(child_it), self.codomain.rules_dict[child])
+                    (
+                        None
+                        if child.is_empty()
+                        else (next(child_it), self.codomain.rules_dict[child])
+                    )
                     for child in rule2.children
                 )
             ),

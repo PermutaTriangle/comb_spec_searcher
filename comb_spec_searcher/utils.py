@@ -1,4 +1,5 @@
 """Some useful miscellaneous functions used througout the package."""
+
 import functools
 import operator
 import os

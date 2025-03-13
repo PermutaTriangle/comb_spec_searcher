@@ -439,9 +439,11 @@ class Quotient(Constructor[CombinatorialClassType, CombinatorialObjectType]):
             param: pos for pos, param in enumerate(child.extra_parameters)
         }
         parent_pos_to_child_pos: Tuple[Tuple[int, ...], ...] = tuple(
-            (child_param_to_pos[extra_param[parent_var]],)
-            if parent_var in extra_param
-            else tuple()
+            (
+                (child_param_to_pos[extra_param[parent_var]],)
+                if parent_var in extra_param
+                else tuple()
+            )
             for parent_var in parent.extra_parameters
         )
         return self.build_param_map(

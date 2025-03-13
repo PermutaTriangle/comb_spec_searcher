@@ -1,6 +1,7 @@
 """
 A database to search for tree.
 """
+
 import abc
 import itertools
 from collections import defaultdict

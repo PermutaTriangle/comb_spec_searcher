@@ -6,6 +6,7 @@ This can be used to get the generating function for the class.
 The class is only used for reverse compatibility with ComboPal. You should use
 the Specification class.
 """
+
 import json
 import warnings
 from typing import Any, Dict, Iterable, List, Optional
