@@ -416,7 +416,6 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
     def is_equivalence(
         self, is_empty: Optional[Callable[[CombinatorialClassType], bool]] = None
     ):
-        print(self.strategy.can_be_equivalent(), len(self.non_empty_children(is_empty)), self.constructor.can_be_equivalent())
         return (
             self.strategy.can_be_equivalent()
             and len(self.non_empty_children(is_empty)) == 1
