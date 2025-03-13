@@ -24,6 +24,7 @@ The default setting treats the pack as follows:
 If the iterative boolean is True, then CSS will search for an iterative
 specification.
 """
+
 from itertools import chain
 from typing import Iterable, Iterator, Optional, Type, TypeVar
 

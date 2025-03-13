@@ -595,9 +595,9 @@ class ForestRuleExtractor:
         strats: Iterator[CSSstrategy] = itertools.chain([EmptyStrategy()], self.pack)
         for strat in strats:
             if isinstance(strat, StrategyFactory):
-                strats_or_rules: Iterable[
-                    Union[AbstractRule, AbstractStrategy]
-                ] = strat(comb_class)
+                strats_or_rules: Iterable[Union[AbstractRule, AbstractStrategy]] = (
+                    strat(comb_class)
+                )
             else:
                 strats_or_rules = [strat]
             for x in strats_or_rules:

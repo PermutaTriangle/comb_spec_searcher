@@ -1,6 +1,7 @@
 """
 Definition of the base feature of any ruledb.
 """
+
 import abc
 from typing import (
     TYPE_CHECKING,

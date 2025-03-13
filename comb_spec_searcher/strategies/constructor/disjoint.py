@@ -160,14 +160,16 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
             for parent_var, child_var in extra_param.items():
                 reversed_extra_param[child_var].append(parent_var)
             child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...] = tuple(
-                tuple(
-                    map(
-                        parent_param_to_pos.__getitem__,
-                        reversed_extra_param[child_param],
+                (
+                    tuple(
+                        map(
+                            parent_param_to_pos.__getitem__,
+                            reversed_extra_param[child_param],
+                        )
                     )
+                    if child_param in reversed_extra_param
+                    else tuple()
                 )
-                if child_param in reversed_extra_param
-                else tuple()
                 for child_param in child.extra_parameters
             )
             map_list.append(
@@ -297,14 +299,16 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
             for parent_var, child_var in extra_param.items():
                 reversed_extra_param[child_var].append(parent_var)
             child_pos_to_parent_pos: Tuple[Tuple[int, ...], ...] = tuple(
-                tuple(
-                    map(
-                        parent_param_to_pos.__getitem__,
-                        reversed_extra_param[child_param],
+                (
+                    tuple(
+                        map(
+                            parent_param_to_pos.__getitem__,
+                            reversed_extra_param[child_param],
+                        )
                     )
+                    if child_param in reversed_extra_param
+                    else tuple()
                 )
-                if child_param in reversed_extra_param
-                else tuple()
                 for child_param in child.extra_parameters
             )
             map_list.append(
@@ -326,9 +330,11 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
             param: pos for pos, param in enumerate(child.extra_parameters)
         }
         parent_pos_to_child_pos: Tuple[Tuple[int, ...], ...] = tuple(
-            (child_param_to_pos[extra_param[parent_var]],)
-            if parent_var in extra_param
-            else tuple()
+            (
+                (child_param_to_pos[extra_param[parent_var]],)
+                if parent_var in extra_param
+                else tuple()
+            )
             for parent_var in parent.extra_parameters
         )
         return DisjointUnion.build_param_map(

@@ -2,6 +2,7 @@
 The constructor class contains all the method, and logic, needed to get the
 enumeration, generate objects, and sample objects.
 """
+
 import abc
 from collections import Counter
 from functools import partial

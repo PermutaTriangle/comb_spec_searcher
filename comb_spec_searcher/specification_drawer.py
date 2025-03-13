@@ -1,6 +1,7 @@
 """
 A specification drawer is for visualizing combinatorial specification object
 """
+
 import json
 import os
 import tempfile

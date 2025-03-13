@@ -3,6 +3,7 @@ A database to search for tree.
 
 The database do not store the strategy to save memory.
 """
+
 import itertools
 from typing import (
     TYPE_CHECKING,
@@ -85,9 +86,9 @@ class RecomputingDict(MutableMapping[RuleKey, AbstractStrategy]):
         for label, strat in itertools.product(possible_labels, self.pack):
             comb_class = self.classdb.get_class(label)
             if isinstance(strat, StrategyFactory):
-                strats_or_rules: Iterable[
-                    Union[AbstractRule, AbstractStrategy]
-                ] = strat(comb_class)
+                strats_or_rules: Iterable[Union[AbstractRule, AbstractStrategy]] = (
+                    strat(comb_class)
+                )
             else:
                 strats_or_rules = [strat]
             for x in strats_or_rules:

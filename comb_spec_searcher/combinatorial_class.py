@@ -1,6 +1,7 @@
 """
 An abstract class for a CombinatorialClass.
 """
+
 import abc
 from functools import reduce
 from importlib import import_module
