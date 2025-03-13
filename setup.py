@@ -53,7 +53,7 @@ setup(
         "logzero==1.7.0",
         "sympy==1.13.3",
         "psutil==5.9.4",
-        "pympler==1.0.1",
+        "pympler==1.1",
         "requests==2.32.0",
         "typing-extensions==4.4.0",
         "tabulate==0.9.0",
