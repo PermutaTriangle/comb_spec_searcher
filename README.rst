@@ -1,8 +1,14 @@
 Combinatorial Specification Searcher
 ====================================
-.. image:: https://travis-ci.org/PermutaTriangle/comb_spec_searcher.svg?branch=master
-    :alt: Travis
-    :target: https://travis-ci.org/PermutaTriangle/comb_spec_searcher
+.. image:: https://github.com/PermutaTriangle/comb_spec_searcher/actions/workflows/test.yml/badge.svg
+    :alt: Tests
+    :target: https://github.com/PermutaTriangle/comb_spec_searcher/actions/workflows/test.yml
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :alt: Code style: black
+    :target: https://github.com/psf/black
+.. image:: https://img.shields.io/badge/mypy-checked-blue
+    :alt: mypy: checked
+    :target: https://mypy-lang.org/
 .. image:: https://img.shields.io/coveralls/github/PermutaTriangle/comb_spec_searcher.svg
     :alt: Coveralls
     :target: https://coveralls.io/github/PermutaTriangle/comb_spec_searcher
@@ -14,11 +20,8 @@ Combinatorial Specification Searcher
 .. image:: https://img.shields.io/pypi/pyversions/comb_spec_searcher.svg
     :target: https://pypi.python.org/pypi/comb_spec_searcher
 .. image:: http://img.shields.io/badge/readme-tested-brightgreen.svg
-    :alt: Travis
-    :target: https://travis-ci.org/PermutaTriangle/comb_spec_searcher
-.. image:: https://requires.io/github/PermutaTriangle/comb_spec_searcher/requirements.svg?branch=master
-     :target: https://requires.io/github/PermutaTriangle/comb_spec_searcher/requirements/?branch=master
-     :alt: Requirements Status
+    :alt: README Tests
+    :target: https://github.com/PermutaTriangle/comb_spec_searcher/actions/workflows/test.yml
 .. image:: https://zenodo.org/badge/121520109.svg
    :target: https://zenodo.org/badge/latestdoi/121520109
 
@@ -44,7 +47,7 @@ cloning the repository:
 
 .. code:: bash
 
-       ./setup.py develop
+       pip install -e .
 
 Combinatorial exploration
 -------------------------

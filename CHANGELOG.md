@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Minimum Python version updated from 3.8 to 3.10
+- Migrated from setup.py to modern pyproject.toml packaging with hatchling backend
+- Updated GitHub Actions workflows to use latest versions and modern build commands
+- Updated README badges: replaced deprecated Travis CI and requires.io badges with GitHub Actions
+
+### Removed
+- setup.py and MANIFEST.in files (replaced by pyproject.toml configuration)
 
 ## [4.2.1] 2024-03-04
 ### Changed
