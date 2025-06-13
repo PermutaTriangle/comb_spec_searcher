@@ -50,15 +50,15 @@ packages = ["comb_spec_searcher"]
 
 [tool.hatchling.build.targets.sdist]
 include = [
-    "/comb_spec_searcher",
-    "/tests", 
-    "/README.rst",
-    "/LICENSE.txt",
-    "/CHANGELOG.md",
-    "/CITATION.cff",
-    "/example.py",
-    "/test_readme.txt",
-    "/setup_tilescope_test.sh",
+    "comb_spec_searcher",
+    "tests", 
+    "README.rst",
+    "LICENSE.txt",
+    "CHANGELOG.md",
+    "CITATION.cff",
+    "example.py",
+    "test_readme.txt",
+    "setup_tilescope_test.sh",
 ]
 
 [tool.black]
