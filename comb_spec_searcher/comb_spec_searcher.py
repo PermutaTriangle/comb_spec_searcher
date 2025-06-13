@@ -283,6 +283,14 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         """
         for comb_class, child_label in zip(rule.children, end_labels):
             if not rule.possibly_empty:
+                if self.debug:
+                    if comb_class.is_empty():
+                        logger.debug(
+                            "SANITY CHECK FAILURE.\n"
+                            " The folowing combinatorial class "
+                            "is set not empty but is empty!\n%s",
+                            comb_class,
+                        )
                 self.classdb.set_empty(child_label, empty=False)
             if self.symmetries and child_label not in self.symmetry_expanded:
                 self._symmetry_expand(comb_class, child_label)
@@ -552,7 +560,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
             logger.debug("Searching for specification.")
             if self.has_specification():
                 logger.info("Specification detected.")
-                return self.ruledb.get_specification_rules(
+                return self._get_specification_rules(
                     smallest=smallest,
                     minimization_time_limit=0.01 * (time.time() - auto_search_start),
                 )
@@ -629,10 +637,15 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         """
         if not self.ruledb.has_specification():
             raise SpecificationNotFound
-        kwargs = {
-            "minimization_time_limit": minimization_time_limit,
-            "smallest": smallest,
-        }
-        rules = self.ruledb.get_specification_rules(**kwargs)
+        rules = self._get_specification_rules(
+            smallest=smallest, minimization_time_limit=minimization_time_limit
+        )
         logger.info("Creating a specification.")
         return CombinatorialSpecification(self.start_class, rules)
+
+    def _get_specification_rules(
+        self, smallest: bool = False, minimization_time_limit: float = 10
+    ) -> Iterator[AbstractRule]:
+        return self.ruledb.get_specification_rules(
+            smallest=smallest, minimization_time_limit=minimization_time_limit
+        )
