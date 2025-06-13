@@ -579,7 +579,7 @@ class CombinatorialSpecification(
         res = f"A combinatorial specification with {self.number_of_rules()} rules."
         rules_dict = copy(self.rules_dict)
 
-        def update_res(comb_class: CombinatorialClassType, res: str):
+        def update_res(comb_class: CombinatorialClassType, res: str) -> str:
             try:
                 rule = rules_dict.pop(comb_class)
             except KeyError:
