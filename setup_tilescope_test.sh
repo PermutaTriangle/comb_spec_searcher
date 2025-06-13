@@ -7,6 +7,5 @@ else
     git clone --depth 1 https://github.com/PermutaTriangle/Tilings.git .tilings
 fi
 cd .tilings
-pip install setuptools
-./setup.py install
+pip install .
 cd ..
