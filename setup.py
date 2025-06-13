@@ -55,7 +55,7 @@ setup(
         "psutil==7.0.0",
         "pympler==1.1",
         "requests==2.32.4",
-        "typing-extensions==4.13.2",
+        "typing-extensions==4.14.0",
         "tabulate==0.9.0",
     ],
 )
