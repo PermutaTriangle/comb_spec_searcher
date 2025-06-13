@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [4.3.0] - 2025-06-13
 ### Changed
 - Minimum Python version updated from 3.8 to 3.10
 - Migrated from setup.py to modern pyproject.toml packaging with hatchling backend
