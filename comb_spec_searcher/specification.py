@@ -200,7 +200,7 @@ class CombinatorialSpecification(
         max_expansion_time: Optional[float] = None,
     ) -> "CombinatorialSpecification[CombinatorialClassType, CombinatorialObjectType]":
         return self.expand_comb_classes(
-            [comb_class, pack, reverse, continue_expanding_verified, max_expansion_time]
+            [comb_class], pack, reverse, continue_expanding_verified, max_expansion_time
         )
 
     def expand_comb_classes(
