@@ -199,6 +199,18 @@ class CombinatorialSpecification(
         continue_expanding_verified: bool,
         max_expansion_time: Optional[float] = None,
     ) -> "CombinatorialSpecification[CombinatorialClassType, CombinatorialObjectType]":
+        return self.expand_comb_classes(
+            [comb_class, pack, reverse, continue_expanding_verified, max_expansion_time]
+        )
+
+    def expand_comb_classes(
+        self,
+        comb_classes: Iterable[Union[int, CombinatorialClassType]],
+        pack: StrategyPack,
+        reverse: bool,
+        continue_expanding_verified: bool,
+        max_expansion_time: Optional[float] = None,
+    ) -> "CombinatorialSpecification[CombinatorialClassType, CombinatorialObjectType]":
         """
         Will try to expand a particular class with respect to the given strategy pack.
 
@@ -211,12 +223,18 @@ class CombinatorialSpecification(
         from .comb_spec_searcher import CombinatorialSpecificationSearcher
         from .rule_db import RuleDBForest
 
-        if isinstance(comb_class, int):
-            comb_class = self.get_comb_class(comb_class)
+        comb_classes = set(
+            (
+                self.get_comb_class(comb_class)
+                if isinstance(comb_class, int)
+                else comb_class
+            )
+            for comb_class in comb_classes
+        )
 
         spec_rules: List[AbstractRule] = []
         for cc, rule in self.rules_dict.items():
-            if cc != comb_class:
+            if cc in comb_classes:
                 if isinstance(rule, EquivalencePathRule):
                     spec_rules.extend(map(copy, rule.rules))
                 else:
@@ -236,9 +254,10 @@ class CombinatorialSpecification(
             ruledb.add(start_label, end_labels, rule)
         ruledb.reverse = reverse
         css.classqueue = DefaultQueue(css.strategy_pack)
-        label_to_expand = css.classdb.get_label(comb_class)
-        css.classqueue.add(label_to_expand)
-        css.try_verify(comb_class, label_to_expand)
+        for comb_class in comb_classes:
+            label_to_expand = css.classdb.get_label(comb_class)
+            css.classqueue.add(label_to_expand)
+            css.try_verify(comb_class, label_to_expand)
         # logger.info(CSS.run_information())
         try:
             # pylint: disable=protected-access
