@@ -231,14 +231,14 @@ class CombinatorialSpecification(
             )
             for comb_class in comb_classes
         )
-
         spec_rules: List[AbstractRule] = []
         for cc, rule in self.rules_dict.items():
-            if cc in comb_classes:
-                if isinstance(rule, EquivalencePathRule):
-                    spec_rules.extend(map(copy, rule.rules))
-                else:
-                    spec_rules.append(copy(rule))
+            if isinstance(rule, VerificationRule) and cc in comb_classes:
+                continue
+            if isinstance(rule, EquivalencePathRule):
+                spec_rules.extend(map(copy, rule.rules))
+            else:
+                spec_rules.append(copy(rule))
 
         ruledb = RuleDBForest(reverse=False, rule_cache=spec_rules)
         css = CombinatorialSpecificationSearcher(
