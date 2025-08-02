@@ -161,18 +161,28 @@ class CombinatorialSpecification(
             rule = new_spec.rules_dict[class_to_expand]
             assert isinstance(rule, VerificationRule)
             pack = rule.pack()
+            classes_to_expand = set(
+                cc
+                for cc in new_spec.unexpanded_verified_classes()
+                if new_spec.rules_dict[cc].strategy == rule.strategy
+            )
             try:
-                logger.info("Expanding with %s on \n%s\n", pack.name, class_to_expand)
-                new_spec = new_spec.expand_comb_class(
+                logger.info(
+                    "Expanding with %s on \n%s\nand %s other classes",
+                    pack.name,
                     class_to_expand,
+                    len(classes_to_expand),
+                )
+                new_spec = new_spec.expand_comb_classes(
+                    classes_to_expand,
                     pack,
                     reverse=False,
                     continue_expanding_verified=False,
                 )
             except SpecificationNotFound:
                 logger.info("Specification NOT detected. Allowing reverse rules")
-                new_spec = new_spec.expand_comb_class(
-                    class_to_expand,
+                new_spec = new_spec.expand_comb_classes(
+                    classes_to_expand,
                     pack,
                     reverse=True,
                     continue_expanding_verified=True,
