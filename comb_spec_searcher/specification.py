@@ -233,7 +233,7 @@ class CombinatorialSpecification(
         from .comb_spec_searcher import CombinatorialSpecificationSearcher
         from .rule_db import RuleDBForest
 
-        comb_classes = set(
+        classes_to_expand: set[CombinatorialClassType] = set(
             (
                 self.get_comb_class(comb_class)
                 if isinstance(comb_class, int)
@@ -243,7 +243,7 @@ class CombinatorialSpecification(
         )
         spec_rules: List[AbstractRule] = []
         for cc, rule in self.rules_dict.items():
-            if isinstance(rule, VerificationRule) and cc in comb_classes:
+            if isinstance(rule, VerificationRule) and cc in classes_to_expand:
                 continue
             if isinstance(rule, EquivalencePathRule):
                 spec_rules.extend(map(copy, rule.rules))
@@ -264,7 +264,7 @@ class CombinatorialSpecification(
             ruledb.add(start_label, end_labels, rule)
         ruledb.reverse = reverse
         css.classqueue = DefaultQueue(css.strategy_pack)
-        for comb_class in comb_classes:
+        for comb_class in classes_to_expand:
             label_to_expand = css.classdb.get_label(comb_class)
             css.classqueue.add(label_to_expand)
             css.try_verify(comb_class, label_to_expand)
