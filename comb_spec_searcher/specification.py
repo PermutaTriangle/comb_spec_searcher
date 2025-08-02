@@ -171,7 +171,7 @@ class CombinatorialSpecification(
                     "Expanding with %s on \n%s\nand %s other classes",
                     pack.name,
                     class_to_expand,
-                    len(classes_to_expand),
+                    len(classes_to_expand) - 1,
                 )
                 new_spec = new_spec.expand_comb_classes(
                     classes_to_expand,
