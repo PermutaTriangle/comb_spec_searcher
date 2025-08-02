@@ -234,12 +234,8 @@ class CombinatorialSpecification(
         from .rule_db import RuleDBForest
 
         classes_to_expand: set[CombinatorialClassType] = set(
-            (
-                self.get_comb_class(comb_class)
-                if isinstance(comb_class, int)
-                else comb_class
-            )
-            for comb_class in comb_classes
+            (self.get_comb_class(cc) if isinstance(cc, int) else cc)
+            for cc in comb_classes
         )
         spec_rules: List[AbstractRule] = []
         for cc, rule in self.rules_dict.items():
@@ -259,9 +255,11 @@ class CombinatorialSpecification(
             expand_verified=continue_expanding_verified,
         )
         for rule in spec_rules:
-            start_label = css.classdb.get_label(rule.comb_class)
-            end_labels = tuple(map(css.classdb.get_label, rule.children))
-            ruledb.add(start_label, end_labels, rule)
+            ruledb.add(
+                css.classdb.get_label(rule.comb_class),
+                tuple(map(css.classdb.get_label, rule.children)),
+                rule,
+            )
         ruledb.reverse = reverse
         css.classqueue = DefaultQueue(css.strategy_pack)
         for comb_class in classes_to_expand:
@@ -271,10 +269,12 @@ class CombinatorialSpecification(
         # logger.info(CSS.run_information())
         try:
             # pylint: disable=protected-access
-            spec_rule = css._auto_search_rules(max_expansion_time=max_expansion_time)
+            new_spec_rules = css._auto_search_rules(
+                max_expansion_time=max_expansion_time
+            )
         except SpecificationNotFound as e:
             raise SpecificationNotFound("Expansion unsuccessful") from e
-        new_spec = CombinatorialSpecification(self.root, spec_rule)
+        new_spec = CombinatorialSpecification(self.root, new_spec_rules)
         return new_spec
 
     def _is_valid_spec(self) -> bool:
