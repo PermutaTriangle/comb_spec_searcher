@@ -161,11 +161,12 @@ class CombinatorialSpecification(
             rule = new_spec.rules_dict[class_to_expand]
             assert isinstance(rule, VerificationRule)
             pack = rule.pack()
-            classes_to_expand = set(
-                cc
-                for cc in new_spec.unexpanded_verified_classes()
-                if new_spec.rules_dict[cc].strategy == rule.strategy
-            )
+            classes_to_expand = set()
+            for cc in new_spec.unexpanded_verified_classes():
+                other_rule = new_spec.rules_dict[cc]
+                if isinstance(other_rule, VerificationRule):
+                    if rule.pack() == other_rule.pack():
+                        classes_to_expand.add(cc)
             try:
                 logger.info(
                     "Expanding with %s on \n%s\nand %s other classes",
