@@ -161,18 +161,29 @@ class CombinatorialSpecification(
             rule = new_spec.rules_dict[class_to_expand]
             assert isinstance(rule, VerificationRule)
             pack = rule.pack()
+            classes_to_expand = set()
+            for cc in new_spec.unexpanded_verified_classes():
+                other_rule = new_spec.rules_dict[cc]
+                if isinstance(other_rule, VerificationRule):
+                    if rule.pack() == other_rule.pack():
+                        classes_to_expand.add(cc)
             try:
-                logger.info("Expanding with %s on \n%s\n", pack.name, class_to_expand)
-                new_spec = new_spec.expand_comb_class(
+                logger.info(
+                    "Expanding with %s on \n%s\nand %s other classes",
+                    pack.name,
                     class_to_expand,
+                    len(classes_to_expand) - 1,
+                )
+                new_spec = new_spec.expand_comb_classes(
+                    classes_to_expand,
                     pack,
                     reverse=False,
                     continue_expanding_verified=False,
                 )
             except SpecificationNotFound:
                 logger.info("Specification NOT detected. Allowing reverse rules")
-                new_spec = new_spec.expand_comb_class(
-                    class_to_expand,
+                new_spec = new_spec.expand_comb_classes(
+                    classes_to_expand,
                     pack,
                     reverse=True,
                     continue_expanding_verified=True,
@@ -199,6 +210,18 @@ class CombinatorialSpecification(
         continue_expanding_verified: bool,
         max_expansion_time: Optional[float] = None,
     ) -> "CombinatorialSpecification[CombinatorialClassType, CombinatorialObjectType]":
+        return self.expand_comb_classes(
+            [comb_class], pack, reverse, continue_expanding_verified, max_expansion_time
+        )
+
+    def expand_comb_classes(
+        self,
+        comb_classes: Iterable[Union[int, CombinatorialClassType]],
+        pack: StrategyPack,
+        reverse: bool,
+        continue_expanding_verified: bool,
+        max_expansion_time: Optional[float] = None,
+    ) -> "CombinatorialSpecification[CombinatorialClassType, CombinatorialObjectType]":
         """
         Will try to expand a particular class with respect to the given strategy pack.
 
@@ -211,16 +234,18 @@ class CombinatorialSpecification(
         from .comb_spec_searcher import CombinatorialSpecificationSearcher
         from .rule_db import RuleDBForest
 
-        if isinstance(comb_class, int):
-            comb_class = self.get_comb_class(comb_class)
-
+        classes_to_expand: set[CombinatorialClassType] = set(
+            (self.get_comb_class(cc) if isinstance(cc, int) else cc)
+            for cc in comb_classes
+        )
         spec_rules: List[AbstractRule] = []
         for cc, rule in self.rules_dict.items():
-            if cc != comb_class:
-                if isinstance(rule, EquivalencePathRule):
-                    spec_rules.extend(map(copy, rule.rules))
-                else:
-                    spec_rules.append(copy(rule))
+            if isinstance(rule, VerificationRule) and cc in classes_to_expand:
+                continue
+            if isinstance(rule, EquivalencePathRule):
+                spec_rules.extend(map(copy, rule.rules))
+            else:
+                spec_rules.append(copy(rule))
 
         ruledb = RuleDBForest(reverse=False, rule_cache=spec_rules)
         css = CombinatorialSpecificationSearcher(
@@ -231,21 +256,26 @@ class CombinatorialSpecification(
             expand_verified=continue_expanding_verified,
         )
         for rule in spec_rules:
-            start_label = css.classdb.get_label(rule.comb_class)
-            end_labels = tuple(map(css.classdb.get_label, rule.children))
-            ruledb.add(start_label, end_labels, rule)
+            ruledb.add(
+                css.classdb.get_label(rule.comb_class),
+                tuple(map(css.classdb.get_label, rule.children)),
+                rule,
+            )
         ruledb.reverse = reverse
         css.classqueue = DefaultQueue(css.strategy_pack)
-        label_to_expand = css.classdb.get_label(comb_class)
-        css.classqueue.add(label_to_expand)
-        css.try_verify(comb_class, label_to_expand)
+        for comb_class in classes_to_expand:
+            label_to_expand = css.classdb.get_label(comb_class)
+            css.classqueue.add(label_to_expand)
+            css.try_verify(comb_class, label_to_expand)
         # logger.info(CSS.run_information())
         try:
             # pylint: disable=protected-access
-            spec_rule = css._auto_search_rules(max_expansion_time=max_expansion_time)
+            new_spec_rules = css._auto_search_rules(
+                max_expansion_time=max_expansion_time
+            )
         except SpecificationNotFound as e:
             raise SpecificationNotFound("Expansion unsuccessful") from e
-        new_spec = CombinatorialSpecification(self.root, spec_rule)
+        new_spec = CombinatorialSpecification(self.root, new_spec_rules)
         return new_spec
 
     def _is_valid_spec(self) -> bool:
