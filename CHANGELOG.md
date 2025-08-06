@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Migrated from setup.py to modern pyproject.toml packaging with hatchling backend
 - Updated GitHub Actions workflows to use latest versions and modern build commands
 - Updated README badges: replaced deprecated Travis CI and requires.io badges with GitHub Actions
+- `CombinatorialSpecification.expand_verified` will expand all classes that use the same pack at once
 
 ### Removed
 - setup.py and MANIFEST.in files (replaced by pyproject.toml configuration)
