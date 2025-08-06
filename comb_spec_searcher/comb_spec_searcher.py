@@ -237,7 +237,7 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
                 logger.debug(
                     "The equivalence strategy %s returned the same "
                     "combinatorial class when applied to %r",
-                    str(rule).split(" ")[1],
+                    rule.formal_step,
                     comb_class,
                 )
                 continue
