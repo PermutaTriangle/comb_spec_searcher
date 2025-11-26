@@ -51,6 +51,7 @@ AtomStrategy, relying on CombinatorialClass methods.
 """
 import abc
 from collections import defaultdict
+from copy import copy
 from importlib import import_module
 from typing import (
     TYPE_CHECKING,
@@ -106,6 +107,7 @@ def strategy_from_dict(d) -> CSSstrategy:
     """
     Return the AbstractStrategy or StrategyFactory from the json representation.
     """
+    d = copy(d)
     module = import_module(d.pop("class_module"))
     StratClass: Type[CSSstrategy] = getattr(module, d.pop("strategy_class"))
     assert issubclass(
