@@ -7,6 +7,7 @@ calling the Strategy class and storing its results.
 
 
 import abc
+from copy import copy
 import random
 from collections import defaultdict
 from importlib import import_module
@@ -91,6 +92,7 @@ class AbstractRule(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectT
     @classmethod
     @abc.abstractmethod
     def from_dict(cls, d: dict) -> "AbstractRule":
+        d = copy(d)
         module = import_module(d.pop("class_module"))
         RuleClass: Type["AbstractRule"] = getattr(module, d.pop("rule_class"))
         if not issubclass(RuleClass, AbstractRule):
@@ -374,6 +376,7 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         # pylint: disable=import-outside-toplevel
         from comb_spec_searcher.strategies.strategy import AbstractStrategy, Strategy
 
+        d = copy(d)
         strategy = AbstractStrategy.from_dict(d.pop("strategy"))
         assert isinstance(strategy, Strategy)
         comb_class = CombinatorialClass.from_dict(d.pop("comb_class"))
@@ -739,6 +742,7 @@ class EquivalenceRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
 
     @classmethod
     def from_dict(cls, d: dict) -> "EquivalenceRule":
+        d = copy(d)
         rule = AbstractRule.from_dict(d.pop("original_rule"))
         assert isinstance(rule, Rule)
         assert not d, d.keys()
@@ -840,6 +844,7 @@ class EquivalencePathRule(Rule[CombinatorialClassType, CombinatorialObjectType])
 
     @classmethod
     def from_dict(cls, d: dict) -> "EquivalencePathRule":
+        d = copy(d)
         rules: List[Rule] = []
         for rule_dict in d.pop("rules"):
             rule = AbstractRule.from_dict(rule_dict)
@@ -991,6 +996,7 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
 
     @classmethod
     def from_dict(cls, d: dict) -> "ReverseRule":
+        d = copy(d)
         rule = AbstractRule.from_dict(d.pop("original_rule"))
         assert isinstance(rule, Rule)
         idx = d.pop("idx")
@@ -1104,6 +1110,7 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
             VerificationStrategy,
         )
 
+        d = copy(d)
         strategy = AbstractStrategy.from_dict(d.pop("strategy"))
         assert isinstance(strategy, VerificationStrategy)
         comb_class = CombinatorialClass.from_dict(d.pop("comb_class"))

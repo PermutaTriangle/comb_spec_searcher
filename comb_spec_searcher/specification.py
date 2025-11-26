@@ -267,7 +267,7 @@ class CombinatorialSpecification(
             label_to_expand = css.classdb.get_label(comb_class)
             css.classqueue.add(label_to_expand)
             css.try_verify(comb_class, label_to_expand)
-        # logger.info(CSS.run_information())
+        logger.info(css.run_information())
         try:
             # pylint: disable=protected-access
             new_spec_rules = css._auto_search_rules(
@@ -298,9 +298,9 @@ class CombinatorialSpecification(
             assert (
                 comb_class.is_empty()
             ), f"rule not in the spec and not empty\n{comb_class}"
-            empty_strat = EmptyStrategy[
+            empty_strat: EmptyStrategy[
                 CombinatorialClassType, CombinatorialObjectType
-            ]()
+            ] = EmptyStrategy()
             self.rules_dict[comb_class] = empty_strat(comb_class)
         return self.rules_dict[comb_class]
 
@@ -674,9 +674,10 @@ class CombinatorialSpecification(
         Return the specification with the dictionary outputter by the
         'to_jsonable' method
         """
+        d = copy(d)
         root = CombinatorialClass.from_dict(d.pop("root"))
         rules = [AbstractRule.from_dict(rule_dict) for rule_dict in d.pop("rules")]
-        return CombinatorialSpecification(root, rules, group_equiv=False)
+        return cls(root, rules, group_equiv=False)
 
 
 class AlreadyVerified(VerificationStrategy[CombinatorialClass, CombinatorialObject]):
