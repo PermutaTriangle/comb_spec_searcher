@@ -19,7 +19,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [4.2.1] 2024-03-04
 ### Changed
-- `VerificationRule.from_dict` reapplies strategies. 
+- `VerificationRule.from_dict` reapplies strategies.
+- `from_dict` methods use `copy` to avoid deleting dicts
 
 ### Fixed
 - Bug in `CombinatorialSpecification.expand_comb_class`, 

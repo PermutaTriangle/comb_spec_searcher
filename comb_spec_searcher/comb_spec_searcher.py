@@ -537,7 +537,8 @@ class CombinatorialSpecificationSearcher(Generic[CombinatorialClassType]):
         """
         if not 0 < perc <= 100:
             logger.warning(
-                "Percentage not between 0 and 100, so assuming 1% search percentage."
+                "Percentage not between 0 and 100, so assuming 1"
+                " percent search percentage."
             )
             perc = 1
         auto_search_start = time.time()
