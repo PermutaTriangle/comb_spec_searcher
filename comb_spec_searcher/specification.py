@@ -677,7 +677,7 @@ class CombinatorialSpecification(
         d = copy(d)
         root = CombinatorialClass.from_dict(d.pop("root"))
         rules = [AbstractRule.from_dict(rule_dict) for rule_dict in d.pop("rules")]
-        return cls(root, rules, group_equiv=False)
+        return CombinatorialSpecification(root, rules, group_equiv=False)
 
 
 class AlreadyVerified(VerificationStrategy[CombinatorialClass, CombinatorialObject]):
