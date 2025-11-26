@@ -34,6 +34,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `EquivalencePathRule` can not accept `Complement` rules 
   where two parameters map to the same parameter as this will 
   result in more than permuting labels.
+- Bug in `CombinatorialSpecification.get_rule` which broke
+  the equality of `EmptyStrategy` rules in specs.
 
 ## [4.2.0] 2023-01-18
 ### Changed
