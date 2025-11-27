@@ -41,6 +41,7 @@ table {
 .node-container{
   width: min-content;
   border: 1px solid;
+  position: relative;
 }
 
 .inner-node-content{
@@ -141,6 +142,45 @@ pre{
   font-style: normal;
   line-height: normal;
   max-width: none !important;
+}
+
+.info-button {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  z-index: 10;
+  transition: background-color 0.2s;
+}
+
+.info-button:hover {
+  background-color: #0056b3;
+}
+
+.info-button:focus {
+  outline: 2px solid #0056b3;
+  outline-offset: 2px;
+}
+
+.delimiter-container {
+  position: relative;
+  display: inline-block;
+}
+
+.delimiter-info-button {
+  top: -5px;
+  right: -15px;
 }
 
 @media print {

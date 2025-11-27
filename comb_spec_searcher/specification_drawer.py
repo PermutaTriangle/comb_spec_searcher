@@ -149,7 +149,7 @@ class SpecificationDrawer:
         """Creates hover over tooltip for delimiter node"""
         tooltip = {
             "content": f"<p>Formal step:<br/>{rule.formal_step}</p>",
-            "selector": f"#node{node_identifier}",
+            "selector": f"#btn{node_identifier}",
         }
         self.tooltips.append(tooltip)
 
@@ -188,7 +188,7 @@ class SpecificationDrawer:
                 <p>Labels: {labels_string}</p>
                 <pre>{rule_string}</pre>
                 {json_string}""",
-            "selector": f"#node{node_identifier}",
+            "selector": f"#btn{node_identifier}",
         }
         if isinstance(rule, VerificationRule):
             tooltip["content"] += f"<p>Verified: {rule.formal_step}</p>"
@@ -199,8 +199,9 @@ class SpecificationDrawer:
     ) -> Tuple[TreantNode, str]:
         """Returns a tuple containing a standard treant node and its id."""
         new_id = self._get_new_node_id()
+        info_button = f'<button class="info-button" id="btn{new_id}" data-toggle="tooltip">ℹ️</button>'
         treant_node = TreantNode(
-            innerHTML=f'<div id="node{new_id}" data-toggle="tooltip">{html_node}</div>',
+            innerHTML=f'<div id="node{new_id}">{html_node}{info_button}</div>',
             collapsable=False,
             collapsed=False,
             children=children,
@@ -238,9 +239,10 @@ class SpecificationDrawer:
         # collapses at levels_shown and at every levels_expand after that
         collapsed = is_on_levels_shown or is_on_levels_expand
 
+        info_button = f'<button class="info-button delimiter-info-button" id="btn{new_id}" data-toggle="tooltip">ℹ️</button>'
         delimiter_node = TreantNode(
-            innerHTML=f"""<div id="node{new_id}"
-                data-toggle="tooltip">{delimiter_html}</div>""",
+            innerHTML=f"""<div id="node{new_id}" class="delimiter-container">
+                {delimiter_html}{info_button}</div>""",
             collapsable=True,
             collapsed=collapsed,
             children=children,
