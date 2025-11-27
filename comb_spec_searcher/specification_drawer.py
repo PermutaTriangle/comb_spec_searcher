@@ -138,10 +138,11 @@ class SpecificationDrawer:
             node_label_additional_style += "background-color: #ff8080;"
             node_additional_style += "border-color: red;"
             node_additional_style += "border-width: 3px; "
+        node_id = self._get_new_node_id()
         html_node = self.comb_classes_to_html_node(
-            comb_classes, node_additional_style, node_label_additional_style
+            comb_classes, node_additional_style, node_label_additional_style, node_id
         )
-        treant_node, node_id = self._create_standard_node(html_node, children)
+        treant_node = self._create_standard_node(html_node, children, node_id)
         self._create_standard_tooltip(comb_classes, node_id)
         return treant_node
 
@@ -149,7 +150,7 @@ class SpecificationDrawer:
         """Creates hover over tooltip for delimiter node"""
         tooltip = {
             "content": f"<p>Formal step:<br/>{rule.formal_step}</p>",
-            "selector": f"#btn{node_identifier}",
+            "selector": f"#node{node_identifier}",
         }
         self.tooltips.append(tooltip)
 
@@ -195,18 +196,16 @@ class SpecificationDrawer:
         self.tooltips.append(tooltip)
 
     def _create_standard_node(
-        self, html_node: str, children: List[TreantNode]
-    ) -> Tuple[TreantNode, str]:
-        """Returns a tuple containing a standard treant node and its id."""
-        new_id = self._get_new_node_id()
-        info_button = f'<button class="info-button" id="btn{new_id}" data-toggle="tooltip">ℹ️</button>'
+        self, html_node: str, children: List[TreantNode], node_id: str
+    ) -> TreantNode:
+        """Returns a standard treant node."""
         treant_node = TreantNode(
-            innerHTML=f'<div id="node{new_id}">{html_node}{info_button}</div>',
+            innerHTML=f'<div id="node{node_id}">{html_node}</div>',
             collapsable=False,
             collapsed=False,
             children=children,
         )
-        return treant_node, new_id
+        return treant_node
 
     def _create_delimiter_node(
         self,
@@ -239,10 +238,9 @@ class SpecificationDrawer:
         # collapses at levels_shown and at every levels_expand after that
         collapsed = is_on_levels_shown or is_on_levels_expand
 
-        info_button = f'<button class="info-button delimiter-info-button" id="btn{new_id}" data-toggle="tooltip">ℹ️</button>'
         delimiter_node = TreantNode(
-            innerHTML=f"""<div id="node{new_id}" class="delimiter-container">
-                {delimiter_html}{info_button}</div>""",
+            innerHTML=f"""<div id="node{new_id}" data-toggle="tooltip">
+                {delimiter_html}</div>""",
             collapsable=True,
             collapsed=collapsed,
             children=children,
@@ -254,6 +252,7 @@ class SpecificationDrawer:
         comb_classes: List[CombinatorialClass],
         additional_style: str = "",
         additional_label_style: str = "",
+        node_id: str = "",
     ) -> str:
         """Returns a representation of comb classes as a single html node string"""
         if not comb_classes:
@@ -281,8 +280,13 @@ class SpecificationDrawer:
         # add labels above the node
         labels = [str(self.spec.get_label(comb_class)) for comb_class in comb_classes]
         labels_string = ", ".join(labels)
+        info_button = (
+            f'<button class="info-button" id="btn{node_id}" data-toggle="tooltip">ℹ️</button>'
+            if node_id
+            else ""
+        )
         labels_html = f"""<div class=label
-            style='{additional_style}{additional_label_style}'>{labels_string}</div>"""
+            style='{additional_style}{additional_label_style}'>{labels_string}{info_button}</div>"""
 
         # add verbose below the node
         verbose_html = ""
