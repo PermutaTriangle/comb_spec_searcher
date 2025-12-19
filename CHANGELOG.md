@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added 
+- the `AtomStrategy` handles extra parameters when counting
+
 ### Changed
 - `from_dict` methods use `copy` to avoid deleting dicts
 
