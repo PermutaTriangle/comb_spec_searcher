@@ -804,10 +804,9 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
         super().__init__(ignore_parent=True)
 
     def get_terms(self, comb_class: CombinatorialClass, n: int) -> Terms:
-        if comb_class.extra_parameters:
-            raise NotImplementedError
         if n == comb_class.minimum_size_of_object():
-            return Counter([tuple()])
+            param = comb_class.get_parameters(next(comb_class.objects_of_size(n)))
+            return Counter([param])
         return Counter()
 
     def get_objects(self, comb_class: CombinatorialClass, n: int) -> Objects:
