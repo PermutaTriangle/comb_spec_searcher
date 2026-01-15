@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added 
+- the `AtomStrategy` handles extra parameters when counting
+
+### Changed
+- `from_dict` methods use `copy` to avoid deleting dicts
+
+### Fixed
+- Bug in `CombinatorialSpecification.get_rule` which broke
+  the equality of `EmptyStrategy` rules in specs.
+
 ## [4.3.0] - 2025-06-13
 ### Changed
 - Minimum Python version updated from 3.8 to 3.10
@@ -19,7 +29,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [4.2.1] 2024-03-04
 ### Changed
-- `VerificationRule.from_dict` reapplies strategies. 
+- `VerificationRule.from_dict` reapplies strategies.
 
 ### Fixed
 - Bug in `CombinatorialSpecification.expand_comb_class`, 

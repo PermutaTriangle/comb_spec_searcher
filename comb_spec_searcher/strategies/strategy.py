@@ -51,6 +51,7 @@ AtomStrategy, relying on CombinatorialClass methods.
 """
 import abc
 from collections import defaultdict
+from copy import copy
 from importlib import import_module
 from typing import (
     TYPE_CHECKING,
@@ -106,6 +107,7 @@ def strategy_from_dict(d) -> CSSstrategy:
     """
     Return the AbstractStrategy or StrategyFactory from the json representation.
     """
+    d = copy(d)
     module = import_module(d.pop("class_module"))
     StratClass: Type[CSSstrategy] = getattr(module, d.pop("strategy_class"))
     assert issubclass(
@@ -802,10 +804,9 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
         super().__init__(ignore_parent=True)
 
     def get_terms(self, comb_class: CombinatorialClass, n: int) -> Terms:
-        if comb_class.extra_parameters:
-            raise NotImplementedError
         if n == comb_class.minimum_size_of_object():
-            return Counter([tuple()])
+            param = comb_class.get_parameters(next(comb_class.objects_of_size(n)))
+            return Counter([param])
         return Counter()
 
     def get_objects(self, comb_class: CombinatorialClass, n: int) -> Objects:
