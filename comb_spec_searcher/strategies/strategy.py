@@ -837,12 +837,11 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
     ) -> CombinatorialObject:
         if n != comb_class.minimum_size_of_object():
             raise ValueError("Invalid size")
-        else:
-            obj: CombinatorialObject = next(comb_class.objects_of_size(n))
-            param = comb_class.get_parameters(obj)
-            variables = comb_class.extra_parameters
-            if parameters != {k: v for k, v in zip(variables, param)}:
-                raise ValueError("Invalid params")
+        obj: CombinatorialObject = next(comb_class.objects_of_size(n))
+        param = comb_class.get_parameters(obj)
+        variables = comb_class.extra_parameters
+        if parameters != dict(zip(variables, param)):
+            raise ValueError("Invalid params")
         return obj
 
     def verified(self, comb_class: CombinatorialClass) -> bool:
