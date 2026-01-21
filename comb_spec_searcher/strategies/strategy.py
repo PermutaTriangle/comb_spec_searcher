@@ -829,7 +829,7 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
         variables = comb_class.extra_parameters
         res = var("x") ** comb_class.minimum_size_of_object()
         for k, v in zip(variables, param):
-            res *= k**v
+            res *= var(k) ** v
         return res
 
     def random_sample_object_of_size(
@@ -838,7 +838,7 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
         if n != comb_class.minimum_size_of_object():
             raise ValueError("Invalid size")
         else:
-            obj = next(comb_class.objects_of_size(n))
+            obj: CombinatorialObject = next(comb_class.objects_of_size(n))
             param = comb_class.get_parameters(obj)
             variables = comb_class.extra_parameters
             if parameters != {k: v for k, v in zip(variables, param)}:
