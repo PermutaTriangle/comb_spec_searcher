@@ -810,11 +810,11 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
         return Counter()
 
     def get_objects(self, comb_class: CombinatorialClass, n: int) -> Objects:
-        if comb_class.extra_parameters:
-            raise NotImplementedError
         res: Objects = defaultdict(list)
         if n == comb_class.minimum_size_of_object():
-            res[tuple()].append(next(comb_class.objects_of_size(n)))
+            obj = next(comb_class.objects_of_size(n))
+            param = comb_class.get_parameters(obj)
+            res[param].append(obj)
         return res
 
     def get_genf(
@@ -822,21 +822,26 @@ class AtomStrategy(VerificationStrategy[CombinatorialClass, CombinatorialObject]
         comb_class: CombinatorialClass,
         funcs: Optional[Dict[CombinatorialClass, Function]] = None,
     ) -> Any:
-        if comb_class.extra_parameters:
-            raise NotImplementedError
         if not self.verified(comb_class):
             raise StrategyDoesNotApply("Can't find generating functon for non-atom.")
-        x = var("x")
-        return x ** comb_class.minimum_size_of_object()
+        obj = next(comb_class.objects_of_size(comb_class.minimum_size_of_object()))
+        param = comb_class.get_parameters(obj)
+        variables = comb_class.extra_parameters
+        res = var("x") ** comb_class.minimum_size_of_object()
+        for k, v in zip(variables, param):
+            res *= var(k) ** v
+        return res
 
     def random_sample_object_of_size(
         self, comb_class: CombinatorialClass, n: int, **parameters: int
     ) -> CombinatorialObject:
-        if comb_class.extra_parameters:
-            raise NotImplementedError
         if n != comb_class.minimum_size_of_object():
             raise ValueError("Invalid size")
         obj: CombinatorialObject = next(comb_class.objects_of_size(n))
+        param = comb_class.get_parameters(obj)
+        variables = comb_class.extra_parameters
+        if parameters != dict(zip(variables, param)):
+            raise ValueError("Invalid params")
         return obj
 
     def verified(self, comb_class: CombinatorialClass) -> bool:
