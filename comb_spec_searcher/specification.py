@@ -7,7 +7,17 @@ from copy import copy
 from functools import reduce
 from itertools import chain
 from operator import mul
-from typing import Any, Dict, Generic, Iterable, Iterator, List, Optional, Set, Union
+from typing import (
+    Any,
+    Dict,
+    Generic,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Union,
+)
 
 import sympy
 from logzero import logger

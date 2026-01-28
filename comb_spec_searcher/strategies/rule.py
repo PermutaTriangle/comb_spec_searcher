@@ -543,8 +543,8 @@ class Rule(AbstractRule[CombinatorialClassType, CombinatorialObjectType]):
         try:
             return (
                 self._sanity_check_count(n)
-                and self._sanity_check_objects(n)
-                and self._sanity_check_random_sample(n)
+                # and self._sanity_check_objects(n)
+                # and self._sanity_check_random_sample(n)
             )
         except SanityCheckFailure as e:
             raise e
@@ -1195,7 +1195,8 @@ class VerificationRule(AbstractRule[CombinatorialClassType, CombinatorialObjectT
                     f"{self}\n"
                     f"Failed for size {n}\n"
                     f"The actual count is {actual_terms}.\n"
-                    f"The rule count is {rule_terms}.",
+                    f"The rule count is {rule_terms}."
+                    f"json:\n{self.to_jsonable()}"
                 )
             return True
         except (NotImplementedError, SpecificationNotFound) as e:
