@@ -466,3 +466,46 @@ def test_minimization_keeps_the_same_rules(patterns):
     extractor.check()
     stable_rules = extractor._sorted_stable_rules(ruledb.table_method)
     assert extractor.needed_rules == minimize_as_before(ruledb.root_label, stable_rules)
+
+
+def test_justified_rules():
+    """
+    The rules that justify the root's value leave out the rules that do not help it,
+    and make it pump on their own.
+    """
+    needed = [
+        ForestRuleKey(0, (1, 2), (0, 0), RuleBucket.NORMAL),
+        ForestRuleKey(1, (), (), RuleBucket.VERIFICATION),
+        ForestRuleKey(2, (3,), (0,), RuleBucket.NORMAL),
+        ForestRuleKey(3, (4,), (0,), RuleBucket.NORMAL),
+        ForestRuleKey(4, (5, 0, 0), (0, 1, 1), RuleBucket.NORMAL),
+        ForestRuleKey(5, (), (), RuleBucket.VERIFICATION),
+    ]
+    useless = [
+        ForestRuleKey(2, (6,), (2,), RuleBucket.UNDEFINED),  # 6 has no rule
+        ForestRuleKey(3, (4,), (1,), RuleBucket.NORMAL),  # added once 3 pumps
+    ]
+    tb = TableMethod(record_justifications=True)
+    for rule in needed + useless:
+        tb.add_rule_key(rule)
+    justified = tb.justified_rules(0)
+    assert set(justified) == set(needed)
+    alone = TableMethod()
+    for rule in justified:
+        alone.add_rule_key(rule)
+    assert alone.is_pumping(0)
+    with pytest.raises(ValueError):
+        TableMethod().justified_rules(0)
+
+
+def test_forest_justifying_rules_only():
+    """
+    Minimizing only the rules that justify the root still gives a specification.
+    """
+    alphabet = ["a", "b"]
+    start_class = AvoidingWithPrefix("", ["ababa", "babb"], alphabet)
+    ruledb = RuleDBForest(justifying_rules_only=True)
+    searcher = CombinatorialSpecificationSearcher(start_class, pack, ruledb=ruledb)
+    spec = searcher.auto_search()
+    expected_count = [1, 2, 4, 8, 15, 27, 48, 87, 157, 283]
+    assert [spec.count_objects_of_size(n) for n in range(10)] == expected_count
