@@ -359,15 +359,15 @@ class TableMethod:
         stack = [label]
         rule_indices: Set[int] = set()
         while stack:
-            for rule_idx in self._justifications[stack.pop()]:
-                if rule_idx in rule_indices:
+            for rule_index in self._justifications[stack.pop()]:
+                if rule_index in rule_indices:
                     continue
-                rule_indices.add(rule_idx)
-                for child in self._rules[rule_idx].children:
+                rule_indices.add(rule_index)
+                for child in self._rules[rule_index].children:
                     if child not in seen:
                         seen.add(child)
                         stack.append(child)
-        return [self._rules[idx] for idx in sorted(rule_indices)]
+        return [self._rules[rule_index] for rule_index in sorted(rule_indices)]
 
     def pumping_subuniverse(
         self,
@@ -583,15 +583,15 @@ class ForestRuleExtractor:
             table = TableMethod(record_justifications=True)
             for rule_key in self.needed_rules:
                 table.add_rule_key(rule_key)
-            for key in reversed(ForestRuleExtractor.MINIMIZE_ORDER):
-                for rule_key in self.rule_by_bucket[key]:
+            for bucket in reversed(ForestRuleExtractor.MINIMIZE_ORDER):
+                for rule_key in self.rule_by_bucket[bucket]:
                     table.add_rule_key(rule_key)
             justifying = set(table.justified_rules(self.root_label))
             if not self._is_productive(justifying):
                 return
             remaining = {
-                key: [rk for rk in rules if rk in justifying]
-                for key, rules in self.rule_by_bucket.items()
+                bucket: [rule_key for rule_key in rules if rule_key in justifying]
+                for bucket, rules in self.rule_by_bucket.items()
             }
             if sum(map(len, remaining.values())) == sum(
                 map(len, self.rule_by_bucket.values())

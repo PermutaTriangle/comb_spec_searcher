@@ -489,10 +489,10 @@ def test_justified_rules():
         ForestRuleKey(2, (6,), (2,), RuleBucket.UNDEFINED),  # 6 has no rule
         ForestRuleKey(3, (4,), (1,), RuleBucket.NORMAL),  # added once 3 pumps
     ]
-    tb = TableMethod(record_justifications=True)
+    table = TableMethod(record_justifications=True)
     for rule in needed + useless:
-        tb.add_rule_key(rule)
-    justified = tb.justified_rules(0)
+        table.add_rule_key(rule)
+    justified = table.justified_rules(0)
     assert set(justified) == set(needed)
     alone = TableMethod()
     for rule in justified:
@@ -512,4 +512,4 @@ def test_forest_justifying_rules_only():
     searcher = CombinatorialSpecificationSearcher(start_class, pack, ruledb=ruledb)
     spec = searcher.auto_search()
     expected_count = [1, 2, 4, 8, 15, 27, 48, 87, 157, 283]
-    assert [spec.count_objects_of_size(n) for n in range(10)] == expected_count
+    assert [spec.count_objects_of_size(size) for size in range(10)] == expected_count
