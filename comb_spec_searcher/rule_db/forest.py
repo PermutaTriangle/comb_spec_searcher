@@ -247,7 +247,14 @@ class Function:
 
 
 class TableMethod:
-    def __init__(self) -> None:
+    def __init__(self, record_justifications: bool = False) -> None:
+        """
+        With record_justifications, the table keeps for each class the rules
+        that raised its value, or made it infinite (see `justified_rules`).
+        """
+        self._justifications: Optional[DefaultList[List[int]]] = (
+            DefaultList(list) if record_justifications else None
+        )
         self._rules: List[ForestRuleKey] = []
         self._shifts: DefaultList[List[Optional[int]]] = DefaultList(list)
         self._function: Function = Function()
@@ -268,6 +275,9 @@ class TableMethod:
         # pylint: disable=protected-access
         assert not self._processing_queue
         new = TableMethod.__new__(TableMethod)
+        new._justifications = (
+            None if self._justifications is None else self._justifications.copy()
+        )
         new._rules = self._rules.copy()
         new._shifts = self._shifts.copy()
         new._function = self._function.copy()
@@ -332,6 +342,33 @@ class TableMethod:
     def stable_subset(self) -> Iterator[int]:
         return self._function.preimage(None)
 
+    def justified_rules(self, label: int) -> List[ForestRuleKey]:
+        """
+        Return the rules that justify the value of the class: the rules that
+        raised its value or made it infinite, and in turn those of the children
+        of these rules. Every value the table reached was reached by one of
+        these rules from values of their children reached before, so a table of
+        these rules alone gives the class at least the same value. They are
+        returned in the order they were added to the table.
+
+        The table must have been created with record_justifications.
+        """
+        if self._justifications is None:
+            raise ValueError("the table does not record justifications")
+        seen = {label}
+        stack = [label]
+        rule_indices: Set[int] = set()
+        while stack:
+            for rule_index in self._justifications[stack.pop()]:
+                if rule_index in rule_indices:
+                    continue
+                rule_indices.add(rule_index)
+                for child in self._rules[rule_index].children:
+                    if child not in seen:
+                        seen.add(child)
+                        stack.append(child)
+        return [self._rules[rule_index] for rule_index in sorted(rule_indices)]
+
     def pumping_subuniverse(
         self,
     ) -> Iterator[ForestRuleKey]:
@@ -393,6 +430,11 @@ class TableMethod:
             if self._rule_holding_extra_terms:
                 rule_idx = self._rule_holding_extra_terms.pop()
                 parent = self._rules[rule_idx].parent
+                if (
+                    self._justifications is not None
+                    and self._function[parent] is not None
+                ):
+                    self._justifications.mutable(parent).append(rule_idx)
                 self._set_infinite(parent)
 
     @staticmethod
@@ -419,6 +461,8 @@ class TableMethod:
             self._rule_holding_extra_terms.add(rule_idx)
             return
         values_changed = self._function.increase_value(comb_class)
+        if self._justifications is not None:
+            self._justifications.mutable(comb_class).append(rule_idx)
         # Correction of the gap, which moves only if the values taken changed
         if values_changed:
             gap_start = self._function.preimage_gap(self._gap_size)
@@ -509,14 +553,56 @@ class ForestRuleExtractor:
         ruledb: "RuleDBForest",
         classdb: ClassDB,
         pack: StrategyPack,
+        justifying_rules_only: bool = False,
     ):
         self.pack = pack
+        self.justifying_rules_only = justifying_rules_only
         self.classdb = classdb
         self.root_label = root_label
         self.rule_by_bucket = self._sorted_stable_rules(ruledb.table_method)
         assert set(ForestRuleExtractor.MINIMIZE_ORDER) == set(self.rule_by_bucket)
         self.needed_rules: List[ForestRuleKey] = []
         self._minimize()
+
+    def _keep_justifying_rules(self) -> None:
+        """
+        Keep only the rules still to minimize that justify the root's value.
+
+        The minimization copies a table for every rule it tries, so its time
+        grows with the product of the number of rules it keeps and the number
+        of rules there are. Only the rules that justify the root's value in a
+        table of the rules kept so far and those still to minimize are needed: a
+        table of them alone makes the root pump. Minimizing them gives a minimal
+        specification as well, since minimality is a property of the rules kept.
+        They are taken from a table where the rules kept come first, then those
+        the minimization prefers to keep, so that the others justify only what
+        these cannot; and again from a table of those, until no more go.
+        """
+        before = sum(len(rules) for rules in self.rule_by_bucket.values())
+        while True:
+            table = TableMethod(record_justifications=True)
+            for rule_key in self.needed_rules:
+                table.add_rule_key(rule_key)
+            for bucket in reversed(ForestRuleExtractor.MINIMIZE_ORDER):
+                for rule_key in self.rule_by_bucket[bucket]:
+                    table.add_rule_key(rule_key)
+            justifying = set(table.justified_rules(self.root_label))
+            if not self._is_productive(justifying):
+                return
+            remaining = {
+                bucket: [rule_key for rule_key in rules if rule_key in justifying]
+                for bucket, rules in self.rule_by_bucket.items()
+            }
+            if sum(map(len, remaining.values())) == sum(
+                map(len, self.rule_by_bucket.values())
+            ):
+                break
+            self.rule_by_bucket = remaining
+        logger.info(
+            "Minimizing the %s of %s rules left that justify the root",
+            sum(len(rules) for rules in self.rule_by_bucket.values()),
+            before,
+        )
 
     def check(self) -> None:
         """
@@ -561,6 +647,8 @@ class ForestRuleExtractor:
         Perform the complete minimization of the forest.
         """
         for key in ForestRuleExtractor.MINIMIZE_ORDER:
+            if self.justifying_rules_only:
+                self._keep_justifying_rules()
             self._minimize_key(key)
 
     def _minimize_key(self, key: RuleBucket) -> None:
@@ -709,6 +797,10 @@ class RuleDBForest(RuleDBAbstract):
     current rule in the database.
 
     Set `reverse` to prevent the reverse of the added rules to be added to the database.
+
+    Set `justifying_rules_only` to minimize, when extracting a specification, only the
+    rules that justify the root's value: much faster on a large forest, with a
+    specification that may have more rules (see `ForestRuleExtractor`).
     """
 
     def __init__(
@@ -716,9 +808,11 @@ class RuleDBForest(RuleDBAbstract):
         *,
         reverse: bool = True,
         rule_cache: Iterable[AbstractRule] = tuple(),
+        justifying_rules_only: bool = False,
     ) -> None:
         super().__init__()
         self.reverse = reverse
+        self.justifying_rules_only = justifying_rules_only
         self._num_rules = 0
         self._time_table_method = 0.0
         self._time_key = 0.0
@@ -770,7 +864,11 @@ class RuleDBForest(RuleDBAbstract):
     @ensure_specification
     def get_specification_rules(self, **kwargs) -> Iterator[AbstractRule]:
         extractor = ForestRuleExtractor(
-            self.root_label, self, self.classdb, self.strategy_pack
+            self.root_label,
+            self,
+            self.classdb,
+            self.strategy_pack,
+            justifying_rules_only=self.justifying_rules_only,
         )
         extractor.check()
         return extractor.rules(self._rule_cache)
