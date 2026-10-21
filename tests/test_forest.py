@@ -4,7 +4,13 @@ from typing import Dict, List, Union
 import pytest
 
 from comb_spec_searcher import CombinatorialSpecificationSearcher
-from comb_spec_searcher.rule_db.forest import Function, RuleDBForest, TableMethod
+from comb_spec_searcher.rule_db.forest import (
+    DefaultList,
+    ForestRuleExtractor,
+    Function,
+    RuleDBForest,
+    TableMethod,
+)
 from comb_spec_searcher.strategies.strategy import EmptyStrategy
 from comb_spec_searcher.typing import ForestRuleKey, RuleBucket
 from example import AvoidingWithPrefix, pack
@@ -340,3 +346,123 @@ def test_emtpy_rule_first():
     css = CombinatorialSpecificationSearcher(empty_class, pack, ruledb=RuleDBForest())
     spec = css.auto_search()
     assert isinstance(spec.rules_dict[empty_class].strategy, EmptyStrategy)
+
+
+def test_default_list_copy():
+    """
+    A copy of a default list shares its items with the list copied until one of
+    the two changes them.
+    """
+    lst = DefaultList(list)
+    lst.mutable(0).append(1)
+    lst.mutable(2).append(2)
+    copy = lst.copy()
+    copy.mutable(0).append(3)
+    lst.mutable(2).append(4)
+    copy[1] = [5]
+    copy.append([6])
+    lst.mutable(4).append(7)
+    assert list(lst) == [[1], [], [2, 4], [], [7]]
+    assert list(copy) == [[1, 3], [5], [2], [6]]
+    again = copy.copy()
+    again.mutable(0).append(8)
+    copy.mutable(3).append(9)
+    assert list(copy) == [[1, 3], [5], [2], [6, 9]]
+    assert list(again) == [[1, 3, 8], [5], [2], [6]]
+
+
+def test_table_copy():
+    """
+    A copy of a table and the table copied take rules of their own without
+    changing each other, and each ends as a table built with its rules.
+    """
+    base = [
+        ForestRuleKey(0, (1, 2), (0, 0), RuleBucket.NORMAL),
+        ForestRuleKey(1, (), (), RuleBucket.VERIFICATION),
+        ForestRuleKey(2, (3,), (0,), RuleBucket.NORMAL),
+    ]
+    more = [
+        ForestRuleKey(3, (4,), (0,), RuleBucket.NORMAL),
+        ForestRuleKey(4, (5, 0, 0), (0, 1, 1), RuleBucket.NORMAL),
+        ForestRuleKey(5, (), (), RuleBucket.VERIFICATION),
+    ]
+    other = [ForestRuleKey(3, (), (), RuleBucket.VERIFICATION)]
+
+    def table(rules):
+        tb = TableMethod()
+        for rule in rules:
+            tb.add_rule_key(rule)
+        return tb
+
+    tb = table(base)
+    before = tb.function
+    copy = tb.copy()
+    for rule in more:
+        copy.add_rule_key(rule)
+    assert tb.function == before
+    after = copy.function
+    for rule in other:
+        tb.add_rule_key(rule)
+    assert copy.function == after
+    assert copy.function == table(base + more).function == {i: None for i in range(6)}
+    assert tb.function == table(base + other).function == {i: None for i in range(4)}
+
+
+def minimize_as_before(root, rule_by_bucket):
+    """
+    The extractor's minimization as it was before it copied tables.
+    """
+
+    def is_productive(rule_keys):
+        tb = TableMethod()
+        for rk in rule_keys:
+            tb.add_rule_key(rk)
+        return tb.is_pumping(root)
+
+    needed_rules = []
+    for key in ForestRuleExtractor.MINIMIZE_ORDER:
+        maybe_useful = []
+        not_minimizing = [needed_rules, maybe_useful]
+        not_minimizing.extend(rules for k, rules in rule_by_bucket.items() if k != key)
+        minimizing = rule_by_bucket[key]
+        while minimizing:
+            tb = TableMethod()
+            for rk in itertools.chain.from_iterable(not_minimizing):
+                tb.add_rule_key(rk)
+            if tb.is_pumping(root):
+                minimizing.clear()
+                break
+            for i, rk in enumerate(minimizing):
+                tb.add_rule_key(rk)
+                if tb.is_pumping(root):
+                    break
+            else:
+                raise RuntimeError("Not pumping after adding all rules")
+            maybe_useful.append(rk)
+            del minimizing[i:]
+        while maybe_useful:
+            rk = maybe_useful.pop()
+            if not is_productive(itertools.chain.from_iterable(not_minimizing)):
+                needed_rules.append(rk)
+    return needed_rules
+
+
+@pytest.mark.parametrize(
+    "patterns",
+    [["ababa", "babb"], ["abaab", "babb", "bbaa"], ["abba", "aaba", "babaa"]],
+)
+def test_minimization_keeps_the_same_rules(patterns):
+    """
+    The extractor keeps the rules it kept before it copied tables, in the same
+    order.
+    """
+    start_class = AvoidingWithPrefix("", patterns, ["a", "b"])
+    ruledb = RuleDBForest()
+    searcher = CombinatorialSpecificationSearcher(start_class, pack, ruledb=ruledb)
+    searcher.auto_search()
+    extractor = ForestRuleExtractor(
+        ruledb.root_label, ruledb, ruledb.classdb, ruledb.strategy_pack
+    )
+    extractor.check()
+    stable_rules = extractor._sorted_stable_rules(ruledb.table_method)
+    assert extractor.needed_rules == minimize_as_before(ruledb.root_label, stable_rules)
