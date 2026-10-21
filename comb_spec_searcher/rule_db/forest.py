@@ -400,8 +400,8 @@ class TableMethod:
         """
         Return True if the shifts indicate that a new terms can be computed.
         """
-        for s in shifts:
-            if s is not None and s <= 0:
+        for shift in shifts:
+            if shift is not None and shift <= 0:
                 return False
         return True
 
@@ -578,11 +578,11 @@ class ForestRuleExtractor:
         logger.info("Minimizing %s", key.name)
         maybe_useful: List[ForestRuleKey] = []
         others = TableMethod()
-        for rk in itertools.chain(
+        for rule_key in itertools.chain(
             self.needed_rules,
-            *(rules for k, rules in self.rule_by_bucket.items() if k != key),
+            *(rules for bucket, rules in self.rule_by_bucket.items() if bucket != key),
         ):
-            others.add_rule_key(rk)
+            others.add_rule_key(rule_key)
         # the rules we are not trying to minimize, and those found useful
         base = others.copy()
         minimizing = self.rule_by_bucket[key]
@@ -590,17 +590,21 @@ class ForestRuleExtractor:
             if base.is_pumping(self.root_label):
                 minimizing.clear()
                 break
-            minimizing[:] = [rk for rk in minimizing if not base.is_pumping(rk.parent)]
+            minimizing[:] = [
+                rule_key
+                for rule_key in minimizing
+                if not base.is_pumping(rule_key.parent)
+            ]
             # Add rule until it gets productive
-            tb = base.copy()
-            for i, rk in enumerate(minimizing):
-                tb.add_rule_key(rk)
-                if tb.is_pumping(self.root_label):
+            table = base.copy()
+            for i, rule_key in enumerate(minimizing):
+                table.add_rule_key(rule_key)
+                if table.is_pumping(self.root_label):
                     break
             else:
                 raise RuntimeError("Not pumping after adding all rules")
-            maybe_useful.append(rk)
-            base.add_rule_key(rk)
+            maybe_useful.append(rule_key)
+            base.add_rule_key(rule_key)
             assert minimizing, "variable i won't be set"
             # pylint: disable=undefined-loop-variable
             del minimizing[i:]
@@ -609,13 +613,13 @@ class ForestRuleExtractor:
                 gc.collect_step()  # type: ignore
         counter = 0
         while maybe_useful:
-            rk = maybe_useful.pop()
-            tb = others.copy()
+            rule_key = maybe_useful.pop()
+            table = others.copy()
             for useful in maybe_useful:
-                tb.add_rule_key(useful)
-            if not tb.is_pumping(self.root_label):
-                self.needed_rules.append(rk)
-                others.add_rule_key(rk)
+                table.add_rule_key(useful)
+            if not table.is_pumping(self.root_label):
+                self.needed_rules.append(rule_key)
+                others.add_rule_key(rule_key)
                 counter += 1
             # added to avoid doubling in memory when minimizing with pypy
             if platform.python_implementation() == "PyPy":
