@@ -353,16 +353,16 @@ def test_default_list_copy():
     A copy of a default list shares its items with the list copied until one of
     the two changes them.
     """
-    lst = DefaultList(list)
-    lst.mutable(0).append(1)
-    lst.mutable(2).append(2)
-    copy = lst.copy()
+    default_list = DefaultList(list)
+    default_list.mutable(0).append(1)
+    default_list.mutable(2).append(2)
+    copy = default_list.copy()
     copy.mutable(0).append(3)
-    lst.mutable(2).append(4)
+    default_list.mutable(2).append(4)
     copy[1] = [5]
     copy.append([6])
-    lst.mutable(4).append(7)
-    assert list(lst) == [[1], [], [2, 4], [], [7]]
+    default_list.mutable(4).append(7)
+    assert list(default_list) == [[1], [], [2, 4], [], [7]]
     assert list(copy) == [[1, 3], [5], [2], [6]]
     again = copy.copy()
     again.mutable(0).append(8)
@@ -389,23 +389,25 @@ def test_table_copy():
     other = [ForestRuleKey(3, (), (), RuleBucket.VERIFICATION)]
 
     def table(rules):
-        tb = TableMethod()
+        new_table = TableMethod()
         for rule in rules:
-            tb.add_rule_key(rule)
-        return tb
+            new_table.add_rule_key(rule)
+        return new_table
 
-    tb = table(base)
-    before = tb.function
-    copy = tb.copy()
+    original = table(base)
+    before = original.function
+    copy = original.copy()
     for rule in more:
         copy.add_rule_key(rule)
-    assert tb.function == before
+    assert original.function == before
     after = copy.function
     for rule in other:
-        tb.add_rule_key(rule)
+        original.add_rule_key(rule)
     assert copy.function == after
     assert copy.function == table(base + more).function == {i: None for i in range(6)}
-    assert tb.function == table(base + other).function == {i: None for i in range(4)}
+    assert (
+        original.function == table(base + other).function == {i: None for i in range(4)}
+    )
 
 
 def minimize_as_before(root, rule_by_bucket):
@@ -414,36 +416,38 @@ def minimize_as_before(root, rule_by_bucket):
     """
 
     def is_productive(rule_keys):
-        tb = TableMethod()
-        for rk in rule_keys:
-            tb.add_rule_key(rk)
-        return tb.is_pumping(root)
+        table = TableMethod()
+        for rule_key in rule_keys:
+            table.add_rule_key(rule_key)
+        return table.is_pumping(root)
 
     needed_rules = []
-    for key in ForestRuleExtractor.MINIMIZE_ORDER:
+    for bucket in ForestRuleExtractor.MINIMIZE_ORDER:
         maybe_useful = []
         not_minimizing = [needed_rules, maybe_useful]
-        not_minimizing.extend(rules for k, rules in rule_by_bucket.items() if k != key)
-        minimizing = rule_by_bucket[key]
+        not_minimizing.extend(
+            rules for other, rules in rule_by_bucket.items() if other != bucket
+        )
+        minimizing = rule_by_bucket[bucket]
         while minimizing:
-            tb = TableMethod()
-            for rk in itertools.chain.from_iterable(not_minimizing):
-                tb.add_rule_key(rk)
-            if tb.is_pumping(root):
+            table = TableMethod()
+            for rule_key in itertools.chain.from_iterable(not_minimizing):
+                table.add_rule_key(rule_key)
+            if table.is_pumping(root):
                 minimizing.clear()
                 break
-            for i, rk in enumerate(minimizing):
-                tb.add_rule_key(rk)
-                if tb.is_pumping(root):
+            for i, rule_key in enumerate(minimizing):
+                table.add_rule_key(rule_key)
+                if table.is_pumping(root):
                     break
             else:
                 raise RuntimeError("Not pumping after adding all rules")
-            maybe_useful.append(rk)
+            maybe_useful.append(rule_key)
             del minimizing[i:]
         while maybe_useful:
-            rk = maybe_useful.pop()
+            rule_key = maybe_useful.pop()
             if not is_productive(itertools.chain.from_iterable(not_minimizing)):
-                needed_rules.append(rk)
+                needed_rules.append(rule_key)
     return needed_rules
 
 
