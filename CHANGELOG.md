@@ -7,12 +7,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added 
+- Required CI coverage for stable PyPy 3.12 alongside PyPy 3.11.
 - the `AtomStrategy` handles extra parameters when counting, finding equations and sampling
 
 ### Changed
+- Minimum Python version is now 3.11; CPython and PyPy 3.10 are no longer supported.
+- Python 3.15 is primary for linting, packaging, downstream Tilings tests, and
+  cross-platform tests, with CPython 3.11 through 3.14 compatibility coverage.
+- Modernized GitHub Actions, dependency caching, and Black configuration.
 - `from_dict` methods use `copy` to avoid deleting dicts
 
 ### Fixed
+- Install pytest-timeout so the existing timeout-marked tests enforce their limits.
+- Supply the dependencies of PyPy's bundled cffi and HPy packages in tox.
+- Isolate the downstream Tilings checkout in tox's temporary directory and
+  preserve the CSS version under test when installing Tilings.
 - Bug in `CombinatorialSpecification.get_rule` which broke
   the equality of `EmptyStrategy` rules in specs.
 
