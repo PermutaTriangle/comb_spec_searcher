@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 - `from_dict` methods use `copy` to avoid deleting dicts
+- `ForestRuleExtractor` finds the same specification several times faster on a
+  large forest: the table of the rules not being minimized is built once and
+  copied for each rule tried, rather than built again, and a copy of a
+  `TableMethod` shares its lists with the table copied until either changes them.
+  `TableMethod` also looks for a new gap only when the values taken change.
 
 ### Fixed
 - Bug in `CombinatorialSpecification.get_rule` which broke

@@ -2,6 +2,7 @@ import gc
 import itertools
 import platform
 import time
+from copy import copy as shallow_copy
 from datetime import timedelta
 from typing import (
     Callable,
@@ -50,11 +51,19 @@ class DefaultList(Generic[T]):
 
     When getting longer the list is filled by calling the provied `default_factory`.
     This is similar to the `collections.defaultdict` data structure.
+
+    A copy shares the items with the list it was copied from until one of the two
+    changes them: an item to change in place must be gotten with `mutable`, which
+    copies it first if it is shared.
     """
 
     def __init__(self, default_factory: Callable[[], T]):
         self._default_factory = default_factory
         self._list: List[T] = []
+        # The items before this index may be shared with a copy, except for those
+        # in `_owned`, copied since.
+        self._shared_len = 0
+        self._owned: Set[int] = set()
 
     def _increase_list_len(self, key: int) -> None:
         """
@@ -72,12 +81,42 @@ class DefaultList(Generic[T]):
 
     def __setitem__(self, key: int, value: T) -> None:
         self._list[key] = value
+        if key < self._shared_len:
+            self._owned.add(key)
+
+    def mutable(self, key: int) -> T:
+        """
+        Return the item for the given key, to be changed in place: an item shared
+        with a copy is copied first.
+        """
+        item = self[key]
+        if key < self._shared_len and key not in self._owned:
+            item = shallow_copy(item)
+            self._list[key] = item
+            self._owned.add(key)
+        return item
+
+    def append(self, item: T) -> None:
+        self._list.append(item)
 
     def __iter__(self) -> Iterator[T]:
         return iter(self._list)
 
     def __str__(self) -> str:
         return str(self._list)
+
+    def copy(self) -> "DefaultList[T]":
+        """
+        Return a copy of the list. The two share their items until they change
+        them (see `mutable`), so copying takes the time of copying a list of
+        references.
+        """
+        # pylint: disable=protected-access
+        new: DefaultList[T] = DefaultList(self._default_factory)
+        new._list = self._list.copy()
+        new._shared_len = self._shared_len = len(self._list)
+        self._owned = set()
+        return new
 
 
 class Function:
@@ -109,6 +148,17 @@ class Function:
     def infinity_count(self) -> int:
         return self._infinity_count
 
+    def copy(self) -> "Function":
+        """
+        Return a copy of the function.
+        """
+        # pylint: disable=protected-access
+        new = Function()
+        new._value = self._value.copy()
+        new._preimage_count = self._preimage_count.copy()
+        new._infinity_count = self._infinity_count
+        return new
+
     def __getitem__(self, key: int) -> Optional[int]:
         """
         Return the value of the function for the given key.
@@ -124,9 +174,12 @@ class Function:
         self._value.extend((0 for _ in range(num_new_entry)))
         self._preimage_count[0] += num_new_entry
 
-    def increase_value(self, key: int) -> None:
+    def increase_value(self, key: int) -> bool:
         """
         Increase by one the value of the function for the given key.
+
+        Return True if the values the function takes changed: the old value is
+        no longer taken, or the new one was not before.
         """
         try:
             old_value = self._value[key]
@@ -136,8 +189,11 @@ class Function:
             self._increase_list_len(key)
             old_value = 0
         self._value[key] = old_value + 1
-        self._preimage_count[old_value] -= 1
-        self._preimage_count[old_value + 1] += 1
+        old_count = self._preimage_count[old_value] - 1
+        self._preimage_count[old_value] = old_count
+        new_count = self._preimage_count[old_value + 1] + 1
+        self._preimage_count[old_value + 1] = new_count
+        return old_count == 0 or new_count == 1
 
     def set_infinite(self, key: int) -> None:
         """
@@ -193,7 +249,7 @@ class Function:
 class TableMethod:
     def __init__(self) -> None:
         self._rules: List[ForestRuleKey] = []
-        self._shifts: List[List[Optional[int]]] = []
+        self._shifts: DefaultList[List[Optional[int]]] = DefaultList(list)
         self._function: Function = Function()
         self._gap_size: int = 1
         self._rules_using_class: DefaultList[List[Tuple[int, int]]] = DefaultList(list)
@@ -201,6 +257,29 @@ class TableMethod:
         self._processing_queue: Deque[int] = Deque()
         self._current_gap: Tuple[int, int] = (1, 1)
         self._rule_holding_extra_terms: Set[int] = set()
+
+    def copy(self) -> "TableMethod":
+        """
+        Return a copy of the table, which rules can be added to without changing
+        this one, and the other way around. The two share the lists of shifts and
+        of rules for each class until they change them, so copying a table is
+        much faster than building it again.
+        """
+        # pylint: disable=protected-access
+        # adding a rule processes the queue and the rules held for extra terms
+        # until both are empty
+        assert not self._processing_queue and not self._rule_holding_extra_terms
+        new = TableMethod.__new__(TableMethod)
+        new._rules = self._rules.copy()
+        new._shifts = self._shifts.copy()
+        new._function = self._function.copy()
+        new._gap_size = self._gap_size
+        new._rules_using_class = self._rules_using_class.copy()
+        new._rules_pumping_class = self._rules_pumping_class.copy()
+        new._processing_queue = Deque()
+        new._current_gap = self._current_gap
+        new._rule_holding_extra_terms = set()
+        return new
 
     @property
     def function(self) -> Dict[int, Optional[int]]:
@@ -233,10 +312,10 @@ class TableMethod:
             self._correct_gap()
         if self._function[rule_key.parent] is not None:
             rule_idx = len(self._rules) - 1
-            self._rules_pumping_class[rule_key.parent].append(rule_idx)
+            self._rules_pumping_class.mutable(rule_key.parent).append(rule_idx)
             for child_idx, child in enumerate(rule_key.children):
                 if self._function[child] is not None:
-                    self._rules_using_class[child].append((rule_idx, child_idx))
+                    self._rules_using_class.mutable(child).append((rule_idx, child_idx))
             self._processing_queue.append(rule_idx)
         self._process_queue()
 
@@ -323,7 +402,10 @@ class TableMethod:
         """
         Return True if the shifts indicate that a new terms can be computed.
         """
-        return all(s is None or s > 0 for s in shifts)
+        for shift in shifts:
+            if shift is not None and shift <= 0:
+                return False
+        return True
 
     def _increase_value(self, comb_class: int, rule_idx: int) -> None:
         """
@@ -338,21 +420,22 @@ class TableMethod:
         if current_value > self._current_gap[1]:
             self._rule_holding_extra_terms.add(rule_idx)
             return
-        self._function.increase_value(comb_class)
-        # Correction of the gap
-        gap_start = self._function.preimage_gap(self._gap_size)
-        if self._current_gap[0] != gap_start:
-            self._correct_gap()
+        values_changed = self._function.increase_value(comb_class)
+        # Correction of the gap, which moves only if the values taken changed
+        if values_changed:
+            gap_start = self._function.preimage_gap(self._gap_size)
+            if self._current_gap[0] != gap_start:
+                self._correct_gap()
         # Correction of the shifts for rule pumping comb_class
         for r_idx in self._rules_pumping_class[comb_class]:
-            shifts = self._shifts[r_idx]
+            shifts = self._shifts.mutable(r_idx)
             for i, v in enumerate(shifts):
                 shifts[i] = v - 1 if v is not None else None
             if self._can_give_terms(shifts):
                 self._processing_queue.append(r_idx)
         # Correction of the shifts for rules using comb_class to pump
         for r_idx, class_idx in self._rules_using_class[comb_class]:
-            shifts = self._shifts[r_idx]
+            shifts = self._shifts.mutable(r_idx)
             current_shift = shifts[class_idx]
             assert current_shift is not None
             shifts[class_idx] = current_shift + 1
@@ -382,14 +465,14 @@ class TableMethod:
                     for ri, ci in self._rules_using_class[child]
                     if ri != rule_idx
                 ]
-        self._rules_pumping_class[comb_class].clear()
+        self._rules_pumping_class[comb_class] = []
         # Correction of the shifts for rules using comb_class to pump
         for rule_idx, class_idx in self._rules_using_class[comb_class]:
-            shifts = self._shifts[rule_idx]
+            shifts = self._shifts.mutable(rule_idx)
             shifts[class_idx] = None
             if self._can_give_terms(shifts):
                 self._processing_queue.append(rule_idx)
-        self._rules_using_class[comb_class].clear()
+        self._rules_using_class[comb_class] = []
 
     def rule_info(self, rule_idx: int) -> str:
         """
@@ -488,45 +571,60 @@ class ForestRuleExtractor:
 
         The list of rule in `self.rule_by_bucket[key]` is cleared and a
         minimal set from theses is added to `self.needed_rules`.
+
+        The table of the rules not being minimized is built once, extended by
+        each rule found useful, and copied for each try, rather than built again
+        for each: the same sets of rules are checked. A rule for a class that
+        pumps already changes nothing, so it is left out of the tries.
         """
         logger.info("Minimizing %s", key.name)
+        if not self.rule_by_bucket[key]:
+            # nothing to minimize, and no table of the other rules to build
+            return
         maybe_useful: List[ForestRuleKey] = []
-        not_minimizing: List[List[ForestRuleKey]] = [
+        others = TableMethod()
+        for rule_key in itertools.chain(
             self.needed_rules,
-            maybe_useful,
-        ]
-        not_minimizing.extend(
-            rules for k, rules in self.rule_by_bucket.items() if k != key
-        )
+            *(rules for bucket, rules in self.rule_by_bucket.items() if bucket != key),
+        ):
+            others.add_rule_key(rule_key)
+        # the rules we are not trying to minimize, and those found useful
+        base = others.copy()
         minimizing = self.rule_by_bucket[key]
         while minimizing:
-            tb = TableMethod()
-            # Add the rule we are not trying to minimize
-            for rk in itertools.chain.from_iterable(not_minimizing):
-                tb.add_rule_key(rk)
-            if tb.is_pumping(self.root_label):
+            if base.is_pumping(self.root_label):
                 minimizing.clear()
                 break
+            minimizing[:] = [
+                rule_key
+                for rule_key in minimizing
+                if not base.is_pumping(rule_key.parent)
+            ]
             # Add rule until it gets productive
-            for i, rk in enumerate(minimizing):
-                tb.add_rule_key(rk)
-                if tb.is_pumping(self.root_label):
+            table = base.copy()
+            for i, rule_key in enumerate(minimizing):
+                table.add_rule_key(rule_key)
+                if table.is_pumping(self.root_label):
                     break
             else:
                 raise RuntimeError("Not pumping after adding all rules")
-            maybe_useful.append(rk)
+            maybe_useful.append(rule_key)
+            base.add_rule_key(rule_key)
             assert minimizing, "variable i won't be set"
             # pylint: disable=undefined-loop-variable
-            for _ in range(i, len(minimizing)):
-                minimizing.pop()
+            del minimizing[i:]
             # added to avoid doubling in memory when minimizing with pypy
             if platform.python_implementation() == "PyPy":
                 gc.collect_step()  # type: ignore
         counter = 0
         while maybe_useful:
-            rk = maybe_useful.pop()
-            if not self._is_productive(itertools.chain.from_iterable(not_minimizing)):
-                self.needed_rules.append(rk)
+            rule_key = maybe_useful.pop()
+            table = others.copy()
+            for useful in maybe_useful:
+                table.add_rule_key(useful)
+            if not table.is_pumping(self.root_label):
+                self.needed_rules.append(rule_key)
+                others.add_rule_key(rule_key)
                 counter += 1
             # added to avoid doubling in memory when minimizing with pypy
             if platform.python_implementation() == "PyPy":
