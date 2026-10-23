@@ -41,6 +41,8 @@ To install ``comb_spec_searcher`` on your system, run:
 
        pip install comb_spec_searcher
 
+Python 3.11 or newer is required.
+
 It is also possible to install comb_spec_searcher in development mode to
 work on the source code, in which case you run the following after
 cloning the repository:
@@ -48,6 +50,32 @@ cloning the repository:
 .. code:: bash
 
        pip install -e .
+
+Running the checks
+------------------
+
+Install tox and run checks with an installed Python version:
+
+.. code:: bash
+
+       python -m pip install "tox>=4,<5"
+       python -m tox run -e py315
+
+The test environments cover CPython 3.11 through 3.15 and PyPy 3.11 and 3.12.
+Python 3.15 is used for linting, type checking, packaging, and the Linux,
+macOS, and Windows test jobs. Older supported CPython versions and both PyPy
+versions are tested on Linux. Black targets the minimum supported Python 3.11.
+Pass pytest arguments after ``--``, for example
+``python -m tox run -e py315 -- tests``.
+
+The ``tilescope`` environment runs the development branch of Tilings' tests
+against this CSS checkout and the development branch of Permuta, using Python
+3.15. It checks out Tilings inside tox's temporary directory and installs it
+without replacing the CSS version under test:
+
+.. code:: bash
+
+       python -m tox run -e tilescope
 
 Combinatorial exploration
 -------------------------
