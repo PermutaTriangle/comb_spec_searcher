@@ -375,6 +375,8 @@ def test_default_list_copy():
     default_list.mutable(2).append(2)
     copy = default_list.copy()
     copy.mutable(0).append(3)
+    # an item is copied once, then changed in place
+    assert copy.mutable(0) is copy.mutable(0)
     default_list.mutable(2).append(4)
     copy[1] = [5]
     copy.append([6])
@@ -386,6 +388,22 @@ def test_default_list_copy():
     copy.mutable(3).append(9)
     assert list(copy) == [[1, 3], [5], [2], [6, 9]]
     assert list(again) == [[1, 3, 8], [5], [2], [6]]
+
+
+def test_default_list_copy_of_a_changed_copy():
+    """
+    A copy of a list that changed an item since it was itself copied shares that
+    item again, which a change in place must then not reach.
+    """
+    original = DefaultList(list)
+    original.mutable(0).append(1)
+    first = original.copy()
+    first.mutable(0).append(2)
+    second = first.copy()
+    first.mutable(0).append(3)
+    assert list(second) == [[1, 2]]
+    assert list(first) == [[1, 2, 3]]
+    assert list(original) == [[1]]
 
 
 def test_table_copy():
@@ -509,6 +527,36 @@ def test_table_copies_on_random_forests():
         assert table_values(copy) == full, seed
 
 
+# The values of the tables built from the first ten random forests, as develop
+# (826a16c) gives them: the classes' values (None for a class that pumps), the
+# gap's size and the current gap.
+TABLE_VALUES_BEFORE = {
+    0: ([None, None, None, None, None, None, None, None, None], 3, (0, 2)),
+    1: ([None, None, None, None, None], 3, (0, 2)),
+    2: ([1, 1, 0], 2, (2, 3)),
+    3: ([None, None, None, None, None, None], 3, (0, 2)),
+    4: ([None, None, None, None, None, None], 3, (0, 2)),
+    5: ([None, None, None, None, None, None, None], 3, (0, 2)),
+    6: ([None, None, None, None], 3, (0, 2)),
+    7: ([None, 0, None, None, 0, 0, None, 0], 3, (1, 3)),
+    8: ([None, None, None, None, None, None], 3, (0, 2)),
+    9: ([None, None, 0, None, None, None, None, None, None, None], 2, (1, 2)),
+}
+
+
+def test_table_values_on_random_forests_as_before():
+    """
+    The tables built from the first ten random forests have the values they had
+    before tables were copied. Unlike those test_table_copies_on_random_forests
+    compares, these values do not come from TableMethod.
+    """
+    for seed, values in TABLE_VALUES_BEFORE.items():
+        table = TableMethod()
+        for rule_key in random_rule_keys(random.Random(seed)):
+            table.add_rule_key(rule_key)
+        assert table_values(table) == values, seed
+
+
 def minimize_as_before(root, rule_by_bucket):
     """
     The extractor's minimization as it was before it copied tables.
@@ -569,3 +617,126 @@ def test_minimization_keeps_the_same_rules(patterns):
     extractor.check()
     stable_rules = extractor._sorted_stable_rules(ruledb.table_method)
     assert extractor.needed_rules == minimize_as_before(ruledb.root_label, stable_rules)
+
+
+# The rules the extractor kept before it copied tables (develop at 826a16c), in
+# their order, for three classes whose universes are expanded level by level.
+RULES_KEPT_BEFORE = {
+    ("ababa", "babb"): [
+        (0, (1, 2, 3), (0, 0, 0), "NORMAL"),
+        (2, (4, 5, 6), (0, 0, 0), "NORMAL"),
+        (5, (4, 2), (1, 1), "NORMAL"),
+        (3, (7, 8, 9), (0, 0, 0), "NORMAL"),
+        (9, (7, 3), (1, 1), "NORMAL"),
+        (6, (10, 11, 12), (0, 0, 0), "NORMAL"),
+        (12, (10, 3), (1, 2), "NORMAL"),
+        (8, (13, 14, 15), (0, 0, 0), "NORMAL"),
+        (14, (13, 2), (1, 2), "NORMAL"),
+        (11, (16, 17, 18), (0, 0, 0), "NORMAL"),
+        (17, (16, 2), (1, 3), "NORMAL"),
+        (15, (19, 20, 21), (0, 0, 0), "NORMAL"),
+        (20, (7, 11), (3, 1), "NORMAL"),
+        (18, (22, 23, 24), (0, 0, 0), "EQUIV"),
+        (1, (), (), "VERIFICATION"),
+        (4, (), (), "VERIFICATION"),
+        (7, (), (), "VERIFICATION"),
+        (10, (), (), "VERIFICATION"),
+        (13, (), (), "VERIFICATION"),
+        (16, (), (), "VERIFICATION"),
+        (19, (), (), "VERIFICATION"),
+        (21, (), (), "VERIFICATION"),
+        (22, (), (), "VERIFICATION"),
+        (23, (), (), "VERIFICATION"),
+        (24, (), (), "VERIFICATION"),
+    ],
+    ("abaab", "babb", "bbaa"): [
+        (0, (1, 2, 3), (0, 0, 0), "NORMAL"),
+        (2, (4, 5, 6), (0, 0, 0), "NORMAL"),
+        (5, (4, 2), (1, 1), "NORMAL"),
+        (3, (7, 8, 9), (0, 0, 0), "NORMAL"),
+        (6, (10, 11, 12), (0, 0, 0), "NORMAL"),
+        (12, (4, 9), (2, 1), "NORMAL"),
+        (8, (13, 14, 15), (0, 0, 0), "NORMAL"),
+        (14, (13, 2), (1, 2), "NORMAL"),
+        (9, (16, 17, 18), (0, 0, 0), "NORMAL"),
+        (18, (7, 9), (2, 1), "NORMAL"),
+        (11, (19, 20, 21), (0, 0, 0), "NORMAL"),
+        (21, (4, 15), (3, 1), "NORMAL"),
+        (15, (22, 23, 24), (0, 0, 0), "NORMAL"),
+        (23, (7, 11), (3, 1), "NORMAL"),
+        (17, (25, 26, 27), (0, 0, 0), "NORMAL"),
+        (27, (7, 15), (3, 1), "NORMAL"),
+        (20, (28, 29, 30), (0, 0, 0), "NORMAL"),
+        (29, (28, 2), (1, 4), "NORMAL"),
+        (1, (), (), "VERIFICATION"),
+        (4, (), (), "VERIFICATION"),
+        (7, (), (), "VERIFICATION"),
+        (10, (), (), "VERIFICATION"),
+        (13, (), (), "VERIFICATION"),
+        (16, (), (), "VERIFICATION"),
+        (19, (), (), "VERIFICATION"),
+        (22, (), (), "VERIFICATION"),
+        (24, (), (), "VERIFICATION"),
+        (25, (), (), "VERIFICATION"),
+        (26, (), (), "VERIFICATION"),
+        (28, (), (), "VERIFICATION"),
+        (30, (), (), "VERIFICATION"),
+    ],
+    ("abba", "aaba", "babaa"): [
+        (0, (1, 2, 3), (0, 0, 0), "NORMAL"),
+        (2, (4, 5, 6), (0, 0, 0), "NORMAL"),
+        (3, (7, 8, 9), (0, 0, 0), "NORMAL"),
+        (9, (7, 3), (1, 1), "NORMAL"),
+        (5, (10, 11, 12), (0, 0, 0), "NORMAL"),
+        (11, (4, 5), (2, 1), "NORMAL"),
+        (6, (13, 14, 15), (0, 0, 0), "NORMAL"),
+        (14, (4, 8), (2, 1), "NORMAL"),
+        (8, (16, 17, 18), (0, 0, 0), "NORMAL"),
+        (17, (7, 5), (2, 1), "NORMAL"),
+        (12, (19, 20, 21), (0, 0, 0), "NORMAL"),
+        (21, (4, 15), (3, 1), "NORMAL"),
+        (15, (22, 23, 24), (0, 0, 0), "NORMAL"),
+        (24, (22, 3), (1, 3), "NORMAL"),
+        (18, (25, 26, 27), (0, 0, 0), "NORMAL"),
+        (27, (7, 15), (3, 1), "NORMAL"),
+        (26, (28, 29, 30), (0, 0, 0), "NORMAL"),
+        (30, (16, 18), (3, 2), "NORMAL"),
+        (1, (), (), "VERIFICATION"),
+        (4, (), (), "VERIFICATION"),
+        (7, (), (), "VERIFICATION"),
+        (10, (), (), "VERIFICATION"),
+        (13, (), (), "VERIFICATION"),
+        (16, (), (), "VERIFICATION"),
+        (19, (), (), "VERIFICATION"),
+        (20, (), (), "VERIFICATION"),
+        (22, (), (), "VERIFICATION"),
+        (23, (), (), "VERIFICATION"),
+        (25, (), (), "VERIFICATION"),
+        (28, (), (), "VERIFICATION"),
+        (29, (), (), "VERIFICATION"),
+    ],
+}
+
+
+@pytest.mark.parametrize("patterns", list(RULES_KEPT_BEFORE))
+def test_minimization_keeps_the_rules_kept_before(patterns):
+    """
+    The extractor keeps, in the same order, the rules it kept before it copied
+    tables, on universes expanded level by level, which leave nothing to timing.
+    Unlike test_minimization_keeps_the_same_rules, the rules to keep do not come
+    from TableMethod, so that a fault in the table is seen.
+    """
+    ruledb = RuleDBForest()
+    searcher = CombinatorialSpecificationSearcher(
+        AvoidingWithPrefix("", list(patterns), ["a", "b"]), pack, ruledb=ruledb
+    )
+    while not ruledb.has_specification():
+        searcher.do_level()
+    extractor = ForestRuleExtractor(
+        ruledb.root_label, ruledb, ruledb.classdb, ruledb.strategy_pack
+    )
+    extractor.check()
+    assert [
+        (rule_key.parent, rule_key.children, rule_key.shifts, rule_key.bucket.name)
+        for rule_key in extractor.needed_rules
+    ] == RULES_KEPT_BEFORE[patterns]

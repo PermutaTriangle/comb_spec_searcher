@@ -266,7 +266,9 @@ class TableMethod:
         much faster than building it again.
         """
         # pylint: disable=protected-access
-        assert not self._processing_queue
+        # adding a rule processes the queue and the rules held for extra terms
+        # until both are empty
+        assert not self._processing_queue and not self._rule_holding_extra_terms
         new = TableMethod.__new__(TableMethod)
         new._rules = self._rules.copy()
         new._shifts = self._shifts.copy()
@@ -276,7 +278,7 @@ class TableMethod:
         new._rules_pumping_class = self._rules_pumping_class.copy()
         new._processing_queue = Deque()
         new._current_gap = self._current_gap
-        new._rule_holding_extra_terms = self._rule_holding_extra_terms.copy()
+        new._rule_holding_extra_terms = set()
         return new
 
     @property
@@ -576,6 +578,9 @@ class ForestRuleExtractor:
         pumps already changes nothing, so it is left out of the tries.
         """
         logger.info("Minimizing %s", key.name)
+        if not self.rule_by_bucket[key]:
+            # nothing to minimize, and no table of the other rules to build
+            return
         maybe_useful: List[ForestRuleKey] = []
         others = TableMethod()
         for rule_key in itertools.chain(
