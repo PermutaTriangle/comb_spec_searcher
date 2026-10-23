@@ -1,4 +1,5 @@
 import itertools
+import random
 from typing import Dict, List, Union
 
 import pytest
@@ -117,6 +118,22 @@ class TestFunction:
         assert f.preimage_gap(1) == 2
         assert f.preimage_gap(2) == 4
         assert f.preimage_gap(3) == 4
+
+    def test_increase_value_tells_whether_the_values_taken_changed(self):
+        """
+        increase_value returns True exactly when a value stops being taken or
+        starts being taken.
+        """
+        f = Function()
+        f[3]  # four classes with value 0
+        assert f.increase_value(0)  # 1 is taken for the first time
+        assert not f.increase_value(1)  # 0 and 1 stay taken
+        assert not f.increase_value(2)
+        assert f.increase_value(3)  # 0 is no longer taken
+        assert f.increase_value(3)  # 2 is taken for the first time
+        assert not f.increase_value(2)  # 1 and 2 stay taken
+        assert not f.increase_value(1)
+        assert f.increase_value(0)  # 1 is no longer taken
 
 
 # Test of the table method
@@ -408,6 +425,88 @@ def test_table_copy():
     assert (
         original.function == table(base + other).function == {i: None for i in range(4)}
     )
+
+
+def table_state(table):
+    """
+    Everything a table holds, its lists of shifts and of rules included.
+    """
+    # pylint: disable=protected-access
+    return (
+        list(table._rules),
+        [list(shifts) for shifts in table._shifts],
+        [list(rules) for rules in table._rules_using_class],
+        [list(rules) for rules in table._rules_pumping_class],
+        list(table._function._value),
+        table._gap_size,
+        table._current_gap,
+    )
+
+
+def table_values(table):
+    """
+    What a table means: the values of its classes (None for one that pumps) and
+    its gap. Its lists of shifts can hold different stale entries for the rules
+    of a class that pumps, as the rules held for extra terms come out of a set,
+    in an order that depends on the set's history.
+    """
+    # pylint: disable=protected-access
+    return (list(table._function._value), table._gap_size, table._current_gap)
+
+
+def random_rule_keys(random_generator):
+    """
+    The rules of a random forest: verifications, and rules of one to three
+    children with shifts from -2 to 3, each once.
+    """
+    labels = list(range(random_generator.randint(3, 10)))
+    rule_keys = []
+    for _ in range(random_generator.randint(len(labels), 4 * len(labels))):
+        parent = random_generator.choice(labels)
+        if random_generator.random() < 0.2:
+            rule_keys.append(ForestRuleKey(parent, (), (), RuleBucket.VERIFICATION))
+        else:
+            children = tuple(
+                random_generator.choice(labels)
+                for _ in range(random_generator.randint(1, 3))
+            )
+            shifts = tuple(
+                random_generator.choice([-2, -1, 0, 0, 1, 1, 2, 3]) for _ in children
+            )
+            rule_keys.append(ForestRuleKey(parent, children, shifts, RuleBucket.NORMAL))
+    return list(dict.fromkeys(rule_keys))
+
+
+def test_table_copies_on_random_forests():
+    """
+    On 300 seeded random forests, a table copied partway, and the copy extended
+    with the remaining rules: the original keeps the state of a table built from
+    its own rules, its lists included, and the copy gets the values of a table
+    built from all of them. Then the original is extended too, with the copy
+    alive, and both have the full table's values.
+    """
+
+    def built(rule_keys):
+        table = TableMethod()
+        for rule_key in rule_keys:
+            table.add_rule_key(rule_key)
+        return table
+
+    for seed in range(300):
+        random_generator = random.Random(seed)
+        rule_keys = random_rule_keys(random_generator)
+        split = random_generator.randrange(len(rule_keys) + 1)
+        original = built(rule_keys[:split])
+        copy = original.copy()
+        for rule_key in rule_keys[split:]:
+            copy.add_rule_key(rule_key)
+        full = table_values(built(rule_keys))
+        assert table_state(original) == table_state(built(rule_keys[:split])), seed
+        assert table_values(copy) == full, seed
+        for rule_key in rule_keys[split:]:
+            original.add_rule_key(rule_key)
+        assert table_values(original) == full, seed
+        assert table_values(copy) == full, seed
 
 
 def minimize_as_before(root, rule_by_bucket):
