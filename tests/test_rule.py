@@ -246,8 +246,11 @@ def test_reverse_of_a_one_child_rule_that_is_not_a_disjoint_union():
     rule = UpperCaseStrategy()(comb_class)
     assert not isinstance(rule.constructor, DisjointUnion)
     reverse = rule.to_reverse_rule(0)
-    assert reverse.forward_map(Word("ABAB")) == (Word("abab"),)
-    assert list(reverse.backward_map((Word("abab"),))) == [Word("ABAB")]
+    for size in range(2, 7):
+        for word in comb_class.objects_of_size(size):
+            upper_case = Word(word.upper())
+            assert reverse.forward_map(upper_case) == (word,)
+            assert list(reverse.backward_map((word,))) == [upper_case]
 
 
 class NowhereUpperCaseStrategy(UpperCaseStrategy):
@@ -326,5 +329,25 @@ class UnbuiltUpperCaseStrategy(UpperCaseStrategy):
 def test_reverse_of_a_one_child_rule_whose_constructor_cannot_be_built():
     comb_class = AvoidingWithPrefix("ab", ["aa"], "ab", False)
     reverse = UnbuiltUpperCaseStrategy()(comb_class).to_reverse_rule(0)
-    assert reverse.forward_map(Word("ABAB")) == (Word("abab"),)
-    assert list(reverse.backward_map((Word("abab"),))) == [Word("ABAB")]
+    for size in range(2, 7):
+        for word in comb_class.objects_of_size(size):
+            upper_case = Word(word.upper())
+            assert reverse.forward_map(upper_case) == (word,)
+            assert list(reverse.backward_map((word,))) == [upper_case]
+
+
+def test_reverse_of_a_disjoint_union_with_two_non_empty_children():
+    comb_class = AvoidingWithPrefix("aaa", ["aaaa"], "ab", False)
+    rule = UpperCaseExpansionStrategy()(comb_class)
+    assert [child.is_empty() for child in rule.children] == [False, True, False]
+    reverse = rule.to_reverse_rule(2)
+    assert list(reverse.backward_map((Word("aaa"), None, None))) == []
+    assert list(reverse.backward_map((Word("aaab"), None, None))) == [Word("AAAB")]
+
+
+def test_reverse_that_counts_an_empty_child():
+    comb_class = AvoidingWithPrefix("aaa", ["aaaa"], "a", False)
+    rule = UpperCaseExpansionStrategy()(comb_class)
+    assert [child.is_empty() for child in rule.children] == [False, True]
+    reverse = rule.to_reverse_rule(1)
+    assert list(reverse.backward_map((Word("aaa"), None))) == []
