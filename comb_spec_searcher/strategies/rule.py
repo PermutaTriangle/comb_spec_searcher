@@ -1076,8 +1076,8 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     ) -> Iterator[CombinatorialObjectType]:
         """
         Map an object of the original rule's parent, the other children given
-        None, to the object of the counted child that it is. For a disjoint
-        union, nothing is yielded if the object lies in another child.
+        None, to the object of the counted child that it is. Nothing is yielded
+        if the object lies in another child.
         """
         if not self._maps_objects():
             raise NotImplementedError(
@@ -1086,12 +1086,13 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
             )
         assert all(obj is None for obj in objs[1:])
         assert objs[0] is not None
-        res = self.original_rule.forward_map(objs[0])[self.idx]
+        images = self.original_rule.forward_map(objs[0])
+        res = images[self.idx]
         if res is not None:
             yield res
-        else:  # only a disjoint union's object can lie in another child
-            assert (
-                len(self.original_rule.non_empty_children()) > 1
+        else:  # the object lies in another child of the original rule
+            assert any(
+                image is not None for image in images
             ), "The original rule's forward map places the object in no child."
 
     def indexed_backward_map(
