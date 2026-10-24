@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `ReverseRule.forward_map` raises `NotImplementedError`, rather than an
   assertion error, when the original rule's backward map gives several objects,
   as the reverse of a rule that is not bijective, such as a fusion, does
+- `CombinatorialSpecification.derivation`, the derivation of an object: the rule
+  of its class, and the derivations of the objects that the rule's forward map
+  sends it to, down to the verified classes, as `Derivation` tuples whose
+  children line up with the rule's; `choose_images` chooses the images where a
+  rule cannot map an object forward, and a cache keeps the derivations found
 
 ### Changed
 - `from_dict` methods use `copy` to avoid deleting dicts
