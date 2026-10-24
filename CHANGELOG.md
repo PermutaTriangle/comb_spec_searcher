@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added 
 - the `AtomStrategy` handles extra parameters when counting, finding equations and sampling
+- `ReverseRule.forward_map` and `ReverseRule.backward_map` for the reverse of a
+  disjoint union with more than one non-empty child: an object of the counted
+  child maps to the object of the parent that it is, and back, and an object of
+  the parent that lies in another child maps back to nothing
 
 ### Changed
 - `from_dict` methods use `copy` to avoid deleting dicts
