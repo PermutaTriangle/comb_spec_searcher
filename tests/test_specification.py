@@ -1,5 +1,6 @@
 import itertools
 import json
+import sys
 
 import pytest
 
@@ -234,34 +235,53 @@ def test_cant_count_unexpanded():
         assert not (rule1 is rule2)
 
 
-def check_derivation(spec, derivation):
-    """
-    Check every node of the derivation against the specification: its rule is
-    the class's, its children are the forward map's images, a node without
-    children is a verification, and the backward map gives the object back.
-    """
+def nodes(derivation):
+    """Yield each node of a derivation once, a node shared by branches too."""
+    seen = set()
     stack = [derivation]
     while stack:
         node = stack.pop()
+        if id(node) in seen:
+            continue
+        seen.add(id(node))
+        yield node
+        stack.extend(child for child in node.children if child is not None)
+
+
+def check_derivation(spec, derivation, choose_images=None):
+    """
+    Check every node of the derivation against the specification: its rule is
+    the class's, its children are the images of the forward map, or those of
+    choose_images where there is none, each an object of its class, a
+    verification's children are None, and the backward map, where there is
+    one, gives the object back.
+    """
+    for node in nodes(derivation):
         assert node.rule is spec.get_rule(node.comb_class)
         assert len(node.children) == len(node.rule.children)
         if isinstance(node.rule, VerificationRule):
             assert node.children == tuple(None for _ in node.rule.children)
             continue
-        images = node.rule.forward_map(node.obj)
+        try:
+            images = node.rule.forward_map(node.obj)
+        except NotImplementedError:
+            images = choose_images(node.rule, node.obj)
         for child_class, image, child in zip(node.rule.children, images, node.children):
             if image is None:
                 assert child is None
             else:
                 assert child.comb_class == child_class
                 assert child.obj == image
-                stack.append(child)
+                assert image in child_class.objects_of_size(len(image))
         objs = tuple(None if child is None else child.obj for child in node.children)
-        assert list(node.rule.backward_map(objs)) == [node.obj]
+        try:
+            assert list(node.rule.backward_map(objs)) == [node.obj]
+        except NotImplementedError:
+            pass
 
 
 def test_derivation(specification):
-    words = 0
+    word_count = 0
     for size in range(9):
         for word in specification.root.objects_of_size(size):
             derivation = specification.derivation(word)
@@ -269,8 +289,8 @@ def test_derivation(specification):
             assert derivation.comb_class == specification.root
             assert derivation.obj == word
             check_derivation(specification, derivation)
-            words += 1
-    assert words == sum(specification.count_objects_of_size(n) for n in range(9))
+            word_count += 1
+    assert word_count == sum(specification.count_objects_of_size(n) for n in range(9))
 
 
 def test_derivation_in_a_class_other_than_the_root(specification):
@@ -282,6 +302,23 @@ def test_derivation_in_a_class_other_than_the_root(specification):
         check_derivation(specification, derivation)
 
 
+def test_derivation_from_a_verified_class(specification):
+    atom, atom_rule = next(
+        (comb_class, rule)
+        for comb_class, rule in specification.rules_dict.items()
+        if isinstance(rule.strategy, AtomStrategy)
+    )
+    word = next(atom.objects_of_size(atom.minimum_size_of_object()))
+    assert specification.derivation(word, atom) == Derivation(atom, atom_rule, word, ())
+
+
+def test_derivation_from_a_class_with_no_rule(specification):
+    not_in_the_specification = AvoidingWithPrefix("bbbbbbbb", ["ababa", "babb"], "ab")
+    with pytest.raises(InvalidOperationError, match="has no rule for the class"):
+        specification.derivation(Word("bbbbbbbb"), not_in_the_specification)
+
+
+@pytest.fixture
 def reverse_rule_specification():
     """
     The words over a and b that avoid aa and start with bb, counted by the
@@ -298,8 +335,8 @@ def reverse_rule_specification():
     return CombinatorialSpecification(start_with_bb, rules)
 
 
-def test_derivation_through_a_reverse_rule():
-    spec = reverse_rule_specification()
+def test_derivation_through_a_reverse_rule(reverse_rule_specification):
+    spec = reverse_rule_specification
     reverse = spec.get_rule(spec.root)
     assert isinstance(reverse, ReverseRule)
     start_with_b = reverse.children[0]
@@ -315,8 +352,10 @@ def test_derivation_through_a_reverse_rule():
             check_derivation(spec, derivation)
 
 
-def test_derivation_chooses_images_where_a_rule_cannot_map(monkeypatch):
-    spec = reverse_rule_specification()
+def test_derivation_chooses_images_where_a_rule_cannot_map(
+    reverse_rule_specification, monkeypatch
+):
+    spec = reverse_rule_specification
     reverse = spec.get_rule(spec.root)
     word = Word("bbab")
     expected = spec.derivation(word)
@@ -337,10 +376,106 @@ def test_derivation_chooses_images_where_a_rule_cannot_map(monkeypatch):
     assert chosen == [(reverse, word)]
 
 
-def test_derivation_that_comes_back_to_where_it_is():
+@pytest.fixture
+def division_specification():
+    """
+    The words over b, counted by division: those that start with b, divided by
+    the word b. Those that start with b are the word b and those that start
+    with bb, which are the word bb times all the words.
+    """
+    all_words = AvoidingWithPrefix("", [], ["b"])
+    start_with_b = AvoidingWithPrefix("b", [], ["b"])
+    remove_b = RemoveFrontOfPrefix()(start_with_b)
+    just_b, rest = remove_b.children
+    assert rest == all_words
+    expansion = ExpansionStrategy()(start_with_b)
+    remove_bb = RemoveFrontOfPrefix()(expansion.children[1])
+    rules = [
+        remove_b.to_reverse_rule(1),
+        expansion,
+        remove_bb,
+        AtomStrategy()(just_b),
+        AtomStrategy()(remove_bb.children[0]),
+    ]
+    return CombinatorialSpecification(all_words, rules)
+
+
+def prepend_b(rule, word):
+    """The images of a word under the division: b in front of it, and b."""
+    return (Word("b" + word), Word("b"))
+
+
+def test_derivation_that_reaches_the_same_object_by_two_branches(
+    division_specification,
+):
+    spec = division_specification
+    divide, expand = spec.root_rule, spec.get_rule(spec.root_rule.children[0])
+    just_b = divide.children[1]
+    remove_bb = spec.get_rule(expand.children[1])
+    just_bb = remove_bb.children[0]
+
+    def expected(comb_class, size):
+        """The derivation of the word of b's of the size, from the equations."""
+        word = Word("b" * size)
+        rule = spec.get_rule(comb_class)
+        if comb_class == spec.root:
+            children = (expected(divide.children[0], size + 1), expected(just_b, 1))
+        elif rule is expand:
+            children = (
+                (expected(just_b, 1), None)
+                if size == 1
+                else (None, expected(expand.children[1], size))
+            )
+        elif rule is remove_bb:
+            children = (expected(just_bb, 2), expected(spec.root, size - 2))
+        else:
+            children = ()
+        return Derivation(comb_class, rule, word, children)
+
+    for size in range(6):
+        word = Word("b" * size)
+        derivation = spec.derivation(word, choose_images=prepend_b)
+        assert derivation == expected(spec.root, size)
+        check_derivation(spec, derivation, prepend_b)
+        by_key = {}
+        for node in nodes(derivation):
+            assert (node.comb_class, node.obj) not in by_key
+            by_key[(node.comb_class, node.obj)] = node
+    derivation = spec.derivation(Word(""), choose_images=prepend_b)
+    assert derivation.children[0].children[0] is derivation.children[1]
+
+
+def test_derivation_with_too_few_images(division_specification):
+    def only_one(rule, word):
+        return prepend_b(rule, word)[:1]
+
+    with pytest.raises(InvalidOperationError, match="1 images for the 2 children"):
+        division_specification.derivation(Word("bb"), choose_images=only_one)
+
+
+def test_derivation_with_images_past_the_children(division_specification):
+    spec = division_specification
+    expected = spec.derivation(Word("bb"), choose_images=prepend_b)
+
+    def with_none_past(rule, word):
+        return prepend_b(rule, word) + (None,)
+
+    def with_a_word_past(rule, word):
+        return prepend_b(rule, word) + (Word("b"),)
+
+    def generated(rule, word):
+        yield from prepend_b(rule, word)
+
+    assert spec.derivation(Word("bb"), choose_images=with_none_past) == expected
+    assert spec.derivation(Word("bb"), choose_images=generated) == expected
+    with pytest.raises(InvalidOperationError, match="3 images for the 2 children"):
+        spec.derivation(Word("bb"), choose_images=with_a_word_past)
+
+
+def test_derivation_in_a_circular_specification():
     patterns, alphabet = ["aa"], ["a", "b"]
-    words = AvoidingWithPrefix("", patterns, alphabet)
-    expansion = ExpansionStrategy()(words)
+    all_words = AvoidingWithPrefix("", patterns, alphabet)
+    expansion = ExpansionStrategy()(all_words)
     empty_word, _, start_with_b = expansion.children
     remove_b = RemoveFrontOfPrefix()(start_with_b)
     # the words that start with a, counted as all words less the empty word
@@ -352,10 +487,16 @@ def test_derivation_that_comes_back_to_where_it_is():
         AtomStrategy()(empty_word),
         AtomStrategy()(remove_b.children[0]),
     ]
-    spec = CombinatorialSpecification(words, rules)
+    spec = CombinatorialSpecification(all_words, rules)
     check_derivation(spec, spec.derivation(Word("bb")))
-    with pytest.raises(InvalidOperationError):
-        spec.derivation(Word("ab"))
+    cache = {}
+    with pytest.raises(
+        InvalidOperationError, match="The derivation comes back to the object ab"
+    ):
+        spec.derivation(Word("ab"), cache=cache)
+    for derivation in cache.values():  # only those it finished
+        for node in nodes(derivation):
+            assert cache[(node.comb_class, node.obj)] is node
 
 
 def test_derivation_cache(specification):
@@ -363,14 +504,27 @@ def test_derivation_cache(specification):
     cache = {}
     derivation = specification.derivation(word, cache=cache)
     assert specification.derivation(word, cache=cache) is derivation
-    stack = [derivation]
-    while stack:
-        node = stack.pop()
+    for node in nodes(derivation):
         assert cache[(node.comb_class, node.obj)] is node
-        stack.extend(child for child in node.children if child is not None)
     assert specification.derivation(word) == derivation
     cache = {(specification.root, word): "known"}
     assert specification.derivation(word, cache=cache) == "known"
+
+
+def test_a_derivation_deeper_than_the_recursion_limit():
+    spec = CombinatorialSpecificationSearcher(
+        AvoidingWithPrefix("", [], ["b"]), pack
+    ).auto_search()
+    derivation = spec.derivation(Word("b" * sys.getrecursionlimit()))
+    depth = 0
+    node = derivation
+    while node.children:
+        node = max(
+            (child for child in node.children if child is not None),
+            key=lambda child: len(child.obj),
+        )
+        depth += 1
+    assert depth > sys.getrecursionlimit()
 
 
 class AtomStrategyNamingAClass(AtomStrategy):
@@ -391,9 +545,13 @@ class AtomStrategyNamingAClass(AtomStrategy):
 
 
 def test_derivation_ends_at_a_verification_that_names_a_class(specification):
-    naming = AtomStrategyNamingAClass(specification.root)
+    naming_strategy = AtomStrategyNamingAClass(specification.root)
     rules = [
-        naming(rule.comb_class) if isinstance(rule.strategy, AtomStrategy) else rule
+        (
+            naming_strategy(rule.comb_class)
+            if isinstance(rule.strategy, AtomStrategy)
+            else rule
+        )
         for rule in specification
     ]
     spec = CombinatorialSpecification(specification.root, rules)
@@ -402,12 +560,9 @@ def test_derivation_ends_at_a_verification_that_names_a_class(specification):
         for word in spec.root.objects_of_size(size):
             derivation = spec.derivation(word)
             check_derivation(spec, derivation)
-            stack = [derivation]
-            while stack:
-                node = stack.pop()
+            for node in nodes(derivation):
                 if isinstance(node.rule, VerificationRule):
                     assert node.rule.children == (specification.root,)
                     assert node.children == (None,)
                     verifications += 1
-                stack.extend(child for child in node.children if child is not None)
     assert verifications > 0
