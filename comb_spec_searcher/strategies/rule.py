@@ -1098,7 +1098,12 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         ]
         objs[self.idx] = obj
         orig_res = list(self.original_rule.backward_map(tuple(objs)))
-        assert len(orig_res) == 1, "More than one results from back map"
+        if len(orig_res) > 1:
+            raise NotImplementedError(
+                "Cannot map forward: the original rule's backward map gives "
+                f"{len(orig_res)} objects, as for a rule that is not bijective."
+            )
+        assert len(orig_res) == 1, "No result from back map"
         return tuple(orig_res) + tuple(None for _ in range(len(self.children) - 1))
 
     def get_op_symbol(self):

@@ -169,3 +169,24 @@ def test_quotient_rule_has_no_object_maps():
         reverse.forward_map(Word("ba"))
     with pytest.raises(NotImplementedError):
         next(reverse.backward_map((Word("abba"), None)))
+
+
+class TwoWayUpperCaseExpansionStrategy(UpperCaseExpansionStrategy):
+    """
+    As UpperCaseExpansionStrategy, but every word of a child maps back to two
+    words of the parent, as for a rule that is not bijective.
+    """
+
+    def backward_map(self, avoiding_with_prefix, words, children=None):
+        word = next(super().backward_map(avoiding_with_prefix, words, children))
+        yield word
+        yield Word(word + "!")
+
+
+def test_reverse_rule_of_a_map_that_is_not_bijective():
+    comb_class = AvoidingWithPrefix("aaa", ["aaaa"], "a", False)
+    rule = TwoWayUpperCaseExpansionStrategy()(comb_class)
+    reverse = rule.to_reverse_rule(0)
+    with pytest.raises(NotImplementedError):
+        reverse.forward_map(Word("AAA"))
+    assert list(reverse.backward_map((Word("aaa"), None))) == [Word("AAA")]
