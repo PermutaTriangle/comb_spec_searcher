@@ -42,7 +42,12 @@ from comb_spec_searcher.typing import (
 )
 
 from ..combinatorial_class import CombinatorialClassType, CombinatorialObjectType
-from ..exception import SanityCheckFailure, SpecificationNotFound, StrategyDoesNotApply
+from ..exception import (
+    ObjectMappingError,
+    SanityCheckFailure,
+    SpecificationNotFound,
+    StrategyDoesNotApply,
+)
 from ..utils import TermsCache, equal_counters
 from .constructor import Complement, Constructor, DisjointUnion
 
@@ -1055,11 +1060,15 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
     def _maps_objects(self) -> bool:
         """
         Return True if the objects of the counted child map to the parent and
-        back: the original rule is a disjoint union, of whose parent the counted
-        child is a part, or an equivalence.
+        back: the original rule has one non-empty child, or it is a disjoint
+        union, of whose parent the counted child is a part. A constructor that
+        subclasses DisjointUnion may count otherwise, as one that divides does,
+        so only DisjointUnion itself is taken for a disjoint union.
         """
-        return isinstance(self.original_rule.constructor, DisjointUnion) or (
+        # pylint: disable=unidiomatic-typecheck
+        return (
             len(self.original_rule.non_empty_children()) == 1
+            or type(self.original_rule.constructor) is DisjointUnion
         )
 
     def backward_map(
@@ -1073,13 +1082,35 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         if not self._maps_objects():
             raise NotImplementedError(
                 "Cannot map backward for the reverse of a rule that is neither "
-                "a disjoint union nor an equivalence."
+                "a disjoint union nor a rule with one non-empty child."
             )
         assert all(obj is None for obj in objs[1:])
         assert objs[0] is not None
         res = self.original_rule.forward_map(objs[0])[self.idx]
         if res is not None:
             yield res
+        else:  # only a disjoint union's object can lie in another child
+            assert (
+                len(self.original_rule.non_empty_children()) > 1
+            ), "The original rule's forward map places the object in no child."
+
+    def indexed_backward_map(
+        self,
+        objs: Tuple[Optional[CombinatorialObjectType], ...],
+        idx: int,
+        data: Optional[object] = None,
+    ) -> CombinatorialObjectType:
+        """
+        The backward map's object, for bijections. Raise an ObjectMappingError
+        if the parent's object lies in another child, so that it is no object
+        of the counted child.
+        """
+        for res in self.backward_map(objs):
+            return res
+        raise ObjectMappingError(
+            f"The object {objs[0]} lies in a child of the original rule other "
+            f"than the one counted by {self.formal_step}"
+        )
 
     def forward_map(
         self, obj: CombinatorialObjectType
@@ -1091,7 +1122,7 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
         if not self._maps_objects():
             raise NotImplementedError(
                 "Cannot map forward for the reverse of a rule that is neither "
-                "a disjoint union nor an equivalence."
+                "a disjoint union nor a rule with one non-empty child."
             )
         objs: List[Optional[CombinatorialObjectType]] = [
             None for _ in self.original_rule.children
