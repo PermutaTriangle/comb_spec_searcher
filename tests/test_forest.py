@@ -984,20 +984,31 @@ def test_justified_rules_of_classes_apart():
     assert table.justified_rules(99) == []
 
 
-class LargestFirstSet(set):
+class SortedSet(set):
     """
-    A set that gives its largest element first, both when popped and when
-    iterated over: another order than this Python's sets give, as CPython's and
-    PyPy's sets of integers give different orders.
+    A set that gives its elements in increasing order, both when popped and
+    when iterated over, or in decreasing order with largest_first: other orders
+    than this Python's sets give, as CPython's and PyPy's sets of integers give
+    different orders.
     """
+
+    largest_first = False
 
     def pop(self):
-        largest = max(self)
-        self.remove(largest)
-        return largest
+        element = max(self) if self.largest_first else min(self)
+        self.remove(element)
+        return element
 
     def __iter__(self):
-        return iter(sorted(set.__iter__(self), reverse=True))
+        return iter(sorted(set.__iter__(self), reverse=self.largest_first))
+
+
+class LargestFirstSet(SortedSet):
+    """
+    A set that gives its largest element first.
+    """
+
+    largest_first = True
 
 
 def test_justified_rules_whatever_order_a_set_gives():
@@ -1005,24 +1016,26 @@ def test_justified_rules_whatever_order_a_set_gives():
     In a table that records justifications, the rules held for extra terms
     leave in the order they were added to the table, and go back to the queue
     in that order, so the rules that justify a class do not depend on the order
-    a set gives its elements in. On 1000 seeded random forests, a table whose
-    set of held rules gives its largest element first records the same
-    justifications (the order back to the queue matters on few of them, seed
-    549 the first).
+    a set gives its elements in. On 1000 seeded random forests, tables whose
+    sets of held rules give their smallest or their largest element first
+    record the same justifications as a table with a set (the order back to the
+    queue matters on few of them, seed 549 the first).
     """
     for seed in range(1000):
         rule_keys = random_rule_keys(random.Random(seed))
-        table = TableMethod(record_justifications=True)
-        other_order = TableMethod(record_justifications=True)
+        tables = [TableMethod(record_justifications=True) for _ in range(3)]
         # pylint: disable=protected-access
-        other_order._rule_holding_extra_terms = LargestFirstSet()
+        tables[1]._rule_holding_extra_terms = SortedSet()
+        tables[2]._rule_holding_extra_terms = LargestFirstSet()
         for rule_key in rule_keys:
-            table.add_rule_key(rule_key)
-            other_order.add_rule_key(rule_key)
-        labels = range(len(table_values(table)[0]))
-        assert [table.justified_rules(label) for label in labels] == [
-            other_order.justified_rules(label) for label in labels
-        ], seed
+            for table in tables:
+                table.add_rule_key(rule_key)
+        labels = range(len(table_values(tables[0])[0]))
+        justifications = [
+            [table.justified_rules(label) for label in labels] for table in tables
+        ]
+        assert justifications[1] == justifications[0], seed
+        assert justifications[2] == justifications[0], seed
 
 
 def test_justifying_rules_only_whatever_order_a_set_gives(monkeypatch):
