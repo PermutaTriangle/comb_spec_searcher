@@ -862,6 +862,40 @@ def test_copy_of_a_table_that_records_justifications():
         assert [copy.justified_rules(label) for label in labels] == copy_justified, seed
 
 
+@pytest.mark.parametrize("copy_extended", [False, True])
+def test_copies_stay_apart_when_a_held_rule_sets_a_class_infinite(copy_extended):
+    """
+    The first three rules give class 1 the value 1, justified by rule 2. The
+    verification of 0 then raises 0 to the value 2, and through rule 0 class 2
+    to 1, so that no class is left with the value 0 and all three are on the
+    right of the gap. The rules held for extra terms set them infinite,
+    smallest first, and rule 1, held once 2 is infinite, sets 1 infinite and
+    joins its justifications. Whether the verification goes to a copy made
+    before it or to the table copied, the other keeps the value of 1 and its
+    one justification.
+    """
+    rule_keys = [
+        ForestRuleKey(2, (0,), (0,), RuleBucket.NORMAL),
+        ForestRuleKey(1, (2,), (0,), RuleBucket.NORMAL),
+        ForestRuleKey(1, (2,), (1,), RuleBucket.NORMAL),
+        ForestRuleKey(0, (), (), RuleBucket.VERIFICATION),
+    ]
+    table = TableMethod(record_justifications=True)
+    for rule_key in rule_keys[:3]:
+        table.add_rule_key(rule_key)
+    copy = table.copy()
+    extended, other = (copy, table) if copy_extended else (table, copy)
+    extended.add_rule_key(rule_keys[3])
+    assert extended.function == {0: None, 1: None, 2: None}
+    assert extended.justified_rules(1) == rule_keys
+    assert other.function == {1: 1}
+    assert [other.justified_rules(label) for label in range(3)] == [
+        [],
+        [rule_keys[2]],
+        [],
+    ]
+
+
 # The rules the extractor keeps from the random forest of seed 225, by default
 # and with justifying_rules_only: the option keeps a different, larger minimal
 # set.
@@ -946,7 +980,7 @@ def test_extractor_of_a_root_that_does_not_pump(justifying_rules_only):
     table.add_rule_key(ForestRuleKey(1, (), (), RuleBucket.VERIFICATION))
     table.add_rule_key(ForestRuleKey(0, (2,), (0,), RuleBucket.NORMAL))
     assert not table.is_pumping(0)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match="Not pumping after adding all rules"):
         ForestRuleExtractor(
             0,
             SimpleNamespace(table_method=table),
@@ -1118,13 +1152,18 @@ def test_justifying_rules_only_prunes_until_all_rules_left_justify_the_root(
     assert len(prunings) > 400
 
 
-def test_rule_added_first_justifies_a_class_set_infinite():
+@pytest.mark.parametrize("held_rules", [set, SortedSet, LargestFirstSet])
+def test_rule_added_first_justifies_a_class_set_infinite(held_rules):
     """
     Class 0 has two rules, through 1 and through 2, and both are held for extra
     terms when the verification of 3 makes the classes pump, the one through 2
     first. The one added first, through 1, which also raised the values of 0,
     justifies 0 when it is set infinite, so the rules through 2 are not needed
-    to justify it.
+    to justify it, whether the set of held rules gives its elements in the
+    order of a set, in increasing order, or in decreasing order. A set gives
+    the rule through 1 first here, on CPython as on PyPy, so only the
+    decreasing order checks that the rule added first is taken, rather than the
+    one a set gives first.
     """
     rule_keys = [
         ForestRuleKey(0, (1,), (0,), RuleBucket.NORMAL),
@@ -1134,8 +1173,114 @@ def test_rule_added_first_justifies_a_class_set_infinite():
         ForestRuleKey(3, (), (), RuleBucket.VERIFICATION),
     ]
     table = TableMethod(record_justifications=True)
+    table._rule_holding_extra_terms = held_rules()  # pylint: disable=protected-access
     for rule_key in rule_keys:
         table.add_rule_key(rule_key)
     assert table.function == {0: None, 1: None, 2: None, 3: None}
     assert table.justified_rules(0) == [rule_keys[0], rule_keys[2], rule_keys[4]]
     assert table.justified_rules(2) == [rule_keys[3], rule_keys[4]]
+
+
+def test_held_rules_go_back_to_the_queue_in_the_order_added(monkeypatch):
+    """
+    When the gap moves right, a table that records justifications puts the rules
+    it held for extra terms at the end of its queue in the order they were added
+    to it, and holds none; when the gap does not move right, it holds the same
+    rules and its queue is as it was. On 1000 seeded random forests, on every
+    call of _correct_gap, checked against the rules held before the call, which
+    the test sorts itself. Also, the heap holds the rules the set does.
+    """
+    correct_gap = TableMethod._correct_gap
+    sizes_sent_back = []
+
+    def checked(table):
+        # pylint: disable=protected-access
+        held = sorted(table._rule_holding_extra_terms)
+        queue = list(table._processing_queue)
+        correct_gap(table)
+        if table._rule_holding_extra_terms:
+            assert sorted(table._rule_holding_extra_terms) == held
+            assert list(table._processing_queue) == queue
+        else:
+            assert list(table._processing_queue) == queue + held
+            sizes_sent_back.append(len(held))
+        assert sorted(table._rule_holding_extra_terms_heap) == sorted(
+            table._rule_holding_extra_terms
+        )
+
+    monkeypatch.setattr(TableMethod, "_correct_gap", checked)
+    for seed in range(1000):
+        table = TableMethod(record_justifications=True)
+        for rule_key in random_rule_keys(random.Random(seed)):
+            table.add_rule_key(rule_key)
+    # the calls that send back several rules are the ones that test the order
+    assert sum(1 for size in sizes_sent_back if size > 1) >= 20
+
+
+SIX_RULES = [
+    ForestRuleKey(2, (3,), (-1,), RuleBucket.NORMAL),
+    ForestRuleKey(3, (0,), (0,), RuleBucket.NORMAL),
+    ForestRuleKey(0, (1,), (1,), RuleBucket.NORMAL),
+    ForestRuleKey(0, (3,), (0,), RuleBucket.NORMAL),
+    ForestRuleKey(0, (2,), (0,), RuleBucket.NORMAL),
+    ForestRuleKey(0, (), (), RuleBucket.VERIFICATION),
+]
+
+
+def test_the_order_back_to_the_queue_decides_which_rules_justify_a_class():
+    """
+    On this forest the rules 1 (3 -> 0) and 5 (the verification of 0) are held
+    for extra terms when the rule 0 raises class 2 and the gap moves right, and
+    go back to the queue, rule 1 first as it was added first. Largest first,
+    class 0 would reach 4 before 3 reaches 3, and in the end rule 3, held with
+    rule 5, would set 0 infinite in the place of rule 5, so that 0 would be
+    justified by the rules 1, 2, 3 and 5 rather than by 2 and 5. The expected
+    justifications are the head's, traced by hand; classes 0, 2 and 3 pump, and
+    1, which has no rule, stays 0.
+    """
+    table = TableMethod(record_justifications=True)
+    for rule_key in SIX_RULES:
+        table.add_rule_key(rule_key)
+    assert table.function == {0: None, 2: None, 3: None}
+    expected = {0: [2, 5], 1: [], 2: [0, 1, 2, 5], 3: [1, 2, 5]}
+    for label, rule_numbers in expected.items():
+        assert table.justified_rules(label) == [SIX_RULES[n] for n in rule_numbers]
+
+
+def test_a_class_set_infinite_is_justified_by_the_rule_that_sets_it():
+    """
+    Rule 2 lets class 0 rise without end, rule 1 does so for class 1, and when
+    1 is infinite rule 0 can set 0 infinite too. The two rules held for class 0,
+    0 and 2, go out smallest first, so rule 0 sets it infinite; the rule that
+    set it is among its justifications, with the rule that raised it first (2)
+    and the one that set 1 infinite (1), although rule 2 alone would do.
+    """
+    rule_keys = [
+        ForestRuleKey(0, (1,), (-1,), RuleBucket.NORMAL),
+        ForestRuleKey(1, (0,), (1,), RuleBucket.NORMAL),
+        ForestRuleKey(0, (0,), (1,), RuleBucket.NORMAL),
+    ]
+    table = TableMethod(record_justifications=True)
+    for rule_key in rule_keys:
+        table.add_rule_key(rule_key)
+    assert table.function == {0: None, 1: None}
+    assert table.justified_rules(0) == rule_keys
+    assert table.justified_rules(1) == rule_keys
+
+
+@pytest.mark.parametrize("justifying_rules_only", [False, True])
+def test_extractor_of_an_empty_forest(justifying_rules_only):
+    """
+    With no rule at all, a table that records justifications has none for any
+    class, and the extractor keeps no rule, with justifying_rules_only as
+    without it (the root's table has no justification to prune).
+    """
+    assert TableMethod(record_justifications=True).justified_rules(0) == []
+    extractor = ForestRuleExtractor(
+        0,
+        SimpleNamespace(table_method=TableMethod()),
+        None,
+        None,
+        justifying_rules_only=justifying_rules_only,
+    )
+    assert extractor.needed_rules == []

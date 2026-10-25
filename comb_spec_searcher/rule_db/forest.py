@@ -616,8 +616,10 @@ class ForestRuleExtractor:
                 for rule_key in self.rule_by_bucket[bucket]:
                     table.add_rule_key(rule_key)
             justifying_rules = table.justified_rules(self.root_label)
-            # the root does not pump only when the extractor is called on a
-            # forest with no specification: the minimization then raises the
+            # every table after the first holds the rules that justified the
+            # root in the one before, which make it pump on their own, so the
+            # root does not pump only when the extractor is called on a forest
+            # with no specification: the minimization then raises the
             # default's error, rather than keeping no rules
             if not self._is_productive(justifying_rules):
                 return
