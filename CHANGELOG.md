@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   disjoint union with more than one non-empty child: an object of the counted
   child maps to the object of the parent that it is, and back, and an object of
   the parent that lies in another child maps back to nothing
+- `CombinatorialSpecification.derivation`, the derivation of an object: the rule
+  of its class, and the derivations of the objects that the rule's forward map
+  sends it to, down to the verification rules, as `Derivation` tuples whose
+  children line up with the rule's; `choose_images` chooses the images where a
+  rule cannot map an object forward, a cache keeps the derivations found, and an
+  `InvalidOperationError` is raised for a class with no rule, a rule with too
+  few images, or a derivation that comes back to where it is
 
 ### Changed
 - `from_dict` methods use `copy` to avoid deleting dicts
