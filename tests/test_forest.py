@@ -770,7 +770,7 @@ def test_justified_rules():
     for rule in justified:
         alone.add_rule_key(rule)
     assert alone.is_pumping(0)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="does not record justifications"):
         TableMethod().justified_rules(0)
 
 

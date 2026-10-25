@@ -607,7 +607,7 @@ class ForestRuleExtractor:
         table records justifications in the order of its rules, the rules taken
         are the same on every Python.
         """
-        before = sum(len(rules) for rules in self.rule_by_bucket.values())
+        rule_count_before = self._rule_count()
         while True:
             table = TableMethod(record_justifications=True)
             for rule_key in self.needed_rules:
@@ -615,23 +615,31 @@ class ForestRuleExtractor:
             for bucket in reversed(ForestRuleExtractor.MINIMIZE_ORDER):
                 for rule_key in self.rule_by_bucket[bucket]:
                     table.add_rule_key(rule_key)
-            justifying = set(table.justified_rules(self.root_label))
-            if not self._is_productive(justifying):
+            justifying_rules = table.justified_rules(self.root_label)
+            # the root does not pump only when the extractor is called on a
+            # forest with no specification: the minimization then raises the
+            # default's error, rather than keeping no rules
+            if not self._is_productive(justifying_rules):
                 return
+            justifying = set(justifying_rules)
             remaining = {
                 bucket: [rule_key for rule_key in rules if rule_key in justifying]
                 for bucket, rules in self.rule_by_bucket.items()
             }
-            if sum(map(len, remaining.values())) == sum(
-                map(len, self.rule_by_bucket.values())
-            ):
+            if sum(map(len, remaining.values())) == self._rule_count():
                 break
             self.rule_by_bucket = remaining
         logger.info(
             "Minimizing the %s of %s rules left that justify the root",
-            sum(len(rules) for rules in self.rule_by_bucket.values()),
-            before,
+            self._rule_count(),
+            rule_count_before,
         )
+
+    def _rule_count(self) -> int:
+        """
+        Return the number of rules still to minimize.
+        """
+        return sum(len(rules) for rules in self.rule_by_bucket.values())
 
     def check(self) -> None:
         """
