@@ -8,9 +8,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added 
 - the `AtomStrategy` handles extra parameters when counting, finding equations and sampling
+- `ReverseRule.forward_map` and `ReverseRule.backward_map` for the reverse of a
+  disjoint union with more than one non-empty child: an object of the counted
+  child maps to the object of the parent that it is, and back, and an object of
+  the parent that lies in another child maps back to nothing
 
 ### Changed
 - `from_dict` methods use `copy` to avoid deleting dicts
+- `ReverseRule.forward_map` raises `NotImplementedError`, rather than an
+  assertion error, when the original rule's backward map gives several objects,
+  as the reverse of a rule that is not bijective, such as a fusion, does
+- `ReverseRule.indexed_backward_map` raises an `ObjectMappingError` naming the
+  rule for an object of the parent that lies in another child
 
 ### Fixed
 - Bug in `CombinatorialSpecification.get_rule` which broke
