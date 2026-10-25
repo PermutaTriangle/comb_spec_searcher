@@ -982,3 +982,147 @@ def test_justified_rules_of_classes_apart():
     assert table.justified_rules(4) == []
     assert table.justified_rules(5) == []
     assert table.justified_rules(99) == []
+
+
+class LargestFirstSet(set):
+    """
+    A set that gives its largest element first, both when popped and when
+    iterated over: another order than this Python's sets give, as CPython's and
+    PyPy's sets of integers give different orders.
+    """
+
+    def pop(self):
+        largest = max(self)
+        self.remove(largest)
+        return largest
+
+    def __iter__(self):
+        return iter(sorted(set.__iter__(self), reverse=True))
+
+
+def test_justified_rules_whatever_order_a_set_gives():
+    """
+    In a table that records justifications, the rules held for extra terms
+    leave in the order they were added to the table, and go back to the queue
+    in that order, so the rules that justify a class do not depend on the order
+    a set gives its elements in. On 1000 seeded random forests, a table whose
+    set of held rules gives its largest element first records the same
+    justifications (the order back to the queue matters on few of them, seed
+    549 the first).
+    """
+    for seed in range(1000):
+        rule_keys = random_rule_keys(random.Random(seed))
+        table = TableMethod(record_justifications=True)
+        other_order = TableMethod(record_justifications=True)
+        # pylint: disable=protected-access
+        other_order._rule_holding_extra_terms = LargestFirstSet()
+        for rule_key in rule_keys:
+            table.add_rule_key(rule_key)
+            other_order.add_rule_key(rule_key)
+        labels = range(len(table_values(table)[0]))
+        assert [table.justified_rules(label) for label in labels] == [
+            other_order.justified_rules(label) for label in labels
+        ], seed
+
+
+def test_justifying_rules_only_whatever_order_a_set_gives(monkeypatch):
+    """
+    With justifying_rules_only, the extractor keeps the same rules when the
+    sets of rules held for extra terms give their largest element first, so the
+    same on CPython as on PyPy: on 300 seeded random forests whose root pumps.
+    """
+    forests = []
+    for seed in range(300):
+        table = TableMethod()
+        for rule_key in random_rule_keys(random.Random(seed)):
+            table.add_rule_key(rule_key)
+        if table.is_pumping(0):
+            forests.append((seed, SimpleNamespace(table_method=table)))
+    assert len(forests) > 100
+
+    def rules_kept():
+        return [
+            ForestRuleExtractor(
+                0, ruledb, None, None, justifying_rules_only=True
+            ).needed_rules
+            for _, ruledb in forests
+        ]
+
+    kept = rules_kept()
+    original_init = TableMethod.__init__
+
+    def init_with_largest_first(self, record_justifications=False):
+        original_init(self, record_justifications=record_justifications)
+        # pylint: disable=protected-access
+        self._rule_holding_extra_terms = LargestFirstSet()
+
+    monkeypatch.setattr(TableMethod, "__init__", init_with_largest_first)
+    for (seed, _), rule_keys, other_order in zip(forests, kept, rules_kept()):
+        assert rule_keys == other_order, seed
+
+
+def test_justifying_rules_only_prunes_until_all_rules_left_justify_the_root(
+    monkeypatch,
+):
+    """
+    With justifying_rules_only, the extractor prunes the rules still to
+    minimize before each bucket until all of them justify the root's value in a
+    table of the rules kept and those left: on 300 seeded random forests whose
+    root pumps, after each of the four prunings.
+    """
+    keep_justifying_rules = ForestRuleExtractor._keep_justifying_rules
+    prunings = []
+
+    def keep_and_check(extractor):
+        keep_justifying_rules(extractor)
+        table = TableMethod(record_justifications=True)
+        for rule_key in extractor.needed_rules:
+            table.add_rule_key(rule_key)
+        for bucket in reversed(ForestRuleExtractor.MINIMIZE_ORDER):
+            for rule_key in extractor.rule_by_bucket[bucket]:
+                table.add_rule_key(rule_key)
+        justifying = set(table.justified_rules(extractor.root_label))
+        assert all(
+            rule_key in justifying
+            for rule_keys in extractor.rule_by_bucket.values()
+            for rule_key in rule_keys
+        )
+        prunings.append(extractor)
+
+    monkeypatch.setattr(ForestRuleExtractor, "_keep_justifying_rules", keep_and_check)
+    for seed in range(300):
+        table = TableMethod()
+        for rule_key in random_rule_keys(random.Random(seed)):
+            table.add_rule_key(rule_key)
+        if table.is_pumping(0):
+            ForestRuleExtractor(
+                0,
+                SimpleNamespace(table_method=table),
+                None,
+                None,
+                justifying_rules_only=True,
+            )
+    assert len(prunings) > 400
+
+
+def test_rule_added_first_justifies_a_class_set_infinite():
+    """
+    Class 0 has two rules, through 1 and through 2, and both are held for extra
+    terms when the verification of 3 makes the classes pump, the one through 2
+    first. The one added first, through 1, which also raised the values of 0,
+    justifies 0 when it is set infinite, so the rules through 2 are not needed
+    to justify it.
+    """
+    rule_keys = [
+        ForestRuleKey(0, (1,), (0,), RuleBucket.NORMAL),
+        ForestRuleKey(0, (2,), (0,), RuleBucket.NORMAL),
+        ForestRuleKey(1, (3,), (0,), RuleBucket.NORMAL),
+        ForestRuleKey(2, (3,), (0,), RuleBucket.NORMAL),
+        ForestRuleKey(3, (), (), RuleBucket.VERIFICATION),
+    ]
+    table = TableMethod(record_justifications=True)
+    for rule_key in rule_keys:
+        table.add_rule_key(rule_key)
+    assert table.function == {0: None, 1: None, 2: None, 3: None}
+    assert table.justified_rules(0) == [rule_keys[0], rule_keys[2], rule_keys[4]]
+    assert table.justified_rules(2) == [rule_keys[3], rule_keys[4]]

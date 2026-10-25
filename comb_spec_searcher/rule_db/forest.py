@@ -1,4 +1,5 @@
 import gc
+import heapq
 import itertools
 import platform
 import time
@@ -251,6 +252,9 @@ class TableMethod:
         """
         With record_justifications, the table keeps for each class the rules
         that raised its value, or made it infinite (see `justified_rules`).
+        The rules held for extra terms then leave in the order they were added
+        to the table, rather than in the order of a set, which differs between
+        CPython and PyPy, so the justifications are the same on every Python.
         """
         self._justifications: Optional[DefaultList[List[int]]] = (
             DefaultList(list) if record_justifications else None
@@ -264,6 +268,9 @@ class TableMethod:
         self._processing_queue: Deque[int] = Deque()
         self._current_gap: Tuple[int, int] = (1, 1)
         self._rule_holding_extra_terms: Set[int] = set()
+        # with record_justifications, the same rules in a heap, so that they
+        # leave the set smallest first (see _process_queue)
+        self._rule_holding_extra_terms_heap: List[int] = []
 
     def copy(self) -> "TableMethod":
         """
@@ -289,6 +296,7 @@ class TableMethod:
         new._processing_queue = Deque()
         new._current_gap = self._current_gap
         new._rule_holding_extra_terms = set()
+        new._rule_holding_extra_terms_heap = []
         return new
 
     @property
@@ -414,7 +422,13 @@ class TableMethod:
         k = self._function.preimage_gap(self._gap_size)
         new_gap = (k, k + self._gap_size - 1)
         if new_gap[1] > self._current_gap[1]:
-            self._processing_queue.extend(self._rule_holding_extra_terms)
+            if self._justifications is None:
+                self._processing_queue.extend(self._rule_holding_extra_terms)
+            else:
+                # in the order added, as the rule that raises a value first
+                # justifies it
+                self._processing_queue.extend(sorted(self._rule_holding_extra_terms))
+                self._rule_holding_extra_terms_heap.clear()
             self._rule_holding_extra_terms.clear()
         self._current_gap = new_gap
 
@@ -430,7 +444,13 @@ class TableMethod:
                     parent = self._rules[rule_idx].parent
                     self._increase_value(parent, rule_idx)
             if self._rule_holding_extra_terms:
-                rule_idx = self._rule_holding_extra_terms.pop()
+                if self._justifications is None:
+                    rule_idx = self._rule_holding_extra_terms.pop()
+                else:
+                    # the rule added first justifies the class it sets
+                    # infinite, rather than the one a set happens to give
+                    rule_idx = heapq.heappop(self._rule_holding_extra_terms_heap)
+                    self._rule_holding_extra_terms.remove(rule_idx)
                 parent = self._rules[rule_idx].parent
                 if (
                     self._justifications is not None
@@ -460,6 +480,11 @@ class TableMethod:
         if current_value is None:
             return
         if current_value > self._current_gap[1]:
+            if (
+                self._justifications is not None
+                and rule_idx not in self._rule_holding_extra_terms
+            ):
+                heapq.heappush(self._rule_holding_extra_terms_heap, rule_idx)
             self._rule_holding_extra_terms.add(rule_idx)
             return
         values_changed = self._function.increase_value(comb_class)
@@ -578,7 +603,9 @@ class ForestRuleExtractor:
         specification as well, since minimality is a property of the rules kept.
         They are taken from a table where the rules kept come first, then those
         the minimization prefers to keep, so that the others justify only what
-        these cannot; and again from a table of those, until no more go.
+        these cannot; and again from a table of those, until no more go. As the
+        table records justifications in the order of its rules, the rules taken
+        are the same on every Python.
         """
         before = sum(len(rules) for rules in self.rule_by_bucket.values())
         while True:
@@ -804,8 +831,11 @@ class RuleDBForest(RuleDBAbstract):
     Set `reverse` to prevent the reverse of the added rules to be added to the database.
 
     Set `justifying_rules_only` to minimize, when extracting a specification, only the
-    rules that justify the root's value: much faster on a large forest, with a
-    specification that may have more rules (see `ForestRuleExtractor`).
+    rules that justify the root's value (see `ForestRuleExtractor`). It pays when the
+    minimization tries many rules on a large forest, and can cost more than it saves
+    on a forest the default minimizes in about a second. The specification is the
+    same on every Python, still minimal, and may have more rules, REVERSE ones among
+    them, as the other buckets are pruned before the REVERSE rules are minimized.
     """
 
     def __init__(
