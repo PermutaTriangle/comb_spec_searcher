@@ -1,9 +1,11 @@
 import itertools
 import random
+from types import SimpleNamespace
 from typing import Dict, List, Union
 
 import pytest
 
+import comb_spec_searcher.rule_db.forest as forest_module
 from comb_spec_searcher import CombinatorialSpecificationSearcher
 from comb_spec_searcher.rule_db.forest import (
     DefaultList,
@@ -783,3 +785,200 @@ def test_forest_justifying_rules_only():
     spec = searcher.auto_search()
     expected_count = [1, 2, 4, 8, 15, 27, 48, 87, 157, 283]
     assert [spec.count_objects_of_size(size) for size in range(10)] == expected_count
+
+
+def test_justified_rules_on_random_forests():
+    """
+    On 300 seeded random forests, a table that records justifications has the
+    values of one that does not. For every class, a table of the rules that
+    justify it, alone, gives the class at least its value (and a class that
+    pumps pumps), and the rules come in the order they were added.
+    """
+    for seed in range(300):
+        rule_keys = random_rule_keys(random.Random(seed))
+        recording = TableMethod(record_justifications=True)
+        plain = TableMethod()
+        for rule_key in rule_keys:
+            recording.add_rule_key(rule_key)
+            plain.add_rule_key(rule_key)
+        assert table_values(recording) == table_values(plain), seed
+        for label in range(len(table_values(plain)[0])):
+            justified = recording.justified_rules(label)
+            assert justified == [
+                rule_key for rule_key in rule_keys if rule_key in justified
+            ], (seed, label)
+            alone = TableMethod()
+            for rule_key in justified:
+                alone.add_rule_key(rule_key)
+            if plain.is_pumping(label):
+                assert alone.is_pumping(label), (seed, label)
+            else:
+                assert alone.is_pumping(label) or alone.function.get(
+                    label, 0
+                ) >= plain.function.get(label, 0), (seed, label)
+
+
+def test_copy_of_a_table_that_records_justifications():
+    """
+    A copy of a table that records justifications records them too, and the two
+    are independent. On 300 seeded random forests, a table is copied partway and
+    the copy extended with the remaining rules in reverse order, so that its new
+    rules' indices are those of other rules in the original: the rules that
+    justify each class in the copy give it its value on their own. Then the
+    original is extended too, in order, with the copy alive: its justifications
+    are those of a table built from all the rules, and the copy's do not change.
+    """
+
+    def built(rule_keys):
+        table = TableMethod(record_justifications=True)
+        for rule_key in rule_keys:
+            table.add_rule_key(rule_key)
+        return table
+
+    for seed in range(300):
+        random_generator = random.Random(seed)
+        rule_keys = random_rule_keys(random_generator)
+        split = random_generator.randrange(len(rule_keys) + 1)
+        original = built(rule_keys[:split])
+        copy = original.copy()
+        for rule_key in reversed(rule_keys[split:]):
+            copy.add_rule_key(rule_key)
+        labels = range(len(table_values(copy)[0]))
+        copy_justified = [copy.justified_rules(label) for label in labels]
+        for label, justified in zip(labels, copy_justified):
+            alone = TableMethod()
+            for rule_key in justified:
+                alone.add_rule_key(rule_key)
+            assert alone.is_pumping(label) or not copy.is_pumping(label), seed
+            assert alone.is_pumping(label) or alone.function.get(
+                label, 0
+            ) >= copy.function.get(label, 0), (seed, label)
+        for rule_key in rule_keys[split:]:
+            original.add_rule_key(rule_key)
+        full = built(rule_keys)
+        assert [original.justified_rules(label) for label in labels] == [
+            full.justified_rules(label) for label in labels
+        ], seed
+        assert [copy.justified_rules(label) for label in labels] == copy_justified, seed
+
+
+# The rules the extractor keeps from the random forest of seed 225, by default
+# and with justifying_rules_only: the option keeps a different, larger minimal
+# set.
+RULES_KEPT_FROM_SEED_225 = {
+    False: [
+        (5, (5, 1, 1), (1, 0, -2), "NORMAL"),
+        (0, (4, 1), (0, 1), "NORMAL"),
+        (1, (5,), (3,), "NORMAL"),
+        (4, (), (), "VERIFICATION"),
+    ],
+    True: [
+        (0, (4, 1), (0, 1), "NORMAL"),
+        (3, (4,), (-2,), "NORMAL"),
+        (5, (3, 3), (-1, -2), "NORMAL"),
+        (1, (5,), (3,), "NORMAL"),
+        (4, (), (), "VERIFICATION"),
+    ],
+}
+
+
+def test_justifying_rules_only_changes_the_rules_kept():
+    """
+    On the random forest of seed 225, the extractor keeps other rules with
+    justifying_rules_only than without it, and the default is without it. Both
+    sets make the root pump, and each of their rules is needed.
+    """
+    table = TableMethod()
+    for rule_key in random_rule_keys(random.Random(225)):
+        table.add_rule_key(rule_key)
+    ruledb = SimpleNamespace(table_method=table)
+    kept = {
+        False: ForestRuleExtractor(0, ruledb, None, None).needed_rules,
+        True: ForestRuleExtractor(
+            0, ruledb, None, None, justifying_rules_only=True
+        ).needed_rules,
+    }
+    for option, rule_keys in kept.items():
+        assert [
+            (rule_key.parent, rule_key.children, rule_key.shifts, rule_key.bucket.name)
+            for rule_key in rule_keys
+        ] == RULES_KEPT_FROM_SEED_225[option]
+        for index in range(len(rule_keys) + 1):
+            alone = TableMethod()
+            for rule_key in rule_keys[:index] + rule_keys[index + 1 :]:
+                alone.add_rule_key(rule_key)
+            # without a rule the root does not pump; with all of them it does
+            assert alone.is_pumping(0) == (index == len(rule_keys)), (option, index)
+
+
+def test_forest_passes_justifying_rules_only_to_the_extractor(monkeypatch):
+    """
+    RuleDBForest gives the extractor its justifying_rules_only, which is False by
+    default.
+    """
+    options_given = []
+
+    class Extractor(ForestRuleExtractor):
+        def __init__(self, *args, justifying_rules_only=False):
+            options_given.append(justifying_rules_only)
+            super().__init__(*args, justifying_rules_only=justifying_rules_only)
+
+    monkeypatch.setattr(forest_module, "ForestRuleExtractor", Extractor)
+    for option, ruledb in (
+        (False, RuleDBForest()),
+        (True, RuleDBForest(justifying_rules_only=True)),
+    ):
+        options_given.clear()
+        start_class = AvoidingWithPrefix("", ["ababa", "babb"], ["a", "b"])
+        CombinatorialSpecificationSearcher(
+            start_class, pack, ruledb=ruledb
+        ).auto_search()
+        assert options_given and all(given is option for given in options_given)
+
+
+@pytest.mark.parametrize("justifying_rules_only", [False, True])
+def test_extractor_of_a_root_that_does_not_pump(justifying_rules_only):
+    """
+    With a root that does not pump, the extractor raises the same error with
+    justifying_rules_only as without it, rather than keeping no rules.
+    """
+    table = TableMethod()
+    table.add_rule_key(ForestRuleKey(1, (), (), RuleBucket.VERIFICATION))
+    table.add_rule_key(ForestRuleKey(0, (2,), (0,), RuleBucket.NORMAL))
+    assert not table.is_pumping(0)
+    with pytest.raises(RuntimeError):
+        ForestRuleExtractor(
+            0,
+            SimpleNamespace(table_method=table),
+            None,
+            None,
+            justifying_rules_only=justifying_rules_only,
+        )
+
+
+def test_justified_rules_of_classes_apart():
+    """
+    The rules that justify a class leave out those of classes it does not use,
+    and come in the order they were added. A class that no rule raised, or a
+    label never seen, has none; a class a rule raised to a finite value has that
+    rule.
+    """
+    rule_keys = [
+        ForestRuleKey(0, (1,), (0,), RuleBucket.NORMAL),
+        ForestRuleKey(1, (), (), RuleBucket.VERIFICATION),
+        ForestRuleKey(7, (8,), (0,), RuleBucket.NORMAL),
+        ForestRuleKey(8, (), (), RuleBucket.VERIFICATION),
+        ForestRuleKey(2, (3,), (1,), RuleBucket.NORMAL),  # raises 2 to 1, no further
+        ForestRuleKey(4, (5,), (0,), RuleBucket.NORMAL),  # 5 has no rule: 4 stays 0
+    ]
+    table = TableMethod(record_justifications=True)
+    for rule_key in rule_keys:
+        table.add_rule_key(rule_key)
+    assert table.function == {0: None, 1: None, 2: 1, 7: None, 8: None}
+    assert table.justified_rules(0) == rule_keys[:2]
+    assert table.justified_rules(1) == [rule_keys[1]]
+    assert table.justified_rules(7) == rule_keys[2:4]
+    assert table.justified_rules(2) == [rule_keys[4]]
+    assert table.justified_rules(4) == []
+    assert table.justified_rules(5) == []
+    assert table.justified_rules(99) == []
