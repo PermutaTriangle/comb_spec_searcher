@@ -41,6 +41,8 @@ To install ``comb_spec_searcher`` on your system, run:
 
        pip install comb_spec_searcher
 
+Python 3.11 or newer is required.
+
 It is also possible to install comb_spec_searcher in development mode to
 work on the source code, in which case you run the following after
 cloning the repository:
