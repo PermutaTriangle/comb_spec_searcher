@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   still minimal, but it may have more rules, REVERSE ones among them.
   `TableMethod(record_justifications=True)` records the rules that raised each
   class's value, and `TableMethod.justified_rules` gives their closure.
+- `ReverseRule.forward_map` and `ReverseRule.backward_map` for the reverse of a
+  disjoint union with more than one non-empty child: an object of the counted
+  child maps to the object of the parent that it is, and back, and an object of
+  the parent that lies in another child maps back to nothing
 
 ### Changed
 - Minimum Python version is now 3.11; CPython and PyPy 3.10 are no longer supported.
@@ -27,6 +31,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   copied for each rule tried, rather than built again, and a copy of a
   `TableMethod` shares its lists with the table copied until either changes them.
   `TableMethod` also looks for a new gap only when the values taken change.
+- `ReverseRule.forward_map` raises `NotImplementedError`, rather than an
+  assertion error, when the original rule's backward map gives several objects,
+  as the reverse of a rule that is not bijective, such as a fusion, does
+- `ReverseRule.indexed_backward_map` raises an `ObjectMappingError` naming the
+  rule for an object of the parent that lies in another child
 
 ### Fixed
 - Install pytest-timeout so the existing timeout-marked tests enforce their limits.

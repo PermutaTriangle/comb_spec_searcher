@@ -42,7 +42,12 @@ from comb_spec_searcher.typing import (
 )
 
 from ..combinatorial_class import CombinatorialClassType, CombinatorialObjectType
-from ..exception import SanityCheckFailure, SpecificationNotFound, StrategyDoesNotApply
+from ..exception import (
+    ObjectMappingError,
+    SanityCheckFailure,
+    SpecificationNotFound,
+    StrategyDoesNotApply,
+)
 from ..utils import TermsCache, equal_counters
 from .constructor import Complement, Constructor, DisjointUnion
 
@@ -1052,28 +1057,85 @@ class ReverseRule(Rule[CombinatorialClassType, CombinatorialObjectType]):
             return f"reverse of '{self.strategy.formal_step()}'"
         return f"reverse of '{self.strategy.formal_step()}', counting child {self.idx}"
 
+    def _maps_objects(self) -> bool:
+        """
+        Return True if the objects of the counted child map to the parent and
+        back: the original rule has one non-empty child, or it is a disjoint
+        union, of whose parent the counted child is a part. A constructor that
+        subclasses DisjointUnion may count otherwise, as one that divides does,
+        so only DisjointUnion itself is taken for a disjoint union.
+        """
+        # pylint: disable=unidiomatic-typecheck
+        return (
+            len(self.original_rule.non_empty_children()) == 1
+            or type(self.original_rule.constructor) is DisjointUnion
+        )
+
     def backward_map(
         self, objs: Tuple[Optional[CombinatorialObjectType], ...]
     ) -> Iterator[CombinatorialObjectType]:
-        if not len(self.original_rule.non_empty_children()) == 1:
-            raise NotImplementedError("Cannot map forward for non equivalence rule.")
+        """
+        Map an object of the original rule's parent, the other children given
+        None, to the object of the counted child that it is. Nothing is yielded
+        if the object lies in another child.
+        """
+        if not self._maps_objects():
+            raise NotImplementedError(
+                "Cannot map backward for the reverse of a rule that is neither "
+                "a disjoint union nor a rule with one non-empty child."
+            )
         assert all(obj is None for obj in objs[1:])
         assert objs[0] is not None
-        res = self.original_rule.forward_map(objs[0])[self.idx]
-        assert res is not None
-        yield res
+        images = self.original_rule.forward_map(objs[0])
+        res = images[self.idx]
+        if res is not None:
+            yield res
+        else:  # the object lies in another child of the original rule
+            assert any(
+                image is not None for image in images
+            ), "The original rule's forward map places the object in no child."
+
+    def indexed_backward_map(
+        self,
+        objs: Tuple[Optional[CombinatorialObjectType], ...],
+        idx: int,
+        data: Optional[object] = None,
+    ) -> CombinatorialObjectType:
+        """
+        The backward map's object, for bijections. Raise an ObjectMappingError
+        if the parent's object lies in another child, so that it is no object
+        of the counted child.
+        """
+        for res in self.backward_map(objs):
+            return res
+        raise ObjectMappingError(
+            f"The object {objs[0]} lies in a child of the original rule other "
+            f"than the one counted by {self.formal_step}"
+        )
 
     def forward_map(
         self, obj: CombinatorialObjectType
     ) -> Tuple[Optional[CombinatorialObjectType], ...]:
-        if not len(self.original_rule.non_empty_children()) == 1:
-            raise NotImplementedError("Cannot map forward for non equivalence rule.")
+        """
+        Map an object of the counted child to the object of the original
+        rule's parent that it is, with None for the other children.
+        """
+        if not self._maps_objects():
+            raise NotImplementedError(
+                "Cannot map forward for the reverse of a rule that is neither "
+                "a disjoint union nor a rule with one non-empty child."
+            )
         objs: List[Optional[CombinatorialObjectType]] = [
             None for _ in self.original_rule.children
         ]
         objs[self.idx] = obj
         orig_res = list(self.original_rule.backward_map(tuple(objs)))
-        assert len(orig_res) == 1, "More than one results from back map"
+        if len(orig_res) > 1:
+            raise NotImplementedError(
+                "Cannot map forward: the original rule's backward map gives "
+                f"{len(orig_res)} objects, as for a rule that is not bijective."
+            )
+        assert len(orig_res) == 1, "No result from back map"
         return tuple(orig_res) + tuple(None for _ in range(len(self.children) - 1))
 
     def get_op_symbol(self):
