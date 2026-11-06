@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added 
 - Required CI coverage for stable PyPy 3.12 alongside PyPy 3.11.
 - the `AtomStrategy` handles extra parameters when counting, finding equations and sampling
+- `RuleDBForest(justifying_rules_only=True)` minimizes, when extracting a
+  specification, only the rules that justify the root's value: faster when the
+  minimization tries many rules on a large forest, the same on every Python, and
+  still minimal, but it may have more rules, REVERSE ones among them.
+  `TableMethod(record_justifications=True)` records the rules that raised each
+  class's value, and `TableMethod.justified_rules` gives their closure.
 
 ### Changed
 - Minimum Python version is now 3.11; CPython and PyPy 3.10 are no longer supported.
