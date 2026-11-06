@@ -7,7 +7,20 @@ from copy import copy
 from functools import reduce
 from itertools import chain
 from operator import mul
-from typing import Any, Dict, Generic, Iterable, Iterator, List, Optional, Set, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generic,
+    Iterable,
+    Iterator,
+    List,
+    NamedTuple,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
 import sympy
 from logzero import logger
@@ -46,7 +59,37 @@ from .utils import (
     taylor_expand,
 )
 
-__all__ = ("CombinatorialSpecification",)
+__all__ = ("CombinatorialSpecification", "Derivation")
+
+
+# A class and an object of it; and what chooses the images of an object under a
+# rule that cannot map it forward (CombinatorialSpecification.derivation)
+DerivationKey = Tuple[CombinatorialClassType, CombinatorialObjectType]
+ImagesChooser = Callable[
+    [Rule, CombinatorialObjectType], Tuple[Optional[CombinatorialObjectType], ...]
+]
+
+
+class Derivation(NamedTuple):
+    """
+    The derivation of an object of a combinatorial class in a specification:
+    the rule that the specification applies to the class, and the derivations
+    of the objects that the rule's forward map sends the object to, or that
+    choose_images chooses (CombinatorialSpecification.derivation).
+
+    The children line up with the rule's children: the entry at an index is the
+    derivation in the rule's child at that index, or None if the object maps to
+    nothing there. A derivation ends at a verification rule. Its children, if
+    it names any, as a verification relying on another class can, get None.
+
+    Each node keeps its object: for a rule that is not bijective, such as a
+    fusion, the children's objects need not determine it.
+    """
+
+    comb_class: CombinatorialClass
+    rule: AbstractRule
+    obj: CombinatorialObject
+    children: Tuple[Optional["Derivation"], ...]
 
 
 class CombinatorialSpecification(
@@ -517,6 +560,130 @@ class CombinatorialSpecification(
             raise InvalidOperationError(
                 "The root does not contain objects of this size"
             )
+
+    def derivation(
+        self,
+        obj: CombinatorialObjectType,
+        comb_class: Optional[CombinatorialClassType] = None,
+        choose_images: Optional[ImagesChooser[CombinatorialObjectType]] = None,
+        cache: Optional[
+            Dict[
+                DerivationKey[CombinatorialClassType, CombinatorialObjectType],
+                Derivation,
+            ]
+        ] = None,
+    ) -> Derivation:
+        """
+        Return the derivation of obj, an object of comb_class (the root if none
+        is given): the rule of the class, and the derivations of the objects
+        that the rule's forward map sends obj to, down to the verification
+        rules. The objects must be hashable. Derivation is imported from
+        comb_spec_searcher.specification.
+
+        A rule whose forward map raises NotImplementedError, as the reverse of
+        a Cartesian product (counted by division) or of a fusion does, does
+        not determine the images: choose_images(rule, obj) chooses them if it
+        is given, and otherwise the error is raised. It must give one image for
+        each of the rule's children, None where the object does not reach, and
+        images that the rule's backward map takes back to the object, which is
+        not checked. For the reverse of a Cartesian product, give the other
+        children their smallest objects: larger ones can bring the derivation
+        back to where it is, or make it go on without end.
+
+        A dictionary given as cache keeps the derivations found, by class and
+        object, for later calls: use it only with this specification and the
+        same choose_images. A derivation shares the node of a class and an
+        object reached more than once, so walking it as a tree, or comparing
+        derivations made apart, can take time exponential in its depth.
+
+        Raise an InvalidOperationError if comb_class has no rule in the
+        specification (as a class inside an equivalence path has none), if a
+        rule gives fewer images than it has children, or if the derivation
+        comes back to a class and an object that it is still following, as it
+        can in a specification whose counting is circular.
+        """
+        if comb_class is None:
+            comb_class = self.root
+        elif comb_class not in self.rules_dict and not comb_class.is_empty():
+            raise InvalidOperationError(
+                f"The specification has no rule for the class\n{comb_class}"
+            )
+        derivations: Dict[
+            DerivationKey[CombinatorialClassType, CombinatorialObjectType],
+            Derivation,
+        ]
+        derivations = {} if cache is None else cache
+        in_progress: Dict[
+            DerivationKey[CombinatorialClassType, CombinatorialObjectType],
+            Tuple[AbstractRule, Tuple[Optional[CombinatorialObjectType], ...]],
+        ] = {}
+        stack: List[DerivationKey[CombinatorialClassType, CombinatorialObjectType]]
+        stack = [(comb_class, obj)]
+        # Depth first, with a stack rather than recursion, as a derivation can be
+        # deeper than Python's recursion limit.
+        while stack:
+            key = stack[-1]
+            current_class, current_obj = key
+            if key in derivations:  # made already, in another branch or call
+                stack.pop()
+            elif key in in_progress:  # back on top, with its children's made
+                stack.pop()
+                rule, images = in_progress.pop(key)
+                derivations[key] = Derivation(
+                    current_class,
+                    rule,
+                    current_obj,
+                    tuple(
+                        None if image is None else derivations[(child, image)]
+                        for child, image in zip(rule.children, images)
+                    ),
+                )
+            else:  # first on top: follow it into its children
+                rule = self.get_rule(current_class)
+                if isinstance(rule, VerificationRule):
+                    images = tuple(None for _ in rule.children)
+                else:
+                    assert isinstance(rule, Rule)
+                    images = self._images(rule, current_obj, choose_images)
+                in_progress[key] = (rule, images)
+                for child, image in zip(rule.children, images):
+                    if image is None:
+                        continue
+                    if (child, image) in in_progress:
+                        raise InvalidOperationError(
+                            "The derivation comes back to the object "
+                            f"{image} of the class\n{child}"
+                        )
+                    stack.append((child, image))
+        return derivations[(comb_class, obj)]
+
+    @staticmethod
+    def _images(
+        rule: Rule,
+        obj: CombinatorialObjectType,
+        choose_images: Optional[ImagesChooser[CombinatorialObjectType]],
+    ) -> Tuple[Optional[CombinatorialObjectType], ...]:
+        """
+        Return the images of the object under the rule's forward map, or those
+        that choose_images chooses where the rule cannot map it forward, one
+        for each of the rule's children. Images past the children may be None,
+        as some forward maps give, and are dropped.
+        """
+        try:
+            images = tuple(rule.forward_map(obj))
+        except NotImplementedError:
+            if choose_images is None:
+                raise
+            images = tuple(choose_images(rule, obj))
+        number_of_children = len(rule.children)
+        if len(images) < number_of_children or any(
+            image is not None for image in images[number_of_children:]
+        ):
+            raise InvalidOperationError(
+                f"{len(images)} images for the {number_of_children} children of "
+                f"the rule {rule.formal_step}"
+            )
+        return images[:number_of_children]
 
     def number_of_rules(self) -> int:
         return len(self.rules_dict)
