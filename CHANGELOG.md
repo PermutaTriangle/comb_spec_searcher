@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   preserve the CSS version under test when installing Tilings.
 - Bug in `CombinatorialSpecification.get_rule` which broke
   the equality of `EmptyStrategy` rules in specs.
+- The reverse rule of a disjoint union no longer fails an assertion when it
+  counts a child to one of whose parameters two parent parameters go.
 
 ## [4.3.0] - 2025-06-13
 ### Changed
