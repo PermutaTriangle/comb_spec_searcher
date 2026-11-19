@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added 
+- Specifications can sanity-check their generating-function equations against class terms.
 - Required CI coverage for stable PyPy 3.12 alongside PyPy 3.11.
 - the `AtomStrategy` handles extra parameters when counting, finding equations and sampling
 

@@ -23,6 +23,7 @@ from comb_spec_searcher.typing import (
 )
 
 from .combinatorial_class import CombinatorialClass, CombinatorialObject
+from .equation_check import EquationChecker
 from .exception import (
     IncorrectGeneratingFunctionError,
     InvalidOperationError,
@@ -356,6 +357,11 @@ class CombinatorialSpecification(
         Yield all equations on the (ordinary) generating function that the
         rules of the specification imply.
         """
+        for _, equation in self.get_equations_with_labels():
+            yield equation
+
+    def get_equations_with_labels(self) -> Iterator[tuple[int, Eq]]:
+        """Yield each equation with the label of the rule that produced it."""
         funcs: Dict[CombinatorialClass, Function] = {
             comb_class: self.get_function(comb_class)
             for comb_class, rule in self.rules_dict.items()
@@ -370,7 +376,7 @@ class CombinatorialSpecification(
                 else:
                     eq = rule.get_equation(self.get_function)
                 if not isinstance(eq, bool):
-                    yield eq
+                    yield self.get_label(rule.comb_class), eq
             except NotImplementedError as e:
                 logger.info(
                     "can't find generating function for the rule %s -> %s. Reason: %s"
@@ -381,7 +387,7 @@ class CombinatorialSpecification(
                     rule,
                 )
                 x = var("x")
-                yield Eq(
+                yield self.get_label(rule.comb_class), Eq(
                     self.get_function(rule.comb_class),
                     sympy.Function("NOTIMPLEMENTED")(x),
                 )
@@ -521,11 +527,12 @@ class CombinatorialSpecification(
     def number_of_rules(self) -> int:
         return len(self.rules_dict)
 
-    def sanity_check(self, length: int = 5) -> bool:
+    def sanity_check(self, length: int = 5, *, check_equations: bool = False) -> bool:
         """
         Sanity check the specification to the given length.
 
-        Raise an SanityCheckFailure error if it fails.
+        With check_equations, also compare the emitted equations with class terms.
+        Unsupported checks are logged. A mismatch raises SanityCheckFailure.
         """
         if not self._is_valid_spec():
             return False
@@ -542,6 +549,14 @@ class CombinatorialSpecification(
                     tuple(self.get_label(child) for child in rule.children),
                     rule,
                 )
+
+        if check_equations:
+            checker = EquationChecker(self, length)
+            for label, equation in self.get_equations_with_labels():
+                try:
+                    checker.check(equation)
+                except NotImplementedError as exc:
+                    logger.warning("Skipping equation for rule %s: %s", label, exc)
 
         return True
 

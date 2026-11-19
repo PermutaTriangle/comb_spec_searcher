@@ -135,7 +135,7 @@ def test_forest_ruledb():
 
 
 def test_sancheck(specification):
-    assert specification.sanity_check(6)
+    assert specification.sanity_check(6, check_equations=True)
 
 
 def test_expand_size1_spec():
