@@ -18,7 +18,7 @@ from comb_spec_searcher.typing import (
     Terms,
 )
 
-from .base import Constructor
+from .base import Constructor, substitute_parameters
 
 
 class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]):
@@ -95,16 +95,7 @@ class DisjointUnion(Constructor[CombinatorialClassType, CombinatorialObjectType]
     ) -> sympy.Eq:
         res = 0
         for rhs_func, extra_parameters in zip(rhs_funcs, self.extra_parameters):
-            subs: Dict[str, sympy.Expr] = {}
-            for parent, child in extra_parameters.items():
-                if child in subs:
-                    subs[child] *= sympy.var(parent)
-                else:
-                    subs[child] = sympy.var(parent)
-            res += rhs_func.subs(
-                subs,
-                simultaneous=True,
-            )
+            res += substitute_parameters(rhs_func, extra_parameters)
         return sympy.Eq(lhs_func, res)
 
     def reliance_profile(self, n: int, **parameters: int) -> RelianceProfile:

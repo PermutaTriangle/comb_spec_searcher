@@ -24,6 +24,16 @@ from comb_spec_searcher.typing import (
 )
 
 
+def substitute_parameters(
+    child_func: sympy.Function, extra_parameters: Dict[str, str]
+) -> sympy.Expr:
+    """Replace each child marker by the product of its parent markers."""
+    substitutions: Dict[str, sympy.Expr] = {}
+    for parent, child in extra_parameters.items():
+        substitutions[child] = substitutions.get(child, 1) * sympy.Symbol(parent)
+    return child_func.subs(substitutions, simultaneous=True)
+
+
 class Constructor(abc.ABC, Generic[CombinatorialClassType, CombinatorialObjectType]):
     """The constructor is akin to the 'counting function' in the comb exp paper."""
 

@@ -32,7 +32,7 @@ from comb_spec_searcher.typing import (
     Terms,
 )
 
-from .base import Constructor
+from .base import Constructor, substitute_parameters
 
 T = TypeVar("T")
 
@@ -145,10 +145,7 @@ class CartesianProduct(Constructor[CombinatorialClassType, CombinatorialObjectTy
     ) -> sympy.Eq:
         res = 1
         for extra_parameters, rhs_func in zip(self.extra_parameters, rhs_funcs):
-            res *= rhs_func.subs(
-                {child: parent for parent, child in extra_parameters.items()},
-                simultaneous=True,
-            )
+            res *= substitute_parameters(rhs_func, extra_parameters)
         return sympy.Eq(lhs_func, res)
 
     def reliance_profile(self, n: int, **parameters: int) -> RelianceProfile:
