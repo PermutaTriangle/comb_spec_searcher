@@ -1,6 +1,9 @@
+from unittest.mock import Mock
+
 import pytest
 import sympy
 
+from comb_spec_searcher import CombinatorialClass
 from comb_spec_searcher.exception import ObjectMappingError
 from comb_spec_searcher.strategies import (
     CartesianProductStrategy,
@@ -351,3 +354,32 @@ def test_reverse_that_counts_an_empty_child():
     assert [child.is_empty() for child in rule.children] == [False, True]
     reverse = rule.to_reverse_rule(1)
     assert list(reverse.backward_map((Word("aaa"), None))) == []
+
+
+@pytest.mark.parametrize("reverse", [False, True], ids=["forward", "reverse"])
+@pytest.mark.parametrize("shared", [{"u": "u", "v": "u"}, {"v": "u", "u": "u"}])
+def test_cartesian_product_shared_marker(shared, reverse):
+    class MarkedProduct(RemoveFrontOfPrefix):
+        def extra_parameters(self, comb_class, children=None):
+            return shared, {"u": "v", "v": "u"}
+
+    def marked_class(*parameters):
+        comb_class = Mock(spec=CombinatorialClass, extra_parameters=parameters)
+        comb_class.minimum_size_of_object.return_value = 0
+        comb_class.get_minimum_value.return_value = 0
+        comb_class.is_atom.return_value = False
+        return comb_class
+
+    parent = marked_class("u", "v")
+    left = marked_class("u")
+    right = marked_class("u", "v")
+    x, u, v = sympy.symbols("x u v")
+    p, a, b = map(sympy.Function, ["P", "A", "B"])
+    functions = {parent: p(x, u, v), left: a(x, u), right: b(x, u, v)}
+    rule = MarkedProduct()(parent, (left, right))
+    if reverse:
+        rule = rule.to_reverse_rule(0)
+
+    assert rule.get_equation(functions.__getitem__) == sympy.Eq(
+        p(x, u, v), a(x, u * v) * b(x, v, u)
+    )

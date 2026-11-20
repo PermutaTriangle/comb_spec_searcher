@@ -45,6 +45,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   rule for an object of the parent that lies in another child
 
 ### Fixed
+- Cartesian product equations now multiply all parent markers that map to the
+  same child parameter.
 - Install pytest-timeout so the existing timeout-marked tests enforce their limits.
 - Supply the dependencies of PyPy's bundled cffi and HPy packages in tox.
 - Isolate the downstream Tilings checkout in tox's temporary directory and
