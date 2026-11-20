@@ -99,6 +99,11 @@ class CombinatorialClass(Generic[CombinatorialObjectType], abc.ABC):
             )
         )
 
+    @classmethod
+    def from_genf_name(cls, name: str) -> "CombinatorialClass | None":
+        """Return the class counted by a named function in an equation, if known."""
+        return None
+
     @property
     def extra_parameters(self) -> Tuple[str, ...]:
         """

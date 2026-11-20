@@ -19,6 +19,7 @@ class EquationChecker:
             raise ValueError("length must be nonnegative")
         self.length = length
         self.x = sympy.Symbol("x")
+        self.root = spec.root
         functions = {spec.get_function(cls): cls for cls in spec.rules_dict}
         self.classes = {function.func: cls for function, cls in functions.items()}
         self.symbols = {self.x}.union(*(f.free_symbols for f in functions))
@@ -31,7 +32,10 @@ class EquationChecker:
             return self.series[key]
         cls = self.classes.get(call.func)
         if cls is None:
-            raise NotImplementedError(f"No class terms for {call.func}")
+            cls = self.root.from_genf_name(call.func.__name__)
+            if cls is None:
+                raise NotImplementedError(f"No class terms for {call.func}")
+            self.classes[call.func] = cls
         size, *markers = call.args
         if len(markers) != len(cls.extra_parameters):
             raise ValueError(f"Wrong number of parameters in {call}")

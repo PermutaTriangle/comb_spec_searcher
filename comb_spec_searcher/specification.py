@@ -5,7 +5,6 @@ where each of the bi appear exactly once on the left hand side of some rule.
 
 from copy import copy
 from functools import reduce
-from itertools import chain
 from operator import mul
 from typing import Any, Dict, Generic, Iterable, Iterator, List, Optional, Set, Union
 
@@ -441,7 +440,12 @@ class CombinatorialSpecification(
         logger.info("Solving...")
         solutions = solve(
             eqs,
-            set(chain.from_iterable(eq.atoms(Function) for eq in eqs)),
+            {
+                f
+                for eq in eqs
+                for f in eq.atoms(Function)
+                if self.root.from_genf_name(f.func.__name__) is None
+            },
             dict=True,
             cubics=False,
             quartics=False,
