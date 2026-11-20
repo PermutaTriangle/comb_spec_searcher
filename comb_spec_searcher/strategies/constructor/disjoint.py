@@ -351,21 +351,46 @@ class Complement(Constructor[CombinatorialClassType, CombinatorialObjectType]):
     def get_terms(
         self, parent_terms: Callable[[int], Terms], subterms: SubTerms, n: int
     ) -> Terms:
-        parent_terms_mapped: Terms = Counter()
+        """Return the terms of size n of the child the rule is solved for.
+
+        The other children's terms are taken from the parent's while both are in
+        the parent's parameters. Only what is left, the terms of this child's own
+        objects, is mapped to this child's parameters, since a term of another
+        child can give two parent parameters that go to one parameter of this
+        child different values.
+
+        Examples:
+            >>> from collections import Counter
+            >>> from types import SimpleNamespace
+            >>> parent = SimpleNamespace(extra_parameters=("p", "q"))
+            >>> children = (
+            ...     SimpleNamespace(extra_parameters=("u",)),
+            ...     SimpleNamespace(extra_parameters=("w",)),
+            ... )
+            >>> maps = ({"p": "u", "q": "u"}, {"p": "w"})
+            >>> complement = Complement(parent, children, 0, maps)
+            >>> parent_size_two = Counter({(2, 2): 1, (1, 0): 2, (0, 0): 1})
+            >>> other_child_size_two = Counter({(1,): 2, (0,): 1})
+            >>> subterms = (lambda n: parent_size_two, lambda n: other_child_size_two)
+            >>> complement.get_terms(None, subterms, 2)
+            Counter({(2,): 1})
+        """
+        parent_terms_left: Terms = Counter()
         for param, value in subterms[0](n).items():
             if value:
-                parent_terms_mapped[self._parent_param_map(param)] += value
+                parent_terms_left[param] += value
         children_terms = subterms[1:]
         for child_terms, param_map in zip(children_terms, self._children_param_maps):
-            # we subtract from total
             for param, value in child_terms(n).items():
-                mapped_param = self._parent_param_map(param_map(param))
-                parent_terms_mapped[mapped_param] -= value
-                assert parent_terms_mapped[mapped_param] >= 0
-                if parent_terms_mapped[mapped_param] == 0:
-                    parent_terms_mapped.pop(mapped_param)
-
-        return parent_terms_mapped
+                mapped_param = param_map(param)
+                parent_terms_left[mapped_param] -= value
+                assert parent_terms_left[mapped_param] >= 0
+                if parent_terms_left[mapped_param] == 0:
+                    parent_terms_left.pop(mapped_param)
+        terms: Terms = Counter()
+        for param, value in parent_terms_left.items():
+            terms[self._parent_param_map(param)] += value
+        return terms
 
     def get_sub_objects(
         self, subobjs: SubObjects, n: int
