@@ -1,5 +1,6 @@
 """Check a generating-function equation against independently enumerated terms."""
 
+import itertools
 from typing import TYPE_CHECKING
 
 import sympy
@@ -177,13 +178,24 @@ class EquationChecker:
             if eq != sympy.true:
                 numerator, _ = self._fraction(eq)
                 residuals.append(numerator)
-        prefix, unknowns = self._pump(root, residuals)
-        actual = prefix.as_poly(self.x)
-        for n in range(self.length + 1):
-            if actual.nth(n).free_symbols.intersection(unknowns):
+        first_missing = -1
+        for actual, unknowns in self._root_approximations(root, residuals):
+            missing = next(
+                (
+                    n
+                    for n in range(self.length + 1)
+                    if actual.nth(n).free_symbols.intersection(unknowns)
+                ),
+                None,
+            )
+            if missing is None:
+                break
+            # A shifted equation may need another order of an auxiliary series.
+            if missing <= first_missing:
                 raise NotImplementedError(
-                    f"Equations do not determine the root at size {n}"
+                    f"Could not determine the root at size {missing}"
                 )
+            first_missing = missing
         expected = self._expand_call(root, self.length).as_poly(self.x)
         for n in range(self.length + 1):
             if sympy.simplify(actual.nth(n) - expected.nth(n)) != 0:
@@ -192,7 +204,7 @@ class EquationChecker:
                     f"enumeration gives {expected.nth(n)}"
                 )
 
-    def _pump(self, root, residuals):
+    def _root_approximations(self, root, residuals):
         functions = {f.func: f for f in self.functions}
         internal = {}
         for call in {call for expr in residuals for call in expr.atoms(AppliedUndef)}:
@@ -211,7 +223,7 @@ class EquationChecker:
 
         # Classes can start in different degrees, as in H(x) = x * G(x).
         unknowns: dict = {}
-        for step in range(max(0, self.length - minimum[root]) + 1):
+        for step in itertools.count():
             degree = {f: m + step for f, m in minimum.items()}
             trial = {
                 f: prefix[f]
@@ -235,7 +247,8 @@ class EquationChecker:
             values = self._solve_coefficients(constraints, unknowns)
             prefix = {f: series.xreplace(values) for f, series in trial.items()}
             unknowns = {u: term for u, term in unknowns.items() if u not in values}
-        return prefix[root], unknowns
+            if degree[root] >= self.length:
+                yield prefix[root].as_poly(self.x), unknowns
 
     def _solve_coefficients(self, constraints, unknowns):
         """Solve linear constraints, then substitute their solutions into products."""

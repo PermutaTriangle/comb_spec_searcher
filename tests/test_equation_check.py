@@ -115,12 +115,13 @@ def test_pump_undetermined_root():
         checker.check_root([sympy.Eq(f, f)])
 
 
-def test_pump_named_class_and_shifted_equation():
+@pytest.mark.parametrize("constant", [0, 1])
+def test_pump_named_class_and_shifted_equation(constant):
     x = sympy.Symbol("x")
     f, h, named = (sympy.Function(name)(x) for name in ("F", "H", "Named"))
     root, child, known = (Mock(extra_parameters=()) for _ in range(3))
     root.minimum_size_of_object.return_value = 0
-    child.minimum_size_of_object.return_value = 1
+    child.minimum_size_of_object.return_value = int(constant == 0)
     root.from_genf_name.return_value = known
     root.get_terms.side_effect = known.get_terms.side_effect = lambda n: Counter(
         {(): n + 1}
@@ -128,7 +129,9 @@ def test_pump_named_class_and_shifted_equation():
     spec = Mock(root=root, rules_dict={root: None, child: None})
     spec.get_function.side_effect = {root: f, child: h}.__getitem__
     checker = EquationChecker(spec, length=3)
-    checker.check_root([sympy.Eq(h, x * f), sympy.Eq(h, x * named)])
+    checker.check_root(
+        [sympy.Eq(h, constant + x * f), sympy.Eq(h, constant + x * named)]
+    )
     child.get_terms.assert_not_called()
 
 
