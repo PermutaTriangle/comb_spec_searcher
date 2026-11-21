@@ -250,6 +250,16 @@ class EquationChecker:
             if degree[root] >= self.length:
                 yield prefix[root].as_poly(self.x), unknowns
 
+    @staticmethod
+    def _isolate_coefficient(constraints, unknowns):
+        """A nonlinear relation can still be linear in one coefficient."""
+        for constraint in constraints:
+            for variable in constraint.free_symbols.intersection(unknowns):
+                slope = constraint.diff(variable)
+                if slope.is_number and slope.is_zero is False:
+                    return {variable: -constraint.xreplace({variable: 0}) / slope}
+        return {}
+
     def _solve_coefficients(self, constraints, unknowns):
         """Solve linear constraints, then substitute their solutions into products."""
         result: dict = {}
@@ -282,6 +292,8 @@ class EquationChecker:
                     u: v for u, v in zip(variables, solution, strict=True) if u != v
                 }
             if nonlinear and not values:
+                values = self._isolate_coefficient(nonlinear, unknowns)
+            if nonlinear and not values:
                 # Only size-zero enumeration may select an algebraic branch.
                 for u in (
                     set.union(*(c.free_symbols for c in nonlinear)) & unknowns.keys()
@@ -295,5 +307,5 @@ class EquationChecker:
                     raise NotImplementedError("Unresolved nonlinear coefficient system")
             result = {u: v.xreplace(values) for u, v in result.items()}
             result.update(values)
-            constraints = [c.xreplace(values) for c in nonlinear]
+            constraints = [c.xreplace(values).expand() for c in nonlinear]
         return result

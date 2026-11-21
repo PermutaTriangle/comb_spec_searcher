@@ -146,3 +146,21 @@ def test_pump_allows_free_auxiliary_series():
     spec.get_function.side_effect = {root: f, child: g}.__getitem__
     checker = EquationChecker(spec, length=3)
     checker.check_root([sympy.Eq(f, 1 / (1 - x) ** 2), sympy.Eq(g, g)])
+
+
+def test_pump_delayed_product():
+    x = sympy.Symbol("x")
+    f, g, h = (sympy.Function(name)(x) for name in ("F", "G", "H"))
+    root, child, auxiliary = (Mock(extra_parameters=()) for _ in range(3))
+    root.minimum_size_of_object.return_value = 2
+    child.minimum_size_of_object.return_value = 1
+    auxiliary.minimum_size_of_object.return_value = 0
+    root.get_terms.side_effect = lambda n: Counter({(): max(n - 1, 0)})
+    spec = Mock(root=root, rules_dict={root: None, child: None, auxiliary: None})
+    spec.get_function.side_effect = {root: f, child: g, auxiliary: h}.__getitem__
+    checker = EquationChecker(spec, length=6)
+    checker.check_root(
+        [sympy.Eq(f, g**2), sympy.Eq(h, 1 + x * g), sympy.Eq(h, 1 + x**2 / (1 - x))]
+    )
+    child.get_terms.assert_not_called()
+    auxiliary.get_terms.assert_not_called()
