@@ -5,7 +5,6 @@ where each of the bi appear exactly once on the left hand side of some rule.
 
 from copy import copy
 from functools import reduce
-from itertools import chain
 from operator import mul
 from typing import Any, Dict, Generic, Iterable, Iterator, List, Optional, Set, Union
 
@@ -23,6 +22,7 @@ from comb_spec_searcher.typing import (
 )
 
 from .combinatorial_class import CombinatorialClass, CombinatorialObject
+from .equation_check import EquationChecker
 from .exception import (
     IncorrectGeneratingFunctionError,
     InvalidOperationError,
@@ -356,6 +356,11 @@ class CombinatorialSpecification(
         Yield all equations on the (ordinary) generating function that the
         rules of the specification imply.
         """
+        for _, equation in self.get_equations_with_labels():
+            yield equation
+
+    def get_equations_with_labels(self) -> Iterator[tuple[int, Eq]]:
+        """Yield each equation with the label of the rule that produced it."""
         funcs: Dict[CombinatorialClass, Function] = {
             comb_class: self.get_function(comb_class)
             for comb_class, rule in self.rules_dict.items()
@@ -370,7 +375,7 @@ class CombinatorialSpecification(
                 else:
                     eq = rule.get_equation(self.get_function)
                 if not isinstance(eq, bool):
-                    yield eq
+                    yield self.get_label(rule.comb_class), eq
             except NotImplementedError as e:
                 logger.info(
                     "can't find generating function for the rule %s -> %s. Reason: %s"
@@ -381,7 +386,7 @@ class CombinatorialSpecification(
                     rule,
                 )
                 x = var("x")
-                yield Eq(
+                yield self.get_label(rule.comb_class), Eq(
                     self.get_function(rule.comb_class),
                     sympy.Function("NOTIMPLEMENTED")(x),
                 )
@@ -435,7 +440,12 @@ class CombinatorialSpecification(
         logger.info("Solving...")
         solutions = solve(
             eqs,
-            set(chain.from_iterable(eq.atoms(Function) for eq in eqs)),
+            {
+                f
+                for eq in eqs
+                for f in eq.atoms(Function)
+                if self.root.from_genf_name(f.func.__name__) is None
+            },
             dict=True,
             cubics=False,
             quartics=False,
@@ -521,11 +531,13 @@ class CombinatorialSpecification(
     def number_of_rules(self) -> int:
         return len(self.rules_dict)
 
-    def sanity_check(self, length: int = 5) -> bool:
+    def sanity_check(self, length: int = 5, *, check_equations: bool = False) -> bool:
         """
         Sanity check the specification to the given length.
 
-        Raise an SanityCheckFailure error if it fails.
+        With check_equations, check each equation against class terms and pump
+        the root from the system. Return False if either equation check is
+        unavailable. A mismatch raises SanityCheckFailure.
         """
         if not self._is_valid_spec():
             return False
@@ -542,6 +554,23 @@ class CombinatorialSpecification(
                     tuple(self.get_label(child) for child in rule.children),
                     rule,
                 )
+
+        if check_equations:
+            checker = EquationChecker(self, length)
+            equations = tuple(self.get_equations_with_labels())
+            complete = True
+            for label, equation in equations:
+                try:
+                    checker.check(equation)
+                except NotImplementedError as exc:
+                    complete = False
+                    logger.warning("Skipping equation for rule %s: %s", label, exc)
+            try:
+                checker.check_root(equation for _, equation in equations)
+            except NotImplementedError as exc:
+                logger.warning("Cannot pump the root equations: %s", exc)
+                return False
+            return complete
 
         return True
 

@@ -2,6 +2,7 @@ import itertools
 import json
 
 import pytest
+import sympy
 
 from comb_spec_searcher import (
     CombinatorialSpecification,
@@ -135,7 +136,7 @@ def test_forest_ruledb():
 
 
 def test_sancheck(specification):
-    assert specification.sanity_check(6)
+    assert specification.sanity_check(6, check_equations=True)
 
 
 def test_expand_size1_spec():
@@ -223,3 +224,17 @@ def test_cant_count_unexpanded():
     assert new_spec.count_objects_of_size(10) == 144
     for rule1, rule2 in itertools.product(spec, new_spec):
         assert not (rule1 is rule2)
+
+
+def test_sanity_check_requires_root_coefficients(finite_specification, monkeypatch):
+    spec = finite_specification
+    label = spec.get_label(spec.root)
+    root = spec.get_function(spec.root)
+    equations = dict(spec.get_equations_with_labels())
+    equations[label] = sympy.Eq(root, root)
+    monkeypatch.setattr(spec, "get_equations_with_labels", equations.items)
+    assert spec.sanity_check(2)
+    assert not spec.sanity_check(2, check_equations=True)
+
+    equations[label] = sympy.Eq(root, sympy.Function("NOTIMPLEMENTED")(*root.args))
+    assert not spec.sanity_check(2, check_equations=True)

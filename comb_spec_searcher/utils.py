@@ -260,11 +260,14 @@ def sympy_expr_to_maple(expr):
     if isinstance(expr.__class__, sympy.core.function.UndefinedFunction):
         if "NOTIMPLEMENTED" in str(expr):
             return "NOTIMPLEMENTED"
-        split = re.compile(r"F_([0-9]+)\((.*)\)")
-        splitmatch = split.match(repr(expr))
-        assert splitmatch is not None, expr
-        label = splitmatch.group(1)
-        args = map(sympy.sympify, splitmatch.group(2).split(", "))
+        match = re.fullmatch(r"F_(\d+|Av\([\d,]*\))", expr.func.__name__)
+        assert match is not None, expr
+        label = match[1]
+        args = expr.args
+        if label.startswith("Av(") and args == (
+            sympy.Symbol("x") * sympy.Symbol("k_0"),
+        ):
+            args = sympy.symbols("x k_0")
         content = f"{label}, " + ", ".join(map(sympy_expr_to_maple, args))
         return f"F[{content}]"
     if isinstance(expr, sympy.core.symbol.Symbol):
