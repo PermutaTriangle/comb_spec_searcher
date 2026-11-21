@@ -535,8 +535,9 @@ class CombinatorialSpecification(
         """
         Sanity check the specification to the given length.
 
-        With check_equations, also compare the emitted equations with class terms.
-        Unsupported checks are logged. A mismatch raises SanityCheckFailure.
+        With check_equations, check each equation against class terms and pump
+        the root from the system. Return False if either equation check is
+        unavailable. A mismatch raises SanityCheckFailure.
         """
         if not self._is_valid_spec():
             return False
@@ -556,11 +557,20 @@ class CombinatorialSpecification(
 
         if check_equations:
             checker = EquationChecker(self, length)
-            for label, equation in self.get_equations_with_labels():
+            equations = tuple(self.get_equations_with_labels())
+            complete = True
+            for label, equation in equations:
                 try:
                     checker.check(equation)
                 except NotImplementedError as exc:
+                    complete = False
                     logger.warning("Skipping equation for rule %s: %s", label, exc)
+            try:
+                checker.check_root(equation for _, equation in equations)
+            except NotImplementedError as exc:
+                logger.warning("Cannot pump the root equations: %s", exc)
+                return False
+            return complete
 
         return True
 

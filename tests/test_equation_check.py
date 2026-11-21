@@ -64,3 +64,82 @@ def test_named_function_maple_export():
     f = sympy.Function("F_Av(1234,1324)")
     assert sympy_expr_to_maple(f(x)) == "F[Av(1234,1324), x]"
     assert sympy_expr_to_maple(f(x * k)) == "F[Av(1234,1324), x, k[0]]"
+
+
+def test_pump_marked_system():
+    x, k = sympy.symbols("x k")
+    f, g = map(sympy.Function, ("F", "G"))
+    root = Mock(extra_parameters=("k",))
+    child = Mock(extra_parameters=("k",))
+    spec = Mock(root=root, rules_dict={root: None, child: None})
+    spec.get_function.side_effect = {root: f(x, k), child: g(x, k)}.__getitem__
+    for cls in (root, child):
+        cls.minimum_size_of_object.return_value = 0
+        cls.possible_parameters.side_effect = lambda n: ({"k": i} for i in range(n + 1))
+    counts = [1, 2, 8, 40]
+    root.get_terms.side_effect = lambda n: Counter({(n,): counts[n]})
+    equations = [
+        sympy.Eq(f(x, k), g(k * x, 1)),
+        sympy.Eq(g(x, k), (1 - sympy.sqrt(1 - 8 * k * x)) / (4 * k * x)),
+    ]
+    checker = EquationChecker(spec, length=3)
+    checker.check_root(equations)
+    child.get_terms.assert_not_called()
+    with pytest.raises(SanityCheckFailure, match="size 1"):
+        checker.check_root([sympy.Eq(f(x, k), g(x, 1)), equations[1]])
+
+
+def test_pump_selects_algebraic_branch():
+    x = sympy.Symbol("x")
+    f = sympy.Function("F")(x)
+    root = Mock(extra_parameters=())
+    root.minimum_size_of_object.return_value = 0
+    counts = [1, 1, 2, 5, 14]
+    root.get_terms.side_effect = lambda n: Counter({(): counts[n]})
+    spec = Mock(root=root, rules_dict={root: None})
+    spec.get_function.return_value = f
+    checker = EquationChecker(spec, length=4)
+    checker.check_root([sympy.Eq(f**2 - f, x * f**3)])
+
+
+def test_pump_undetermined_root():
+    x = sympy.Symbol("x")
+    f = sympy.Function("F")(x)
+    root = Mock(extra_parameters=())
+    root.minimum_size_of_object.return_value = 0
+    spec = Mock(root=root, rules_dict={root: None})
+    spec.get_function.return_value = f
+    checker = EquationChecker(spec, length=2)
+    checker.check(sympy.Eq(f, f))
+    with pytest.raises(NotImplementedError, match="determine"):
+        checker.check_root([sympy.Eq(f, f)])
+
+
+def test_pump_named_class_and_shifted_equation():
+    x = sympy.Symbol("x")
+    f, h, named = (sympy.Function(name)(x) for name in ("F", "H", "Named"))
+    root, child, known = (Mock(extra_parameters=()) for _ in range(3))
+    root.minimum_size_of_object.return_value = 0
+    child.minimum_size_of_object.return_value = 1
+    root.from_genf_name.return_value = known
+    root.get_terms.side_effect = known.get_terms.side_effect = lambda n: Counter(
+        {(): n + 1}
+    )
+    spec = Mock(root=root, rules_dict={root: None, child: None})
+    spec.get_function.side_effect = {root: f, child: h}.__getitem__
+    checker = EquationChecker(spec, length=3)
+    checker.check_root([sympy.Eq(h, x * f), sympy.Eq(h, x * named)])
+    child.get_terms.assert_not_called()
+
+
+def test_pump_allows_free_auxiliary_series():
+    x = sympy.Symbol("x")
+    f, g = (sympy.Function(name)(x) for name in ("F", "G"))
+    root, child = (Mock(extra_parameters=()) for _ in range(2))
+    for cls in (root, child):
+        cls.minimum_size_of_object.return_value = 0
+    root.get_terms.side_effect = lambda n: Counter({(): n + 1})
+    spec = Mock(root=root, rules_dict={root: None, child: None})
+    spec.get_function.side_effect = {root: f, child: g}.__getitem__
+    checker = EquationChecker(spec, length=3)
+    checker.check_root([sympy.Eq(f, 1 / (1 - x) ** 2), sympy.Eq(g, g)])
